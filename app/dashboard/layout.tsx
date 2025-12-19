@@ -68,7 +68,15 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
     ) {
       router.push('/onboarding/organisation');
     }
-  }, [profile, profile?.isLoading, domain.isLoading, domain.isReady, profile?.organisation_affiliations, domain.activeDomain, router]);
+  }, [
+    profile,
+    profile?.isLoading,
+    domain.isLoading,
+    domain.isReady,
+    profile?.organisation_affiliations,
+    domain.activeDomain,
+    router,
+  ]);
 
   const userDomains = useMemo(() => domain.domains as KnownDomain[], [domain.domains]);
   const activeDomain = (domain.activeDomain ?? null) as KnownDomain | null;
@@ -123,8 +131,7 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production') {
     }
-  }, [
-  ]);
+  }, []);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production' && !domainSlot && !shouldUseDefaultSlot) {
@@ -136,8 +143,7 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
     activeDomain === 'organization' ? ('organisation' as UserDomain) : (activeDomain as UserDomain);
   // Show loading if profile exists but domains are not loaded yet
   // This handles the rehydration period when TanStack Query is loading persisted data
-  const showLoader =
-    profile?.isLoading || domain.isLoading || !profile;
+  const showLoader = profile?.isLoading || domain.isLoading || !profile;
 
   if (showLoader) {
     return <CustomLoader />;
@@ -154,22 +160,22 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   }
 
   return (
-      <SidebarProvider>
-        <DashboardViewProvider
-          initialView={normalizedActiveView as DashboardView}
-          availableViews={normalizedAvailableViews.length ? normalizedAvailableViews : undefined}
-        >
-          <BreadcrumbProvider>
-            <div className='flex min-h-screen w-full overflow-hidden'>
-              {/* Sidebar */}
-              <AppSidebar activeDomain={sidebarDomain} />
-              {/* Main content area */}
-              <div className='flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden'>
-                <DashboardMainContent>{currentDashboard}</DashboardMainContent>
-              </div>
+    <SidebarProvider>
+      <DashboardViewProvider
+        initialView={normalizedActiveView as DashboardView}
+        availableViews={normalizedAvailableViews.length ? normalizedAvailableViews : undefined}
+      >
+        <BreadcrumbProvider>
+          <div className='flex min-h-screen w-full overflow-hidden'>
+            {/* Sidebar */}
+            <AppSidebar activeDomain={sidebarDomain} />
+            {/* Main content area */}
+            <div className='flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto'>
+              <DashboardMainContent>{currentDashboard}</DashboardMainContent>
             </div>
-          </BreadcrumbProvider>
-        </DashboardViewProvider>
-      </SidebarProvider>
+          </div>
+        </BreadcrumbProvider>
+      </DashboardViewProvider>
+    </SidebarProvider>
   );
 }

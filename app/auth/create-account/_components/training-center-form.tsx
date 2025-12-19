@@ -54,9 +54,9 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
   return (
     <Form {...trainingCenterForm}>
       <form onSubmit={trainingCenterForm.handleSubmit(onSubmit)} className='space-y-6'>
-        <div className='rounded-md border border-border bg-card p-6'>
-          <h2 className='mb-1 text-lg font-medium text-foreground'>Training Center Details</h2>
-          <p className='mb-4 text-sm text-muted-foreground'>Tell us about your organization</p>
+        <div className='border-border bg-card rounded-md border p-6'>
+          <h2 className='text-foreground mb-1 text-lg font-medium'>Training Center Details</h2>
+          <p className='text-muted-foreground mb-4 text-sm'>Tell us about your organization</p>
           <div className='space-y-4'>
             <FormField
               control={trainingCenterForm.control}
@@ -136,7 +136,7 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
             <Button type='submit' disabled={isSubmitting} className='flex-1' size='lg'>
               {isSubmitting ? (
                 <div className='flex items-center gap-2'>
-                  <span className='h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent' />
+                  <span className='border-primary-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent' />
                   Processing...
                 </div>
               ) : (

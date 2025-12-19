@@ -16,30 +16,33 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  cancelBookingMutation,
+  requestPaymentMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation } from '@tanstack/react-query';
 import { Calendar, Clock, Eye, Star, X } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { cancelBookingMutation, requestPaymentMutation } from '../../../services/client/@tanstack/react-query.gen';
+import { useCountdown } from '../../../hooks/use-countdown';
 import { BookingDetailsModal } from './booking-details-modal';
-
 
 // "cancelled" | "expired" | "confirmed" | "payment_required" | "payment_failed"
 export const getStatusColor = (status?: any): string => {
   switch (status) {
-    case "confirmed":
-      return "bg-success";
-    case "payment_required":
-      return "bg-primary";
-    case "payment_failed":
-      return "bg-destructive";
-    case "expired":
-      return "bg-muted-foreground";
-    case "cancelled":
-      return "bg-destructive";
+    case 'confirmed':
+      return 'bg-success';
+    case 'payment_required':
+      return 'bg-primary';
+    case 'payment_failed':
+      return 'bg-destructive';
+    case 'expired':
+      return 'bg-muted-foreground';
+    case 'cancelled':
+      return 'bg-destructive';
     default:
-      return "bg-muted-foreground";
+      return 'bg-muted-foreground';
   }
 };
 
@@ -50,7 +53,12 @@ type Props = {
   onBookingUpdate: (booking: any) => void;
 };
 
-export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBookingUpdate, refetchBookings }) => {
+export const ManageBookings: React.FC<Props> = ({
+  bookings,
+  instructors,
+  onBookingUpdate,
+  refetchBookings,
+}) => {
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
@@ -62,40 +70,46 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
     return instructors.find(i => i.uuid === instructorId);
   };
 
-  const cancelBooking = useMutation(cancelBookingMutation())
+  const cancelBooking = useMutation(cancelBookingMutation());
   const handleCancelBooking = () => {
     if (!selectedBooking) return;
 
-    cancelBooking.mutate({ path: { bookingUuid: selectedBooking.uuid } }, {
-      onSuccess: (data) => {
-        toast.success('Booking cancelled successfully');
+    cancelBooking.mutate(
+      { path: { bookingUuid: selectedBooking.uuid } },
+      {
+        onSuccess: data => {
+          toast.success('Booking cancelled successfully');
 
-        refetchBookings();
-        setShowCancelDialog(false);
-        setSelectedBooking(null);
-        setCancelReason('');
-      },
-      onError: (error: any) => {
-        toast.error(`Failed to cancel booking: ${error.message}`);
+          refetchBookings();
+          setShowCancelDialog(false);
+          setSelectedBooking(null);
+          setCancelReason('');
+        },
+        onError: (error: any) => {
+          toast.error(`Failed to cancel booking: ${error.message}`);
+        },
       }
-    });
+    );
   };
 
-  const payBooking = useMutation(requestPaymentMutation())
+  const payBooking = useMutation(requestPaymentMutation());
   const handlePayBooking = (booking: any) => {
-    payBooking.mutate({ path: { bookingUuid: booking.uuid } }, {
-      onSuccess: (data) => {
-        if (data?.data?.payment_url) {
-          window.location.href = data.data.payment_url;
-        } else {
-          toast.error('Payment URL not found');
-        }
-      },
-      onError: (error: any) => {
-        toast.error(`Failed to initiate payment: ${error.message}`);
+    payBooking.mutate(
+      { path: { bookingUuid: booking.uuid } },
+      {
+        onSuccess: data => {
+          if (data?.data?.payment_url) {
+            window.location.href = data.data.payment_url;
+          } else {
+            toast.error('Payment URL not found');
+          }
+        },
+        onError: (error: any) => {
+          toast.error(`Failed to initiate payment: ${error.message}`);
+        },
       }
-    });
-  }
+    );
+  };
 
   const handleSubmitFeedback = () => {
     if (!selectedBooking) return;
@@ -123,9 +137,9 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
   });
 
   const renderBookingCard = (booking: any) => {
-    const instructor = instructors.find(
-      i => i.uuid === booking.instructor_uuid
-    );
+    const countdown = useCountdown(booking.hold_expires_at);
+
+    const instructor = instructors.find(i => i.uuid === booking.instructor_uuid);
 
     if (!instructor) return null;
 
@@ -135,56 +149,51 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
     const now = new Date();
 
     const isPastBooking =
-      new Date(booking.start_time) < now ||
-      ['completed', 'cancelled'].includes(booking.status);
-
+      new Date(booking.start_time) < now || ['completed', 'cancelled'].includes(booking.status);
 
     return (
-      <Card
-        key={booking.uuid}
-        className="p-4 sm:p-6 max-w-3xl"
-      >
+      <Card key={booking.uuid} className='max-w-3xl p-4 sm:p-6'>
         {/* Header */}
-        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className='mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
           {/* Instructor */}
-          <div className="flex items-start gap-3">
-            <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
-              <AvatarFallback>
-                {instructor.full_name?.charAt(0)}
-              </AvatarFallback>
+          <div className='flex items-start gap-3'>
+            <Avatar className='h-10 w-10 sm:h-12 sm:w-12'>
+              <AvatarFallback>{instructor.full_name?.charAt(0)}</AvatarFallback>
             </Avatar>
 
             <div>
-              <h4 className="text-sm sm:text-base font-medium">
-                {instructor.full_name}
-              </h4>
-              <p className="text-muted-foreground text-xs sm:text-sm">
+              <h4 className='text-sm font-medium sm:text-base'>{instructor.full_name}</h4>
+              <p className='text-muted-foreground text-xs sm:text-sm'>
                 {instructor.professional_headline}
               </p>
 
-              <Badge className={`mt-2 ${getStatusColor(booking.status)}`}>
-                {booking.status}
-              </Badge>
+              <Badge className={`mt-2 ${getStatusColor(booking.status)}`}>{booking.status}</Badge>
+
+              <div>
+                {booking.status === 'payment_required' && (
+                  <span className='text-muted-foreground text-sm'>
+                    {`Payment expires in ${countdown?.hours}h ${String(countdown?.minutes).padStart(2, '0')}m ${String(countdown?.seconds).padStart(2, '0')}s`}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Price */}
-          <div className="text-left sm:text-right">
-            <p className="text-lg sm:text-xl font-semibold">
+          <div className='text-left sm:text-right'>
+            <p className='text-lg font-semibold sm:text-xl'>
               {booking.currency} {booking.price_amount}
             </p>
-            <p className="text-muted-foreground text-xs sm:text-sm">
-              1 session
-            </p>
+            <p className='text-muted-foreground text-xs sm:text-sm'>1 session</p>
           </div>
         </div>
 
         {/* Info Section */}
-        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:justify-between">
+        <div className='mb-4 flex flex-col gap-4 sm:flex-row sm:justify-between'>
           {/* Session Info */}
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+          <div className='space-y-2 text-sm'>
+            <div className='flex items-center gap-2'>
+              <Calendar className='text-muted-foreground h-4 w-4' />
               <span>
                 {start.toLocaleDateString('en-US', {
                   weekday: 'short',
@@ -195,90 +204,82 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
+            <div className='flex items-center gap-2'>
+              <Clock className='text-muted-foreground h-4 w-4' />
               <span>
                 {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} –{' '}
                 {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span>
-                Note: {booking?.purpose}
-              </span>
+            <div className='flex items-center gap-2'>
+              <span>Note: {booking?.purpose}</span>
             </div>
           </div>
 
           {/* Payment Info */}
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between sm:justify-start sm:gap-2">
-              <span className="font-medium">Payment:</span>
+          <div className='space-y-1 text-sm'>
+            <div className='flex justify-between sm:justify-start sm:gap-2'>
+              <span className='font-medium'>Payment:</span>
               <span>{booking?.payment_engine}</span>
             </div>
 
-            <div className="flex justify-between sm:justify-start sm:gap-2">
-              <span className="font-medium">Status:</span>
-              <span>
-                {booking?.payment_reference ? 'Paid' : 'Pending'}
-              </span>
+            <div className='flex justify-between sm:justify-start sm:gap-2'>
+              <span className='font-medium'>Status:</span>
+              <span>{booking?.payment_reference ? 'Paid' : 'Pending'}</span>
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:flex-wrap">
+        <div className='flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end'>
           {!isPastBooking && booking.status !== 'cancelled' && (
             <Button
-              variant="destructive"
-              size="sm"
-              className="w-full sm:w-auto gap-2"
+              variant='destructive'
+              size='sm'
+              className='w-full gap-2 sm:w-auto'
               onClick={() => {
                 setSelectedBooking(booking);
                 setShowCancelDialog(true);
               }}
             >
-              <X className="h-4 w-4" />
+              <X className='h-4 w-4' />
               Cancel
             </Button>
           )}
 
           <Button
-            variant="outline"
-            size="sm"
-            className="w-full sm:w-auto gap-2"
+            variant='outline'
+            size='sm'
+            className='w-full gap-2 sm:w-auto'
             onClick={() => setSelectedBooking(booking)}
           >
-            <Eye className="h-4 w-4" />
+            <Eye className='h-4 w-4' />
             View Details
           </Button>
 
           {!isPastBooking && !booking?.payment_reference && (
-            <Button
-              className="w-full sm:w-auto gap-2"
-              onClick={() => handlePayBooking(booking)}
-            >
+            <Button className='w-full gap-2 sm:w-auto' onClick={() => handlePayBooking(booking)}>
               Pay {booking.currency} {booking.price_amount}
             </Button>
           )}
 
           {booking.status === 'completed' && (
             <Button
-              variant="outline"
-              size="sm"
-              className="w-full sm:w-auto gap-2"
+              variant='outline'
+              size='sm'
+              className='w-full gap-2 sm:w-auto'
               onClick={() => {
                 setSelectedBooking(booking);
                 setShowFeedbackDialog(true);
               }}
             >
-              <Star className="h-4 w-4" />
+              <Star className='h-4 w-4' />
               Rate
             </Button>
           )}
         </div>
       </Card>
-
     );
   };
 
@@ -329,7 +330,8 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
           booking={selectedBooking}
           open={!!selectedBooking}
           onClose={() => setSelectedBooking(null)}
-          instructors={instructors} />
+          instructors={instructors}
+        />
       )}
 
       {/* Cancel Dialog */}
@@ -364,8 +366,7 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
               Keep Booking
             </Button>
             <Button variant='destructive' onClick={handleCancelBooking}>
-              {cancelBooking.isPending ? 'Cancelling...' : "Cancel Booking"}
-
+              {cancelBooking.isPending ? 'Cancelling...' : 'Cancel Booking'}
             </Button>
           </DialogFooter>
         </DialogContent>

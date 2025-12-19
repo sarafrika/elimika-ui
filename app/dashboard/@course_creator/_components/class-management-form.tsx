@@ -38,7 +38,11 @@ import {
   updateClassDefinitionMutation,
   updateScheduledInstanceStatusMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { LocationTypeEnum, RecurrenceTypeEnum, type StatusEnum3 } from '@/services/client/types.gen';
+import {
+  LocationTypeEnum,
+  RecurrenceTypeEnum,
+  type StatusEnum3,
+} from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XIcon } from 'lucide-react';

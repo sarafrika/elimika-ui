@@ -304,9 +304,9 @@ export default function StudentGrades() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-muted-foreground text-sm'>Completed Courses</p>
-                  <p className='text-2xl font-bold text-success'>{student.completedCourses}</p>
+                  <p className='text-success text-2xl font-bold'>{student.completedCourses}</p>
                 </div>
-                <Award className='h-8 w-8 text-success' />
+                <Award className='text-success h-8 w-8' />
               </div>
             </CardContent>
           </Card>
@@ -417,9 +417,9 @@ export default function StudentGrades() {
                     </div>
 
                     {course.nextAssignment && (
-                      <div className='rounded border border-primary/30 bg-primary/10 p-3'>
-                        <p className='text-sm font-medium text-primary'>Next Assignment:</p>
-                        <p className='text-sm text-primary'>{course.nextAssignment}</p>
+                      <div className='border-primary/30 bg-primary/10 rounded border p-3'>
+                        <p className='text-primary text-sm font-medium'>Next Assignment:</p>
+                        <p className='text-primary text-sm'>{course.nextAssignment}</p>
                       </div>
                     )}
 
@@ -519,7 +519,7 @@ export default function StudentGrades() {
                           )}
 
                           {isOverdue && (
-                            <div className='flex items-center gap-2 text-destructive'>
+                            <div className='text-destructive flex items-center gap-2'>
                               <AlertTriangle className='h-4 w-4' />
                               <span className='text-sm'>This assignment is overdue</span>
                             </div>
@@ -580,7 +580,7 @@ export default function StudentGrades() {
                     </div>
                     <div className='flex items-center justify-between'>
                       <span className='text-sm'>Highest Grade</span>
-                      <span className='font-bold text-success'>
+                      <span className='text-success font-bold'>
                         {Math.max(...courses.map(c => c.overallGrade))}%
                       </span>
                     </div>

@@ -36,11 +36,7 @@ const CertificatePreviewPage = () => {
     ]);
   }, [replaceBreadcrumbs, certificateId]);
 
-  const {
-    data,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     ...getCertificateByUuidOptions({ path: { uuid: certificateId } }),
     enabled: Boolean(certificateId),
   });
@@ -88,8 +84,14 @@ const CertificatePreviewPage = () => {
             <CardTitle className='text-lg'>
               {certificate.certificate_type || 'Certificate'}
             </CardTitle>
-            <div className='flex flex-wrap gap-2 text-sm text-muted-foreground'>
-              <Badge variant={certificate.revoked_at || certificate.is_valid === false ? 'destructive' : 'success'}>
+            <div className='text-muted-foreground flex flex-wrap gap-2 text-sm'>
+              <Badge
+                variant={
+                  certificate.revoked_at || certificate.is_valid === false
+                    ? 'destructive'
+                    : 'success'
+                }
+              >
                 {certificate.validity_status ?? (certificate.revoked_at ? 'Revoked' : 'Valid')}
               </Badge>
               <span>Number: {certificate.certificate_number ?? 'Pending'}</span>
@@ -97,8 +99,7 @@ const CertificatePreviewPage = () => {
           </CardHeader>
           <CardContent className='space-y-3 text-sm'>
             <p>
-              <span className='font-medium'>Final Grade:</span>{' '}
-              {certificate.final_grade ?? '—'}{' '}
+              <span className='font-medium'>Final Grade:</span> {certificate.final_grade ?? '—'}{' '}
               {certificate.grade_letter ? `(${certificate.grade_letter})` : ''}
             </p>
             <p>
@@ -145,11 +146,7 @@ const CertificatePreviewPage = () => {
 
                 {certificate.is_downloadable && certificate.certificate_url ? (
                   <Button asChild>
-                    <a
-                      href={certificate.certificate_url}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                    >
+                    <a href={certificate.certificate_url} target='_blank' rel='noopener noreferrer'>
                       Download certificate
                     </a>
                   </Button>
@@ -165,7 +162,7 @@ const CertificatePreviewPage = () => {
           </CardHeader>
           <CardContent>
             {certificate.revoked_at ? (
-              <div className='rounded border bg-destructive/10 p-4 text-center text-destructive shadow'>
+              <div className='bg-destructive/10 text-destructive rounded border p-4 text-center shadow'>
                 Certificate preview is unavailable because this certificate has been revoked.
               </div>
             ) : certificate.certificate_url ? (

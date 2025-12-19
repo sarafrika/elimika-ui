@@ -185,7 +185,7 @@ export default function ClassesPage() {
           </Button>
         </div>
       ) : (
-        <div className='overflow-hidden rounded-t-lg border border-border'>
+        <div className='border-border overflow-hidden rounded-t-lg border'>
           <Table>
             <TableCaption className='py-4'>A list of your programs</TableCaption>
             <TableHeader className='bg-muted'>
@@ -212,90 +212,90 @@ export default function ClassesPage() {
                 </TableRow>
               ) : (
                 programs.map((program: any) => (
-                    <TableRow key={program.uuid}>
-                      <TableHead>
-                        <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
-                      </TableHead>
-                      <TableCell className='font-medium'>
-                        <div>
-                          <div>{program.title}</div>
-                          <div className='text-muted-foreground line-clamp-1 max-w-[250px] truncate text-sm'>
-                            <HTMLTextPreview htmlContent={program?.description as string} />
-                          </div>
+                  <TableRow key={program.uuid}>
+                    <TableHead>
+                      <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
+                    </TableHead>
+                    <TableCell className='font-medium'>
+                      <div>
+                        <div>{program.title}</div>
+                        <div className='text-muted-foreground line-clamp-1 max-w-[250px] truncate text-sm'>
+                          <HTMLTextPreview htmlContent={program?.description as string} />
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className='flex flex-wrap gap-1'>
-                          <Badge variant='outline' className='capitalize'>
-                            {categories?.data?.content?.find(
-                              (p: any) => p.uuid === program.category_uuid
-                            )?.name || 'Unknown'}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>{program.class_limit || 'Unlimited'}</TableCell>
-                      <TableCell>{formatCourseDate(program.updated_date)}</TableCell>
-                      <TableCell className='text-center'>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant='ghost' size='icon' aria-label='Open menu'>
-                              <MoreVertical className='h-4 w-4' />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/dashboard/programs/preview/${program.uuid}`}
-                                className='flex w-full items-center'
-                              >
-                                <EyeIcon className='mr-2 h-4 w-4' />
-                                Preview
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <div
-                                onClick={() => openEditProgramDialog(program.uuid)}
-                                className='flex w-full items-center'
-                              >
-                                <PenIcon className='mr-2 h-4 w-4' />
-                                Edit
-                              </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => openAddProgramCourseDialog(program.uuid)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className='flex flex-wrap gap-1'>
+                        <Badge variant='outline' className='capitalize'>
+                          {categories?.data?.content?.find(
+                            (p: any) => p.uuid === program.category_uuid
+                          )?.name || 'Unknown'}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell>{program.class_limit || 'Unlimited'}</TableCell>
+                    <TableCell>{formatCourseDate(program.updated_date)}</TableCell>
+                    <TableCell className='text-center'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant='ghost' size='icon' aria-label='Open menu'>
+                            <MoreVertical className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href={`/dashboard/programs/preview/${program.uuid}`}
+                              className='flex w-full items-center'
                             >
-                              <BookOpen className='mr-2 h-4 w-4' />
-                              Add Course
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => openProgramRequirementModal(program.uuid)}
+                              <EyeIcon className='mr-2 h-4 w-4' />
+                              Preview
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <div
+                              onClick={() => openEditProgramDialog(program.uuid)}
+                              className='flex w-full items-center'
                             >
-                              <BadgeCheck className='mr-2 h-4 w-4' />
-                              Add Requirements
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/dashboard/programs/enrollments/${program.uuid}`}
-                                className='flex w-full items-center'
-                              >
-                                <EyeIcon className='mr-2 h-4 w-4' />
-                                View Enrollments
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant='destructive'
-                              onClick={() => openDeleteModal(program.uuid)}
+                              <PenIcon className='mr-2 h-4 w-4' />
+                              Edit
+                            </div>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => openAddProgramCourseDialog(program.uuid)}
+                          >
+                            <BookOpen className='mr-2 h-4 w-4' />
+                            Add Course
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => openProgramRequirementModal(program.uuid)}
+                          >
+                            <BadgeCheck className='mr-2 h-4 w-4' />
+                            Add Requirements
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href={`/dashboard/programs/enrollments/${program.uuid}`}
+                              className='flex w-full items-center'
                             >
-                              <TrashIcon className='mr-2 h-4 w-4' />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                              <EyeIcon className='mr-2 h-4 w-4' />
+                              View Enrollments
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant='destructive'
+                            onClick={() => openDeleteModal(program.uuid)}
+                          >
+                            <TrashIcon className='mr-2 h-4 w-4' />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>

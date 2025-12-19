@@ -54,14 +54,14 @@ export default function CourseList({
           </div>
         ) : (
           courses.map(course => (
-              <CourseCard
-                key={course.uuid}
-                course={course}
-                isSelected={selectedCourse?.uuid === course.uuid}
-                onSelect={onCourseSelect}
-                onDelete={onCourseDelete}
-              />
-            ))
+            <CourseCard
+              key={course.uuid}
+              course={course}
+              isSelected={selectedCourse?.uuid === course.uuid}
+              onSelect={onCourseSelect}
+              onDelete={onCourseDelete}
+            />
+          ))
         )}
       </div>
     </div>

@@ -64,21 +64,23 @@ export default function CourseDetailPage() {
   const courseCreatorName = (creatorData as any)?.data?.full_name as string | undefined;
 
   const safeDescription = useMemo(
-    () =>
-      sanitizeCourseDescription(course?.description) ||
-      'No description provided yet.',
+    () => sanitizeCourseDescription(course?.description) || 'No description provided yet.',
     [course?.description]
   );
   const displayTitle =
-    (course?.title as string | undefined) || (course?.name as string | undefined) || 'Untitled course';
+    (course?.title as string | undefined) ||
+    (course?.name as string | undefined) ||
+    'Untitled course';
   const durationLabel = formatDuration(course);
-  const categoryBadges = Array.isArray(course?.category_names) ? course?.category_names.slice(0, 3) : [];
+  const categoryBadges = Array.isArray(course?.category_names)
+    ? course?.category_names.slice(0, 3)
+    : [];
   const objectives = buildListFromText(course?.objectives);
   const prerequisites = buildListFromText(course?.prerequisites);
 
   if (courseQuery.isLoading) {
     return (
-      <div className='min-h-screen bg-background text-foreground'>
+      <div className='bg-background text-foreground min-h-screen'>
         <PublicTopNav />
         <div className='mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-12 lg:py-16'>
           <Skeleton className='h-12 w-48' />
@@ -94,19 +96,19 @@ export default function CourseDetailPage() {
 
   if (courseQuery.error || !course) {
     return (
-      <div className='min-h-screen bg-background text-foreground'>
+      <div className='bg-background text-foreground min-h-screen'>
         <PublicTopNav />
         <div className='mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:py-16'>
           <Link
             href='/courses'
-            className='inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline'
+            className='text-primary inline-flex items-center gap-2 text-sm font-medium hover:underline'
           >
             <ArrowLeft className='h-4 w-4' />
             Back to courses
           </Link>
           <Card className='border-destructive/40 bg-destructive/5'>
             <CardHeader>
-              <CardTitle className='flex items-center gap-2 text-destructive'>
+              <CardTitle className='text-destructive flex items-center gap-2'>
                 <CircleAlert className='h-5 w-5' />
                 Course not found
               </CardTitle>
@@ -121,25 +123,22 @@ export default function CourseDetailPage() {
   }
 
   return (
-    <div className='min-h-screen bg-background text-foreground'>
+    <div className='bg-background text-foreground min-h-screen'>
       <PublicTopNav />
       <div className='mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:py-16'>
         {/* Back Navigation */}
         <Link
           href='/courses'
-          className='inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline'
+          className='text-primary inline-flex items-center gap-2 text-sm font-medium hover:underline'
         >
           <ArrowLeft className='h-4 w-4' />
           Back to courses
         </Link>
 
         {/* Hero Section */}
-        <header className='space-y-6 rounded-[36px] border border-border bg-card p-8 shadow-xl backdrop-blur-sm lg:p-12'>
+        <header className='border-border bg-card space-y-6 rounded-[36px] border p-8 shadow-xl backdrop-blur-sm lg:p-12'>
           <div className='flex flex-wrap items-center gap-3'>
-            <Badge
-              variant={course.is_published ? 'default' : 'secondary'}
-              className='rounded-full'
-            >
+            <Badge variant={course.is_published ? 'default' : 'secondary'} className='rounded-full'>
               {course.is_published ? 'Published' : 'Draft'}
             </Badge>
             {course.status ? (
@@ -150,7 +149,7 @@ export default function CourseDetailPage() {
             {course.level && (
               <Badge
                 variant='outline'
-                className='rounded-full border border-primary/30 bg-primary/10 text-primary'
+                className='border-primary/30 bg-primary/10 text-primary rounded-full border'
               >
                 {course.level}
               </Badge>
@@ -163,11 +162,11 @@ export default function CourseDetailPage() {
           </div>
 
           <div className='space-y-4'>
-            <h1 className='text-3xl font-semibold text-foreground sm:text-4xl lg:text-5xl'>
+            <h1 className='text-foreground text-3xl font-semibold sm:text-4xl lg:text-5xl'>
               {displayTitle}
             </h1>
             <div
-              className='prose max-w-none text-base text-muted-foreground dark:prose-invert'
+              className='prose text-muted-foreground dark:prose-invert max-w-none text-base'
               dangerouslySetInnerHTML={{ __html: safeDescription }}
             />
           </div>
@@ -175,22 +174,22 @@ export default function CourseDetailPage() {
           {/* Course Meta */}
           <div className='flex flex-wrap gap-6 pt-4'>
             {durationLabel ? (
-              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                <Clock className='h-5 w-5 text-primary' />
+              <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+                <Clock className='text-primary h-5 w-5' />
                 <span className='font-medium'>{durationLabel}</span>
               </div>
             ) : null}
             {course.accepts_new_enrollments !== undefined ? (
-              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                <Layers className='h-5 w-5 text-primary' />
+              <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+                <Layers className='text-primary h-5 w-5' />
                 <span className='font-medium'>
                   {course.accepts_new_enrollments ? 'Accepting enrollments' : 'Enrollments closed'}
                 </span>
               </div>
             ) : null}
             {lessons.length > 0 && (
-              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                <BookMarked className='h-5 w-5 text-primary' />
+              <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+                <BookMarked className='text-primary h-5 w-5' />
                 <span className='font-medium'>
                   {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
                 </span>
@@ -204,10 +203,10 @@ export default function CourseDetailPage() {
           {/* Left Column - Course Details */}
           <div className='space-y-6 lg:col-span-2'>
             {/* What You'll Learn */}
-            <Card className='rounded-[28px] border border-border bg-card shadow-lg'>
+            <Card className='border-border bg-card rounded-[28px] border shadow-lg'>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-xl text-foreground'>
-                  <Target className='h-5 w-5 text-primary' />
+                <CardTitle className='text-foreground flex items-center gap-2 text-xl'>
+                  <Target className='text-primary h-5 w-5' />
                   What you'll learn
                 </CardTitle>
               </CardHeader>
@@ -215,24 +214,26 @@ export default function CourseDetailPage() {
                 {objectives.length > 0 ? (
                   <ul className='grid gap-3 sm:grid-cols-2'>
                     {objectives.map((item, index) => (
-                      <li key={index} className='flex items-start gap-3 text-muted-foreground'>
-                        <CheckCircle2 className='h-5 w-5 shrink-0 text-primary' />
+                      <li key={index} className='text-muted-foreground flex items-start gap-3'>
+                        <CheckCircle2 className='text-primary h-5 w-5 shrink-0' />
                         <span className='text-sm'>{item}</span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className='text-sm text-muted-foreground'>No objectives provided for this course yet.</p>
+                  <p className='text-muted-foreground text-sm'>
+                    No objectives provided for this course yet.
+                  </p>
                 )}
               </CardContent>
             </Card>
 
             {/* Course Curriculum */}
             {lessons.length > 0 && (
-              <Card className='rounded-[28px] border border-border bg-card shadow-lg'>
+              <Card className='border-border bg-card rounded-[28px] border shadow-lg'>
                 <CardHeader>
-                  <CardTitle className='flex items-center gap-2 text-xl text-foreground'>
-                    <BookOpen className='h-5 w-5 text-primary' />
+                  <CardTitle className='text-foreground flex items-center gap-2 text-xl'>
+                    <BookOpen className='text-primary h-5 w-5' />
                     Course curriculum
                   </CardTitle>
                   <CardDescription className='text-muted-foreground'>
@@ -251,25 +252,25 @@ export default function CourseDetailPage() {
             )}
 
             {/* Course Requirements */}
-            <Card className='rounded-[28px] border border-border bg-card shadow-lg'>
+            <Card className='border-border bg-card rounded-[28px] border shadow-lg'>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-xl text-foreground'>
-                  <Users className='h-5 w-5 text-primary' />
+                <CardTitle className='text-foreground flex items-center gap-2 text-xl'>
+                  <Users className='text-primary h-5 w-5' />
                   Requirements
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {prerequisites.length > 0 ? (
-                  <ul className='space-y-2 text-sm text-muted-foreground'>
+                  <ul className='text-muted-foreground space-y-2 text-sm'>
                     {prerequisites.map((item, index) => (
                       <li key={index} className='flex items-start gap-3'>
-                        <span className='mt-1 size-1.5 rounded-full bg-primary' />
+                        <span className='bg-primary mt-1 size-1.5 rounded-full' />
                         <span>{item}</span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className='text-sm text-muted-foreground'>No prerequisites specified.</p>
+                  <p className='text-muted-foreground text-sm'>No prerequisites specified.</p>
                 )}
               </CardContent>
             </Card>
@@ -277,12 +278,14 @@ export default function CourseDetailPage() {
 
           {/* Right Column - Enrollment Card */}
           <div className='lg:col-span-1'>
-            <Card className='sticky top-24 rounded-[28px] border border-border bg-card shadow-xl'>
+            <Card className='border-border bg-card sticky top-24 rounded-[28px] border shadow-xl'>
               <CardHeader className='space-y-4'>
                 <div className='space-y-2'>
-                  <CardTitle className='text-2xl text-foreground'>Course overview</CardTitle>
+                  <CardTitle className='text-foreground text-2xl'>Course overview</CardTitle>
                   <CardDescription className='text-muted-foreground'>
-                    {courseCreatorName ? `Published by ${courseCreatorName}` : 'Publisher not provided'}
+                    {courseCreatorName
+                      ? `Published by ${courseCreatorName}`
+                      : 'Publisher not provided'}
                   </CardDescription>
                 </div>
 
@@ -293,25 +296,25 @@ export default function CourseDetailPage() {
                   {durationLabel && (
                     <div className='flex items-center justify-between text-sm'>
                       <span className='text-muted-foreground'>Duration</span>
-                      <span className='font-semibold text-foreground'>{durationLabel}</span>
+                      <span className='text-foreground font-semibold'>{durationLabel}</span>
                     </div>
                   )}
                   {course.level && (
                     <div className='flex items-center justify-between text-sm'>
                       <span className='text-muted-foreground'>Level</span>
-                      <span className='font-semibold text-foreground'>{course.level}</span>
+                      <span className='text-foreground font-semibold'>{course.level}</span>
                     </div>
                   )}
                   {lessons.length > 0 && (
                     <div className='flex items-center justify-between text-sm'>
                       <span className='text-muted-foreground'>Lessons</span>
-                      <span className='font-semibold text-foreground'>{lessons.length}</span>
+                      <span className='text-foreground font-semibold'>{lessons.length}</span>
                     </div>
                   )}
                   {course.price !== undefined || course.is_free !== undefined ? (
                     <div className='flex items-center justify-between text-sm'>
                       <span className='text-muted-foreground'>Pricing</span>
-                      <span className='font-semibold text-foreground'>
+                      <span className='text-foreground font-semibold'>
                         {course.is_free
                           ? 'Free'
                           : typeof course.price === 'number'
@@ -323,7 +326,7 @@ export default function CourseDetailPage() {
                   {course.accepts_new_enrollments !== undefined ? (
                     <div className='flex items-center justify-between text-sm'>
                       <span className='text-muted-foreground'>Enrollments</span>
-                      <span className='font-semibold text-foreground'>
+                      <span className='text-foreground font-semibold'>
                         {course.accepts_new_enrollments ? 'Open' : 'Closed'}
                       </span>
                     </div>
@@ -335,7 +338,7 @@ export default function CourseDetailPage() {
                 <Button
                   size='lg'
                   disabled={!course.is_published || course.accepts_new_enrollments === false}
-                  className='w-full rounded-full bg-primary text-base font-semibold shadow-lg transition hover:bg-primary/90'
+                  className='bg-primary hover:bg-primary/90 w-full rounded-full text-base font-semibold shadow-lg transition'
                 >
                   {course.accepts_new_enrollments === false
                     ? 'Enrollments closed'
@@ -344,9 +347,9 @@ export default function CourseDetailPage() {
                       : 'Not available'}
                 </Button>
                 {courseCreatorName ? (
-                  <div className='rounded-[16px] border border-border bg-muted/40 px-4 py-3 text-xs text-muted-foreground'>
+                  <div className='border-border bg-muted/40 text-muted-foreground rounded-[16px] border px-4 py-3 text-xs'>
                     <div className='flex items-center gap-2'>
-                      <Calendar className='h-4 w-4 text-primary' />
+                      <Calendar className='text-primary h-4 w-4' />
                       <span>Created by {courseCreatorName}</span>
                     </div>
                     {course.updated_date ? (
@@ -372,16 +375,16 @@ function LessonItem({ lesson, index }: { lesson: CourseLesson; index: number }) 
   );
 
   return (
-    <div className='group rounded-2xl border border-border bg-muted/40 p-4 transition hover:border-primary/40 hover:bg-primary/5'>
+    <div className='group border-border bg-muted/40 hover:border-primary/40 hover:bg-primary/5 rounded-2xl border p-4 transition'>
       <div className='flex items-start gap-4'>
-        <div className='flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary'>
+        <div className='bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold'>
           {index}
         </div>
         <div className='flex-1 space-y-1'>
-          <h4 className='font-semibold text-foreground'>{lesson.title}</h4>
+          <h4 className='text-foreground font-semibold'>{lesson.title}</h4>
           {safeDescription && (
             <div
-              className='line-clamp-2 text-sm text-muted-foreground'
+              className='text-muted-foreground line-clamp-2 text-sm'
               dangerouslySetInnerHTML={{ __html: safeDescription }}
             />
           )}

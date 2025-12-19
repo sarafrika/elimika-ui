@@ -140,7 +140,7 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
             >
               <Icon className={`h-4 w-4 ${config.color}`} />
               <span>{config.title}</span>
-              {isActive && <div className='ml-auto h-2 w-2 rounded-full bg-primary' />}
+              {isActive && <div className='bg-primary ml-auto h-2 w-2 rounded-full' />}
             </DropdownMenuItem>
           );
         })}

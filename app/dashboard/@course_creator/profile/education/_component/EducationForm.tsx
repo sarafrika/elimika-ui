@@ -95,7 +95,8 @@ export default function EducationSettings() {
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   const courseCreatorEducation =
-    courseCreator?.educations ?? ([] as Omit<CourseCreatorEducation, 'created_date' | 'updated_date'>[]);
+    courseCreator?.educations ??
+    ([] as Omit<CourseCreatorEducation, 'created_date' | 'updated_date'>[]);
 
   const defaultEducation: EdType = {
     school_name: '',
@@ -201,7 +202,11 @@ export default function EducationSettings() {
     toast('Education removed successfully');
   }
 
-  const formatYearRange = (startYear?: string | number, endYear?: string | number, isCurrent?: boolean) => {
+  const formatYearRange = (
+    startYear?: string | number,
+    endYear?: string | number,
+    isCurrent?: boolean
+  ) => {
     if (!startYear) return 'Years not specified';
     if (isCurrent) return `${startYear} - Present`;
     if (!endYear) return `${startYear}`;
@@ -244,14 +249,18 @@ export default function EducationSettings() {
             description='Add degrees, diplomas, and certifications you have completed or are currently pursuing.'
             viewContent={
               <ProfileViewList emptyMessage='No education history added yet.'>
-                {courseCreatorEducation?.map((edu) => (
+                {courseCreatorEducation?.map(edu => (
                   <ProfileViewListItem
                     key={edu.uuid}
                     title={`${edu.qualification} in ${edu.field_of_study}`}
                     subtitle={edu.school_name}
                     description={edu.full_description}
                     badge={edu.is_recent_qualification ? 'Current' : undefined}
-                    dateRange={formatYearRange(edu.year_started, edu.year_completed, edu.is_recent_qualification)}
+                    dateRange={formatYearRange(
+                      edu.year_started,
+                      edu.year_completed,
+                      edu.is_recent_qualification
+                    )}
                   >
                     {edu.certificate_number && (
                       <div className='text-muted-foreground mt-2 text-xs'>

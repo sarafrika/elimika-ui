@@ -35,7 +35,7 @@ export function CertificateSuccessModal({
       <DialogContent className='max-w-md text-center'>
         <DialogHeader className='flex flex-col items-center justify-center'>
           <div className='mb-4 flex justify-center'>
-            <CheckCircle2 className='h-12 w-12 text-success' />
+            <CheckCircle2 className='text-success h-12 w-12' />
           </div>
           <DialogTitle className='text-xl font-bold'>Certificate verified</DialogTitle>
           <DialogDescription className='text-muted-foreground'>

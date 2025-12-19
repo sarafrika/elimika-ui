@@ -268,30 +268,15 @@ export default function InstructorProfile() {
                 </div>
 
                 <ProfileViewGrid>
-                  <ProfileViewField
-                    label='First name'
-                    value={user?.first_name}
-                  />
-                  <ProfileViewField
-                    label='Last name'
-                    value={user?.last_name}
-                  />
-                  <ProfileViewField
-                    label='Middle name'
-                    value={user?.middle_name}
-                  />
-                  <ProfileViewField
-                    label='Phone number'
-                    value={user?.phone_number}
-                  />
+                  <ProfileViewField label='First name' value={user?.first_name} />
+                  <ProfileViewField label='Last name' value={user?.last_name} />
+                  <ProfileViewField label='Middle name' value={user?.middle_name} />
+                  <ProfileViewField label='Phone number' value={user?.phone_number} />
                   <ProfileViewField
                     label='Date of birth'
                     value={user?.dob ? format(new Date(user.dob), 'PPP') : undefined}
                   />
-                  <ProfileViewField
-                    label='Gender'
-                    value={formatGender(user?.gender)}
-                  />
+                  <ProfileViewField label='Gender' value={formatGender(user?.gender)} />
                 </ProfileViewGrid>
               </div>
             }
@@ -517,7 +502,7 @@ export default function InstructorProfile() {
                       className='prose prose-sm dark:prose-invert max-w-none'
                     />
                   ) : (
-                    <p className='text-muted-foreground italic text-sm'>No biography provided</p>
+                    <p className='text-muted-foreground text-sm italic'>No biography provided</p>
                   )}
                 </div>
               </div>

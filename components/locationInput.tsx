@@ -357,8 +357,8 @@ export default function LocationInput({
       {showMapPreview ? (
         <div className='mt-4 space-y-2'>
           {mapPreviewUrl ? (
-            <div className='overflow-hidden rounded-xl border border-primary/20 bg-white/85 shadow-sm shadow-primary/10 dark:border-primary/30 dark:bg-primary/15 dark:shadow-primary/20'>
-              <div className='aspect-[3/2] w-full overflow-hidden bg-muted'>
+            <div className='border-primary/20 shadow-primary/10 dark:border-primary/30 dark:bg-primary/15 dark:shadow-primary/20 overflow-hidden rounded-xl border bg-white/85 shadow-sm'>
+              <div className='bg-muted aspect-[3/2] w-full overflow-hidden'>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={mapPreviewUrl}
@@ -367,7 +367,7 @@ export default function LocationInput({
                   loading='lazy'
                 />
               </div>
-              <div className='flex flex-col gap-2 border-t border-border bg-white/90 p-3 text-xs text-muted-foreground dark:border-border/60 dark:bg-primary/20 dark:text-foreground sm:flex-row sm:items-center sm:justify-between'>
+              <div className='border-border text-muted-foreground dark:border-border/60 dark:bg-primary/20 dark:text-foreground flex flex-col gap-2 border-t bg-white/90 p-3 text-xs sm:flex-row sm:items-center sm:justify-between'>
                 <div className='space-y-1'>
                   <p className='text-foreground text-sm font-medium'>
                     {selectedFeature?.name ?? selectedPlaceLabel ?? 'Selected location'}
@@ -378,10 +378,10 @@ export default function LocationInput({
                 </div>
                 {hasCoordinates ? (
                   <div className='flex flex-wrap items-center gap-3 sm:justify-end'>
-                    <span className='rounded-full bg-secondary px-3 py-1 text-[11px] font-medium text-primary dark:bg-primary/20 dark:text-primary/90'>
+                    <span className='bg-secondary text-primary dark:bg-primary/20 dark:text-primary/90 rounded-full px-3 py-1 text-[11px] font-medium'>
                       Lat: {formattedLatitude}
                     </span>
-                    <span className='rounded-full bg-secondary px-3 py-1 text-[11px] font-medium text-primary dark:bg-primary/20 dark:text-primary/90'>
+                    <span className='bg-secondary text-primary dark:bg-primary/20 dark:text-primary/90 rounded-full px-3 py-1 text-[11px] font-medium'>
                       Lng: {formattedLongitude}
                     </span>
                   </div>

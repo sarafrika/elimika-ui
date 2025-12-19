@@ -18,8 +18,8 @@ export default function AssessmentLayout({ children }: AssessmentLayoutProps) {
         </div>
       </div>
       <Separator />
-      <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12 '>
-        <div className='flex-1 lg:max-w-7xl mx-auto'>{children}</div>
+      <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
+        <div className='mx-auto flex-1 lg:max-w-7xl'>{children}</div>
       </div>
     </div>
   );

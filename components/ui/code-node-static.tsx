@@ -1,5 +1,3 @@
-
-
 import type { SlateLeafProps } from 'platejs';
 
 import { SlateLeaf } from 'platejs';

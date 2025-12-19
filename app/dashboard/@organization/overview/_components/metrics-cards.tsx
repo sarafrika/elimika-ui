@@ -76,7 +76,7 @@ export function OrganizationMetricsCards() {
 
   return (
     <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-      {metrics.map((metric) => {
+      {metrics.map(metric => {
         const Icon = metric.icon;
         const colorStyles = getColorStyles(metric.color);
 
@@ -88,26 +88,24 @@ export function OrganizationMetricsCards() {
           >
             <div className='flex items-start justify-between'>
               <div className='flex-1'>
-                <p className={elimikaDesignSystem.components.statCard.label}>
-                  {metric.label}
-                </p>
+                <p className={elimikaDesignSystem.components.statCard.label}>{metric.label}</p>
                 {isLoading && metric.value !== '--' ? (
                   <Skeleton className='mt-2 h-10 w-24' />
                 ) : (
-                  <p className={`${elimikaDesignSystem.components.statCard.value} ${colorStyles.text}`}>
+                  <p
+                    className={`${elimikaDesignSystem.components.statCard.value} ${colorStyles.text}`}
+                  >
                     {metric.value}
                   </p>
                 )}
-                <p className='mt-1 text-xs text-muted-foreground'>
-                  {metric.description}
-                </p>
+                <p className='text-muted-foreground mt-1 text-xs'>{metric.description}</p>
               </div>
               <div className={`${colorStyles.bg} rounded-xl p-3`}>
                 <Icon className={`h-6 w-6 ${colorStyles.icon}`} />
               </div>
             </div>
 
-            <div className='mt-4 flex items-center gap-2 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100'>
+            <div className='text-primary mt-4 flex items-center gap-2 text-xs font-medium opacity-0 transition-opacity group-hover:opacity-100'>
               View Details
               <svg
                 className='h-4 w-4 transition-transform group-hover:translate-x-1'
@@ -115,7 +113,12 @@ export function OrganizationMetricsCards() {
                 viewBox='0 0 24 24'
                 stroke='currentColor'
               >
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M9 5l7 7-7 7'
+                />
               </svg>
             </div>
           </Link>

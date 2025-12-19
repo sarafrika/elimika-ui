@@ -139,17 +139,13 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
     <div className='p-2'>
       <div className='group relative flex flex-row items-start gap-3'>
         {/* Index on the left */}
-        <div className='mt-1 w-8 flex-shrink-0 text-center font-semibold'>
-          {qIndex + 1}.
-        </div>
+        <div className='mt-1 w-8 flex-shrink-0 text-center font-semibold'>{qIndex + 1}.</div>
 
         {/* Question text & points */}
         {!isLoading && (
           <div className='flex w-full flex-col gap-1'>
             <p className='font-medium'>{question.question_text}</p>
-            <p className='text-sm font-bold'>
-              Points: {question.points_display}
-            </p>
+            <p className='text-sm font-bold'>Points: {question.points_display}</p>
 
             {/* Only show options & actions if creator */}
             {userDomain === 'course_creator' && (
@@ -204,18 +200,20 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
                 <TableRow
                   key={option.uuid}
                   className={`group transition-colors ${
-                    option.is_correct ? 'hover:bg-success/10 hover:text-foreground' : 'hover:bg-muted'
+                    option.is_correct
+                      ? 'hover:bg-success/10 hover:text-foreground'
+                      : 'hover:bg-muted'
                   }`}
                 >
                   <TableCell className='text-center'>{index + 1}</TableCell>
                   <TableCell>{option.option_text}</TableCell>
                   <TableCell className='text-center'>
                     {option.is_correct ? (
-                      <span className='rounded-md bg-success/10 px-2 py-1 text-xs font-semibold text-success'>
+                      <span className='bg-success/10 text-success rounded-md px-2 py-1 text-xs font-semibold'>
                         ✓ Correct
                       </span>
                     ) : (
-                      <span className='rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground'>
+                      <span className='bg-muted text-muted-foreground rounded-md px-2 py-1 text-xs'>
                         —
                       </span>
                     )}
@@ -225,7 +223,7 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
                       <Button
                         variant='ghost'
                         size='icon'
-                        className='text-destructive opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive/80'
+                        className='text-destructive hover:text-destructive/80 opacity-0 transition-opacity group-hover:opacity-100'
                         onClick={() => handleDeleteOption(option, question?.quiz_uuid)}
                       >
                         <Trash className='h-4 w-4' />

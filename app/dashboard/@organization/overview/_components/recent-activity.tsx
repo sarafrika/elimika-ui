@@ -23,8 +23,8 @@ export function RecentActivity() {
     return (
       <div className={elimikaDesignSystem.components.card.base}>
         <div className='flex flex-col items-center justify-center py-8 text-center'>
-          <Clock className='mb-3 h-10 w-10 text-muted-foreground' />
-          <p className='text-sm text-muted-foreground'>
+          <Clock className='text-muted-foreground mb-3 h-10 w-10' />
+          <p className='text-muted-foreground text-sm'>
             Activity tracking is available for system administrators
           </p>
         </div>
@@ -36,10 +36,8 @@ export function RecentActivity() {
     return (
       <div className={elimikaDesignSystem.components.card.base}>
         <div className='flex flex-col items-center justify-center py-8 text-center'>
-          <AlertCircle className='mb-3 h-10 w-10 text-destructive' />
-          <p className='text-sm text-muted-foreground'>
-            Unable to load activity feed
-          </p>
+          <AlertCircle className='text-destructive mb-3 h-10 w-10' />
+          <p className='text-muted-foreground text-sm'>Unable to load activity feed</p>
         </div>
       </div>
     );
@@ -63,10 +61,8 @@ export function RecentActivity() {
     return (
       <div className={elimikaDesignSystem.components.card.base}>
         <div className='flex flex-col items-center justify-center py-8 text-center'>
-          <Clock className='mb-3 h-10 w-10 text-muted-foreground' />
-          <p className='text-sm text-muted-foreground'>
-            No recent activity to display
-          </p>
+          <Clock className='text-muted-foreground mb-3 h-10 w-10' />
+          <p className='text-muted-foreground text-sm'>No recent activity to display</p>
         </div>
       </div>
     );
@@ -81,22 +77,20 @@ export function RecentActivity() {
           return (
             <div
               key={`${event.title}-${event.timestamp}-${index}`}
-              className='rounded-xl border border-border bg-muted/30 p-3 transition hover:bg-muted/50'
+              className='border-border bg-muted/30 hover:bg-muted/50 rounded-xl border p-3 transition'
             >
               <div className='flex items-start gap-3'>
-                <div className='mt-0.5 rounded-lg bg-muted p-2'>
-                  <Icon className='h-4 w-4 text-primary' />
+                <div className='bg-muted mt-0.5 rounded-lg p-2'>
+                  <Icon className='text-primary h-4 w-4' />
                 </div>
                 <div className='flex-1'>
-                  <p className='text-sm font-medium text-foreground'>
+                  <p className='text-foreground text-sm font-medium'>
                     {event.title ?? 'Activity Event'}
                   </p>
                   {event.description && (
-                    <p className='mt-1 text-xs text-muted-foreground'>
-                      {event.description}
-                    </p>
+                    <p className='text-muted-foreground mt-1 text-xs'>{event.description}</p>
                   )}
-                  <p className='mt-1 text-xs text-muted-foreground'>
+                  <p className='text-muted-foreground mt-1 text-xs'>
                     {event.timestamp
                       ? format(new Date(event.timestamp), 'MMM dd, yyyy • HH:mm')
                       : 'Recently'}
@@ -116,13 +110,21 @@ function getActivityIcon(title?: string) {
 
   const lowerTitle = title.toLowerCase();
 
-  if (lowerTitle.includes('user') || lowerTitle.includes('member') || lowerTitle.includes('invite')) {
+  if (
+    lowerTitle.includes('user') ||
+    lowerTitle.includes('member') ||
+    lowerTitle.includes('invite')
+  ) {
     return UserPlus;
   }
   if (lowerTitle.includes('course') || lowerTitle.includes('learn')) {
     return BookOpen;
   }
-  if (lowerTitle.includes('setting') || lowerTitle.includes('config') || lowerTitle.includes('update')) {
+  if (
+    lowerTitle.includes('setting') ||
+    lowerTitle.includes('config') ||
+    lowerTitle.includes('update')
+  ) {
     return Settings;
   }
 

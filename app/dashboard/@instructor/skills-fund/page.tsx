@@ -257,8 +257,8 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-primary/10 p-2'>
-              <Award className='h-5 w-5 text-primary' />
+            <div className='bg-primary/10 rounded-lg p-2'>
+              <Award className='text-primary h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Applications</p>
@@ -269,8 +269,8 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
 
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-success/10 p-2'>
-              <CheckCircle className='h-5 w-5 text-success' />
+            <div className='bg-success/10 rounded-lg p-2'>
+              <CheckCircle className='text-success h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Approved</p>
@@ -287,8 +287,8 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
 
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-warning/10 p-2'>
-              <LockIcon className='h-5 w-5 text-warning' />
+            <div className='bg-warning/10 rounded-lg p-2'>
+              <LockIcon className='text-warning h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Locked Funds</p>
@@ -299,8 +299,8 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
 
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-accent/10 p-2'>
-              <Users className='h-5 w-5 text-accent' />
+            <div className='bg-accent/10 rounded-lg p-2'>
+              <Users className='text-accent h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Students Trained</p>
@@ -421,49 +421,49 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
           <h3 className='mb-4'>Fund Status</h3>
 
           <div className='space-y-4'>
-            <div className='rounded-lg border border-success/30 bg-success/10 p-4'>
+            <div className='border-success/30 bg-success/10 rounded-lg border p-4'>
               <div className='mb-2 flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
-                  <Unlock className='h-5 w-5 text-success' />
+                  <Unlock className='text-success h-5 w-5' />
                   <span>Available Balance</span>
                 </div>
-                <span className='text-xl text-success'>
+                <span className='text-success text-xl'>
                   ${sampleWallet?.balance.toFixed(2) || '0.00'}
                 </span>
               </div>
-              <p className='text-sm text-success'>Ready to withdraw or use for expenses</p>
+              <p className='text-success text-sm'>Ready to withdraw or use for expenses</p>
             </div>
 
-            <div className='rounded-lg border border-warning/30 bg-warning/10 p-4'>
+            <div className='border-warning/30 bg-warning/10 rounded-lg border p-4'>
               <div className='mb-2 flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
-                  <LockIcon className='h-5 w-5 text-warning' />
+                  <LockIcon className='text-warning h-5 w-5' />
                   <span>Locked Funds</span>
                 </div>
-                <span className='text-xl text-warning'>
+                <span className='text-warning text-xl'>
                   ${sampleWallet?.lockedBalance?.toFixed(2) || '0.00'}
                 </span>
               </div>
-              <p className='text-sm text-warning'>Unlocks upon completing each class session</p>
+              <p className='text-warning text-sm'>Unlocks upon completing each class session</p>
             </div>
 
             <div className='border-t pt-4'>
               <h4 className='mb-3'>How It Works</h4>
               <ul className='text-muted-foreground space-y-2 text-sm'>
                 <li className='flex items-start gap-2'>
-                  <CheckCircle className='mt-0.5 h-4 w-4 text-success' />
+                  <CheckCircle className='text-success mt-0.5 h-4 w-4' />
                   <span>Apply for training facilitation funds</span>
                 </li>
                 <li className='flex items-start gap-2'>
-                  <CheckCircle className='mt-0.5 h-4 w-4 text-success' />
+                  <CheckCircle className='text-success mt-0.5 h-4 w-4' />
                   <span>Funds are disbursed but locked in your wallet</span>
                 </li>
                 <li className='flex items-start gap-2'>
-                  <CheckCircle className='mt-0.5 h-4 w-4 text-success' />
+                  <CheckCircle className='text-success mt-0.5 h-4 w-4' />
                   <span>Complete classes and submit reports</span>
                 </li>
                 <li className='flex items-start gap-2'>
-                  <CheckCircle className='mt-0.5 h-4 w-4 text-success' />
+                  <CheckCircle className='text-success mt-0.5 h-4 w-4' />
                   <span>Funds unlock progressively for each completed session</span>
                 </li>
               </ul>

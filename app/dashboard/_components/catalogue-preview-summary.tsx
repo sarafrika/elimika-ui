@@ -88,12 +88,13 @@ export function CataloguePreviewSummary({
       <div className='mx-auto max-w-5xl space-y-6 p-6'>
         <Card className='border-destructive/30 bg-destructive/5'>
           <CardHeader>
-            <CardTitle className='flex items-center gap-2 text-destructive'>
+            <CardTitle className='text-destructive flex items-center gap-2'>
               <ShieldAlert className='h-5 w-5' />
               Catalogue entry not found
             </CardTitle>
             <CardDescription>
-              We could not resolve a catalogue mapping for this course. Ensure it is published to the catalogue.
+              We could not resolve a catalogue mapping for this course. Ensure it is published to
+              the catalogue.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -105,7 +106,9 @@ export function CataloguePreviewSummary({
   const isPublic = catalogueItem.publicly_visible !== false;
   const pricing = (catalogueItem as { price?: number | string | null }).price ?? null;
   const priceLabel =
-    pricing !== null && pricing !== undefined ? formatMoney(pricing, catalogueItem.currency_code) : 'No price set';
+    pricing !== null && pricing !== undefined
+      ? formatMoney(pricing, catalogueItem.currency_code)
+      : 'No price set';
 
   const typeLabel = useMemo(() => {
     if (catalogueItem.course_uuid) return 'Course';
@@ -123,7 +126,11 @@ export function CataloguePreviewSummary({
               Catalogue summary
             </Badge>
             <Badge variant={isActive ? 'success' : 'secondary'} className='gap-1'>
-              {isActive ? <CheckCircle2 className='h-3.5 w-3.5' /> : <ShieldAlert className='h-3.5 w-3.5' />}
+              {isActive ? (
+                <CheckCircle2 className='h-3.5 w-3.5' />
+              ) : (
+                <ShieldAlert className='h-3.5 w-3.5' />
+              )}
               {isActive ? 'Active' : 'Inactive'}
             </Badge>
             <Badge variant={isPublic ? 'secondary' : 'outline'} className='gap-1'>
@@ -153,22 +160,24 @@ export function CataloguePreviewSummary({
             <Detail label='Updated' value={formatDate(catalogueItem.updated_date)} />
           </div>
 
-          <div className='rounded-xl border bg-muted/40 p-4'>
-            <p className='text-xs uppercase tracking-wide text-muted-foreground'>Pricing</p>
-            <p className='mt-1 text-lg font-semibold text-foreground'>{priceLabel}</p>
+          <div className='bg-muted/40 rounded-xl border p-4'>
+            <p className='text-muted-foreground text-xs tracking-wide uppercase'>Pricing</p>
+            <p className='text-foreground mt-1 text-lg font-semibold'>{priceLabel}</p>
             <p className='text-muted-foreground text-sm'>
-              {catalogueItem.currency_code ? `Currency: ${catalogueItem.currency_code}` : 'Default currency applies.'}
+              {catalogueItem.currency_code
+                ? `Currency: ${catalogueItem.currency_code}`
+                : 'Default currency applies.'}
             </p>
           </div>
 
-          <div className='rounded-xl border bg-card/80 p-4'>
-            <p className='text-xs uppercase tracking-wide text-muted-foreground'>Linked records</p>
+          <div className='bg-card/80 rounded-xl border p-4'>
+            <p className='text-muted-foreground text-xs tracking-wide uppercase'>Linked records</p>
             <div className='mt-3 grid gap-3 md:grid-cols-2'>
               <LinkedItem
                 label='Course'
                 value={
                   catalogueItem.course_uuid
-                    ? course?.title ?? course?.name ?? catalogueItem.course_uuid
+                    ? (course?.title ?? course?.name ?? catalogueItem.course_uuid)
                     : '—'
                 }
                 href={
@@ -181,9 +190,9 @@ export function CataloguePreviewSummary({
                 label='Class'
                 value={
                   catalogueItem.class_definition_uuid
-                    ? classDefinition?.title ??
+                    ? (classDefinition?.title ??
                       classDefinition?.name ??
-                      catalogueItem.class_definition_uuid
+                      catalogueItem.class_definition_uuid)
                     : '—'
                 }
                 href={
@@ -202,9 +211,9 @@ export function CataloguePreviewSummary({
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className='rounded-lg border border-dashed border-border/60 bg-muted/30 p-3 text-sm'>
-      <p className='text-muted-foreground text-xs uppercase tracking-wide'>{label}</p>
-      <p className='mt-1 break-all font-semibold text-foreground'>{value}</p>
+    <div className='border-border/60 bg-muted/30 rounded-lg border border-dashed p-3 text-sm'>
+      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</p>
+      <p className='text-foreground mt-1 font-semibold break-all'>{value}</p>
     </div>
   );
 }
@@ -212,9 +221,9 @@ function Detail({ label, value }: { label: string; value: string }) {
 function LinkedItem({ label, value, href }: { label: string; value: string; href?: string }) {
   if (!href) {
     return (
-      <div className='rounded-lg border border-border/60 bg-muted/20 p-3'>
-        <p className='text-muted-foreground text-xs uppercase tracking-wide'>{label}</p>
-        <p className='mt-1 font-semibold text-foreground'>{value}</p>
+      <div className='border-border/60 bg-muted/20 rounded-lg border p-3'>
+        <p className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</p>
+        <p className='text-foreground mt-1 font-semibold'>{value}</p>
       </div>
     );
   }
@@ -222,13 +231,13 @@ function LinkedItem({ label, value, href }: { label: string; value: string; href
   return (
     <Link
       href={href}
-      className='rounded-lg border border-border/60 bg-muted/10 p-3 transition hover:border-primary/50 hover:bg-primary/5'
+      className='border-border/60 bg-muted/10 hover:border-primary/50 hover:bg-primary/5 rounded-lg border p-3 transition'
     >
-      <p className='text-muted-foreground flex items-center gap-1 text-xs uppercase tracking-wide'>
+      <p className='text-muted-foreground flex items-center gap-1 text-xs tracking-wide uppercase'>
         {label}
         <ExternalLink className='h-3.5 w-3.5' />
       </p>
-      <p className='mt-1 font-semibold text-foreground'>{value}</p>
+      <p className='text-foreground mt-1 font-semibold'>{value}</p>
     </Link>
   );
 }

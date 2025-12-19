@@ -174,9 +174,7 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                         tickLine={false}
                         allowDecimals={false}
                       />
-                      <Tooltip
-                        contentStyle={tooltipStyles}
-                      />
+                      <Tooltip contentStyle={tooltipStyles} />
                       <Legend wrapperStyle={legendWrapperStyle} />
                       <Line
                         type='monotone'
@@ -206,7 +204,7 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
               <>
                 <div className='h-[300px]'>
                   <ResponsiveContainer width='100%' height='100%'>
-                  <BarChart data={organizationGrowthData}>
+                    <BarChart data={organizationGrowthData}>
                       <CartesianGrid strokeDasharray='3 3' stroke={GRID_COLOR} />
                       <XAxis
                         dataKey='label'
@@ -220,9 +218,7 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                         tickLine={false}
                         allowDecimals={false}
                       />
-                      <Tooltip
-                        contentStyle={tooltipStyles}
-                      />
+                      <Tooltip contentStyle={tooltipStyles} />
                       <Legend wrapperStyle={legendWrapperStyle} />
                       <Bar
                         dataKey='value'

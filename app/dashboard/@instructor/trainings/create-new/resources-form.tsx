@@ -136,9 +136,9 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
 
             {lessonsWithContent?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg p-6 text-center'>
-                <FileQuestion className='mb-3 h-8 w-8 text-muted-foreground' />
+                <FileQuestion className='text-muted-foreground mb-3 h-8 w-8' />
                 <h4 className='text-sm font-medium'>No Class Resources</h4>
-                <p className='text-sm text-muted-foreground'>
+                <p className='text-muted-foreground text-sm'>
                   This class doesn&apos;t have any resources/content yet.
                 </p>
               </div>
@@ -152,7 +152,7 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
                   return (
                     <div
                       key={c.uuid}
-                      className='flex items-center justify-between rounded-lg gap-1 p-3'
+                      className='flex items-center justify-between gap-1 rounded-lg p-3'
                     >
                       <div className='flex items-center gap-3'>
                         {getResourceIcon(contentTypeName)}
@@ -187,9 +187,9 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
           <CardContent className='space-y-3 p-4'>
             {cAssesssment?.data?.content?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg p-6 text-center'>
-                <FileQuestion className='mb-3 h-8 w-8 text-muted-foreground' />
+                <FileQuestion className='text-muted-foreground mb-3 h-8 w-8' />
                 <h4 className='text-sm font-medium'>No Assessment Content</h4>
-                <p className='text-sm text-muted-foreground'>
+                <p className='text-muted-foreground text-sm'>
                   This class doesn&apos;t have any assessment yet.
                 </p>
               </div>
@@ -198,11 +198,11 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
             {cAssesssment?.data?.content?.map(a => (
               <div
                 key={a.uuid}
-                className='flex items-center justify-between rounded-lg bg-muted/60 p-3'
+                className='bg-muted/60 flex items-center justify-between rounded-lg p-3'
               >
                 <div className='flex items-center gap-3'>
-                  <div className='flex min-h-8 min-w-8 items-center justify-center rounded-full bg-primary/10'>
-                    <span className='text-sm font-bold text-primary'>
+                  <div className='bg-primary/10 flex min-h-8 min-w-8 items-center justify-center rounded-full'>
+                    <span className='text-primary text-sm font-bold'>
                       {a.assessment_type.charAt(0)}
                     </span>
                   </div>
@@ -276,8 +276,8 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
                 <div className='flex flex-col gap-1.5'>
                   <Label>Upload File</Label>
                   <div className='relative rounded-lg border-2 border-dashed p-4 text-center'>
-                    <Upload className='mx-auto mb-2 h-8 w-8 text-muted-foreground' />
-                    <p className='text-sm text-muted-foreground'>Click or drag to upload</p>
+                    <Upload className='text-muted-foreground mx-auto mb-2 h-8 w-8' />
+                    <p className='text-muted-foreground text-sm'>Click or drag to upload</p>
                     <input
                       type='file'
                       className='absolute inset-0 cursor-pointer opacity-0'

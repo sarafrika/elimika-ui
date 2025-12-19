@@ -20,7 +20,7 @@ export function GuardianProgramTimeline({ programs }: GuardianProgramTimelinePro
             Program milestones
           </CardTitle>
         </CardHeader>
-        <CardContent className='rounded-2xl border border-dashed border-border/70 p-6 text-sm'>
+        <CardContent className='border-border/70 rounded-2xl border border-dashed p-6 text-sm'>
           <p className='font-medium'>No program milestones yet.</p>
           <p className='text-muted-foreground'>
             Long-form journeys (like STEM accelerators) will appear here once a learner is enrolled.
@@ -46,7 +46,10 @@ export function GuardianProgramTimeline({ programs }: GuardianProgramTimelinePro
               : 'Recently updated';
 
           return (
-            <div key={program.enrollment_uuid ?? program.program_uuid ?? index} className='flex gap-4'>
+            <div
+              key={program.enrollment_uuid ?? program.program_uuid ?? index}
+              className='flex gap-4'
+            >
               <div className='flex flex-col items-center'>
                 <span className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full text-sm font-semibold'>
                   {Math.round(program.progress_percentage ?? 0)}%
@@ -55,7 +58,7 @@ export function GuardianProgramTimeline({ programs }: GuardianProgramTimelinePro
                   <span className='bg-border/80 mt-2 h-10 w-px self-center' aria-hidden='true' />
                 )}
               </div>
-              <div className='flex-1 rounded-2xl border border-border/70 p-4'>
+              <div className='border-border/70 flex-1 rounded-2xl border p-4'>
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div>
                     <p className='text-sm font-semibold'>{program.program_name ?? 'Program'}</p>

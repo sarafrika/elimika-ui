@@ -9,7 +9,7 @@ interface CourseCardProps {
   onSelect: (course: Course) => void;
 }
 
-export default function CourseCard({ course, isSelected, onSelect, }: CourseCardProps) {
+export default function CourseCard({ course, isSelected, onSelect }: CourseCardProps) {
   return (
     <div
       className={`hover:bg-muted/50 cursor-pointer border-b p-4 transition-colors ${isSelected ? 'bg-muted' : ''}`}
@@ -41,7 +41,6 @@ export default function CourseCard({ course, isSelected, onSelect, }: CourseCard
                 {course.created_date ? new Date(course.created_date).toLocaleDateString() : 'N/A'}
               </span>
             </div>
-
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import DomainOverviewShell from '@/components/domain-overview-shell';
 import { Badge } from '@/components/ui/badge';
@@ -57,8 +57,8 @@ export default function InstructorOverviewPage() {
           <span>{Math.round(progress)}%</span>
         </div>
         <Progress value={progress} className='h-2' />
-        <div className='rounded-2xl border border-border/60 bg-muted/40 p-4'>
-          <p className='text-sm font-semibold text-foreground'>
+        <div className='border-border/60 bg-muted/40 rounded-2xl border p-4'>
+          <p className='text-foreground text-sm font-semibold'>
             {onboardingSteps[currentStepIndex].title}
           </p>
           <p className='text-muted-foreground text-xs'>
@@ -89,12 +89,14 @@ export default function InstructorOverviewPage() {
           <Badge variant='outline'>Leadership labs</Badge>
           <Badge variant='outline'>Product strategy</Badge>
         </div>
-        <div className='rounded-2xl border border-dashed border-border/60 p-3'>
+        <div className='border-border/60 rounded-2xl border border-dashed p-3'>
           <Detail label='Preferred modality' value='Hybrid: virtual theory, on-site labs' />
           <Detail label='Average satisfaction' value='4.8 / 5.0' />
         </div>
         <Button variant='ghost' size='sm' asChild className='px-0 text-left'>
-          <Link prefetch href='/dashboard/profile/expertise'>Edit specialisations</Link>
+          <Link prefetch href='/dashboard/profile/expertise'>
+            Edit specialisations
+          </Link>
         </Button>
       </CardContent>
     </Card>
@@ -115,7 +117,7 @@ export default function InstructorOverviewPage() {
           return (
             <div
               key={step.title}
-              className='flex items-start gap-3 rounded-2xl border border-border/70 p-3 text-sm'
+              className='border-border/70 flex items-start gap-3 rounded-2xl border p-3 text-sm'
             >
               <div
                 className={`mt-0.5 flex size-8 items-center justify-center rounded-full border ${
@@ -214,7 +216,7 @@ function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className='flex items-center justify-between gap-3'>
       <span className='text-muted-foreground text-xs uppercase'>{label}</span>
-      <span className='text-sm font-semibold text-foreground'>{value}</span>
+      <span className='text-foreground text-sm font-semibold'>{value}</span>
     </div>
   );
 }
@@ -231,10 +233,10 @@ function QuickAction({
   href: string;
 }) {
   return (
-    <div className='flex flex-col justify-between rounded-2xl border border-border/70 bg-muted/20 p-3'>
+    <div className='border-border/70 bg-muted/20 flex flex-col justify-between rounded-2xl border p-3'>
       <div className='space-y-1'>
         <div className='flex items-center gap-2 text-sm font-semibold'>
-          <span className='rounded-full bg-primary/10 p-1.5 text-primary'>{icon}</span>
+          <span className='bg-primary/10 text-primary rounded-full p-1.5'>{icon}</span>
           {title}
         </div>
         <p className='text-muted-foreground text-xs'>{description}</p>

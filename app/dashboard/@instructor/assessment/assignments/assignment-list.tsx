@@ -113,18 +113,13 @@ export default function AssignmentListPage() {
       {!isLoading && !isFetching && isFetched && (
         <div className='space-y-4'>
           {assignments?.map((item, index) => (
-            <Card
-              key={item.uuid || index}
-              className='group relative flex flex-col gap-3 px-4'
-            >
+            <Card key={item.uuid || index} className='group relative flex flex-col gap-3 px-4'>
               {/* Assignment Header with Meta Info */}
               <div className='flex items-start justify-between'>
                 <div className='flex items-start gap-3'>
                   {/* Index Circle */}
-                  <div className='mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20'>
-                    <span className='text-sm font-semibold text-primary'>
-                      {index + 1}
-                    </span>
+                  <div className='bg-primary/10 dark:bg-primary/20 mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full'>
+                    <span className='text-primary text-sm font-semibold'>{index + 1}</span>
                   </div>
 
                   {/* Title + Meta */}

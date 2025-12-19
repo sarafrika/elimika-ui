@@ -50,7 +50,7 @@ export function GuardianStudentSelector({
       <PopoverTrigger asChild>
         <Button
           variant='outline'
-          className='border-border/70 bg-card px-4 py-6 text-left hover:bg-muted/50'
+          className='border-border/70 bg-card hover:bg-muted/50 px-4 py-6 text-left'
           role='combobox'
           aria-expanded={open}
           disabled={isDisabled}

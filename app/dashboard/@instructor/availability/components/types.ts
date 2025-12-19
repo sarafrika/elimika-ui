@@ -2,22 +2,22 @@ export type CalendarEvent = {
   id: string;
   title: string;
   description?: string;
-  entry_type?: "BLOCKED" | "AVAILABILITY" | "SCHEDULED_INSTANCE";
-  startTime: string;       // HH:mm
-  endTime: string;         // HH:mm
-  startDateTime: string;   // ISO YYYY-MM-DDTHH:mm:ss
-  endDateTime: string;     // ISO YYYY-MM-DDTHH:mm:ss
-  date: Date;              // main date for event
-  day: string;             // weekday name
+  entry_type?: 'BLOCKED' | 'AVAILABILITY' | 'SCHEDULED_INSTANCE';
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  startDateTime: string; // ISO YYYY-MM-DDTHH:mm:ss
+  endDateTime: string; // ISO YYYY-MM-DDTHH:mm:ss
+  date: Date; // main date for event
+  day: string; // weekday name
   location?: string;
   attendees?: number;
   isRecurring?: boolean;
   recurringDays?: string[];
-  status: "SCHEDULED" | "CANCELLED" | "COMPLETED" | "ONGOING";
+  status: 'SCHEDULED' | 'CANCELLED' | 'COMPLETED' | 'ONGOING';
   color?: string;
   reminders?: number[];
   notes?: string;
-  is_available?: boolean
+  is_available?: boolean;
 };
 
 export type AvailabilityData = {
@@ -43,8 +43,8 @@ export type ClassScheduleItem = {
   location_type: string;
   max_participants: number;
   cancellation_reason?: string | null;
-  entry_type?: any,
-  is_available?: boolean
+  entry_type?: any;
+  is_available?: boolean;
 };
 
 // export function transformAvailabilityArray(dataArray: any[]): AvailabilitySlot[] {
@@ -109,7 +109,7 @@ export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarE
 
     return {
       id: item.uuid,
-      title: item.title || "",
+      title: item.title || '',
       startTime,
       endTime,
       startDateTime,

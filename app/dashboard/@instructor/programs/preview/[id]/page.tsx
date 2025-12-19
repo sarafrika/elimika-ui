@@ -185,10 +185,10 @@ export default function ProgramPreviewPage() {
   if (isLoading)
     return (
       <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
-        <div className='h-20 w-full animate-pulse rounded bg-muted'></div>
+        <div className='bg-muted h-20 w-full animate-pulse rounded'></div>
         <div className='mt-10 flex items-center justify-center'>{/* <Spinner /> */}</div>
-        <div className='h-16 w-full animate-pulse rounded bg-muted'></div>
-        <div className='h-12 w-full animate-pulse rounded bg-muted'></div>
+        <div className='bg-muted h-16 w-full animate-pulse rounded'></div>
+        <div className='bg-muted h-12 w-full animate-pulse rounded'></div>
       </div>
     );
 
@@ -216,53 +216,53 @@ export default function ProgramPreviewPage() {
         <div className='text-muted-foreground flex items-center gap-2 text-sm'>
           <span>Instructor:</span>
           <Badge variant='outline'>{user?.display_name}</Badge>
-          <span className='text-xs text-muted-foreground'>
+          <span className='text-muted-foreground text-xs'>
             ({user?.instructor?.professional_headline})
           </span>
         </div>
       </div>
 
       <div className='flex flex-col gap-4'>
-        <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-          <span className='font-semibold text-foreground'>Program Size:</span>
+        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+          <span className='text-foreground font-semibold'>Program Size:</span>
           <span className='flex items-center gap-1'>
-            <Users className='h-4 w-4 text-muted-foreground' />
+            <Users className='text-muted-foreground h-4 w-4' />
             {programData?.class_limit === 0
               ? 'Unlimited students'
               : `Up to ${programData?.class_limit} students`}
           </span>
         </div>
 
-        <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-          <span className='font-semibold text-foreground'>Duration:</span>
+        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+          <span className='text-foreground font-semibold'>Duration:</span>
           <span className='flex items-center gap-1'>
-            <Clock className='h-4 w-4 text-muted-foreground' />
+            <Clock className='text-muted-foreground h-4 w-4' />
             Approx. {programData?.total_duration_display}
           </span>
         </div>
 
-        <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-          <span className='font-semibold text-foreground'>Price:</span>
+        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+          <span className='text-foreground font-semibold'>Price:</span>
           <span className='flex items-center gap-1'>
-            <CoinsIcon className='h-3 w-3 text-muted-foreground' />
+            <CoinsIcon className='text-muted-foreground h-3 w-3' />
             {programData?.price} KES
           </span>
         </div>
 
-        <div className='flex flex-col items-start gap-2 text-sm text-muted-foreground'>
-          <span className='font-semibold text-foreground'>Pre-requisites:</span>
+        <div className='text-muted-foreground flex flex-col items-start gap-2 text-sm'>
+          <span className='text-foreground font-semibold'>Pre-requisites:</span>
           <span className='flex items-center gap-2'>
-            <Check className='h-4 w-4 min-w-4 self-start text-muted-foreground' />
+            <Check className='text-muted-foreground h-4 w-4 min-w-4 self-start' />
             {programData?.prerequisites}
           </span>
         </div>
 
-        <div className='flex w-full flex-col items-start gap-2 text-sm text-muted-foreground'>
-          <span className='font-semibold text-foreground'>Requirements:</span>
+        <div className='text-muted-foreground flex w-full flex-col items-start gap-2 text-sm'>
+          <span className='text-foreground font-semibold'>Requirements:</span>
           <div className='flex w-full flex-col gap-2'>
             {programRequirement?.data?.content?.map((r, i) => (
               <div key={i} className='group relative flex items-center gap-2 py-1'>
-                <CheckCheck className='h-4 w-4 min-w-4 self-start text-muted-foreground' />
+                <CheckCheck className='text-muted-foreground h-4 w-4 min-w-4 self-start' />
                 <div>
                   {r?.requirement_type} - {r.requirement_text}
                 </div>
@@ -270,7 +270,7 @@ export default function ProgramPreviewPage() {
                 {/* Delete Button (shown on hover) */}
                 <button
                   onClick={() => handleDeleteRequirement(r.uuid)}
-                  className='absolute right-0 px-2 text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:p-2 hover:text-destructive'
+                  className='text-muted-foreground hover:text-destructive absolute right-0 px-2 opacity-0 transition group-hover:opacity-100 hover:p-2'
                   aria-label='Delete requirement'
                 >
                   <Trash className='h-4 w-4' />
@@ -315,30 +315,30 @@ export default function ProgramPreviewPage() {
                 </div>
               ) : (
                 programCourses?.data?.map((c, i) => (
-                    <div key={i} className='border-b pb-4 last:border-none last:pb-0'>
-                      <div className='flex items-center justify-between'>
-                        <h3 className='flex items-center gap-2 text-base font-semibold'>
-                          <BookOpen className='h-4 w-4 text-primary' />
-                          {c?.name}
-                        </h3>
-                        <button
-                          onClick={() => confirmDelete(c as any)}
-                          className='mx-2 cursor-pointer text-destructive hover:text-destructive/80'
-                          aria-label='Remove course'
-                        >
-                          <Trash className='h-4 w-4' />
-                        </button>
-                      </div>
-
-                      <div className='text-muted-foreground line-clamp-3 w-[95%] text-sm'>
-                        <HTMLTextPreview htmlContent={c?.description as string} />
-                      </div>
-
-                      <Badge className='mt-1' variant='secondary'>
-                        {c?.total_duration_display}
-                      </Badge>
+                  <div key={i} className='border-b pb-4 last:border-none last:pb-0'>
+                    <div className='flex items-center justify-between'>
+                      <h3 className='flex items-center gap-2 text-base font-semibold'>
+                        <BookOpen className='text-primary h-4 w-4' />
+                        {c?.name}
+                      </h3>
+                      <button
+                        onClick={() => confirmDelete(c as any)}
+                        className='text-destructive hover:text-destructive/80 mx-2 cursor-pointer'
+                        aria-label='Remove course'
+                      >
+                        <Trash className='h-4 w-4' />
+                      </button>
                     </div>
-                  ))
+
+                    <div className='text-muted-foreground line-clamp-3 w-[95%] text-sm'>
+                      <HTMLTextPreview htmlContent={c?.description as string} />
+                    </div>
+
+                    <Badge className='mt-1' variant='secondary'>
+                      {c?.total_duration_display}
+                    </Badge>
+                  </div>
+                ))
               )}
             </div>
           </CardContent>

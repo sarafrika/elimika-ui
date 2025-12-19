@@ -26,7 +26,7 @@ export default function ClassScheduleList({ schedules }: Props) {
       {schedules.map(item => (
         <li
           key={item.uuid}
-          className='rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'
+          className='bg-card rounded-lg border p-4 shadow-sm transition-all hover:shadow-md'
         >
           <div className='flex items-center justify-between'>
             <h3 className='text-lg font-semibold'>{item.title}</h3>
@@ -40,7 +40,7 @@ export default function ClassScheduleList({ schedules }: Props) {
               {item.status}
             </span>
           </div>
-          <div className='mt-2 text-sm text-muted-foreground'>
+          <div className='text-muted-foreground mt-2 text-sm'>
             <p>
               <strong>Date:</strong> {moment(item.start_time).format('dddd, MMMM Do YYYY')}
             </p>
@@ -53,7 +53,7 @@ export default function ClassScheduleList({ schedules }: Props) {
           </div>
           {item.can_be_cancelled && (
             <div className='mt-3'>
-              <button className='text-sm text-destructive hover:underline'>Cancel Class</button>
+              <button className='text-destructive text-sm hover:underline'>Cancel Class</button>
             </div>
           )}
         </li>

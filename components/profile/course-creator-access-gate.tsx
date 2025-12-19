@@ -40,7 +40,8 @@ export default function CourseCreatorAccessGate({
   const hasCourseCreatorProfile = Boolean(courseCreator?.profile);
 
   // Grant access if user has global access OR organization access with profile
-  const hasAccess = hasGlobalCourseCreatorAccess || (hasOrgCourseCreatorAccess && hasCourseCreatorProfile);
+  const hasAccess =
+    hasGlobalCourseCreatorAccess || (hasOrgCourseCreatorAccess && hasCourseCreatorProfile);
 
   useEffect(() => {
     if (!profile?.isLoading && !hasAccess) {
@@ -57,13 +58,13 @@ export default function CourseCreatorAccessGate({
             'dark:border-destructive/40 dark:bg-destructive/20'
           )}
         >
-          <ShieldAlert className='col-start-1 self-start text-destructive' />
+          <ShieldAlert className='text-destructive col-start-1 self-start' />
           <AlertTitle className='text-xs font-semibold tracking-[0.15em] uppercase'>
             Access Denied
           </AlertTitle>
           <AlertDescription className='text-sm'>
-            You need course creator permissions to access this feature. Please contact your organization
-            administrator or the Elimika team for access.
+            You need course creator permissions to access this feature. Please contact your
+            organization administrator or the Elimika team for access.
           </AlertDescription>
         </Alert>
       </div>

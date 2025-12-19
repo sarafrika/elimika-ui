@@ -27,24 +27,30 @@ export default function CoursesPage() {
   const size = 50;
   const [page] = useState(0);
 
-  const { data: allCourses } = useQuery(getAllCoursesOptions({ query: { pageable: { page, size, sort: [] } } }));
+  const { data: allCourses } = useQuery(
+    getAllCoursesOptions({ query: { pageable: { page, size, sort: [] } } })
+  );
 
   const { data: appliedCourses } = useQuery({
     ...searchTrainingApplicationsOptions({
-      query: { pageable: {}, searchParams: { applicant_uuid_eq: user?.instructor?.uuid as string } },
+      query: {
+        pageable: {},
+        searchParams: { applicant_uuid_eq: user?.instructor?.uuid as string },
+      },
     }),
     enabled: !!user?.instructor?.uuid,
   });
 
   const combinedCourses = React.useMemo(() => {
     if (!allCourses?.data?.content || !appliedCourses?.data?.content) return [];
-    const appliedMap = new Map(appliedCourses.data.content.map((app: any) => [app.course_uuid, app]));
+    const appliedMap = new Map(
+      appliedCourses.data.content.map((app: any) => [app.course_uuid, app])
+    );
     return allCourses.data.content.map((course: any) => ({
       ...course,
       application: appliedMap.get(course.uuid) || null,
     }));
   }, [allCourses, appliedCourses]);
-
 
   const courses = useMemo(() => combinedCourses ?? [], [combinedCourses]);
   const [selectedCourse, setSelectedCourses] = useState<Course | null>(null);
@@ -78,7 +84,7 @@ export default function CoursesPage() {
           },
         }
       );
-    } catch (_error) { }
+    } catch (_error) {}
   };
 
   const handleUnverifyCourse = async (_course: Course) => {

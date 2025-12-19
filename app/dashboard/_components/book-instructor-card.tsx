@@ -69,7 +69,7 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
         {bio && (
           <HTMLTextPreview
             htmlContent={bio}
-            className='prose prose-sm max-w-none text-muted-foreground'
+            className='prose prose-sm text-muted-foreground max-w-none'
           />
         )}
 
@@ -94,8 +94,8 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
         <DialogContent className='sm:max-w-md md:max-w-lg'>
           <DialogTitle />
           <DialogHeader>
-            <h3 className='text-xl font-semibold text-foreground'>Book Instuctor</h3>
-            <p className='text-sm text-muted-foreground'>
+            <h3 className='text-foreground text-xl font-semibold'>Book Instuctor</h3>
+            <p className='text-muted-foreground text-sm'>
               Select a time slot to book <strong>{full_name}</strong>.
             </p>
           </DialogHeader>

@@ -29,7 +29,7 @@ import {
   getClassDefinitionsForInstructorQueryKey,
   searchTrainingApplicationsOptions,
   searchTrainingProgramsOptions,
-  updateClassDefinitionMutation
+  updateClassDefinitionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -55,13 +55,12 @@ interface ClassDetailsProps {
 }
 
 function toDateTimeLocal(value?: string | null) {
-  if (!value) return "";
+  if (!value) return '';
   const date = new Date(value);
   const offset = date.getTimezoneOffset();
   const localDate = new Date(date.getTime() - offset * 60000);
   return localDate.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
 }
-
 
 export default function ClassDetailsForm({
   handleNextStep,
@@ -171,10 +170,9 @@ export default function ClassDetailsForm({
       return classData?.session_templates ?? [];
     }
 
-    const availabilityDays =
-      combinedRecurrenceData?.payload?.availability
-        ?.filter((slot: any) => slot?.enabled)
-        ?.map((slot: any) => slot.day?.toString().toUpperCase());
+    const availabilityDays = combinedRecurrenceData?.payload?.availability
+      ?.filter((slot: any) => slot?.enabled)
+      ?.map((slot: any) => slot.day?.toString().toUpperCase());
 
     const recurrence =
       combinedRecurrenceData?.payload?.recurrence ||
@@ -187,8 +185,7 @@ export default function ClassDetailsForm({
           }
         : undefined);
 
-    const conflictResolution =
-      classData?.session_templates?.[0]?.conflict_resolution || 'FAIL';
+    const conflictResolution = classData?.session_templates?.[0]?.conflict_resolution || 'FAIL';
 
     return [
       {
@@ -244,7 +241,6 @@ export default function ClassDetailsForm({
       class_time_validity: classTimeValidity,
     };
 
-
     if (resolveId) {
       updateClassDefinition.mutate(
         { path: { uuid: resolveId }, body: payload as any },
@@ -296,35 +292,30 @@ export default function ClassDetailsForm({
     if (!selectedCourseProgram?.application?.rate_card) return 0;
 
     const rates = selectedCourseProgram.application.rate_card;
-    const sessionFormat = form.watch("session_format"); // GROUP / PRIVATE
-    const visibility = form.watch("class_visibility");  // PUBLIC / PRIVATE
+    const sessionFormat = form.watch('session_format'); // GROUP / PRIVATE
+    const visibility = form.watch('class_visibility'); // PUBLIC / PRIVATE
 
-    if (visibility === "PRIVATE" && sessionFormat === "PRIVATE") {
+    if (visibility === 'PRIVATE' && sessionFormat === 'PRIVATE') {
       return rates.private_inperson_rate;
     }
-    if (visibility === "PRIVATE" && sessionFormat === "GROUP") {
+    if (visibility === 'PRIVATE' && sessionFormat === 'GROUP') {
       return rates.private_online_rate;
     }
-    if (visibility === "PUBLIC" && sessionFormat === "PRIVATE") {
+    if (visibility === 'PUBLIC' && sessionFormat === 'PRIVATE') {
       return rates.group_inperson_rate;
     }
-    if (visibility === "PUBLIC" && sessionFormat === "GROUP") {
+    if (visibility === 'PUBLIC' && sessionFormat === 'GROUP') {
       return rates.group_online_rate;
     }
 
     return 0;
   };
 
-
   useEffect(() => {
     if (!selectedCourseProgram?.application?.rate_card) return;
     const newRate = computeTrainingRate();
-    form.setValue("training_fee", newRate);
-  }, [
-    selectedCourseProgram,
-    form.watch("class_visibility"),
-    form.watch("session_format")
-  ]);
+    form.setValue('training_fee', newRate);
+  }, [selectedCourseProgram, form.watch('class_visibility'), form.watch('session_format')]);
 
   useEffect(() => {
     if (!classData || !approvedCourses?.length) return;
@@ -377,7 +368,6 @@ export default function ClassDetailsForm({
                       //   selectedCourse?.class_limit ?? selectedProgram?.class_limit;
 
                       const selectedCourse = approvedCourses?.find(course => course.uuid === value);
-
 
                       const maxParticipants = selectedCourse?.class_limit;
 
@@ -469,26 +459,21 @@ export default function ClassDetailsForm({
               )}
             />
 
-
-
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className='flex flex-col gap-4 md:flex-row'>
               {/* CLASS VISIBILITY */}
               <FormField
                 control={form.control}
-                name="class_visibility"
+                name='class_visibility'
                 render={({ field }) => (
-                  <FormItem className="w-full flex-1">
+                  <FormItem className='w-full flex-1'>
                     <FormLabel>Class Visibility</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select visibility" />
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className='w-full'>
+                        <SelectValue placeholder='Select visibility' />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PUBLIC">PUBLIC</SelectItem>
-                        <SelectItem value="PRIVATE">PRIVATE</SelectItem>
+                        <SelectItem value='PUBLIC'>PUBLIC</SelectItem>
+                        <SelectItem value='PRIVATE'>PRIVATE</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -499,21 +484,18 @@ export default function ClassDetailsForm({
               {/* SESSION FORMAT */}
               <FormField
                 control={form.control}
-                name="session_format"
+                name='session_format'
                 render={({ field }) => (
-                  <FormItem className="w-full flex-1">
+                  <FormItem className='w-full flex-1'>
                     <FormLabel>Session Format</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select session format" />
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className='w-full'>
+                        <SelectValue placeholder='Select session format' />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="GROUP">GROUP</SelectItem>
-                        <SelectItem value="PRIVATE">PRIVATE</SelectItem>
-                        <SelectItem value="HYBRID">HYBRID</SelectItem>
+                        <SelectItem value='GROUP'>GROUP</SelectItem>
+                        <SelectItem value='PRIVATE'>PRIVATE</SelectItem>
+                        <SelectItem value='HYBRID'>HYBRID</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -530,10 +512,7 @@ export default function ClassDetailsForm({
                   <FormItem className='w-full'>
                     <FormLabel>Start Time</FormLabel>
                     <FormControl>
-                      <Input
-                        type='datetime-local'
-                        {...field}
-                      />
+                      <Input type='datetime-local' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -547,10 +526,7 @@ export default function ClassDetailsForm({
                   <FormItem className='w-full'>
                     <FormLabel>End Time</FormLabel>
                     <FormControl>
-                      <Input
-                        type='datetime-local'
-                        {...field}
-                      />
+                      <Input type='datetime-local' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -558,34 +534,32 @@ export default function ClassDetailsForm({
               />
             </div>
 
-
             <FormField
               control={form.control}
-              name="training_fee"
+              name='training_fee'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Training Fee (Auto-calculated)</FormLabel>
                   <FormControl>
                     <Input
-                      type="number"
+                      type='number'
                       {...field}
                       value={field.value}
                       readOnly
-                      className="bg-gray-100 cursor-not-allowed"
+                      className='cursor-not-allowed bg-gray-100'
                     />
                   </FormControl>
 
                   <FormDescription>
                     Based on: <br />
-                    Visibility: <strong>{form.watch("class_visibility")}</strong> &nbsp;|&nbsp;
-                    Format: <strong>{form.watch("session_format")}</strong>
+                    Visibility: <strong>{form.watch('class_visibility')}</strong> &nbsp;|&nbsp;
+                    Format: <strong>{form.watch('session_format')}</strong>
                   </FormDescription>
 
                   <FormMessage />
                 </FormItem>
               )}
             />
-
 
             {/* Required Toggle */}
             {/* <FormField

@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'api.elimika.sarafrika.com',
-      }
+      },
     ],
   },
   typescript: {

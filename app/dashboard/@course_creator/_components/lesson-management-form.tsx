@@ -61,7 +61,13 @@ import {
   Youtube,
 } from 'lucide-react';
 import React, { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { type Control, type FieldErrors, type SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
+import {
+  type Control,
+  type FieldErrors,
+  type SubmitHandler,
+  useFieldArray,
+  useForm,
+} from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
@@ -308,7 +314,7 @@ function LessonList({
   }, [lessons, lessonContentsMap, contentTypeData]);
 
   return (
-    <div className='space-y-8 rounded-[32px] border border-border bg-card p-6 shadow-xl transition lg:p-10'>
+    <div className='border-border bg-card space-y-8 rounded-[32px] border p-6 shadow-xl transition lg:p-10'>
       <div className='flex flex-col items-center justify-between gap-4 md:flex-row'>
         <div className='space-y-1 self-start'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
@@ -343,7 +349,7 @@ function LessonList({
               return (
                 <div
                   key={lesson?.uuid || index}
-                  className='group relative flex flex-col gap-4 rounded-[20px] border border-border bg-card/90 p-4 shadow-xl backdrop-blur lg:p-8'
+                  className='group border-border bg-card/90 relative flex flex-col gap-4 rounded-[20px] border p-4 shadow-xl backdrop-blur lg:p-8'
                 >
                   <div className='flex items-start gap-4'>
                     <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
@@ -442,20 +448,18 @@ function LessonList({
                           .map((item: any) => (
                             <div
                               key={item.uuid}
-                              className='group text-muted-foreground flex cursor-default items-center justify-between gap-4 rounded-md p-4 text-sm transition-colors hover:bg-muted/50'
+                              className='group text-muted-foreground hover:bg-muted/50 flex cursor-default items-center justify-between gap-4 rounded-md p-4 text-sm transition-colors'
                             >
                               <div className='flex flex-col gap-1'>
                                 <div className='flex items-center gap-2'>
                                   {getContentTypeIcon(item.content_type_key)}
-                                  <span className='font-medium text-foreground'>
-                                    {item.title}
-                                  </span>
+                                  <span className='text-foreground font-medium'>{item.title}</span>
                                 </div>
-                                <div className='line-clamp-2 text-xs text-muted-foreground'>
+                                <div className='text-muted-foreground line-clamp-2 text-xs'>
                                   <RichTextRenderer htmlString={item?.description} maxChars={150} />
                                 </div>
                                 {item.content_text && (
-                                  <div className='text-xs text-muted-foreground'>
+                                  <div className='text-muted-foreground text-xs'>
                                     <RichTextRenderer
                                       htmlString={item?.content_text}
                                       maxChars={150}
@@ -467,7 +471,7 @@ function LessonList({
                                     href={item.file_url}
                                     target='_blank'
                                     rel='noopener noreferrer'
-                                    className='text-xs text-primary underline hover:text-primary/80'
+                                    className='text-primary hover:text-primary/80 text-xs underline'
                                   >
                                     View File
                                   </a>
@@ -761,7 +765,7 @@ function LessonCreationForm({
                   size='sm'
                   onClick={() => removeResource(index)}
                 >
-                  <X className='h-4 w-4 text-destructive' />
+                  <X className='text-destructive h-4 w-4' />
                 </Button>
               </div>
 
@@ -1007,7 +1011,7 @@ function LessonEditingForm({
                   size='sm'
                   onClick={() => removeResource(index)}
                 >
-                  <X className='h-4 w-4 text-destructive' />
+                  <X className='text-destructive h-4 w-4' />
                 </Button>
               </div>
 
@@ -1331,7 +1335,7 @@ function LessonContentForm({
                       {contentTypeData.map((value: any) => {
                         const Icon =
                           ContentTypeIcons[
-                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
                           ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
@@ -1626,7 +1630,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   return (
@@ -1720,9 +1724,7 @@ function AssessmentCreationForm({
                       key={rubric.uuid}
                       className={clsx(
                         'cursor-pointer rounded-lg border p-4 transition',
-                        isSelected
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border hover:bg-muted'
+                        isSelected ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted'
                       )}
                     >
                       <div
@@ -1736,11 +1738,11 @@ function AssessmentCreationForm({
                           </div>
                         </div>
                         {isSelected && (
-                          <span className='text-sm font-medium text-primary'>Selected</span>
+                          <span className='text-primary text-sm font-medium'>Selected</span>
                         )}
                       </div>
 
-                      <div className='flfex-row mt-2 flex items-center gap-6 text-sm text-muted-foreground'>
+                      <div className='flfex-row text-muted-foreground mt-2 flex items-center gap-6 text-sm'>
                         <p>
                           <strong>Type:</strong> {rubric.rubric_type}
                         </p>
@@ -1753,7 +1755,7 @@ function AssessmentCreationForm({
                       <button
                         type='button'
                         onClick={() => toggleExpand(rubric.uuid)}
-                        className='mt-3 flex items-center gap-1 text-sm text-primary'
+                        className='text-primary mt-3 flex items-center gap-1 text-sm'
                       >
                         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                         {isExpanded
@@ -1768,9 +1770,9 @@ function AssessmentCreationForm({
                           {criteria.map(criterion => (
                             <div
                               key={criterion.uuid}
-                              className='rounded-md border border-border bg-card p-3'
+                              className='border-border bg-card rounded-md border p-3'
                             >
-                              <div className='flex flex-row items-center gap-2 font-medium text-foreground'>
+                              <div className='text-foreground flex flex-row items-center gap-2 font-medium'>
                                 <CircleCheckBig size={14} color='green' />{' '}
                                 {criterion.component_name}
                               </div>
@@ -1829,7 +1831,7 @@ function AssessmentCreationForm({
                   size='sm'
                   onClick={() => removeResource(index)}
                 >
-                  <X className='h-4 w-4 text-destructive' />
+                  <X className='text-destructive h-4 w-4' />
                 </Button>
               </div>
 
@@ -2244,5 +2246,5 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList
+  LessonList,
 };

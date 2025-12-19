@@ -25,22 +25,20 @@ export default function ErrorPage({
 
   return (
     <main
-      className='flex h-full w-full flex-1 items-center justify-center bg-secondary/60 dark:bg-background'
+      className='bg-secondary/60 dark:bg-background flex h-full w-full flex-1 items-center justify-center'
       aria-label='Error page'
     >
-      <section className='flex w-full max-w-md flex-col items-center rounded-xl bg-card p-8 shadow-lg shadow-primary/10 dark:bg-card/90'>
+      <section className='bg-card shadow-primary/10 dark:bg-card/90 flex w-full max-w-md flex-col items-center rounded-xl p-8 shadow-lg'>
         <div className='mb-4 animate-bounce text-5xl' aria-hidden='true'>
           <span role='img' aria-label='Error'>
             ❌
           </span>
         </div>
-        <h2 className='mb-2 text-2xl font-extrabold text-foreground'>
-          An Error Occurred
-        </h2>
-        <p className='mb-2 text-center text-muted-foreground'>{message}</p>
+        <h2 className='text-foreground mb-2 text-2xl font-extrabold'>An Error Occurred</h2>
+        <p className='text-muted-foreground mb-2 text-center'>{message}</p>
         {details && (
           <pre
-            className='mb-2 w-full overflow-x-auto rounded bg-destructive/10 p-2 text-xs text-destructive dark:bg-background'
+            className='bg-destructive/10 text-destructive dark:bg-background mb-2 w-full overflow-x-auto rounded p-2 text-xs'
             aria-label='Error details'
           >
             {details}
@@ -48,7 +46,7 @@ export default function ErrorPage({
         )}
         <button
           onClick={handleAction}
-          className='mt-4 rounded-lg bg-destructive px-6 py-2 font-semibold text-destructive-foreground shadow transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-destructive/40'
+          className='bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive/40 mt-4 rounded-lg px-6 py-2 font-semibold shadow transition-colors focus:ring-2 focus:outline-none'
         >
           {actionLabel}
         </button>

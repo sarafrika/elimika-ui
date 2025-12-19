@@ -4,11 +4,30 @@ import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/da
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { type AdminCourse, useAdminCourses, useUpdateAdminCourse } from '@/services/admin';
@@ -44,7 +63,9 @@ const statusOptions = [
 export default function AdminCoursesPage() {
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED'
+  >('all');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -78,13 +99,14 @@ export default function AdminCoursesPage() {
       {
         id: 'title',
         header: 'Course',
-        className: 'min-w-[240px]'
-,
+        className: 'min-w-[240px]',
         cell: course => (
           <div className='space-y-1'>
             <div className='font-semibold'>{course.name}</div>
             <div className='text-muted-foreground text-sm'>
-              {course.description ? truncateText(course.description, 80) : 'No description provided'}
+              {course.description
+                ? truncateText(course.description, 80)
+                : 'No description provided'}
             </div>
           </div>
         ),
@@ -127,28 +149,47 @@ export default function AdminCoursesPage() {
     () => courses.filter(course => course.status === 'PUBLISHED').length,
     [courses]
   );
-  const draftCount = useMemo(() => courses.filter(course => course.status === 'DRAFT').length, [courses]);
+  const draftCount = useMemo(
+    () => courses.filter(course => course.status === 'DRAFT').length,
+    [courses]
+  );
 
   return (
-    <div className='mx-auto flex w-full max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem] flex-col gap-6 px-4 py-10 2xl:px-10'>
-      <div className='relative overflow-hidden rounded-3xl border border-primary/20 bg-card p-6 shadow-sm'>
+    <div className='mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 xl:max-w-[110rem] 2xl:max-w-[130rem] 2xl:px-10'>
+      <div className='border-primary/20 bg-card relative overflow-hidden rounded-3xl border p-6 shadow-sm'>
         <div className='flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
           <div className='space-y-2'>
-            <Badge variant='outline' className='border-primary/60 bg-primary/10 text-xs font-semibold uppercase tracking-wide'>
+            <Badge
+              variant='outline'
+              className='border-primary/60 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
+            >
               Catalogue oversight
             </Badge>
             <h1 className='text-3xl font-semibold tracking-tight'>Course publishing queue</h1>
             <p className='text-muted-foreground max-w-2xl text-sm'>
-              Monitor publication readiness, pricing models, and compliance metadata before courses reach the marketplace.
+              Monitor publication readiness, pricing models, and compliance metadata before courses
+              reach the marketplace.
             </p>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
-            <MetricCard icon={<Rocket className='h-5 w-5 text-primary' />} label='Total courses' value={totalItems} />
-            <MetricCard icon={<Award className='h-5 w-5 text-primary' />} label='Published' value={publishedCount} />
+            <MetricCard
+              icon={<Rocket className='text-primary h-5 w-5' />}
+              label='Total courses'
+              value={totalItems}
+            />
+            <MetricCard
+              icon={<Award className='text-primary h-5 w-5' />}
+              label='Published'
+              value={publishedCount}
+            />
           </div>
         </div>
         <div className='mt-6 grid gap-3 sm:grid-cols-2'>
-          <MetricCard icon={<BookOpen className='h-5 w-5 text-primary' />} label='Draft courses' value={draftCount} />
+          <MetricCard
+            icon={<BookOpen className='text-primary h-5 w-5' />}
+            label='Draft courses'
+            value={draftCount}
+          />
           <MetricCard
             icon={<Badge className='bg-primary/20 text-primary'>%</Badge>}
             label='Avg creator share'
@@ -206,8 +247,9 @@ export default function AdminCoursesPage() {
         }}
         emptyState={{
           title: 'No courses available',
-          description: 'Adjust filters or onboarding workflows to discover additional courses awaiting review.',
-          icon: <BookOpen className='h-10 w-10 text-primary' />,
+          description:
+            'Adjust filters or onboarding workflows to discover additional courses awaiting review.',
+          icon: <BookOpen className='text-primary h-10 w-10' />,
         }}
       />
 
@@ -270,7 +312,9 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
       <SheetContent className='w-full max-w-xl border-l'>
         <SheetHeader>
           <SheetTitle>Course details</SheetTitle>
-          <SheetDescription>Update publishing readiness, pricing, and revenue share policies.</SheetDescription>
+          <SheetDescription>
+            Update publishing readiness, pricing, and revenue share policies.
+          </SheetDescription>
         </SheetHeader>
         {course ? (
           <ScrollArea className='mt-4 flex-1 pr-3'>
@@ -296,7 +340,11 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea placeholder='Describe course outcomes and structure' rows={3} {...field} />
+                        <Textarea
+                          placeholder='Describe course outcomes and structure'
+                          rows={3}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -314,11 +362,13 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
                             <SelectValue placeholder='Select status' />
                           </SelectTrigger>
                           <SelectContent>
-                            {statusOptions.filter(option => option.value !== 'all').map(option => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
+                            {statusOptions
+                              .filter(option => option.value !== 'all')
+                              .map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -337,7 +387,11 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
                           <Input
                             type='number'
                             value={field.value ?? ''}
-                            onChange={event => field.onChange(event.target.value ? Number(event.target.value) : undefined)}
+                            onChange={event =>
+                              field.onChange(
+                                event.target.value ? Number(event.target.value) : undefined
+                              )
+                            }
                             placeholder='0'
                           />
                         </FormControl>
@@ -355,7 +409,11 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
                           <Input
                             type='number'
                             value={field.value ?? ''}
-                            onChange={event => field.onChange(event.target.value ? Number(event.target.value) : undefined)}
+                            onChange={event =>
+                              field.onChange(
+                                event.target.value ? Number(event.target.value) : undefined
+                              )
+                            }
                             placeholder='0'
                           />
                         </FormControl>
@@ -409,7 +467,11 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
                     <FormItem>
                       <FormLabel>Revenue share notes</FormLabel>
                       <FormControl>
-                        <Textarea placeholder='Outline any exceptions or contextual notes' rows={3} {...field} />
+                        <Textarea
+                          placeholder='Outline any exceptions or contextual notes'
+                          rows={3}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -422,7 +484,9 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
                     <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
                       <div className='space-y-0.5'>
                         <FormLabel>Enable course</FormLabel>
-                        <p className='text-muted-foreground text-sm'>Only published and active courses appear in discovery flows.</p>
+                        <p className='text-muted-foreground text-sm'>
+                          Only published and active courses appear in discovery flows.
+                        </p>
                       </div>
                       <FormControl>
                         <Switch checked={Boolean(field.value)} onCheckedChange={field.onChange} />
@@ -431,34 +495,44 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
                   )}
                 />
 
-                <div className='rounded-lg border bg-muted/40 p-4 text-xs text-muted-foreground'>
+                <div className='bg-muted/40 text-muted-foreground rounded-lg border p-4 text-xs'>
                   <div className='grid gap-2 sm:grid-cols-2'>
                     <div>
-                      <span className='font-medium text-foreground'>Created:</span>{' '}
-                      {course.created_date ? format(new Date(course.created_date), 'dd MMM yyyy, HH:mm') : '—'}
+                      <span className='text-foreground font-medium'>Created:</span>{' '}
+                      {course.created_date
+                        ? format(new Date(course.created_date), 'dd MMM yyyy, HH:mm')
+                        : '—'}
                     </div>
                     <div>
-                      <span className='font-medium text-foreground'>Updated:</span>{' '}
-                      {course.updated_date ? format(new Date(course.updated_date), 'dd MMM yyyy, HH:mm') : '—'}
+                      <span className='text-foreground font-medium'>Updated:</span>{' '}
+                      {course.updated_date
+                        ? format(new Date(course.updated_date), 'dd MMM yyyy, HH:mm')
+                        : '—'}
                     </div>
                     <div>
-                      <span className='font-medium text-foreground'>Creator UUID:</span> {course.course_creator_uuid ?? '—'}
+                      <span className='text-foreground font-medium'>Creator UUID:</span>{' '}
+                      {course.course_creator_uuid ?? '—'}
                     </div>
                     <div>
-                      <span className='font-medium text-foreground'>Course UUID:</span> {course.uuid ?? '—'}
+                      <span className='text-foreground font-medium'>Course UUID:</span>{' '}
+                      {course.uuid ?? '—'}
                     </div>
                   </div>
                 </div>
 
                 <Button type='submit' className='w-full' disabled={updateCourse.isPending}>
-                  {updateCourse.isPending ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
+                  {updateCourse.isPending ? (
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  ) : null}
                   Save changes
                 </Button>
               </form>
             </Form>
           </ScrollArea>
         ) : (
-          <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>Select a course to manage details.</div>
+          <div className='text-muted-foreground flex h-full items-center justify-center text-sm'>
+            Select a course to manage details.
+          </div>
         )}
       </SheetContent>
     </Sheet>
@@ -487,11 +561,13 @@ interface MetricCardProps {
 
 function MetricCard({ icon, label, value }: MetricCardProps) {
   return (
-    <Card className='bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+    <Card className='bg-background/80 supports-[backdrop-filter]:bg-background/60 backdrop-blur'>
       <CardContent className='flex items-center gap-3 p-4'>
-        <div className='rounded-full bg-primary/10 p-2'>{icon}</div>
+        <div className='bg-primary/10 rounded-full p-2'>{icon}</div>
         <div>
-          <p className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>{label}</p>
+          <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+            {label}
+          </p>
           <p className='text-foreground text-xl font-semibold'>{value}</p>
         </div>
       </CardContent>

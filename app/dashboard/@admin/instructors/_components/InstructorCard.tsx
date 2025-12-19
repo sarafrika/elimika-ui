@@ -22,13 +22,16 @@ export default function InstructorCard({
     <div
       className={`relative cursor-pointer rounded-2xl border p-4 transition-colors ${
         isSelected
-          ? 'border-primary bg-primary/5 ring-1 ring-primary/40 shadow-sm'
+          ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-1'
           : 'border-border/60 bg-card hover:bg-muted/40'
       }`}
       onClick={() => onSelect(instructor)}
     >
       {isSelected ? (
-        <Badge variant='secondary' className='absolute right-3 top-3 text-[10px] font-semibold uppercase'>
+        <Badge
+          variant='secondary'
+          className='absolute top-3 right-3 text-[10px] font-semibold uppercase'
+        >
           Selected
         </Badge>
       ) : null}

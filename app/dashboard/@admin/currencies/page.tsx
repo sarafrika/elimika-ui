@@ -134,7 +134,7 @@ export default function CurrenciesPage() {
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredCurrencies = normalizedSearch
     ? sortedCurrencies.filter(currency =>
-        (currency.code || '').toLowerCase().includes(normalizedSearch),
+        (currency.code || '').toLowerCase().includes(normalizedSearch)
       )
     : sortedCurrencies;
 
@@ -142,7 +142,7 @@ export default function CurrenciesPage() {
   const currentPage = Math.min(page, totalPages);
   const paginatedCurrencies = filteredCurrencies.slice(
     (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
+    currentPage * PAGE_SIZE
   );
 
   useEffect(() => {
@@ -262,7 +262,7 @@ export default function CurrenciesPage() {
       <div className='flex items-start justify-between'>
         <div>
           <h1 className='text-3xl font-bold tracking-tight'>Currency Management</h1>
-          <p className='mt-2 text-muted-foreground'>
+          <p className='text-muted-foreground mt-2'>
             Manage platform currencies, set default currency, and configure currency properties
           </p>
         </div>
@@ -280,16 +280,18 @@ export default function CurrenciesPage() {
             <CardTitle className='text-3xl'>{currencies.length}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className='text-xs text-muted-foreground'>Registered on platform</p>
+            <p className='text-muted-foreground text-xs'>Registered on platform</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className='pb-3'>
             <CardDescription>Active Currencies</CardDescription>
-            <CardTitle className='text-3xl text-success-foreground'>{activeCurrencies.length}</CardTitle>
+            <CardTitle className='text-success-foreground text-3xl'>
+              {activeCurrencies.length}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className='text-xs text-muted-foreground'>Available for use</p>
+            <p className='text-muted-foreground text-xs'>Available for use</p>
           </CardContent>
         </Card>
         <Card>
@@ -298,7 +300,7 @@ export default function CurrenciesPage() {
             <CardTitle className='text-2xl'>{defaultCurrency?.code || '—'}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className='text-xs text-muted-foreground'>{defaultCurrency?.name || 'Not set'}</p>
+            <p className='text-muted-foreground text-xs'>{defaultCurrency?.name || 'Not set'}</p>
           </CardContent>
         </Card>
       </div>
@@ -318,9 +320,9 @@ export default function CurrenciesPage() {
             </div>
           ) : currencies.length === 0 ? (
             <div className='flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center'>
-              <DollarSign className='mb-4 h-10 w-10 text-muted-foreground' />
+              <DollarSign className='text-muted-foreground mb-4 h-10 w-10' />
               <p className='mb-2 text-sm font-medium'>No currencies configured</p>
-              <p className='mb-4 text-xs text-muted-foreground'>
+              <p className='text-muted-foreground mb-4 text-xs'>
                 Add your first currency to start managing platform currencies
               </p>
               <Button onClick={handleCreate}>
@@ -348,7 +350,7 @@ export default function CurrenciesPage() {
                               <ArrowDown className='h-4 w-4' />
                             )
                           ) : (
-                            <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                            <ArrowUpDown className='text-muted-foreground h-4 w-4' />
                           )}
                         </button>
                         <Input
@@ -373,7 +375,7 @@ export default function CurrenciesPage() {
                             <ArrowDown className='h-4 w-4' />
                           )
                         ) : (
-                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                          <ArrowUpDown className='text-muted-foreground h-4 w-4' />
                         )}
                       </button>
                     </TableHead>
@@ -391,7 +393,7 @@ export default function CurrenciesPage() {
                             <ArrowDown className='h-4 w-4' />
                           )
                         ) : (
-                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                          <ArrowUpDown className='text-muted-foreground h-4 w-4' />
                         )}
                       </button>
                     </TableHead>
@@ -409,7 +411,7 @@ export default function CurrenciesPage() {
                             <ArrowDown className='h-4 w-4' />
                           )
                         ) : (
-                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                          <ArrowUpDown className='text-muted-foreground h-4 w-4' />
                         )}
                       </button>
                     </TableHead>
@@ -427,7 +429,7 @@ export default function CurrenciesPage() {
                             <ArrowDown className='h-4 w-4' />
                           )
                         ) : (
-                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                          <ArrowUpDown className='text-muted-foreground h-4 w-4' />
                         )}
                       </button>
                     </TableHead>
@@ -445,7 +447,7 @@ export default function CurrenciesPage() {
                             <ArrowDown className='h-4 w-4' />
                           )
                         ) : (
-                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                          <ArrowUpDown className='text-muted-foreground h-4 w-4' />
                         )}
                       </button>
                     </TableHead>
@@ -463,7 +465,7 @@ export default function CurrenciesPage() {
                             <ArrowDown className='h-4 w-4' />
                           )
                         ) : (
-                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                          <ArrowUpDown className='text-muted-foreground h-4 w-4' />
                         )}
                       </button>
                     </TableHead>
@@ -473,7 +475,7 @@ export default function CurrenciesPage() {
                 <TableBody>
                   {paginatedCurrencies.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className='text-center text-sm text-muted-foreground'>
+                      <TableCell colSpan={8} className='text-muted-foreground text-center text-sm'>
                         No currencies match your search.
                       </TableCell>
                     </TableRow>
@@ -527,7 +529,7 @@ export default function CurrenciesPage() {
                 </TableBody>
               </Table>
               <div className='mt-4 flex flex-wrap items-center justify-between gap-3'>
-                <div className='text-sm text-muted-foreground'>
+                <div className='text-muted-foreground text-sm'>
                   {filteredCurrencies.length === 0
                     ? 'Showing 0 of 0 currencies'
                     : `Showing ${
@@ -545,7 +547,7 @@ export default function CurrenciesPage() {
                   >
                     Previous
                   </Button>
-                  <span className='text-sm text-muted-foreground'>
+                  <span className='text-muted-foreground text-sm'>
                     Page {currentPage} of {totalPages}
                   </span>
                   <Button
@@ -635,7 +637,7 @@ export default function CurrenciesPage() {
               <div className='flex items-center justify-between rounded-lg border p-4'>
                 <div className='space-y-0.5'>
                   <Label htmlFor='active'>Active Status</Label>
-                  <p className='text-xs text-muted-foreground'>
+                  <p className='text-muted-foreground text-xs'>
                     Make this currency available for use
                   </p>
                 </div>

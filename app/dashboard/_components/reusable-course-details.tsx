@@ -72,7 +72,6 @@ export default function ReusableCourseDetailsPage({
   // @ts-expect-error
   const courseCreator = creator?.data;
 
-
   // GET COURSE LESSONS
   const { data: courseLessons, isLoading: lessonsIsLoading } = useQuery({
     ...getCourseLessonsOptions({
@@ -96,11 +95,7 @@ export default function ReusableCourseDetailsPage({
     enabled: !!courseId,
   });
 
-  const {
-    data: courseRubrics,
-    isLoading: rubric,
-    errors,
-  } = useCourseRubrics(courseId as string);
+  const { data: courseRubrics, isLoading: rubric, errors } = useCourseRubrics(courseId as string);
 
   const {
     data: cAssignments,
@@ -267,7 +262,7 @@ export default function ReusableCourseDetailsPage({
             <Card>
               <CardContent className='p-6'>
                 {/* Course Image/Video */}
-                <div className='mb-4 flex h-48 w-full items-center justify-center rounded-lg bg-muted'>
+                <div className='bg-muted mb-4 flex h-48 w-full items-center justify-center rounded-lg'>
                   {courseData?.intro_video_url ? (
                     <div className='relative h-full w-full'>
                       <div className='absolute inset-0 flex items-center justify-center'>
@@ -284,7 +279,9 @@ export default function ReusableCourseDetailsPage({
                 {/* Pricing */}
                 <div className='mb-4 text-center'>
                   <div className='mb-2 flex items-center justify-center gap-2'>
-                    <span className='text-primary text-2xl font-bold'>KES {courseData?.minimum_training_fee}</span>
+                    <span className='text-primary text-2xl font-bold'>
+                      KES {courseData?.minimum_training_fee}
+                    </span>
                     {courseData?.minimum_training_fee && (
                       <span className='text-muted-foreground text-lg line-through'>
                         KES {courseData?.minimum_training_fee}
@@ -403,7 +400,7 @@ export default function ReusableCourseDetailsPage({
           <TabsContent value='skills' className='space-y-4'>
             {lessonsWithContent?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
+                <FileQuestion className='text-muted-foreground mb-4 h-10 w-10' />
                 <h3 className='text-lg font-semibold'>No Lessons/Resources Found</h3>
                 <p className='mt-1 text-sm'>There are no lessons under this course.</p>
               </div>
@@ -414,10 +411,11 @@ export default function ReusableCourseDetailsPage({
                 <CardHeader className='flex flex-row items-center space-y-0'>
                   <div className='flex flex-1 items-center gap-3'>
                     <div
-                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${skill?.lesson?.active
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-muted text-muted-foreground'
-                        }`}
+                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${
+                        skill?.lesson?.active
+                          ? 'bg-green-100 text-green-600'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
                     >
                       {skill?.lesson?.active ? (
                         <CheckCircle className='h-4 w-4' />
@@ -476,7 +474,7 @@ export default function ReusableCourseDetailsPage({
           <TabsContent value='quizzes' className='space-y-4'>
             {filteredQuizzes?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
+                <FileQuestion className='text-muted-foreground mb-4 h-10 w-10' />
                 <h3 className='text-lg font-semibold'>No Quiz Found</h3>
                 <p className='mt-1 text-sm'>There are no quizzes under this course.</p>
               </div>
@@ -508,7 +506,7 @@ export default function ReusableCourseDetailsPage({
           <TabsContent value='assignments' className='space-y-4'>
             {filteredAssignments?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
+                <FileQuestion className='text-muted-foreground mb-4 h-10 w-10' />
                 <h3 className='text-lg font-semibold'>No Assignment Found</h3>
                 <p className='mt-1 text-sm'>There are no assignments under this course.</p>
               </div>
@@ -557,7 +555,7 @@ export default function ReusableCourseDetailsPage({
           <TabsContent value='assessments' className='space-y-4'>
             {courseRubrics?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
+                <FileQuestion className='text-muted-foreground mb-4 h-10 w-10' />
                 <h3 className='text-lg font-semibold'>No Assessment Found</h3>
                 <p className='mt-1 text-sm'>There are no assessments under this course.</p>
               </div>
@@ -574,7 +572,9 @@ export default function ReusableCourseDetailsPage({
                         <Badge variant='outline' className='mb-2'>
                           {assessment?.rubric?.rubric_type}
                         </Badge>
-                        <p className='text-muted-foreground text-sm'>{assessment?.rubric.description}</p>
+                        <p className='text-muted-foreground text-sm'>
+                          {assessment?.rubric.description}
+                        </p>
                       </div>
                     </div>
                     <Button>View Details</Button>

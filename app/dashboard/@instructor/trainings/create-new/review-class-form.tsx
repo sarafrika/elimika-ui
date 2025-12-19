@@ -2,7 +2,11 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useInstructor } from '@/context/instructor-context';
-import { getClassDefinitionQueryKey, getClassDefinitionsForInstructorQueryKey, updateClassDefinitionMutation } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getClassDefinitionQueryKey,
+  getClassDefinitionsForInstructorQueryKey,
+  updateClassDefinitionMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
@@ -36,8 +40,8 @@ export function ReviewPublishForm({
   onPrev,
   scheduleSummary,
 }: ReviewPublishFormProps) {
-  const qc = useQueryClient()
-  const router = useRouter()
+  const qc = useQueryClient();
+  const router = useRouter();
   const instructor = useInstructor();
 
   const startTime = new Date(data?.default_start_time);
@@ -68,7 +72,7 @@ export function ReviewPublishForm({
     }
 
     if (!data) {
-      toast.error("Class data is not available.");
+      toast.error('Class data is not available.');
       return;
     }
 
@@ -80,7 +84,7 @@ export function ReviewPublishForm({
     updateClassDefinition.mutate(
       { path: { uuid: classId }, body: payload as any },
       {
-        onSuccess: (data) => {
+        onSuccess: data => {
           qc.invalidateQueries({
             queryKey: getClassDefinitionsForInstructorQueryKey({
               path: { instructorUuid: instructor?.uuid as string },
@@ -92,17 +96,15 @@ export function ReviewPublishForm({
             }),
           });
 
-          toast.success("Class published successfully!");
-          router.push('/dashboard/trainings')
+          toast.success('Class published successfully!');
+          router.push('/dashboard/trainings');
         },
         onError: (error: any) => {
-          toast.error(JSON.stringify(error?.error || "Failed to publish class"));
+          toast.error(JSON.stringify(error?.error || 'Failed to publish class'));
         },
       }
     );
   };
-
-
 
   return (
     <div className='space-y-6'>
@@ -114,7 +116,7 @@ export function ReviewPublishForm({
       </div>
 
       {/* Class Preview Card */}
-      <Card className='border-2 bg-card'>
+      <Card className='bg-card border-2'>
         <CardHeader>
           <div className='flex items-start justify-between'>
             <div className='flex-1'>
@@ -164,7 +166,9 @@ export function ReviewPublishForm({
               <DollarSign className='text-muted-foreground h-4 w-4' />
               <div>
                 <div className='text-muted-foreground'>Total Cost</div>
-                <span>{"KES"} {calculateTotalFee().toFixed(2)}</span>
+                <span>
+                  {'KES'} {calculateTotalFee().toFixed(2)}
+                </span>
               </div>
             </div>
           </div>
@@ -211,7 +215,7 @@ export function ReviewPublishForm({
             <div>
               <span className='text-muted-foreground text-sm'>Academic Period:</span>
               <div className='text-sm'>
-                {formattedStart} -{' '}{formattedEnd}
+                {formattedStart} - {formattedEnd}
               </div>
             </div>
             <div>
@@ -248,7 +252,6 @@ export function ReviewPublishForm({
               <span className='text-muted-foreground text-sm'>Duration per lesson:</span>
               {/* <div className='font-medium'>{Number(totalHours) / Number(totalLessons)} hours</div> */}
               <div className='font-medium'>{Number(data?.duration_minutes) / 60} hours</div>
-
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Skills:</span>
@@ -280,7 +283,7 @@ export function ReviewPublishForm({
                   </>
                 ) : (
                   <>
-                    <Lock className='h-4 w-4 text-primary' />
+                    <Lock className='text-primary h-4 w-4' />
                     Private
                   </>
                 )}
@@ -311,7 +314,10 @@ export function ReviewPublishForm({
           <CardContent className='space-y-3'>
             <div>
               <span className='text-muted-foreground text-sm'>Course Resources:</span>
-              <div className='font-medium'>{"~ "}{totalLessons} (Auto-filled)</div>
+              <div className='font-medium'>
+                {'~ '}
+                {totalLessons} (Auto-filled)
+              </div>
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Course Assessments:</span>
@@ -346,7 +352,9 @@ export function ReviewPublishForm({
                   <div className='text-green-600'>Total Hours</div>
                 </div>
                 <div>
-                  <span>{"KES"} {calculateTotalFee().toFixed(2)}</span>
+                  <span>
+                    {'KES'} {calculateTotalFee().toFixed(2)}
+                  </span>
                   <div className='text-green-600'>Total Fee</div>
                 </div>
               </div>

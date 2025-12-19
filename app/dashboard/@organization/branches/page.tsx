@@ -6,7 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
@@ -80,10 +87,10 @@ function createBranchColumns(
       header: 'Branch',
       cell: ({ row }) => (
         <div className='flex items-center gap-3'>
-          <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10'>
-            <Building2 className='h-5 w-5 text-primary' />
+          <div className='bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
+            <Building2 className='text-primary h-5 w-5' />
           </div>
-          <div className='font-semibold text-foreground'>{row.original.branch_name}</div>
+          <div className='text-foreground font-semibold'>{row.original.branch_name}</div>
         </div>
       ),
     },
@@ -91,7 +98,7 @@ function createBranchColumns(
       accessorKey: 'address',
       header: 'Location',
       cell: ({ row }) => (
-        <div className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+        <div className='text-muted-foreground flex items-center gap-1.5 text-sm'>
           <MapPin className='h-3.5 w-3.5' />
           <span>{row.original.address || 'No address'}</span>
         </div>
@@ -102,15 +109,15 @@ function createBranchColumns(
       header: 'Point of Contact',
       cell: ({ row }) => (
         <div className='space-y-1'>
-          <div className='flex items-center gap-1.5 text-sm text-foreground'>
-            <Users className='h-3.5 w-3.5 text-muted-foreground' />
+          <div className='text-foreground flex items-center gap-1.5 text-sm'>
+            <Users className='text-muted-foreground h-3.5 w-3.5' />
             <span>{row.original.poc_name}</span>
           </div>
-          <div className='flex items-center gap-1.5 text-xs text-muted-foreground'>
+          <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
             <Mail className='h-3 w-3' />
             <span>{row.original.poc_email}</span>
           </div>
-          <div className='flex items-center gap-1.5 text-xs text-muted-foreground'>
+          <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
             <Phone className='h-3 w-3' />
             <span>{row.original.poc_telephone}</span>
           </div>
@@ -133,17 +140,13 @@ function createBranchColumns(
         <div className='flex justify-end'>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                size='sm'
-                variant='ghost'
-                onClick={(e) => e.stopPropagation()}
-              >
+              <Button size='sm' variant='ghost' onClick={e => e.stopPropagation()}>
                 <MoreVertical className='h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
               <DropdownMenuItem
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   onEdit(row.original);
                 }}
@@ -153,7 +156,7 @@ function createBranchColumns(
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant='destructive'
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   if (confirm(`Delete branch "${row.original.branch_name}"?`)) {
                     onDelete(row.original.uuid!, row.original.branch_name ?? '');
@@ -201,14 +204,18 @@ export default function BranchesPage() {
   }, [branches, selectedBranchId]);
 
   const selectedBranch = useMemo(
-    () => branches.find((branch) => branch.uuid === selectedBranchId) ?? null,
+    () => branches.find(branch => branch.uuid === selectedBranchId) ?? null,
     [branches, selectedBranchId]
   );
 
   const branchUsersQuery = useQuery({
     ...(branchUserDomain
       ? getBranchUsersByDomainOptions({
-          path: { uuid: organisationUuid, branchUuid: selectedBranchId ?? '', domainName: branchUserDomain },
+          path: {
+            uuid: organisationUuid,
+            branchUuid: selectedBranchId ?? '',
+            domainName: branchUserDomain,
+          },
         })
       : getBranchUsersOptions({
           path: { uuid: organisationUuid, branchUuid: selectedBranchId ?? '' },
@@ -311,9 +318,14 @@ export default function BranchesPage() {
     if (!selectedBranchId || !organisationUuid) return;
     const branchUsersKey = branchUserDomain
       ? getBranchUsersByDomainOptions({
-          path: { uuid: organisationUuid, branchUuid: selectedBranchId, domainName: branchUserDomain },
+          path: {
+            uuid: organisationUuid,
+            branchUuid: selectedBranchId,
+            domainName: branchUserDomain,
+          },
         }).queryKey
-      : getBranchUsersOptions({ path: { uuid: organisationUuid, branchUuid: selectedBranchId } }).queryKey;
+      : getBranchUsersOptions({ path: { uuid: organisationUuid, branchUuid: selectedBranchId } })
+          .queryKey;
 
     assignUser.mutate(
       {
@@ -334,9 +346,14 @@ export default function BranchesPage() {
     if (!selectedBranchId || !organisationUuid) return;
     const branchUsersKey = branchUserDomain
       ? getBranchUsersByDomainOptions({
-          path: { uuid: organisationUuid, branchUuid: selectedBranchId, domainName: branchUserDomain },
+          path: {
+            uuid: organisationUuid,
+            branchUuid: selectedBranchId,
+            domainName: branchUserDomain,
+          },
         }).queryKey
-      : getBranchUsersOptions({ path: { uuid: organisationUuid, branchUuid: selectedBranchId } }).queryKey;
+      : getBranchUsersOptions({ path: { uuid: organisationUuid, branchUuid: selectedBranchId } })
+          .queryKey;
 
     removeUser.mutate(
       { path: { uuid: organisationUuid, branchUuid: selectedBranchId, userUuid } },
@@ -356,8 +373,10 @@ export default function BranchesPage() {
       <section className='mb-6'>
         <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div>
-            <h1 className='text-2xl font-bold text-foreground'>Training Branches</h1>
-            <p className='text-sm text-muted-foreground'>Manage locations and assign team members</p>
+            <h1 className='text-foreground text-2xl font-bold'>Training Branches</h1>
+            <p className='text-muted-foreground text-sm'>
+              Manage locations and assign team members
+            </p>
           </div>
           <Button
             size='sm'
@@ -373,39 +392,39 @@ export default function BranchesPage() {
 
         {/* Stats */}
         <div className='grid gap-3 sm:grid-cols-3'>
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <Building2 className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <Building2 className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Total Branches</p>
-                <p className='text-lg font-bold text-foreground'>{totalBranches}</p>
+                <p className='text-muted-foreground text-xs'>Total Branches</p>
+                <p className='text-foreground text-lg font-bold'>{totalBranches}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <Users className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <Users className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Team Members</p>
-                <p className='text-lg font-bold text-foreground'>{branchUsers.length}</p>
+                <p className='text-muted-foreground text-xs'>Team Members</p>
+                <p className='text-foreground text-lg font-bold'>{branchUsers.length}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <GitBranch className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <GitBranch className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Active Branches</p>
-                <p className='text-lg font-bold text-foreground'>
-                  {branches.filter((b) => b.active).length}
+                <p className='text-muted-foreground text-xs'>Active Branches</p>
+                <p className='text-foreground text-lg font-bold'>
+                  {branches.filter(b => b.active).length}
                 </p>
               </div>
             </div>
@@ -417,8 +436,10 @@ export default function BranchesPage() {
       <section className={elimikaDesignSystem.spacing.content}>
         <div className='mb-4 flex items-center justify-between'>
           <div>
-            <h2 className='text-2xl font-semibold text-foreground'>All Branches</h2>
-            <p className='text-sm text-muted-foreground'>Select a branch to view details and manage team members</p>
+            <h2 className='text-foreground text-2xl font-semibold'>All Branches</h2>
+            <p className='text-muted-foreground text-sm'>
+              Select a branch to view details and manage team members
+            </p>
           </div>
         </div>
 
@@ -433,7 +454,8 @@ export default function BranchesPage() {
             <GitBranch className={elimikaDesignSystem.components.emptyState.icon} />
             <h3 className={elimikaDesignSystem.components.emptyState.title}>No branches yet</h3>
             <p className={elimikaDesignSystem.components.emptyState.description}>
-              Create your first training branch to get started with managing your organization's locations.
+              Create your first training branch to get started with managing your organization's
+              locations.
             </p>
             <Button
               className='mt-4'
@@ -453,7 +475,7 @@ export default function BranchesPage() {
             searchKey='branch_name'
             searchPlaceholder='Search branches...'
             pageSize={10}
-            onRowClick={(branch) => setSelectedBranchId(branch.uuid ?? null)}
+            onRowClick={branch => setSelectedBranchId(branch.uuid ?? null)}
           />
         )}
       </section>
@@ -470,12 +492,12 @@ export default function BranchesPage() {
             </div>
             <div className='flex items-center gap-2'>
               <select
-                className='rounded-md border border-border bg-background px-3 py-2 text-sm'
+                className='border-border bg-background rounded-md border px-3 py-2 text-sm'
                 value={branchUserDomain}
-                onChange={(event) => setBranchUserDomain(event.target.value)}
+                onChange={event => setBranchUserDomain(event.target.value)}
               >
                 <option value=''>All roles</option>
-                {domainOptions.map((option) => (
+                {domainOptions.map(option => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -504,23 +526,25 @@ export default function BranchesPage() {
             </div>
           ) : branchUsers.length === 0 ? (
             <div className='flex flex-col items-center justify-center py-12 text-center'>
-              <AlertCircle className='mb-3 h-10 w-10 text-muted-foreground' />
-              <p className='text-sm text-muted-foreground'>No team members assigned to this branch yet</p>
+              <AlertCircle className='text-muted-foreground mb-3 h-10 w-10' />
+              <p className='text-muted-foreground text-sm'>
+                No team members assigned to this branch yet
+              </p>
             </div>
           ) : (
             <div className='grid gap-3 sm:grid-cols-2'>
-              {branchUsers.map((user) => (
+              {branchUsers.map(user => (
                 <div
                   key={user.uuid}
-                  className='flex items-center justify-between rounded-xl border border-border bg-muted/30 p-4'
+                  className='border-border bg-muted/30 flex items-center justify-between rounded-xl border p-4'
                 >
                   <div className='flex-1'>
-                    <p className='font-medium text-foreground'>
+                    <p className='text-foreground font-medium'>
                       {`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email}
                     </p>
-                    <p className='text-xs text-muted-foreground'>{user.email}</p>
+                    <p className='text-muted-foreground text-xs'>{user.email}</p>
                     <div className='mt-1 flex flex-wrap gap-1'>
-                      {user.user_domain?.map((domain) => (
+                      {user.user_domain?.map(domain => (
                         <Badge key={domain} variant='outline' className='text-xs'>
                           {domain}
                         </Badge>
@@ -533,7 +557,7 @@ export default function BranchesPage() {
                     onClick={() => handleRemoveUser(user.uuid!)}
                     disabled={removeUser.isPending}
                   >
-                    <Trash2 className='h-4 w-4 text-destructive' />
+                    <Trash2 className='text-destructive h-4 w-4' />
                   </Button>
                 </div>
               ))}
@@ -605,10 +629,10 @@ function BranchDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className='w-full sm:max-w-2xl'>
         <div className='flex h-full flex-col'>
-          <SheetHeader className='space-y-4 px-6 pb-6 pt-6'>
+          <SheetHeader className='space-y-4 px-6 pt-6 pb-6'>
             <div className='flex items-center gap-4'>
-              <div className='rounded-xl bg-primary/10 p-3.5'>
-                <GitBranch className='h-6 w-6 text-primary' />
+              <div className='bg-primary/10 rounded-xl p-3.5'>
+                <GitBranch className='text-primary h-6 w-6' />
               </div>
               <div>
                 <SheetTitle className='text-2xl font-semibold'>
@@ -623,18 +647,27 @@ function BranchDrawer({
             </div>
           </SheetHeader>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className='flex flex-1 flex-col overflow-hidden'>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className='flex flex-1 flex-col overflow-hidden'
+          >
             <div className='flex-1 space-y-8 overflow-y-auto px-6 pb-6'>
               {/* Branch Information Section */}
               <div className='space-y-5'>
                 <div className='flex items-center gap-2.5'>
-                  <Building2 className='h-5 w-5 text-muted-foreground' />
-                  <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+                  <Building2 className='text-muted-foreground h-5 w-5' />
+                  <h3 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
                     Branch Details
                   </h3>
                 </div>
                 <div className='space-y-5 pl-7'>
-                  <FormField label='Branch Name' name='branch_name' form={form} required placeholder='Downtown Campus' />
+                  <FormField
+                    label='Branch Name'
+                    name='branch_name'
+                    form={form}
+                    required
+                    placeholder='Downtown Campus'
+                  />
                   <FormField
                     label='Address'
                     name='address'
@@ -650,8 +683,8 @@ function BranchDrawer({
               {/* Point of Contact Section */}
               <div className='space-y-5'>
                 <div className='flex items-center gap-2.5'>
-                  <Users className='h-5 w-5 text-muted-foreground' />
-                  <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+                  <Users className='text-muted-foreground h-5 w-5' />
+                  <h3 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
                     Point of Contact
                   </h3>
                 </div>
@@ -692,18 +725,21 @@ function BranchDrawer({
                   <div className='flex items-center gap-4'>
                     <Switch
                       checked={form.watch('active')}
-                      onCheckedChange={(checked) => form.setValue('active', checked)}
+                      onCheckedChange={checked => form.setValue('active', checked)}
                     />
                     <div>
-                      <Label className='text-base font-medium text-foreground'>Active Status</Label>
-                      <p className='mt-0.5 text-sm text-muted-foreground'>
+                      <Label className='text-foreground text-base font-medium'>Active Status</Label>
+                      <p className='text-muted-foreground mt-0.5 text-sm'>
                         {form.watch('active')
                           ? 'Branch is active and available for assignments'
                           : 'Branch is inactive and hidden from assignments'}
                       </p>
                     </div>
                   </div>
-                  <Badge variant={form.watch('active') ? 'secondary' : 'outline'} className='text-xs'>
+                  <Badge
+                    variant={form.watch('active') ? 'secondary' : 'outline'}
+                    className='text-xs'
+                  >
                     {form.watch('active') ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
@@ -711,7 +747,7 @@ function BranchDrawer({
             </div>
 
             {/* Form Actions */}
-            <div className='flex gap-3 border-t border-border px-6 py-4'>
+            <div className='border-border flex gap-3 border-t px-6 py-4'>
               <Button
                 variant='outline'
                 type='button'
@@ -753,13 +789,13 @@ function FormField({
   const error = form.formState.errors[name]?.message;
   return (
     <div className='space-y-2.5'>
-      <Label className='text-sm font-medium text-foreground'>
+      <Label className='text-foreground text-sm font-medium'>
         {label}
-        {required && <span className='ml-1 text-destructive'>*</span>}
+        {required && <span className='text-destructive ml-1'>*</span>}
       </Label>
       <div className='relative'>
         {icon && (
-          <div className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground'>
+          <div className='text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2'>
             {icon}
           </div>
         )}
@@ -771,7 +807,7 @@ function FormField({
         />
       </div>
       {error && (
-        <div className='flex items-center gap-1.5 text-sm text-destructive'>
+        <div className='text-destructive flex items-center gap-1.5 text-sm'>
           <AlertCircle className='h-3.5 w-3.5' />
           <span>{String(error)}</span>
         </div>
@@ -793,33 +829,38 @@ function AssignUserSection({
   const [domain, setDomain] = useState(domainOptions[0]?.value ?? '');
 
   return (
-    <div className='rounded-xl border border-border bg-muted/30 p-4'>
-      <h3 className='mb-3 text-sm font-semibold text-foreground'>Assign New Member</h3>
+    <div className='border-border bg-muted/30 rounded-xl border p-4'>
+      <h3 className='text-foreground mb-3 text-sm font-semibold'>Assign New Member</h3>
       <div className='flex flex-wrap gap-3'>
         <select
-          className='flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm min-w-[200px]'
+          className='border-border bg-background min-w-[200px] flex-1 rounded-md border px-3 py-2 text-sm'
           value={userUuid}
-          onChange={(event) => setUserUuid(event.target.value)}
+          onChange={event => setUserUuid(event.target.value)}
         >
           <option value=''>Select user...</option>
-          {users.map((user) => (
+          {users.map(user => (
             <option key={user.uuid} value={user.uuid ?? ''}>
               {`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email}
             </option>
           ))}
         </select>
         <select
-          className='rounded-md border border-border bg-background px-3 py-2 text-sm'
+          className='border-border bg-background rounded-md border px-3 py-2 text-sm'
           value={domain}
-          onChange={(event) => setDomain(event.target.value)}
+          onChange={event => setDomain(event.target.value)}
         >
-          {domainOptions.map((option) => (
+          {domainOptions.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
         </select>
-        <Button variant='default' size='default' disabled={!userUuid || isLoading} onClick={() => onAssign(userUuid, domain)}>
+        <Button
+          variant='default'
+          size='default'
+          disabled={!userUuid || isLoading}
+          onClick={() => onAssign(userUuid, domain)}
+        >
           {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
           Assign
         </Button>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,11 @@ export default function AuditActivityPage() {
     enabled: isAdmin,
   });
 
-  const { data: activityFeed, isLoading: isActivityLoading, error: activityError } = useAdminActivityFeed({
+  const {
+    data: activityFeed,
+    isLoading: isActivityLoading,
+    error: activityError,
+  } = useAdminActivityFeed({
     enabled: isAdmin,
   });
 
@@ -45,7 +49,7 @@ export default function AuditActivityPage() {
 
   return (
     <div className='space-y-6'>
-      <div className='rounded-3xl border border-border/60 bg-card p-6 shadow-sm'>
+      <div className='border-border/60 bg-card rounded-3xl border p-6 shadow-sm'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <p className='text-sm font-semibold'>Platform health</p>
@@ -81,7 +85,7 @@ export default function AuditActivityPage() {
             activityFeed?.events?.slice(0, 10).map(event => (
               <div
                 key={`${event.title}-${event.timestamp}`}
-                className='rounded-lg border border-border/60 bg-muted/30 p-3'
+                className='border-border/60 bg-muted/30 rounded-lg border p-3'
               >
                 <p className='font-medium'>{event.title ?? 'Admin event'}</p>
                 <p className='text-muted-foreground text-xs'>
@@ -106,9 +110,9 @@ export default function AuditActivityPage() {
 
 function MetricTile({ label, value }: { label: string; value?: number | string }) {
   return (
-    <div className='rounded-xl border border-border/60 bg-muted/40 p-4'>
+    <div className='border-border/60 bg-muted/40 rounded-xl border p-4'>
       <div className='flex items-center gap-2 text-sm font-semibold'>
-        <BarChart3 className='h-4 w-4 text-muted-foreground' />
+        <BarChart3 className='text-muted-foreground h-4 w-4' />
         {label}
       </div>
       <p className='text-2xl font-semibold'>{value ?? '—'}</p>

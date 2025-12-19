@@ -717,7 +717,7 @@ export function InstructorProfileForm({
                 </TabsContent>
               </Tabs>
 
-              <div className='mt-8 flex justify-between border-t border-border pt-4'>
+              <div className='border-border mt-8 flex justify-between border-t pt-4'>
                 {tabOrder.indexOf(activeTab) > 0 ? (
                   <Button type='button' onClick={handlePrevious} className={buttonSecondaryClasses}>
                     Previous

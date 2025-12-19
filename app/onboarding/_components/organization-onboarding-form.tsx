@@ -131,12 +131,12 @@ export function OrganizationOnboardingForm() {
   };
 
   return (
-    <div className='mx-auto max-w-3xl space-y-8 rounded-3xl border border-border/60 bg-card/80 p-8 shadow-sm backdrop-blur-sm'>
+    <div className='border-border/60 bg-card/80 mx-auto max-w-3xl space-y-8 rounded-3xl border p-8 shadow-sm backdrop-blur-sm'>
       <div className='text-center'>
-        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20'>
+        <div className='bg-primary/10 text-primary ring-primary/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ring-1'>
           <Building2 className='h-8 w-8' />
         </div>
-        <h1 className='mb-2 text-3xl font-bold text-foreground'>Organization Registration</h1>
+        <h1 className='text-foreground mb-2 text-3xl font-bold'>Organization Registration</h1>
         <p className='text-muted-foreground'>
           Register your organization to start offering courses
         </p>
@@ -212,7 +212,9 @@ export function OrganizationOnboardingForm() {
                         }}
                       />
                     </FormControl>
-                    <FormDescription>Physical location or address of your organization</FormDescription>
+                    <FormDescription>
+                      Physical location or address of your organization
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -248,7 +250,8 @@ export function OrganizationOnboardingForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Provide additional context about your organization&apos;s purpose and activities
+                      Provide additional context about your organization&apos;s purpose and
+                      activities
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -259,8 +262,8 @@ export function OrganizationOnboardingForm() {
 
           <Card className='border-primary/20 bg-primary/5'>
             <CardContent className='space-y-1'>
-              <h3 className='font-medium text-foreground'>Next Steps</h3>
-              <p className='text-sm text-muted-foreground'>
+              <h3 className='text-foreground font-medium'>Next Steps</h3>
+              <p className='text-muted-foreground text-sm'>
                 After registration, you&apos;ll be able to create training branches, invite
                 instructors and students, and start offering courses through your organization.
               </p>

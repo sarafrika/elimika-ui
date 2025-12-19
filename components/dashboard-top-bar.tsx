@@ -39,7 +39,7 @@ export default function DashboardTopBar({ showToggle = true }: { showToggle?: bo
         <div className='flex w-full items-center gap-3'>
           <Link
             href='/'
-            className='text-base font-semibold tracking-tight text-foreground transition hover:text-primary'
+            className='text-foreground hover:text-primary text-base font-semibold tracking-tight transition'
           >
             Elimika
           </Link>
@@ -49,7 +49,7 @@ export default function DashboardTopBar({ showToggle = true }: { showToggle?: bo
         <div className='flex w-full items-center gap-3'>
           <Link
             href='/'
-            className='text-base font-semibold tracking-tight text-foreground transition hover:text-primary'
+            className='text-foreground hover:text-primary text-base font-semibold tracking-tight transition'
           >
             Elimika
           </Link>

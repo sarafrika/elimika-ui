@@ -276,10 +276,7 @@ export function ProfileFormSection({
         ) : viewContent ? (
           <div className='space-y-6'>{viewContent}</div>
         ) : (
-          <fieldset
-            disabled
-            className='pointer-events-none space-y-6 opacity-70'
-          >
+          <fieldset disabled className='pointer-events-none space-y-6 opacity-70'>
             {children}
           </fieldset>
         )}

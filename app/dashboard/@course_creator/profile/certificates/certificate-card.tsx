@@ -78,7 +78,7 @@ export const CertificateCard: React.FC<CertificateCardProps> = ({
 
       <CardContent className='space-y-4'>
         {/* Certificate Preview */}
-        <div className='rounded-lg border border-dashed border-border/60 bg-muted/40 p-6'>
+        <div className='border-border/60 bg-muted/40 rounded-lg border border-dashed p-6'>
           <div className='space-y-2 text-center'>
             <div className='bg-primary/20 mx-auto flex h-16 w-16 items-center justify-center rounded-full'>
               <Award className='text-primary h-8 w-8' />

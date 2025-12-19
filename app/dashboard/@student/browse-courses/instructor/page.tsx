@@ -4,7 +4,10 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
-import { getStudentBookingsOptions, listTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getStudentBookingsOptions,
+  listTrainingApplicationsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -106,14 +109,16 @@ type Props = {
 const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
-  const student = useStudent()
+  const student = useStudent();
 
-  const { data: studentsBookingsData, refetch } = useQuery(
-    {
-      ...getStudentBookingsOptions({ path: { studentUuid: student?.uuid as string }, query: { pageable: {}, status: "" } })
-      , enabled: !!student?.uuid
-    })
-  const studentsBookings = studentsBookingsData?.data?.content
+  const { data: studentsBookingsData, refetch } = useQuery({
+    ...getStudentBookingsOptions({
+      path: { studentUuid: student?.uuid as string },
+      query: { pageable: {}, status: '' },
+    }),
+    enabled: !!student?.uuid,
+  });
+  const studentsBookings = studentsBookingsData?.data?.content;
 
   const bookings = studentsBookings || [];
   const [activeTab, setActiveTab] = useState('browse');
@@ -122,9 +127,9 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const { data: applications } = useQuery(
     listTrainingApplicationsOptions({
       path: { courseUuid: courseId as string },
-      query: { pageable: {}, status: "approved" }
+      query: { pageable: {}, status: 'approved' },
     })
-  )
+  );
 
   const approvedInstructorUuids =
     applications?.data?.content
@@ -153,7 +158,6 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
     ]);
   }, [replaceBreadcrumbs]);
 
-
   const handleBookingComplete = (_newBooking: Booking) => {
     // setBookings((prev: any) => [...prev, newBooking]);
     setActiveTab('bookings');
@@ -179,8 +183,8 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-primary/10 p-2'>
-              <Users className='h-5 w-5 text-primary' />
+            <div className='bg-primary/10 rounded-lg p-2'>
+              <Users className='text-primary h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Available Instructors</p>
@@ -232,7 +236,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className='border' >
+        <TabsList className='border'>
           <TabsTrigger value='browse'>Browse Instructors</TabsTrigger>
           <TabsTrigger value='bookings'>
             My Bookings {bookings?.length > 0 && `(${bookings?.length})`}
@@ -262,5 +266,3 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 };
 
 export default InstructorBookingDashboard;
-
-

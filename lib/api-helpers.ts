@@ -30,9 +30,7 @@ export function extractEntity<T>(apiResponse: unknown): T | null {
   return entity as T;
 }
 
-export function extractPage<T>(
-  apiResponse: unknown
-): { items: T[]; metadata: PageMetadataLike } {
+export function extractPage<T>(apiResponse: unknown): { items: T[]; metadata: PageMetadataLike } {
   const firstLayer = unwrapPayload(apiResponse);
   const dataLayer = unwrapPayload(firstLayer);
 
@@ -53,9 +51,7 @@ export function getTotalFromMetadata(metadata?: PageMetadataLike): number {
   if (!metadata) return 0;
 
   const total =
-    (metadata.totalElements as number | undefined) ??
-    (metadata as any).total_elements ??
-    0;
+    (metadata.totalElements as number | undefined) ?? (metadata as any).total_elements ?? 0;
 
   return typeof total === 'number' ? total : 0;
 }

@@ -8,11 +8,11 @@ interface CoursesLayoutProps {
 
 export default function CoursesLayout({ children }: CoursesLayoutProps) {
   return (
-    <div className='space-y-8 py-6 px-1.5 sm:px-4 pb-16 md:p-10'>
+    <div className='space-y-8 px-1.5 py-6 pb-16 sm:px-4 md:p-10'>
       <div className='flex w-full items-center justify-between lg:max-w-[75%]'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Browse Courses</h2>
-          <p className='mt-1 text-muted-foreground'>Discover courses across various categories.</p>
+          <p className='text-muted-foreground mt-1'>Discover courses across various categories.</p>
         </div>
       </div>
       <Separator />

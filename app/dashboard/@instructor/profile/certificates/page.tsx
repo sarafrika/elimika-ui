@@ -31,9 +31,9 @@ const renderDocuments = (
     <CardContent className='space-y-3'>
       {loading ? (
         <div className='space-y-2'>
-          <div className='h-4 w-48 animate-pulse rounded bg-muted' />
-          <div className='h-4 w-full animate-pulse rounded bg-muted' />
-          <div className='h-4 w-2/3 animate-pulse rounded bg-muted' />
+          <div className='bg-muted h-4 w-48 animate-pulse rounded' />
+          <div className='bg-muted h-4 w-full animate-pulse rounded' />
+          <div className='bg-muted h-4 w-2/3 animate-pulse rounded' />
         </div>
       ) : docs.length === 0 ? (
         <p className='text-muted-foreground text-sm'>{emptyText}</p>
@@ -55,14 +55,16 @@ const renderDocuments = (
               </div>
               <Badge
                 variant={
-                  doc.verification_status === 'VERIFIED' || doc.is_verified ? 'success' : 'secondary'
+                  doc.verification_status === 'VERIFIED' || doc.is_verified
+                    ? 'success'
+                    : 'secondary'
                 }
                 className='shrink-0'
               >
                 {doc.verification_status ?? (doc.is_verified ? 'Verified' : 'Pending')}
               </Badge>
             </div>
-            <div className='mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground'>
+            <div className='text-muted-foreground mt-3 flex flex-wrap gap-2 text-xs'>
               <span>Type: {doc.mime_type ?? 'Unknown'}</span>
               <span>Size: {doc.file_size_formatted ?? '—'}</span>
             </div>

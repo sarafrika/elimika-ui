@@ -18,7 +18,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileUser, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '../../../../../components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger,
+} from '../../../../../components/ui/dialog';
 import { useInstructorDetails } from '../../../../../hooks/use-instructor-details';
 import { InstructorSkillCard } from '../../../@instructor/profile/skills/_component/instructor-skill-card';
 import { CustomLoadingState } from '../../_components/loading-state';
@@ -54,7 +59,6 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
   );
   const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
 
-
   useEffect(() => {
     if (!autoSelectedRef.current && applicationData.length > 0) {
       setSelectedApplication(null);
@@ -62,20 +66,19 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
     }
   }, [applicationData, tab]);
 
-
   const [selectedApplication, setSelectedApplication] = useState<any | null>(null);
   const instructorUuid = selectedApplication?.applicant_uuid;
   const applicantType = selectedApplication?.applicant_type;
 
   const { instructor } = useInstructorDetails(instructorUuid);
   // @ts-ignore
-  const applicantDetails = instructor?.data
+  const applicantDetails = instructor?.data;
 
   const { data: skills } = useQuery({
     ...getInstructorSkillsOptions({ query: { pageable: {} }, path: { instructorUuid } }),
-    enabled: !!instructorUuid
-  })
-  const instructorSkills = skills?.data?.content || []
+    enabled: !!instructorUuid,
+  });
+  const instructorSkills = skills?.data?.content || [];
 
   const handleActionSubmit = (data: {
     notes: string;
@@ -177,7 +180,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 {course?.category_names?.map((category: string, idx: number) => (
                   <span
                     key={idx}
-                    className='rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary'
+                    className='bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium'
                   >
                     {category}
                   </span>
@@ -236,7 +239,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
               </Tabs>
 
               {/* Single-column ist of applications */}
-              <div className='min-h-[40vh] max-h-[70vh] overflow-auto'>
+              <div className='max-h-[70vh] min-h-[40vh] overflow-auto'>
                 {!selectedApplication ? (
                   <div className='space-y-2'>
                     {filteredApplications(tab).length === 0 ? (
@@ -248,12 +251,14 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                         <button
                           key={app.uuid}
                           onClick={() => setSelectedApplication(app)}
-                          className='w-full text-left p-4 rounded-md transition border hover:bg-muted'
+                          className='hover:bg-muted w-full rounded-md border p-4 text-left transition'
                         >
                           <div className='flex items-center justify-between'>
                             <div>
-                              <p className='text-sm font-medium'>Application by {app.applicant_type}</p>
-                              <p className='text-xs text-muted-foreground'>{app.applicant_uuid}</p>
+                              <p className='text-sm font-medium'>
+                                Application by {app.applicant_type}
+                              </p>
+                              <p className='text-muted-foreground text-xs'>{app.applicant_uuid}</p>
                             </div>
                             <div className='text-right'>
                               <p className='text-xs'>
@@ -272,10 +277,14 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                   </div>
                 ) : (
                   <div className='w-full'>
-                    <div className='flex items-center justify-between mb-4'>
+                    <div className='mb-4 flex items-center justify-between'>
                       <div>
-                        <p className='text-sm font-medium'>Application by {selectedApplication.applicant_type}</p>
-                        <p className='text-xs text-muted-foreground'>{applicantDetails?.full_name}</p>
+                        <p className='text-sm font-medium'>
+                          Application by {selectedApplication.applicant_type}
+                        </p>
+                        <p className='text-muted-foreground text-xs'>
+                          {applicantDetails?.full_name}
+                        </p>
                       </div>
                       <Button
                         variant='ghost'
@@ -290,8 +299,8 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                       </Button>
                     </div>
 
-                    <Card className='p-0 h-auto'>
-                      <CardHeader className='px-4 py-4 flex flex-row items-center justify-between'>
+                    <Card className='h-auto p-0'>
+                      <CardHeader className='flex flex-row items-center justify-between px-4 py-4'>
                         <CardTitle className='text-base'>
                           Application by {applicantDetails?.full_name || 'N/A'}
                         </CardTitle>
@@ -299,18 +308,23 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                         <span
                           className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${getStatusBadgeClasses(selectedApplication.status)}`}
                         >
-                          {selectedApplication.status.charAt(0).toUpperCase() + selectedApplication.status.slice(1)}
+                          {selectedApplication.status.charAt(0).toUpperCase() +
+                            selectedApplication.status.slice(1)}
                         </span>
                       </CardHeader>
 
-                      <CardContent className='py-4 space-y-6'>
+                      <CardContent className='space-y-6 py-4'>
                         <div className='space-y-3'>
-                          <h3 className='font-semibold text-sm text-primary'>Instructor Information</h3>
+                          <h3 className='text-primary text-sm font-semibold'>
+                            Instructor Information
+                          </h3>
 
                           <div>
                             <p className='text-muted-foreground text-sm font-medium'>Name</p>
-                            <p className='text-sm font-medium'>{applicantDetails?.full_name || 'N/A'}</p>
-                            <p className='text-xs text-muted-foreground'>
+                            <p className='text-sm font-medium'>
+                              {applicantDetails?.full_name || 'N/A'}
+                            </p>
+                            <p className='text-muted-foreground text-xs'>
                               {selectedApplication.instructor?.email || ''}
                             </p>
                           </div>
@@ -327,9 +341,9 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                             {applicantDetails?.website ? (
                               <a
                                 href={applicantDetails.website}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className='text-sm text-primary underline'
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='text-primary text-sm underline'
                               >
                                 {applicantDetails.website}
                               </a>
@@ -348,8 +362,10 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                           <div>
                             <p className='text-muted-foreground text-sm font-medium'>Bio</p>
                             <div
-                              className="text-sm prose max-w-none"
-                              dangerouslySetInnerHTML={{ __html: applicantDetails?.bio || "<p>No bio provided</p>" }}
+                              className='prose max-w-none text-sm'
+                              dangerouslySetInnerHTML={{
+                                __html: applicantDetails?.bio || '<p>No bio provided</p>',
+                              }}
                             />
                           </div>
 
@@ -360,32 +376,34 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                                 <Dialog>
                                   <DialogTrigger asChild>
                                     <Button
-                                      size={"sm"}
-                                      className="flex items-center gap-2 self-end text-sm cursor-pointer transition"
+                                      size={'sm'}
+                                      className='flex cursor-pointer items-center gap-2 self-end text-sm transition'
                                     >
                                       View Skill Card
                                     </Button>
-
                                   </DialogTrigger>
 
                                   <DialogContent className='max-h-[85vh] max-w-2xl overflow-y-auto'>
                                     <DialogHeader />
-                                    <InstructorSkillCard instructor={applicantDetails} skills={instructorSkills} />
+                                    <InstructorSkillCard
+                                      instructor={applicantDetails}
+                                      skills={instructorSkills}
+                                    />
                                   </DialogContent>
                                 </Dialog>
                               </div>
                             </div>
                             {instructorSkills && instructorSkills.length > 0 ? (
-                              <div className='space-y-2 mt-1'>
-                                {instructorSkills.map((skill) => (
+                              <div className='mt-1 space-y-2'>
+                                {instructorSkills.map(skill => (
                                   <div
                                     key={skill.uuid}
-                                    className='p-2 border rounded-md bg-muted/30'
+                                    className='bg-muted/30 rounded-md border p-2'
                                   >
                                     <p className='text-sm font-medium'>
                                       {skill.skill_name} ({skill.proficiency_level})
                                     </p>
-                                    <p className='text-xs text-muted-foreground'>
+                                    <p className='text-muted-foreground text-xs'>
                                       {skill.proficiency_description}
                                     </p>
                                   </div>
@@ -400,34 +418,47 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                         <Separator />
 
                         <div className='space-y-4'>
-                          <h3 className='font-semibold text-sm text-primary'>Application Information</h3>
+                          <h3 className='text-primary text-sm font-semibold'>
+                            Application Information
+                          </h3>
 
                           <div>
-                            <p className='text-muted-foreground text-sm font-medium'>Application Notes</p>
+                            <p className='text-muted-foreground text-sm font-medium'>
+                              Application Notes
+                            </p>
                             <p className='text-sm'>
-                              {selectedApplication.application_notes || "No notes provided"}
+                              {selectedApplication.application_notes || 'No notes provided'}
                             </p>
                           </div>
 
                           <div>
-                            <p className='text-muted-foreground text-sm font-medium'>Rates (per head)</p>
+                            <p className='text-muted-foreground text-sm font-medium'>
+                              Rates (per head)
+                            </p>
 
                             <div className='grid grid-cols-2 gap-2'>
                               <div>
                                 <p className='text-sm'>
-                                  Private - Online: {selectedApplication.rate_card.private_online_rate} {selectedApplication.rate_card.currency}
+                                  Private - Online:{' '}
+                                  {selectedApplication.rate_card.private_online_rate}{' '}
+                                  {selectedApplication.rate_card.currency}
                                 </p>
                                 <p className='text-sm'>
-                                  Private - In-person: {selectedApplication.rate_card.private_inperson_rate} {selectedApplication.rate_card.currency}
+                                  Private - In-person:{' '}
+                                  {selectedApplication.rate_card.private_inperson_rate}{' '}
+                                  {selectedApplication.rate_card.currency}
                                 </p>
                               </div>
 
                               <div>
                                 <p className='text-sm'>
-                                  Group - Online: {selectedApplication.rate_card.group_online_rate} {selectedApplication.rate_card.currency}
+                                  Group - Online: {selectedApplication.rate_card.group_online_rate}{' '}
+                                  {selectedApplication.rate_card.currency}
                                 </p>
                                 <p className='text-sm'>
-                                  Group - In-person: {selectedApplication.rate_card.group_inperson_rate} {selectedApplication.rate_card.currency}
+                                  Group - In-person:{' '}
+                                  {selectedApplication.rate_card.group_inperson_rate}{' '}
+                                  {selectedApplication.rate_card.currency}
                                 </p>
                               </div>
                             </div>
@@ -436,7 +467,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                           <div>
                             <p className='text-muted-foreground text-sm font-medium'>Review Note</p>
                             <p className='text-sm'>
-                              {selectedApplication.review_notes || "No review notes provided"}
+                              {selectedApplication.review_notes || 'No review notes provided'}
                             </p>
                           </div>
 
@@ -451,23 +482,23 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
 
                       <CardContent className='pb-4'>
                         <div className='flex justify-end gap-3 pt-2'>
-                          {selectedApplication.status === "pending" && (
+                          {selectedApplication.status === 'pending' && (
                             <>
                               <Button
-                                variant="outline"
+                                variant='outline'
                                 onClick={() => {
                                   setSelectedUuid(selectedApplication.uuid);
-                                  setSelectedAction("reject");
+                                  setSelectedAction('reject');
                                   setNotesModalOpen(true);
                                 }}
                               >
                                 Reject
                               </Button>
                               <Button
-                                variant="default"
+                                variant='default'
                                 onClick={() => {
                                   setSelectedUuid(selectedApplication.uuid);
-                                  setSelectedAction("approve");
+                                  setSelectedAction('approve');
                                   setNotesModalOpen(true);
                                 }}
                               >
@@ -476,12 +507,12 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                             </>
                           )}
 
-                          {selectedApplication.status === "approved" && (
+                          {selectedApplication.status === 'approved' && (
                             <Button
-                              variant="destructive"
+                              variant='destructive'
                               onClick={() => {
                                 setSelectedUuid(selectedApplication.uuid);
-                                setSelectedAction("revoke");
+                                setSelectedAction('revoke');
                                 setNotesModalOpen(true);
                               }}
                             >
@@ -489,12 +520,12 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                             </Button>
                           )}
 
-                          {selectedApplication.status === "revoked" && (
+                          {selectedApplication.status === 'revoked' && (
                             <Button
-                              variant="default"
+                              variant='default'
                               onClick={() => {
                                 setSelectedUuid(selectedApplication.uuid);
-                                setSelectedAction("approve");
+                                setSelectedAction('approve');
                                 setNotesModalOpen(true);
                               }}
                             >
@@ -511,7 +542,6 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
           </Card>
         )}
       </div>
-
 
       <NotesModal
         open={notesModalOpen}

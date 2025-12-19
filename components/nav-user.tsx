@@ -76,7 +76,7 @@ export function NavUser({ items }: NavUserProps) {
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
-            className='w-[--radix-dropdown-menu-trigger-width] min-w-64 rounded-xl border border-border bg-card p-4 shadow-lg shadow-primary/10'
+            className='border-border bg-card shadow-primary/10 w-[--radix-dropdown-menu-trigger-width] min-w-64 rounded-xl border p-4 shadow-lg'
             side={isMobile ? 'bottom' : 'right'}
             align='end'
             sideOffset={8}
@@ -128,14 +128,14 @@ export function NavUser({ items }: NavUserProps) {
                 {/* Add Profile Option */}
                 <div
                   onClick={() => router.push('/dashboard/add-profile')}
-                  className='flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-primary transition-colors hover:bg-secondary/70'
+                  className='text-primary hover:bg-secondary/70 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
                 >
                   <UserPlus className='size-4' />
                   <span>Add New Profile</span>
                 </div>
 
                 <div
-                  className='flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive'
+                  className='text-destructive hover:bg-destructive/10 hover:text-destructive flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
                   onClick={async () =>
                     await signOut().then(() => {
                       userDomain.clearDomain();

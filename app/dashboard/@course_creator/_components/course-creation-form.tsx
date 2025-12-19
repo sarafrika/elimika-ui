@@ -47,7 +47,14 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, XIcon } from 'lucide-react';
-import { forwardRef, type ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import {
+  forwardRef,
+  type ReactNode,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
@@ -66,12 +73,12 @@ export type FormSectionProps = {
 };
 
 export const FormSection = ({ title, description, children }: FormSectionProps) => (
-  <section className='rounded-3xl border border-border bg-card p-6 shadow-lg transition lg:p-8'>
+  <section className='border-border bg-card rounded-3xl border p-6 shadow-lg transition lg:p-8'>
     <div className='flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10'>
       <div className='lg:w-1/3'>
-        <p className='text-xs font-semibold tracking-[0.4em] text-primary/80 uppercase'>Section</p>
-        <h3 className='mt-2 text-lg font-semibold text-foreground'>{title}</h3>
-        <p className='mt-2 text-sm text-muted-foreground'>{description}</p>
+        <p className='text-primary/80 text-xs font-semibold tracking-[0.4em] uppercase'>Section</p>
+        <h3 className='text-foreground mt-2 text-lg font-semibold'>{title}</h3>
+        <p className='text-muted-foreground mt-2 text-sm'>{description}</p>
       </div>
       <div className='lg:flex-1'>{children}</div>
     </div>
@@ -383,7 +390,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className='space-y-8 rounded-[32px] border border-border bg-card p-6 shadow-xl transition lg:p-10'
+          className='border-border bg-card space-y-8 rounded-[32px] border p-6 shadow-xl transition lg:p-10'
         >
           {/* Course Name */}
           <FormSection

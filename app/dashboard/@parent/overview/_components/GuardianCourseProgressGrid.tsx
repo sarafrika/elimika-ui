@@ -44,7 +44,7 @@ export function GuardianCourseProgressGrid({
             Course progress
           </CardTitle>
         </CardHeader>
-        <CardContent className='rounded-2xl border border-dashed border-border/70 p-6 text-sm'>
+        <CardContent className='border-border/70 rounded-2xl border border-dashed p-6 text-sm'>
           <p className='font-medium'>No active coursework yet.</p>
           <p className='text-muted-foreground'>
             Once the learner enrolls, lessons and progress updates will appear here.
@@ -89,7 +89,7 @@ export function GuardianCourseProgressGrid({
           return (
             <div
               key={course.enrollment_uuid ?? course.course_uuid ?? course.course_name}
-              className='rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm'
+              className='border-border/70 bg-card/60 rounded-2xl border p-4 shadow-sm'
             >
               <div className='flex items-start justify-between gap-4'>
                 <div>

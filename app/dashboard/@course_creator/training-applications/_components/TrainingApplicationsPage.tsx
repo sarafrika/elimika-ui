@@ -96,7 +96,9 @@ export default function TrainingApplicationsPage() {
   const [applicantTypeFilter, setApplicantTypeFilter] = useState('');
   const [page, setPage] = useState(0);
   const [searchValue, setSearchValue] = useState('');
-  const [selectedApplication, setSelectedApplication] = useState<CourseTrainingApplication | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<CourseTrainingApplication | null>(
+    null
+  );
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revoke'>('approve');
   const pageSize = 12;
@@ -119,19 +121,21 @@ export default function TrainingApplicationsPage() {
 
     // Status filter
     if (statusFilter) {
-      items = items.filter((app) => app.status?.toLowerCase() === statusFilter.toLowerCase());
+      items = items.filter(app => app.status?.toLowerCase() === statusFilter.toLowerCase());
     }
 
     // Applicant type filter
     if (applicantTypeFilter) {
-      items = items.filter((app) => app.applicant_type?.toLowerCase() === applicantTypeFilter.toLowerCase());
+      items = items.filter(
+        app => app.applicant_type?.toLowerCase() === applicantTypeFilter.toLowerCase()
+      );
     }
 
     // Search filter
     if (searchValue) {
       const term = searchValue.toLowerCase();
       items = items.filter(
-        (app) =>
+        app =>
           app.applicant_name?.toLowerCase().includes(term) ||
           app.course_uuid?.toLowerCase().includes(term) ||
           app.application_notes?.toLowerCase().includes(term)
@@ -147,16 +151,20 @@ export default function TrainingApplicationsPage() {
   const stats = useMemo(() => {
     return {
       total: allApplications.length,
-      pending: allApplications.filter((a) => a.status?.toLowerCase() === 'pending').length,
-      approved: allApplications.filter((a) => a.status?.toLowerCase() === 'approved').length,
-      instructors: allApplications.filter((a) => a.applicant_type?.toLowerCase() === 'instructor').length,
+      pending: allApplications.filter(a => a.status?.toLowerCase() === 'pending').length,
+      approved: allApplications.filter(a => a.status?.toLowerCase() === 'approved').length,
+      instructors: allApplications.filter(a => a.applicant_type?.toLowerCase() === 'instructor')
+        .length,
     };
   }, [allApplications]);
 
   // Mutation
   const decideMutation = useMutation(decideOnTrainingApplicationMutation());
 
-  const handleReview = (application: CourseTrainingApplication, action: 'approve' | 'reject' | 'revoke') => {
+  const handleReview = (
+    application: CourseTrainingApplication,
+    action: 'approve' | 'reject' | 'revoke'
+  ) => {
     setSelectedApplication(application);
     setReviewAction(action);
     setReviewDialogOpen(true);
@@ -199,8 +207,8 @@ export default function TrainingApplicationsPage() {
       <section className='mb-6'>
         <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div>
-            <h1 className='text-2xl font-bold text-foreground'>Training Applications</h1>
-            <p className='text-sm text-muted-foreground'>
+            <h1 className='text-foreground text-2xl font-bold'>Training Applications</h1>
+            <p className='text-muted-foreground text-sm'>
               Review and manage applications from instructors and organizations
             </p>
           </div>
@@ -208,50 +216,50 @@ export default function TrainingApplicationsPage() {
 
         {/* Stats */}
         <div className='grid gap-3 sm:grid-cols-4'>
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <FileText className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <FileText className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Total Applications</p>
-                <p className='text-lg font-bold text-foreground'>{stats.total}</p>
+                <p className='text-muted-foreground text-xs'>Total Applications</p>
+                <p className='text-foreground text-lg font-bold'>{stats.total}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <Clock className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <Clock className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Pending Review</p>
-                <p className='text-lg font-bold text-foreground'>{stats.pending}</p>
+                <p className='text-muted-foreground text-xs'>Pending Review</p>
+                <p className='text-foreground text-lg font-bold'>{stats.pending}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <CheckCircle2 className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <CheckCircle2 className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Approved</p>
-                <p className='text-lg font-bold text-foreground'>{stats.approved}</p>
+                <p className='text-muted-foreground text-xs'>Approved</p>
+                <p className='text-foreground text-lg font-bold'>{stats.approved}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <Users className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <Users className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Instructors</p>
-                <p className='text-lg font-bold text-foreground'>{stats.instructors}</p>
+                <p className='text-muted-foreground text-xs'>Instructors</p>
+                <p className='text-foreground text-lg font-bold'>{stats.instructors}</p>
               </div>
             </div>
           </div>
@@ -262,30 +270,30 @@ export default function TrainingApplicationsPage() {
       <section className='mb-6'>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex items-center gap-3'>
-            <Filter className='h-4 w-4 text-muted-foreground' />
+            <Filter className='text-muted-foreground h-4 w-4' />
             <select
-              className='rounded-md border border-border bg-background px-3 py-2 text-sm'
+              className='border-border bg-background rounded-md border px-3 py-2 text-sm'
               value={statusFilter}
-              onChange={(event) => {
+              onChange={event => {
                 setStatusFilter(event.target.value);
                 setPage(0);
               }}
             >
-              {statusOptions.map((option) => (
+              {statusOptions.map(option => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
             <select
-              className='rounded-md border border-border bg-background px-3 py-2 text-sm'
+              className='border-border bg-background rounded-md border px-3 py-2 text-sm'
               value={applicantTypeFilter}
-              onChange={(event) => {
+              onChange={event => {
                 setApplicantTypeFilter(event.target.value);
                 setPage(0);
               }}
             >
-              {applicantTypeOptions.map((option) => (
+              {applicantTypeOptions.map(option => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -305,11 +313,11 @@ export default function TrainingApplicationsPage() {
             )}
           </div>
           <div className='relative'>
-            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
             <Input
               placeholder='Search by applicant name...'
               value={searchValue}
-              onChange={(event) => setSearchValue(event.target.value)}
+              onChange={event => setSearchValue(event.target.value)}
               className='w-full pl-10 sm:w-80'
             />
             {searchValue && (
@@ -317,7 +325,7 @@ export default function TrainingApplicationsPage() {
                 variant='ghost'
                 size='sm'
                 onClick={() => setSearchValue('')}
-                className='absolute right-1 top-1/2 h-7 -translate-y-1/2'
+                className='absolute top-1/2 right-1 h-7 -translate-y-1/2'
               >
                 <X className='h-4 w-4' />
               </Button>
@@ -351,7 +359,7 @@ export default function TrainingApplicationsPage() {
         ) : (
           <>
             <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-              {filteredApplications.map((application) => (
+              {filteredApplications.map(application => (
                 <ApplicationCard
                   key={application.uuid}
                   application={application}
@@ -368,18 +376,18 @@ export default function TrainingApplicationsPage() {
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
                   disabled={page === 0}
                 >
                   Previous
                 </Button>
-                <span className='text-sm text-muted-foreground'>
+                <span className='text-muted-foreground text-sm'>
                   Page {page + 1} of {totalPages}
                 </span>
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                   disabled={page >= totalPages - 1}
                 >
                   Next
@@ -420,16 +428,18 @@ function ApplicationCard({
   return (
     <div className={elimikaDesignSystem.components.listCard.base}>
       <div className='mb-4 flex items-start justify-between'>
-        <div className='flex items-center gap-3 flex-1 min-w-0'>
-          <div className='flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary flex-shrink-0'>
+        <div className='flex min-w-0 flex-1 items-center gap-3'>
+          <div className='bg-primary/10 text-primary flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full'>
             {application.applicant_type?.toLowerCase() === 'instructor' ? (
               <Users className='h-6 w-6' />
             ) : (
               <Building2 className='h-6 w-6' />
             )}
           </div>
-          <div className='flex-1 min-w-0'>
-            <h3 className='font-semibold text-foreground truncate'>{application.applicant_name || 'Unknown'}</h3>
+          <div className='min-w-0 flex-1'>
+            <h3 className='text-foreground truncate font-semibold'>
+              {application.applicant_name || 'Unknown'}
+            </h3>
             <Badge variant='outline' className='mt-1 text-xs'>
               {application.applicant_type || 'Unknown'}
             </Badge>
@@ -445,15 +455,15 @@ function ApplicationCard({
 
       <div className='space-y-3'>
         {application.created_date && (
-          <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+          <div className='text-muted-foreground flex items-center gap-2 text-xs'>
             <Calendar className='h-3 w-3 flex-shrink-0' />
             <span>Applied {format(new Date(application.created_date), 'MMM dd, yyyy')}</span>
           </div>
         )}
 
         {application.rate_card && (
-          <div className='rounded-lg bg-muted/30 p-3 space-y-2'>
-            <div className='flex items-center gap-2 text-xs font-medium text-muted-foreground'>
+          <div className='bg-muted/30 space-y-2 rounded-lg p-3'>
+            <div className='text-muted-foreground flex items-center gap-2 text-xs font-medium'>
               <DollarSign className='h-3 w-3' />
               <span>Rate Card</span>
             </div>
@@ -461,13 +471,15 @@ function ApplicationCard({
               <div>
                 <span className='text-muted-foreground'>Private Online:</span>
                 <p className='font-medium'>
-                  {application.rate_card.currency || 'KES'} {application.rate_card.private_online_rate || 0}
+                  {application.rate_card.currency || 'KES'}{' '}
+                  {application.rate_card.private_online_rate || 0}
                 </p>
               </div>
               <div>
                 <span className='text-muted-foreground'>Group Online:</span>
                 <p className='font-medium'>
-                  {application.rate_card.currency || 'KES'} {application.rate_card.group_online_rate || 0}
+                  {application.rate_card.currency || 'KES'}{' '}
+                  {application.rate_card.group_online_rate || 0}
                 </p>
               </div>
             </div>
@@ -476,15 +488,17 @@ function ApplicationCard({
 
         {application.application_notes && (
           <div>
-            <p className='mb-1 text-xs font-medium text-muted-foreground'>Notes</p>
-            <p className='text-xs text-muted-foreground italic line-clamp-2'>&quot;{application.application_notes}&quot;</p>
+            <p className='text-muted-foreground mb-1 text-xs font-medium'>Notes</p>
+            <p className='text-muted-foreground line-clamp-2 text-xs italic'>
+              &quot;{application.application_notes}&quot;
+            </p>
           </div>
         )}
 
         {application.review_notes && (
-          <div className='rounded-lg bg-primary/10 border border-primary/20 p-2'>
-            <p className='mb-1 text-xs font-medium text-foreground'>Review Notes</p>
-            <p className='text-xs text-muted-foreground line-clamp-2'>{application.review_notes}</p>
+          <div className='bg-primary/10 border-primary/20 rounded-lg border p-2'>
+            <p className='text-foreground mb-1 text-xs font-medium'>Review Notes</p>
+            <p className='text-muted-foreground line-clamp-2 text-xs'>{application.review_notes}</p>
           </div>
         )}
       </div>
@@ -497,7 +511,7 @@ function ApplicationCard({
               Approve
             </Button>
             <Button size='sm' variant='outline' onClick={onReject}>
-              <ThumbsDown className='h-3.5 w-3.5 text-destructive' />
+              <ThumbsDown className='text-destructive h-3.5 w-3.5' />
             </Button>
           </>
         )}
@@ -508,7 +522,7 @@ function ApplicationCard({
           </Button>
         )}
         {!isPending && !isApproved && (
-          <div className='flex-1 text-center text-xs text-muted-foreground'>
+          <div className='text-muted-foreground flex-1 text-center text-xs'>
             {application.status === 'rejected' && 'Application was rejected'}
             {application.status === 'revoked' && 'Approval was revoked'}
           </div>
@@ -564,7 +578,7 @@ function ReviewDialog({
       <DialogContent>
         <DialogHeader>
           <div className='flex items-center gap-3'>
-            <div className={`rounded-lg bg-muted p-2 ${config.color}`}>
+            <div className={`bg-muted rounded-lg p-2 ${config.color}`}>
               <Icon className='h-5 w-5' />
             </div>
             <div>
@@ -576,27 +590,29 @@ function ReviewDialog({
 
         {application && (
           <div className='space-y-4 py-4'>
-            <div className='rounded-lg border border-border bg-muted/30 p-4 space-y-2'>
+            <div className='border-border bg-muted/30 space-y-2 rounded-lg border p-4'>
               <div className='flex items-center gap-2'>
-                <Users className='h-4 w-4 text-muted-foreground' />
+                <Users className='text-muted-foreground h-4 w-4' />
                 <span className='text-sm font-medium'>{application.applicant_name}</span>
                 <Badge variant='outline' className='text-xs'>
                   {application.applicant_type}
                 </Badge>
               </div>
               {application.application_notes && (
-                <p className='text-sm text-muted-foreground'>
+                <p className='text-muted-foreground text-sm'>
                   &quot;{application.application_notes}&quot;
                 </p>
               )}
             </div>
 
             <div className='space-y-2'>
-              <Label>Review Notes {action === 'reject' && <span className='text-destructive'>*</span>}</Label>
+              <Label>
+                Review Notes {action === 'reject' && <span className='text-destructive'>*</span>}
+              </Label>
               <Textarea
                 placeholder={`Add your ${action} notes...`}
                 value={reviewNotes}
-                onChange={(e) => setReviewNotes(e.target.value)}
+                onChange={e => setReviewNotes(e.target.value)}
                 rows={4}
               />
             </div>

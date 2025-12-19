@@ -37,20 +37,20 @@ const sarafrikaPoints = [
 
 export default function Home() {
   return (
-    <div className='relative min-h-screen overflow-hidden bg-background text-foreground'>
+    <div className='bg-background text-foreground relative min-h-screen overflow-hidden'>
       <PublicTopNav />
 
       <main>
-        <section className='relative overflow-hidden border-b border-border/50'>
-          <div className='relative mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-6 pb-24 pt-24 text-center lg:pt-28'>
-            <span className='inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-primary shadow-sm'>
+        <section className='border-border/50 relative overflow-hidden border-b'>
+          <div className='relative mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-6 pt-24 pb-24 text-center lg:pt-28'>
+            <span className='border-border/60 bg-card/80 text-primary inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs font-semibold tracking-[0.4em] uppercase shadow-sm'>
               Product experience
             </span>
-            <h1 className='max-w-4xl text-balance text-4xl font-semibold leading-tight text-foreground sm:text-5xl lg:text-[56px]'>
+            <h1 className='text-foreground max-w-4xl text-4xl leading-tight font-semibold text-balance sm:text-5xl lg:text-[56px]'>
               Elimika is the home of orchestrated learning experiences for Africa&rsquo;s creators
               and institutions.
             </h1>
-            <p className='max-w-3xl text-base text-muted-foreground sm:text-lg'>
+            <p className='text-muted-foreground max-w-3xl text-base sm:text-lg'>
               A product suite born from the Elimika mark—layered gradients, confident geometry, and
               purposeful flows—designed to elevate every learning journey.
             </p>
@@ -58,27 +58,27 @@ export default function Home() {
               <LoginButton />
               <Link
                 href='/courses'
-                className='inline-flex items-center justify-center gap-2 rounded-full border border-primary/50 bg-primary/10 px-7 py-3 text-sm font-semibold text-primary shadow hover:border-primary/70'
+                className='border-primary/50 bg-primary/10 text-primary hover:border-primary/70 inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3 text-sm font-semibold shadow'
               >
                 Browse courses <ArrowRight className='h-4 w-4' />
               </Link>
               <Link
                 href='#product'
-                className='inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-7 py-3 text-sm font-medium text-primary shadow hover:border-primary/60 hover:text-primary'
+                className='border-border bg-card text-primary hover:border-primary/60 hover:text-primary inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3 text-sm font-medium shadow'
               >
                 Explore the product <ArrowRight className='h-4 w-4' />
               </Link>
             </div>
 
-            <div className='flex flex-col items-center gap-4 rounded-[36px] border border-border/60 bg-card/70 px-6 py-6 shadow-lg shadow-black/5 backdrop-blur-sm sm:px-10 sm:py-8'>
-              <p className='text-xs font-semibold uppercase tracking-[0.4em] text-primary'>
+            <div className='border-border/60 bg-card/70 flex flex-col items-center gap-4 rounded-[36px] border px-6 py-6 shadow-lg shadow-black/5 backdrop-blur-sm sm:px-10 sm:py-8'>
+              <p className='text-primary text-xs font-semibold tracking-[0.4em] uppercase'>
                 Domains harmonised
               </p>
-              <div className='grid gap-4 text-sm font-medium text-muted-foreground sm:grid-cols-4'>
+              <div className='text-muted-foreground grid gap-4 text-sm font-medium sm:grid-cols-4'>
                 {domainLabels.map(label => (
                   <BrandPill
                     key={label}
-                    className='justify-center normal-case tracking-[0.2em] text-xs font-semibold'
+                    className='justify-center text-xs font-semibold tracking-[0.2em] normal-case'
                   >
                     {label}
                   </BrandPill>
@@ -91,11 +91,11 @@ export default function Home() {
         <section id='product' className='bg-background/80 py-20'>
           <div className='mx-auto grid w-full max-w-6xl gap-10 px-6 md:grid-cols-[1.1fr_0.9fr] md:items-center'>
             <div className='space-y-5'>
-              <p className='text-sm font-semibold text-primary'>Crafted for orchestrators</p>
-              <h2 className='text-3xl font-semibold text-foreground sm:text-4xl'>
+              <p className='text-primary text-sm font-semibold'>Crafted for orchestrators</p>
+              <h2 className='text-foreground text-3xl font-semibold sm:text-4xl'>
                 Purpose-built for creators, instructors, organisations, and learners
               </h2>
-              <p className='text-base text-muted-foreground'>
+              <p className='text-muted-foreground text-base'>
                 Each role inherits an environment aligned with their workflow—no context-switching,
                 just clarity, governance, and inspired execution.
               </p>
@@ -107,32 +107,32 @@ export default function Home() {
               </div>
             </div>
 
-            <div className='flex-1 rounded-[32px] border border-border/60 bg-card/80 p-8 shadow-xl shadow-black/10'>
-              <p className='text-sm font-semibold text-primary'>What our partners say</p>
-              <blockquote className='mt-3 text-base text-muted-foreground'>
+            <div className='border-border/60 bg-card/80 flex-1 rounded-[32px] border p-8 shadow-xl shadow-black/10'>
+              <p className='text-primary text-sm font-semibold'>What our partners say</p>
+              <blockquote className='text-muted-foreground mt-3 text-base'>
                 “Elimika is where storytelling meets infrastructure. The product honours our brand
                 while giving our teams the clarity they need to scale.”
               </blockquote>
               <div className='mt-6 flex items-center gap-3'>
-                <div className='rounded-full bg-primary/15 p-2'>
-                  <Sparkles className='h-4 w-4 text-primary' />
+                <div className='bg-primary/15 rounded-full p-2'>
+                  <Sparkles className='text-primary h-4 w-4' />
                 </div>
                 <div>
-                  <p className='text-sm font-semibold text-foreground'>Sarafrika Product Studio</p>
-                  <p className='text-xs text-muted-foreground'>Design & engineering partner</p>
+                  <p className='text-foreground text-sm font-semibold'>Sarafrika Product Studio</p>
+                  <p className='text-muted-foreground text-xs'>Design & engineering partner</p>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section id='domains' className='border-y border-border/60 bg-background/70 py-20'>
+        <section id='domains' className='border-border/60 bg-background/70 border-y py-20'>
           <div className='mx-auto w-full max-w-6xl px-6'>
             <div className='mb-12 text-center'>
-              <p className='text-xs font-semibold uppercase tracking-[0.4em] text-primary'>
+              <p className='text-primary text-xs font-semibold tracking-[0.4em] uppercase'>
                 Product pillars
               </p>
-              <h2 className='mt-3 text-3xl font-semibold text-foreground sm:text-4xl'>
+              <h2 className='text-foreground mt-3 text-3xl font-semibold sm:text-4xl'>
                 The Elimika platform at a glance
               </h2>
             </div>
@@ -143,13 +143,13 @@ export default function Home() {
                 return (
                   <article
                     key={feature.title}
-                    className='group rounded-[28px] border border-border bg-card/90 p-6 shadow-lg shadow-black/10 transition hover:-translate-y-1 hover:border-primary/60'
+                    className='group border-border bg-card/90 hover:border-primary/60 rounded-[28px] border p-6 shadow-lg shadow-black/10 transition hover:-translate-y-1'
                   >
-                    <div className='mb-5 inline-flex items-center justify-center rounded-full bg-primary/15 p-3 text-primary'>
+                    <div className='bg-primary/15 text-primary mb-5 inline-flex items-center justify-center rounded-full p-3'>
                       <Icon className='h-5 w-5' />
                     </div>
-                    <h3 className='mb-3 text-lg font-semibold text-foreground'>{feature.title}</h3>
-                    <p className='text-sm leading-6 text-muted-foreground'>{feature.description}</p>
+                    <h3 className='text-foreground mb-3 text-lg font-semibold'>{feature.title}</h3>
+                    <p className='text-muted-foreground text-sm leading-6'>{feature.description}</p>
                   </article>
                 );
               })}
@@ -160,28 +160,28 @@ export default function Home() {
         <section id='powered' className='bg-background py-20'>
           <div className='mx-auto grid w-full max-w-6xl gap-10 px-6 md:grid-cols-[1.1fr_0.9fr] md:items-center'>
             <div className='space-y-5'>
-              <p className='inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-primary'>
+              <p className='border-border bg-secondary/60 text-primary inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.4em] uppercase'>
                 Powered by Sarafrika
               </p>
-              <h2 className='text-3xl font-semibold text-foreground sm:text-4xl'>
+              <h2 className='text-foreground text-3xl font-semibold sm:text-4xl'>
                 Product craftsmanship by Sarafrika, inspired by the Elimika emblem
               </h2>
-              <p className='text-base text-muted-foreground'>
+              <p className='text-muted-foreground text-base'>
                 Sarafrika&rsquo;s product studios steward Elimika&rsquo;s vision—from interface
                 language to enabling technology—embedding sustainable design and engineering across
                 every release.
               </p>
-              <ul className='space-y-3 text-sm text-muted-foreground'>
+              <ul className='text-muted-foreground space-y-3 text-sm'>
                 {sarafrikaPoints.map(point => (
                   <li key={point} className='flex items-start gap-3'>
-                    <div className='mt-1 size-2 rounded-full bg-primary' />
+                    <div className='bg-primary mt-1 size-2 rounded-full' />
                     <span>{point}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className='flex flex-col items-center gap-6 rounded-[32px] border border-border/60 bg-card/80 p-8 shadow-xl shadow-black/10'>
+            <div className='border-border/60 bg-card/80 flex flex-col items-center gap-6 rounded-[32px] border p-8 shadow-xl shadow-black/10'>
               <div className='flex items-center justify-center gap-3'>
                 <Image
                   alt='Sarafrika logo'
@@ -198,7 +198,7 @@ export default function Home() {
                   className='hidden h-12 w-auto dark:block'
                 />
               </div>
-              <p className='text-center text-sm text-muted-foreground'>
+              <p className='text-muted-foreground text-center text-sm'>
                 “Together, Elimika and Sarafrika celebrate African ingenuity—building a product
                 ecosystem where talent thrives, organisations transform, and learners flourish.”
               </p>
@@ -207,9 +207,9 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className='border-t border-border/60 bg-card/80 py-10'>
+      <footer className='border-border/60 bg-card/80 border-t py-10'>
         <div className='mx-auto flex w-full max-w-6xl justify-center px-6'>
-          <div className='text-xs text-muted-foreground'>
+          <div className='text-muted-foreground text-xs'>
             {'\u00A9'} {currentYear} Sarafrika. Elimika is owned and copyrighted by Sarafrika.
           </div>
         </div>
@@ -220,7 +220,7 @@ export default function Home() {
 
 function FeatureBadge({ label }: { label: string }) {
   return (
-    <div className='rounded-full border border-border bg-card/80 px-4 py-2 text-xs font-semibold text-primary shadow-sm'>
+    <div className='border-border bg-card/80 text-primary rounded-full border px-4 py-2 text-xs font-semibold shadow-sm'>
       {label}
     </div>
   );

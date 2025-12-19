@@ -253,14 +253,18 @@ export default function ProfessionalExperienceSettings() {
             description='Share the roles and teaching engagements that show your track record.'
             viewContent={
               <ProfileViewList emptyMessage='No professional experience added yet.'>
-                {instructorExperience?.map((exp) => (
+                {instructorExperience?.map(exp => (
                   <ProfileViewListItem
                     key={exp.uuid}
                     title={exp.position || 'Position not specified'}
                     subtitle={exp.organization_name}
                     description={exp.responsibilities}
                     badge={exp.is_current_position ? 'Current' : undefined}
-                    dateRange={formatDateRange(exp.start_date, exp.end_date, exp.is_current_position)}
+                    dateRange={formatDateRange(
+                      exp.start_date,
+                      exp.end_date,
+                      exp.is_current_position
+                    )}
                   />
                 ))}
               </ProfileViewList>

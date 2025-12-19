@@ -2,7 +2,7 @@ import AddCourseCreatorProfileForm from '../_components/add-course-creator-profi
 
 export default function AddCourseCreatorProfilePage() {
   return (
-    <div className='min-h-screen bg-background py-8'>
+    <div className='bg-background min-h-screen py-8'>
       <AddCourseCreatorProfileForm />
     </div>
   );

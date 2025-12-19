@@ -13,7 +13,7 @@ import {
   getCourseByUuidOptions,
   getInstructorCalendarOptions,
   getInstructorScheduleOptions,
-  markAttendanceMutation
+  markAttendanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -27,12 +27,12 @@ import {
   Linkedin,
   Mail,
   MessageCircle,
-  Twitter
+  Twitter,
 } from 'lucide-react';
 
 import { SidebarMenuButton } from '@/components/ui/sidebar';
 import { useClassRoster } from '@/hooks/use-class-roster';
-import { BarChart2, Camera, Search, Upload, UserCheck } from "lucide-react";
+import { BarChart2, Camera, Search, Upload, UserCheck } from 'lucide-react';
 import moment from 'moment';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -111,7 +111,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const shareToSocial = (platform: string) => {
@@ -141,49 +141,52 @@ export default function ClassPreviewPage() {
     }),
   });
 
-  const [activeTab, setActiveTab] = useState("roster");
+  const [activeTab, setActiveTab] = useState('roster');
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [showQR, setShowQR] = useState(false);
 
-  const markAttendance = useMutation(markAttendanceMutation())
+  const markAttendance = useMutation(markAttendanceMutation());
   const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
 
   const { data: classSchedule } = useQuery({
-    ...getInstructorCalendarOptions({ path: { instructorUuid: classData?.default_instructor_uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } }),
+    ...getInstructorCalendarOptions({
+      path: { instructorUuid: classData?.default_instructor_uuid as string },
+      query: { start_date: '2025-09-11' as any, end_date: '2026-11-11' as any },
+    }),
     enabled: !!classData?.default_instructor_uuid,
-  })
+  });
 
   // console.log(classSchedule?.data, "class schedule!!")
   // console.log(roster, "cllass roster!!", rosterLoading)
 
   const activityLog = [
-    { name: "Dianne Russel", action: "Checked in via QR", time: "8:35 AM" },
-    { name: "Jacob Jones", action: "Submitted Assignment 2", time: "9:15 AM" },
-    { name: "Leslie Alexander", action: "Downloaded Lecture Slides", time: "10:02 AM" },
+    { name: 'Dianne Russel', action: 'Checked in via QR', time: '8:35 AM' },
+    { name: 'Jacob Jones', action: 'Submitted Assignment 2', time: '9:15 AM' },
+    { name: 'Leslie Alexander', action: 'Downloaded Lecture Slides', time: '10:02 AM' },
   ];
 
   const rubric = [
-    { criteria: "Attendance", weight: "20%", description: "Consistency and punctuality" },
-    { criteria: "Participation", weight: "25%", description: "Engagement during sessions" },
-    { criteria: "Assignments", weight: "35%", description: "Completion and quality" },
-    { criteria: "Exam", weight: "20%", description: "Final test performance" },
+    { criteria: 'Attendance', weight: '20%', description: 'Consistency and punctuality' },
+    { criteria: 'Participation', weight: '25%', description: 'Engagement during sessions' },
+    { criteria: 'Assignments', weight: '35%', description: 'Completion and quality' },
+    { criteria: 'Exam', weight: '20%', description: 'Final test performance' },
   ];
 
   const performance = [
-    { name: "Dianne Russel", participation: 95, score: 88, progress: 92 },
-    { name: "Jacob Jones", participation: 78, score: 70, progress: 75 },
-    { name: "Leslie Alexander", participation: 85, score: 90, progress: 88 },
+    { name: 'Dianne Russel', participation: 95, score: 88, progress: 92 },
+    { name: 'Jacob Jones', participation: 78, score: 70, progress: 75 },
+    { name: 'Leslie Alexander', participation: 85, score: 90, progress: 88 },
   ];
 
   const toggleAttendance = (student: string) => {
-    setAttendance((prev) => ({ ...prev, [student]: !prev[student] }));
+    setAttendance(prev => ({ ...prev, [student]: !prev[student] }));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const names = Array.from(e.target.files).map((f) => f.name);
-      setUploadedFiles((prev) => [...prev, ...names]);
+      const names = Array.from(e.target.files).map(f => f.name);
+      setUploadedFiles(prev => [...prev, ...names]);
     }
   };
 
@@ -204,116 +207,111 @@ export default function ClassPreviewPage() {
 
   return (
     <div className='mb-20 space-y-6'>
-      <Card className="flex flex-row h-auto pb-20">
+      <Card className='flex h-auto flex-row pb-20'>
         {/* Sidebar */}
-        <aside className="w-64 border-r border-border/100 p-4 flex flex-col">
-          <h2 className="text-lg font-semibold mb-4">Class Menu</h2>
-          <div className="space-y-2">
+        <aside className='border-border/100 flex w-64 flex-col border-r p-4'>
+          <h2 className='mb-4 text-lg font-semibold'>Class Menu</h2>
+          <div className='space-y-2'>
             {[
-              { id: "roster", label: "Class Roster", icon: UserCheck },
-              { id: "schedule", label: "Class Schedule", icon: Calendar1Icon },
-              { id: "attendance", label: "Attendance", icon: Clock },
-              { id: "resources", label: "Resources", icon: Upload },
-              { id: "activity", label: "Activity Log", icon: FileText },
-              { id: "rubric", label: "Assessment Rubric", icon: BarChart2 },
-              { id: "performance", label: "Performance", icon: CheckCircle },
+              { id: 'roster', label: 'Class Roster', icon: UserCheck },
+              { id: 'schedule', label: 'Class Schedule', icon: Calendar1Icon },
+              { id: 'attendance', label: 'Attendance', icon: Clock },
+              { id: 'resources', label: 'Resources', icon: Upload },
+              { id: 'activity', label: 'Activity Log', icon: FileText },
+              { id: 'rubric', label: 'Assessment Rubric', icon: BarChart2 },
+              { id: 'performance', label: 'Performance', icon: CheckCircle },
             ].map(({ id, label, icon: Icon }) => (
               <SidebarMenuButton
                 key={id}
-                size="lg"
+                size='lg'
                 onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-3 w-full justify-start text-sm rounded-lg transition-colors ${activeTab === id
-                  ? "font-medium bg-card text-foreground"
-                  : "hover:bg-muted/70 text-muted-foreground"
-                  }`}
+                className={`flex w-full items-center justify-start gap-3 rounded-lg text-sm transition-colors ${
+                  activeTab === id
+                    ? 'bg-card text-foreground font-medium'
+                    : 'hover:bg-muted/70 text-muted-foreground'
+                }`}
               >
-                <div className="flex items-center justify-center rounded-lg">
-                  <Icon className="size-4" />
+                <div className='flex items-center justify-center rounded-lg'>
+                  <Icon className='size-4' />
                 </div>
-                <span className="truncate">{label}</span>
+                <span className='truncate'>{label}</span>
               </SidebarMenuButton>
             ))}
           </div>
         </aside>
 
-
         {/* Main Section */}
-        <main className="flex-1 p-6 overflow-y-auto">
-          <h1 className="text-xl font-bold mb-4">
-            {activeTab === "roster" && "📋 Class Roster"}
-            {activeTab === "schedule" && "📋 Class Schedule"}
-            {activeTab === "attendance" && "🕒 Attendance Tracking"}
-            {activeTab === "resources" && "📁 Resource Distribution"}
-            {activeTab === "activity" && "📜 Activity Log"}
-            {activeTab === "rubric" && "📊 Class Attendance Assessment Rubric"}
-            {activeTab === "performance" && "📈 Performance Tracking"}
+        <main className='flex-1 overflow-y-auto p-6'>
+          <h1 className='mb-4 text-xl font-bold'>
+            {activeTab === 'roster' && '📋 Class Roster'}
+            {activeTab === 'schedule' && '📋 Class Schedule'}
+            {activeTab === 'attendance' && '🕒 Attendance Tracking'}
+            {activeTab === 'resources' && '📁 Resource Distribution'}
+            {activeTab === 'activity' && '📜 Activity Log'}
+            {activeTab === 'rubric' && '📊 Class Attendance Assessment Rubric'}
+            {activeTab === 'performance' && '📈 Performance Tracking'}
           </h1>
 
           {/* CLASS ROSTER */}
-          {activeTab === "roster" && (
-            <Card className="p-5 rounded-xl shadow-sm border border-border/100">
-              <div className="relative flex flex-row items-center mb-3">
-                <Search size={18} className="absolute left-3 text-muted-foreground" />
+          {activeTab === 'roster' && (
+            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
+              <div className='relative mb-3 flex flex-row items-center'>
+                <Search size={18} className='text-muted-foreground absolute left-3' />
                 <Input
-                  type="text"
-                  placeholder="Search learner"
-                  className="pl-10 pr-3 py-2 border rounded-lg w-full text-sm"
+                  type='text'
+                  placeholder='Search learner'
+                  className='w-full rounded-lg border py-2 pr-3 pl-10 text-sm'
                 />
               </div>
-              <ul className="divide-y">
+              <ul className='divide-y'>
                 {roster?.map((entry: any) => (
-                  <li key={entry?.user?.uuid} className="py-2 flex items-center justify-between">
+                  <li key={entry?.user?.uuid} className='flex items-center justify-between py-2'>
                     <span>{entry?.user?.full_name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {entry?.enrollment?.status === "ENROLLED" ? "Active" : "Inactive"}
+                    <span className='text-muted-foreground text-xs'>
+                      {entry?.enrollment?.status === 'ENROLLED' ? 'Active' : 'Inactive'}
                     </span>
                   </li>
                 ))}
               </ul>
-
             </Card>
           )}
 
-
           {/* CLASS SCHEDULE */}
-          {activeTab === "schedule" && (
-            <Card className="p-5 rounded-xl shadow-sm border border-border/100">
-              <div className="relative flex flex-row items-center mb-3">
-                <Search size={18} className="absolute left-3 text-muted-foreground" />
+          {activeTab === 'schedule' && (
+            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
+              <div className='relative mb-3 flex flex-row items-center'>
+                <Search size={18} className='text-muted-foreground absolute left-3' />
                 <Input
-                  type="text"
-                  placeholder="Search learner"
-                  className="pl-10 pr-3 py-2 border rounded-lg w-full text-sm"
+                  type='text'
+                  placeholder='Search learner'
+                  className='w-full rounded-lg border py-2 pr-3 pl-10 text-sm'
                 />
               </div>
 
-              <ul className="divide-y">
-                class schedule in order
-              </ul>
-
+              <ul className='divide-y'>class schedule in order</ul>
             </Card>
           )}
 
           {/* ATTENDANCE TRACKING */}
-          {activeTab === "attendance" && (
-            <Card className="p-5 rounded-xl shadow-sm border border-border/100 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold">Manual Attendance</h2>
+          {activeTab === 'attendance' && (
+            <Card className='border-border/100 space-y-4 rounded-xl border p-5 shadow-sm'>
+              <div className='flex items-center justify-between'>
+                <h2 className='font-semibold'>Manual Attendance</h2>
                 <button
                   onClick={() => setShowQR(!showQR)}
-                  className="flex items-center gap-2 bg-primary text-white px-3 py-2 rounded-lg text-sm"
+                  className='bg-primary flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white'
                 >
-                  <Camera /> {showQR ? "Hide QR" : "Show QR Scanner"}
+                  <Camera /> {showQR ? 'Hide QR' : 'Show QR Scanner'}
                 </button>
               </div>
 
               {showQR && (
-                <div className="flex justify-center rounded-lg bg-muted py-10 text-sm text-muted-foreground">
+                <div className='bg-muted text-muted-foreground flex justify-center rounded-lg py-10 text-sm'>
                   [Mock QR Scanner Placeholder]
                 </div>
               )}
 
-              <div className="divide-y">
+              <div className='divide-y'>
                 {roster.map((entry: any) => {
                   const enrollmentUuid = entry?.enrollment?.uuid;
                   const fullName = entry?.user?.full_name;
@@ -321,10 +319,7 @@ export default function ClassPreviewPage() {
                   const isPresent = attendance[enrollmentUuid] ?? isAttendanceMarked;
 
                   return (
-                    <div
-                      key={enrollmentUuid}
-                      className="py-2 flex items-center justify-between"
-                    >
+                    <div key={enrollmentUuid} className='flex items-center justify-between py-2'>
                       <span>{fullName}</span>
 
                       <button
@@ -341,32 +336,32 @@ export default function ClassPreviewPage() {
                             }
                           );
                         }}
-                        className={`px-3 py-1 text-xs rounded-lg ${isPresent
-                          ? " text-muted-foreground"
-                          : "text-text-muted-foreground"
-                          }`}
+                        className={`rounded-lg px-3 py-1 text-xs ${
+                          isPresent ? 'text-muted-foreground' : 'text-text-muted-foreground'
+                        }`}
                       >
-                        {isPresent ? "Present" : "Mark Present"}
+                        {isPresent ? 'Present' : 'Mark Present'}
                       </button>
                     </div>
                   );
                 })}
               </div>
-
             </Card>
           )}
 
           {/* RESOURCE DISTRIBUTION */}
-          {activeTab === "resources" && (
-            <Card className="p-5 rounded-xl shadow-sm border border-border/100">
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">Upload Class Resources</label>
-              <input type="file" multiple onChange={handleFileUpload} className="mb-4 text-sm" />
-              <ul className="list-disc pl-5 text-sm space-y-1">
+          {activeTab === 'resources' && (
+            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
+              <label className='text-muted-foreground mb-2 block text-sm font-medium'>
+                Upload Class Resources
+              </label>
+              <input type='file' multiple onChange={handleFileUpload} className='mb-4 text-sm' />
+              <ul className='list-disc space-y-1 pl-5 text-sm'>
                 {uploadedFiles.length === 0 && (
-                  <li className="text-muted-foreground">No files uploaded yet</li>
+                  <li className='text-muted-foreground'>No files uploaded yet</li>
                 )}
                 {uploadedFiles.map((file, i) => (
-                  <li key={i} className="text-muted-foreground hover:underline cursor-pointer">
+                  <li key={i} className='text-muted-foreground cursor-pointer hover:underline'>
                     {file}
                   </li>
                 ))}
@@ -375,22 +370,22 @@ export default function ClassPreviewPage() {
           )}
 
           {/* ACTIVITY LOG */}
-          {activeTab === "activity" && (
-            <Card className="p-5 rounded-xl shadow-sm border border-border/100">
-              <table className="w-full text-sm">
+          {activeTab === 'activity' && (
+            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
+              <table className='w-full text-sm'>
                 <thead>
-                  <tr className="text-left text-muted-foreground border-b">
-                    <th className="py-2">Learner</th>
-                    <th className="py-2">Activity</th>
-                    <th className="py-2">Time</th>
+                  <tr className='text-muted-foreground border-b text-left'>
+                    <th className='py-2'>Learner</th>
+                    <th className='py-2'>Activity</th>
+                    <th className='py-2'>Time</th>
                   </tr>
                 </thead>
                 <tbody>
                   {activityLog.map((log, i) => (
-                    <tr key={i} className="border-b border-border/100 hover:bg-background">
-                      <td className="py-2">{log.name}</td>
-                      <td className="py-2">{log.action}</td>
-                      <td className="py-2 text-muted-foreground">{log.time}</td>
+                    <tr key={i} className='border-border/100 hover:bg-background border-b'>
+                      <td className='py-2'>{log.name}</td>
+                      <td className='py-2'>{log.action}</td>
+                      <td className='text-muted-foreground py-2'>{log.time}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -399,22 +394,22 @@ export default function ClassPreviewPage() {
           )}
 
           {/* ASSESSMENT RUBRIC */}
-          {activeTab === "rubric" && (
-            <Card className="p-5 rounded-xl shadow-sm border border-border/100">
-              <table className="w-full text-sm">
+          {activeTab === 'rubric' && (
+            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
+              <table className='w-full text-sm'>
                 <thead>
-                  <tr className="text-left border-b">
-                    <th className="py-2">Criteria</th>
-                    <th className="py-2">Weight</th>
-                    <th className="py-2">Description</th>
+                  <tr className='border-b text-left'>
+                    <th className='py-2'>Criteria</th>
+                    <th className='py-2'>Weight</th>
+                    <th className='py-2'>Description</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rubric.map((r, i) => (
-                    <tr key={i} className="border-b hover:bg-background">
-                      <td className="py-2 font-medium">{r.criteria}</td>
-                      <td className="py-2 text-muted-foreground">{r.weight}</td>
-                      <td className="py-2">{r.description}</td>
+                    <tr key={i} className='hover:bg-background border-b'>
+                      <td className='py-2 font-medium'>{r.criteria}</td>
+                      <td className='text-muted-foreground py-2'>{r.weight}</td>
+                      <td className='py-2'>{r.description}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -423,24 +418,24 @@ export default function ClassPreviewPage() {
           )}
 
           {/* PERFORMANCE TRACKING */}
-          {activeTab === "performance" && (
-            <Card className="p-5 rounded-xl shadow-sm border border-border/100">
-              <table className="w-full text-sm">
+          {activeTab === 'performance' && (
+            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
+              <table className='w-full text-sm'>
                 <thead>
-                  <tr className="text-left border-b">
-                    <th className="py-2">Learner</th>
-                    <th className="py-2">Participation</th>
-                    <th className="py-2">Score</th>
-                    <th className="py-2">Progress</th>
+                  <tr className='border-b text-left'>
+                    <th className='py-2'>Learner</th>
+                    <th className='py-2'>Participation</th>
+                    <th className='py-2'>Score</th>
+                    <th className='py-2'>Progress</th>
                   </tr>
                 </thead>
                 <tbody>
                   {performance.map((p, i) => (
-                    <tr key={i} className="border-b hover:bg-background">
-                      <td className="py-2 font-medium">{p.name}</td>
-                      <td className="py-2">{p.participation}%</td>
-                      <td className="py-2">{p.score}%</td>
-                      <td className="py-2">{p.progress}%</td>
+                    <tr key={i} className='hover:bg-background border-b'>
+                      <td className='py-2 font-medium'>{p.name}</td>
+                      <td className='py-2'>{p.participation}%</td>
+                      <td className='py-2'>{p.score}%</td>
+                      <td className='py-2'>{p.progress}%</td>
                     </tr>
                   ))}
                 </tbody>

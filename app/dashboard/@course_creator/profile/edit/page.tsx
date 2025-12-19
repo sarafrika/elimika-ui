@@ -185,7 +185,8 @@ export default function CourseCreatorProfile() {
                       alt={`${user?.data?.first_name} ${user?.data?.last_name}`}
                     />
                     <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
-                      {`${user?.data?.first_name?.[0]?.toUpperCase() ?? ''}${user?.data?.last_name?.[0]?.toUpperCase() ?? ''}` || 'CC'}
+                      {`${user?.data?.first_name?.[0]?.toUpperCase() ?? ''}${user?.data?.last_name?.[0]?.toUpperCase() ?? ''}` ||
+                        'CC'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
@@ -412,10 +413,7 @@ export default function CourseCreatorProfile() {
             viewContent={
               <div className='space-y-6'>
                 <ProfileViewGrid>
-                  <ProfileViewField
-                    label='Primary location'
-                    value={profile?.location}
-                  />
+                  <ProfileViewField label='Primary location' value={profile?.location} />
                   <ProfileViewField
                     label='Professional headline'
                     value={profile?.professional_headline}
@@ -445,7 +443,7 @@ export default function CourseCreatorProfile() {
                       className='prose prose-sm dark:prose-invert max-w-none'
                     />
                   ) : (
-                    <p className='text-muted-foreground italic text-sm'>No biography provided</p>
+                    <p className='text-muted-foreground text-sm italic'>No biography provided</p>
                   )}
                 </div>
               </div>

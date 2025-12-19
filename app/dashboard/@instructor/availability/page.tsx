@@ -21,7 +21,10 @@ const Page = () => {
   const [transformedSlots, setTransformedSlots] = useState<any[]>([]);
 
   const { data: availabilitySlotss, refetch } = useQuery(
-    getInstructorCalendarOptions({ path: { instructorUuid: user?.instructor?.uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } })
+    getInstructorCalendarOptions({
+      path: { instructorUuid: user?.instructor?.uuid as string },
+      query: { start_date: '2025-09-11' as any, end_date: '2026-11-11' as any },
+    })
   );
 
   const { data: timetable } = useQuery({

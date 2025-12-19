@@ -20,11 +20,14 @@ import {
 } from '../../_components/class-management-form';
 
 interface TrainingPageProps {
-  classesWithCourseAndInstructor: any,
-  loading: boolean
+  classesWithCourseAndInstructor: any;
+  loading: boolean;
 }
 
-export default function TrainingsPage({ classesWithCourseAndInstructor, loading }: TrainingPageProps) {
+export default function TrainingsPage({
+  classesWithCourseAndInstructor,
+  loading,
+}: TrainingPageProps) {
   const router = useRouter();
   const qc = useQueryClient();
   const instructor = useInstructor();

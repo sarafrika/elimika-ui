@@ -6,7 +6,7 @@ export default function ParentBillingPage() {
       <CardHeader>
         <CardTitle>Billing & invoices</CardTitle>
       </CardHeader>
-      <CardContent className='text-sm text-muted-foreground'>
+      <CardContent className='text-muted-foreground text-sm'>
         Guardians with billing permissions will see invoices and payment options here soon.
       </CardContent>
     </Card>

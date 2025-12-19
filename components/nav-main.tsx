@@ -52,7 +52,8 @@ function MenuItemWithAccordion({ item, isAdmin }: { item: MenuItem; isAdmin: boo
           {/* Nested Items */}
           {isOpen && (
             <SidebarMenu className='border-border/60 ml-4 border-l pl-4'>
-              {item.items?.filter(child => (child.requiresAdmin ? isAdmin : true))
+              {item.items
+                ?.filter(child => (child.requiresAdmin ? isAdmin : true))
                 .map((child, index) => (
                   <MenuItemWithAccordion key={index} item={child} isAdmin={isAdmin} />
                 ))}

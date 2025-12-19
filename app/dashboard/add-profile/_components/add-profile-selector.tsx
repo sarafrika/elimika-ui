@@ -92,7 +92,7 @@ export default function AddProfileSelector() {
   if (availableProfiles.length === 0) {
     return (
       <div className='mx-auto max-w-2xl text-center'>
-        <div className='rounded-3xl border border-border bg-card p-12 shadow-lg shadow-primary/5'>
+        <div className='border-border bg-card shadow-primary/5 rounded-3xl border p-12 shadow-lg'>
           <h2 className='text-foreground mb-4 text-2xl font-bold'>All Profiles Added!</h2>
           <p className='text-muted-foreground mb-6'>
             You already have all available profile types. You can switch between them using the
@@ -117,7 +117,7 @@ export default function AddProfileSelector() {
             key={type.id}
             href={type.href}
             className={cn(
-              'group relative block rounded-3xl border border-border bg-card/90 p-8 shadow-lg shadow-primary/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 dark:bg-card/70',
+              'group border-border bg-card/90 shadow-primary/5 dark:bg-card/70 relative block rounded-3xl border p-8 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-4 focus-visible:outline-none',
               type.accent.cardAccent
             )}
           >
@@ -151,7 +151,7 @@ export default function AddProfileSelector() {
             <div className='flex justify-center'>
               <div
                 className={cn(
-                  'border-border text-foreground flex w-full items-center justify-center gap-3 rounded-lg border bg-card px-6 py-3 text-center font-medium transition-all duration-300',
+                  'border-border text-foreground bg-card flex w-full items-center justify-center gap-3 rounded-lg border px-6 py-3 text-center font-medium transition-all duration-300',
                   type.accent.buttonAccent
                 )}
               >
@@ -163,7 +163,7 @@ export default function AddProfileSelector() {
             {/* Decorative gradient overlay */}
             <div
               className={cn(
-                'pointer-events-none absolute inset-0 rounded-3xl bg-primary/10 opacity-0 transition-opacity duration-300 group-hover:opacity-20',
+                'bg-primary/10 pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-20',
                 type.accent.glow
               )}
             />

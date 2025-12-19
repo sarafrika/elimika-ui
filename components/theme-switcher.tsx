@@ -52,11 +52,11 @@ export function ThemeSwitcher({ size = 'default' }: { size?: 'default' | 'icon' 
       <Button
         variant='outline'
         size={size === 'icon' ? 'icon' : 'sm'}
-        className={cn('h-9 w-9 rounded-full border border-border/70 bg-card/60 shadow-sm')}
+        className={cn('border-border/70 bg-card/60 h-9 w-9 rounded-full border shadow-sm')}
         aria-label='Toggle theme'
         disabled
       >
-        <ActiveIcon className='h-4 w-4 text-muted-foreground' />
+        <ActiveIcon className='text-muted-foreground h-4 w-4' />
       </Button>
     );
   }
@@ -68,14 +68,14 @@ export function ThemeSwitcher({ size = 'default' }: { size?: 'default' | 'icon' 
           variant='outline'
           size={size === 'icon' ? 'icon' : 'default'}
           className={cn(
-            'rounded-full border border-border/70 bg-card/70 shadow-sm transition hover:border-primary/50',
+            'border-border/70 bg-card/70 hover:border-primary/50 rounded-full border shadow-sm transition',
             size === 'icon' ? 'h-10 w-10' : 'h-10 px-4'
           )}
           aria-label='Toggle theme'
         >
-          <ActiveIcon className='h-4 w-4 text-primary' />
+          <ActiveIcon className='text-primary h-4 w-4' />
           {size !== 'icon' && (
-            <span className='ml-2 text-sm text-muted-foreground'>{activeLabel}</span>
+            <span className='text-muted-foreground ml-2 text-sm'>{activeLabel}</span>
           )}
         </Button>
       </DropdownMenuTrigger>
@@ -97,14 +97,14 @@ export function ThemeSwitcher({ size = 'default' }: { size?: 'default' | 'icon' 
                 <span>{label}</span>
               </span>
               {value === 'system' && (
-                <span className='text-xs text-muted-foreground'>
+                <span className='text-muted-foreground text-xs'>
                   Device: {resolvedTheme === 'dark' ? 'Dark' : 'Light'}
                 </span>
               )}
             </span>
             <Check
               className={cn(
-                'h-4 w-4 text-primary transition-opacity',
+                'text-primary h-4 w-4 transition-opacity',
                 selectedTheme === value ? 'opacity-100' : 'opacity-0'
               )}
             />

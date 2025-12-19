@@ -3,7 +3,14 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { cn } from '@/lib/utils';
@@ -111,9 +118,7 @@ export function ParentOverviewContent() {
     if (!dashboard?.compliance_notices?.length) {
       return null;
     }
-    return dashboard.compliance_notices.find(notice =>
-      notice.code?.toLowerCase().includes('age')
-    );
+    return dashboard.compliance_notices.find(notice => notice.code?.toLowerCase().includes('age'));
   }, [dashboard?.compliance_notices]);
 
   const handleRefresh = async () => {
@@ -176,10 +181,10 @@ export function ParentOverviewContent() {
 
   return (
     <div className='space-y-6'>
-      <div className='rounded-3xl border border-border/70 bg-card p-6 shadow-sm'>
+      <div className='border-border/70 bg-card rounded-3xl border p-6 shadow-sm'>
         <div className='flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
           <div className='space-y-3'>
-            <Badge variant='outline' className='uppercase tracking-[0.3em]'>
+            <Badge variant='outline' className='tracking-[0.3em] uppercase'>
               Parent portal
             </Badge>
             <div>
@@ -222,7 +227,8 @@ export function ParentOverviewContent() {
               isDisabled={Boolean(studentsError)}
             />
             <p className='text-muted-foreground text-xs'>
-              Switching learners updates the dashboard instantly and is announced for screen readers.
+              Switching learners updates the dashboard instantly and is announced for screen
+              readers.
             </p>
           </div>
         </div>
@@ -257,11 +263,7 @@ export function ParentOverviewContent() {
               <Button size='sm' variant='outline' onClick={() => refetchDashboard()}>
                 Retry
               </Button>
-              <Button
-                size='sm'
-                variant='ghost'
-                onClick={() => setSelectedStudentId(null)}
-              >
+              <Button size='sm' variant='ghost' onClick={() => setSelectedStudentId(null)}>
                 Re-select learner
               </Button>
             </div>

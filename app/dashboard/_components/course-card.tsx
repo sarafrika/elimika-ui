@@ -70,12 +70,12 @@ export function CourseCard({
 
   return (
     <Card
-      className='group max-w-[360px] p-0 cursor-pointer rounded-lg border-[1px] border-border transition-all hover:-translate-y-1 hover:shadow-lg'
+      className='group border-border max-w-[360px] cursor-pointer rounded-lg border-[1px] p-0 transition-all hover:-translate-y-1 hover:shadow-lg'
       onClick={handleClick}
     >
       <div className='relative'>
         {/* Course Image */}
-        <div className='relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg bg-muted'>
+        <div className='bg-muted relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg'>
           {course?.banner_url ? (
             <Image
               src={course?.banner_url}

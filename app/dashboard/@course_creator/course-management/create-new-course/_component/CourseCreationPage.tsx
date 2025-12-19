@@ -182,15 +182,15 @@ export default function CourseCreationPage() {
       // @ts-expect-error
       training_requirements: Array.isArray(c.training_requirements)
         ? c.training_requirements.map(req => ({
-          uuid: req.uuid,
-          requirement_type: req.requirement_type,
-          name: req.name,
-          description: req.description ?? '',
-          quantity: req.quantity ?? undefined,
-          unit: req.unit ?? '',
-          provided_by: req.provided_by ?? 'course_creator',
-          is_mandatory: !!req.is_mandatory,
-        }))
+            uuid: req.uuid,
+            requirement_type: req.requirement_type,
+            name: req.name,
+            description: req.description ?? '',
+            quantity: req.quantity ?? undefined,
+            unit: req.unit ?? '',
+            provided_by: req.provided_by ?? 'course_creator',
+            is_mandatory: !!req.is_mandatory,
+          }))
         : [],
     });
   }, [courseId, course]);
@@ -269,33 +269,33 @@ export default function CourseCreationPage() {
   const _content =
     lesson && lessonContent
       ? lessonContent.map((item: any) => {
-        const matchedType = Array.isArray(contentTypeList?.data)
-          ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
-          : undefined;
+          const matchedType = Array.isArray(contentTypeList?.data)
+            ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
+            : undefined;
 
-        const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
+          const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
 
-        return {
-          contentType: typeName.toUpperCase() as
-            | 'AUDIO'
-            | 'VIDEO'
-            | 'TEXT'
-            | 'LINK'
-            | 'PDF'
-            | 'YOUTUBE',
-          title: item?.title || '',
-          uuid: item?.uuid || '',
-          value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
-          duration:
-            typeof item?.estimated_duration === 'string'
-              ? parseInt(item.estimated_duration, 10) || 0
-              : 0,
-          durationHours: item?.duration_hours || 0,
-          durationMinutes: item?.duration_minutes || 0,
-          contentTypeUuid: item?.content_type || '',
-          contentCategory: matchedType?.upload_category ?? '',
-        };
-      })
+          return {
+            contentType: typeName.toUpperCase() as
+              | 'AUDIO'
+              | 'VIDEO'
+              | 'TEXT'
+              | 'LINK'
+              | 'PDF'
+              | 'YOUTUBE',
+            title: item?.title || '',
+            uuid: item?.uuid || '',
+            value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
+            duration:
+              typeof item?.estimated_duration === 'string'
+                ? parseInt(item.estimated_duration, 10) || 0
+                : 0,
+            durationHours: item?.duration_hours || 0,
+            durationMinutes: item?.duration_minutes || 0,
+            contentTypeUuid: item?.content_type || '',
+            contentCategory: matchedType?.upload_category ?? '',
+          };
+        })
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
@@ -359,7 +359,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   // DELETE LESSON MUTATION
@@ -384,7 +384,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const deleteLessonContent = useMutation(deleteLessonContentMutation());
@@ -411,7 +411,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   if (creatorLoading) {
@@ -429,14 +429,14 @@ export default function CourseCreationPage() {
   return (
     <div className='relative overflow-hidden'>
       <div className='relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-12 lg:px-6 lg:py-16'>
-        <header className='rounded-[36px] border border-border bg-card/90 p-8 shadow-xl backdrop-blur lg:p-12'>
-          <span className='inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-xs font-semibold tracking-[0.4em] text-primary uppercase'>
+        <header className='border-border bg-card/90 rounded-[36px] border p-8 shadow-xl backdrop-blur lg:p-12'>
+          <span className='border-primary/40 bg-primary/10 text-primary inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs font-semibold tracking-[0.4em] uppercase'>
             Course creator studio
           </span>
-          <h1 className='mt-4 text-3xl font-semibold text-foreground sm:text-4xl'>
+          <h1 className='text-foreground mt-4 text-3xl font-semibold sm:text-4xl'>
             Design learning experiences that match your vision
           </h1>
-          <p className='mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base'>
+          <p className='text-muted-foreground mt-3 max-w-2xl text-sm sm:text-base'>
             Outline your course blueprint, orchestrate lessons, and refine assessments with
             guardrails that echo the Elimika brand.
           </p>
@@ -496,7 +496,7 @@ export default function CourseCreationPage() {
                 onAddLesson={openAddLessonModal}
                 onEditLesson={openEditLessonModal}
                 onDeleteLesson={handleDeleteLesson}
-                onReorderLessons={() => { }}
+                onReorderLessons={() => {}}
                 // lesson content
                 lessonContentsMap={lessonContentMap}
                 onAddLessonContent={openAddContentModal}
@@ -519,7 +519,7 @@ export default function CourseCreationPage() {
                   courseId={courseId as string}
                   lessonId={selectedLesson?.uuid}
                   initialValues={lessonInitialValues}
-                  onCancel={() => { }}
+                  onCancel={() => {}}
                   onSuccess={data => {
                     setCreatedCourseId(data?.uuid);
 
@@ -745,10 +745,8 @@ export default function CourseCreationPage() {
                 </div>
 
                 <div className='p-6'>
-                  <div className='mb-3 text-xl font-semibold text-foreground'>
-                    💰 Pricing
-                  </div>
-                  <div className='space-y-2 text-muted-foreground'>
+                  <div className='text-foreground mb-3 text-xl font-semibold'>💰 Pricing</div>
+                  <div className='text-muted-foreground space-y-2'>
                     <p>
                       <span className='font-medium'>Free Course:</span>{' '}
                       {/* {course?.data?.is_free ? 'Yes' : 'No'} */}
@@ -764,11 +762,11 @@ export default function CourseCreationPage() {
                       alt='upload-banner'
                       width={128}
                       height={128}
-                      className='mb-8 max-h-[250px] w-full bg-muted text-sm'
+                      className='bg-muted mb-8 max-h-[250px] w-full text-sm'
                     />
                   </div>
 
-                  <h3 className='mb-3 text-xl font-semibold text-foregrounds'>
+                  <h3 className='text-foregrounds mb-3 text-xl font-semibold'>
                     Course Information
                   </h3>
                   <div className='space-y-3'>
@@ -787,9 +785,7 @@ export default function CourseCreationPage() {
 
                 {/* Learning Objectives */}
                 <section>
-                  <h3 className='mb-3 text-xl font-semibold'>
-                    🎯 Learning Objectives
-                  </h3>
+                  <h3 className='mb-3 text-xl font-semibold'>🎯 Learning Objectives</h3>
                   <div className='html-text-preview text-muted-foreground'>
                     <HTMLTextPreview htmlContent={course?.data?.objectives as string} />
                   </div>
@@ -807,7 +803,7 @@ export default function CourseCreationPage() {
                     {course?.data?.category_names?.map((category: string, idx: number) => (
                       <span
                         key={idx}
-                        className='rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary'
+                        className='bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium'
                       >
                         {category}
                       </span>
@@ -828,7 +824,7 @@ export default function CourseCreationPage() {
                         <div key={i} className='flex flex-row gap-2'>
                           <div>
                             <span className='min-h-4 min-w-4'>
-                              <CheckCircle className='mt-1 h-4 w-4 text-success' />
+                              <CheckCircle className='text-success mt-1 h-4 w-4' />
                             </span>
                           </div>
                           <div className='flex flex-col gap-2'>
@@ -855,7 +851,7 @@ export default function CourseCreationPage() {
               </div>
             ) : (
               <div className='flex h-48 flex-col items-center justify-center text-center'>
-                <p className='mb-4 text-muted-foreground'>
+                <p className='text-muted-foreground mb-4'>
                   Please complete the course details first
                 </p>
               </div>

@@ -177,7 +177,7 @@ export function AvailabilityBooking({
           <CardContent>
             <div className='grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3'>
               {nextWeekSlots.map(slot => (
-                <Card key={slot.id} className='border border-success/30 bg-success/10'>
+                <Card key={slot.id} className='border-success/30 bg-success/10 border'>
                   <CardContent className='p-4'>
                     <div className='space-y-2'>
                       <div className='flex items-center justify-between'>
@@ -188,7 +188,7 @@ export function AvailabilityBooking({
                           {getTimeRangeLabel(slot.startTime)}
                         </Badge>
                       </div>
-                      <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                      <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                         <Clock className='h-4 w-4' />
                         <span>
                           {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
@@ -238,7 +238,7 @@ export function AvailabilityBooking({
             <div className='space-y-2'>
               <Label>Search</Label>
               <div className='relative'>
-                <Search className='absolute top-2.5 left-3 h-4 w-4 text-muted-foreground' />
+                <Search className='text-muted-foreground absolute top-2.5 left-3 h-4 w-4' />
                 <Input
                   placeholder='Search by day or time...'
                   value={searchQuery}
@@ -308,7 +308,7 @@ export function AvailabilityBooking({
         </CardHeader>
         <CardContent>
           {availableSlots?.length === 0 ? (
-            <div className='py-8 text-center text-muted-foreground'>
+            <div className='text-muted-foreground py-8 text-center'>
               <Calendar className='mx-auto mb-4 h-12 w-12 opacity-50' />
               <p>No available slots match your criteria.</p>
               <p className='text-sm'>Try adjusting your filters or check back later.</p>
@@ -318,14 +318,14 @@ export function AvailabilityBooking({
               {availableSlots?.map(slot => (
                 <div
                   key={slot.id}
-                  className='flex items-center justify-between rounded-lg border p-4 hover:bg-muted/60'
+                  className='hover:bg-muted/60 flex items-center justify-between rounded-lg border p-4'
                 >
                   <div className='flex items-center gap-4'>
                     <div className='flex flex-col'>
                       <span className='font-medium'>
                         {slot.date ? formatDate(slot.date) : `Every ${slot.day}`}
                       </span>
-                      <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                      <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                         <Clock className='h-4 w-4' />
                         <span>
                           {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
@@ -406,13 +406,13 @@ function BookingForm({
       <Card className='border-primary/30 bg-primary/10'>
         <CardContent className='p-4'>
           <div className='mb-2 flex items-center gap-2'>
-            <Calendar className='h-4 w-4 text-primary' />
+            <Calendar className='text-primary h-4 w-4' />
             <span className='font-medium'>
               {slot.date ? formatDate(slot.date) : `Every ${slot.day}`}
             </span>
           </div>
           <div className='flex items-center gap-2'>
-            <Clock className='h-4 w-4 text-primary' />
+            <Clock className='text-primary h-4 w-4' />
             <span>
               {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
             </span>

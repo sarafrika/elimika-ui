@@ -126,18 +126,22 @@ export async function fetchGuardianStudents(): Promise<GuardianLinkedStudent[]> 
 export async function fetchGuardianDashboard(
   studentUuid: string
 ): Promise<GuardianDashboardSnapshot> {
-  const response = await fetchClient.GET('/api/v1/guardians/students/{studentUuid}/dashboard' as any, {
-    params: {
-      path: { studentUuid },
-    },
-  });
+  const response = await fetchClient.GET(
+    '/api/v1/guardians/students/{studentUuid}/dashboard' as any,
+    {
+      params: {
+        path: { studentUuid },
+      },
+    }
+  );
 
   if (response.error) {
     const message =
       response.error && typeof response.error === 'string'
         ? response.error
         : 'Unable to load guardian dashboard.';
-    const status = response.response && 'status' in response.response ? response.response.status : 500;
+    const status =
+      response.response && 'status' in response.response ? response.response.status : 500;
 
     const error = new Error(message);
     (error as Error & { status?: number }).status = status;

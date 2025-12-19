@@ -205,7 +205,7 @@ export default function MetricsBreakdown({ statistics, isLoading }: MetricsBreak
               {section.metrics.map(metric => (
                 <div
                   key={`${section.key}-${metric.label}`}
-                  className='flex items-center justify-between gap-4 rounded-md border border-dashed border-border/60 px-3 py-2'
+                  className='border-border/60 flex items-center justify-between gap-4 rounded-md border border-dashed px-3 py-2'
                 >
                   <dt className='text-muted-foreground text-sm font-medium'>{metric.label}</dt>
                   <dd className='text-sm font-semibold'>{metric.value}</dd>

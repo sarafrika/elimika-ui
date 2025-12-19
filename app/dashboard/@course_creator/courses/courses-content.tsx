@@ -120,7 +120,7 @@ export default function CourseCreatorCoursesContent() {
                   <TableHead className='w-[34%]'>Course</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>
-                    <div className='flex flex-col gap-0.5' >
+                    <div className='flex flex-col gap-0.5'>
                       <p>Minimum training fee</p>
                       <p>(per person per head)</p>
                     </div>

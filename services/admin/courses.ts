@@ -47,7 +47,9 @@ function buildCourseFilters(params: AdminCourseListParams) {
   return filters;
 }
 
-export async function fetchAdminCourses(params: AdminCourseListParams = {}): Promise<AdminCourseListResult> {
+export async function fetchAdminCourses(
+  params: AdminCourseListParams = {}
+): Promise<AdminCourseListResult> {
   const { page = 0, size = 20, sortField = 'updated_date', sortOrder = 'desc' } = params;
   const pageable = {
     page,
@@ -76,7 +78,9 @@ export async function fetchAdminCourses(params: AdminCourseListParams = {}): Pro
       });
 
   if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to fetch courses');
+    throw new Error(
+      typeof response.error === 'string' ? response.error : 'Failed to fetch courses'
+    );
   }
 
   const parsed = courseListResponseSchema.parse(response.data ?? {});
@@ -97,7 +101,8 @@ export async function fetchAdminCourses(params: AdminCourseListParams = {}): Pro
   };
 }
 
-export const adminCoursesQueryKey = (params: AdminCourseListParams) => ['admin-courses', params] as const;
+export const adminCoursesQueryKey = (params: AdminCourseListParams) =>
+  ['admin-courses', params] as const;
 
 export function useAdminCourses(
   params: AdminCourseListParams,

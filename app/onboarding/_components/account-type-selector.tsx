@@ -43,12 +43,10 @@ export default function AccountTypeSelector() {
           <Link
             key={type.id}
             href={type.href}
-            className='group relative block rounded-3xl border border-border bg-card/80 p-8 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/60 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20'
+            className='group border-border bg-card/80 hover:border-primary/60 focus-visible:ring-primary/20 relative block rounded-3xl border p-8 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-4 focus-visible:outline-none'
           >
             <div className='mb-6 flex justify-center'>
-              <div
-                className='flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15 transition-all duration-300 group-hover:scale-110 group-hover:ring-primary/25'
-              >
+              <div className='bg-primary/10 text-primary ring-primary/15 group-hover:ring-primary/25 flex h-14 w-14 items-center justify-center rounded-2xl ring-1 transition-all duration-300 group-hover:scale-110'>
                 <Icon className='h-7 w-7' />
               </div>
             </div>
@@ -61,16 +59,14 @@ export default function AccountTypeSelector() {
             </div>
 
             <div className='flex justify-center'>
-              <div
-                className='border-border text-foreground group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground flex w-full items-center justify-center gap-3 rounded-lg border bg-muted/60 px-6 py-3 text-center text-sm font-medium transition-all duration-300'
-              >
+              <div className='border-border text-foreground group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground bg-muted/60 flex w-full items-center justify-center gap-3 rounded-lg border px-6 py-3 text-center text-sm font-medium transition-all duration-300'>
                 Choose {type.title}
                 <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
               </div>
             </div>
 
             <div
-              className='pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-border/60 transition duration-300 group-hover:ring-primary/40'
+              className='ring-border/60 group-hover:ring-primary/40 pointer-events-none absolute inset-0 rounded-3xl ring-1 transition duration-300'
               aria-hidden
             />
           </Link>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import DomainOverviewShell from '@/components/domain-overview-shell';
 import { Button } from '@/components/ui/button';
@@ -79,7 +79,9 @@ function MetricsGrid({ metrics }: { metrics: ReturnType<typeof buildMetricCards>
       {metrics.map(metric => (
         <Card key={metric.title} className='border-border/70'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-3'>
-            <CardTitle className='text-muted-foreground text-sm font-medium'>{metric.title}</CardTitle>
+            <CardTitle className='text-muted-foreground text-sm font-medium'>
+              {metric.title}
+            </CardTitle>
             {metric.icon}
           </CardHeader>
           <CardContent>
@@ -98,25 +100,25 @@ function buildMetricCards(analytics: CourseCreatorAnalyticsSummary) {
       title: 'Total courses',
       value: analytics.totalCourses,
       description: 'Across every status',
-      icon: <Layers className='h-5 w-5 text-primary' />,
+      icon: <Layers className='text-primary h-5 w-5' />,
     },
     {
       title: 'Published',
       value: analytics.publishedCourses,
       description: 'Live in marketplace',
-      icon: <CheckCircle2 className='h-5 w-5 text-primary' />,
+      icon: <CheckCircle2 className='text-primary h-5 w-5' />,
     },
     {
       title: 'In review',
       value: analytics.inReviewCourses,
       description: 'Awaiting quality checks',
-      icon: <Clock className='h-5 w-5 text-muted-foreground' />,
+      icon: <Clock className='text-muted-foreground h-5 w-5' />,
     },
     {
       title: 'Drafts',
       value: analytics.draftCourses,
       description: 'Ready for your next edit',
-      icon: <Sparkles className='h-5 w-5 text-muted-foreground' />,
+      icon: <Sparkles className='text-muted-foreground h-5 w-5' />,
     },
   ];
 }
@@ -126,7 +128,7 @@ function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetiz
     <Card className='border-border/70'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
-          <DollarSign className='h-5 w-5 text-primary' />
+          <DollarSign className='text-primary h-5 w-5' />
           Monetization snapshot
         </CardTitle>
         <CardDescription>
@@ -183,7 +185,7 @@ function TrainingRequirementsCard({
     <Card className='border-border/70'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
-          <ListCheck className='h-5 w-5 text-primary' />
+          <ListCheck className='text-primary h-5 w-5' />
           Training requirements
         </CardTitle>
         <CardDescription>
@@ -209,9 +211,9 @@ function TrainingRequirementsCard({
 
 function VerificationCard({ verification }: { verification: CourseCreatorVerificationStatus }) {
   const statusIcon = verification.adminVerified ? (
-    <ShieldCheck className='h-5 w-5 text-primary' />
+    <ShieldCheck className='text-primary h-5 w-5' />
   ) : (
-    <ShieldAlert className='h-5 w-5 text-muted-foreground' />
+    <ShieldAlert className='text-muted-foreground h-5 w-5' />
   );
 
   const statusCopy = verification.adminVerified
@@ -280,7 +282,7 @@ function QuickActionsCard() {
 
 function RequirementStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className='rounded-2xl border border-border/60 bg-muted/30 p-3'>
+    <div className='border-border/60 bg-muted/30 rounded-2xl border p-3'>
       <p className='text-muted-foreground text-xs uppercase'>{label}</p>
       <p className='text-foreground text-xl font-semibold'>{value}</p>
     </div>
@@ -291,7 +293,7 @@ function DetailRow({ label, value }: { label: string; value: string | number }) 
   return (
     <div className='flex items-center justify-between gap-3'>
       <span className='text-muted-foreground text-xs uppercase'>{label}</span>
-      <span className='text-sm font-semibold text-foreground'>{value}</span>
+      <span className='text-foreground text-sm font-semibold'>{value}</span>
     </div>
   );
 }
@@ -306,9 +308,9 @@ function ActionTile({
   href: string;
 }) {
   return (
-    <div className='flex h-full flex-col justify-between rounded-2xl border border-border/70 bg-muted/20 p-3 text-sm'>
+    <div className='border-border/70 bg-muted/20 flex h-full flex-col justify-between rounded-2xl border p-3 text-sm'>
       <div className='space-y-1'>
-        <p className='font-semibold text-foreground'>{title}</p>
+        <p className='text-foreground font-semibold'>{title}</p>
         <p className='text-muted-foreground text-xs'>{description}</p>
       </div>
       <Button asChild variant='ghost' size='sm' className='mt-3 justify-start px-0 text-sm'>

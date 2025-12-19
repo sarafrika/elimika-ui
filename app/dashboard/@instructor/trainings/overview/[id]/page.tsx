@@ -15,7 +15,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassRoster } from '@/hooks/use-class-roster';
@@ -26,7 +26,7 @@ import {
   getClassDefinitionOptions,
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
-  getInstructorScheduleOptions
+  getInstructorScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -56,7 +56,11 @@ import { useEffect, useState } from 'react';
 import { momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { MonthlyAvailabilityGrid } from '../../../availability/components/monthly-availability-grid';
-import { AvailabilityData, ClassScheduleItem, convertToCalendarEvents } from '../../../availability/components/types';
+import {
+  AvailabilityData,
+  ClassScheduleItem,
+  convertToCalendarEvents,
+} from '../../../availability/components/types';
 
 const _localizer = momentLocalizer(moment);
 
@@ -142,7 +146,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const shareToSocial = (platform: string) => {
@@ -177,7 +181,6 @@ export default function ClassPreviewPage() {
       setEndDate(formatDate(classData?.default_end_time as any));
     }
   }, [classData]);
-
 
   const { data: timetable, isLoading: timetableIsLoading } = useQuery({
     ...getInstructorScheduleOptions({
@@ -214,7 +217,6 @@ export default function ClassPreviewPage() {
     }));
   }, [timetable?.data]);
 
-
   const { roster } = useClassRoster(classId);
 
   if (isLoading || isAllLessonsDataLoading || classIsLoading) {
@@ -240,14 +242,14 @@ export default function ClassPreviewPage() {
           <div>
             {classData?.is_active ? (
               <>
-                <h1 className='text-2xl font-semibold text-success'>Active Class</h1>
+                <h1 className='text-success text-2xl font-semibold'>Active Class</h1>
                 <p className='text-muted-foreground'>
                   Your class is live and accepting new students.
                 </p>
               </>
             ) : (
               <>
-                <h1 className='text-2xl font-semibold text-foreground'>Inactive Class</h1>
+                <h1 className='text-foreground text-2xl font-semibold'>Inactive Class</h1>
                 <p className='text-muted-foreground'>
                   This class is currently not active. Activate it to allow student enrollment.
                 </p>
@@ -272,10 +274,10 @@ export default function ClassPreviewPage() {
           <Card className='border-success/30 bg-success/10'>
             <CardContent className='p-4'>
               <div className='flex items-center gap-3'>
-                <CheckCircle className='h-6 w-6 text-success' />
+                <CheckCircle className='text-success h-6 w-6' />
                 <div>
-                  <h3 className='font-semibold text-success'>Class Published Successfully!</h3>
-                  <p className='text-sm text-success'>
+                  <h3 className='text-success font-semibold'>Class Published Successfully!</h3>
+                  <p className='text-success text-sm'>
                     Your class is now live and students can enroll. Share the registration link to
                     start getting enrollments.
                   </p>
@@ -289,7 +291,7 @@ export default function ClassPreviewPage() {
               <div className='flex items-center gap-3'>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
-                  className='h-6 w-6 text-warning'
+                  className='text-warning h-6 w-6'
                   fill='none'
                   viewBox='0 0 24 24'
                   stroke='currentColor'
@@ -302,8 +304,8 @@ export default function ClassPreviewPage() {
                   />
                 </svg>
                 <div>
-                  <h3 className='font-semibold text-warning'>Class is Currently Inactive</h3>
-                  <p className='text-sm text-warning'>
+                  <h3 className='text-warning font-semibold'>Class is Currently Inactive</h3>
+                  <p className='text-warning text-sm'>
                     Students cannot enroll in this class until it’s activated. You can activate it
                     from your dashboard.
                   </p>
@@ -325,7 +327,7 @@ export default function ClassPreviewPage() {
                   <RichTextRenderer maxChars={100} htmlString={classData?.description as string} />
                 </div>
               )}
-              <Badge className='mt-2 border-success/30 bg-success/10 text-success'>
+              <Badge className='border-success/30 bg-success/10 text-success mt-2'>
                 Published/Draft
               </Badge>
             </div>
@@ -392,7 +394,9 @@ export default function ClassPreviewPage() {
             </div>
             <div className='flex items-center gap-2'>
               <Users className='text-muted-foreground h-4 w-4' />
-              <span>{roster?.length} / {classData?.max_participants} students</span>
+              <span>
+                {roster?.length} / {classData?.max_participants} students
+              </span>
             </div>
           </div>
 
@@ -478,56 +482,57 @@ export default function ClassPreviewPage() {
             <CardHeader>
               <CardTitle>Weekly Schedule</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className='space-y-6'>
               {/* Display Formatted Dates */}
-              <div className="text-sm text-muted-foreground">
-                <span className="font-medium">Academic Period: </span>
+              <div className='text-muted-foreground text-sm'>
+                <span className='font-medium'>Academic Period: </span>
                 {/* {formattedStart} – {formattedEnd} */}
               </div>
 
               {/* Date Inputs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <Label className="text-sm font-medium mb-1">Start Date</Label>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <div className='flex flex-col'>
+                  <Label className='mb-1 text-sm font-medium'>Start Date</Label>
                   <Input
-                    type="date"
+                    type='date'
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="mt-1"
+                    onChange={e => setStartDate(e.target.value)}
+                    className='mt-1'
                   />
                 </div>
 
-                <div className="flex flex-col">
-                  <Label className="text-sm font-medium mb-1">End Date</Label>
+                <div className='flex flex-col'>
+                  <Label className='mb-1 text-sm font-medium'>End Date</Label>
                   <Input
-                    type="date"
+                    type='date'
                     value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="mt-1"
+                    onChange={e => setEndDate(e.target.value)}
+                    className='mt-1'
                   />
                 </div>
               </div>
 
               {/* Timetable Section */}
               {timetableIsLoading ? (
-                <div className="space-y-4 p-4">
+                <div className='space-y-4 p-4'>
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="h-16 w-full bg-muted animate-pulse rounded-lg" />
+                    <div key={i} className='bg-muted h-16 w-full animate-pulse rounded-lg' />
                   ))}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className='space-y-4'>
+                  <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                     <span>
                       You have {timetable?.data?.length ?? 0} class instance
-                      {timetable?.data?.length === 1 ? '' : 's'} under this class for the academic period.
+                      {timetable?.data?.length === 1 ? '' : 's'} under this class for the academic
+                      period.
                     </span>
                   </div>
 
-                  <div className="border-t border-border pt-4">
+                  <div className='border-border border-t pt-4'>
                     <MonthlyAvailabilityGrid
                       availabilityData={availabilityData}
-                      onAvailabilityUpdate={() => { }}
+                      onAvailabilityUpdate={() => {}}
                       isEditing={false}
                       classes={[]}
                     />
@@ -535,7 +540,6 @@ export default function ClassPreviewPage() {
                 </div>
               )}
             </CardContent>
-
           </Card>
         </TabsContent>
 
@@ -546,11 +550,9 @@ export default function ClassPreviewPage() {
 
               {lessonsWithContent?.length === 0 && (
                 <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg p-6 text-center text-sm'>
-                  <FileQuestion className='mb-3 h-8 w-8 text-muted-foreground' />
+                  <FileQuestion className='text-muted-foreground mb-3 h-8 w-8' />
                   <h4 className='font-medium'>No Class Resources</h4>
-                  <p>
-                    This class doesn&apos;t have any resources/content yet.
-                  </p>
+                  <p>This class doesn&apos;t have any resources/content yet.</p>
                 </div>
               )}
 
@@ -568,7 +570,7 @@ export default function ClassPreviewPage() {
                     return (
                       <div
                         key={c.uuid}
-                        className='flex items-center justify-between rounded-lg p-3 hover:bg-card'
+                        className='hover:bg-card flex items-center justify-between rounded-lg p-3'
                       >
                         <div className='flex items-center gap-3'>
                           {getResourceIcon(contentTypeName)}
@@ -604,11 +606,11 @@ export default function ClassPreviewPage() {
                 return (
                   <div
                     key={index}
-                    className='flex items-center justify-between rounded-lg bg-muted/60 p-3'
+                    className='bg-muted/60 flex items-center justify-between rounded-lg p-3'
                   >
                     <div className='flex items-center gap-3'>
-                      <div className='flex min-h-8 min-w-8 items-center justify-center rounded-full bg-primary/10'>
-                        <span className='text-sm font-medium text-primary'>
+                      <div className='bg-primary/10 flex min-h-8 min-w-8 items-center justify-center rounded-full'>
+                        <span className='text-primary text-sm font-medium'>
                           {assessment?.assessment_type?.charAt(0)}
                         </span>
                       </div>
@@ -627,25 +629,23 @@ export default function ClassPreviewPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="students" className="space-y-4">
+        <TabsContent value='students' className='space-y-4'>
           <Card>
             <CardHeader>
               <CardTitle>Enrolled Students</CardTitle>
             </CardHeader>
 
             <CardContent>
-              {(!roster || roster.length === 0) ? (
-                <div className="py-8 text-center">
-                  <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                  <h3 className="mb-2 font-medium text-foreground">
-                    No students enrolled yet
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
+              {!roster || roster.length === 0 ? (
+                <div className='py-8 text-center'>
+                  <Users className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                  <h3 className='text-foreground mb-2 font-medium'>No students enrolled yet</h3>
+                  <p className='text-muted-foreground text-sm'>
                     Share your registration link to start getting enrollments
                   </p>
                 </div>
               ) : (
-                <div className="rounded-md border">
+                <div className='rounded-md border'>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -666,27 +666,23 @@ export default function ClassPreviewPage() {
                         return (
                           <TableRow key={index}>
                             {/* NAME */}
-                            <TableCell className="font-medium">
-                              {user?.full_name || "Unknown Student"}
+                            <TableCell className='font-medium'>
+                              {user?.full_name || 'Unknown Student'}
                             </TableCell>
 
                             {/* EMAIL */}
-                            <TableCell>{user?.email || "--"}</TableCell>
+                            <TableCell>{user?.email || '--'}</TableCell>
 
                             {/* PRIMARY GUARDIAN */}
-                            <TableCell>
-                              {student?.primaryGuardianContact || "--"}
-                            </TableCell>
+                            <TableCell>{student?.primaryGuardianContact || '--'}</TableCell>
 
                             {/* SECONDARY GUARDIAN */}
-                            <TableCell>
-                              {student?.secondaryGuardianContact || "--"}
-                            </TableCell>
+                            <TableCell>{student?.secondaryGuardianContact || '--'}</TableCell>
 
                             {/* STATUS */}
                             <TableCell>
-                              <Badge variant="success">
-                                {entry.enrollment?.status || "UNKNOWN"}
+                              <Badge variant='success'>
+                                {entry.enrollment?.status || 'UNKNOWN'}
                               </Badge>
                             </TableCell>
                           </TableRow>

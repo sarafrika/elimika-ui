@@ -4,13 +4,7 @@ import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/ui/dialog';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
@@ -18,7 +12,7 @@ import { useCourseRubrics } from '@/hooks/use-course-rubric';
 import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
-  getCourseLessonsOptions
+  getCourseLessonsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -47,8 +41,17 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
   useEffect(() => {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      { id: 'course-management', title: 'Course Management', url: '/dashboard/course-management/drafts' },
-      { id: 'preview', title: 'Preview', url: `/dashboard/course-management/preview/${courseId}`, isLast: true },
+      {
+        id: 'course-management',
+        title: 'Course Management',
+        url: '/dashboard/course-management/drafts',
+      },
+      {
+        id: 'preview',
+        title: 'Preview',
+        url: `/dashboard/course-management/preview/${courseId}`,
+        isLast: true,
+      },
     ]);
   }, [replaceBreadcrumbs, courseId]);
 
@@ -82,16 +85,12 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
     enabled: !!courseId,
   });
 
-  const {
-    data: courseRubrics,
-    isLoading: rubric,
-    errors,
-  } = useCourseRubrics(courseId as string);
+  const { data: courseRubrics, isLoading: rubric, errors } = useCourseRubrics(courseId as string);
 
   if (isLoading) {
     return (
       <div className='flex flex-col gap-4'>
-        <div className='h-48 w-full animate-pulse rounded bg-muted'></div>
+        <div className='bg-muted h-48 w-full animate-pulse rounded'></div>
         <div className='flex items-center justify-center'>
           <Spinner />
         </div>
@@ -103,11 +102,11 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
     <div className='mx-auto max-w-5xl space-y-10 p-6'>
       {/* Banner */}
       {course?.banner_url && (
-        <div className="relative h-60 w-full overflow-hidden rounded-lg shadow-md">
+        <div className='relative h-60 w-full overflow-hidden rounded-lg shadow-md'>
           <Image
             src={course.banner_url}
-            alt="Course banner"
-            className="object-cover w-full h-full"
+            alt='Course banner'
+            className='h-full w-full object-cover'
             priority
             width={1200}
             height={300}
@@ -119,11 +118,11 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
       <section className='flex flex-col gap-4 border-b pb-6 md:flex-row md:items-center md:justify-between'>
         <div className='flex items-center gap-4'>
           {course?.thumbnail_url && (
-            <div className="relative w-20 h-20 rounded-md overflow-hidden shadow-sm">
+            <div className='relative h-20 w-20 overflow-hidden rounded-md shadow-sm'>
               <Image
                 src={course.thumbnail_url}
-                alt="Course thumbnail"
-                className="w-full h-full object-cover"
+                alt='Course thumbnail'
+                className='h-full w-full object-cover'
                 priority
                 width={20}
                 height={20}
@@ -138,7 +137,9 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
             </p>
             <div className='mt-2 flex flex-wrap items-center gap-2'>
               {course?.category_names?.map((cat: string) => (
-                <Badge key={cat} variant='secondary'>{cat}</Badge>
+                <Badge key={cat} variant='secondary'>
+                  {cat}
+                </Badge>
               ))}
               {course?.difficulty_uuid && (
                 <Badge variant='outline' className='text-xs'>
@@ -164,9 +165,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
       <Card>
         <CardHeader>
           <CardTitle>Course Overview</CardTitle>
-          <CardDescription>
-            A quick summary of what this course offers.
-          </CardDescription>
+          <CardDescription>A quick summary of what this course offers.</CardDescription>
         </CardHeader>
         <CardContent>
           <HTMLTextPreview htmlContent={course?.description ?? 'No description provided.'} />
@@ -207,11 +206,11 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
               .map((lesson: any) => (
                 <div key={lesson.uuid} className='border-b pb-4 last:border-0'>
                   <div className='flex items-center gap-2'>
-                    <CheckCircle className='text-green-500 h-4 w-4' />
+                    <CheckCircle className='h-4 w-4 text-green-500' />
                     <h3 className='font-semibold'>{lesson.title}</h3>
                   </div>
                   <RichTextRenderer htmlString={lesson.description ?? 'No description.'} />
-                  <p className='mt-1 text-sm text-muted-foreground'>
+                  <p className='text-muted-foreground mt-1 text-sm'>
                     <Clock className='mr-1 inline-block h-4 w-4' /> {lesson.duration_display}
                   </p>
                 </div>
@@ -237,47 +236,41 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         <CardContent>
           {courseRubrics?.length ? (
             courseRubrics.map((assessment: any) => (
-              <div key={assessment.uuid} className='border-b pb-4 pt-2 last:border-0'>
+              <div key={assessment.uuid} className='border-b pt-2 pb-4 last:border-0'>
                 <div className='flex items-center gap-2'>
-                  <BookOpenCheck className='text-blue-500 h-4 w-4' />
+                  <BookOpenCheck className='h-4 w-4 text-blue-500' />
                   <h3 className='font-semibold'>{assessment.rubric.title}</h3>
                 </div>
                 <RichTextRenderer htmlString={assessment.rubric.description ?? 'No description.'} />
 
-                <div className="flex flex-row space-x-4 mt-1">
+                <div className='mt-1 flex flex-row space-x-4'>
                   {assessment.rubric?.duration_display && (
-                    <p className="text-sm text-muted-foreground">
-                      <Clock className="mr-1 inline-block h-4 w-4" />
+                    <p className='text-muted-foreground text-sm'>
+                      <Clock className='mr-1 inline-block h-4 w-4' />
                       {assessment.rubric.duration_display}
                     </p>
                   )}
 
                   {assessment.rubric.total_weight != null && (
-                    <p className="text-sm text-muted-foreground">
-                      <Scale className="mr-1 inline-block h-4 w-4" />
+                    <p className='text-muted-foreground text-sm'>
+                      <Scale className='mr-1 inline-block h-4 w-4' />
                       Weight: {assessment.rubric.total_weight}%
                     </p>
                   )}
 
-
                   {assessment.rubric.min_passing_score != null && (
-                    <p className="text-sm text-muted-foreground">
-                      <CheckCircle className="mr-1 inline-block h-4 w-4" />
+                    <p className='text-muted-foreground text-sm'>
+                      <CheckCircle className='mr-1 inline-block h-4 w-4' />
                       Passing score: {assessment.rubric.min_passing_score}%
                     </p>
                   )}
 
                   {assessment.rubric?.is_published ? (
-                    <p className="text-sm text-muted-foreground">
-                      Published                    </p>
+                    <p className='text-muted-foreground text-sm'>Published </p>
                   ) : (
-                    <p className="text-sm text-muted-foreground italic">
-                      Not published
-                    </p>
+                    <p className='text-muted-foreground text-sm italic'>Not published</p>
                   )}
-
                 </div>
-
               </div>
             ))
           ) : (
@@ -301,14 +294,30 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         <CardContent className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
           <DetailItem icon={Users} label='Class Limit' value={course?.class_limit || 'Unlimited'} />
           <DetailItem icon={Clock} label='Total Duration' value={course?.total_duration_display} />
-          <DetailItem icon={GraduationCap} label='Enrollment' value={course?.accepts_new_enrollments ? 'Open' : 'Closed'} />
+          <DetailItem
+            icon={GraduationCap}
+            label='Enrollment'
+            value={course?.accepts_new_enrollments ? 'Open' : 'Closed'}
+          />
           <DetailItem icon={Layers} label='Lifecycle Stage' value={course?.lifecycle_stage} />
-          <DetailItem icon={Video} label='Intro Video' value={course?.intro_video_url ? 'Available' : 'Not provided'} />
-          <DetailItem icon={BookOpen} label='Minimum Training Fee (per hour per head)' value={`KES ${course?.minimum_training_fee}`} />
-          <DetailItem icon={CheckCircle} label='Revenue Split' value={`Instructor: ${course?.instructor_share_percentage}% / Creator: ${course?.creator_share_percentage}%`} />
+          <DetailItem
+            icon={Video}
+            label='Intro Video'
+            value={course?.intro_video_url ? 'Available' : 'Not provided'}
+          />
+          <DetailItem
+            icon={BookOpen}
+            label='Minimum Training Fee (per hour per head)'
+            value={`KES ${course?.minimum_training_fee}`}
+          />
+          <DetailItem
+            icon={CheckCircle}
+            label='Revenue Split'
+            value={`Instructor: ${course?.instructor_share_percentage}% / Creator: ${course?.creator_share_percentage}%`}
+          />
           <DetailItem
             icon={Clock}
-            label="Created On"
+            label='Created On'
             value={course?.created_date ? format(new Date(course.created_date), 'PPP') : '—'}
           />
         </CardContent>
@@ -319,7 +328,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         <DialogContent className='sm:max-w-md'>
           <DialogHeader>
             <h3 className='text-lg font-semibold'>Edit Course</h3>
-            <p className='text-sm text-muted-foreground'>
+            <p className='text-muted-foreground text-sm'>
               Editing will unpublish this course. It will need re-approval before going live again.
             </p>
           </DialogHeader>
@@ -341,9 +350,9 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
 function DetailItem({ icon: Icon, label, value }: any) {
   return (
     <div className='flex items-center text-sm'>
-      <Icon className='mr-2 h-4 w-4 text-muted-foreground' />
+      <Icon className='text-muted-foreground mr-2 h-4 w-4' />
       <span className='font-medium'>{label}:</span>
-      <span className='ml-1 text-muted-foreground'>{value}</span>
+      <span className='text-muted-foreground ml-1'>{value}</span>
     </div>
   );
 }
@@ -351,9 +360,9 @@ function DetailItem({ icon: Icon, label, value }: any) {
 function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: any) {
   return (
     <div className='flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center'>
-      <Icon className='mb-3 h-8 w-8 text-muted-foreground' />
+      <Icon className='text-muted-foreground mb-3 h-8 w-8' />
       <h3 className='text-lg font-semibold'>{title}</h3>
-      <p className='mt-1 text-sm text-muted-foreground'>{description}</p>
+      <p className='text-muted-foreground mt-1 text-sm'>{description}</p>
       {actionLabel && (
         <Button variant='outline' className='mt-4' onClick={onAction}>
           + {actionLabel}

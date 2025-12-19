@@ -10,7 +10,14 @@ import type {
   AdminDataTableSearch,
 } from './types';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -62,17 +69,22 @@ export function AdminDataTable<TData>({
       <CardHeader className='space-y-4'>
         <div className='flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between'>
           <div>
-            <Badge variant='outline' className='border-primary/40 bg-primary/10 text-xs font-semibold uppercase tracking-wide'>
+            <Badge
+              variant='outline'
+              className='border-primary/40 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
+            >
               Administrative
             </Badge>
             <CardTitle className='mt-2 text-xl font-semibold'>{title}</CardTitle>
             {description ? (
-              <CardDescription className='max-w-2xl text-sm leading-relaxed'>{description}</CardDescription>
+              <CardDescription className='max-w-2xl text-sm leading-relaxed'>
+                {description}
+              </CardDescription>
             ) : null}
           </div>
           {headerActions ? <div className='flex items-center gap-2'>{headerActions}</div> : null}
         </div>
-        {search || (filters?.length) ? (
+        {search || filters?.length ? (
           <AdminDataTableToolbar search={search} filters={filters} />
         ) : null}
       </CardHeader>
@@ -82,7 +94,11 @@ export function AdminDataTable<TData>({
             <TableHeader>
               <TableRow>
                 {columns.map(column => (
-                  <TableHead key={column.id} className={column.className} style={column.width ? { width: column.width } : undefined}>
+                  <TableHead
+                    key={column.id}
+                    className={column.className}
+                    style={column.width ? { width: column.width } : undefined}
+                  >
                     {column.header}
                   </TableHead>
                 ))}
@@ -105,7 +121,7 @@ export function AdminDataTable<TData>({
                       <TableRow
                         key={rowId}
                         className={cn(
-                          'transition-colors hover:bg-muted/40',
+                          'hover:bg-muted/40 transition-colors',
                           onRowClick ? 'cursor-pointer' : undefined,
                           selectedId && rowId === selectedId ? 'bg-primary/5' : undefined
                         )}

@@ -64,12 +64,12 @@ const DateTimeModal: React.FC<DateTimeModalProps> = ({ isOpen, onClose, onSave, 
         </div>
 
         <div className='flex justify-end gap-3 pt-4'>
-          <button onClick={onClose} className='rounded bg-muted px-4 py-2 hover:bg-muted/80'>
+          <button onClick={onClose} className='bg-muted hover:bg-muted/80 rounded px-4 py-2'>
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className='rounded bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90'
+            className='bg-primary text-primary-foreground hover:bg-primary/90 rounded px-4 py-2'
           >
             {pending ? <Spinner /> : 'Save'}
           </button>

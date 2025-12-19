@@ -65,9 +65,7 @@ const resolveStatusVariant = (
     return 'warning';
   }
 
-  if (
-    ['failed', 'error', 'critical', 'rejected', 'blocked', 'cancelled'].includes(normalized)
-  ) {
+  if (['failed', 'error', 'critical', 'rejected', 'blocked', 'cancelled'].includes(normalized)) {
     return 'destructive';
   }
 
@@ -82,8 +80,7 @@ const formatStatusLabel = (status: string): string =>
     .join(' ');
 
 const getEventIcon = (event: AdminActivityEvent) => {
-  const category =
-    event.category ?? event.domain ?? event.event_type ?? event.type ?? '';
+  const category = event.category ?? event.domain ?? event.event_type ?? event.type ?? '';
 
   switch (category.toLowerCase()) {
     case 'user':
@@ -130,15 +127,10 @@ const resolveEventTimestamp = (event: AdminActivityEvent): string => {
 };
 
 const resolveEventSummary = (event: AdminActivityEvent): string =>
-  event.summary ??
-  event.message ??
-  event.description ??
-  event.title ??
-  'Platform update recorded.';
+  event.summary ?? event.message ?? event.description ?? event.title ?? 'Platform update recorded.';
 
 const resolveEventCategoryLabel = (event: AdminActivityEvent): string | null => {
-  const category =
-    event.category ?? event.domain ?? event.event_type ?? event.type ?? null;
+  const category = event.category ?? event.domain ?? event.event_type ?? event.type ?? null;
   return category ? formatStatusLabel(category) : null;
 };
 
@@ -155,9 +147,7 @@ const extractMetadataEntries = (event: AdminActivityEvent) => {
     .filter(
       ([, value]) =>
         value !== null &&
-        (typeof value === 'string' ||
-          typeof value === 'number' ||
-          typeof value === 'boolean')
+        (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
     )
     .slice(0, 3);
 };
@@ -329,8 +319,7 @@ export default function ActivityFeed({
   error,
   onRetry,
 }: ActivityFeedProps) {
-  const derivedEvents =
-    events.length === 0 ? buildDerivedEventsFromStatistics(statistics) : [];
+  const derivedEvents = events.length === 0 ? buildDerivedEventsFromStatistics(statistics) : [];
 
   const items = events.length > 0 ? events : derivedEvents;
   const showLoading = isLoading || isEventsLoading;
@@ -415,7 +404,7 @@ export default function ActivityFeed({
                         <div className='flex flex-wrap items-center gap-2'>
                           <p className='text-sm font-medium'>
                             {actorLabel ? `${actorLabel} · ` : ''}
-                            <span className='font-normal text-muted-foreground'>{summary}</span>
+                            <span className='text-muted-foreground font-normal'>{summary}</span>
                           </p>
                           {categoryLabel ? (
                             <Badge variant='outline' className='text-xs uppercase'>
@@ -425,12 +414,12 @@ export default function ActivityFeed({
                         </div>
 
                         {metadataEntries.length > 0 ? (
-                          <div className='text-xs text-muted-foreground'>
+                          <div className='text-muted-foreground text-xs'>
                             <ul className='flex flex-wrap gap-x-4 gap-y-1'>
                               {metadataEntries.map(([key, value]) => (
                                 <li key={key} className='flex items-center gap-1 capitalize'>
-                                  <span className='uppercase tracking-wide'>{key}:</span>
-                                  <span className='font-medium text-foreground'>
+                                  <span className='tracking-wide uppercase'>{key}:</span>
+                                  <span className='text-foreground font-medium'>
                                     {typeof value === 'number'
                                       ? value.toLocaleString()
                                       : String(value)}
@@ -461,7 +450,7 @@ export default function ActivityFeed({
               })}
             </div>
           ) : (
-            <div className='flex h-32 flex-col items-center justify-center text-center text-sm text-muted-foreground'>
+            <div className='text-muted-foreground flex h-32 flex-col items-center justify-center text-center text-sm'>
               <Shield className='mb-2 h-6 w-6' />
               No recent activity available yet.
             </div>

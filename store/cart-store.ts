@@ -9,9 +9,9 @@ type CartStore = {
 
 export const useCartStore = create<CartStore>()(
   persist(
-    (set) => ({
+    set => ({
       cartId: null,
-      setCartId: (id) => set({ cartId: id }),
+      setCartId: id => set({ cartId: id }),
       clearCart: () => set({ cartId: null }),
     }),
     {

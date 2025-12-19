@@ -2,13 +2,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '@/components/ui/dialog';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { getInstructorRatingSummaryOptions, getInstructorSkillsOptions, getUserByUuidOptions, searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
+  getInstructorRatingSummaryOptions,
+  getInstructorSkillsOptions,
+  getUserByUuidOptions,
+  searchTrainingApplicationsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Briefcase, Building, MapPin, Star, Users, Video } from 'lucide-react';
 import { InstructorSkillCard } from '../../@instructor/profile/skills/_component/instructor-skill-card';
@@ -27,16 +27,19 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
   const user = data?.data as any;
 
   const { data: skills } = useQuery({
-    ...getInstructorSkillsOptions({ query: { pageable: {} }, path: { instructorUuid: instructor?.uuid as string } }),
+    ...getInstructorSkillsOptions({
+      query: { pageable: {} },
+      path: { instructorUuid: instructor?.uuid as string },
+    }),
     enabled: !!instructor.uuid,
-  })
+  });
   const instructorSkills = skills?.data?.content || [];
   const skillNames = instructorSkills.map(skill => skill.skill_name);
 
   const { data: reviews } = useQuery({
     ...getInstructorRatingSummaryOptions({ path: { instructorUuid: instructor?.uuid as string } }),
     enabled: !!instructor.uuid,
-  })
+  });
   const instructorReviews = reviews?.data;
 
   const { data: appliedCourses } = useQuery({
@@ -77,13 +80,12 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
               <span className='text-muted-foreground text-sm'>
                 {instructorReviews?.review_count} reviews
               </span>
-              <div className="flex flex-row items-center gap-2">
-                <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                <span className="text-sm">
+              <div className='flex flex-row items-center gap-2'>
+                <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
+                <span className='text-sm'>
                   {(instructorReviews?.average_rating ?? 0).toFixed(1)}
                 </span>
               </div>
-
             </div>
           </div>
         </div>
@@ -123,63 +125,57 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
         </div>
 
         {/* Specializations */}
-        <div className="flex w-full flex-wrap gap-2 min-h-6">
+        <div className='flex min-h-6 w-full flex-wrap gap-2'>
           {skillNames?.length > 0 ? (
             <>
               {skillNames.slice(0, 3).map((spec, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
+                <Badge key={index} variant='outline' className='text-xs'>
                   {spec}
                 </Badge>
               ))}
 
               {skillNames.length > 3 && (
-                <Badge variant="outline" className="text-xs">
+                <Badge variant='outline' className='text-xs'>
                   +{skillNames.length - 3} more
                 </Badge>
               )}
             </>
           ) : (
-            <span className="text-xs text-muted-foreground">
-              No skills added
-            </span>
+            <span className='text-muted-foreground text-xs'>No skills added</span>
           )}
 
           {skillNames?.length > 0 && (
-            <div className="flex w-full mt-1 justify-end">
+            <div className='mt-1 flex w-full justify-end'>
               <Dialog>
                 <DialogTrigger asChild>
-                  <div className="flex cursor-pointer items-center gap-2 text-sm text-primary underline">
+                  <div className='text-primary flex cursor-pointer items-center gap-2 text-sm underline'>
                     View Instructor Skill Card
                   </div>
                 </DialogTrigger>
 
-                <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+                <DialogContent className='max-h-[85vh] max-w-2xl overflow-y-auto'>
                   <DialogHeader />
-                  <InstructorSkillCard
-                    instructor={instructor}
-                    skills={instructorSkills}
-                  />
+                  <InstructorSkillCard instructor={instructor} skills={instructorSkills} />
                 </DialogContent>
               </Dialog>
             </div>
           )}
         </div>
 
-
         {/* Rate */}
         <div className='border-border border-t pt-3'>
           <div className='flex items-center justify-between'>
             <div>
-              <p className="text-muted-foreground text-sm">Starting from</p>
+              <p className='text-muted-foreground text-sm'>Starting from</p>
 
               {matchedCourse ? (
-                <p className="text-lg">
-                  KES {matchedCourse.rate_card?.private_online_rate ?? "N/A"} -{" "}
-                  {matchedCourse.rate_card?.private_inperson_rate ?? "N/A"}
-                  <span className="text-muted-foreground text-sm">/hour</span>
+                <p className='text-lg'>
+                  KES {matchedCourse.rate_card?.private_online_rate ?? 'N/A'} -{' '}
+                  {matchedCourse.rate_card?.private_inperson_rate ?? 'N/A'}
+                  <span className='text-muted-foreground text-sm'>/hour</span>
                 </p>
               ) : (
-                <p className="text-sm text-muted-foreground">Hourly rate not available</p>
+                <p className='text-muted-foreground text-sm'>Hourly rate not available</p>
               )}
             </div>
 
@@ -192,4 +188,3 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
     </Card>
   );
 };
-

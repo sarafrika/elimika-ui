@@ -53,7 +53,7 @@ export function VerificationSnapshot({ statistics }: VerificationSnapshotProps) 
         {items.map(item => (
           <div
             key={item.label}
-            className='flex items-center justify-between gap-4 rounded-xl border border-border/60 px-4 py-3'
+            className='border-border/60 flex items-center justify-between gap-4 rounded-xl border px-4 py-3'
           >
             <div>
               <p className='text-sm font-medium'>{item.label}</p>

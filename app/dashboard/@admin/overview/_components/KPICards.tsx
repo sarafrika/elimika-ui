@@ -1,4 +1,14 @@
-import { Users, Building2, BookOpen, Shield, Activity, UserCheck, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import {
+  Users,
+  Building2,
+  BookOpen,
+  Shield,
+  Activity,
+  UserCheck,
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+} from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -89,13 +99,16 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
   return (
     <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
       {kpis.map((kpi, index) => (
-        <Card key={index} className={`flex flex-col ${kpi.highlight ? 'border-warning bg-warning/5' : ''}`}>
+        <Card
+          key={index}
+          className={`flex flex-col ${kpi.highlight ? 'border-warning bg-warning/5' : ''}`}
+        >
           <CardHeader className='flex flex-row items-start justify-between space-y-0 pb-2'>
             <div className='flex items-center gap-2'>
               <CardTitle className='text-sm font-medium'>{kpi.title}</CardTitle>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className='h-4 w-4 text-muted-foreground cursor-help flex-shrink-0' />
+                  <Info className='text-muted-foreground h-4 w-4 flex-shrink-0 cursor-help' />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{kpi.description}</p>
@@ -103,12 +116,12 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
               </Tooltip>
             </div>
             <div
-              className={`rounded-full p-2 flex-shrink-0 ${kpi.highlight ? 'bg-warning/20' : 'bg-primary/10'}`}
+              className={`flex-shrink-0 rounded-full p-2 ${kpi.highlight ? 'bg-warning/20' : 'bg-primary/10'}`}
             >
               <kpi.icon className={`h-4 w-4 ${kpi.highlight ? 'text-warning' : 'text-primary'}`} />
             </div>
           </CardHeader>
-          <CardContent className='flex-grow flex items-end'>
+          <CardContent className='flex flex-grow items-end'>
             <div className='text-2xl font-bold'>{kpi.value}</div>
           </CardContent>
         </Card>

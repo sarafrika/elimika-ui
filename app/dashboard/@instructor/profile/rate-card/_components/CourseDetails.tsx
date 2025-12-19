@@ -12,8 +12,7 @@ interface CourseDetailsProps {
 
 export default function CourseDetails({ course, className = '' }: CourseDetailsProps) {
   // @ts-ignore
-  const rates = course?.application?.rate_card
-
+  const rates = course?.application?.rate_card;
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -62,7 +61,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 {course?.category_names?.map((category: string, idx: number) => (
                   <span
                     key={idx}
-                    className='rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary'
+                    className='bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium'
                   >
                     {category}
                   </span>
@@ -79,44 +78,43 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div className='mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2'>
               {/* Private Online */}
-              <div className="rounded-xl border p-4 shadow-sm hover:shadow-md transition">
-                <h3 className="font-semibold text-lg">Private Online</h3>
-                <p className="text-muted-foreground text-sm">Rate per hour per head</p>
-                <p className="mt-2 text-xl font-bold">
+              <div className='rounded-xl border p-4 shadow-sm transition hover:shadow-md'>
+                <h3 className='text-lg font-semibold'>Private Online</h3>
+                <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
+                <p className='mt-2 text-xl font-bold'>
                   {rates.currency} {rates.private_online_rate}
                 </p>
               </div>
 
               {/* Private In-Person */}
-              <div className="rounded-xl border p-4 shadow-sm hover:shadow-md transition">
-                <h3 className="font-semibold text-lg">Private In-person</h3>
-                <p className="text-muted-foreground text-sm">Rate per hour per head</p>
-                <p className="mt-2 text-xl font-bold">
+              <div className='rounded-xl border p-4 shadow-sm transition hover:shadow-md'>
+                <h3 className='text-lg font-semibold'>Private In-person</h3>
+                <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
+                <p className='mt-2 text-xl font-bold'>
                   {rates.currency} {rates.private_inperson_rate}
                 </p>
               </div>
 
               {/* Group Online */}
-              <div className="rounded-xl border p-4 shadow-sm hover:shadow-md transition">
-                <h3 className="font-semibold text-lg">Group Online</h3>
-                <p className="text-muted-foreground text-sm">Rate per hour per head</p>
-                <p className="mt-2 text-xl font-bold">
+              <div className='rounded-xl border p-4 shadow-sm transition hover:shadow-md'>
+                <h3 className='text-lg font-semibold'>Group Online</h3>
+                <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
+                <p className='mt-2 text-xl font-bold'>
                   {rates.currency} {rates.group_online_rate}
                 </p>
               </div>
 
               {/* Group In-Person */}
-              <div className="rounded-xl border p-4 shadow-sm hover:shadow-md transition">
-                <h3 className="font-semibold text-lg">Group In-person</h3>
-                <p className="text-muted-foreground text-sm">Rate per hour per head</p>
-                <p className="mt-2 text-xl font-bold">
+              <div className='rounded-xl border p-4 shadow-sm transition hover:shadow-md'>
+                <h3 className='text-lg font-semibold'>Group In-person</h3>
+                <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
+                <p className='mt-2 text-xl font-bold'>
                   {rates.currency} {rates.group_inperson_rate}
                 </p>
               </div>
             </div>
-
           </div>
         </CardHeader>
       </Card>

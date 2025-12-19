@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PublicTopNav } from '@/components/PublicTopNav';
-import { getCourseCreatorByUuidOptions, searchCatalogueOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getCourseCreatorByUuidOptions,
+  searchCatalogueOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import type { Course } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, GraduationCap, CircleAlert, Layers } from 'lucide-react';
@@ -26,26 +29,24 @@ export default function PublicCoursesPage() {
     }),
     retry: 1,
   });
-  const courses = useMemo(
-    () => coursesQuery.data?.data?.content ?? [],
-    [coursesQuery.data]
-  );
+  const courses = useMemo(() => coursesQuery.data?.data?.content ?? [], [coursesQuery.data]);
 
   return (
-    <div className='min-h-screen bg-background text-foreground'>
+    <div className='bg-background text-foreground min-h-screen'>
       <PublicTopNav />
       <div className='mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:py-16'>
-        <header className='space-y-6 rounded-[36px] border border-border bg-card p-8 shadow-xl backdrop-blur-sm lg:p-12'>
-          <div className='inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-primary'>
+        <header className='border-border bg-card space-y-6 rounded-[36px] border p-8 shadow-xl backdrop-blur-sm lg:p-12'>
+          <div className='border-primary/40 bg-primary/10 text-primary inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs font-semibold tracking-[0.4em] uppercase'>
             Catalogue
           </div>
           <div className='space-y-4'>
-            <h1 className='text-3xl font-semibold text-foreground sm:text-4xl'>
+            <h1 className='text-foreground text-3xl font-semibold sm:text-4xl'>
               Browse our course catalogue
             </h1>
-            <p className='max-w-3xl text-base text-muted-foreground'>
-              Explore our comprehensive catalogue of courses created by expert instructors and organizations.
-              Find the perfect course to advance your skills and achieve your learning goals.
+            <p className='text-muted-foreground max-w-3xl text-base'>
+              Explore our comprehensive catalogue of courses created by expert instructors and
+              organizations. Find the perfect course to advance your skills and achieve your
+              learning goals.
             </p>
           </div>
         </header>
@@ -60,32 +61,34 @@ export default function PublicCoursesPage() {
           ) : coursesQuery.error ? (
             <Card className='border-destructive/40 bg-destructive/5'>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-destructive'>
+                <CardTitle className='text-destructive flex items-center gap-2'>
                   <CircleAlert className='h-4 w-4' />
                   Unable to load courses
                 </CardTitle>
                 <CardDescription className='text-muted-foreground'>
-                  Please refresh the page or try again later. If the issue persists, contact support.
+                  Please refresh the page or try again later. If the issue persists, contact
+                  support.
                 </CardDescription>
               </CardHeader>
             </Card>
           ) : courses.length === 0 ? (
             <Card className='border-border bg-card/80'>
               <CardHeader className='space-y-3 text-center'>
-                <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10'>
-                  <BookOpen className='h-6 w-6 text-primary' />
+                <div className='bg-primary/10 mx-auto flex h-12 w-12 items-center justify-center rounded-full'>
+                  <BookOpen className='text-primary h-6 w-6' />
                 </div>
                 <CardTitle className='text-foreground'>No courses available</CardTitle>
                 <CardDescription className='text-muted-foreground'>
-                  Our catalogue is being updated. Check back soon for new courses or contact us to explore custom learning opportunities.
+                  Our catalogue is being updated. Check back soon for new courses or contact us to
+                  explore custom learning opportunities.
                 </CardDescription>
               </CardHeader>
             </Card>
           ) : (
             <>
               <div className='flex items-center justify-between'>
-                <div className='text-sm text-muted-foreground'>
-                  <span className='font-semibold text-foreground'>{courses.length}</span>{' '}
+                <div className='text-muted-foreground text-sm'>
+                  <span className='text-foreground font-semibold'>{courses.length}</span>{' '}
                   {courses.length === 1 ? 'course' : 'courses'} available
                 </div>
               </div>
@@ -124,9 +127,7 @@ function CourseCard({ course }: { course: Course }) {
   const courseUuid = uuid ?? '';
   const displayTitle = title || (name as string | undefined) || 'Untitled course';
   const safeDescription = useMemo(
-    () =>
-      sanitizeCourseDescription(description) ||
-      'No description provided yet.',
+    () => sanitizeCourseDescription(description) || 'No description provided yet.',
     [description]
   );
   const durationLabel =
@@ -142,9 +143,9 @@ function CourseCard({ course }: { course: Course }) {
   const courseCreatorName = (courseCreatorData as any)?.data?.full_name as string | undefined;
 
   return (
-    <Card className='group h-full rounded-[28px] border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg'>
+    <Card className='group border-border bg-card h-full rounded-[28px] border transition hover:-translate-y-1 hover:shadow-lg'>
       {thumbnail_url ? (
-        <div className='relative aspect-[16/9] w-full overflow-hidden rounded-t-[28px] border-b border-border/60 bg-muted'>
+        <div className='border-border/60 bg-muted relative aspect-[16/9] w-full overflow-hidden rounded-t-[28px] border-b'>
           <Image
             src={thumbnail_url}
             alt={title ?? 'Course thumbnail'}
@@ -158,7 +159,7 @@ function CourseCard({ course }: { course: Course }) {
       <CardHeader className='space-y-3'>
         <div className='flex items-start justify-between gap-3'>
           <div className='flex-1 space-y-2'>
-            <CardTitle className='line-clamp-2 text-lg font-semibold leading-6 text-foreground'>
+            <CardTitle className='text-foreground line-clamp-2 text-lg leading-6 font-semibold'>
               {displayTitle}
             </CardTitle>
             <div className='flex flex-wrap gap-2'>
@@ -176,14 +177,18 @@ function CourseCard({ course }: { course: Course }) {
               {level && (
                 <Badge
                   variant='outline'
-                  className='rounded-full border border-primary/30 bg-primary/10 text-primary'
+                  className='border-primary/30 bg-primary/10 text-primary rounded-full border'
                 >
                   {level}
                 </Badge>
               )}
               {Array.isArray(category_names) &&
                 category_names.slice(0, 2).map(category => (
-                  <Badge key={`${courseUuid}-${category}`} variant='secondary' className='rounded-full text-xs'>
+                  <Badge
+                    key={`${courseUuid}-${category}`}
+                    variant='secondary'
+                    className='rounded-full text-xs'
+                  >
                     {category}
                   </Badge>
                 ))}
@@ -191,27 +196,27 @@ function CourseCard({ course }: { course: Course }) {
           </div>
         </div>
         <CardDescription
-          className='line-clamp-3 text-sm leading-6 text-muted-foreground'
+          className='text-muted-foreground line-clamp-3 text-sm leading-6'
           dangerouslySetInnerHTML={{ __html: safeDescription }}
         />
       </CardHeader>
       <CardContent className='space-y-4'>
         <div className='space-y-2.5'>
           {durationLabel && (
-            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-              <Clock className='h-4 w-4 text-primary' />
+            <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+              <Clock className='text-primary h-4 w-4' />
               <span>{durationLabel}</span>
             </div>
           )}
           {courseCreatorName && (
-            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-              <GraduationCap className='h-4 w-4 text-primary' />
+            <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+              <GraduationCap className='text-primary h-4 w-4' />
               <span>Created by {courseCreatorName}</span>
             </div>
           )}
-          <div className='flex flex-wrap items-center gap-2 text-sm text-muted-foreground'>
-            <Layers className='h-4 w-4 text-primary' />
-            <span className='font-semibold text-foreground'>
+          <div className='text-muted-foreground flex flex-wrap items-center gap-2 text-sm'>
+            <Layers className='text-primary h-4 w-4' />
+            <span className='text-foreground font-semibold'>
               {is_free
                 ? 'Free'
                 : typeof price === 'number'
@@ -230,15 +235,13 @@ function CourseCard({ course }: { course: Course }) {
           </div>
         </div>
 
-        <div className='flex items-center justify-between border-t border-border pt-4'>
-          <div className='text-sm font-medium text-muted-foreground'>
-            Learn more
-          </div>
+        <div className='border-border flex items-center justify-between border-t pt-4'>
+          <div className='text-muted-foreground text-sm font-medium'>Learn more</div>
           <Link href={courseUuid ? `/courses/${encodeURIComponent(courseUuid)}` : '/courses'}>
             <Button
               size='sm'
               disabled={!is_published || !courseUuid}
-              className='rounded-full bg-primary px-6 shadow-lg transition hover:bg-primary/90'
+              className='bg-primary hover:bg-primary/90 rounded-full px-6 shadow-lg transition'
             >
               View Course
             </Button>

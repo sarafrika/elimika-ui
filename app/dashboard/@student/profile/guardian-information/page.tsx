@@ -150,10 +150,7 @@ function CertificationsSettingsContent() {
                 <div className='space-y-4'>
                   <h4 className='text-foreground text-sm font-semibold'>Primary Guardian</h4>
                   <ProfileViewGrid>
-                    <ProfileViewField
-                      label='Full name'
-                      value={studentInfo?.first_guardian_name}
-                    />
+                    <ProfileViewField label='Full name' value={studentInfo?.first_guardian_name} />
                     <ProfileViewField
                       label='Mobile number'
                       value={studentInfo?.first_guardian_mobile}
@@ -163,10 +160,7 @@ function CertificationsSettingsContent() {
                 <div className='space-y-4'>
                   <h4 className='text-foreground text-sm font-semibold'>Secondary Guardian</h4>
                   <ProfileViewGrid>
-                    <ProfileViewField
-                      label='Full name'
-                      value={studentInfo?.second_guardian_name}
-                    />
+                    <ProfileViewField label='Full name' value={studentInfo?.second_guardian_name} />
                     <ProfileViewField
                       label='Mobile number'
                       value={studentInfo?.second_guardian_mobile}

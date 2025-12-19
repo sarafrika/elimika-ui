@@ -89,11 +89,7 @@ async function OrganizationUsersContent({
       </div>
 
       <div className='bg-background flex min-h-0 flex-1 flex-col lg:flex-row'>
-        <OrganizationUsersList
-          users={users}
-          organizationUuid={uuid}
-          selectedUser={selectedUser}
-        />
+        <OrganizationUsersList users={users} organizationUuid={uuid} selectedUser={selectedUser} />
         <OrganizationUserDetailsPanel user={selectedUser} organizationUuid={uuid} />
       </div>
     </div>

@@ -146,7 +146,7 @@ export default function AddInstructorProfileForm() {
       <div className='mx-auto max-w-2xl space-y-4 p-6'>
         <Skeleton className='h-4 w-32' />
         <Skeleton className='h-8 w-56' />
-        <div className='space-y-3 rounded-3xl border border-border/60 bg-card/70 p-6 shadow-sm'>
+        <div className='border-border/60 bg-card/70 space-y-3 rounded-3xl border p-6 shadow-sm'>
           <Skeleton className='h-5 w-1/2' />
           <Skeleton className='h-4 w-full' />
           <Skeleton className='h-4 w-2/3' />
@@ -159,7 +159,7 @@ export default function AddInstructorProfileForm() {
     return (
       <div className='mx-auto max-w-2xl p-6'>
         <div className='flex h-64 flex-col items-center justify-center'>
-          <div className='mb-4 text-destructive'>
+          <div className='text-destructive mb-4'>
             <BookOpen className='h-16 w-16' />
           </div>
           <h2 className='text-foreground mb-2 text-xl font-semibold'>Unable to Load Profile</h2>
@@ -185,7 +185,7 @@ export default function AddInstructorProfileForm() {
       </div>
 
       <div className='mb-8 text-center'>
-        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success'>
+        <div className='bg-success/15 text-success mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
           <BookOpen className='h-8 w-8' />
         </div>
         <h1 className='text-foreground mb-2 text-3xl font-bold'>Add Instructor Profile</h1>

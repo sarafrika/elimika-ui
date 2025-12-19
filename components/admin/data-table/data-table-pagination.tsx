@@ -23,14 +23,14 @@ export function AdminDataTablePagination({
   return (
     <div
       className={cn(
-        'border-border/60 flex flex-col items-center justify-between gap-4 border-t pt-4 text-sm text-muted-foreground sm:flex-row',
+        'border-border/60 text-muted-foreground flex flex-col items-center justify-between gap-4 border-t pt-4 text-sm sm:flex-row',
         className
       )}
     >
       <div>
-        Showing <span className='font-medium text-foreground'>{start}</span> –{' '}
-        <span className='font-medium text-foreground'>{end}</span> of{' '}
-        <span className='font-medium text-foreground'>{totalItems}</span> entries
+        Showing <span className='text-foreground font-medium'>{start}</span> –{' '}
+        <span className='text-foreground font-medium'>{end}</span> of{' '}
+        <span className='text-foreground font-medium'>{totalItems}</span> entries
       </div>
       <div className='flex items-center gap-2'>
         <Button
@@ -41,7 +41,7 @@ export function AdminDataTablePagination({
         >
           Previous
         </Button>
-        <div className='text-foreground flex items-center gap-1 text-xs font-medium uppercase tracking-wide'>
+        <div className='text-foreground flex items-center gap-1 text-xs font-medium tracking-wide uppercase'>
           Page {page + 1} <span className='text-muted-foreground'>/</span> {safeTotalPages}
         </div>
         <Button

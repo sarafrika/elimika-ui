@@ -65,7 +65,7 @@ export function ProfileSummaryView({
   className,
 }: ProfileSummaryViewProps) {
   return (
-    <div className={cn('mx-auto w-full max-w-4xl space-y-6 px-4 py-10 overflow-x-auto', className)}>
+    <div className={cn('mx-auto w-full max-w-4xl space-y-6 overflow-x-auto px-4 py-10', className)}>
       <header className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div className='flex items-start gap-4'>
           {avatar && (

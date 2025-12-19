@@ -70,10 +70,10 @@ export default function ClassCreationPage() {
 
   const combinedData = data?.data
     ? {
-      ...data.data,
-      course: courseData?.data || null,
-      recurrence: data.data.session_templates?.[0]?.recurrence || null,
-    }
+        ...data.data,
+        course: courseData?.data || null,
+        recurrence: data.data.session_templates?.[0]?.recurrence || null,
+      }
     : null;
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -107,14 +107,17 @@ export default function ClassCreationPage() {
     remainingMinutes: 0,
   });
 
-  const handleSummaryChange = useCallback((summary: {
-    totalSkills: number;
-    totalLessons: number;
-    totalHours: number;
-    remainingMinutes: number;
-  }) => {
-    setScheduleSummary(summary);
-  }, []);
+  const handleSummaryChange = useCallback(
+    (summary: {
+      totalSkills: number;
+      totalLessons: number;
+      totalHours: number;
+      remainingMinutes: number;
+    }) => {
+      setScheduleSummary(summary);
+    },
+    []
+  );
 
   const [combinedRecurrenceData, setCombinedRecurrenceData] = useState<{
     response?: any;
@@ -169,7 +172,7 @@ export default function ClassCreationPage() {
         return (
           <VisibilityForm
             data={combinedData as any}
-            onUpdate={() => { }}
+            onUpdate={() => {}}
             onNext={nextStep}
             onPrev={prevStep}
             scheduleSummary={scheduleSummary}
@@ -228,21 +231,21 @@ export default function ClassCreationPage() {
       </div>
 
       {/* Progress Steps */}
-      <div className="w-full pt-0 pb-4">
-        <div className="relative flex items-center w-full">
+      <div className='w-full pt-0 pb-4'>
+        <div className='relative flex w-full items-center'>
           {steps.map((step, index) => (
             <React.Fragment key={step.id}>
               {/* Step Circle */}
-              <div className="flex flex-col items-center flex-1">
+              <div className='flex flex-1 flex-col items-center'>
                 <div
                   onClick={() => setCurrentStep(index)}
-                  className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all cursor-pointer
-              ${index === currentStep
+                  className={`relative z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 transition-all ${
+                    index === currentStep
                       ? 'border-primary bg-primary text-white'
                       : index < currentStep
                         ? 'border-primary bg-primary/10 text-primary'
                         : 'border-muted-foreground/30 text-muted-foreground/50'
-                    }`}
+                  }`}
                 >
                   {index + 1}
                 </div>
@@ -251,11 +254,9 @@ export default function ClassCreationPage() {
               {/* Connector Line (between steps) */}
               {index < steps.length - 1 && (
                 <div
-                  className={`absolute top-1/2 left-[calc((100%/${steps.length})*${index + 0.5})] w-[calc(100%/${steps.length})] h-[2px] -translate-y-1/2 transition-all
-              ${index < currentStep
-                      ? 'bg-primary'
-                      : 'bg-muted-foreground/20'
-                    }`}
+                  className={`absolute top-1/2 left-[calc((100%/${steps.length})*${index + 0.5})] w-[calc(100%/${steps.length})] h-[2px] -translate-y-1/2 transition-all ${
+                    index < currentStep ? 'bg-primary' : 'bg-muted-foreground/20'
+                  }`}
                 />
               )}
             </React.Fragment>
@@ -263,12 +264,13 @@ export default function ClassCreationPage() {
         </div>
 
         {/* Labels */}
-        <div className="flex justify-between w-full mt-3 text-xs md:text-sm text-muted-foreground">
+        <div className='text-muted-foreground mt-3 flex w-full justify-between text-xs md:text-sm'>
           {steps.map((step, index) => (
             <div
               key={step.id}
-              className={`flex-1 text-center ${index === currentStep ? 'text-primary font-medium' : ''
-                }`}
+              className={`flex-1 text-center ${
+                index === currentStep ? 'text-primary font-medium' : ''
+              }`}
             >
               {step.title}
             </div>
