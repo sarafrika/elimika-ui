@@ -1,7 +1,12 @@
 import OrganisationProvider from '@/context/organisation-context';
 import { getCourseCreatorDashboardData } from '@/services/course-creator/data';
 import type { Organisation, User, UserOrganisationAffiliationDto } from '@/services/client';
-import { getOrganisationByUuid, search, type ApiResponse, type SearchResponse } from '@/services/client';
+import {
+  getOrganisationByUuid,
+  search,
+  type ApiResponse,
+  type SearchResponse,
+} from '@/services/client';
 import { auth } from '@/services/auth';
 import type { ReactNode } from 'react';
 import OrganisationLayoutClient from './layout-client';
@@ -21,7 +26,8 @@ async function fetchOrganisationForUser(): Promise<Organisation | null> {
   const userData = userResp.data as SearchResponse;
   const user = userData?.data?.content?.[0] as User | undefined;
   const affiliation: UserOrganisationAffiliationDto | undefined =
-    user?.organisation_affiliations?.find(org => org.active) ?? user?.organisation_affiliations?.[0];
+    user?.organisation_affiliations?.find(org => org.active) ??
+    user?.organisation_affiliations?.[0];
   const organisationUuid = affiliation?.organisation_uuid;
   if (!organisationUuid) return null;
 
@@ -36,7 +42,9 @@ export default async function OrganisationLayout({ children }: { children: React
 
   return (
     <OrganisationProvider initialOrganisation={organisation}>
-      <OrganisationLayoutClient initialData={courseCreatorData}>{children}</OrganisationLayoutClient>
+      <OrganisationLayoutClient initialData={courseCreatorData}>
+        {children}
+      </OrganisationLayoutClient>
     </OrganisationProvider>
   );
 }

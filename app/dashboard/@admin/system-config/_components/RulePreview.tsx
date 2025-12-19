@@ -45,10 +45,10 @@ export function RulePreview({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='w-full max-w-xl border-l bg-background'>
+      <SheetContent side='right' className='bg-background w-full max-w-xl border-l'>
         <SheetHeader>
           <SheetTitle className='flex items-center gap-2'>
-            <ClipboardList className='h-4 w-4 text-muted-foreground' />
+            <ClipboardList className='text-muted-foreground h-4 w-4' />
             {rule?.key ?? 'Rule details'}
           </SheetTitle>
           <SheetDescription>
@@ -73,8 +73,8 @@ export function RulePreview({
 
             <Separator />
 
-            <div className='grid gap-2 rounded-xl border bg-card p-3 text-sm shadow-sm'>
-              <div className='flex items-center gap-2 text-muted-foreground text-xs'>
+            <div className='bg-card grid gap-2 rounded-xl border p-3 text-sm shadow-sm'>
+              <div className='text-muted-foreground flex items-center gap-2 text-xs'>
                 <CalendarClock className='h-4 w-4' />
                 Effective window
               </div>
@@ -86,23 +86,23 @@ export function RulePreview({
               </p>
             </div>
 
-            <div className='grid gap-2 rounded-xl border border-dashed bg-muted/40 p-3 shadow-sm'>
+            <div className='bg-muted/40 grid gap-2 rounded-xl border border-dashed p-3 shadow-sm'>
               <div className='flex items-center gap-2'>
-                <User className='h-4 w-4 text-muted-foreground' />
+                <User className='text-muted-foreground h-4 w-4' />
                 <p className='text-sm font-semibold'>Audit</p>
               </div>
               <p className='text-sm'>
                 Updated by {userName(rule.updatedBy)} on {formatDate(rule.updatedDate)}
               </p>
-              <p className='text-sm text-muted-foreground'>
+              <p className='text-muted-foreground text-sm'>
                 Created {formatDate(rule.createdDate)} by {userName(rule.createdBy)}
               </p>
             </div>
 
             <div className='space-y-2'>
               <p className='text-sm font-semibold'>Payload</p>
-              <ScrollArea className='h-56 rounded-lg border border-dashed border-border/70 bg-muted/30 p-3'>
-                <pre className='whitespace-pre-wrap break-all font-mono text-xs'>
+              <ScrollArea className='border-border/70 bg-muted/30 h-56 rounded-lg border border-dashed p-3'>
+                <pre className='font-mono text-xs break-all whitespace-pre-wrap'>
                   {JSON.stringify(rule.valuePayload ?? {}, null, 2)}
                 </pre>
               </ScrollArea>
@@ -110,8 +110,8 @@ export function RulePreview({
 
             <div className='space-y-2'>
               <p className='text-sm font-semibold'>Conditions</p>
-              <ScrollArea className='h-32 rounded-lg border border-dashed border-border/70 bg-muted/20 p-3'>
-                <pre className='whitespace-pre-wrap break-all font-mono text-xs'>
+              <ScrollArea className='border-border/70 bg-muted/20 h-32 rounded-lg border border-dashed p-3'>
+                <pre className='font-mono text-xs break-all whitespace-pre-wrap'>
                   {rule.conditions ? JSON.stringify(rule.conditions, null, 2) : 'No conditions'}
                 </pre>
               </ScrollArea>
@@ -126,7 +126,7 @@ export function RulePreview({
             ) : null}
           </div>
         ) : (
-          <p className='text-sm text-muted-foreground'>Select a rule to view its details.</p>
+          <p className='text-muted-foreground text-sm'>Select a rule to view its details.</p>
         )}
       </SheetContent>
     </Sheet>

@@ -6,7 +6,7 @@ export default function ParentAttendancePage() {
       <CardHeader>
         <CardTitle>Attendance Center</CardTitle>
       </CardHeader>
-      <CardContent className='text-sm text-muted-foreground'>
+      <CardContent className='text-muted-foreground text-sm'>
         Dedicated attendance tooling for guardians is coming soon.
       </CardContent>
     </Card>

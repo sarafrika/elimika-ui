@@ -43,7 +43,7 @@ export function GuardianLearnerSummary({
             {relationship ?? 'Parent portal access'}{' '}
             {gradeLevel ? (
               <>
-                • <span className='font-medium text-foreground'>{gradeLevel}</span>
+                • <span className='text-foreground font-medium'>{gradeLevel}</span>
               </>
             ) : null}
           </p>

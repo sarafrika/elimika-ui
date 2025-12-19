@@ -244,29 +244,27 @@ export function YearlyAvailabilityGrid({
                     <div className='flex h-full flex-col'>
                       <div className='mb-2 flex items-center justify-between'>
                         <h4 className='text-lg font-medium'>{month.name}</h4>
-                        <Calendar className='h-4 w-4 text-muted-foreground' />
+                        <Calendar className='text-muted-foreground h-4 w-4' />
                       </div>
 
                       <div className='flex-1 space-y-2'>
                         {status.available > 0 && (
                           <div className='flex items-center justify-between'>
-                            <span className='text-sm text-success'>Available</span>
-                            <Badge className='bg-success/10 text-success'>
-                              {status.available}
-                            </Badge>
+                            <span className='text-success text-sm'>Available</span>
+                            <Badge className='bg-success/10 text-success'>{status.available}</Badge>
                           </div>
                         )}
 
                         {status.booked > 0 && (
                           <div className='flex items-center justify-between'>
-                            <span className='text-sm text-primary'>Booked</span>
+                            <span className='text-primary text-sm'>Booked</span>
                             <Badge className='bg-primary/10 text-primary'>{status.booked}</Badge>
                           </div>
                         )}
 
                         {status.unavailable > 0 && (
                           <div className='flex items-center justify-between'>
-                            <span className='text-sm text-destructive'>Unavailable</span>
+                            <span className='text-destructive text-sm'>Unavailable</span>
                             <Badge className='bg-destructive/10 text-destructive'>
                               {status.unavailable}
                             </Badge>
@@ -275,22 +273,20 @@ export function YearlyAvailabilityGrid({
 
                         {status.reserved > 0 && (
                           <div className='flex items-center justify-between'>
-                            <span className='text-sm text-warning'>Reserved</span>
-                            <Badge className='bg-warning/10 text-warning'>
-                              {status.reserved}
-                            </Badge>
+                            <span className='text-warning text-sm'>Reserved</span>
+                            <Badge className='bg-warning/10 text-warning'>{status.reserved}</Badge>
                           </div>
                         )}
                       </div>
 
                       {status.total === 0 && (
-                        <div className='py-4 text-center text-sm text-muted-foreground'>
+                        <div className='text-muted-foreground py-4 text-center text-sm'>
                           No availability set
                         </div>
                       )}
 
-                      <div className='mt-auto border-t border-border pt-2'>
-                        <div className='text-center text-xs text-muted-foreground'>
+                      <div className='border-border mt-auto border-t pt-2'>
+                        <div className='text-muted-foreground text-center text-xs'>
                           {month.daysInMonth} days • {status.total} slots
                         </div>
                       </div>
@@ -309,7 +305,7 @@ export function YearlyAvailabilityGrid({
                       <div className='text-warning'>⏳ {status.reserved} reserved</div>
                     </div>
                     {isEditing && (
-                      <div className='mt-2 border-t pt-2 text-xs text-muted-foreground'>
+                      <div className='text-muted-foreground mt-2 border-t pt-2 text-xs'>
                         Click to toggle month availability
                       </div>
                     )}
@@ -325,7 +321,7 @@ export function YearlyAvailabilityGrid({
       {isEditing && (
         <Card className='p-4'>
           <div className='flex items-center justify-between'>
-            <div className='text-sm text-muted-foreground'>
+            <div className='text-muted-foreground text-sm'>
               Click months to toggle availability • Automatically sets business hours for weekdays
             </div>
             <div className='flex items-center gap-2'>

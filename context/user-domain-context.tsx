@@ -71,7 +71,7 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
         : null;
 
     const nextDomain =
-      storedDomain && domains.includes(storedDomain) ? storedDomain : domains[0] ?? null;
+      storedDomain && domains.includes(storedDomain) ? storedDomain : (domains[0] ?? null);
 
     setActiveDomainState(nextDomain);
     setHydrated(true);

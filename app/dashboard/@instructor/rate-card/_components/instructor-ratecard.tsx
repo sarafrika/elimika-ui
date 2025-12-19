@@ -562,7 +562,7 @@ export function InstructorRateCard() {
                           .filter((f: string) => f.trim())
                           .map((feature: string, index: number) => (
                             <li key={index} className='flex items-center gap-2 text-sm'>
-                              <CheckCircle className='h-3 w-3 text-success' />
+                              <CheckCircle className='text-success h-3 w-3' />
                               {feature}
                             </li>
                           ))}
@@ -627,7 +627,7 @@ export function InstructorRateCard() {
 
   return (
     <div className='min-h-screen'>
-      <div className='w-fit bg-destructive text-destructive-foreground'>
+      <div className='bg-destructive text-destructive-foreground w-fit'>
         {' '}
         Needs endpoint to fetch courses instructor can train
       </div>
@@ -648,11 +648,11 @@ export function InstructorRateCard() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-muted-foreground text-sm'>Total Revenue</p>
-                  <p className='text-2xl font-bold text-success'>
+                  <p className='text-success text-2xl font-bold'>
                     {formatCurrency(instructor.totalRevenue)}
                   </p>
                 </div>
-                <TrendingUp className='h-8 w-8 text-success' />
+                <TrendingUp className='text-success h-8 w-8' />
               </div>
             </CardContent>
           </Card>
@@ -662,9 +662,9 @@ export function InstructorRateCard() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-muted-foreground text-sm'>Total Bookings</p>
-                  <p className='text-2xl font-bold text-primary'>{instructor.totalBookings}</p>
+                  <p className='text-primary text-2xl font-bold'>{instructor.totalBookings}</p>
                 </div>
-                <Users className='h-8 w-8 text-primary' />
+                <Users className='text-primary h-8 w-8' />
               </div>
             </CardContent>
           </Card>

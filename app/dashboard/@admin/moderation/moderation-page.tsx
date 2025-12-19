@@ -4,9 +4,22 @@ import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/da
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import {
   type ModerationQueueItem,
@@ -46,7 +59,9 @@ const entityOptions = [
 export default function ModerationPage() {
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'PENDING' | 'APPROVED' | 'DISMISSED'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'PENDING' | 'APPROVED' | 'DISMISSED'>(
+    'all'
+  );
   const [entityFilter, setEntityFilter] = useState('');
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -85,8 +100,7 @@ export default function ModerationPage() {
       {
         id: 'entity',
         header: 'Entity',
-        className: 'min-w-[200px]'
-,
+        className: 'min-w-[200px]',
         cell: item => (
           <div className='space-y-1'>
             <div className='font-semibold'>{item.entity_type}</div>
@@ -110,7 +124,9 @@ export default function ModerationPage() {
         className: 'hidden md:table-cell text-muted-foreground',
         cell: item => (
           <span className='text-sm'>
-            {item.submitted_at ? formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true }) : '—'}
+            {item.submitted_at
+              ? formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
+              : '—'}
           </span>
         ),
       },
@@ -118,30 +134,47 @@ export default function ModerationPage() {
         id: 'submitted_by',
         header: 'Submitted by',
         className: 'hidden lg:table-cell text-muted-foreground',
-        cell: item => <span className='text-sm'>{item.submitted_by_name ?? item.submitted_by ?? '—'}</span>,
+        cell: item => (
+          <span className='text-sm'>{item.submitted_by_name ?? item.submitted_by ?? '—'}</span>
+        ),
       },
     ],
     []
   );
 
-  const pendingCount = useMemo(() => items.filter(item => item.status === 'PENDING').length, [items]);
+  const pendingCount = useMemo(
+    () => items.filter(item => item.status === 'PENDING').length,
+    [items]
+  );
 
   return (
-    <div className='mx-auto flex w-full max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem] flex-col gap-6 px-4 py-10 2xl:px-10'>
-      <div className='relative overflow-hidden rounded-3xl border border-primary/20 bg-card p-6 shadow-sm'>
+    <div className='mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 xl:max-w-[110rem] 2xl:max-w-[130rem] 2xl:px-10'>
+      <div className='border-primary/20 bg-card relative overflow-hidden rounded-3xl border p-6 shadow-sm'>
         <div className='flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
           <div className='space-y-2'>
-            <Badge variant='outline' className='border-primary/60 bg-primary/10 text-xs font-semibold uppercase tracking-wide'>
+            <Badge
+              variant='outline'
+              className='border-primary/60 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
+            >
               Trust & safety
             </Badge>
             <h1 className='text-3xl font-semibold tracking-tight'>Moderation queue</h1>
             <p className='text-muted-foreground max-w-2xl text-sm'>
-              Review flagged submissions, approve compliant content, or document dismissals directly from this operational view.
+              Review flagged submissions, approve compliant content, or document dismissals directly
+              from this operational view.
             </p>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
-            <MetricCard icon={<Gavel className='h-5 w-5 text-primary' />} label='Pending reviews' value={pendingCount} />
-            <MetricCard icon={<ClipboardCheck className='h-5 w-5 text-primary' />} label='Items in scope' value={totalItems} />
+            <MetricCard
+              icon={<Gavel className='text-primary h-5 w-5' />}
+              label='Pending reviews'
+              value={pendingCount}
+            />
+            <MetricCard
+              icon={<ClipboardCheck className='text-primary h-5 w-5' />}
+              label='Items in scope'
+              value={totalItems}
+            />
           </div>
         </div>
       </div>
@@ -204,7 +237,7 @@ export default function ModerationPage() {
         emptyState={{
           title: 'No moderation items',
           description: 'Good news—there are no flagged submissions awaiting review.',
-          icon: <CheckCircle2 className='h-10 w-10 text-primary' />,
+          icon: <CheckCircle2 className='text-primary h-10 w-10' />,
         }}
       />
 
@@ -212,7 +245,13 @@ export default function ModerationPage() {
         item={selectedItem}
         open={isSheetOpen && Boolean(selectedItem)}
         onOpenChange={setIsSheetOpen}
-        listParams={{ status: statusFilter, entityType: entityFilter, search: searchQuery, page, size: 20 }}
+        listParams={{
+          status: statusFilter,
+          entityType: entityFilter,
+          search: searchQuery,
+          page,
+          size: 20,
+        }}
       />
     </div>
   );
@@ -225,20 +264,19 @@ interface ModerationDetailSheetProps {
   listParams: ModerationQueueParams;
 }
 
-function ModerationDetailSheet({ item, open, onOpenChange, listParams }: ModerationDetailSheetProps) {
+function ModerationDetailSheet({
+  item,
+  open,
+  onOpenChange,
+  listParams,
+}: ModerationDetailSheetProps) {
   const moderationAction = useModerationAction();
   const form = useForm<ModerationActionFormValues>({
     resolver: zodResolver(moderationActionSchema),
     defaultValues: { reason: '' },
   });
 
-  const {
-    status = 'all',
-    entityType = '',
-    search = '',
-    page = 0,
-    size = 20,
-  } = listParams;
+  const { status = 'all', entityType = '', search = '', page = 0, size = 20 } = listParams;
 
   useEffect(() => {
     form.reset({ reason: '' });
@@ -266,7 +304,9 @@ function ModerationDetailSheet({ item, open, onOpenChange, listParams }: Moderat
           onOpenChange(false);
         },
         onError: error => {
-          toast.error(error instanceof Error ? error.message : 'Failed to process moderation action');
+          toast.error(
+            error instanceof Error ? error.message : 'Failed to process moderation action'
+          );
         },
       }
     );
@@ -277,35 +317,39 @@ function ModerationDetailSheet({ item, open, onOpenChange, listParams }: Moderat
       <SheetContent className='w-full max-w-xl border-l'>
         <SheetHeader>
           <SheetTitle>Moderation decision</SheetTitle>
-          <SheetDescription>Inspect submission metadata, capture reviewer notes, and finalize a decision.</SheetDescription>
+          <SheetDescription>
+            Inspect submission metadata, capture reviewer notes, and finalize a decision.
+          </SheetDescription>
         </SheetHeader>
         {item ? (
           <ScrollArea className='mt-4 flex-1 pr-3'>
             <div className='space-y-6 pb-6'>
-              <div className='rounded-lg border bg-muted/40 p-4 text-xs text-muted-foreground'>
+              <div className='bg-muted/40 text-muted-foreground rounded-lg border p-4 text-xs'>
                 <div className='grid gap-2 sm:grid-cols-2'>
                   <div>
-                    <span className='font-medium text-foreground'>Entity type:</span> {item.entity_type}
+                    <span className='text-foreground font-medium'>Entity type:</span>{' '}
+                    {item.entity_type}
                   </div>
                   <div>
-                    <span className='font-medium text-foreground'>Entity UUID:</span> {item.entity_uuid}
+                    <span className='text-foreground font-medium'>Entity UUID:</span>{' '}
+                    {item.entity_uuid}
                   </div>
                   <div>
-                    <span className='font-medium text-foreground'>Submitted:</span>{' '}
+                    <span className='text-foreground font-medium'>Submitted:</span>{' '}
                     {item.submitted_at
                       ? formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
                       : '—'}
                   </div>
                   <div>
-                    <span className='font-medium text-foreground'>Submitted by:</span>{' '}
+                    <span className='text-foreground font-medium'>Submitted by:</span>{' '}
                     {item.submitted_by_name ?? item.submitted_by ?? '—'}
                   </div>
                 </div>
               </div>
 
-              <div className='rounded-lg border bg-background p-4'>
+              <div className='bg-background rounded-lg border p-4'>
                 <h3 className='text-sm font-semibold'>Payload</h3>
-                <pre className='mt-2 max-h-60 overflow-auto rounded-md bg-muted/60 p-3 text-xs text-muted-foreground'>
+                <pre className='bg-muted/60 text-muted-foreground mt-2 max-h-60 overflow-auto rounded-md p-3 text-xs'>
                   {JSON.stringify(item.payload ?? {}, null, 2)}
                 </pre>
               </div>
@@ -319,7 +363,11 @@ function ModerationDetailSheet({ item, open, onOpenChange, listParams }: Moderat
                       <FormItem>
                         <FormLabel>Reviewer notes</FormLabel>
                         <FormControl>
-                          <Textarea placeholder='Document reasoning for audit trails (optional)' rows={3} {...field} />
+                          <Textarea
+                            placeholder='Document reasoning for audit trails (optional)'
+                            rows={3}
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -333,17 +381,25 @@ function ModerationDetailSheet({ item, open, onOpenChange, listParams }: Moderat
                       disabled={moderationAction.isPending}
                       onClick={() => handleAction('approve')}
                     >
-                      {moderationAction.isPending ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <CheckCircle2 className='mr-2 h-4 w-4' />}
+                      {moderationAction.isPending ? (
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                      ) : (
+                        <CheckCircle2 className='mr-2 h-4 w-4' />
+                      )}
                       Approve
                     </Button>
                     <Button
                       type='button'
                       variant='outline'
-                      className='flex-1 border-destructive text-destructive hover:bg-destructive/10'
+                      className='border-destructive text-destructive hover:bg-destructive/10 flex-1'
                       disabled={moderationAction.isPending}
                       onClick={() => handleAction('dismiss')}
                     >
-                      {moderationAction.isPending ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <Ban className='mr-2 h-4 w-4' />}
+                      {moderationAction.isPending ? (
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                      ) : (
+                        <Ban className='mr-2 h-4 w-4' />
+                      )}
                       Dismiss
                     </Button>
                   </div>
@@ -352,7 +408,9 @@ function ModerationDetailSheet({ item, open, onOpenChange, listParams }: Moderat
             </div>
           </ScrollArea>
         ) : (
-          <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>Select a submission to moderate.</div>
+          <div className='text-muted-foreground flex h-full items-center justify-center text-sm'>
+            Select a submission to moderate.
+          </div>
         )}
       </SheetContent>
     </Sheet>
@@ -367,11 +425,13 @@ interface MetricCardProps {
 
 function MetricCard({ icon, label, value }: MetricCardProps) {
   return (
-    <Card className='bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+    <Card className='bg-background/80 supports-[backdrop-filter]:bg-background/60 backdrop-blur'>
       <CardContent className='flex items-center gap-3 p-4'>
-        <div className='rounded-full bg-primary/10 p-2'>{icon}</div>
+        <div className='bg-primary/10 rounded-full p-2'>{icon}</div>
         <div>
-          <p className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>{label}</p>
+          <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+            {label}
+          </p>
           <p className='text-foreground text-xl font-semibold'>{value}</p>
         </div>
       </CardContent>

@@ -38,24 +38,18 @@ export function QuickActions() {
 
   return (
     <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-      {actions.map((action) => {
+      {actions.map(action => {
         const Icon = action.icon;
         const colorStyles = getActionColorStyles(action.color);
 
         return (
           <Link key={action.title} href={action.href}>
-            <div
-              className={`${elimikaDesignSystem.components.listCard.base} h-full`}
-            >
+            <div className={`${elimikaDesignSystem.components.listCard.base} h-full`}>
               <div className={`${colorStyles.bg} mb-4 inline-flex rounded-xl p-3`}>
                 <Icon className={`h-5 w-5 ${colorStyles.icon}`} />
               </div>
-              <h3 className='mb-2 text-base font-semibold text-foreground'>
-                {action.title}
-              </h3>
-              <p className='text-sm text-muted-foreground'>
-                {action.description}
-              </p>
+              <h3 className='text-foreground mb-2 text-base font-semibold'>{action.title}</h3>
+              <p className='text-muted-foreground text-sm'>{action.description}</p>
             </div>
           </Link>
         );

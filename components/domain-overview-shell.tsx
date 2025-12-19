@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -31,11 +31,14 @@ export function DomainOverviewShell({
   className,
 }: DomainOverviewShellProps) {
   return (
-    <div className={cn('mx-auto w-full max-w-6xl space-y-6 px-4 py-10 overflow-x-auto', className)}>
-      <div className='rounded-3xl border border-border bg-card p-6 shadow-sm'>
+    <div className={cn('mx-auto w-full max-w-6xl space-y-6 overflow-x-auto px-4 py-10', className)}>
+      <div className='border-border bg-card rounded-3xl border p-6 shadow-sm'>
         <div className='flex flex-col gap-6 md:flex-row md:items-center md:justify-between'>
           <div className='space-y-2'>
-            <Badge variant='outline' className='border-border/70 bg-muted/60 text-xs font-semibold uppercase tracking-[0.3em]'>
+            <Badge
+              variant='outline'
+              className='border-border/70 bg-muted/60 text-xs font-semibold tracking-[0.3em] uppercase'
+            >
               {domainLabel}
             </Badge>
             <h1 className='text-3xl font-semibold tracking-tight'>{title}</h1>

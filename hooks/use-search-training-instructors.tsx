@@ -57,16 +57,15 @@ function useSearchTrainingInstructors() {
   });
   const skills = skillQueries.map(q => q.data?.data?.content ?? []);
 
-
   // Combine data
   const instructorsWithProfiles = instructors.map((instructor: any, i: number) => {
     const profile = profiles[i];
     const expArray = experiences[i] ?? [];
     const totalExperience = Array.isArray(expArray)
       ? expArray.reduce(
-        (sum, exp: any) => sum + (exp?.years_of_experience ?? exp?.calculated_years ?? 0),
-        0
-      )
+          (sum, exp: any) => sum + (exp?.years_of_experience ?? exp?.calculated_years ?? 0),
+          0
+        )
       : 0;
 
     const skillArray = Array.isArray(skills[i]) ? skills[i] : [];

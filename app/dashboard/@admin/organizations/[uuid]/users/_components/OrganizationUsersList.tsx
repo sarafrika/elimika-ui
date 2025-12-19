@@ -30,7 +30,7 @@ export default function OrganizationUsersList({
   const isSelected = (user: User) => (!selectedUser ? true : selectedUser?.uuid === user.uuid);
 
   return (
-    <div className='bg-background flex w-full min-h-0 flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
+    <div className='bg-background flex min-h-0 w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
       <div className='flex-1 overflow-y-auto'>
         {users.length === 0 ? (
           <div className='text-muted-foreground flex h-32 items-center justify-center'>

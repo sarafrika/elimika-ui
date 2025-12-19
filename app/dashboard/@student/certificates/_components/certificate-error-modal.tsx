@@ -25,7 +25,7 @@ export function CertificateErrorModal({
       <DialogContent className='max-w-md text-center'>
         <DialogHeader className='flex flex-col items-center justify-center'>
           <div className='mb-4 flex justify-center'>
-            <AlertTriangle className='h-12 w-12 text-destructive' />
+            <AlertTriangle className='text-destructive h-12 w-12' />
           </div>
           <DialogTitle className='text-xl font-bold'>Verification Failed!</DialogTitle>
           <DialogDescription className='text-muted-foreground text-center font-bold'>

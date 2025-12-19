@@ -166,8 +166,8 @@ export const EnrollmentCards = ({
                     toast.success('Success!');
                   },
                   onError: (error: any) => {
-                    toast.error(error.message)
-                  }
+                    toast.error(error.message);
+                  },
                 }
               );
             }}

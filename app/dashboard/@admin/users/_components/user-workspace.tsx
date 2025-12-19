@@ -3,10 +3,23 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -16,11 +29,11 @@ import {
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { type AdminUser, useUpdateAdminUser } from '@/services/admin';
 import {
-  type AdminUser,
-  useUpdateAdminUser,
-} from '@/services/admin';
-import { getAdminUsersOptions, getAllUsersOptions } from '@/services/client/@tanstack/react-query.gen';
+  getAdminUsersOptions,
+  getAllUsersOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { zUser } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -108,11 +121,11 @@ export function AdminUserWorkspace({
   const { data, isLoading } = useQuery(
     useAdminEndpoint
       ? getAdminUsersOptions({
-        query: {
-          filters: {},
-          pageable: { page, size: 20, sort: ['created_date,desc'] },
-        },
-      })
+          query: {
+            filters: {},
+            pageable: { page, size: 20, sort: ['created_date,desc'] },
+          },
+        })
       : getAllUsersOptions({ query: { pageable: { page, size: 20, sort: ['created_date,desc'] } } })
   );
 
@@ -228,17 +241,20 @@ function UserListPanel({
   const renderContent = () => {
     if (isLoading) {
       return Array.from({ length: 6 }).map((_, index) => (
-        <div key={`skeleton-${index}`} className='border-border/60 animate-pulse rounded-2xl border bg-muted/40 p-4'>
-          <div className='h-4 w-1/2 rounded bg-muted' />
-          <div className='mt-2 h-3 w-1/3 rounded bg-muted' />
+        <div
+          key={`skeleton-${index}`}
+          className='border-border/60 bg-muted/40 animate-pulse rounded-2xl border p-4'
+        >
+          <div className='bg-muted h-4 w-1/2 rounded' />
+          <div className='bg-muted mt-2 h-3 w-1/3 rounded' />
         </div>
       ));
     }
 
     if (filteredUsers.length === 0) {
       return (
-        <div className='flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/30 p-6 text-center'>
-          <ShieldAlert className='mb-3 h-10 w-10 text-muted-foreground' />
+        <div className='border-border/60 bg-muted/30 flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed p-6 text-center'>
+          <ShieldAlert className='text-muted-foreground mb-3 h-10 w-10' />
           <p className='text-sm font-medium'>{emptyStateTitle}</p>
           <p className='text-muted-foreground text-xs'>{emptyStateDescription}</p>
         </div>
@@ -254,13 +270,16 @@ function UserListPanel({
           className={cn(
             'relative cursor-pointer rounded-2xl border p-4 transition-colors',
             selectedUserId === user.uuid
-              ? 'border-primary bg-primary/5 ring-1 ring-primary/40 shadow-sm'
+              ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-1'
               : 'border-border/60 bg-card hover:bg-muted/40'
           )}
           onClick={() => onSelect(user)}
         >
           {selectedUserId === user.uuid ? (
-            <Badge variant='secondary' className='absolute right-3 top-3 text-[10px] font-semibold uppercase'>
+            <Badge
+              variant='secondary'
+              className='absolute top-3 right-3 text-[10px] font-semibold uppercase'
+            >
               Selected
             </Badge>
           ) : null}
@@ -269,7 +288,9 @@ function UserListPanel({
               <div className='mb-1 flex items-center gap-2'>
                 <h3 className='truncate text-sm font-medium'>{fullName}</h3>
               </div>
-              <p className='text-muted-foreground mb-1 truncate text-xs'>{user.email || 'No email'}</p>
+              <p className='text-muted-foreground mb-1 truncate text-xs'>
+                {user.email || 'No email'}
+              </p>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
                   <Badge variant={user.active ? 'secondary' : 'outline'} className='text-xs'>
@@ -281,8 +302,17 @@ function UserListPanel({
                 </div>
               </div>
               <div className='mt-2 flex flex-wrap gap-1.5'>
-                {(Array.isArray(user.user_domain) ? user.user_domain : user.user_domain ? [user.user_domain] : []).map(domain => (
-                  <Badge key={`${user.uuid}-${domain}`} variant='outline' className='uppercase text-[10px]'>
+                {(Array.isArray(user.user_domain)
+                  ? user.user_domain
+                  : user.user_domain
+                    ? [user.user_domain]
+                    : []
+                ).map(domain => (
+                  <Badge
+                    key={`${user.uuid}-${domain}`}
+                    variant='outline'
+                    className='text-[10px] uppercase'
+                  >
                     {String(domain).replace(/_/g, ' ')}
                   </Badge>
                 ))}
@@ -295,7 +325,7 @@ function UserListPanel({
   };
 
   return (
-    <div className='bg-background flex w-full min-h-0 flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
+    <div className='bg-background flex min-h-0 w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
       <div className='space-y-2 border-b p-4'>
         <div className='flex flex-col gap-2'>
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
@@ -327,12 +357,17 @@ function UserListPanel({
         </div>
       </div>
 
-      <ScrollArea className='flex-1 min-h-0 px-6 py-4'>
+      <ScrollArea className='min-h-0 flex-1 px-6 py-4'>
         <div className='flex flex-col gap-4 pb-8'>{renderContent()}</div>
       </ScrollArea>
 
       <div className='border-border/60 flex items-center justify-between border-t px-6 py-4 text-sm'>
-        <Button variant='ghost' size='sm' onClick={() => onPageChange(Math.max(page - 1, 0))} disabled={page === 0}>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={() => onPageChange(Math.max(page - 1, 0))}
+          disabled={page === 0}
+        >
           Previous
         </Button>
         <div className='text-muted-foreground'>
@@ -392,7 +427,7 @@ function UserDetailsPanel({ user, panelTitle }: UserDetailsPanelProps) {
   };
 
   return (
-    <div className='hidden min-h-0 flex-1 flex-col bg-card lg:flex'>
+    <div className='bg-card hidden min-h-0 flex-1 flex-col lg:flex'>
       {user ? (
         <>
           <div className='border-b p-6'>
@@ -402,10 +437,14 @@ function UserDetailsPanel({ user, panelTitle }: UserDetailsPanelProps) {
           <div className='space-y-3 border-b px-6 py-4'>
             <div className='flex items-start justify-between gap-4'>
               <div>
-                <p className='text-sm font-semibold'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()}</p>
+                <p className='text-sm font-semibold'>
+                  {`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()}
+                </p>
                 <p className='text-muted-foreground text-xs'>{user.email}</p>
               </div>
-              <Badge variant={user.active ? 'secondary' : 'outline'}>{user.active ? 'Active' : 'Inactive'}</Badge>
+              <Badge variant={user.active ? 'secondary' : 'outline'}>
+                {user.active ? 'Active' : 'Inactive'}
+              </Badge>
             </div>
             <div className='grid gap-3 text-xs sm:grid-cols-2'>
               <div>
@@ -421,11 +460,16 @@ function UserDetailsPanel({ user, panelTitle }: UserDetailsPanelProps) {
             </div>
           </div>
           <div className='flex-1 overflow-y-auto px-6'>
-            <UserDetailsForm form={form} onSubmit={handleSubmit} isPending={updateUser.isPending} user={user} />
+            <UserDetailsForm
+              form={form}
+              onSubmit={handleSubmit}
+              isPending={updateUser.isPending}
+              user={user}
+            />
           </div>
         </>
       ) : (
-        <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
+        <div className='text-muted-foreground flex h-full items-center justify-center text-sm'>
           Select a record from the list to begin a review.
         </div>
       )}
@@ -480,13 +524,20 @@ function UserDetailSheet({ user, open, onOpenChange }: UserDetailSheetProps) {
       <SheetContent className='w-full max-w-xl border-l'>
         <SheetHeader>
           <SheetTitle>Review user details</SheetTitle>
-          <SheetDescription>Manage identity info, toggle access, and record compliance notes.</SheetDescription>
+          <SheetDescription>
+            Manage identity info, toggle access, and record compliance notes.
+          </SheetDescription>
         </SheetHeader>
         <ScrollArea className='mt-4 flex-1 pr-3'>
           {user ? (
-            <UserDetailsForm form={form} onSubmit={handleSubmit} isPending={updateUser.isPending} user={user} />
+            <UserDetailsForm
+              form={form}
+              onSubmit={handleSubmit}
+              isPending={updateUser.isPending}
+              user={user}
+            />
           ) : (
-            <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
+            <div className='text-muted-foreground flex h-full items-center justify-center text-sm'>
               Select a user to manage details.
             </div>
           )}
@@ -605,7 +656,12 @@ function UserDetailsForm({ form, onSubmit, isPending, user }: UserDetailsFormPro
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Gender</FormLabel>
-                <Select value={field.value ?? 'UNSPECIFIED'} onValueChange={value => field.onChange(value === 'UNSPECIFIED' ? undefined : value)}>
+                <Select
+                  value={field.value ?? 'UNSPECIFIED'}
+                  onValueChange={value =>
+                    field.onChange(value === 'UNSPECIFIED' ? undefined : value)
+                  }
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder='Select gender' />
@@ -629,7 +685,7 @@ function UserDetailsForm({ form, onSubmit, isPending, user }: UserDetailsFormPro
           control={form.control}
           name='active'
           render={({ field }) => (
-            <FormItem className='flex flex-row items-center justify-between rounded-xl border bg-muted/40 p-4'>
+            <FormItem className='bg-muted/40 flex flex-row items-center justify-between rounded-xl border p-4'>
               <div className='space-y-0.5'>
                 <FormLabel>Account status</FormLabel>
                 <p className='text-muted-foreground text-xs'>
@@ -643,24 +699,29 @@ function UserDetailsForm({ form, onSubmit, isPending, user }: UserDetailsFormPro
           )}
         />
 
-        <div className='rounded-xl border bg-muted/40 p-4 text-xs text-muted-foreground'>
+        <div className='bg-muted/40 text-muted-foreground rounded-xl border p-4 text-xs'>
           <div className='grid gap-2 sm:grid-cols-2'>
             <div>
-              <span className='font-medium text-foreground'>Created:</span>{' '}
+              <span className='text-foreground font-medium'>Created:</span>{' '}
               {user?.created_date ? format(new Date(user.created_date), 'dd MMM yyyy, HH:mm') : '—'}
             </div>
             <div>
-              <span className='font-medium text-foreground'>Updated:</span>{' '}
+              <span className='text-foreground font-medium'>Updated:</span>{' '}
               {user?.updated_date ? format(new Date(user.updated_date), 'dd MMM yyyy, HH:mm') : '—'}
             </div>
             <div>
-              <span className='font-medium text-foreground'>Domains:</span>{' '}
-              {(Array.isArray(user?.user_domain) ? user?.user_domain : user?.user_domain ? [user?.user_domain] : [])
+              <span className='text-foreground font-medium'>Domains:</span>{' '}
+              {(Array.isArray(user?.user_domain)
+                ? user?.user_domain
+                : user?.user_domain
+                  ? [user?.user_domain]
+                  : []
+              )
                 .map(domain => domain?.toString().replace(/_/g, ' '))
                 .join(', ') || '—'}
             </div>
             <div>
-              <span className='font-medium text-foreground'>UUID:</span> {user?.uuid ?? '—'}
+              <span className='text-foreground font-medium'>UUID:</span> {user?.uuid ?? '—'}
             </div>
           </div>
         </div>

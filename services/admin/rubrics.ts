@@ -1,7 +1,10 @@
 import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
 import { updateAssessmentRubricMutation } from '@/services/client/@tanstack/react-query.gen';
-import { zApiResponsePagedDtoAssessmentRubric, type zAssessmentRubric } from '@/services/client/zod.gen';
+import {
+  zApiResponsePagedDtoAssessmentRubric,
+  type zAssessmentRubric,
+} from '@/services/client/zod.gen';
 import type { Options, UpdateAssessmentRubricData } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import type { z } from 'zod';
@@ -52,7 +55,9 @@ function buildRubricFilters(params: AdminRubricListParams) {
   return filters;
 }
 
-export async function fetchAdminRubrics(params: AdminRubricListParams = {}): Promise<AdminRubricListResult> {
+export async function fetchAdminRubrics(
+  params: AdminRubricListParams = {}
+): Promise<AdminRubricListResult> {
   const { page = 0, size = 20, sortField = 'updated_date', sortOrder = 'desc' } = params;
   const pageable = {
     page,
@@ -73,7 +78,9 @@ export async function fetchAdminRubrics(params: AdminRubricListParams = {}): Pro
   });
 
   if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to fetch rubrics');
+    throw new Error(
+      typeof response.error === 'string' ? response.error : 'Failed to fetch rubrics'
+    );
   }
 
   const parsed = rubricListResponseSchema.parse(response.data ?? {});
@@ -94,7 +101,8 @@ export async function fetchAdminRubrics(params: AdminRubricListParams = {}): Pro
   };
 }
 
-export const adminRubricsQueryKey = (params: AdminRubricListParams) => ['admin-rubrics', params] as const;
+export const adminRubricsQueryKey = (params: AdminRubricListParams) =>
+  ['admin-rubrics', params] as const;
 
 export function useAdminRubrics(
   params: AdminRubricListParams,

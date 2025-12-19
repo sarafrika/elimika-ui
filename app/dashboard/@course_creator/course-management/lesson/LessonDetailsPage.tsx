@@ -43,7 +43,11 @@ import {
   LessonContentDialog,
 } from '../../_components/lesson-management-form';
 import { CustomLoadingState } from '../../_components/loading-state';
-import { QuestionDialog, QuizDialog, type QuizFormValues } from '../../_components/quiz-management-form';
+import {
+  QuestionDialog,
+  QuizDialog,
+  type QuizFormValues,
+} from '../../_components/quiz-management-form';
 import QuizQuestions from './quizQuestions';
 
 const LessonDetailsPage = () => {
@@ -141,7 +145,7 @@ const LessonDetailsPage = () => {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   // Quiz management
@@ -238,7 +242,7 @@ const LessonDetailsPage = () => {
           <div className='text-muted-foreground mt-1 text-[15px]'>
             <RichTextRenderer htmlString={lesson?.description} />
           </div>
-          <div className='flex flex-row gap-6 text-sm font-normal text-muted-foreground'>
+          <div className='text-muted-foreground flex flex-row gap-6 text-sm font-normal'>
             <p className='flex items-center gap-2'>
               <Clock size={14} /> Duration: {lesson?.duration_display}
             </p>
@@ -281,17 +285,15 @@ const LessonDetailsPage = () => {
                   <div className='flex flex-col gap-1'>
                     <div className='flex items-center gap-2'>
                       {getContentTypeIcon(content_type_key as ContentType)}
-                      <span className='text-base font-medium text-foreground'>
-                        {item.title}
-                      </span>
+                      <span className='text-foreground text-base font-medium'>{item.title}</span>
                     </div>
 
-                    <div className='line-clamp-2 text-sm text-muted-foreground'>
+                    <div className='text-muted-foreground line-clamp-2 text-sm'>
                       <RichTextRenderer htmlString={item?.description} />
                     </div>
 
                     {item.content_text && (
-                      <div className='mt-2 text-sm text-muted-foreground'>
+                      <div className='text-muted-foreground mt-2 text-sm'>
                         <RichTextRenderer htmlString={item.content_text} maxChars={500} />
                       </div>
                     )}
@@ -301,7 +303,7 @@ const LessonDetailsPage = () => {
                         href={item.file_url}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='text-xs text-primary underline hover:text-primary/80'
+                        className='text-primary hover:text-primary/80 text-xs underline'
                       >
                         View File
                       </a>
@@ -394,25 +396,23 @@ const LessonDetailsPage = () => {
                       {/* Header */}
                       <div className='flex items-start gap-3'>
                         <div className='flex-shrink-0'>
-                          <div className='rounded-full bg-success/10 p-1 text-success'>
+                          <div className='bg-success/10 text-success rounded-full p-1'>
                             <CheckCircle className='h-5 w-5' />
                           </div>
                         </div>
                         <div className='flex w-full flex-col gap-2'>
                           {/* Quiz Title */}
-                          <h3 className='text-lg font-semibold text-foreground'>
-                            {quiz.title}
-                          </h3>
+                          <h3 className='text-foreground text-lg font-semibold'>{quiz.title}</h3>
 
                           {/* Quiz Description */}
-                          <div className='text-sm text-muted-foreground'>
+                          <div className='text-muted-foreground text-sm'>
                             <RichTextRenderer
                               htmlString={(quiz?.description as string) || 'No skill provided'}
                             />
                           </div>
 
                           {/* Info Bar: Time Limit + Passing Score */}
-                          <div className='mt-1 flex flex-col text-sm text-muted-foreground md:flex-row md:gap-4'>
+                          <div className='text-muted-foreground mt-1 flex flex-col text-sm md:flex-row md:gap-4'>
                             <span className='flex items-center gap-1'>
                               <span>📅</span> {quiz.time_limit_display}
                             </span>
@@ -513,7 +513,7 @@ const LessonDetailsPage = () => {
           <div className='flex flex-row items-center justify-between gap-4'>
             <p className='text-lg font-semibold'>Skill Assignments</p>
             <Button
-              onClick={() => { }}
+              onClick={() => {}}
               variant='secondary'
               size='sm'
               className='flex w-fit items-center gap-1'
@@ -541,25 +541,23 @@ const LessonDetailsPage = () => {
                       {/* Header */}
                       <div className='flex items-start gap-3'>
                         <div className='flex-shrink-0'>
-                          <div className='rounded-full bg-success/10 p-1 text-success'>
+                          <div className='bg-success/10 text-success rounded-full p-1'>
                             <CheckCircle className='h-5 w-5' />
                           </div>
                         </div>
                         <div className='flex w-full flex-col gap-2'>
                           {/* Quiz Title */}
-                          <h3 className='text-lg font-semibold text-foreground'>
-                            {a.title}
-                          </h3>
+                          <h3 className='text-foreground text-lg font-semibold'>{a.title}</h3>
 
                           {/* Quiz Description */}
-                          <div className='text-sm text-muted-foreground'>
+                          <div className='text-muted-foreground text-sm'>
                             <RichTextRenderer
                               htmlString={(a?.description as string) || 'No skill provided'}
                             />
                           </div>
 
                           {/* Info Bar: Time Limit + Passing Score */}
-                          <div className='mt-1 flex flex-col text-sm text-muted-foreground md:flex-row md:gap-4'>
+                          <div className='text-muted-foreground mt-1 flex flex-col text-sm md:flex-row md:gap-4'>
                             <span className='flex items-center gap-1'>
                               <span>📅</span> {a.time_limit_display}
                             </span>

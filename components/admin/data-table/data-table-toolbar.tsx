@@ -19,11 +19,7 @@ interface AdminDataTableToolbarProps {
   filters?: AdminDataTableFilter[];
 }
 
-export function AdminDataTableToolbar({
-  className,
-  search,
-  filters,
-}: AdminDataTableToolbarProps) {
+export function AdminDataTableToolbar({ className, search, filters }: AdminDataTableToolbarProps) {
   const hasFilters = Boolean(filters?.length);
 
   return (
@@ -35,7 +31,7 @@ export function AdminDataTableToolbar({
     >
       {search ? (
         <div className='relative w-full max-w-lg'>
-          <Search className='text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
+          <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
           <Input
             value={search.value}
             onChange={event => search.onChange(event.target.value)}
@@ -66,10 +62,7 @@ export function AdminDataTableToolbar({
                 <SelectContent>
                   <SelectItem value='__all__'>{filter.label}</SelectItem>
                   {filter.options.map(option => (
-                    <SelectItem
-                      key={option.value}
-                      value={option.value || '__all__'}
-                    >
+                    <SelectItem key={option.value} value={option.value || '__all__'}>
                       {option.label}
                     </SelectItem>
                   ))}

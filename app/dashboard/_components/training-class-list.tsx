@@ -35,7 +35,7 @@ import {
   Play,
   Search,
   SlidersHorizontal,
-  Users
+  Users,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -75,7 +75,7 @@ interface TrainingClassListProps {
   onOpenTimetable?: (id: string) => void;
   onOpenRecurring?: (id: string) => void;
   classesWithCourseAndInstructor: any;
-  loading: boolean
+  loading: boolean;
 }
 
 export function TrainingClassList({
@@ -84,7 +84,7 @@ export function TrainingClassList({
   onOpenTimetable,
   onOpenRecurring,
   classesWithCourseAndInstructor,
-  loading
+  loading,
 }: TrainingClassListProps) {
   const router = useRouter();
   const _instructor = useInstructor();
@@ -123,7 +123,7 @@ export function TrainingClassList({
   const enrollmentQueries = useQueries({
     queries: filteredClasses.map((cls: any) => ({
       ...getEnrollmentsForClassOptions({
-        path: { uuid: cls.uuid }
+        path: { uuid: cls.uuid },
       }),
       queryKey: ['class-enrollments', cls.uuid], // ensure unique
       enabled: !!cls.uuid,
@@ -164,7 +164,7 @@ export function TrainingClassList({
       </div>
 
       {/* Filters and Search */}
-      <div className='flex flex-wrap items-center gap-4 rounded-xl border border-border-100/50 p-4 shadow-sm backdrop-blur-sm'>
+      <div className='border-border-100/50 flex flex-wrap items-center gap-4 rounded-xl border p-4 shadow-sm backdrop-blur-sm'>
         <div className='relative min-w-[300px] flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
           <Input
@@ -218,20 +218,18 @@ export function TrainingClassList({
           // @ts-ignore
           const enrollmentData = enrollmentQuery?.data?.data || [];
 
-          const uniqueStudentIds = new Set(
-            enrollmentData.map((e: any) => e.student_uuid)
-          );
+          const uniqueStudentIds = new Set(enrollmentData.map((e: any) => e.student_uuid));
           const enrolledCount = uniqueStudentIds.size;
           const max = cls.max_participants;
           const enrolledPercentage = (enrolledCount / max) * 100;
 
           return (
             <div key={cls.uuid} className='group cursor-pointer'>
-              <div className='relative h-full max-w-[380px] rounded-2xl border border-primary/40 bg-card dark:bg-inherit p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl'>
+              <div className='border-primary/40 bg-card relative h-full max-w-[380px] rounded-2xl border p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl dark:bg-inherit'>
                 <div className='h-full overflow-hidden rounded-2xl'>
                   {/* Image Header */}
                   <div className='relative h-48 overflow-hidden'>
-                    <div className='absolute inset-0 z-10 bg-primary/10' />
+                    <div className='bg-primary/10 absolute inset-0 z-10' />
                     <Image
                       src={
                         (cls?.course?.thumbnail_url as string) ||
@@ -258,7 +256,9 @@ export function TrainingClassList({
 
                     {isFull && (
                       <div className='absolute top-3 right-3 z-20'>
-                        <Badge className='bg-destructive/90 text-destructive-foreground backdrop-blur-sm'>FULL</Badge>
+                        <Badge className='bg-destructive/90 text-destructive-foreground backdrop-blur-sm'>
+                          FULL
+                        </Badge>
                       </div>
                     )}
 
@@ -292,7 +292,7 @@ export function TrainingClassList({
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => onDelete?.(cls.uuid)}
-                            className='flex w-full cursor-pointer items-center text-destructive'
+                            className='text-destructive flex w-full cursor-pointer items-center'
                           >
                             <LucideFileWarning className='mr-2 h-4 w-4' />
                             Deactivate
@@ -306,11 +306,11 @@ export function TrainingClassList({
                   <div className='space-y-4 p-5'>
                     {/* Title and Course */}
                     <div className='space-y-2'>
-                      <h3 className='line-clamp-1 transition-colors group-hover:text-primary'>
+                      <h3 className='group-hover:text-primary line-clamp-1 transition-colors'>
                         {cls?.title}
                       </h3>
                       <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-                        <BookOpen className='h-3.5 w-3.5 text-primary' />
+                        <BookOpen className='text-primary h-3.5 w-3.5' />
                         <span className='line-clamp-1'>{cls?.course?.name}</span>
                       </div>
                     </div>
@@ -326,7 +326,7 @@ export function TrainingClassList({
                         <Badge
                           key={idx}
                           variant='outline'
-                          className='border-border-100/50 text-xs text-primary'
+                          className='border-border-100/50 text-primary text-xs'
                         >
                           {category}
                         </Badge>
@@ -334,8 +334,8 @@ export function TrainingClassList({
                     </div>
 
                     {/* Instructor */}
-                    <div className='flex items-center gap-2 rounded-lg border border-primary/30 bg-muted p-2.5'>
-                      <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground shadow-md'>
+                    <div className='border-primary/30 bg-muted flex items-center gap-2 rounded-lg border p-2.5'>
+                      <div className='bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm shadow-md'>
                         {cls?.instructor?.full_name?.charAt(0)}
                       </div>
                       <div className='min-w-0 flex-1'>
@@ -345,10 +345,10 @@ export function TrainingClassList({
                     </div>
 
                     {/* Stats Grid */}
-                    <div className='grid grid-cols-2 gap-3 border-t border-border pt-2'>
+                    <div className='border-border grid grid-cols-2 gap-3 border-t pt-2'>
                       <div className='flex items-center gap-2 text-sm'>
-                        <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10'>
-                          <Clock className='h-4 w-4 text-primary' />
+                        <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg'>
+                          <Clock className='text-primary h-4 w-4' />
                         </div>
                         <div>
                           <p className='text-muted-foreground text-xs'>Duration</p>
@@ -356,8 +356,8 @@ export function TrainingClassList({
                         </div>
                       </div>
                       <div className='flex items-center gap-2 text-sm'>
-                        <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-success/10'>
-                          <Users className='h-4 w-4 text-success' />
+                        <div className='bg-success/10 flex h-8 w-8 items-center justify-center rounded-lg'>
+                          <Users className='text-success h-4 w-4' />
                         </div>
                         <div>
                           <p className='text-muted-foreground text-xs'>Enrolled</p>
@@ -373,31 +373,37 @@ export function TrainingClassList({
                       <div className='flex justify-between text-xs'>
                         <span className='text-muted-foreground'>Enrollment</span>
                         <span
-                          className={
-                            enrolledPercentage >= 80 ? 'text-warning' : 'text-primary'
-                          }
+                          className={enrolledPercentage >= 80 ? 'text-warning' : 'text-primary'}
                         >
                           {enrolledPercentage?.toFixed(0)}%
                         </span>
                       </div>
-                      <div className='h-2 overflow-hidden rounded-full bg-primary/10'>
+                      <div className='bg-primary/10 h-2 overflow-hidden rounded-full'>
                         <div
-                          className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
-                            }`}
+                          className={`h-full transition-all duration-500 ${
+                            enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                          }`}
                           style={{ width: `${enrolledPercentage}%` }}
                         />
                       </div>
                     </div>
 
                     {/* Footer */}
-                    <div className='flex items-center justify-between border-t border-border pt-2'>
+                    <div className='border-border flex items-center justify-between border-t pt-2'>
                       <div className='flex items-center gap-1.5'>
                         <span className='text-lg'>KES {cls?.training_fee || 'N/A'}</span>
                       </div>
                     </div>
 
-                    <div className='flex flex-row items-center justify-between' >
-                      <Button onClick={() => router.push(`/dashboard/trainings/instructor-console/${cls?.uuid}`)}> <Play />  Start Class</Button>
+                    <div className='flex flex-row items-center justify-between'>
+                      <Button
+                        onClick={() =>
+                          router.push(`/dashboard/trainings/instructor-console/${cls?.uuid}`)
+                        }
+                      >
+                        {' '}
+                        <Play /> Start Class
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -409,8 +415,8 @@ export function TrainingClassList({
 
       {filteredClasses.length === 0 && (
         <div className='py-16 text-center'>
-          <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10'>
-            <Search className='h-8 w-8 text-primary' />
+          <div className='bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
+            <Search className='text-primary h-8 w-8' />
           </div>
           <h3>No classes found</h3>
           <p className='text-muted-foreground mt-2'>Try adjusting your search or filters</p>

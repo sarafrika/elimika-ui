@@ -1,5 +1,3 @@
-
-
 import { type SlateElementProps, SlateElement } from 'platejs';
 
 export function BlockquoteElementStatic(props: SlateElementProps) {

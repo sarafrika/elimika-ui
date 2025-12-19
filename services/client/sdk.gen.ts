@@ -733,9 +733,15 @@ import type {
   PaymentCallbackData,
   PaymentCallbackResponses,
   PaymentCallbackErrors,
+  DeclineBookingData,
+  DeclineBookingResponses,
+  DeclineBookingErrors,
   CancelBookingData,
   CancelBookingResponses,
   CancelBookingErrors,
+  AcceptBookingData,
+  AcceptBookingResponses,
+  AcceptBookingErrors,
   GetAllAssignmentsData,
   GetAllAssignmentsResponses,
   GetAllAssignmentsErrors,
@@ -1445,7 +1451,9 @@ import {
   createBookingResponseTransformer,
   requestPaymentResponseTransformer,
   paymentCallbackResponseTransformer,
+  declineBookingResponseTransformer,
   cancelBookingResponseTransformer,
+  acceptBookingResponseTransformer,
   getAllAssignmentsResponseTransformer,
   createAssignmentResponseTransformer,
   submitAssignmentResponseTransformer,
@@ -8925,6 +8933,33 @@ export const paymentCallback = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Instructor declines a booking
+ */
+export const declineBooking = <ThrowOnError extends boolean = false>(
+  options: Options<DeclineBookingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DeclineBookingResponses,
+    DeclineBookingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: declineBookingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/bookings/{bookingUuid}/decline',
+    ...options,
+  });
+};
+
+/**
  * Cancel a booking and release the reserved slot
  */
 export const cancelBooking = <ThrowOnError extends boolean = false>(
@@ -8947,6 +8982,33 @@ export const cancelBooking = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/bookings/{bookingUuid}/cancel',
+    ...options,
+  });
+};
+
+/**
+ * Instructor accepts a booking
+ */
+export const acceptBooking = <ThrowOnError extends boolean = false>(
+  options: Options<AcceptBookingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AcceptBookingResponses,
+    AcceptBookingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: acceptBookingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/bookings/{bookingUuid}/accept',
     ...options,
   });
 };

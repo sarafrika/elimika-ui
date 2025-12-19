@@ -91,9 +91,7 @@ export interface AdminActivityFeedResult {
   totalItems?: number;
 }
 
-function normalizeActivityFeedPayload(
-  payload: unknown
-): AdminActivityFeedResult | undefined {
+function normalizeActivityFeedPayload(payload: unknown): AdminActivityFeedResult | undefined {
   if (!payload) {
     return { events: [] };
   }
@@ -108,15 +106,12 @@ function normalizeActivityFeedPayload(
     }
 
     if (data && typeof data === 'object') {
-      const events =
-        data.items ?? data.events ?? data.content ?? [];
+      const events = data.items ?? data.events ?? data.content ?? [];
       const metadata = 'metadata' in data ? data.metadata : undefined;
 
       return {
         events,
-        totalItems: metadata?.totalElements
-          ? toNumber(metadata.totalElements)
-          : events.length,
+        totalItems: metadata?.totalElements ? toNumber(metadata.totalElements) : events.length,
       };
     }
 
@@ -136,18 +131,12 @@ export async function fetchAdminActivityFeed(): Promise<AdminActivityFeedResult>
   const response = await fetchClient.GET('/api/v1/admin/dashboard/activity-feed' as any);
 
   if (response.error) {
-    if (
-      response.response &&
-      'status' in response.response &&
-      response.response.status === 404
-    ) {
+    if (response.response && 'status' in response.response && response.response.status === 404) {
       return { events: [] };
     }
 
     throw new Error(
-      typeof response.error === 'string'
-        ? response.error
-        : 'Failed to load activity feed'
+      typeof response.error === 'string' ? response.error : 'Failed to load activity feed'
     );
   }
 

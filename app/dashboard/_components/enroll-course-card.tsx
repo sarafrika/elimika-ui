@@ -5,7 +5,11 @@ import { Card } from '@/components/ui/card';
 import { useStudent } from '@/context/student-context';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { addItemMutation, createCartMutation, getCartQueryKey } from '@/services/client/@tanstack/react-query.gen';
+import {
+  addItemMutation,
+  createCartMutation,
+  getCartQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, CheckCircle, MapPin } from 'lucide-react';
 import Image from 'next/image';
@@ -31,44 +35,43 @@ export default function EnrollCourseCard({
   disableEnroll,
   variant,
 }: EnrollCourseCardProps) {
-  const student = useStudent()
-  const qc = useQueryClient()
+  const student = useStudent();
+  const qc = useQueryClient();
   const { difficultyMap } = useDifficultyLevels();
   const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'Unknown';
 
   const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(cls.uuid);
-  const enrolled = roster?.length
+  const enrolled = roster?.length;
   const enrolledPercentage = (enrolled / cls?.max_participants) * 100;
 
-  const savedCartId = localStorage.getItem("cart_id");
+  const savedCartId = localStorage.getItem('cart_id');
   const [showCartModal, setShowCartModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<any>(null);
 
-  const createCart = useMutation(createCartMutation())
-  const addItemToCart = useMutation(addItemMutation())
+  const createCart = useMutation(createCartMutation());
+  const addItemToCart = useMutation(addItemMutation());
 
   const handleCreateCart = (cls: any) => {
     if (!cls) return;
 
-    const catalogue = cls.catalogue
+    const catalogue = cls.catalogue;
 
     if (catalogue === null) {
-      toast.error("No catalogue found for this class")
+      toast.error('No catalogue found for this class');
       setShowCartModal(false);
-      return
+      return;
     }
 
     if (!savedCartId) {
       createCart.mutate(
         {
           body: {
-            currency_code: "KES",
-            region_code: "KE",
+            currency_code: 'KES',
+            region_code: 'KE',
             items: [
               {
                 variant_id: catalogue.variant_code,
                 quantity: 1,
-
               },
             ],
           },
@@ -78,50 +81,53 @@ export default function EnrollCourseCard({
             const cartId = data?.data?.id || null;
 
             if (cartId) {
-              localStorage.setItem("cart_id", cartId);
+              localStorage.setItem('cart_id', cartId);
             } else {
               // console.warn("Cart ID not found in API response:", data);
             }
 
-            toast.success("Class added to cart!");
+            toast.success('Class added to cart!');
             setShowCartModal(false);
           },
           onError: (error: any) => {
-            toast.error(error.message)
-          }
+            toast.error(error.message);
+          },
         }
       );
 
-      return
+      return;
     }
 
-    addItemToCart.mutate({
-      path: { cartId: savedCartId as string },
-      body: {
-        variant_id: catalogue.variant_code,
-        quantity: 1,
+    addItemToCart.mutate(
+      {
+        path: { cartId: savedCartId as string },
+        body: {
+          variant_id: catalogue.variant_code,
+          quantity: 1,
+        },
+      },
+      {
+        onSuccess: data => {
+          qc.invalidateQueries({
+            queryKey: getCartQueryKey({ path: { cartId: savedCartId } }),
+          });
+          toast.success('Class added to cart!');
+          setShowCartModal(false);
+        },
       }
-    }, {
-      onSuccess: (data) => {
-        qc.invalidateQueries({
-          queryKey: getCartQueryKey({ path: { cartId: savedCartId } }),
-        });
-        toast.success("Class added to cart!");
-        setShowCartModal(false);
-      }
-    })
+    );
   };
 
   return (
     <div className='group cursor-pointer'>
-      <Card className='relative h-full w-full max-w-full rounded-2xl p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl sm:w-[360px] border border-muted-foreground'>
+      <Card className='border-muted-foreground relative h-full w-full max-w-full rounded-2xl border p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl sm:w-[360px]'>
         <div className='h-full overflow-hidden rounded-2xl'>
           {/* Image Header */}
           <div className='relative h-48 overflow-hidden'>
-            <div className='absolute inset-0 z-10 bg-primary/10' />
+            <div className='bg-primary/10 absolute inset-0 z-10' />
             <Image
               src={cls?.course?.banner_url}
-              alt={"banner"}
+              alt={'banner'}
               className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
               width={200}
               height={50}
@@ -134,9 +140,7 @@ export default function EnrollCourseCard({
                 {cls?.location_type.replace('_', ' ')}
               </Badge>
 
-              {variant === "full" &&
-                <Badge className={`backdrop-blur-sm`}>{difficultyName}</Badge>
-              }
+              {variant === 'full' && <Badge className={`backdrop-blur-sm`}>{difficultyName}</Badge>}
             </div>
 
             {isFull && (
@@ -145,11 +149,11 @@ export default function EnrollCourseCard({
               </div>
             )}
 
-            {variant === "full" &&
+            {variant === 'full' && (
               <Button
                 size='icon'
                 variant='secondary'
-                className='absolute right-3 bottom-3 z-30 rounded-full border border-primary/30 bg-white/90 hover:bg-primary/10'
+                className='border-primary/30 hover:bg-primary/10 absolute right-3 bottom-3 z-30 rounded-full border bg-white/90'
                 onClick={e => {
                   e.stopPropagation();
                   setSelectedClass(cls);
@@ -162,7 +166,7 @@ export default function EnrollCourseCard({
                   viewBox='0 0 24 24'
                   strokeWidth={2}
                   stroke='currentColor'
-                  className='h-4 w-4 text-primary'
+                  className='text-primary h-4 w-4'
                 >
                   <path
                     strokeLinecap='round'
@@ -170,20 +174,20 @@ export default function EnrollCourseCard({
                     d='M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8h13.2L17 13M7 13h10m-4 8a1 1 0 100-2 1 1 0 000 2zm-6 0a1 1 0 100-2 1 1 0 000 2z'
                   />
                 </svg>
-              </Button>}
-
+              </Button>
+            )}
           </div>
 
           {/* Card Body */}
           <div className='space-y-4 p-5'>
             <Link href={href} className='flex flex-col py-2'>
               <div className='space-y-2'>
-                <h3 className='line-clamp-2 min-h-12 transition-colors group-hover:text-primary'>
+                <h3 className='group-hover:text-primary line-clamp-2 min-h-12 transition-colors'>
                   {cls?.title}
                 </h3>
                 {variant === 'full' && (
                   <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-                    <BookOpen className='h-3.5 w-3.5 text-primary' />
+                    <BookOpen className='text-primary h-3.5 w-3.5' />
                     <span className='line-clamp-1'>{cls?.course?.name}</span>
                   </div>
                 )}
@@ -199,7 +203,7 @@ export default function EnrollCourseCard({
                 <Badge
                   key={idx}
                   variant='outline'
-                  className='border-muted-foreground bg-muted-foreground text-xs text-primary-foreground'
+                  className='border-muted-foreground bg-muted-foreground text-primary-foreground text-xs'
                 >
                   {category}
                 </Badge>
@@ -208,15 +212,13 @@ export default function EnrollCourseCard({
 
             {/* Instructor */}
             {variant === 'full' && (
-              <div className='flex items-center gap-2 rounded-lg border border-primary/30 bg-muted p-2.5 dark:border-primary/30 dark:bg-muted/30'>
-                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground shadow-md'>
+              <div className='border-primary/30 bg-muted dark:border-primary/30 dark:bg-muted/30 flex items-center gap-2 rounded-lg border p-2.5'>
+                <div className='bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm shadow-md'>
                   {cls?.instructor?.full_name?.charAt(0)}
                 </div>
                 <div className='min-w-0 flex-1'>
                   <p className='text-muted-foreground text-xs'>Instructor</p>
-                  <p className='truncate text-sm text-foreground'>
-                    {cls?.instructor?.full_name}
-                  </p>
+                  <p className='text-foreground truncate text-sm'>{cls?.instructor?.full_name}</p>
                 </div>
               </div>
             )}
@@ -226,16 +228,15 @@ export default function EnrollCourseCard({
               <div className='space-y-1.5'>
                 <div className='flex justify-between text-xs'>
                   <span className='text-muted-foreground'>Enrollment</span>
-                  <span
-                    className={enrolledPercentage >= 80 ? 'text-warning' : 'text-primary'}
-                  >
+                  <span className={enrolledPercentage >= 80 ? 'text-warning' : 'text-primary'}>
                     {enrolledPercentage?.toFixed(0)}%
                   </span>
                 </div>
-                <div className='h-2 overflow-hidden rounded-full bg-primary/10'>
+                <div className='bg-primary/10 h-2 overflow-hidden rounded-full'>
                   <div
-                    className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
-                      }`}
+                    className={`h-full transition-all duration-500 ${
+                      enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                    }`}
                     style={{ width: `${enrolledPercentage}%` }}
                   />
                 </div>
@@ -243,13 +244,11 @@ export default function EnrollCourseCard({
             )}
 
             {/* Footer: Enroll + Add to Cart */}
-            <div className='flex items-center justify-between border-t border-primary/30 pt-3'>
+            <div className='border-primary/30 flex items-center justify-between border-t pt-3'>
               {variant === 'full' ? (
                 <div className='flex items-center gap-1'>
-                  <span className='text-lg font-medium'>
-                    KES {cls?.training_fee || 'N/A'}
-                  </span>
-                  <span className='text-sm' >/hour/head</span>
+                  <span className='text-lg font-medium'>KES {cls?.training_fee || 'N/A'}</span>
+                  <span className='text-sm'>/hour/head</span>
                 </div>
               ) : (
                 ''
@@ -265,13 +264,13 @@ export default function EnrollCourseCard({
                   disabled={disableEnroll}
                   className={
                     disableEnroll
-                      ? 'flex cursor-default items-center gap-2 bg-success text-success-foreground shadow-sm hover:bg-success/90'
-                      : 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
+                      ? 'bg-success text-success-foreground hover:bg-success/90 flex cursor-default items-center gap-2 shadow-sm'
+                      : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm'
                   }
                 >
                   {disableEnroll ? (
                     <>
-                      <CheckCircle className='h-4 w-4 text-success-foreground' />
+                      <CheckCircle className='text-success-foreground h-4 w-4' />
                       <span>Enrolled</span>
                     </>
                   ) : (
@@ -284,7 +283,6 @@ export default function EnrollCourseCard({
         </div>
       </Card>
 
-
       <AddToCartModal
         open={showCartModal}
         onClose={() => setShowCartModal(false)}
@@ -294,7 +292,6 @@ export default function EnrollCourseCard({
         }}
         isPending={createCart.isPending || addItemToCart.isPending}
       />
-
     </div>
   );
 }

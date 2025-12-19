@@ -93,8 +93,8 @@ export function DataTable<TData, TValue>({
       {/* Toolbar */}
       {searchKey && (
         <div className='flex items-center justify-between'>
-          <div className='relative flex-1 max-w-sm'>
-            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+          <div className='relative max-w-sm flex-1'>
+            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
             <Input
               placeholder={searchPlaceholder}
               value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ''}
@@ -106,7 +106,7 @@ export function DataTable<TData, TValue>({
                 variant='ghost'
                 size='sm'
                 onClick={handleReset}
-                className='absolute right-1 top-1/2 h-7 -translate-y-1/2'
+                className='absolute top-1/2 right-1 h-7 -translate-y-1/2'
               >
                 <X className='h-4 w-4' />
               </Button>
@@ -116,15 +116,15 @@ export function DataTable<TData, TValue>({
       )}
 
       {/* Table */}
-      <div className='overflow-hidden rounded-lg border border-border'>
+      <div className='border-border overflow-hidden rounded-lg border'>
         <Table>
           <TableHeader className='bg-muted/50'>
             {table.getHeaderGroups().map(headerGroup => (
-              <TableRow key={headerGroup.id} className='border-b border-border'>
+              <TableRow key={headerGroup.id} className='border-border border-b'>
                 {headerGroup.headers.map(header => (
                   <TableHead
                     key={header.id}
-                    className='px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground'
+                    className='text-muted-foreground px-4 py-3 text-xs font-medium tracking-wider uppercase'
                   >
                     {header.isPlaceholder
                       ? null
@@ -134,13 +134,13 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className='divide-y divide-border bg-card'>
+          <TableBody className='divide-border bg-card divide-y'>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map(row => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className='cursor-pointer transition-colors hover:bg-muted/30'
+                  className='hover:bg-muted/30 cursor-pointer transition-colors'
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map(cell => (
@@ -164,7 +164,7 @@ export function DataTable<TData, TValue>({
       {/* Pagination */}
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex items-center gap-2'>
-          <span className='text-sm text-muted-foreground'>Rows per page:</span>
+          <span className='text-muted-foreground text-sm'>Rows per page:</span>
           <Select
             value={String(table.getState().pagination.pageSize)}
             onValueChange={value => {
@@ -185,8 +185,9 @@ export function DataTable<TData, TValue>({
         </div>
 
         <div className='flex items-center gap-2'>
-          <span className='text-sm text-muted-foreground'>
-            Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
+          <span className='text-muted-foreground text-sm'>
+            Showing{' '}
+            {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
             {Math.min(
               (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
               table.getFilteredRowModel().rows.length

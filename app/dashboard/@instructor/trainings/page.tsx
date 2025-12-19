@@ -35,7 +35,8 @@ export default function TrainingManagementPage() {
         <TabsContent value='overview' className='space-y-6'>
           <TrainingsPage
             classesWithCourseAndInstructor={classesWithCourseAndInstructor}
-            loading={loading} />
+            loading={loading}
+          />
         </TabsContent>
 
         <TabsContent value='timetable' className='space-y-6'>

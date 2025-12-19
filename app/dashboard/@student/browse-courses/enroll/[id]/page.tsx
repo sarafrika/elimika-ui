@@ -11,7 +11,7 @@ import {
   getCartOptions,
   getStudentScheduleQueryKey,
   listCatalogItemsOptions,
-  selectPaymentSessionMutation
+  selectPaymentSessionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addYears, format } from 'date-fns';
@@ -41,7 +41,11 @@ const EnrollmentPage = () => {
       replaceBreadcrumbs([
         { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
         { id: 'courses', title: 'Browse Courses', url: `/dashboard/browse-courses` },
-        { id: 'course-details', title: `Enroll`, url: `/dashboard/browse-courses/enroll/${courseId}` },
+        {
+          id: 'course-details',
+          title: `Enroll`,
+          url: `/dashboard/browse-courses/enroll/${courseId}`,
+        },
       ]);
     }
   }, [replaceBreadcrumbs, courseId]);
@@ -55,12 +59,8 @@ const EnrollmentPage = () => {
   const [startDateInput, setStartDateInput] = useState<string>(toInputDate(defaultStartDate));
   const [endDateInput, setEndDateInput] = useState<string>(toInputDate(defaultEndDate));
 
-  const [appliedStart, setAppliedStart] = useState<string>(
-    toInputDate(defaultStartDate)
-  );
-  const [appliedEnd, setAppliedEnd] = useState<string>(
-    toInputDate(defaultEndDate)
-  );
+  const [appliedStart, setAppliedStart] = useState<string>(toInputDate(defaultStartDate));
+  const [appliedEnd, setAppliedEnd] = useState<string>(toInputDate(defaultEndDate));
   const [dateError, setDateError] = useState<string | null>(null);
 
   const applyDates = () => {
@@ -94,14 +94,12 @@ const EnrollmentPage = () => {
     setDateError(null);
   };
 
-  const { data: catalogues } = useQuery(listCatalogItemsOptions())
-  const { classes = [], loading, isError } = useBundledClassInfo(
-    courseId,
-    appliedStart ?? undefined,
-    appliedEnd ?? undefined,
-    student
-  );
-
+  const { data: catalogues } = useQuery(listCatalogItemsOptions());
+  const {
+    classes = [],
+    loading,
+    isError,
+  } = useBundledClassInfo(courseId, appliedStart ?? undefined, appliedEnd ?? undefined, student);
 
   const filteredClasses = classes.filter(cls =>
     catalogues?.data?.some(cat => cat.class_definition_uuid === cls.uuid)
@@ -165,58 +163,58 @@ const EnrollmentPage = () => {
     );
   };
 
-  const savedCartId = localStorage.getItem("cart_id");
+  const savedCartId = localStorage.getItem('cart_id');
   const [openCartModal, setOpenCartModal] = useState(false);
 
-  const { data: cartData } = useQuery(getCartOptions({ path: { cartId: savedCartId as string } }))
+  const { data: cartData } = useQuery(getCartOptions({ path: { cartId: savedCartId as string } }));
   // @ts-ignore
-  const cart = cartData?.data
+  const cart = cartData?.data;
 
-  const cartPaymentSession = useMutation(selectPaymentSessionMutation())
+  const cartPaymentSession = useMutation(selectPaymentSessionMutation());
   const handlePaymentSession = (cart: any) => {
-    cartPaymentSession.mutate({
-      path: { cartId: cart.id },
-      body: { provider_id: "manual" }
-    }, {
-      onSuccess: (data) => {
-        toast.success("Redirecting to payment…"),
-          setOpenCartModal(false)
+    cartPaymentSession.mutate(
+      {
+        path: { cartId: cart.id },
+        body: { provider_id: 'manual' },
+      },
+      {
+        onSuccess: data => {
+          toast.success('Redirecting to payment…'), setOpenCartModal(false);
+        },
       }
-    })
-  }
+    );
+  };
 
-  const completeCart = useMutation(completeCartMutation())
+  const completeCart = useMutation(completeCartMutation());
   const handleCompleteCart = () => [
-    completeCart.mutate({
-      path: { cartId: savedCartId as string }
-    },
+    completeCart.mutate(
+      {
+        path: { cartId: savedCartId as string },
+      },
       {
         onSuccess: (data: any) => {
-          toast.success("Success")
+          toast.success('Success');
         },
         onError: (error: any) => {
-          toast.error(error?.message)
-        }
-      })
-  ]
+          toast.error(error?.message);
+        },
+      }
+    ),
+  ];
 
   return (
-    <div className="space-y-4 pb-10">
-      <div className="flex items-center justify-between">
+    <div className='space-y-4 pb-10'>
+      <div className='flex items-center justify-between'>
         <div>
-          <h1 className="text-2xl font-semibold">Explore Classes Open for Enrollment</h1>
-          <p className="text-muted-foreground">
+          <h1 className='text-2xl font-semibold'>Explore Classes Open for Enrollment</h1>
+          <p className='text-muted-foreground'>
             Discover courses designed to help you grow and succeed.
           </p>
         </div>
 
-        <div
-          className="relative cursor-pointer"
-          onClick={() => setOpenCartModal(true)}
-        >
+        <div className='relative cursor-pointer' onClick={() => setOpenCartModal(true)}>
           <ShoppingCart />
-          <span className="absolute -top-2.5 -right-2.5 flex items-center justify-center 
-    bg-destructive text-white text-xs font-bold w-5 h-5 rounded-full">
+          <span className='bg-destructive absolute -top-2.5 -right-2.5 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-white'>
             {cart?.items.length}
           </span>
         </div>
@@ -227,192 +225,192 @@ const EnrollmentPage = () => {
       </div>
 
       {/* Date filter controls */}
-      <Card className="p-4 space-y-3">
-
+      <Card className='space-y-3 p-4'>
         {/* Info */}
-        <div className="text-sm text-muted-foreground">
+        <div className='text-muted-foreground text-sm'>
           {!appliedStart || !appliedEnd ? (
             <span>
-              Showing default date range. Adjust dates and click{" "}
-              <strong>Apply</strong>.
+              Showing default date range. Adjust dates and click <strong>Apply</strong>.
             </span>
           ) : (
             <span>
-              Showing{" "}
-              <strong>{format(new Date(appliedStart), "MMM dd, yyyy")}</strong> –{" "}
-              <strong>{format(new Date(appliedEnd), "MMM dd, yyyy")}</strong>
+              Showing <strong>{format(new Date(appliedStart), 'MMM dd, yyyy')}</strong> –{' '}
+              <strong>{format(new Date(appliedEnd), 'MMM dd, yyyy')}</strong>
             </span>
           )}
 
-          {dateError && (
-            <p className="mt-1 text-destructive">{dateError}</p>
-          )}
+          {dateError && <p className='text-destructive mt-1'>{dateError}</p>}
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
-
-          <div className="w-full sm:w-auto">
-            <Label className="text-xs">Start</Label>
+        <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end'>
+          <div className='w-full sm:w-auto'>
+            <Label className='text-xs'>Start</Label>
             <Input
-              type="date"
+              type='date'
               value={startDateInput}
-              onChange={(e) => setStartDateInput(e.target.value)}
-              className="mt-1 w-full sm:w-[160px]"
+              onChange={e => setStartDateInput(e.target.value)}
+              className='mt-1 w-full sm:w-[160px]'
             />
           </div>
 
-          <div className="w-full sm:w-auto">
-            <Label className="text-xs">End</Label>
+          <div className='w-full sm:w-auto'>
+            <Label className='text-xs'>End</Label>
             <Input
-              type="date"
+              type='date'
               value={endDateInput}
-              onChange={(e) => setEndDateInput(e.target.value)}
-              className="mt-1 w-full sm:w-[160px]"
+              onChange={e => setEndDateInput(e.target.value)}
+              className='mt-1 w-full sm:w-[160px]'
             />
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 pt-1 sm:pt-0">
-            <Button size="sm" onClick={applyDates}>
+          <div className='flex gap-2 pt-1 sm:pt-0'>
+            <Button size='sm' onClick={applyDates}>
               Apply
             </Button>
-            <Button size="sm" variant="outline" onClick={clearDates}>
+            <Button size='sm' variant='outline' onClick={clearDates}>
               Reset
             </Button>
           </div>
         </div>
-
       </Card>
 
-      {loading ?
-        <CustomLoadingState subHeading="Loading available classes..." />
-        : <>
-          {(!appliedStart || !appliedEnd) ? (
-            <Card className="flex flex-col items-center justify-center space-y-2 p-6 text-center text-muted-foreground">
-              <h3 className="text-lg font-medium text-foreground">Select a date range</h3>
-              <p className="text-sm text-muted-foreground">
+      {loading ? (
+        <CustomLoadingState subHeading='Loading available classes...' />
+      ) : (
+        <>
+          {!appliedStart || !appliedEnd ? (
+            <Card className='text-muted-foreground flex flex-col items-center justify-center space-y-2 p-6 text-center'>
+              <h3 className='text-foreground text-lg font-medium'>Select a date range</h3>
+              <p className='text-muted-foreground text-sm'>
                 Choose a start and end date then click Apply to view available classes.
               </p>
             </Card>
-          ) :
-            classes.length === 0 ? (
-              <Card className="flex flex-col items-center justify-center space-y-2 p-6 text-center text-muted-foreground">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-10 w-10 text-muted-foreground"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10m-9 4h4m-8 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-                <h3 className="text-lg font-medium text-foreground">No Classes Available</h3>
-                <p className="text-sm text-muted-foreground">
-                  It looks like this course doesn’t have any classes yet.
-                </p>
-              </Card>
-            ) : (
-              <div className="flex flex-row flex-wrap gap-4">
-                {filteredClasses.map(cls => (
-                  <EnrollCourseCard
-                    key={cls?.uuid}
-                    href="#"
-                    cls={cls}
-                    isFull={false}
-                    disableEnroll={false}
-                    handleEnroll={() => {
-                      setEnrollingClass(cls);
-                      setOpenEnrollModal(true);
-                    }}
-                    variant="full"
-                  />
-                ))}
-              </div>
-            )}</>}
-
-
+          ) : classes.length === 0 ? (
+            <Card className='text-muted-foreground flex flex-col items-center justify-center space-y-2 p-6 text-center'>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                className='text-muted-foreground h-10 w-10'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M8 7V3m8 4V3m-9 8h10m-9 4h4m-8 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
+                />
+              </svg>
+              <h3 className='text-foreground text-lg font-medium'>No Classes Available</h3>
+              <p className='text-muted-foreground text-sm'>
+                It looks like this course doesn’t have any classes yet.
+              </p>
+            </Card>
+          ) : (
+            <div className='flex flex-row flex-wrap gap-4'>
+              {filteredClasses.map(cls => (
+                <EnrollCourseCard
+                  key={cls?.uuid}
+                  href='#'
+                  cls={cls}
+                  isFull={false}
+                  disableEnroll={false}
+                  handleEnroll={() => {
+                    setEnrollingClass(cls);
+                    setOpenEnrollModal(true);
+                  }}
+                  variant='full'
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
 
       <ConfirmModal
         open={openEnrollModal}
         setOpen={setOpenEnrollModal}
-        title="Confirm Enrollment"
+        title='Confirm Enrollment'
         description={
-          <div className="space-y-3 text-sm text-muted-foreground">
-            <p>You are about to <strong>enroll</strong> in the following class/program:</p>
+          <div className='text-muted-foreground space-y-3 text-sm'>
+            <p>
+              You are about to <strong>enroll</strong> in the following class/program:
+            </p>
 
-            <div className="rounded-md border bg-muted/60 p-3">
-              <p><strong>Course Name:</strong> {enrollingClass?.course?.name || 'N/A'}</p>
-              <p><strong>Instructor:</strong> {enrollingClass?.instructor?.full_name || 'N/A'}</p>
-              <p><strong>Start Date:</strong> {formattedStart}</p>
-              <p><strong>End Date:</strong> {formattedEnd}</p>
+            <div className='bg-muted/60 rounded-md border p-3'>
+              <p>
+                <strong>Course Name:</strong> {enrollingClass?.course?.name || 'N/A'}
+              </p>
+              <p>
+                <strong>Instructor:</strong> {enrollingClass?.instructor?.full_name || 'N/A'}
+              </p>
+              <p>
+                <strong>Start Date:</strong> {formattedStart}
+              </p>
+              <p>
+                <strong>End Date:</strong> {formattedEnd}
+              </p>
               {enrollingClass?.location_type && (
-                <p><strong>Location:</strong> {enrollingClass.location_type}</p>
+                <p>
+                  <strong>Location:</strong> {enrollingClass.location_type}
+                </p>
               )}
             </div>
 
             <p>
-              By enrolling, you’ll gain access to course materials, session updates,
-              and any assessments or assignments tied to this program.
+              By enrolling, you’ll gain access to course materials, session updates, and any
+              assessments or assignments tied to this program.
             </p>
 
-            <p><strong>Training Fee: </strong>KES {enrollingClass?.training_fee || 'N/A'}</p>
+            <p>
+              <strong>Training Fee: </strong>KES {enrollingClass?.training_fee || 'N/A'}
+            </p>
 
-            <p className="text-yellow-600 font-medium">
+            <p className='font-medium text-yellow-600'>
               Note: Once enrolled, you may need to contact your instructor or admin to withdraw.
             </p>
           </div>
         }
         onConfirm={handleEnrollStudent}
         isLoading={enrollStudent.isPending}
-        confirmText="Yes, Enroll Me"
-        cancelText="No, Cancel"
-        variant="primary"
+        confirmText='Yes, Enroll Me'
+        cancelText='No, Cancel'
+        variant='primary'
       />
 
       <ConfirmModal
         open={openCartModal}
         setOpen={setOpenCartModal}
-        title="Your Cart"
+        title='Your Cart'
         description={
-          <div className="space-y-4 text-sm text-foreground">
+          <div className='text-foreground space-y-4 text-sm'>
             {cart?.items?.length === 0 && (
-              <p className="text-muted-foreground text-center">Your cart is empty.</p>
+              <p className='text-muted-foreground text-center'>Your cart is empty.</p>
             )}
 
             {cart?.items?.map((item: any) => (
-              <div
-                key={item.id}
-                className="rounded-md border bg-muted/50 p-3 space-y-1"
-              >
-                <p className="font-medium">{item.title}</p>
-                <p className="text-muted-foreground text-xs">
-                  Quantity: {item.quantity}
-                </p>
-                <p className="text-xs">Unit Price: ${item.unit_price}</p>
-                <p className="text-xs font-semibold">
-                  Subtotal: ${item.total}
-                </p>
+              <div key={item.id} className='bg-muted/50 space-y-1 rounded-md border p-3'>
+                <p className='font-medium'>{item.title}</p>
+                <p className='text-muted-foreground text-xs'>Quantity: {item.quantity}</p>
+                <p className='text-xs'>Unit Price: ${item.unit_price}</p>
+                <p className='text-xs font-semibold'>Subtotal: ${item.total}</p>
               </div>
             ))}
 
-            <div className="border-t pt-3">
-              <p className="font-semibold text-base">
-                Cart Total: ${cart?.total}
-              </p>
+            <div className='border-t pt-3'>
+              <p className='text-base font-semibold'>Cart Total: ${cart?.total}</p>
             </div>
           </div>
         }
-        confirmText="Proceed to Payment"
-        cancelText="Close"
-        variant="primary"
+        confirmText='Proceed to Payment'
+        cancelText='Close'
+        variant='primary'
         onConfirm={() => {
-          handlePaymentSession(cart)
+          handlePaymentSession(cart);
         }}
       />
-
     </div>
   );
 };

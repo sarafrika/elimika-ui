@@ -77,7 +77,6 @@ export function VisibilityForm({
     return watchPrice * totalHours * enrollmentCount;
   };
 
-
   const handleSubmit = (_values: VisibilityFormValues) => {
     onNext();
   };
@@ -120,7 +119,7 @@ export function VisibilityForm({
                       <RadioGroupItem value='private' id='private' />
                       <div className='flex-1'>
                         <div className='flex items-center gap-2'>
-                          <Lock className='h-4 w-4 text-primary' />
+                          <Lock className='text-primary h-4 w-4' />
                           <Label htmlFor='private' className='font-medium'>
                             Private
                           </Label>
@@ -154,7 +153,7 @@ export function VisibilityForm({
                     readOnly
                     min={1}
                     max={1000}
-                    className="max-w-32 bg-muted cursor-not-allowed"
+                    className='bg-muted max-w-32 cursor-not-allowed'
                   />
                   <span className='text-muted-foreground text-sm'>students maximum</span>
                 </div>
@@ -201,11 +200,11 @@ export function VisibilityForm({
                 <div className='flex items-center gap-2'>
                   <DollarSign className='text-muted-foreground h-5 w-5' />
                   <Input
-                    type="number"
+                    type='number'
                     {...field}
                     value={field.value ?? ''}
                     readOnly
-                    className="max-w-32 bg-muted cursor-not-allowed"
+                    className='bg-muted max-w-32 cursor-not-allowed'
                   />
                   <span className='text-muted-foreground text-sm'>per lesson</span>
                 </div>
@@ -219,7 +218,9 @@ export function VisibilityForm({
                   <div className='space-y-2 text-sm'>
                     <div className='flex justify-between'>
                       <span>Rate per head per hour:</span>
-                      <span>{"KES"} {watchPrice.toFixed(2)}</span>
+                      <span>
+                        {'KES'} {watchPrice.toFixed(2)}
+                      </span>
                     </div>
                     <div className='flex justify-between'>
                       <span>Number of lessons:</span>
@@ -239,7 +240,9 @@ export function VisibilityForm({
                     </div>
                     <div className='flex justify-between border-t pt-2 font-medium'>
                       <span>Total fee:</span>
-                      <span>{"KES"} {calculateTotalFee().toFixed(2)}</span>
+                      <span>
+                        {'KES'} {calculateTotalFee().toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -270,7 +273,7 @@ export function VisibilityForm({
                 {form.getValues('publicity') === 'public' ? (
                   <Globe className='h-3 w-3 text-green-600' />
                 ) : (
-                  <Lock className='h-3 w-3 text-primary' />
+                  <Lock className='text-primary h-3 w-3' />
                 )}
                 {form.getValues('publicity')}
               </div>
@@ -288,7 +291,9 @@ export function VisibilityForm({
             {!watchIsFree && (
               <div>
                 <span className='text-muted-foreground'>Total Cost:</span>
-                <div className='font-medium'>{"KES"} {calculateTotalFee().toFixed(2)}</div>
+                <div className='font-medium'>
+                  {'KES'} {calculateTotalFee().toFixed(2)}
+                </div>
               </div>
             )}
           </div>

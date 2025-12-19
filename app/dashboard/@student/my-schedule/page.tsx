@@ -81,10 +81,7 @@ const Page = () => {
       </div>
 
       {/* Timetable */}
-      <TimetableManager
-        availabilityData={availabilityData}
-        onAvailabilityUpdate={_updated => { }}
-      />
+      <TimetableManager availabilityData={availabilityData} onAvailabilityUpdate={_updated => {}} />
     </div>
   );
 };

@@ -38,7 +38,7 @@ export function GuardianAttendancePanel({
           </p>
         </div>
         {isAttendanceOnly && (
-          <Badge variant='outline' className='uppercase tracking-wide'>
+          <Badge variant='outline' className='tracking-wide uppercase'>
             Attendance-only scope
           </Badge>
         )}
@@ -46,7 +46,7 @@ export function GuardianAttendancePanel({
       <CardContent className='space-y-4'>
         {entries.length ? (
           entries.slice(0, 5).map(entry => (
-            <div key={entry.id} className='rounded-2xl border border-border/60 p-3 text-sm'>
+            <div key={entry.id} className='border-border/60 rounded-2xl border p-3 text-sm'>
               <div className='flex flex-wrap items-center justify-between gap-2'>
                 <span className='font-medium'>{entry.date}</span>
                 <Badge variant={entry.status === 'Present' ? 'success' : 'warning'}>
@@ -59,7 +59,7 @@ export function GuardianAttendancePanel({
             </div>
           ))
         ) : (
-          <div className='rounded-2xl border border-dashed border-border/60 p-4 text-sm'>
+          <div className='border-border/60 rounded-2xl border border-dashed p-4 text-sm'>
             <p className='font-medium'>No attendance activity yet.</p>
             <p className='text-muted-foreground'>
               When the instructor publishes attendance or announcements, they will appear here with

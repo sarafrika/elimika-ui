@@ -16,7 +16,18 @@ import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { useMemo, useState } from 'react';
-import { Users, Mail, Calendar, Filter, X, Building2, GraduationCap, BookOpen, MoreVertical, UserCog } from 'lucide-react';
+import {
+  Users,
+  Mail,
+  Calendar,
+  Filter,
+  X,
+  Building2,
+  GraduationCap,
+  BookOpen,
+  MoreVertical,
+  UserCog,
+} from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
 import {
   DropdownMenu,
@@ -38,13 +49,14 @@ const peopleColumns: ColumnDef<User>[] = [
     header: 'Member',
     cell: ({ row }) => (
       <div className='flex items-center gap-3'>
-        <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary'>
+        <div className='bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full'>
           <span className='text-base font-semibold'>
             {(row.original.first_name?.[0] || row.original.email?.[0] || '?').toUpperCase()}
           </span>
         </div>
-        <div className='font-semibold text-foreground'>
-          {`${row.original.first_name ?? ''} ${row.original.last_name ?? ''}`.trim() || 'Unnamed User'}
+        <div className='text-foreground font-semibold'>
+          {`${row.original.first_name ?? ''} ${row.original.last_name ?? ''}`.trim() ||
+            'Unnamed User'}
         </div>
       </div>
     ),
@@ -53,7 +65,7 @@ const peopleColumns: ColumnDef<User>[] = [
     accessorKey: 'email',
     header: 'Email',
     cell: ({ row }) => (
-      <div className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+      <div className='text-muted-foreground flex items-center gap-1.5 text-sm'>
         <Mail className='h-3.5 w-3.5' />
         <span>{row.original.email}</span>
       </div>
@@ -65,13 +77,13 @@ const peopleColumns: ColumnDef<User>[] = [
     cell: ({ row }) => (
       <div className='flex flex-wrap gap-1.5'>
         {row.original.user_domain && row.original.user_domain.length > 0 ? (
-          row.original.user_domain.map((domain) => (
+          row.original.user_domain.map(domain => (
             <Badge key={domain} variant='secondary' className='text-xs'>
               {domain}
             </Badge>
           ))
         ) : (
-          <span className='text-xs text-muted-foreground'>No roles</span>
+          <span className='text-muted-foreground text-xs'>No roles</span>
         )}
       </div>
     ),
@@ -81,7 +93,7 @@ const peopleColumns: ColumnDef<User>[] = [
     header: 'Joined',
     cell: ({ row }) =>
       row.original.created_date ? (
-        <div className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+        <div className='text-muted-foreground flex items-center gap-1.5 text-sm'>
           <Calendar className='h-3.5 w-3.5' />
           <span>{format(new Date(row.original.created_date), 'MMM dd, yyyy')}</span>
         </div>
@@ -94,17 +106,13 @@ const peopleColumns: ColumnDef<User>[] = [
       <div className='flex justify-end'>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              size='sm'
-              variant='ghost'
-              onClick={(e) => e.stopPropagation()}
-            >
+            <Button size='sm' variant='ghost' onClick={e => e.stopPropagation()}>
               <MoreVertical className='h-4 w-4' />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
             <DropdownMenuItem
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 // Handle view profile action
               }}
@@ -113,7 +121,7 @@ const peopleColumns: ColumnDef<User>[] = [
               View Profile
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 // Handle manage roles action
               }}
@@ -153,9 +161,9 @@ export default function OrganisationPeoplePage() {
   const stats = useMemo(() => {
     return {
       total: totalItems,
-      orgUsers: users.filter((u) => u.user_domain?.includes('organisation_user')).length,
-      instructors: users.filter((u) => u.user_domain?.includes('instructor')).length,
-      students: users.filter((u) => u.user_domain?.includes('student')).length,
+      orgUsers: users.filter(u => u.user_domain?.includes('organisation_user')).length,
+      instructors: users.filter(u => u.user_domain?.includes('instructor')).length,
+      students: users.filter(u => u.user_domain?.includes('student')).length,
     };
   }, [users, totalItems]);
 
@@ -165,57 +173,57 @@ export default function OrganisationPeoplePage() {
       <section className='mb-6'>
         <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div>
-            <h1 className='text-2xl font-bold text-foreground'>People</h1>
-            <p className='text-sm text-muted-foreground'>Manage members and team roles</p>
+            <h1 className='text-foreground text-2xl font-bold'>People</h1>
+            <p className='text-muted-foreground text-sm'>Manage members and team roles</p>
           </div>
         </div>
 
         {/* Stats */}
         <div className='grid gap-3 sm:grid-cols-4'>
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <Users className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <Users className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Total Members</p>
-                <p className='text-lg font-bold text-foreground'>{stats.total}</p>
+                <p className='text-muted-foreground text-xs'>Total Members</p>
+                <p className='text-foreground text-lg font-bold'>{stats.total}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <Building2 className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <Building2 className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Org Users</p>
-                <p className='text-lg font-bold text-foreground'>{stats.orgUsers}</p>
+                <p className='text-muted-foreground text-xs'>Org Users</p>
+                <p className='text-foreground text-lg font-bold'>{stats.orgUsers}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <BookOpen className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <BookOpen className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Instructors</p>
-                <p className='text-lg font-bold text-foreground'>{stats.instructors}</p>
+                <p className='text-muted-foreground text-xs'>Instructors</p>
+                <p className='text-foreground text-lg font-bold'>{stats.instructors}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-lg border border-border bg-card p-3'>
+          <div className='border-border bg-card rounded-lg border p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <GraduationCap className='h-4 w-4 text-primary' />
+              <div className='bg-muted rounded-lg p-2'>
+                <GraduationCap className='text-primary h-4 w-4' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>Students</p>
-                <p className='text-lg font-bold text-foreground'>{stats.students}</p>
+                <p className='text-muted-foreground text-xs'>Students</p>
+                <p className='text-foreground text-lg font-bold'>{stats.students}</p>
               </div>
             </div>
           </div>
@@ -225,13 +233,13 @@ export default function OrganisationPeoplePage() {
       {/* Filters */}
       <section className='mb-6'>
         <div className='flex items-center gap-3'>
-          <Filter className='h-4 w-4 text-muted-foreground' />
+          <Filter className='text-muted-foreground h-4 w-4' />
           <select
-            className='rounded-md border border-border bg-background px-3 py-2 text-sm'
+            className='border-border bg-background rounded-md border px-3 py-2 text-sm'
             value={domainFilter}
-            onChange={(event) => setDomainFilter(event.target.value)}
+            onChange={event => setDomainFilter(event.target.value)}
           >
-            {domainOptions.map((option) => (
+            {domainOptions.map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

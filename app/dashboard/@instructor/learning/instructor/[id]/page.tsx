@@ -2,7 +2,10 @@
 
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getAllInstructorsOptions, getBookingOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getAllInstructorsOptions,
+  getBookingOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { BookOpen, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -107,9 +110,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   // saved booking ids in local storage
-  const bookingIds: string[] = JSON.parse(
-    localStorage.getItem('student_booking_ids') || '[]'
-  );
+  const bookingIds: string[] = JSON.parse(localStorage.getItem('student_booking_ids') || '[]');
   const bookingQueries = useQueries({
     queries: bookingIds.map(bookingUuid => ({
       ...getBookingOptions({
@@ -119,9 +120,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
     })),
   });
 
-  const studentsBookings = bookingQueries
-    .map(q => q.data?.data)
-    .filter(Boolean);
+  const studentsBookings = bookingQueries.map(q => q.data?.data).filter(Boolean);
   // saved booking ids in local storage
 
   const bookings = studentsBookings || [];
@@ -499,8 +498,8 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-primary/10 p-2'>
-              <Users className='h-5 w-5 text-primary' />
+            <div className='bg-primary/10 rounded-lg p-2'>
+              <Users className='text-primary h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Available Instructors</p>

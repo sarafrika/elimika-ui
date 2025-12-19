@@ -87,19 +87,22 @@ export default function InstructorDetails({
                   <p className='text-muted-foreground text-sm font-medium'>Instructor ID:</p>
                   <p className='font-mono text-sm'>{instructor.uuid?.slice(0, 8) || 'N/A'}</p>
                 </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Status:</p>
-                <Badge variant={instructor?.admin_verified ? 'success' : 'secondary'} className='gap-1'>
-                  {instructor?.admin_verified ? (
-                    <>
-                      <BadgeCheckIcon className='h-3.5 w-3.5' />
-                      Verified
-                    </>
-                  ) : (
-                    'Pending'
-                  )}
-                </Badge>
-              </div>
+                <div>
+                  <p className='text-muted-foreground text-sm font-medium'>Status:</p>
+                  <Badge
+                    variant={instructor?.admin_verified ? 'success' : 'secondary'}
+                    className='gap-1'
+                  >
+                    {instructor?.admin_verified ? (
+                      <>
+                        <BadgeCheckIcon className='h-3.5 w-3.5' />
+                        Verified
+                      </>
+                    ) : (
+                      'Pending'
+                    )}
+                  </Badge>
+                </div>
               </div>
             </div>
 
@@ -159,7 +162,7 @@ export default function InstructorDetails({
                   href={instructor.website}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='flex items-center gap-1 text-sm text-primary hover:underline'
+                  className='text-primary flex items-center gap-1 text-sm hover:underline'
                 >
                   <Globe className='h-3 w-3' />
                   {instructor.website}
@@ -230,7 +233,7 @@ export default function InstructorDetails({
             <div className='grid grid-cols-2 justify-between gap-4'>
               {/* @ts-ignore */}
               {membership?.data?.content?.map((body: any, index) => (
-                <div key={index} className='rounded-lg border bg-card p-4 shadow-sm'>
+                <div key={index} className='bg-card rounded-lg border p-4 shadow-sm'>
                   <div className='mb-2 flex items-center gap-4'>
                     <Badge variant='outline' className='text-xs'>
                       {body?.organization_name || 'N/A'}

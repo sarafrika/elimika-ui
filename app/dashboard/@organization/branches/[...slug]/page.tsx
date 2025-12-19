@@ -88,7 +88,7 @@ export default async function ViewBranch({
               <CardContent>
                 <h1 className='flex gap-3 text-3xl'>
                   <UsersIcon size={32} /> 150k
-                  <LineChart className='ms-auto text-muted-foreground' />
+                  <LineChart className='text-muted-foreground ms-auto' />
                 </h1>
               </CardContent>
             </Card>

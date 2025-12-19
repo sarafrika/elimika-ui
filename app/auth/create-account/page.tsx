@@ -9,7 +9,10 @@ import {
   type TrainingCenter,
   TrainingCenterForm,
 } from '@/app/auth/create-account/_components/training-center-form';
-import { type User, UserAccountForm } from '@/app/auth/create-account/_components/user-account-form';
+import {
+  type User,
+  UserAccountForm,
+} from '@/app/auth/create-account/_components/user-account-form';
 import illustration from '@/assets/illustration.jpg';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -177,11 +180,11 @@ export default function CreateAccountPage() {
   const UserTypeIcon = () => {
     switch (userDomain) {
       case 'student':
-        return <GraduationCap className='h-6 w-6 text-primary' />;
+        return <GraduationCap className='text-primary h-6 w-6' />;
       case 'instructor':
-        return <Lightbulb className='h-6 w-6 text-primary' />;
+        return <Lightbulb className='text-primary h-6 w-6' />;
       case 'organisation_user':
-        return <Building2 className='h-6 w-6 text-primary' />;
+        return <Building2 className='text-primary h-6 w-6' />;
     }
   };
 
@@ -233,7 +236,7 @@ export default function CreateAccountPage() {
     <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>
-          <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20'>
+          <div className='bg-primary/10 text-primary ring-primary/20 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full ring-1'>
             <Check className='h-6 w-6' />
           </div>
           <DialogTitle className='text-center text-xl'>Account Created Successfully</DialogTitle>
@@ -254,45 +257,51 @@ export default function CreateAccountPage() {
             <CardContent>
               <ol className='space-y-4 text-sm'>
                 <li className='flex items-start'>
-                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-primary-foreground'>
+                  <div className='bg-primary text-primary-foreground mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs'>
                     1
                   </div>
                   <div>
                     <p className='font-medium'>Check your inbox</p>
-                    <p className='text-xs text-muted-foreground'>Email should arrive within 5 minutes</p>
+                    <p className='text-muted-foreground text-xs'>
+                      Email should arrive within 5 minutes
+                    </p>
                   </div>
                 </li>
                 <li className='flex items-start'>
-                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-primary-foreground'>
+                  <div className='bg-primary text-primary-foreground mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs'>
                     2
                   </div>
                   <div>
                     <p className='font-medium'>Click the verification link</p>
-                    <p className='text-xs text-muted-foreground'>This confirms your email address</p>
+                    <p className='text-muted-foreground text-xs'>
+                      This confirms your email address
+                    </p>
                   </div>
                 </li>
                 <li className='flex items-start'>
-                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-primary-foreground'>
+                  <div className='bg-primary text-primary-foreground mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs'>
                     3
                   </div>
                   <div>
                     <p className='font-medium'>Set your password</p>
-                    <p className='text-xs text-muted-foreground'>Create a secure password when prompted</p>
+                    <p className='text-muted-foreground text-xs'>
+                      Create a secure password when prompted
+                    </p>
                   </div>
                 </li>
                 <li className='flex items-start'>
-                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-primary-foreground'>
+                  <div className='bg-primary text-primary-foreground mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs'>
                     4
                   </div>
                   <div>
                     <p className='font-medium'>Log in with your credentials</p>
-                    <p className='text-xs text-muted-foreground'>Use your email and new password</p>
+                    <p className='text-muted-foreground text-xs'>Use your email and new password</p>
                   </div>
                 </li>
               </ol>
             </CardContent>
             <CardFooter className='mt-2 flex flex-col items-start gap-2 border-t pt-4'>
-              <div className='flex w-full items-center rounded-md bg-muted p-2 text-xs text-muted-foreground'>
+              <div className='bg-muted text-muted-foreground flex w-full items-center rounded-md p-2 text-xs'>
                 <AlertCircle className='mr-2 h-3 w-3' />
                 <span>Please check your spam folder if you don&apos;t see the email.</span>
               </div>
@@ -340,27 +349,27 @@ export default function CreateAccountPage() {
 
   const LoadingOverlay = () =>
     accountCreationStatus === 'submitting' && (
-      <div className='fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm'>
-        <div className='flex flex-col items-center rounded-lg border border-border bg-card p-6 shadow-lg'>
+      <div className='bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm'>
+        <div className='border-border bg-card flex flex-col items-center rounded-lg border p-6 shadow-lg'>
           <Loader2 className='text-primary mb-4 h-8 w-8 animate-spin' />
-          <p className='text-lg font-medium text-foreground'>Creating your account...</p>
-          <p className='text-sm text-muted-foreground'>This will only take a moment</p>
+          <p className='text-foreground text-lg font-medium'>Creating your account...</p>
+          <p className='text-muted-foreground text-sm'>This will only take a moment</p>
         </div>
       </div>
     );
 
   return (
-    <div className='min-h-screen bg-background py-14'>
+    <div className='bg-background min-h-screen py-14'>
       <div className='container mx-auto max-w-7xl px-4'>
-        <div className='flex flex-col gap-0 overflow-hidden rounded-xl border border-border bg-card shadow-lg lg:flex-row'>
-          <div className='w-full bg-card p-6 md:p-8 lg:w-3/5'>
+        <div className='border-border bg-card flex flex-col gap-0 overflow-hidden rounded-xl border shadow-lg lg:flex-row'>
+          <div className='bg-card w-full p-6 md:p-8 lg:w-3/5'>
             <div className='mx-auto max-w-2xl'>
               <div className='mb-4'>
                 <div className='mb-1 flex items-center gap-2'>
                   <UserTypeIcon />
                   <h1 className='text-2xl font-semibold'>{UserTypeTitle()}</h1>
                 </div>
-                <p className='text-sm text-muted-foreground'>{UserTypeDescription()}</p>
+                <p className='text-muted-foreground text-sm'>{UserTypeDescription()}</p>
               </div>
 
               <ErrorAlert />
@@ -430,10 +439,10 @@ export default function CreateAccountPage() {
                 </TabsContent>
               </Tabs>
 
-              <div className='mt-8 text-center text-sm text-muted-foreground'>
+              <div className='text-muted-foreground mt-8 text-center text-sm'>
                 Already have an account?{' '}
                 <span
-                  className='cursor-pointer text-primary hover:underline'
+                  className='text-primary cursor-pointer hover:underline'
                   onClick={() => signIn('keycloak')}
                 >
                   Sign in

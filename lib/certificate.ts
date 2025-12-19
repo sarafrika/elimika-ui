@@ -32,39 +32,39 @@ export const certificatePDF = (certificate: CertificateData): TDocumentDefinitio
     pageSize: 'A4',
     pageMargins: [50, 70, 50, 60],
     background: (_, pageSize) => ({
-        canvas: [
-          // Soft background
-          {
-            type: 'rect',
-            x: 0,
-            y: 0,
-            w: pageSize.width,
-            h: pageSize.height,
-            color: '#FDFDFD',
-          },
-          // Decorative border
-          {
-            type: 'rect',
-            x: 25,
-            y: 25,
-            w: pageSize.width - 50,
-            h: pageSize.height - 50,
-            lineWidth: 2,
-            lineColor: '#1E3A8A',
-            r: 10,
-          },
-          // Thin inner gold accent border
-          {
-            type: 'rect',
-            x: 35,
-            y: 35,
-            w: pageSize.width - 70,
-            h: pageSize.height - 70,
-            lineWidth: 0.8,
-            lineColor: '#FACC15',
-          },
-        ],
-      }),
+      canvas: [
+        // Soft background
+        {
+          type: 'rect',
+          x: 0,
+          y: 0,
+          w: pageSize.width,
+          h: pageSize.height,
+          color: '#FDFDFD',
+        },
+        // Decorative border
+        {
+          type: 'rect',
+          x: 25,
+          y: 25,
+          w: pageSize.width - 50,
+          h: pageSize.height - 50,
+          lineWidth: 2,
+          lineColor: '#1E3A8A',
+          r: 10,
+        },
+        // Thin inner gold accent border
+        {
+          type: 'rect',
+          x: 35,
+          y: 35,
+          w: pageSize.width - 70,
+          h: pageSize.height - 70,
+          lineWidth: 0.8,
+          lineColor: '#FACC15',
+        },
+      ],
+    }),
 
     content: [
       // Title

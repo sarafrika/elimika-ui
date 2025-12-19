@@ -88,12 +88,7 @@ const combineDateWithTime = (date: Date, timeValue?: Date | string | null) => {
   if (Number.isNaN(time.getTime())) return date;
 
   const merged = new Date(date);
-  merged.setHours(
-    time.getHours(),
-    time.getMinutes(),
-    time.getSeconds(),
-    time.getMilliseconds()
-  );
+  merged.setHours(time.getHours(), time.getMinutes(), time.getSeconds(), time.getMilliseconds());
   return merged;
 };
 
@@ -171,10 +166,7 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
       values.academicPeriod.startDate,
       classData?.default_start_time
     );
-    const endTime = combineDateWithTime(
-      values.academicPeriod.endDate,
-      classData?.default_end_time
-    );
+    const endTime = combineDateWithTime(values.academicPeriod.endDate, classData?.default_end_time);
 
     scheduleClassRequest.mutate(
       {

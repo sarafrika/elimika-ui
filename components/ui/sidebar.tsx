@@ -180,14 +180,14 @@ function Sidebar({
         {/* Menu Hamburger Icon */}
         <button
           onClick={() => setOpenMobile(true)}
-          className='fixed left-4 -top-1 z-50 my-3 flex h-8 w-8 items-center justify-center rounded-sm border border-border bg-secondary shadow-md transition hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-primary/60'
+          className='border-border bg-secondary hover:bg-secondary/80 focus:ring-primary/60 fixed -top-1 left-4 z-50 my-3 flex h-8 w-8 items-center justify-center rounded-sm border shadow-md transition focus:ring-2 focus:outline-none'
           aria-label='Open Sidebar'
         >
           <svg
             xmlns='http://www.w3.org/2000/svg'
             aria-hidden='true'
             role='img'
-            className='h-5 w-5 text-foreground'
+            className='text-foreground h-5 w-5'
             viewBox='0 0 24 24'
           >
             <path
@@ -576,7 +576,7 @@ function SidebarMenuAction({
         'peer-data-[size=lg]/menu-button:top-2.5',
         'group-data-[collapsible=icon]:hidden',
         showOnHover &&
-        'peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0',
+          'peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0',
         className
       )}
       {...props}
@@ -590,7 +590,7 @@ function SidebarMenuBadge({ className, ...props }: React.ComponentProps<'div'>) 
       data-slot='sidebar-menu-badge'
       data-sidebar='menu-badge'
       className={cn(
-        'pointer-events-none absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-sidebar-border/70 bg-sidebar-accent/90 px-1.5 text-[11px] font-semibold tabular-nums text-sidebar-accent-foreground select-none shadow-sm',
+        'border-sidebar-border/70 bg-sidebar-accent/90 text-sidebar-accent-foreground pointer-events-none absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-full border px-1.5 text-[11px] font-semibold tabular-nums shadow-sm select-none',
         'peer-hover/menu-button:text-sidebar-accent-foreground peer-data-[active=true]/menu-button:text-sidebar-accent-foreground',
         'peer-data-[size=sm]/menu-button:top-1',
         'peer-data-[size=default]/menu-button:top-1.5',
@@ -718,5 +718,5 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  useSidebar
+  useSidebar,
 };

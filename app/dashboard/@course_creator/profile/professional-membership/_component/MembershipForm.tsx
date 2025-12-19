@@ -207,7 +207,11 @@ export default function ProfessionalBodySettings() {
     toast('Membership removed successfully');
   }
 
-  const formatDateRange = (startDate?: string | Date, endDate?: string | Date, isActive?: boolean) => {
+  const formatDateRange = (
+    startDate?: string | Date,
+    endDate?: string | Date,
+    isActive?: boolean
+  ) => {
     const formatDate = (date?: string | Date) => {
       if (!date) return '';
       return format(new Date(date), 'MMM yyyy');
@@ -253,7 +257,7 @@ export default function ProfessionalBodySettings() {
             description='Add the professional bodies where you hold active or past memberships.'
             viewContent={
               <ProfileViewList emptyMessage='No professional memberships added yet.'>
-                {courseCreatorMembership?.map((mem) => (
+                {courseCreatorMembership?.map(mem => (
                   <ProfileViewListItem
                     key={mem.uuid}
                     title={mem.organization_name || 'Organization name not specified'}

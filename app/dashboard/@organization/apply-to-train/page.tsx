@@ -133,7 +133,7 @@ export default function ApplyToTrainPage() {
   if (loadingCourse) {
     return (
       <div className='flex min-h-[400px] items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+        <Loader2 className='text-muted-foreground h-8 w-8 animate-spin' />
       </div>
     );
   }
@@ -153,8 +153,8 @@ export default function ApplyToTrainPage() {
     <div className='mx-auto max-w-5xl space-y-6 p-6'>
       {/* Header */}
       <div className='flex items-start gap-4'>
-        <div className='flex h-12 w-12 items-center justify-center rounded-lg border bg-primary/10'>
-          <FileText className='h-6 w-6 text-primary' />
+        <div className='bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg border'>
+          <FileText className='text-primary h-6 w-6' />
         </div>
         <div className='flex-1'>
           <h1 className='text-2xl font-bold'>Apply to Train Course</h1>
@@ -215,9 +215,7 @@ export default function ApplyToTrainPage() {
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Registration Number</span>
-              <p className='font-medium'>
-                {organisation?.registration_number || 'Not available'}
-              </p>
+              <p className='font-medium'>{organisation?.registration_number || 'Not available'}</p>
             </div>
           </div>
         </CardContent>

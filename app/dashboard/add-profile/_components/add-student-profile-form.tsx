@@ -110,7 +110,7 @@ export default function AddStudentProfileForm() {
       </div>
 
       <div className='mb-8 text-center'>
-        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary'>
+        <div className='bg-primary/10 text-primary mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
           <GraduationCap className='h-8 w-8' />
         </div>
         <h1 className='text-foreground mb-2 text-3xl font-bold'>Add Student Profile</h1>

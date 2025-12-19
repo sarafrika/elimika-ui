@@ -100,7 +100,8 @@ export default function CertificatesPage() {
             ? !cert.revoked_at && cert.is_valid !== false
             : Boolean(cert.revoked_at || cert.is_valid === false);
 
-      const matchesType = typeFilter === 'all' || (cert.certificate_type || 'Unspecified') === typeFilter;
+      const matchesType =
+        typeFilter === 'all' || (cert.certificate_type || 'Unspecified') === typeFilter;
       const matchesSearch =
         searchTerm.trim().length === 0 ||
         cert.certificate_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -161,7 +162,7 @@ export default function CertificatesPage() {
     <div className='space-y-8'>
       <div className='flex flex-wrap items-start justify-between gap-4'>
         <div>
-          <p className='text-sm text-muted-foreground'>Certificates</p>
+          <p className='text-muted-foreground text-sm'>Certificates</p>
           <h1 className='text-2xl font-semibold'>
             {profile?.first_name} {profile?.last_name}
           </h1>
@@ -198,7 +199,7 @@ export default function CertificatesPage() {
                   <p className='text-2xl font-semibold'>{item.value}</p>
                 )}
               </div>
-              <item.icon className='h-6 w-6 text-primary' />
+              <item.icon className='text-primary h-6 w-6' />
             </CardContent>
           </Card>
         ))}
@@ -210,7 +211,7 @@ export default function CertificatesPage() {
         </CardHeader>
         <CardContent className='flex flex-wrap items-center gap-4'>
           <div className='relative min-w-64 flex-1'>
-            <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
+            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
             <Input
               placeholder='Search by number, type, or template'
               className='pl-10'
@@ -218,7 +219,10 @@ export default function CertificatesPage() {
               onChange={event => setSearchTerm(event.target.value)}
             />
           </div>
-          <Select value={statusFilter} onValueChange={value => setStatusFilter(value as typeof statusFilter)}>
+          <Select
+            value={statusFilter}
+            onValueChange={value => setStatusFilter(value as typeof statusFilter)}
+          >
             <SelectTrigger className='w-44'>
               <SelectValue placeholder='Status' />
             </SelectTrigger>
@@ -266,10 +270,13 @@ export default function CertificatesPage() {
           : filteredCertificates.map(certificate => {
               const status = getStatusBadge(certificate);
               const StatusIcon = status.icon;
-              const canDownload = certificate.is_downloadable && Boolean(certificate.certificate_url);
+              const canDownload =
+                certificate.is_downloadable && Boolean(certificate.certificate_url);
               return (
                 <Card
-                  key={certificate.uuid ?? certificate.certificate_number ?? certificate.template_uuid}
+                  key={
+                    certificate.uuid ?? certificate.certificate_number ?? certificate.template_uuid
+                  }
                   className='transition hover:shadow-md'
                 >
                   <CardHeader className='flex flex-row items-start justify-between gap-3 pb-3'>
@@ -294,28 +301,28 @@ export default function CertificatesPage() {
                     </div>
                   </CardHeader>
                   <CardContent className='space-y-3'>
-                    <div className='grid grid-cols-2 gap-3 text-sm text-muted-foreground'>
+                    <div className='text-muted-foreground grid grid-cols-2 gap-3 text-sm'>
                       <div>
-                        <p className='text-xs uppercase tracking-wide'>Completion date</p>
+                        <p className='text-xs tracking-wide uppercase'>Completion date</p>
                         <p className='text-foreground font-medium'>
                           {formatDate(certificate.completion_date)}
                         </p>
                       </div>
                       <div>
-                        <p className='text-xs uppercase tracking-wide'>Issued date</p>
+                        <p className='text-xs tracking-wide uppercase'>Issued date</p>
                         <p className='text-foreground font-medium'>
                           {formatDate(certificate.issued_date)}
                         </p>
                       </div>
                       <div>
-                        <p className='text-xs uppercase tracking-wide'>Final grade</p>
+                        <p className='text-xs tracking-wide uppercase'>Final grade</p>
                         <p className='text-foreground font-medium'>
                           {certificate.final_grade ?? '—'}{' '}
                           {certificate.grade_letter ? `(${certificate.grade_letter})` : ''}
                         </p>
                       </div>
                       <div>
-                        <p className='text-xs uppercase tracking-wide'>Template</p>
+                        <p className='text-xs tracking-wide uppercase'>Template</p>
                         <p className='text-foreground font-medium'>
                           {certificate.template_uuid?.slice(0, 8) ?? 'Not set'}
                         </p>

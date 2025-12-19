@@ -255,7 +255,7 @@ export default function CertificatesSettings() {
             description='Professional certifications and credentials that validate your expertise.'
             viewContent={
               <ProfileViewList emptyMessage='No certifications added yet.'>
-                {courseCreatorCertifications?.map((cert) => (
+                {courseCreatorCertifications?.map(cert => (
                   <ProfileViewListItem
                     key={cert.uuid}
                     title={cert.certification_name || 'Certification not specified'}

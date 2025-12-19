@@ -38,7 +38,11 @@ import {
   updateClassDefinitionMutation,
   updateScheduledInstanceStatusMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { LocationTypeEnum, RecurrenceTypeEnum, type StatusEnum3 } from '@/services/client/types.gen';
+import {
+  LocationTypeEnum,
+  RecurrenceTypeEnum,
+  type StatusEnum3,
+} from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XIcon } from 'lucide-react';
@@ -65,8 +69,8 @@ export const classSchema = z.object({
   max_participants: z.coerce.number().optional(),
   allow_waitlist: z.boolean().default(false),
   recurrence_pattern_uuid: z.string().optional(),
-  class_visibility: z.string().min(1, "class_visibility is required"),
-  session_format: z.string().min(1, "session_format is required"),
+  class_visibility: z.string().min(1, 'class_visibility is required'),
+  session_format: z.string().min(1, 'session_format is required'),
   is_active: z.boolean().default(false),
 });
 
@@ -615,7 +619,7 @@ function RecurrencForm({
           <Button
             type='submit'
             className='flex min-w-[120px] items-center justify-center gap-2'
-          // disabled={createClassRecurrence.isPending || updateClassRecurrence.isPending}
+            // disabled={createClassRecurrence.isPending || updateClassRecurrence.isPending}
           >
             {/* {(createClassRecurrence.isPending || updateClassRecurrence.isPending) && <Spinner />} */}
             {initialValues ? 'Update Recurrence' : 'Create Recurrence'}
@@ -745,7 +749,7 @@ function ScheduleForm({
           <Button
             type='submit'
             className='flex min-w-[120px] items-center justify-center gap-2'
-          // disabled={createClassSchedule.isPending || updateClassSchedule.isPending}
+            // disabled={createClassSchedule.isPending || updateClassSchedule.isPending}
           >
             {/* {(createClassSchedule.isPending || updateClassSchedule.isPending) && <Spinner />} */}
             {initialValues ? 'Update Schedule' : 'Create Schedule'}

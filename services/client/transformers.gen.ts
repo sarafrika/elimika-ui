@@ -191,7 +191,9 @@ import type {
   CreateBookingResponse,
   RequestPaymentResponse,
   PaymentCallbackResponse,
+  DeclineBookingResponse,
   CancelBookingResponse,
+  AcceptBookingResponse,
   GetAllAssignmentsResponse,
   CreateAssignmentResponse,
   SubmitAssignmentResponse,
@@ -3480,9 +3482,23 @@ export const paymentCallbackResponseTransformer = async (
   return data;
 };
 
+export const declineBookingResponseTransformer = async (
+  data: any
+): Promise<DeclineBookingResponse> => {
+  data = apiResponseBookingResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 export const cancelBookingResponseTransformer = async (
   data: any
 ): Promise<CancelBookingResponse> => {
+  data = apiResponseBookingResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const acceptBookingResponseTransformer = async (
+  data: any
+): Promise<AcceptBookingResponse> => {
   data = apiResponseBookingResponseSchemaResponseTransformer(data);
   return data;
 };

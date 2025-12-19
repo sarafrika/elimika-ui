@@ -4,11 +4,30 @@ import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/da
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { type AdminRubric, useAdminRubrics, useUpdateAdminRubric } from '@/services/admin';
@@ -47,7 +66,9 @@ const visibilityOptions = [
 export default function AdminRubricsPage() {
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED'
+  >('all');
   const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all');
   const [selectedRubricId, setSelectedRubricId] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -83,8 +104,7 @@ export default function AdminRubricsPage() {
       {
         id: 'title',
         header: 'Rubric',
-        className: 'min-w-[220px]'
-,
+        className: 'min-w-[220px]',
         cell: rubric => (
           <div className='space-y-1'>
             <div className='font-semibold'>{rubric.title}</div>
@@ -107,7 +127,9 @@ export default function AdminRubricsPage() {
         header: 'Visibility',
         className: 'hidden md:table-cell',
         cell: rubric => (
-          <Badge variant={rubric.is_public ? 'default' : 'outline'}>{rubric.is_public ? 'Public' : 'Private'}</Badge>
+          <Badge variant={rubric.is_public ? 'default' : 'outline'}>
+            {rubric.is_public ? 'Public' : 'Private'}
+          </Badge>
         ),
       },
       {
@@ -124,30 +146,53 @@ export default function AdminRubricsPage() {
     []
   );
 
-  const publishedCount = useMemo(() => rubrics.filter(rubric => rubric.status === 'PUBLISHED').length, [rubrics]);
+  const publishedCount = useMemo(
+    () => rubrics.filter(rubric => rubric.status === 'PUBLISHED').length,
+    [rubrics]
+  );
   const publicCount = useMemo(() => rubrics.filter(rubric => rubric.is_public).length, [rubrics]);
 
   return (
-    <div className='mx-auto flex w-full max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem] flex-col gap-6 px-4 py-10 2xl:px-10'>
-      <div className='relative overflow-hidden rounded-3xl border border-primary/20 bg-card p-6 shadow-sm'>
+    <div className='mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 xl:max-w-[110rem] 2xl:max-w-[130rem] 2xl:px-10'>
+      <div className='border-primary/20 bg-card relative overflow-hidden rounded-3xl border p-6 shadow-sm'>
         <div className='flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
           <div className='space-y-2'>
-            <Badge variant='outline' className='border-primary/60 bg-primary/10 text-xs font-semibold uppercase tracking-wide'>
+            <Badge
+              variant='outline'
+              className='border-primary/60 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
+            >
               Quality assurance
             </Badge>
             <h1 className='text-3xl font-semibold tracking-tight'>Rubric library</h1>
             <p className='text-muted-foreground max-w-2xl text-sm'>
-              Govern assessment quality, share reusable grading frameworks, and monitor rubric publication workflows.
+              Govern assessment quality, share reusable grading frameworks, and monitor rubric
+              publication workflows.
             </p>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
-            <MetricCard icon={<ClipboardList className='h-5 w-5 text-primary' />} label='Total rubrics' value={totalItems} />
-            <MetricCard icon={<ShieldCheck className='h-5 w-5 text-primary' />} label='Published' value={publishedCount} />
+            <MetricCard
+              icon={<ClipboardList className='text-primary h-5 w-5' />}
+              label='Total rubrics'
+              value={totalItems}
+            />
+            <MetricCard
+              icon={<ShieldCheck className='text-primary h-5 w-5' />}
+              label='Published'
+              value={publishedCount}
+            />
           </div>
         </div>
         <div className='mt-6 grid gap-3 sm:grid-cols-2'>
-          <MetricCard icon={<NotebookPen className='h-5 w-5 text-primary' />} label='Public templates' value={publicCount} />
-          <MetricCard icon={<Badge className='bg-primary/20 text-primary'>%</Badge>} label='Avg total weight' value={averageWeight(rubrics)} />
+          <MetricCard
+            icon={<NotebookPen className='text-primary h-5 w-5' />}
+            label='Public templates'
+            value={publicCount}
+          />
+          <MetricCard
+            icon={<Badge className='bg-primary/20 text-primary'>%</Badge>}
+            label='Avg total weight'
+            value={averageWeight(rubrics)}
+          />
         </div>
       </div>
 
@@ -209,7 +254,7 @@ export default function AdminRubricsPage() {
         emptyState={{
           title: 'No rubrics found',
           description: 'Adjust filters or review content workflows to surface rubric templates.',
-          icon: <ClipboardList className='h-10 w-10 text-primary' />,
+          icon: <ClipboardList className='text-primary h-10 w-10' />,
         }}
       />
 
@@ -272,7 +317,9 @@ function RubricDetailSheet({ rubric, open, onOpenChange }: RubricDetailSheetProp
       <SheetContent className='w-full max-w-xl border-l'>
         <SheetHeader>
           <SheetTitle>Rubric details</SheetTitle>
-          <SheetDescription>Adjust publication status, total weighting, and visibility.</SheetDescription>
+          <SheetDescription>
+            Adjust publication status, total weighting, and visibility.
+          </SheetDescription>
         </SheetHeader>
         {rubric ? (
           <ScrollArea className='mt-4 flex-1 pr-3'>
@@ -298,7 +345,11 @@ function RubricDetailSheet({ rubric, open, onOpenChange }: RubricDetailSheetProp
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea placeholder='Provide context for evaluators' rows={3} {...field} />
+                        <Textarea
+                          placeholder='Provide context for evaluators'
+                          rows={3}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -328,7 +379,11 @@ function RubricDetailSheet({ rubric, open, onOpenChange }: RubricDetailSheetProp
                           <Input
                             type='number'
                             value={field.value ?? ''}
-                            onChange={event => field.onChange(event.target.value ? Number(event.target.value) : undefined)}
+                            onChange={event =>
+                              field.onChange(
+                                event.target.value ? Number(event.target.value) : undefined
+                              )
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -347,11 +402,13 @@ function RubricDetailSheet({ rubric, open, onOpenChange }: RubricDetailSheetProp
                               <SelectValue placeholder='Select status' />
                             </SelectTrigger>
                             <SelectContent>
-                              {statusOptions.filter(option => option.value !== 'all').map(option => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
+                              {statusOptions
+                                .filter(option => option.value !== 'all')
+                                .map(option => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                         </FormControl>
@@ -367,7 +424,9 @@ function RubricDetailSheet({ rubric, open, onOpenChange }: RubricDetailSheetProp
                     <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
                       <div className='space-y-0.5'>
                         <FormLabel>Public template</FormLabel>
-                        <p className='text-muted-foreground text-sm'>Public rubrics can be reused by other course creators.</p>
+                        <p className='text-muted-foreground text-sm'>
+                          Public rubrics can be reused by other course creators.
+                        </p>
                       </div>
                       <FormControl>
                         <Switch checked={Boolean(field.value)} onCheckedChange={field.onChange} />
@@ -376,34 +435,44 @@ function RubricDetailSheet({ rubric, open, onOpenChange }: RubricDetailSheetProp
                   )}
                 />
 
-                <div className='rounded-lg border bg-muted/40 p-4 text-xs text-muted-foreground'>
+                <div className='bg-muted/40 text-muted-foreground rounded-lg border p-4 text-xs'>
                   <div className='grid gap-2 sm:grid-cols-2'>
                     <div>
-                      <span className='font-medium text-foreground'>Created:</span>{' '}
-                      {rubric.created_date ? format(new Date(rubric.created_date), 'dd MMM yyyy, HH:mm') : '—'}
+                      <span className='text-foreground font-medium'>Created:</span>{' '}
+                      {rubric.created_date
+                        ? format(new Date(rubric.created_date), 'dd MMM yyyy, HH:mm')
+                        : '—'}
                     </div>
                     <div>
-                      <span className='font-medium text-foreground'>Updated:</span>{' '}
-                      {rubric.updated_date ? format(new Date(rubric.updated_date), 'dd MMM yyyy, HH:mm') : '—'}
+                      <span className='text-foreground font-medium'>Updated:</span>{' '}
+                      {rubric.updated_date
+                        ? format(new Date(rubric.updated_date), 'dd MMM yyyy, HH:mm')
+                        : '—'}
                     </div>
                     <div>
-                      <span className='font-medium text-foreground'>Course creator:</span> {rubric.course_creator_uuid ?? '—'}
+                      <span className='text-foreground font-medium'>Course creator:</span>{' '}
+                      {rubric.course_creator_uuid ?? '—'}
                     </div>
                     <div>
-                      <span className='font-medium text-foreground'>Rubric UUID:</span> {rubric.uuid ?? '—'}
+                      <span className='text-foreground font-medium'>Rubric UUID:</span>{' '}
+                      {rubric.uuid ?? '—'}
                     </div>
                   </div>
                 </div>
 
                 <Button type='submit' className='w-full' disabled={updateRubric.isPending}>
-                  {updateRubric.isPending ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
+                  {updateRubric.isPending ? (
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  ) : null}
                   Save changes
                 </Button>
               </form>
             </Form>
           </ScrollArea>
         ) : (
-          <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>Select a rubric to manage details.</div>
+          <div className='text-muted-foreground flex h-full items-center justify-center text-sm'>
+            Select a rubric to manage details.
+          </div>
         )}
       </SheetContent>
     </Sheet>
@@ -429,11 +498,13 @@ interface MetricCardProps {
 
 function MetricCard({ icon, label, value }: MetricCardProps) {
   return (
-    <Card className='bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+    <Card className='bg-background/80 supports-[backdrop-filter]:bg-background/60 backdrop-blur'>
       <CardContent className='flex items-center gap-3 p-4'>
-        <div className='rounded-full bg-primary/10 p-2'>{icon}</div>
+        <div className='bg-primary/10 rounded-full p-2'>{icon}</div>
         <div>
-          <p className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>{label}</p>
+          <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+            {label}
+          </p>
           <p className='text-foreground text-xl font-semibold'>{value}</p>
         </div>
       </CardContent>

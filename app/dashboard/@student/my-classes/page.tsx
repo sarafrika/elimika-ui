@@ -26,7 +26,7 @@ export default function MyClassesPage() {
         id: 'my-classes',
         title: 'My Classes',
         url: '/dashboard/my-classes',
-      }
+      },
     ]);
   }, [replaceBreadcrumbs]);
 
@@ -50,9 +50,7 @@ export default function MyClassesPage() {
   });
 
   if (loading) {
-    return (
-      <CustomLoadingState subHeading='Fetching your classes...' />
-    );
+    return <CustomLoadingState subHeading='Fetching your classes...' />;
   }
 
   return (
@@ -95,7 +93,7 @@ export default function MyClassesPage() {
               cls={classDetails}
               isFull={false}
               disableEnroll={true}
-              handleEnroll={() => { }}
+              handleEnroll={() => {}}
               variant='minimal'
             />
           ))}

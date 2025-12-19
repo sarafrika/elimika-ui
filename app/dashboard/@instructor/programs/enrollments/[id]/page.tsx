@@ -53,10 +53,10 @@ export default function ProgramEnrollmentPage() {
   if (isLoading)
     return (
       <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
-        <div className='h-20 w-full animate-pulse rounded bg-muted'></div>
+        <div className='bg-muted h-20 w-full animate-pulse rounded'></div>
         <div className='mt-10 flex items-center justify-center'>{/* <Spinner /> */}</div>
-        <div className='h-16 w-full animate-pulse rounded bg-muted'></div>
-        <div className='h-12 w-full animate-pulse rounded bg-muted'></div>
+        <div className='bg-muted h-16 w-full animate-pulse rounded'></div>
+        <div className='bg-muted h-12 w-full animate-pulse rounded'></div>
       </div>
     );
 
@@ -72,27 +72,27 @@ export default function ProgramEnrollmentPage() {
         <div className='text-muted-foreground flex items-center gap-2 text-sm'>
           <span>Instructor:</span>
           <Badge variant='outline'>{user?.display_name}</Badge>
-          <span className='text-xs text-muted-foreground'>
+          <span className='text-muted-foreground text-xs'>
             ({user?.instructor?.professional_headline})
           </span>
         </div>
       </div>
 
       <div className='flex flex-row gap-4'>
-        <div className='flex w-1/2 items-center gap-2 text-sm text-muted-foreground'>
-          <span className='font-semibold text-foreground'>Program Size:</span>
+        <div className='text-muted-foreground flex w-1/2 items-center gap-2 text-sm'>
+          <span className='text-foreground font-semibold'>Program Size:</span>
           <span className='flex items-center gap-1'>
-            <Users className='h-4 w-4 text-muted-foreground' />
+            <Users className='text-muted-foreground h-4 w-4' />
             {programData?.class_limit === 0
               ? 'Unlimited students'
               : `Up to ${programData?.class_limit} students`}
           </span>
         </div>
 
-        <div className='flex w-1/2 items-center gap-2 text-sm text-muted-foreground'>
-          <span className='font-semibold text-foreground'>Duration:</span>
+        <div className='text-muted-foreground flex w-1/2 items-center gap-2 text-sm'>
+          <span className='text-foreground font-semibold'>Duration:</span>
           <span className='flex items-center gap-1'>
-            <Clock className='h-4 w-4 text-muted-foreground' />
+            <Clock className='text-muted-foreground h-4 w-4' />
             Approx. {programData?.total_duration_display}
           </span>
         </div>

@@ -86,7 +86,6 @@ export default function SkillsSettings({
     proficiency_level: 'BEGINNER',
   };
 
-
   const passSkill = (skill: InstructorSkill): SkillType => ({
     uuid: skill.uuid,
     instructor_uuid: instructor.uuid!,
@@ -101,9 +100,7 @@ export default function SkillsSettings({
   const form = useForm<SkillsFormValues>({
     resolver: zodResolver(skillsSchema),
     defaultValues: {
-      skills: instructorSkills.length
-        ? instructorSkills.map(passSkill)
-        : [defaultSkill],
+      skills: instructorSkills.length ? instructorSkills.map(passSkill) : [defaultSkill],
     },
     mode: 'onChange',
   });
@@ -115,7 +112,6 @@ export default function SkillsSettings({
       });
     }
   }, [instructorSkills]);
-
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -196,17 +192,16 @@ export default function SkillsSettings({
 
     deleteSkillMutation.mutate(
       {
-        path: { instructorUuid: instructor.uuid!, skillUuid: skill.uuid, },
+        path: { instructorUuid: instructor.uuid!, skillUuid: skill.uuid },
       },
       {
         onSuccess: () => {
           remove(index);
-          toast.success("Skill removed");
+          toast.success('Skill removed');
         },
       }
     );
   };
-
 
   const domainBadges =
     // @ts-expect-error

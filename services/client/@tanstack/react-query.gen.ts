@@ -244,7 +244,9 @@ import {
   createBooking,
   requestPayment,
   paymentCallback,
+  declineBooking,
   cancelBooking,
+  acceptBooking,
   getAllAssignments,
   createAssignment,
   submitAssignment,
@@ -1067,9 +1069,15 @@ import type {
   PaymentCallbackData,
   PaymentCallbackError,
   PaymentCallbackResponse,
+  DeclineBookingData,
+  DeclineBookingError,
+  DeclineBookingResponse,
   CancelBookingData,
   CancelBookingError,
   CancelBookingResponse,
+  AcceptBookingData,
+  AcceptBookingError,
+  AcceptBookingResponse,
   GetAllAssignmentsData,
   GetAllAssignmentsError,
   GetAllAssignmentsResponse,
@@ -11668,6 +11676,50 @@ export const paymentCallbackMutation = (
   return mutationOptions;
 };
 
+export const declineBookingQueryKey = (options: Options<DeclineBookingData>) =>
+  createQueryKey('declineBooking', options);
+
+/**
+ * Instructor declines a booking
+ */
+export const declineBookingOptions = (options: Options<DeclineBookingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await declineBooking({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: declineBookingQueryKey(options),
+  });
+};
+
+/**
+ * Instructor declines a booking
+ */
+export const declineBookingMutation = (
+  options?: Partial<Options<DeclineBookingData>>
+): UseMutationOptions<DeclineBookingResponse, DeclineBookingError, Options<DeclineBookingData>> => {
+  const mutationOptions: UseMutationOptions<
+    DeclineBookingResponse,
+    DeclineBookingError,
+    Options<DeclineBookingData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await declineBooking({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const cancelBookingQueryKey = (options: Options<CancelBookingData>) =>
   createQueryKey('cancelBooking', options);
 
@@ -11702,6 +11754,50 @@ export const cancelBookingMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await cancelBooking({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const acceptBookingQueryKey = (options: Options<AcceptBookingData>) =>
+  createQueryKey('acceptBooking', options);
+
+/**
+ * Instructor accepts a booking
+ */
+export const acceptBookingOptions = (options: Options<AcceptBookingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await acceptBooking({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: acceptBookingQueryKey(options),
+  });
+};
+
+/**
+ * Instructor accepts a booking
+ */
+export const acceptBookingMutation = (
+  options?: Partial<Options<AcceptBookingData>>
+): UseMutationOptions<AcceptBookingResponse, AcceptBookingError, Options<AcceptBookingData>> => {
+  const mutationOptions: UseMutationOptions<
+    AcceptBookingResponse,
+    AcceptBookingError,
+    Options<AcceptBookingData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await acceptBooking({
         ...options,
         ...localOptions,
         throwOnError: true,

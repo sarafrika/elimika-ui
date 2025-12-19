@@ -29,7 +29,9 @@ export interface AdminUserListResult {
   hasPrevious: boolean;
 }
 
-export async function fetchAdminUsers(params: AdminUserListParams = {}): Promise<AdminUserListResult> {
+export async function fetchAdminUsers(
+  params: AdminUserListParams = {}
+): Promise<AdminUserListResult> {
   const { page = 0, size = 20, sortField = 'created_date', sortOrder = 'desc' } = params;
   const pageable = {
     page,

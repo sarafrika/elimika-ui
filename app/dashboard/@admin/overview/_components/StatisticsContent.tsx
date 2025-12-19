@@ -22,7 +22,10 @@ import ActivityFeed from './ActivityFeed';
 import MetricsBreakdown from './MetricsBreakdown';
 import { VerificationSnapshot } from './VerificationSnapshot';
 import { RecentActivitySummary } from './RecentActivitySummary';
-import { EnrollmentComplianceCard, type EnrollmentComplianceMetrics } from './EnrollmentComplianceCard';
+import {
+  EnrollmentComplianceCard,
+  type EnrollmentComplianceMetrics,
+} from './EnrollmentComplianceCard';
 
 export default function StatisticsContent() {
   const router = useRouter();
@@ -131,16 +134,14 @@ export default function StatisticsContent() {
   return (
     <div className='flex flex-col gap-6'>
       <div className='space-y-4'>
-        <div className='rounded-3xl border border-border/60 bg-card p-6 shadow-sm'>
+        <div className='border-border/60 bg-card rounded-3xl border p-6 shadow-sm'>
           <div className='flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
             <div className='space-y-3'>
-              <Badge variant='outline' className='w-fit uppercase tracking-[0.3em]'>
+              <Badge variant='outline' className='w-fit tracking-[0.3em] uppercase'>
                 System Administrator
               </Badge>
               <div>
-                <h1 className='text-3xl font-bold tracking-tight'>
-                  360° admin control center
-                </h1>
+                <h1 className='text-3xl font-bold tracking-tight'>360° admin control center</h1>
                 <p className='text-muted-foreground text-sm'>
                   Stay ahead of growth, compliance, and performance in a single workspace. Grant
                   access, review risk, and triage verifications without leaving this dashboard.
@@ -175,9 +176,9 @@ export default function StatisticsContent() {
               {missionStats.map(stat => (
                 <div
                   key={stat.label}
-                  className='rounded-2xl border border-border/60 bg-muted/40 p-4 shadow-inner'
+                  className='border-border/60 bg-muted/40 rounded-2xl border p-4 shadow-inner'
                 >
-                  <p className='text-muted-foreground text-xs uppercase tracking-wide'>
+                  <p className='text-muted-foreground text-xs tracking-wide uppercase'>
                     {stat.label}
                   </p>
                   <p className='text-2xl font-semibold'>{stat.value}</p>
@@ -187,10 +188,10 @@ export default function StatisticsContent() {
           </div>
         </div>
 
-        <div className='rounded-2xl border border-border/60 bg-card p-4 shadow-sm'>
+        <div className='border-border/60 bg-card rounded-2xl border p-4 shadow-sm'>
           <div className='flex flex-wrap items-center gap-3'>
-            <div className='relative flex-1 min-w-[220px]'>
-              <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
+            <div className='relative min-w-[220px] flex-1'>
+              <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
               <Input
                 placeholder='Search users, organizations, rules...'
                 value={searchValue}
@@ -211,7 +212,10 @@ export default function StatisticsContent() {
               <Bell className='h-4 w-4' />
             </Button>
             <Avatar className='h-10 w-10'>
-              <AvatarImage src={profile?.profile_image_url ?? undefined} alt={profile?.email ?? ''} />
+              <AvatarImage
+                src={profile?.profile_image_url ?? undefined}
+                alt={profile?.email ?? ''}
+              />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
           </div>

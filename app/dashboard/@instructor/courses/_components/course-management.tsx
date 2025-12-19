@@ -29,7 +29,7 @@ import { toast } from 'sonner';
 import { TrainCourseCard } from '../../../_components/train-course-card';
 
 export default function CourseMangementPage() {
-  const qc = useQueryClient()
+  const qc = useQueryClient();
   const router = useRouter();
   const instructor = useInstructor();
   const userDomain = useUserDomain();
@@ -40,7 +40,6 @@ export default function CourseMangementPage() {
   const [applyModal, setApplyModal] = useState(false);
   const [applyingCourseId, setApplyingCourseId] = useState<string | null>(null);
   const [applyingCourse, setApplyingCourse] = useState<any | null>(null);
-
 
   const size = 20;
   const [page, setPage] = useState(0);
@@ -121,7 +120,7 @@ export default function CourseMangementPage() {
             private_online_rate: data?.private_online_rate,
             private_inperson_rate: data?.private_inperson_rate,
             group_online_rate: data?.group_online_rate,
-            group_inperson_rate: data?.group_inperson_rate
+            group_inperson_rate: data?.group_inperson_rate,
           },
           application_notes: data?.notes,
         },
@@ -130,7 +129,12 @@ export default function CourseMangementPage() {
       {
         onSuccess: data => {
           qc.invalidateQueries({
-            queryKey: searchTrainingApplicationsQueryKey({ query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } } }),
+            queryKey: searchTrainingApplicationsQueryKey({
+              query: {
+                pageable: {},
+                searchParams: { applicant_uuid_eq: instructor?.uuid as string },
+              },
+            }),
           });
           toast.success(data?.message);
           setApplyModal(false);
@@ -214,12 +218,12 @@ export default function CourseMangementPage() {
               handleQuickApply={() => {
                 setApplyModal(true);
                 setApplyingCourseId(course?.uuid as string);
-                setApplyingCourse(course as any)
+                setApplyingCourse(course as any);
               }}
               handleReapplyToTrain={() => {
                 setApplyModal(true);
                 setApplyingCourseId(course?.uuid as string);
-                setApplyingCourse(course as any)
+                setApplyingCourse(course as any);
               }}
             />
           ))}

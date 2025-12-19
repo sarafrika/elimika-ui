@@ -90,12 +90,12 @@ export function StudentOnboardingForm() {
   };
 
   return (
-    <div className='mx-auto max-w-3xl space-y-8 rounded-3xl border border-border/60 bg-card/80 p-8 shadow-sm backdrop-blur-sm'>
+    <div className='border-border/60 bg-card/80 mx-auto max-w-3xl space-y-8 rounded-3xl border p-8 shadow-sm backdrop-blur-sm'>
       <div className='text-center'>
-        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20'>
+        <div className='bg-primary/10 text-primary ring-primary/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ring-1'>
           <GraduationCap className='h-8 w-8' />
         </div>
-        <h1 className='mb-2 text-3xl font-bold text-foreground'>Student Registration</h1>
+        <h1 className='text-foreground mb-2 text-3xl font-bold'>Student Registration</h1>
         <p className='text-muted-foreground'>
           Set up your student profile - all fields are optional and can be completed later
         </p>
@@ -171,8 +171,8 @@ export function StudentOnboardingForm() {
 
           <Card className='bg-muted/40'>
             <CardContent className='space-y-1'>
-              <h3 className='font-medium text-foreground'>Optional Setup</h3>
-              <p className='text-sm text-muted-foreground'>
+              <h3 className='text-foreground font-medium'>Optional Setup</h3>
+              <p className='text-muted-foreground text-sm'>
                 You can complete this form now or skip it and add guardian information later in your
                 profile settings. All fields are optional and can be updated anytime.
               </p>

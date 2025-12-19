@@ -38,15 +38,7 @@ interface ProfileViewGridProps {
 
 export function ProfileViewGrid({ children, columns = 2, className }: ProfileViewGridProps) {
   return (
-    <dl
-      className={cn(
-        'grid gap-6',
-        columns === 2 && 'sm:grid-cols-2',
-        className
-      )}
-    >
-      {children}
-    </dl>
+    <dl className={cn('grid gap-6', columns === 2 && 'sm:grid-cols-2', className)}>{children}</dl>
   );
 }
 
@@ -70,7 +62,7 @@ export function ProfileViewListItem({
   className,
 }: ProfileViewListItemProps) {
   return (
-    <div className={cn('border-border/60 rounded-lg border bg-card/30 p-4 space-y-2', className)}>
+    <div className={cn('border-border/60 bg-card/30 space-y-2 rounded-lg border p-4', className)}>
       <div className='flex items-start justify-between gap-4'>
         <div className='flex-1 space-y-1'>
           <h4 className='text-foreground font-semibold'>{title}</h4>

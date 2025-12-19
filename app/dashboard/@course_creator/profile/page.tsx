@@ -66,7 +66,7 @@ export default function CourseCreatorProfilePage() {
   if (!profile) {
     return (
       <div className='mx-auto flex h-full max-w-3xl flex-col items-center justify-center gap-4 px-4 py-20 text-center'>
-        <Spinner className='h-6 w-6 text-muted-foreground' />
+        <Spinner className='text-muted-foreground h-6 w-6' />
       </div>
     );
   }
@@ -175,7 +175,7 @@ export default function CourseCreatorProfilePage() {
       description: 'Track global publishing access and organisation-specific responsibilities.',
       content: (
         <div className='space-y-3 text-sm'>
-          <div className='rounded-lg border border-dashed border-border/60 bg-muted/40 p-3'>
+          <div className='border-border/60 bg-muted/40 rounded-lg border border-dashed p-3'>
             <p className='text-muted-foreground text-xs tracking-wide uppercase'>Marketplace</p>
             <p className='font-semibold'>
               {data.assignments.hasGlobalAccess
@@ -353,9 +353,7 @@ export default function CourseCreatorProfilePage() {
                     Membership #{membership.membership_number}
                   </p>
                 ) : null}
-                {range ? (
-                  <p className='text-muted-foreground text-xs'>Duration: {range}</p>
-                ) : null}
+                {range ? <p className='text-muted-foreground text-xs'>Duration: {range}</p> : null}
               </div>
             );
           })}

@@ -47,7 +47,9 @@ export async function fetchAdminBranches(
   });
 
   if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to load branches');
+    throw new Error(
+      typeof response.error === 'string' ? response.error : 'Failed to load branches'
+    );
   }
 
   const parsed = branchListResponseSchema.parse(response.data ?? {});
@@ -146,7 +148,13 @@ export async function fetchBranchUsers(
 }
 
 export const branchUsersQueryKey = (params: BranchUserListParams | null) =>
-  ['branch-users', params?.organizationUuid, params?.branchUuid, params?.page, params?.size] as const;
+  [
+    'branch-users',
+    params?.organizationUuid,
+    params?.branchUuid,
+    params?.page,
+    params?.size,
+  ] as const;
 
 export function useBranchUsers(
   params: BranchUserListParams | null,

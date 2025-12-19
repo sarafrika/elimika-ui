@@ -6,7 +6,7 @@ import { Inbox } from 'lucide-react';
 
 export function GuardianEmptyState() {
   return (
-    <Card className='border-dashed border-border/70'>
+    <Card className='border-border/70 border-dashed'>
       <CardHeader className='flex flex-col items-center text-center'>
         <div className='bg-muted text-muted-foreground mb-4 inline-flex size-12 items-center justify-center rounded-full'>
           <Inbox className='size-6' />

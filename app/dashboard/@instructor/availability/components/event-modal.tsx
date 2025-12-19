@@ -22,26 +22,16 @@ import {
   blockInstructorTimeMutation,
   createBookingMutation,
   getInstructorCalendarQueryKey,
-  scheduleClassMutation
+  scheduleClassMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import dayjs from "dayjs";
-import {
-  AlertCircle,
-  BookOpen,
-  Calendar,
-  Clock,
-  Coffee,
-  MapPin,
-  Trash2
-} from 'lucide-react';
+import dayjs from 'dayjs';
+import { AlertCircle, BookOpen, Calendar, Clock, Coffee, MapPin, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import DatePicker from "react-multi-date-picker";
+import DatePicker from 'react-multi-date-picker';
 import { toast } from 'sonner';
 import Spinner from '../../../../../components/ui/spinner';
 import type { CalendarEvent } from './types';
-
-
 
 interface EventModalProps {
   isOpen: boolean;
@@ -67,7 +57,7 @@ interface OutputItem {
   color_code: string;
 }
 
-export type EventType = "BLOCKED" | "AVAILABILITY" | "SCHEDULED_INSTANCE";
+export type EventType = 'BLOCKED' | 'AVAILABILITY' | 'SCHEDULED_INSTANCE';
 
 const eventTypes: {
   value: EventType;
@@ -75,26 +65,25 @@ const eventTypes: {
   icon: any;
   color: string;
 }[] = [
-    {
-      value: "SCHEDULED_INSTANCE",
-      label: "Class Schedule Instance",
-      icon: BookOpen,
-      color: "bg-blue-500",
-    },
-    {
-      value: "BLOCKED",
-      label: "Blocked/Unavailable",
-      icon: Coffee,
-      color: "bg-orange-500",
-    },
-    {
-      value: "AVAILABILITY",
-      label: "Available",
-      icon: Calendar,
-      color: "bg-green-500",
-    },
-  ];
-
+  {
+    value: 'SCHEDULED_INSTANCE',
+    label: 'Class Schedule Instance',
+    icon: BookOpen,
+    color: 'bg-blue-500',
+  },
+  {
+    value: 'BLOCKED',
+    label: 'Blocked/Unavailable',
+    icon: Coffee,
+    color: 'bg-orange-500',
+  },
+  {
+    value: 'AVAILABILITY',
+    label: 'Available',
+    icon: Calendar,
+    color: 'bg-green-500',
+  },
+];
 
 function extractDateTimeParts(date: Date) {
   const pad = (num: number) => String(num).padStart(2, '0');
@@ -153,27 +142,23 @@ export function EventModal({
   });
 
   function convertDates(dates: DateTimeItem[]): OutputItem[] {
-    return dates.map((item) => ({
+    return dates.map(item => ({
       start_time: dayjs(`${item.date}T${item.startTime}`).toISOString(),
       end_time: dayjs(`${item.date}T${item.endTime}`).toISOString(),
-      color_code: "",
+      color_code: '',
     }));
   }
 
   const [blockDates, setBlockDates] = useState<DateTimeItem[]>([]);
   const handleDatesChange = (selectedDates: any[]) => {
-    const newDates: DateTimeItem[] = selectedDates.map((d) => {
-      const formatted = dayjs(d.toDate()).format("YYYY-MM-DD");
-      return { date: formatted, startTime: "09:00", endTime: "17:00" };
+    const newDates: DateTimeItem[] = selectedDates.map(d => {
+      const formatted = dayjs(d.toDate()).format('YYYY-MM-DD');
+      return { date: formatted, startTime: '09:00', endTime: '17:00' };
     });
     setBlockDates(newDates);
   };
 
-  const updateTime = (
-    index: number,
-    field: "startTime" | "endTime",
-    value: string
-  ) => {
+  const updateTime = (index: number, field: 'startTime' | 'endTime', value: string) => {
     setBlockDates((prev: any) => {
       const copy = [...prev];
       copy[index][field] = value;
@@ -186,7 +171,6 @@ export function EventModal({
   useEffect(() => {
     if (!isOpen) return;
     if (event) {
-
       const eventDate = new Date(event.date);
 
       setFormData({
@@ -204,16 +188,16 @@ export function EventModal({
       const endTime = getEndTime(selectedSlot.time);
 
       setFormData({
-        title: "",
-        description: "",
-        entry_type: "AVAILABILITY",
-        location: "",
+        title: '',
+        description: '',
+        entry_type: 'AVAILABILITY',
+        location: '',
         attendees: 1,
         isRecurring: false,
         recurringDays: [],
-        status: "SCHEDULED",
+        status: 'SCHEDULED',
         reminders: [15],
-        notes: "",
+        notes: '',
         day: selectedSlot.day,
         date: selectedSlot.date,
         startTime: selectedSlot.time,
@@ -241,7 +225,6 @@ export function EventModal({
       reminders: [15],
       notes: '',
     });
-
   }, [event, selectedSlot, isOpen]);
 
   const _validateForm = (): boolean => {
@@ -274,18 +257,29 @@ export function EventModal({
     return Object.keys(newErrors).length === 0;
   };
 
-
-
   const instrucor = useInstructor();
   const qc = useQueryClient();
   const scheduleClass = useMutation(scheduleClassMutation());
-  const blockTimeForInstructor = useMutation(blockInstructorTimeMutation())
-  const createBookingForInstructor = useMutation(createBookingMutation())
+  const blockTimeForInstructor = useMutation(blockInstructorTimeMutation());
+  const createBookingForInstructor = useMutation(createBookingMutation());
 
   const handleSave = () => {
     // if (!validateForm()) return;
 
-    const { startDateTime, endDateTime, title, entry_type, date, location, attendees, isRecurring, recurringDays, status, reminders, notes } = formData;
+    const {
+      startDateTime,
+      endDateTime,
+      title,
+      entry_type,
+      date,
+      location,
+      attendees,
+      isRecurring,
+      recurringDays,
+      status,
+      reminders,
+      notes,
+    } = formData;
 
     if (!startDateTime || !endDateTime || !title || !entry_type) {
       return;
@@ -294,8 +288,8 @@ export function EventModal({
     const start = new Date(startDateTime);
     const end = new Date(endDateTime);
 
-    const startClock = startDateTime?.split("T")[1]?.slice(0, 5); // HH:mm
-    const endClock = endDateTime?.split("T")[1]?.slice(0, 5);     // HH:mm
+    const startClock = startDateTime?.split('T')[1]?.slice(0, 5); // HH:mm
+    const endClock = endDateTime?.split('T')[1]?.slice(0, 5); // HH:mm
 
     const eventData: CalendarEvent = {
       id: event?.id || `event-${Date.now()}`,
@@ -305,7 +299,7 @@ export function EventModal({
       startTime: startClock as any,
       endTime: endClock as any,
       date: start,
-      day: start.toLocaleDateString("en-US", { weekday: "long" }),
+      day: start.toLocaleDateString('en-US', { weekday: 'long' }),
       location,
       attendees,
       isRecurring,
@@ -321,40 +315,43 @@ export function EventModal({
     const { localDate, localTime, localDateTime } = extractDateTimeParts(eventData.date);
 
     // block time logic
-    if (eventData.entry_type === "BLOCKED") {
-      blockTimeForInstructor.mutate({
-        path: { instructorUuid: instrucor?.uuid as string },
-        body: { periods: convertDates(blockDates) as any }
-      }, {
-        onSuccess: (data) => {
-          toast.success(data?.message)
-          qc.invalidateQueries({
-            queryKey: getInstructorCalendarQueryKey({
-              path: { instructorUuid: instrucor?.uuid as string },
-              query: {
-                start_date: new Date(startDateTime),
-                end_date: new Date(endDateTime),
-              },
-            })
-          })
-          onClose();
+    if (eventData.entry_type === 'BLOCKED') {
+      blockTimeForInstructor.mutate(
+        {
+          path: { instructorUuid: instrucor?.uuid as string },
+          body: { periods: convertDates(blockDates) as any },
+        },
+        {
+          onSuccess: data => {
+            toast.success(data?.message);
+            qc.invalidateQueries({
+              queryKey: getInstructorCalendarQueryKey({
+                path: { instructorUuid: instrucor?.uuid as string },
+                query: {
+                  start_date: new Date(startDateTime),
+                  end_date: new Date(endDateTime),
+                },
+              }),
+            });
+            onClose();
+          },
         }
-      })
+      );
 
-      return
+      return;
     }
 
-    if (eventData.entry_type === "AVAILABILITY") {
+    if (eventData.entry_type === 'AVAILABILITY') {
       const body = {
-        course_uuid: "",
+        course_uuid: '',
         end_time: endDateTime as any,
         instructor_uuid: instrucor?.uuid as string,
         start_time: startDateTime as any,
-        student_uuid: "",
-        currency: "KES",
+        student_uuid: '',
+        currency: 'KES',
         price_amount: 100,
-        purpose: "Booking"
-      }
+        purpose: 'Booking',
+      };
 
       // createBookingForInstructor.mutate({
       //   body: {
@@ -415,8 +412,8 @@ export function EventModal({
           <Label htmlFor='type'>Event Type</Label>
           <Select
             value={formData.entry_type}
-            onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, entry_type: value as EventType }))
+            onValueChange={value =>
+              setFormData(prev => ({ ...prev, entry_type: value as EventType }))
             }
           >
             <SelectTrigger className='w-full'>
@@ -438,47 +435,41 @@ export function EventModal({
 
         <div className='space-y-6'>
           {/* Basic Information */}
-          {selectedEventType?.value === "BLOCKED" && (
+          {selectedEventType?.value === 'BLOCKED' && (
             <div>
-              <div className="w-full max-w-sm">
+              <div className='w-full max-w-sm'>
                 <DatePicker
                   multiple
-                  value={blockDates.map((d) => d.date)}
+                  value={blockDates.map(d => d.date)}
                   onChange={handleDatesChange}
-                  format="YYYY-MM-DD"
-                  placeholder="Select dates"
+                  format='YYYY-MM-DD'
+                  placeholder='Select dates'
                 />
               </div>
               {/* Rows */}
-              <div className="mt-4 flex flex-col gap-3">
+              <div className='mt-4 flex flex-col gap-3'>
                 {blockDates.map((item, index) => (
-                  <div
-                    key={item.date}
-                    className="flex items-center gap-3 border p-3 rounded-md"
-                  >
-                    <span className="w-32">{item.date}</span>
+                  <div key={item.date} className='flex items-center gap-3 rounded-md border p-3'>
+                    <span className='w-32'>{item.date}</span>
 
                     <Input
-                      type="time"
+                      type='time'
                       value={item.startTime}
-                      onChange={(e) => updateTime(index, "startTime", e.target.value)}
-                      className="w-32"
+                      onChange={e => updateTime(index, 'startTime', e.target.value)}
+                      className='w-32'
                     />
 
                     <Input
-                      type="time"
+                      type='time'
                       value={item.endTime}
-                      onChange={(e) => updateTime(index, "endTime", e.target.value)}
-                      className="w-32"
+                      onChange={e => updateTime(index, 'endTime', e.target.value)}
+                      className='w-32'
                     />
                   </div>
                 ))}
               </div>
 
-              <Button
-                className="mt-4"
-                onClick={() => setBlockDates([])}
-              >
+              <Button className='mt-4' onClick={() => setBlockDates([])}>
                 Clear dates
               </Button>
             </div>
@@ -495,7 +486,7 @@ export function EventModal({
                 className={errors.title ? 'border-destructive' : ''}
               />
               {errors.title && (
-                <p className='flex items-center gap-1 text-sm text-destructive'>
+                <p className='text-destructive flex items-center gap-1 text-sm'>
                   <AlertCircle className='h-3 w-3' />
                   {errors.title}
                 </p>
@@ -516,49 +507,47 @@ export function EventModal({
             <Separator />
           </div>
 
+          {selectedEventType?.value !== 'BLOCKED' && (
+            <div className='space-y-4'>
+              <h4 className='flex items-center gap-2 font-medium'>
+                <Clock className='h-4 w-4' />
+                Date & Time (ISO Format)
+              </h4>
 
+              <div className='grid grid-cols-2 gap-4'>
+                {/* START DATETIME */}
+                <div className='space-y-2'>
+                  <Label>Start Date & Time *</Label>
+                  <Input
+                    type='datetime-local'
+                    value={formData.startDateTime || ''}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        startDateTime: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
 
-
-          {selectedEventType?.value !== "BLOCKED" && <div className="space-y-4">
-            <h4 className="flex items-center gap-2 font-medium">
-              <Clock className="h-4 w-4" />
-              Date & Time (ISO Format)
-            </h4>
-
-            <div className="grid grid-cols-2 gap-4">
-              {/* START DATETIME */}
-              <div className="space-y-2">
-                <Label>Start Date & Time *</Label>
-                <Input
-                  type="datetime-local"
-                  value={formData.startDateTime || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      startDateTime: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              {/* END DATETIME */}
-              <div className="space-y-2">
-                <Label>End Date & Time *</Label>
-                <Input
-                  type="datetime-local"
-                  value={formData.endDateTime || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      endDateTime: e.target.value,
-                    }))
-                  }
-                />
+                {/* END DATETIME */}
+                <div className='space-y-2'>
+                  <Label>End Date & Time *</Label>
+                  <Input
+                    type='datetime-local'
+                    value={formData.endDateTime || ''}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        endDateTime: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
               </div>
             </div>
-          </div>}
+          )}
           {/* Date & Time */}
-
 
           {/* Additional Details */}
           {selectedEventType?.value === 'SCHEDULED_INSTANCE' && (
@@ -648,20 +637,27 @@ export function EventModal({
               Cancel
             </Button>
 
-            {selectedEventType?.value === "AVAILABILITY" && <Button onClick={handleSave}>{event ? 'Save Changes' : 'Create Availability'}</Button>}
+            {selectedEventType?.value === 'AVAILABILITY' && (
+              <Button onClick={handleSave}>{event ? 'Save Changes' : 'Create Availability'}</Button>
+            )}
 
-            {selectedEventType?.value === "BLOCKED" && (
+            {selectedEventType?.value === 'BLOCKED' && (
               <Button
-                className={`bg-destructive text-destructive-foreground hover:bg-destructive/70 disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`bg-destructive text-destructive-foreground hover:bg-destructive/70 disabled:cursor-not-allowed disabled:opacity-50`}
                 onClick={handleSave}
                 disabled={!formData.startDateTime || !formData.endDateTime}
               >
-                {blockTimeForInstructor.isPending ? <Spinner /> : <>{event ? "Save Changes" : "Block Time"}</>}
+                {blockTimeForInstructor.isPending ? (
+                  <Spinner />
+                ) : (
+                  <>{event ? 'Save Changes' : 'Block Time'}</>
+                )}
               </Button>
             )}
 
-            {selectedEventType?.value === "SCHEDULED_INSTANCE" && <Button onClick={handleSave}>{event ? 'Save Changes' : 'Schedeule Class'}</Button>}
-
+            {selectedEventType?.value === 'SCHEDULED_INSTANCE' && (
+              <Button onClick={handleSave}>{event ? 'Save Changes' : 'Schedeule Class'}</Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>

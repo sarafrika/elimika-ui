@@ -18,7 +18,9 @@ import CustomLoader from '../components/custom-loader';
 import { useUserProfile } from './profile-context';
 import { useUserDomain } from './user-domain-context';
 
-type OrganisationContextValue = (Organisation & { branches?: TrainingBranch[]; users?: User[] }) | null;
+type OrganisationContextValue =
+  | (Organisation & { branches?: TrainingBranch[]; users?: User[] })
+  | null;
 
 const OrganisationContext = createContext<OrganisationContextValue>(null);
 
@@ -39,7 +41,8 @@ export default function OrganisationProvider({
   const [storedOrgId, setStoredOrgId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const affiliations: UserOrganisationAffiliationDto[] = userProfile?.organisation_affiliations ?? [];
+  const affiliations: UserOrganisationAffiliationDto[] =
+    userProfile?.organisation_affiliations ?? [];
   const activeAffiliation: UserOrganisationAffiliationDto | undefined =
     affiliations.find(org => org.active) ?? affiliations[0];
 
@@ -63,7 +66,8 @@ export default function OrganisationProvider({
   const activeOrgId =
     activeAffiliation?.organisation_uuid ?? initialOrganisation?.uuid ?? storedOrgId ?? null;
 
-  const hasOrgDomain = userDomain.domains.includes('organisation') || userDomain.domains.includes('organisation_user');
+  const hasOrgDomain =
+    userDomain.domains.includes('organisation') || userDomain.domains.includes('organisation_user');
 
   useEffect(() => {
     if (typeof window !== 'undefined' && storageKey && activeOrgId) {
@@ -78,7 +82,11 @@ export default function OrganisationProvider({
   }, [hasOrgDomain, hydrated, activeOrgId, userProfile?.isLoading, router]);
 
   if (initialOrganisation) {
-    return <OrganisationContext.Provider value={initialOrganisation}>{children}</OrganisationContext.Provider>;
+    return (
+      <OrganisationContext.Provider value={initialOrganisation}>
+        {children}
+      </OrganisationContext.Provider>
+    );
   }
 
   // If no organisation is attached and user is not in an organisation domain, just render children without fetching
@@ -135,8 +143,7 @@ function createQueryOptions(
         if (branchesData.data?.content && organisationData) {
           organisationData.branches = branchesData.data.content as unknown as TrainingBranch[];
         }
-      } catch (_error) {
-      }
+      } catch (_error) {}
 
       try {
         const orgUsersResp = (await getUsersByOrganisation({
@@ -148,8 +155,7 @@ function createQueryOptions(
         if (orgUsersData.data?.content && organisationData) {
           organisationData.users = orgUsersData.data.content as unknown as User[];
         }
-      } catch (_error) {
-      }
+      } catch (_error) {}
 
       return organisationData;
     },

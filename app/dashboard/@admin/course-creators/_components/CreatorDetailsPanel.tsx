@@ -64,10 +64,7 @@ export default function CourseCreatorDetailsPanel({
       {/* Action Buttons */}
       <div className='bg-background border-t p-6'>
         <div className='flex gap-3'>
-          <Button
-            onClick={() => onApprove(courseCreator)}
-            className='min-w-[110px]'
-          >
+          <Button onClick={() => onApprove(courseCreator)} className='min-w-[110px]'>
             <Edit className='mr-2 h-4 w-4' />
             {isApprovePending ? <Spinner /> : 'Approve Verification'}
           </Button>

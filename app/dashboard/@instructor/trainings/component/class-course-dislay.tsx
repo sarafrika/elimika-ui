@@ -48,7 +48,7 @@ export default function ClassCourseDisplay({ courseUuid, classInfo }: Props) {
   }
 
   if (isError) {
-    return <div className='text-sm text-destructive'>Failed to load course details.</div>;
+    return <div className='text-destructive text-sm'>Failed to load course details.</div>;
   }
 
   if (!course) {

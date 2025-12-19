@@ -99,29 +99,29 @@ export function TimetableForm({ data, onNext }: TimetableFormProps) {
     if (data) {
       const recurrence = data?.recurrence ?? {};
       const recurrenceEndDate = recurrence?.end_date
-        ? new Date(recurrence.end_date).toISOString().split("T")[0]
-        : "";
+        ? new Date(recurrence.end_date).toISOString().split('T')[0]
+        : '';
 
       reset({
-        location_type: data?.location_type ?? "",
-        location_name: data?.location_name ?? "",
+        location_type: data?.location_type ?? '',
+        location_name: data?.location_name ?? '',
         location_latitude: data?.location_latitude ?? -1.29,
         location_longitude: data?.location_longitude ?? 36.82,
 
-        duration: data?.duration_minutes ?? "",
+        duration: data?.duration_minutes ?? '',
 
         availability: data?.availability?.length
           ? data.availability
           : daysOfWeek.map(day => ({
-            day: day.full,
-            enabled: false,
-            slots: [],
-          })),
+              day: day.full,
+              enabled: false,
+              slots: [],
+            })),
 
-        recurrence_type: recurrence?.recurrence_type || "WEEKLY",
+        recurrence_type: recurrence?.recurrence_type || 'WEEKLY',
         interval_value: recurrence?.interval_value || 1,
         day_of_month: recurrence?.day_of_month ?? null,
-        end_date: recurrenceEndDate || "2026-12-31",
+        end_date: recurrenceEndDate || '2026-12-31',
         occurrence_count: recurrence?.occurrence_count || 0,
       });
     }
@@ -134,9 +134,7 @@ export function TimetableForm({ data, onNext }: TimetableFormProps) {
   };
 
   const onSubmit = (values: TimetableFormData) => {
-    const enabledDays = values.availability
-      .filter(d => d.enabled)
-      .map(d => d.day.toUpperCase());
+    const enabledDays = values.availability.filter(d => d.enabled).map(d => d.day.toUpperCase());
 
     const payload = {
       ...values,
@@ -182,18 +180,18 @@ export function TimetableForm({ data, onNext }: TimetableFormProps) {
         </div>
 
         {['IN_PERSON', 'HYBRID'].includes(watched.location_type) && (
-          <div className="space-y-3">
+          <div className='space-y-3'>
             <Label>Search Location</Label>
 
             <MapboxSearchInput
               onSelect={(place: any) => {
                 // Mapbox now ONLY sets coordinates
-                setValue("location_latitude", place.latitude);
-                setValue("location_longitude", place.longitude);
+                setValue('location_latitude', place.latitude);
+                setValue('location_longitude', place.longitude);
               }}
             />
 
-            <p className="text-xs text-muted-foreground">
+            <p className='text-muted-foreground text-xs'>
               Selecting a location auto-fills coordinates.
             </p>
           </div>
@@ -203,38 +201,36 @@ export function TimetableForm({ data, onNext }: TimetableFormProps) {
       {['IN_PERSON', 'HYBRID'].includes(watched.location_type) && (
         <>
           {/* NEW VENUE FIELD */}
-          <div className="space-y-2 mt-4">
+          <div className='mt-4 space-y-2'>
             <Label>Venue *</Label>
             <Controller
-              name="location_name"
+              name='location_name'
               control={control}
-              render={({ field }) => (
-                <Input {...field} placeholder="e.g. Nairobi Serena Hotel" />
-              )}
+              render={({ field }) => <Input {...field} placeholder='e.g. Nairobi Serena Hotel' />}
             />
           </div>
 
-          <div className="hidden grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div className='mt-4 hidden grid-cols-1 gap-4 md:grid-cols-2'>
             {/* LATITUDE */}
             <Controller
-              name="location_latitude"
+              name='location_latitude'
               control={control}
               render={({ field }) => (
-                <div className="space-y-1">
+                <div className='space-y-1'>
                   <Label>Latitude</Label>
-                  <Input {...field} type="number" step="0.000001" placeholder="-1.292066" />
+                  <Input {...field} type='number' step='0.000001' placeholder='-1.292066' />
                 </div>
               )}
             />
 
             {/* LONGITUDE */}
             <Controller
-              name="location_longitude"
+              name='location_longitude'
               control={control}
               render={({ field }) => (
-                <div className="space-y-1">
+                <div className='space-y-1'>
                   <Label>Longitude</Label>
-                  <Input {...field} type="number" step="0.000001" placeholder="36.821945" />
+                  <Input {...field} type='number' step='0.000001' placeholder='36.821945' />
                 </div>
               )}
             />
@@ -335,9 +331,13 @@ export function TimetableForm({ data, onNext }: TimetableFormProps) {
       </Card>
 
       <div className='flex justify-end gap-4'>
-        {isSubmitting ? <Spinner /> :
-          <Button type='submit' className='min-w-[250px]'>Save & Continue</Button>
-        }
+        {isSubmitting ? (
+          <Spinner />
+        ) : (
+          <Button type='submit' className='min-w-[250px]'>
+            Save & Continue
+          </Button>
+        )}
       </div>
     </form>
   );

@@ -199,7 +199,7 @@ export default function CheckoutPage() {
   // Loading state
   if (cartQuery.isLoading || !cart) {
     return (
-      <div className='min-h-screen bg-background'>
+      <div className='bg-background min-h-screen'>
         <PublicTopNav />
         <div className='mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12'>
           <Skeleton className='mb-8 h-10 w-48' />
@@ -215,16 +215,19 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className='min-h-screen bg-background'>
+    <div className='bg-background min-h-screen'>
       <PublicTopNav />
       <div className='mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12'>
         {/* Header */}
         <div className='mb-8 flex items-center justify-between'>
           <div>
             <h1 className='text-2xl font-bold md:text-3xl'>Checkout</h1>
-            <p className='mt-1 text-sm text-muted-foreground'>Complete your purchase</p>
+            <p className='text-muted-foreground mt-1 text-sm'>Complete your purchase</p>
           </div>
-          <Link href='/cart' className='inline-flex items-center gap-2 text-sm text-primary hover:underline'>
+          <Link
+            href='/cart'
+            className='text-primary inline-flex items-center gap-2 text-sm hover:underline'
+          >
             <ArrowLeft className='h-4 w-4' />
             Back to cart
           </Link>
@@ -238,7 +241,7 @@ export default function CheckoutPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
-                    <CreditCard className='h-5 w-5 text-primary' />
+                    <CreditCard className='text-primary h-5 w-5' />
                     Contact Information
                   </CardTitle>
                   <CardDescription>We'll send your receipt and course access here</CardDescription>
@@ -253,7 +256,9 @@ export default function CheckoutPage() {
                       {...form.register('email')}
                     />
                     {form.formState.errors.email && (
-                      <p className='text-sm text-destructive'>{form.formState.errors.email.message}</p>
+                      <p className='text-destructive text-sm'>
+                        {form.formState.errors.email.message}
+                      </p>
                     )}
                   </div>
                 </CardContent>
@@ -263,7 +268,7 @@ export default function CheckoutPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
-                    <Wallet className='h-5 w-5 text-primary' />
+                    <Wallet className='text-primary h-5 w-5' />
                     Payment Options
                   </CardTitle>
                   <CardDescription>Choose how you'd like to pay</CardDescription>
@@ -271,13 +276,17 @@ export default function CheckoutPage() {
                 <CardContent className='space-y-6'>
                   <RadioGroup
                     value={watchPaymentType}
-                    onValueChange={(value: 'full' | 'installments') => form.setValue('paymentType', value)}
+                    onValueChange={(value: 'full' | 'installments') =>
+                      form.setValue('paymentType', value)
+                    }
                     className='space-y-3'
                   >
                     {/* Full Payment Option */}
                     <label
-                      className={`flex cursor-pointer items-start gap-4 rounded-lg border-2 p-4 transition-all hover:border-primary/50 ${
-                        watchPaymentType === 'full' ? 'border-primary bg-primary/5' : 'border-border'
+                      className={`hover:border-primary/50 flex cursor-pointer items-start gap-4 rounded-lg border-2 p-4 transition-all ${
+                        watchPaymentType === 'full'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border'
                       }`}
                     >
                       <RadioGroupItem value='full' id='payment-full' className='mt-1' />
@@ -286,31 +295,40 @@ export default function CheckoutPage() {
                           <span className='font-semibold'>Pay in Full</span>
                           <Badge variant='secondary'>Recommended</Badge>
                         </div>
-                        <p className='text-sm text-muted-foreground'>
+                        <p className='text-muted-foreground text-sm'>
                           Pay the full amount now and get instant access
                         </p>
-                        <p className='text-xl font-bold text-primary'>{formatMoney(total, currency)}</p>
+                        <p className='text-primary text-xl font-bold'>
+                          {formatMoney(total, currency)}
+                        </p>
                       </div>
                     </label>
 
                     {/* Installments Option */}
                     <label
-                      className={`flex cursor-pointer items-start gap-4 rounded-lg border-2 p-4 transition-all hover:border-primary/50 ${
-                        watchPaymentType === 'installments' ? 'border-primary bg-primary/5' : 'border-border'
+                      className={`hover:border-primary/50 flex cursor-pointer items-start gap-4 rounded-lg border-2 p-4 transition-all ${
+                        watchPaymentType === 'installments'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border'
                       }`}
                     >
-                      <RadioGroupItem value='installments' id='payment-installments' className='mt-1' />
+                      <RadioGroupItem
+                        value='installments'
+                        id='payment-installments'
+                        className='mt-1'
+                      />
                       <div className='flex-1 space-y-1'>
                         <div className='flex items-center gap-2'>
                           <span className='font-semibold'>Pay in Installments</span>
                           <Badge variant='outline'>Flexible</Badge>
                         </div>
-                        <p className='text-sm text-muted-foreground'>
+                        <p className='text-muted-foreground text-sm'>
                           Spread the cost over multiple months
                         </p>
                         {installmentCalculation && (
-                          <p className='text-lg font-bold text-primary'>
-                            {formatMoney(installmentCalculation.monthlyAmountWithFees, currency)}/month
+                          <p className='text-primary text-lg font-bold'>
+                            {formatMoney(installmentCalculation.monthlyAmountWithFees, currency)}
+                            /month
                           </p>
                         )}
                       </div>
@@ -319,14 +337,16 @@ export default function CheckoutPage() {
 
                   {/* Installment Plan Selection */}
                   {watchPaymentType === 'installments' && (
-                    <div className='space-y-3 rounded-lg border border-border bg-muted/30 p-4'>
+                    <div className='border-border bg-muted/30 space-y-3 rounded-lg border p-4'>
                       <Label className='flex items-center gap-2'>
-                        <CalendarDays className='h-4 w-4 text-primary' />
+                        <CalendarDays className='text-primary h-4 w-4' />
                         Select Installment Period
                       </Label>
                       <RadioGroup
                         value={watchInstallmentPlan}
-                        onValueChange={(value: '3' | '6' | '12') => form.setValue('installmentPlan', value)}
+                        onValueChange={(value: '3' | '6' | '12') =>
+                          form.setValue('installmentPlan', value)
+                        }
                         className='space-y-2'
                       >
                         {INSTALLMENT_PLANS.map(plan => {
@@ -336,22 +356,29 @@ export default function CheckoutPage() {
                           return (
                             <label
                               key={plan.months}
-                              className={`flex cursor-pointer items-center justify-between gap-4 rounded-md border p-3 transition-all hover:border-primary/50 ${
+                              className={`hover:border-primary/50 flex cursor-pointer items-center justify-between gap-4 rounded-md border p-3 transition-all ${
                                 watchInstallmentPlan === String(plan.months)
                                   ? 'border-primary bg-primary/5'
                                   : 'border-border'
                               }`}
                             >
                               <div className='flex items-center gap-3'>
-                                <RadioGroupItem value={String(plan.months)} id={`plan-${plan.months}`} />
+                                <RadioGroupItem
+                                  value={String(plan.months)}
+                                  id={`plan-${plan.months}`}
+                                />
                                 <div>
                                   <p className='font-medium'>{plan.label}</p>
-                                  <p className='text-xs text-muted-foreground'>{plan.description}</p>
+                                  <p className='text-muted-foreground text-xs'>
+                                    {plan.description}
+                                  </p>
                                 </div>
                               </div>
                               <div className='text-right'>
-                                <p className='font-bold text-primary'>{formatMoney(monthlyWithFees, currency)}</p>
-                                <p className='text-xs text-muted-foreground'>per month</p>
+                                <p className='text-primary font-bold'>
+                                  {formatMoney(monthlyWithFees, currency)}
+                                </p>
+                                <p className='text-muted-foreground text-xs'>per month</p>
                               </div>
                             </label>
                           );
@@ -359,7 +386,7 @@ export default function CheckoutPage() {
                       </RadioGroup>
 
                       {installmentCalculation && (
-                        <div className='mt-4 space-y-2 rounded-md bg-primary/5 p-3 text-sm'>
+                        <div className='bg-primary/5 mt-4 space-y-2 rounded-md p-3 text-sm'>
                           <p className='flex justify-between'>
                             <span className='text-muted-foreground'>Processing fee (5%):</span>
                             <span className='font-medium'>
@@ -392,7 +419,7 @@ export default function CheckoutPage() {
                     className='space-y-3'
                   >
                     <label
-                      className={`flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-all hover:border-primary/50 ${
+                      className={`hover:border-primary/50 flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-all ${
                         form.watch('paymentProvider') === 'mpesa'
                           ? 'border-primary bg-primary/5'
                           : 'border-border'
@@ -407,13 +434,13 @@ export default function CheckoutPage() {
                         />
                         <div>
                           <p className='font-semibold'>M-Pesa</p>
-                          <p className='text-sm text-muted-foreground'>Pay with mobile money</p>
+                          <p className='text-muted-foreground text-sm'>Pay with mobile money</p>
                         </div>
                       </div>
                     </label>
 
                     <label
-                      className={`flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-all hover:border-primary/50 ${
+                      className={`hover:border-primary/50 flex cursor-pointer items-center gap-4 rounded-lg border-2 p-4 transition-all ${
                         form.watch('paymentProvider') === 'card'
                           ? 'border-primary bg-primary/5'
                           : 'border-border'
@@ -421,10 +448,10 @@ export default function CheckoutPage() {
                     >
                       <RadioGroupItem value='card' id='card' />
                       <div className='flex items-center gap-3'>
-                        <CreditCard className='h-10 w-10 text-primary' />
+                        <CreditCard className='text-primary h-10 w-10' />
                         <div>
                           <p className='font-semibold'>Credit/Debit Card</p>
-                          <p className='text-sm text-muted-foreground'>Visa, Mastercard accepted</p>
+                          <p className='text-muted-foreground text-sm'>Visa, Mastercard accepted</p>
                         </div>
                       </div>
                     </label>
@@ -444,18 +471,22 @@ export default function CheckoutPage() {
                   <div className='space-y-3'>
                     {cartItems.map((item: CartItemResponse) => (
                       <div key={item.id} className='flex gap-3'>
-                        <div className='relative h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-muted'>
+                        <div className='bg-muted relative h-16 w-20 shrink-0 overflow-hidden rounded-lg'>
                           {item.thumbnail ? (
-                            <img src={item.thumbnail} alt={item.title ?? ''} className='h-full w-full object-cover' />
+                            <img
+                              src={item.thumbnail}
+                              alt={item.title ?? ''}
+                              className='h-full w-full object-cover'
+                            />
                           ) : (
                             <div className='flex h-full items-center justify-center'>
-                              <Package className='h-6 w-6 text-muted-foreground' />
+                              <Package className='text-muted-foreground h-6 w-6' />
                             </div>
                           )}
                         </div>
                         <div className='flex-1 space-y-1'>
                           <p className='text-sm font-medium'>{item.title}</p>
-                          <p className='text-sm font-semibold text-primary'>
+                          <p className='text-primary text-sm font-semibold'>
                             {formatMoney(item.total ?? item.subtotal, currency)}
                           </p>
                         </div>
@@ -502,12 +533,12 @@ export default function CheckoutPage() {
                     </div>
 
                     {watchPaymentType === 'installments' && installmentCalculation && (
-                      <div className='rounded-lg bg-primary/10 p-3 text-center'>
-                        <p className='text-xs text-muted-foreground'>Monthly Payment</p>
-                        <p className='text-xl font-bold text-primary'>
+                      <div className='bg-primary/10 rounded-lg p-3 text-center'>
+                        <p className='text-muted-foreground text-xs'>Monthly Payment</p>
+                        <p className='text-primary text-xl font-bold'>
                           {formatMoney(installmentCalculation.monthlyAmountWithFees, currency)}
                         </p>
-                        <p className='text-xs text-muted-foreground'>
+                        <p className='text-muted-foreground text-xs'>
                           for {installmentCalculation.months} months
                         </p>
                       </div>
@@ -535,12 +566,12 @@ export default function CheckoutPage() {
 
                   {/* Trust Badges */}
                   <div className='space-y-2 pt-4'>
-                    <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                      <ShieldCheck className='h-4 w-4 text-primary' />
+                    <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+                      <ShieldCheck className='text-primary h-4 w-4' />
                       <span>Secure payment processing</span>
                     </div>
-                    <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                      <Package className='h-4 w-4 text-primary' />
+                    <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+                      <Package className='text-primary h-4 w-4' />
                       <span>Instant course access after payment</span>
                     </div>
                   </div>

@@ -157,7 +157,7 @@ export const AddCategoryFormItem: React.FC<AddCategoryFormItemProps> = ({ field 
             {selectedCategory.name}
             <button
               type='button'
-              className='ml-1 text-destructive hover:text-destructive/80'
+              className='text-destructive hover:text-destructive/80 ml-1'
               onClick={() => field.onChange('')}
             >
               ✕

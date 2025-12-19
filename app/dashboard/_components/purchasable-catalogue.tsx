@@ -1,10 +1,14 @@
-"use client";
+'use client';
 
 import { CatalogueWorkspace } from '@/app/dashboard/_components/catalogue-workspace';
 
 type CatalogueScope = 'admin' | 'organization' | 'instructor' | 'course_creator';
 
-export default function PurchasableCatalogue({ scope = 'organization' }: { scope?: CatalogueScope }) {
+export default function PurchasableCatalogue({
+  scope = 'organization',
+}: {
+  scope?: CatalogueScope;
+}) {
   return (
     <CatalogueWorkspace
       scope={scope}

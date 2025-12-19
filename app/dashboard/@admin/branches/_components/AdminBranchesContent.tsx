@@ -87,7 +87,7 @@ export function AdminBranchesContent() {
             <div className='space-y-2'>
               {isOrgLoading &&
                 Array.from({ length: 5 }).map((_, index) => (
-                  <div key={index} className='rounded-xl border border-border/60 p-4'>
+                  <div key={index} className='border-border/60 rounded-xl border p-4'>
                     <Skeleton className='h-4 w-48' />
                     <Skeleton className='mt-2 h-3 w-24' />
                   </div>
@@ -104,7 +104,9 @@ export function AdminBranchesContent() {
                         setBranchSearch('');
                       }}
                       className={`w-full rounded-xl border p-4 text-left transition ${
-                        isActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
+                        isActive
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/40'
                       }`}
                     >
                       <div className='flex items-center justify-between gap-2'>
@@ -149,12 +151,12 @@ export function AdminBranchesContent() {
         </CardHeader>
         <CardContent className='space-y-4'>
           {activeOrg && (
-            <div className='flex flex-wrap gap-2 rounded-2xl border border-border/60 bg-muted/30 p-4 text-sm'>
+            <div className='border-border/60 bg-muted/30 flex flex-wrap gap-2 rounded-2xl border p-4 text-sm'>
               <span className='flex items-center gap-2 font-medium'>
                 <Building2 className='h-4 w-4' />
                 {activeOrg.location ?? 'No location'}
               </span>
-              <span className='flex items-center gap-2 text-muted-foreground'>
+              <span className='text-muted-foreground flex items-center gap-2'>
                 <Users className='h-4 w-4' />
                 {activeOrg.admin_verified ? 'Admin verified' : 'Awaiting verification'}
               </span>
@@ -178,7 +180,7 @@ export function AdminBranchesContent() {
             <div className='space-y-3'>
               {isBranchesLoading &&
                 Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className='rounded-2xl border border-border/60 p-4'>
+                  <div key={index} className='border-border/60 rounded-2xl border p-4'>
                     <Skeleton className='h-4 w-40' />
                     <Skeleton className='mt-2 h-3 w-28' />
                     <Skeleton className='mt-4 h-3 w-20' />
@@ -194,7 +196,9 @@ export function AdminBranchesContent() {
                       type='button'
                       onClick={() => setSelectedBranch(branch)}
                       className={`w-full rounded-2xl border p-4 text-left shadow-sm transition ${
-                        isSelected ? 'border-primary bg-primary/5' : 'border-border/60 hover:border-primary/40'
+                        isSelected
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border/60 hover:border-primary/40'
                       }`}
                     >
                       <div className='flex flex-wrap items-center justify-between gap-2'>
@@ -207,27 +211,29 @@ export function AdminBranchesContent() {
                         </Badge>
                       </div>
                       <div className='mt-3 grid gap-2 text-sm md:grid-cols-2'>
-                      <div>
-                        <p className='text-muted-foreground text-xs uppercase'>Point of contact</p>
-                        <p className='font-medium'>{branch.poc_name}</p>
-                        <p className='text-muted-foreground'>{branch.poc_email}</p>
+                        <div>
+                          <p className='text-muted-foreground text-xs uppercase'>
+                            Point of contact
+                          </p>
+                          <p className='font-medium'>{branch.poc_name}</p>
+                          <p className='text-muted-foreground'>{branch.poc_email}</p>
+                        </div>
+                        <div>
+                          <p className='text-muted-foreground text-xs uppercase'>Telephone</p>
+                          <p>{branch.poc_telephone}</p>
+                          <p className='text-muted-foreground text-xs'>
+                            Updated{' '}
+                            {branch.updated_date
+                              ? formatDistanceToNow(new Date(branch.updated_date), {
+                                  addSuffix: true,
+                                })
+                              : 'recently'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className='text-muted-foreground text-xs uppercase'>Telephone</p>
-                        <p>{branch.poc_telephone}</p>
-                        <p className='text-muted-foreground text-xs'>
-                          Updated{' '}
-                          {branch.updated_date
-                            ? formatDistanceToNow(new Date(branch.updated_date), {
-                                addSuffix: true,
-                              })
-                            : 'recently'}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
 
               {!isBranchesLoading && branches.length === 0 && activeOrg && (
                 <p className='text-muted-foreground text-sm'>
@@ -236,12 +242,14 @@ export function AdminBranchesContent() {
               )}
 
               {!activeOrg && (
-                <p className='text-muted-foreground text-sm'>Select an organization to load branches.</p>
+                <p className='text-muted-foreground text-sm'>
+                  Select an organization to load branches.
+                </p>
               )}
             </div>
           </ScrollArea>
 
-          <div className='rounded-2xl border border-border/60 p-4'>
+          <div className='border-border/60 rounded-2xl border p-4'>
             {selectedBranch ? (
               <div className='space-y-3'>
                 <div className='flex flex-wrap items-center gap-2'>
@@ -285,7 +293,7 @@ export function AdminBranchesContent() {
                 {isBranchUsersLoading && (
                   <div className='space-y-2'>
                     {Array.from({ length: 3 }).map((_, index) => (
-                      <div key={index} className='rounded-xl border border-border/60 p-3'>
+                      <div key={index} className='border-border/60 rounded-xl border p-3'>
                         <Skeleton className='h-4 w-32' />
                         <Skeleton className='mt-1 h-3 w-24' />
                       </div>
@@ -304,7 +312,7 @@ export function AdminBranchesContent() {
                     {branchUsersData.items.map(user => (
                       <div
                         key={user.uuid ?? user.email}
-                        className='rounded-xl border border-border/60 p-3 text-sm'
+                        className='border-border/60 rounded-xl border p-3 text-sm'
                       >
                         <p className='font-semibold'>
                           {[user.first_name, user.last_name].filter(Boolean).join(' ') ||

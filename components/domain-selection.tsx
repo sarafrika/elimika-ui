@@ -86,16 +86,16 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
   };
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-background p-4 dark:bg-background'>
+    <div className='bg-background dark:bg-background flex min-h-screen items-center justify-center p-4'>
       <div className='w-full max-w-4xl'>
         <div className='mb-8 text-center'>
-          <BrandPill className='mx-auto mb-4 normal-case tracking-[0.3em] text-xs'>
+          <BrandPill className='mx-auto mb-4 text-xs tracking-[0.3em] normal-case'>
             Dashboard selection
           </BrandPill>
-          <h1 className='mb-2 text-3xl font-bold text-foreground'>
+          <h1 className='text-foreground mb-2 text-3xl font-bold'>
             Welcome back{userName ? `, ${userName}` : ''}!
           </h1>
-          <p className='text-lg text-muted-foreground'>
+          <p className='text-muted-foreground text-lg'>
             You have access to multiple dashboards. Choose which one you&apos;d like to enter.
           </p>
         </div>
@@ -122,12 +122,12 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
                   <div className={`mx-auto mb-4 rounded-full p-3 ${config.bgColor}`}>
                     <Icon className={`h-8 w-8 ${config.color}`} />
                   </div>
-                  <CardTitle className='text-xl font-semibold text-foreground'>
+                  <CardTitle className='text-foreground text-xl font-semibold'>
                     {config.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className='text-center leading-relaxed text-muted-foreground'>
+                  <CardDescription className='text-muted-foreground text-center leading-relaxed'>
                     {config.description}
                   </CardDescription>
                 </CardContent>
@@ -148,7 +148,7 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
         </div>
 
         <div className='mt-6 text-center'>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             You can switch between dashboards anytime from your profile menu.
           </p>
         </div>

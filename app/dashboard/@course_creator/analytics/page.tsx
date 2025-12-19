@@ -81,18 +81,18 @@ export default function CourseCreatorAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className='space-y-3 text-sm'>
-            <div className='flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-4 py-3'>
+            <div className='border-border/60 bg-muted/40 flex items-center justify-between rounded-lg border px-4 py-3'>
               <span>Total configured items</span>
               <span className='font-semibold'>{trainingRequirements.totalRequirements}</span>
             </div>
             <div className='grid grid-cols-2 gap-3'>
-              <div className='rounded-lg border border-border/60 bg-muted/40 p-3 text-center'>
+              <div className='border-border/60 bg-muted/40 rounded-lg border p-3 text-center'>
                 <p className='text-muted-foreground text-xs tracking-wide uppercase'>Mandatory</p>
                 <p className='text-lg font-semibold'>
                   {trainingRequirements.mandatoryRequirements}
                 </p>
               </div>
-              <div className='rounded-lg border border-border/60 bg-muted/40 p-3 text-center'>
+              <div className='border-border/60 bg-muted/40 rounded-lg border p-3 text-center'>
                 <p className='text-muted-foreground text-xs tracking-wide uppercase'>Optional</p>
                 <p className='text-lg font-semibold'>{trainingRequirements.optionalRequirements}</p>
               </div>
@@ -112,13 +112,13 @@ export default function CourseCreatorAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className='space-y-3 text-sm'>
-            <div className='flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-4 py-3'>
+            <div className='border-border/60 bg-muted/40 flex items-center justify-between rounded-lg border px-4 py-3'>
               <span>Status</span>
               <span className='font-semibold'>
                 {verification.adminVerified ? 'Verified' : 'Pending review'}
               </span>
             </div>
-            <div className='flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-4 py-3'>
+            <div className='border-border/60 bg-muted/40 flex items-center justify-between rounded-lg border px-4 py-3'>
               <span>Last updated</span>
               <span className='font-semibold'>
                 {verification.lastUpdated
@@ -126,7 +126,7 @@ export default function CourseCreatorAnalyticsPage() {
                   : 'Not recorded'}
               </span>
             </div>
-            <div className='flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-4 py-3'>
+            <div className='border-border/60 bg-muted/40 flex items-center justify-between rounded-lg border px-4 py-3'>
               <span>Profile completeness</span>
               <span className='font-semibold'>
                 {verification.profileComplete ? 'Complete' : 'Needs attention'}
@@ -151,7 +151,7 @@ function FeeStat({
   const displayValue =
     typeof value === 'number' && isCurrency ? formatCurrency(value) : (value ?? 'Not set');
   return (
-    <div className='rounded-lg border border-border/60 bg-muted/40 p-3'>
+    <div className='border-border/60 bg-muted/40 rounded-lg border p-3'>
       <p className='text-muted-foreground text-xs tracking-wide uppercase'>{heading}</p>
       <p className='text-lg font-semibold'>{displayValue}</p>
     </div>

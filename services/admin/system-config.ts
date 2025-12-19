@@ -8,8 +8,17 @@ import type {
   ScopeEnum,
   ValueTypeEnum,
 } from '@/services/client/types.gen';
-import { zApiResponsePagedDtoSystemRuleResponse, zSystemRuleRequest } from '@/services/client/zod.gen';
-import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from '@tanstack/react-query';
+import {
+  zApiResponsePagedDtoSystemRuleResponse,
+  zSystemRuleRequest,
+} from '@/services/client/zod.gen';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationOptions,
+  type UseQueryOptions,
+} from '@tanstack/react-query';
 import { z } from 'zod';
 
 export type SystemRule = Record<string, any>;
@@ -40,24 +49,22 @@ export interface SystemRuleListResult {
 
 const listRulesResponseSchema = zApiResponsePagedDtoSystemRuleResponse.passthrough();
 
-const systemRuleRequestSchema = zSystemRuleRequest
-  .passthrough()
-  .transform(data => {
-    const cleaned: Record<string, unknown> = { ...data };
-    delete cleaned.createdDate;
-    delete cleaned.updatedDate;
-    delete cleaned.createdBy;
-    delete cleaned.updatedBy;
+const systemRuleRequestSchema = zSystemRuleRequest.passthrough().transform(data => {
+  const cleaned: Record<string, unknown> = { ...data };
+  delete cleaned.createdDate;
+  delete cleaned.updatedDate;
+  delete cleaned.createdBy;
+  delete cleaned.updatedBy;
 
-    if (cleaned.effectiveFrom instanceof Date) {
-      cleaned.effectiveFrom = cleaned.effectiveFrom.toISOString();
-    }
-    if (cleaned.effectiveTo instanceof Date) {
-      cleaned.effectiveTo = cleaned.effectiveTo.toISOString();
-    }
+  if (cleaned.effectiveFrom instanceof Date) {
+    cleaned.effectiveFrom = cleaned.effectiveFrom.toISOString();
+  }
+  if (cleaned.effectiveTo instanceof Date) {
+    cleaned.effectiveTo = cleaned.effectiveTo.toISOString();
+  }
 
-    return cleaned;
-  });
+  return cleaned;
+});
 
 const buildListRulesOptions = (params: SystemRuleListParams) => {
   const query: ListRulesData['query'] = {
@@ -71,7 +78,10 @@ const buildListRulesOptions = (params: SystemRuleListParams) => {
   return listRulesOptions({ query });
 };
 
-const deriveListResult = (data: unknown, fallback: Required<SystemRuleListParams>): SystemRuleListResult => {
+const deriveListResult = (
+  data: unknown,
+  fallback: Required<SystemRuleListParams>
+): SystemRuleListResult => {
   // Use the raw response payload to avoid losing items if schemas drift
   const base: any = (data as any)?.data ?? data ?? {};
   const payload = base?.data ?? base; // handle possible double nesting
@@ -82,11 +92,7 @@ const deriveListResult = (data: unknown, fallback: Required<SystemRuleListParams
     (Array.isArray(base?.content) && base.content) ||
     [];
 
-  const metadata =
-    payload?.metadata ??
-    payload?.page ??
-    base?.metadata ??
-    {};
+  const metadata = payload?.metadata ?? payload?.page ?? base?.metadata ?? {};
 
   const page =
     Number.isFinite(metadata.pageNumber) || Number.isFinite(metadata.page)
@@ -96,10 +102,12 @@ const deriveListResult = (data: unknown, fallback: Required<SystemRuleListParams
     Number.isFinite(metadata.pageSize) || Number.isFinite(metadata.size)
       ? (Number(metadata.pageSize ?? metadata.size) as number)
       : fallback.size;
-  const totalItems = toNumber(metadata.totalElements ?? metadata.totalItems ?? items.length, items.length);
+  const totalItems = toNumber(
+    metadata.totalElements ?? metadata.totalItems ?? items.length,
+    items.length
+  );
   const totalPages =
-    metadata.totalPages ??
-    (totalItems > 0 && size > 0 ? Math.ceil(totalItems / size) : 0);
+    metadata.totalPages ?? (totalItems > 0 && size > 0 ? Math.ceil(totalItems / size) : 0);
 
   return {
     items,
@@ -131,7 +139,10 @@ export function useSystemRules(
   });
 }
 
-export function useSystemRule(uuid: string | null, options?: Partial<UseQueryOptions<SystemRule | null, Error>>) {
+export function useSystemRule(
+  uuid: string | null,
+  options?: Partial<UseQueryOptions<SystemRule | null, Error>>
+) {
   return useQuery({
     ...getRuleOptions({
       path: { uuid: uuid ?? '' },

@@ -11,7 +11,7 @@ export default function SkillsFundLayout({ children }: SkillsFundLayoutProps) {
     <div className='space-y-8 p-4 pb-16 md:p-10'>
       <div>
         <h2 className='text-2xl font-bold tracking-tight'>Skills Fund</h2>
-        <p className='mt-1 text-muted-foreground'>
+        <p className='text-muted-foreground mt-1'>
           Empowering Growth through Skills Funding. Access scholarships, grants, and support for
           your learning journey.
         </p>
@@ -19,7 +19,7 @@ export default function SkillsFundLayout({ children }: SkillsFundLayoutProps) {
 
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
-        <div className='flex-1 lg:max-w-7xl mx-auto'>{children}</div>
+        <div className='mx-auto flex-1 lg:max-w-7xl'>{children}</div>
       </div>
     </div>
   );

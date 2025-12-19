@@ -10,7 +10,7 @@ const normalizeSkill = (skill: any) => {
     BEGINNER: 25,
     INTERMEDIATE: 50,
     ADVANCED: 75,
-    EXPERT: 90
+    EXPERT: 90,
   };
 
   const level = (skill.proficiency_level || '').toUpperCase();
@@ -39,15 +39,12 @@ interface InstructorSkillCardProps {
   skills: any[];
 }
 
-export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({
-  instructor,
-  skills
-}) => {
+export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({ instructor, skills }) => {
   // Normalize incoming API data
   const normalizedSkills = skills.map(normalizeSkill);
 
   return (
-  <Card className='rounded-[12px] border border-border bg-card p-4 shadow-xl'>
+    <Card className='border-border bg-card rounded-[12px] border p-4 shadow-xl'>
       <CardHeader className='flex flex-row items-center gap-4 p-0'>
         <Avatar className='h-14 w-14'>
           <AvatarImage src={instructor.profile_image_url} alt={instructor.full_name} />
@@ -71,23 +68,19 @@ export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({
         {normalizedSkills.map(skill => (
           <div
             key={skill.uuid}
-            className='rounded-[20px] border border-border p-2 backdrop-blur lg:p-4'
+            className='border-border rounded-[20px] border p-2 backdrop-blur lg:p-4'
           >
             <div className='flex items-center justify-between'>
               <div>
                 <h3 className='text-sm font-medium'>{skill.skill_name}</h3>
-                <p className='text-xs text-muted-foreground'>
-                  {skill.summary}
-                </p>
+                <p className='text-muted-foreground text-xs'>{skill.summary}</p>
               </div>
               <Badge variant='outline' className='text-xs'>
                 {skill.proficiency_level}
               </Badge>
             </div>
 
-            <p className='mt-2 text-xs text-muted-foreground'>
-              {skill.proficiency_description}
-            </p>
+            <p className='text-muted-foreground mt-2 text-xs'>{skill.proficiency_description}</p>
 
             <div className='mt-4 flex items-center gap-2 text-xs'>
               <Progress value={skill.proficiency_percentage} className='h-1.5 w-full' />
@@ -103,7 +96,7 @@ export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({
               </div>
 
               <div className='flex items-center gap-1.5'>
-                <BrainCircuit className='h-3.5 w-3.5 text-accent' />
+                <BrainCircuit className='text-accent h-3.5 w-3.5' />
                 <span>{skill.is_teaching_qualified ? 'Qualified to Teach' : 'Not Teaching'}</span>
               </div>
 

@@ -28,8 +28,10 @@ export default async function OrganizationOverviewPage() {
       <section className='mb-6'>
         <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div>
-            <h1 className='text-2xl font-bold text-foreground'>Organization Overview</h1>
-            <p className='text-sm text-muted-foreground'>Monitor performance and manage your organization</p>
+            <h1 className='text-foreground text-2xl font-bold'>Organization Overview</h1>
+            <p className='text-muted-foreground text-sm'>
+              Monitor performance and manage your organization
+            </p>
           </div>
           <div className='flex flex-wrap gap-2'>
             <Button asChild size='sm' variant='outline'>
@@ -52,10 +54,8 @@ export default async function OrganizationOverviewPage() {
       <section className={elimikaDesignSystem.spacing.content}>
         <div className='mb-4 flex items-center justify-between'>
           <div>
-            <h2 className='text-2xl font-semibold text-foreground'>
-              Key Metrics
-            </h2>
-            <p className='text-sm text-muted-foreground'>
+            <h2 className='text-foreground text-2xl font-semibold'>Key Metrics</h2>
+            <p className='text-muted-foreground text-sm'>
               Real-time overview of your organization's performance
             </p>
           </div>
@@ -77,22 +77,16 @@ export default async function OrganizationOverviewPage() {
         <div className={elimikaDesignSystem.spacing.content}>
           {/* Quick Actions */}
           <section>
-            <h2 className='mb-4 text-xl font-semibold text-foreground'>
-              Quick Actions
-            </h2>
+            <h2 className='text-foreground mb-4 text-xl font-semibold'>Quick Actions</h2>
             <QuickActions />
           </section>
 
           {/* Organization Profile */}
           <section>
             <div className='mb-4 flex items-center justify-between'>
-              <h2 className='text-xl font-semibold text-foreground'>
-                Organization Profile
-              </h2>
+              <h2 className='text-foreground text-xl font-semibold'>Organization Profile</h2>
               <Button asChild variant='outline' size='sm'>
-                <Link href='/dashboard/account/training-center'>
-                  Edit Profile
-                </Link>
+                <Link href='/dashboard/account/training-center'>Edit Profile</Link>
               </Button>
             </div>
             <OrganizationProfile />
@@ -119,40 +113,22 @@ export default async function OrganizationOverviewPage() {
             </div>
 
             <div className='grid gap-4 md:grid-cols-3'>
-              <div className='rounded-[20px] border border-border bg-muted/50 p-4'>
-                <p className='text-sm font-medium text-muted-foreground'>
-                  Active Courses
-                </p>
-                <p className='mt-2 text-3xl font-bold text-primary'>
-                  --
-                </p>
-                <p className='mt-1 text-xs text-muted-foreground'>
-                  Available for enrollment
-                </p>
+              <div className='border-border bg-muted/50 rounded-[20px] border p-4'>
+                <p className='text-muted-foreground text-sm font-medium'>Active Courses</p>
+                <p className='text-primary mt-2 text-3xl font-bold'>--</p>
+                <p className='text-muted-foreground mt-1 text-xs'>Available for enrollment</p>
               </div>
 
-              <div className='rounded-[20px] border border-border bg-muted/50 p-4'>
-                <p className='text-sm font-medium text-muted-foreground'>
-                  Completion Rate
-                </p>
-                <p className='mt-2 text-3xl font-bold text-primary'>
-                  --%
-                </p>
-                <p className='mt-1 text-xs text-muted-foreground'>
-                  Average across all courses
-                </p>
+              <div className='border-border bg-muted/50 rounded-[20px] border p-4'>
+                <p className='text-muted-foreground text-sm font-medium'>Completion Rate</p>
+                <p className='text-primary mt-2 text-3xl font-bold'>--%</p>
+                <p className='text-muted-foreground mt-1 text-xs'>Average across all courses</p>
               </div>
 
-              <div className='rounded-[20px] border border-border bg-muted/50 p-4'>
-                <p className='text-sm font-medium text-muted-foreground'>
-                  Enrollments
-                </p>
-                <p className='mt-2 text-3xl font-bold text-primary'>
-                  --
-                </p>
-                <p className='mt-1 text-xs text-muted-foreground'>
-                  Total active students
-                </p>
+              <div className='border-border bg-muted/50 rounded-[20px] border p-4'>
+                <p className='text-muted-foreground text-sm font-medium'>Enrollments</p>
+                <p className='text-primary mt-2 text-3xl font-bold'>--</p>
+                <p className='text-muted-foreground mt-1 text-xs'>Total active students</p>
               </div>
             </div>
           </section>
@@ -162,9 +138,7 @@ export default async function OrganizationOverviewPage() {
         <aside className={elimikaDesignSystem.spacing.content}>
           {/* Recent Activity */}
           <section>
-            <h2 className='mb-4 text-xl font-semibold text-foreground'>
-              Recent Activity
-            </h2>
+            <h2 className='text-foreground mb-4 text-xl font-semibold'>Recent Activity</h2>
             <RecentActivity />
           </section>
 
@@ -177,20 +151,17 @@ export default async function OrganizationOverviewPage() {
             <Separator className='my-4' />
 
             <div className='space-y-3'>
-              <div className='rounded-xl border border-border bg-muted/50 p-3'>
+              <div className='border-border bg-muted/50 rounded-xl border p-3'>
                 <div className='flex items-start gap-3'>
-                  <ShieldCheck className='mt-0.5 h-5 w-5 text-primary' />
+                  <ShieldCheck className='text-primary mt-0.5 h-5 w-5' />
                   <div className='flex-1'>
-                    <p className='text-sm font-medium text-foreground'>
-                      Organization Verified
-                    </p>
-                    <p className='mt-1 text-xs text-muted-foreground'>
+                    <p className='text-foreground text-sm font-medium'>Organization Verified</p>
+                    <p className='text-muted-foreground mt-1 text-xs'>
                       Your organization has been verified by the admin team.
                     </p>
                   </div>
                 </div>
               </div>
-
             </div>
           </section>
 

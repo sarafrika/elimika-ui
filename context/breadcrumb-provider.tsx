@@ -33,8 +33,7 @@ const BreadcrumbContext = createContext<BreadcrumbContextType | undefined>(undef
 const STORAGE_KEY = 'app-breadcrumbs';
 
 // --- 🧩 Utility helpers (make sure these are above your provider) ---
-const generateId = () =>
-  `breadcrumb-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+const generateId = () => `breadcrumb-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
 const findMenuPathByUrl = (
   menuItems: MenuItem[],
@@ -85,8 +84,7 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
       try {
         const parsed: BreadcrumbItem[] = JSON.parse(stored);
         setBreadcrumbs(parsed);
-      } catch (_e) {
-      }
+      } catch (_e) {}
     }
   }, []);
 
@@ -118,10 +116,7 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
   const addBreadcrumb = useCallback((title: string, url?: string | null) => {
     setBreadcrumbs(prev => {
       const updatedBreadcrumbs = prev.map(b => ({ ...b, isLast: false }));
-      return [
-        ...updatedBreadcrumbs,
-        { id: generateId(), title, url: url || null, isLast: true },
-      ];
+      return [...updatedBreadcrumbs, { id: generateId(), title, url: url || null, isLast: true }];
     });
   }, []);
 
@@ -149,7 +144,14 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
       clearBreadcrumbs,
       replaceBreadcrumbs,
     }),
-    [breadcrumbs, addBreadcrumb, removeBreadcrumb, removeLastBreadcrumb, clearBreadcrumbs, replaceBreadcrumbs]
+    [
+      breadcrumbs,
+      addBreadcrumb,
+      removeBreadcrumb,
+      removeLastBreadcrumb,
+      clearBreadcrumbs,
+      replaceBreadcrumbs,
+    ]
   );
 
   return <BreadcrumbContext.Provider value={value}>{children}</BreadcrumbContext.Provider>;

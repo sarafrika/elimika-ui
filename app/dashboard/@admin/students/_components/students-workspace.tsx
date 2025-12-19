@@ -3,8 +3,20 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import type { AdminUser } from '@/services/admin';
 import { getAllUsersOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -129,8 +141,8 @@ function StudentListPanel({
           key={`skeleton-${index}`}
           className='hover:bg-muted/50 cursor-pointer border-b p-4 transition-colors'
         >
-          <div className='h-4 w-1/2 animate-pulse rounded bg-muted' />
-          <div className='mt-2 h-3 w-1/3 animate-pulse rounded bg-muted' />
+          <div className='bg-muted h-4 w-1/2 animate-pulse rounded' />
+          <div className='bg-muted mt-2 h-3 w-1/3 animate-pulse rounded' />
         </div>
       ));
     }
@@ -138,9 +150,11 @@ function StudentListPanel({
     if (filteredStudents.length === 0) {
       return (
         <div className='flex flex-1 flex-col items-center justify-center p-6 text-center'>
-          <ShieldAlert className='mb-3 h-10 w-10 text-muted-foreground' />
+          <ShieldAlert className='text-muted-foreground mb-3 h-10 w-10' />
           <p className='text-sm font-medium'>No students match your filters</p>
-          <p className='text-muted-foreground text-xs'>Adjust filter selections to discover more students.</p>
+          <p className='text-muted-foreground text-xs'>
+            Adjust filter selections to discover more students.
+          </p>
         </div>
       );
     }
@@ -154,13 +168,16 @@ function StudentListPanel({
           className={cn(
             'relative cursor-pointer rounded-2xl border p-4 transition-colors',
             selectedStudentId === student.uuid
-              ? 'border-primary bg-primary/5 ring-1 ring-primary/40 shadow-sm'
+              ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-1'
               : 'border-border/60 bg-card hover:bg-muted/40'
           )}
           onClick={() => onSelect(student)}
         >
           {selectedStudentId === student.uuid ? (
-            <Badge variant='secondary' className='absolute right-3 top-3 text-[10px] font-semibold uppercase'>
+            <Badge
+              variant='secondary'
+              className='absolute top-3 right-3 text-[10px] font-semibold uppercase'
+            >
               Selected
             </Badge>
           ) : null}
@@ -169,14 +186,18 @@ function StudentListPanel({
               <div className='mb-1 flex items-center gap-2'>
                 <h3 className='truncate text-sm font-medium'>{fullName}</h3>
               </div>
-              <p className='text-muted-foreground mb-1 truncate text-xs'>{student.email || 'No email'}</p>
+              <p className='text-muted-foreground mb-1 truncate text-xs'>
+                {student.email || 'No email'}
+              </p>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
                   <Badge variant={student.active ? 'secondary' : 'outline'} className='text-xs'>
                     {student.active ? 'Active' : 'Inactive'}
                   </Badge>
                   <span className='text-muted-foreground text-xs'>
-                    {student.created_date ? format(new Date(student.created_date), 'dd MMM yyyy') : 'N/A'}
+                    {student.created_date
+                      ? format(new Date(student.created_date), 'dd MMM yyyy')
+                      : 'N/A'}
                   </span>
                 </div>
               </div>
@@ -210,7 +231,12 @@ function StudentListPanel({
       <ScrollArea className='flex-1'>{renderContent()}</ScrollArea>
 
       <div className='border-border/60 flex items-center justify-between border-t px-6 py-4 text-sm'>
-        <Button variant='ghost' size='sm' onClick={() => onPageChange(Math.max(page - 1, 0))} disabled={page === 0}>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={() => onPageChange(Math.max(page - 1, 0))}
+          disabled={page === 0}
+        >
           Previous
         </Button>
         <div className='text-muted-foreground'>
@@ -236,8 +262,10 @@ interface StudentDetailsPanelProps {
 function StudentDetailsPanel({ student }: StudentDetailsPanelProps) {
   if (!student) {
     return (
-      <div className='hidden flex-1 items-center justify-center bg-card lg:flex'>
-        <p className='text-muted-foreground text-sm'>Select a student from the list to view details</p>
+      <div className='bg-card hidden flex-1 items-center justify-center lg:flex'>
+        <p className='text-muted-foreground text-sm'>
+          Select a student from the list to view details
+        </p>
       </div>
     );
   }
@@ -245,7 +273,7 @@ function StudentDetailsPanel({ student }: StudentDetailsPanelProps) {
   const fullName = `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() || 'N/A';
 
   return (
-    <div className='hidden flex-1 flex-col bg-card lg:flex'>
+    <div className='bg-card hidden flex-1 flex-col lg:flex'>
       <div className='border-b p-6'>
         <h2 className='text-2xl font-semibold'>Student Details</h2>
         <p className='text-muted-foreground text-sm'>View student profile information</p>
@@ -269,18 +297,24 @@ function StudentDetailsPanel({ student }: StudentDetailsPanelProps) {
                 <dd className='mt-1 text-sm'>{student.username || 'N/A'}</dd>
               </div>
               <div>
-                <dt className='text-muted-foreground text-xs font-medium uppercase'>Phone Number</dt>
+                <dt className='text-muted-foreground text-xs font-medium uppercase'>
+                  Phone Number
+                </dt>
                 <dd className='mt-1 text-sm'>{student.phone_number || 'N/A'}</dd>
               </div>
               <div>
-                <dt className='text-muted-foreground text-xs font-medium uppercase'>Date of Birth</dt>
+                <dt className='text-muted-foreground text-xs font-medium uppercase'>
+                  Date of Birth
+                </dt>
                 <dd className='mt-1 text-sm'>
                   {student.dob ? format(new Date(student.dob), 'dd MMM yyyy') : 'N/A'}
                 </dd>
               </div>
               <div>
                 <dt className='text-muted-foreground text-xs font-medium uppercase'>Gender</dt>
-                <dd className='mt-1 text-sm'>{student.gender ? String(student.gender).replace(/_/g, ' ') : 'N/A'}</dd>
+                <dd className='mt-1 text-sm'>
+                  {student.gender ? String(student.gender).replace(/_/g, ' ') : 'N/A'}
+                </dd>
               </div>
             </dl>
           </div>
@@ -299,18 +333,24 @@ function StudentDetailsPanel({ student }: StudentDetailsPanelProps) {
               <div>
                 <dt className='text-muted-foreground text-xs font-medium uppercase'>Created</dt>
                 <dd className='mt-1 text-sm'>
-                  {student.created_date ? format(new Date(student.created_date), 'dd MMM yyyy, HH:mm') : 'N/A'}
+                  {student.created_date
+                    ? format(new Date(student.created_date), 'dd MMM yyyy, HH:mm')
+                    : 'N/A'}
                 </dd>
               </div>
               <div>
-                <dt className='text-muted-foreground text-xs font-medium uppercase'>Last Updated</dt>
+                <dt className='text-muted-foreground text-xs font-medium uppercase'>
+                  Last Updated
+                </dt>
                 <dd className='mt-1 text-sm'>
-                  {student.updated_date ? format(new Date(student.updated_date), 'dd MMM yyyy, HH:mm') : 'N/A'}
+                  {student.updated_date
+                    ? format(new Date(student.updated_date), 'dd MMM yyyy, HH:mm')
+                    : 'N/A'}
                 </dd>
               </div>
               <div>
                 <dt className='text-muted-foreground text-xs font-medium uppercase'>UUID</dt>
-                <dd className='mt-1 text-xs font-mono'>{student.uuid || 'N/A'}</dd>
+                <dd className='mt-1 font-mono text-xs'>{student.uuid || 'N/A'}</dd>
               </div>
             </dl>
           </div>
@@ -356,18 +396,24 @@ function StudentDetailSheet({ student, open, onOpenChange }: StudentDetailSheetP
                   <dd className='mt-1 text-sm'>{student.username || 'N/A'}</dd>
                 </div>
                 <div>
-                  <dt className='text-muted-foreground text-xs font-medium uppercase'>Phone Number</dt>
+                  <dt className='text-muted-foreground text-xs font-medium uppercase'>
+                    Phone Number
+                  </dt>
                   <dd className='mt-1 text-sm'>{student.phone_number || 'N/A'}</dd>
                 </div>
                 <div>
-                  <dt className='text-muted-foreground text-xs font-medium uppercase'>Date of Birth</dt>
+                  <dt className='text-muted-foreground text-xs font-medium uppercase'>
+                    Date of Birth
+                  </dt>
                   <dd className='mt-1 text-sm'>
                     {student.dob ? format(new Date(student.dob), 'dd MMM yyyy') : 'N/A'}
                   </dd>
                 </div>
                 <div>
                   <dt className='text-muted-foreground text-xs font-medium uppercase'>Gender</dt>
-                  <dd className='mt-1 text-sm'>{student.gender ? String(student.gender).replace(/_/g, ' ') : 'N/A'}</dd>
+                  <dd className='mt-1 text-sm'>
+                    {student.gender ? String(student.gender).replace(/_/g, ' ') : 'N/A'}
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -386,18 +432,24 @@ function StudentDetailSheet({ student, open, onOpenChange }: StudentDetailSheetP
                 <div>
                   <dt className='text-muted-foreground text-xs font-medium uppercase'>Created</dt>
                   <dd className='mt-1 text-sm'>
-                    {student.created_date ? format(new Date(student.created_date), 'dd MMM yyyy, HH:mm') : 'N/A'}
+                    {student.created_date
+                      ? format(new Date(student.created_date), 'dd MMM yyyy, HH:mm')
+                      : 'N/A'}
                   </dd>
                 </div>
                 <div>
-                  <dt className='text-muted-foreground text-xs font-medium uppercase'>Last Updated</dt>
+                  <dt className='text-muted-foreground text-xs font-medium uppercase'>
+                    Last Updated
+                  </dt>
                   <dd className='mt-1 text-sm'>
-                    {student.updated_date ? format(new Date(student.updated_date), 'dd MMM yyyy, HH:mm') : 'N/A'}
+                    {student.updated_date
+                      ? format(new Date(student.updated_date), 'dd MMM yyyy, HH:mm')
+                      : 'N/A'}
                   </dd>
                 </div>
                 <div>
                   <dt className='text-muted-foreground text-xs font-medium uppercase'>UUID</dt>
-                  <dd className='mt-1 text-xs font-mono'>{student.uuid || 'N/A'}</dd>
+                  <dd className='mt-1 font-mono text-xs'>{student.uuid || 'N/A'}</dd>
                 </div>
               </dl>
             </div>

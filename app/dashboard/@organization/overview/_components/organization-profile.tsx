@@ -93,21 +93,16 @@ export function OrganizationProfile() {
 
       {/* Profile Fields */}
       <div className='grid gap-4 sm:grid-cols-2'>
-        {profileFields.map((field) => {
+        {profileFields.map(field => {
           const Icon = field.icon;
 
           return (
-            <div
-              key={field.label}
-              className='rounded-xl border border-border bg-muted/30 p-4'
-            >
-              <div className='mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+            <div key={field.label} className='border-border bg-muted/30 rounded-xl border p-4'>
+              <div className='text-muted-foreground mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
                 <Icon className='h-3.5 w-3.5' />
                 {field.label}
               </div>
-              <p className='text-sm font-medium text-foreground'>
-                {field.value}
-              </p>
+              <p className='text-foreground text-sm font-medium'>{field.value}</p>
             </div>
           );
         })}
@@ -115,7 +110,7 @@ export function OrganizationProfile() {
 
       {/* Timestamps */}
       {(organisation.created_date || organisation.updated_date) && (
-        <div className='mt-4 flex flex-wrap gap-4 border-t border-border pt-4 text-xs text-muted-foreground'>
+        <div className='border-border text-muted-foreground mt-4 flex flex-wrap gap-4 border-t pt-4 text-xs'>
           {organisation.created_date && (
             <div>
               <span className='font-medium'>Created:</span>{' '}
@@ -133,9 +128,9 @@ export function OrganizationProfile() {
 
       {/* Coordinates (if available) */}
       {(organisation.latitude || organisation.longitude) && (
-        <div className='mt-3 rounded-lg bg-muted p-3 text-xs'>
-          <span className='font-medium text-foreground'>Coordinates:</span>{' '}
-          <span className='font-mono text-muted-foreground'>
+        <div className='bg-muted mt-3 rounded-lg p-3 text-xs'>
+          <span className='text-foreground font-medium'>Coordinates:</span>{' '}
+          <span className='text-muted-foreground font-mono'>
             {organisation.latitude ?? '—'}, {organisation.longitude ?? '—'}
           </span>
         </div>

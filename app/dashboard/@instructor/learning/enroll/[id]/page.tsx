@@ -9,7 +9,10 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import ConfirmModal from '../../../../../../components/custom-modals/confirm-modal';
 import { useInstructor } from '../../../../../../context/instructor-context';
-import { enrollStudentMutation, getStudentScheduleQueryKey } from '../../../../../../services/client/@tanstack/react-query.gen';
+import {
+  enrollStudentMutation,
+  getStudentScheduleQueryKey,
+} from '../../../../../../services/client/@tanstack/react-query.gen';
 import {
   CustomEmptyState,
   CustomLoadingState,
@@ -18,8 +21,8 @@ import EnrollCourseCard from '../../../../_components/enroll-course-card';
 
 const EnrollmentPage = () => {
   const params = useParams();
-  const qc = useQueryClient()
-  const instructor = useInstructor()
+  const qc = useQueryClient();
+  const instructor = useInstructor();
   const courseId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
 
@@ -89,8 +92,12 @@ const EnrollmentPage = () => {
   return (
     <Card className='space-y-4 px-6 py-10'>
       <CardHeader>
-        <CardTitle className='text-2xl font-semibold'>Explore Classes Open for Enrollment</CardTitle>
-        <CardDescription className=''>Discover courses designed to help you grow and succeed.</CardDescription>
+        <CardTitle className='text-2xl font-semibold'>
+          Explore Classes Open for Enrollment
+        </CardTitle>
+        <CardDescription className=''>
+          Discover courses designed to help you grow and succeed.
+        </CardDescription>
       </CardHeader>
 
       {classes.length === 0 ? (
@@ -120,42 +127,54 @@ const EnrollmentPage = () => {
       <ConfirmModal
         open={openEnrollModal}
         setOpen={setOpenEnrollModal}
-        title="Confirm Enrollment"
+        title='Confirm Enrollment'
         description={
-          <div className='space-y-3 text-sm text-muted-foreground'>
+          <div className='text-muted-foreground space-y-3 text-sm'>
             <p>
               You are about to <strong>enroll</strong> in the following class/program:
             </p>
 
-            <div className='rounded-md border bg-muted/60 p-3'>
-              <p><strong>Course Name:</strong> {enrollingClass?.course?.name}</p>
-              <p><strong>Instructor:</strong> {enrollingClass?.instructor?.full_name}</p>
+            <div className='bg-muted/60 rounded-md border p-3'>
+              <p>
+                <strong>Course Name:</strong> {enrollingClass?.course?.name}
+              </p>
+              <p>
+                <strong>Instructor:</strong> {enrollingClass?.instructor?.full_name}
+              </p>
               {/* <p><strong>Schedule:</strong> {enrollingCourse?.scheduleSummary}</p> */}
-              <p><strong>Start Date:</strong> {(enrollingClass?.default_start_time)}</p>
-              <p><strong>End Date:</strong> {(enrollingClass?.default_end_time)}</p>
+              <p>
+                <strong>Start Date:</strong> {enrollingClass?.default_start_time}
+              </p>
+              <p>
+                <strong>End Date:</strong> {enrollingClass?.default_end_time}
+              </p>
               {enrollingClass?.location_type && (
-                <p><strong>Location:</strong> {enrollingClass?.location_type}</p>
+                <p>
+                  <strong>Location:</strong> {enrollingClass?.location_type}
+                </p>
               )}
             </div>
 
             <p>
-              By enrolling, you’ll gain access to course materials, session updates,
-              and any assessments or assignments tied to this program. Ensure that
-              you’ve reviewed your class schedule and that this time slot works for you.
+              By enrolling, you’ll gain access to course materials, session updates, and any
+              assessments or assignments tied to this program. Ensure that you’ve reviewed your
+              class schedule and that this time slot works for you.
             </p>
 
-            <p><strong>Training Fee:{"  "} </strong>KES {enrollingClass?.training_fee}</p>
+            <p>
+              <strong>Training Fee:{'  '} </strong>KES {enrollingClass?.training_fee}
+            </p>
 
-            <p className="text-yellow-600 font-medium">
+            <p className='font-medium text-yellow-600'>
               Note: Once enrolled, you may need to contact your instructor or admin to withdraw.
             </p>
           </div>
         }
         onConfirm={handleEnrollStudent}
         isLoading={enrollStudent.isPending}
-        confirmText="Yes, Enroll Me"
-        cancelText="No, Cancel"
-        variant="primary"
+        confirmText='Yes, Enroll Me'
+        cancelText='No, Cancel'
+        variant='primary'
       />
     </Card>
   );

@@ -83,9 +83,9 @@ export const PaymentModal: React.FC<Props> = ({
       <Separator />
 
       {/* Amount */}
-      <div className='rounded-lg border border-primary/30 bg-primary/10 p-4'>
-        <p className='text-sm text-primary'>Amount to pay</p>
-        <p className='text-3xl text-primary'>
+      <div className='border-primary/30 bg-primary/10 rounded-lg border p-4'>
+        <p className='text-primary text-sm'>Amount to pay</p>
+        <p className='text-primary text-3xl'>
           {currency} ${totalFee.toFixed(2)}
         </p>
       </div>

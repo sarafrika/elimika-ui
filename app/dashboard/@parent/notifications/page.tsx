@@ -6,7 +6,7 @@ export default function ParentNotificationsPage() {
       <CardHeader>
         <CardTitle>Notifications</CardTitle>
       </CardHeader>
-      <CardContent className='text-sm text-muted-foreground'>
+      <CardContent className='text-muted-foreground text-sm'>
         Parent-specific notifications will show up here soon.
       </CardContent>
     </Card>

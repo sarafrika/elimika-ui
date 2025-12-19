@@ -1,11 +1,19 @@
-"use client";
+'use client';
 
 import DomainOverviewShell from '@/components/domain-overview-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ArrowRight, BookOpenCheck, CheckCircle2, FileText, GraduationCap, Search, ThumbsUp } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpenCheck,
+  CheckCircle2,
+  FileText,
+  GraduationCap,
+  Search,
+  ThumbsUp,
+} from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
@@ -61,11 +69,13 @@ export default function StudentOverviewPage() {
       <CardContent className='space-y-4'>
         <div className='flex items-center justify-between text-sm font-medium'>
           <span>Steps completed</span>
-          <span>{currentStageIndex + 1} / {approvalStages.length}</span>
+          <span>
+            {currentStageIndex + 1} / {approvalStages.length}
+          </span>
         </div>
         <Progress value={progressPercent} className='h-2' />
-        <div className='rounded-2xl border border-border/60 bg-muted/40 p-4'>
-          <p className='text-sm font-semibold text-foreground'>{currentStage.title}</p>
+        <div className='border-border/60 bg-muted/40 rounded-2xl border p-4'>
+          <p className='text-foreground text-sm font-semibold'>{currentStage.title}</p>
           <p className='text-muted-foreground text-sm'>{currentStage.description}</p>
         </div>
         <Button asChild className='w-full'>
@@ -89,13 +99,15 @@ export default function StudentOverviewPage() {
         <DetailRow label='Mobile number' value={submittedDetails.phone} />
         <DetailRow label='Email address' value={submittedDetails.email} />
         {submittedDetails.hasGuardian ? (
-          <div className='rounded-2xl border border-dashed border-border/60 p-3'>
+          <div className='border-border/60 rounded-2xl border border-dashed p-3'>
             <DetailRow label='Guardian name' value={submittedDetails.guardianName} />
             <DetailRow label='Guardian mobile' value={submittedDetails.guardianPhone} />
           </div>
         ) : null}
         <Button variant='ghost' asChild className='w-full justify-start px-0 text-sm'>
-          <Link prefetch href='/dashboard/profile/guardian'>Edit guardian details</Link>
+          <Link prefetch href='/dashboard/profile/guardian'>
+            Edit guardian details
+          </Link>
         </Button>
       </CardContent>
     </Card>
@@ -114,7 +126,10 @@ export default function StudentOverviewPage() {
           const Icon = stage.icon;
 
           return (
-            <div key={stage.title} className='flex items-start gap-3 rounded-2xl border border-border/60 p-3'>
+            <div
+              key={stage.title}
+              className='border-border/60 flex items-start gap-3 rounded-2xl border p-3'
+            >
               <div
                 className={`mt-1 flex size-9 items-center justify-center rounded-full border ${
                   isCompleted
@@ -127,7 +142,7 @@ export default function StudentOverviewPage() {
                 {isCompleted ? <CheckCircle2 className='h-4 w-4' /> : <Icon className='h-4 w-4' />}
               </div>
               <div className='space-y-1 text-sm'>
-                <p className='font-semibold text-foreground'>{stage.title}</p>
+                <p className='text-foreground font-semibold'>{stage.title}</p>
                 <p className='text-muted-foreground text-xs'>{stage.description}</p>
               </div>
             </div>

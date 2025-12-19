@@ -11,11 +11,7 @@ interface CourseMobileModalProps {
   onDecline: (course: Course) => void;
 }
 
-export default function CourseMobileModal({
-  course,
-  isOpen,
-  onClose,
-}: CourseMobileModalProps) {
+export default function CourseMobileModal({ course, isOpen, onClose }: CourseMobileModalProps) {
   if (!course) return null;
 
   return (
@@ -24,7 +20,6 @@ export default function CourseMobileModal({
         <DialogHeader>
           <div className='flex items-center justify-between'>
             <DialogTitle>Course Details</DialogTitle>
-
           </div>
         </DialogHeader>
 

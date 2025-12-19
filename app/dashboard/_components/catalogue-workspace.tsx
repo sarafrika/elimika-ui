@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useQueries, useQuery } from '@tanstack/react-query';
 import {
@@ -17,7 +17,7 @@ import {
   TrendingUp,
   User,
   UserCheck,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -136,18 +136,24 @@ const buildRows = (items: CommerceCatalogueItem[]): CatalogueRow[] =>
       displayTitle: 'Loading title…',
       typeLabel: item.course_uuid ? 'Course' : item.class_definition_uuid ? 'Class' : 'Item',
       isActive: item.active !== false,
-      isPublic: (item as CommerceCatalogueItem & { publicly_visible?: boolean }).publicly_visible !== false,
+      isPublic:
+        (item as CommerceCatalogueItem & { publicly_visible?: boolean }).publicly_visible !== false,
       unitAmount:
         (item as CommerceCatalogueItem & { unit_amount?: number | string | null }).unit_amount ??
         (item as CommerceCatalogueItem & { price?: number | string | null }).price ??
         null,
-      currency: (item as CommerceCatalogueItem & { currency_code?: string | null }).currency_code ?? null,
+      currency:
+        (item as CommerceCatalogueItem & { currency_code?: string | null }).currency_code ?? null,
       productCode: item.product_code ?? null,
       variantCode: item.variant_code ?? null,
       courseId: item.course_uuid ?? null,
       classId: item.class_definition_uuid ?? null,
-      createdAt: (item as CommerceCatalogueItem & { created_date?: string | Date | null }).created_date ?? null,
-      updatedAt: (item as CommerceCatalogueItem & { updated_date?: string | Date | null }).updated_date ?? null,
+      createdAt:
+        (item as CommerceCatalogueItem & { created_date?: string | Date | null }).created_date ??
+        null,
+      updatedAt:
+        (item as CommerceCatalogueItem & { updated_date?: string | Date | null }).updated_date ??
+        null,
       detailsHref,
       raw: item,
     };
@@ -364,7 +370,15 @@ export function CatalogueWorkspace({
           return true;
       }
     };
-  }, [scope, activeOrgUuid, profile?.courseCreator?.uuid, profile?.instructor?.uuid, titleMaps.classMap, titleMaps.courseMap, getOrganisationUuidForRow]);
+  }, [
+    scope,
+    activeOrgUuid,
+    profile?.courseCreator?.uuid,
+    profile?.instructor?.uuid,
+    titleMaps.classMap,
+    titleMaps.courseMap,
+    getOrganisationUuidForRow,
+  ]);
 
   const scopedRows = useMemo(
     () => rowsWithTitles.filter(filterRowsByScope),
@@ -372,7 +386,9 @@ export function CatalogueWorkspace({
   );
 
   const filteredRows = useMemo(() => {
-    const result = includeHidden ? scopedRows : scopedRows.filter(row => row.isActive && row.isPublic);
+    const result = includeHidden
+      ? scopedRows
+      : scopedRows.filter(row => row.isActive && row.isPublic);
 
     return [...result].sort((a, b) => {
       const aDate = toTimestamp(a.updatedAt ?? a.createdAt);
@@ -393,7 +409,10 @@ export function CatalogueWorkspace({
 
   const selectedRow = filteredRows.find(row => row.id === selectedId) ?? null;
 
-  const displayedRows = useMemo(() => filteredRows.slice(0, displayLimit), [filteredRows, displayLimit]);
+  const displayedRows = useMemo(
+    () => filteredRows.slice(0, displayLimit),
+    [filteredRows, displayLimit]
+  );
   const hasMore = filteredRows.length > displayLimit;
   const remaining = filteredRows.length - displayLimit;
 
@@ -427,12 +446,16 @@ export function CatalogueWorkspace({
 
   return (
     <div className={`flex flex-col gap-4 overflow-hidden lg:flex-row ${heightClass} min-h-0`}>
-      <Card className='lg:w-[420px] lg:min-w-[380px] lg:max-w-[440px] flex h-full min-h-0 flex-col'>
+      <Card className='flex h-full min-h-0 flex-col lg:w-[420px] lg:max-w-[440px] lg:min-w-[380px]'>
         <CardHeader className='space-y-4'>
           <div className='flex items-start justify-between gap-3'>
             <div className='space-y-2'>
-              <CardTitle className='text-xl font-semibold text-foreground'>{title ?? copy.title}</CardTitle>
-              <CardDescription className='text-sm'>{description ?? copy.description}</CardDescription>
+              <CardTitle className='text-foreground text-xl font-semibold'>
+                {title ?? copy.title}
+              </CardTitle>
+              <CardDescription className='text-sm'>
+                {description ?? copy.description}
+              </CardDescription>
             </div>
             <Button
               variant='outline'
@@ -458,21 +481,28 @@ export function CatalogueWorkspace({
                 Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={`catalogue-skeleton-${index}`}
-                    className='rounded-2xl border border-dashed border-border/60 bg-muted/40 p-4'
+                    className='border-border/60 bg-muted/40 rounded-2xl border border-dashed p-4'
                   >
                     <Skeleton className='h-4 w-1/2' />
                     <Skeleton className='mt-2 h-3 w-1/3' />
                   </div>
                 ))
               ) : filteredRows.length === 0 ? (
-                <div className='text-muted-foreground flex flex-col items-start gap-2 rounded-2xl border border-dashed border-border/60 bg-muted/40 p-4 text-sm'>
-                  <p className='font-semibold text-foreground'>No catalogue items available here yet.</p>
+                <div className='text-muted-foreground border-border/60 bg-muted/40 flex flex-col items-start gap-2 rounded-2xl border border-dashed p-4 text-sm'>
+                  <p className='text-foreground font-semibold'>
+                    No catalogue items available here yet.
+                  </p>
                   <p className='text-xs'>Try refreshing or publish items to this catalogue.</p>
                 </div>
               ) : (
                 <>
                   {displayedRows.map(row => {
-                    const typeIcon = row.typeLabel === 'Course' ? BookOpen : row.typeLabel === 'Class' ? GraduationCap : Package;
+                    const typeIcon =
+                      row.typeLabel === 'Course'
+                        ? BookOpen
+                        : row.typeLabel === 'Class'
+                          ? GraduationCap
+                          : Package;
                     const TypeIcon = typeIcon;
 
                     return (
@@ -480,24 +510,28 @@ export function CatalogueWorkspace({
                         key={row.id}
                         type='button'
                         onClick={() => setSelectedId(row.id)}
-                        className={`group w-full rounded-[16px] border p-3.5 text-left transition-all duration-200 ${selectedId === row.id
-                            ? 'border-primary bg-primary/10 shadow-md ring-1 ring-primary/20'
+                        className={`group w-full rounded-[16px] border p-3.5 text-left transition-all duration-200 ${
+                          selectedId === row.id
+                            ? 'border-primary bg-primary/10 ring-primary/20 shadow-md ring-1'
                             : 'border-border/60 bg-card hover:border-primary/50 hover:bg-muted/50 hover:shadow-sm'
-                          }`}
+                        }`}
                       >
                         <div className='flex gap-3'>
                           {/* Icon */}
-                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-colors ${selectedId === row.id
-                              ? 'bg-primary/15 text-primary'
-                              : 'bg-primary/10 text-primary group-hover:bg-primary/15'
-                            }`}>
+                          <div
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-colors ${
+                              selectedId === row.id
+                                ? 'bg-primary/15 text-primary'
+                                : 'bg-primary/10 text-primary group-hover:bg-primary/15'
+                            }`}
+                          >
                             <TypeIcon className='h-4.5 w-4.5' />
                           </div>
 
                           {/* Content */}
                           <div className='flex-1 space-y-2 overflow-hidden'>
                             {/* Title */}
-                            <h3 className='line-clamp-1 text-sm font-semibold leading-tight text-foreground'>
+                            <h3 className='text-foreground line-clamp-1 text-sm leading-tight font-semibold'>
                               {row.displayTitle}
                             </h3>
 
@@ -505,49 +539,39 @@ export function CatalogueWorkspace({
                             <div className='flex flex-wrap items-center gap-1.5'>
                               <Badge
                                 variant='outline'
-                                className='gap-1 border-primary/40 bg-primary/5 text-[10px] font-medium text-primary'
+                                className='border-primary/40 bg-primary/5 text-primary gap-1 text-[10px] font-medium'
                               >
                                 {row.typeLabel}
                               </Badge>
                               {row.isActive && (
-                                <Badge
-                                  className='gap-1 text-[10px]'
-                                  variant='default'
-                                >
+                                <Badge className='gap-1 text-[10px]' variant='default'>
                                   <CheckCircle2 className='h-2.5 w-2.5' />
                                   Active
                                 </Badge>
                               )}
                               {row.isPublic && (
-                                <Badge
-                                  className='gap-1 text-[10px]'
-                                  variant='secondary'
-                                >
+                                <Badge className='gap-1 text-[10px]' variant='secondary'>
                                   <Eye className='h-2.5 w-2.5' />
                                   Public
                                 </Badge>
                               )}
                               {!row.isActive && (
-                                <Badge
-                                  className='gap-1 text-[10px]'
-                                  variant='outline'
-                                >
+                                <Badge className='gap-1 text-[10px]' variant='outline'>
                                   <XCircle className='h-2.5 w-2.5' />
                                   Inactive
                                 </Badge>
                               )}
                               {!row.isPublic && (
-                                <Badge
-                                  className='gap-1 text-[10px]'
-                                  variant='outline'
-                                >
+                                <Badge className='gap-1 text-[10px]' variant='outline'>
                                   <EyeOff className='h-2.5 w-2.5' />
                                   Private
                                 </Badge>
                               )}
-                              <div className='ml-auto flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-semibold text-primary'>
+                              <div className='border-primary/30 bg-primary/5 text-primary ml-auto flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold'>
                                 <DollarSign className='h-3 w-3' />
-                                <span className='text-[11px]'>{formatMoney(row.unitAmount, row.currency ?? undefined)}</span>
+                                <span className='text-[11px]'>
+                                  {formatMoney(row.unitAmount, row.currency ?? undefined)}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -556,11 +580,7 @@ export function CatalogueWorkspace({
                     );
                   })}
                   {hasMore && (
-                    <Button
-                      variant='outline'
-                      className='w-full'
-                      onClick={handleLoadMore}
-                    >
+                    <Button variant='outline' className='w-full' onClick={handleLoadMore}>
                       Load {remaining > 20 ? '20' : remaining} more ({remaining} remaining)
                     </Button>
                   )}
@@ -572,17 +592,21 @@ export function CatalogueWorkspace({
       </Card>
 
       <Card className='flex min-h-0 flex-1 flex-col'>
-        <CardHeader className='flex flex-col gap-3 border-b border-border/60 lg:flex-col lg:items-start lg:justify-between'>
+        <CardHeader className='border-border/60 flex flex-col gap-3 border-b lg:flex-col lg:items-start lg:justify-between'>
           <div className='flex-1 space-y-1.5'>
             <div className='flex items-center gap-2'>
               {selectedRow && (
-                <div className='flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary/10'>
-                  {selectedRow.typeLabel === 'Course' && <BookOpen className='h-4 w-4 text-primary' />}
-                  {selectedRow.typeLabel === 'Class' && <GraduationCap className='h-4 w-4 text-primary' />}
-                  {selectedRow.typeLabel === 'Item' && <Package className='h-4 w-4 text-primary' />}
+                <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-[10px]'>
+                  {selectedRow.typeLabel === 'Course' && (
+                    <BookOpen className='text-primary h-4 w-4' />
+                  )}
+                  {selectedRow.typeLabel === 'Class' && (
+                    <GraduationCap className='text-primary h-4 w-4' />
+                  )}
+                  {selectedRow.typeLabel === 'Item' && <Package className='text-primary h-4 w-4' />}
                 </div>
               )}
-              <CardTitle className='text-lg font-semibold text-foreground'>
+              <CardTitle className='text-foreground text-lg font-semibold'>
                 {selectedRow ? selectedRow.displayTitle : 'Select a catalogue item'}
               </CardTitle>
             </div>
@@ -594,15 +618,17 @@ export function CatalogueWorkspace({
           </div>
           <div className='flex flex-wrap items-center gap-2 lg:justify-end'>
             {selectedRow ? (
-              <div className='flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-sm font-semibold text-foreground'>
-                <DollarSign className='h-4 w-4 text-primary' />
+              <div className='border-primary/30 bg-primary/5 text-foreground flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold'>
+                <DollarSign className='text-primary h-4 w-4' />
                 <span>
                   {selectedRow.unitAmount !== null && selectedRow.unitAmount !== undefined
                     ? formatMoney(selectedRow.unitAmount, selectedRow.currency ?? undefined)
                     : 'No price set'}
                 </span>
                 {selectedRow.currency && (
-                  <span className='text-xs font-medium text-muted-foreground'>({selectedRow.currency})</span>
+                  <span className='text-muted-foreground text-xs font-medium'>
+                    ({selectedRow.currency})
+                  </span>
                 )}
               </div>
             ) : null}
@@ -628,12 +654,26 @@ export function CatalogueWorkspace({
               <div className='space-y-6'>
                 {/* Status Badges */}
                 <div className='flex flex-wrap items-center gap-2'>
-                  <Badge variant={selectedRow.isActive ? 'default' : 'secondary'} className='gap-1.5'>
-                    {selectedRow.isActive ? <CheckCircle2 className='h-3.5 w-3.5' /> : <XCircle className='h-3.5 w-3.5' />}
+                  <Badge
+                    variant={selectedRow.isActive ? 'default' : 'secondary'}
+                    className='gap-1.5'
+                  >
+                    {selectedRow.isActive ? (
+                      <CheckCircle2 className='h-3.5 w-3.5' />
+                    ) : (
+                      <XCircle className='h-3.5 w-3.5' />
+                    )}
                     {selectedRow.isActive ? 'Active' : 'Inactive'}
                   </Badge>
-                  <Badge variant={selectedRow.isPublic ? 'secondary' : 'outline'} className='gap-1.5'>
-                    {selectedRow.isPublic ? <Eye className='h-3.5 w-3.5' /> : <EyeOff className='h-3.5 w-3.5' />}
+                  <Badge
+                    variant={selectedRow.isPublic ? 'secondary' : 'outline'}
+                    className='gap-1.5'
+                  >
+                    {selectedRow.isPublic ? (
+                      <Eye className='h-3.5 w-3.5' />
+                    ) : (
+                      <EyeOff className='h-3.5 w-3.5' />
+                    )}
                     {selectedRow.isPublic ? 'Public' : 'Private'}
                   </Badge>
                   <Badge variant='outline' className='gap-1.5'>
@@ -646,18 +686,26 @@ export function CatalogueWorkspace({
 
                 {/* Description (if available) */}
                 {(() => {
-                  const linkedEntity = selectedRow.courseId ? titleMaps.courseMap.get(selectedRow.courseId) : selectedRow.classId ? titleMaps.classMap.get(selectedRow.classId) : null;
+                  const linkedEntity = selectedRow.courseId
+                    ? titleMaps.courseMap.get(selectedRow.courseId)
+                    : selectedRow.classId
+                      ? titleMaps.classMap.get(selectedRow.classId)
+                      : null;
                   const description = linkedEntity?.description || linkedEntity?.summary;
 
                   return description ? (
-                    <div className='rounded-[16px] border border-border/60 bg-muted/30 p-5'>
-                      <p className='mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                    <div className='border-border/60 bg-muted/30 rounded-[16px] border p-5'>
+                      <p className='text-muted-foreground mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
                         <BookOpen className='h-3.5 w-3.5' />
                         Description
                       </p>
                       <div
-                        className='prose prose-sm max-w-none text-foreground'
-                        dangerouslySetInnerHTML={{ __html: description.replace(/<[^>]*>/g, '').substring(0, 300) + (description.length > 300 ? '...' : '') }}
+                        className='prose prose-sm text-foreground max-w-none'
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            description.replace(/<[^>]*>/g, '').substring(0, 300) +
+                            (description.length > 300 ? '...' : ''),
+                        }}
                       />
                     </div>
                   ) : null;
@@ -671,14 +719,11 @@ export function CatalogueWorkspace({
                 />
 
                 {/* Pricing - More Prominent */}
-                <CatalogueItemPricing
-                  selectedRow={selectedRow}
-                  courseMap={titleMaps.courseMap}
-                />
+                <CatalogueItemPricing selectedRow={selectedRow} courseMap={titleMaps.courseMap} />
 
                 {/* Key Information */}
                 <div className='space-y-3'>
-                  <p className='flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                  <p className='text-muted-foreground flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
                     <Calendar className='h-3.5 w-3.5' />
                     Timeline
                   </p>
@@ -689,30 +734,43 @@ export function CatalogueWorkspace({
                 </div>
 
                 {/* Technical Details - Collapsed by default look */}
-                <details className='group rounded-[16px] border border-border/60 bg-card/50' open>
-                  <summary className='flex cursor-pointer items-center justify-between p-4 text-sm font-semibold text-foreground transition hover:bg-muted/30'>
+                <details className='group border-border/60 bg-card/50 rounded-[16px] border' open>
+                  <summary className='text-foreground hover:bg-muted/30 flex cursor-pointer items-center justify-between p-4 text-sm font-semibold transition'>
                     Technical Details
-                    <span className='text-muted-foreground transition group-open:rotate-180'>▼</span>
+                    <span className='text-muted-foreground transition group-open:rotate-180'>
+                      ▼
+                    </span>
                   </summary>
-                  <div className='space-y-3 border-t border-border/60 p-4'>
+                  <div className='border-border/60 space-y-3 border-t p-4'>
                     <div className='grid gap-3 sm:grid-cols-2'>
                       <DetailTile label='Product code' value={selectedRow.productCode ?? '—'} />
                       <DetailTile label='Variant code' value={selectedRow.variantCode ?? '—'} />
-                      {selectedRow.courseId && <DetailTile label='Course ID' value={selectedRow.courseId} />}
-                      {selectedRow.classId && <DetailTile label='Class ID' value={selectedRow.classId} />}
+                      {selectedRow.courseId && (
+                        <DetailTile label='Course ID' value={selectedRow.courseId} />
+                      )}
+                      {selectedRow.classId && (
+                        <DetailTile label='Class ID' value={selectedRow.classId} />
+                      )}
                     </div>
                   </div>
                 </details>
 
                 {/* Actions */}
-                <div className='flex flex-wrap gap-2 border-t border-border/60 pt-4'>
-                  <Button variant='outline' size='sm' onClick={() => handleCopy(selectedRow.variantCode ?? selectedRow.productCode)}>
+                <div className='border-border/60 flex flex-wrap gap-2 border-t pt-4'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => handleCopy(selectedRow.variantCode ?? selectedRow.productCode)}
+                  >
                     <Copy className='mr-2 h-4 w-4' />
                     Copy SKU
                   </Button>
                   {selectedRow.detailsHref ? (
                     <Button variant='default' size='sm' asChild>
-                      <Link href={selectedRow.detailsHref} className='inline-flex items-center gap-2'>
+                      <Link
+                        href={selectedRow.detailsHref}
+                        className='inline-flex items-center gap-2'
+                      >
                         <ExternalLink className='h-4 w-4' />
                         View full details
                       </Link>
@@ -768,42 +826,46 @@ function CatalogueItemCreatorInfo({
 
   return (
     <div className='space-y-3'>
-      <p className='flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+      <p className='text-muted-foreground flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
         <UserCheck className='h-3.5 w-3.5' />
         People
       </p>
       <div className='grid gap-3 sm:grid-cols-2'>
         {creator && (
-          <div className='rounded-[12px] border border-border/60 bg-card/80 p-4'>
+          <div className='border-border/60 bg-card/80 rounded-[12px] border p-4'>
             <div className='flex items-center gap-3'>
-              <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary/10'>
-                <User className='h-5 w-5 text-primary' />
+              <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full'>
+                <User className='text-primary h-5 w-5' />
               </div>
               <div className='flex-1 overflow-hidden'>
-                <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>Course Creator</p>
-                <p className='mt-1 truncate text-sm font-semibold text-foreground'>
+                <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+                  Course Creator
+                </p>
+                <p className='text-foreground mt-1 truncate text-sm font-semibold'>
                   {creator.first_name} {creator.last_name}
                 </p>
                 {creator.email && (
-                  <p className='truncate text-xs text-muted-foreground'>{creator.email}</p>
+                  <p className='text-muted-foreground truncate text-xs'>{creator.email}</p>
                 )}
               </div>
             </div>
           </div>
         )}
         {instructor && (
-          <div className='rounded-[12px] border border-border/60 bg-card/80 p-4'>
+          <div className='border-border/60 bg-card/80 rounded-[12px] border p-4'>
             <div className='flex items-center gap-3'>
-              <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary/10'>
-                <GraduationCap className='h-5 w-5 text-primary' />
+              <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full'>
+                <GraduationCap className='text-primary h-5 w-5' />
               </div>
               <div className='flex-1 overflow-hidden'>
-                <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>Instructor</p>
-                <p className='mt-1 truncate text-sm font-semibold text-foreground'>
+                <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+                  Instructor
+                </p>
+                <p className='text-foreground mt-1 truncate text-sm font-semibold'>
                   {instructor.first_name} {instructor.last_name}
                 </p>
                 {instructor.email && (
-                  <p className='truncate text-xs text-muted-foreground'>{instructor.email}</p>
+                  <p className='text-muted-foreground truncate text-xs'>{instructor.email}</p>
                 )}
               </div>
             </div>
@@ -825,44 +887,54 @@ function CatalogueItemPricing({
 
   return (
     <div className='space-y-3'>
-      <div className='rounded-[16px] border border-primary/20 bg-primary/5 p-5'>
-        <p className='mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary'>
+      <div className='border-primary/20 bg-primary/5 rounded-[16px] border p-5'>
+        <p className='text-primary mb-1 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
           <DollarSign className='h-3.5 w-3.5' />
           Pricing & Revenue
         </p>
-        <p className='mt-2 text-2xl font-bold text-foreground'>
+        <p className='text-foreground mt-2 text-2xl font-bold'>
           {selectedRow.unitAmount !== null && selectedRow.unitAmount !== undefined
             ? formatMoney(selectedRow.unitAmount, selectedRow.currency ?? undefined)
             : 'No price set'}
         </p>
-        <p className='mt-1 text-xs text-muted-foreground'>
+        <p className='text-muted-foreground mt-1 text-xs'>
           {selectedRow.currency ? `Currency: ${selectedRow.currency}` : 'Default currency applied'}
         </p>
 
         {/* Revenue Share Information */}
-        {course && course.creator_share_percentage !== undefined && course.instructor_share_percentage !== undefined && (
-          <div className='mt-4 grid gap-3 sm:grid-cols-2'>
-            <div className='rounded-[10px] border border-border/60 bg-card/60 p-3'>
-              <div className='flex items-center gap-2'>
-                <Percent className='h-3.5 w-3.5 text-primary' />
-                <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>Creator Share</p>
+        {course &&
+          course.creator_share_percentage !== undefined &&
+          course.instructor_share_percentage !== undefined && (
+            <div className='mt-4 grid gap-3 sm:grid-cols-2'>
+              <div className='border-border/60 bg-card/60 rounded-[10px] border p-3'>
+                <div className='flex items-center gap-2'>
+                  <Percent className='text-primary h-3.5 w-3.5' />
+                  <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+                    Creator Share
+                  </p>
+                </div>
+                <p className='text-foreground mt-1.5 text-lg font-bold'>
+                  {course.creator_share_percentage}%
+                </p>
               </div>
-              <p className='mt-1.5 text-lg font-bold text-foreground'>{course.creator_share_percentage}%</p>
-            </div>
-            <div className='rounded-[10px] border border-border/60 bg-card/60 p-3'>
-              <div className='flex items-center gap-2'>
-                <TrendingUp className='h-3.5 w-3.5 text-primary' />
-                <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>Instructor Share</p>
+              <div className='border-border/60 bg-card/60 rounded-[10px] border p-3'>
+                <div className='flex items-center gap-2'>
+                  <TrendingUp className='text-primary h-3.5 w-3.5' />
+                  <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+                    Instructor Share
+                  </p>
+                </div>
+                <p className='text-foreground mt-1.5 text-lg font-bold'>
+                  {course.instructor_share_percentage}%
+                </p>
               </div>
-              <p className='mt-1.5 text-lg font-bold text-foreground'>{course.instructor_share_percentage}%</p>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Revenue Allocation Context */}
         {course?.revenue_allocation_context && (
-          <div className='mt-3 rounded-[10px] border border-border/60 bg-muted/20 p-3'>
-            <p className='text-xs text-muted-foreground'>{course.revenue_allocation_context}</p>
+          <div className='border-border/60 bg-muted/20 mt-3 rounded-[10px] border p-3'>
+            <p className='text-muted-foreground text-xs'>{course.revenue_allocation_context}</p>
           </div>
         )}
       </div>
@@ -870,7 +942,15 @@ function CatalogueItemPricing({
   );
 }
 
-function StatPill({ label, value, variant = 'default' }: { label: string; value: number; variant?: 'default' | 'success' | 'info' | 'muted' }) {
+function StatPill({
+  label,
+  value,
+  variant = 'default',
+}: {
+  label: string;
+  value: number;
+  variant?: 'default' | 'success' | 'info' | 'muted';
+}) {
   const variantClasses = {
     default: 'border-border bg-card',
     success: 'border-success/30 bg-success/5',
@@ -886,8 +966,12 @@ function StatPill({ label, value, variant = 'default' }: { label: string; value:
   };
 
   return (
-    <div className={`rounded-[12px] border px-3 py-2.5 text-center transition-all hover:shadow-sm ${variantClasses[variant]}`}>
-      <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>{label}</p>
+    <div
+      className={`rounded-[12px] border px-3 py-2.5 text-center transition-all hover:shadow-sm ${variantClasses[variant]}`}
+    >
+      <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+        {label}
+      </p>
       <p className={`mt-0.5 text-lg font-bold ${textClasses[variant]}`}>{value}</p>
     </div>
   );
@@ -895,9 +979,11 @@ function StatPill({ label, value, variant = 'default' }: { label: string; value:
 
 function DetailTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className='rounded-[12px] border border-border/60 bg-muted/30 p-3.5 transition-all hover:bg-muted/50'>
-      <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>{label}</p>
-      <p className='mt-1.5 break-all text-sm font-semibold text-foreground'>{value}</p>
+    <div className='border-border/60 bg-muted/30 hover:bg-muted/50 rounded-[12px] border p-3.5 transition-all'>
+      <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+        {label}
+      </p>
+      <p className='text-foreground mt-1.5 text-sm font-semibold break-all'>{value}</p>
     </div>
   );
 }

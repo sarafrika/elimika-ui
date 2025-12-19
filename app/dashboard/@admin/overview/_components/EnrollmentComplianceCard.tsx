@@ -28,7 +28,7 @@ export function EnrollmentComplianceCard({ metrics }: EnrollmentComplianceCardPr
       metrics.age_gate_denials_30d ||
       metrics.age_restriction_exceptions_30d ||
       metrics.missing_dob_percentage ||
-      (metrics.courses_with_exceptions?.length));
+      metrics.courses_with_exceptions?.length);
 
   const topCourses = metrics?.courses_with_exceptions?.slice(0, 3) ?? [];
 
@@ -42,19 +42,17 @@ export function EnrollmentComplianceCard({ metrics }: EnrollmentComplianceCardPr
         {hasData ? (
           <>
             <div className='grid grid-cols-2 gap-3 text-sm'>
-              <div className='rounded-xl border border-border/60 p-3'>
+              <div className='border-border/60 rounded-xl border p-3'>
                 <p className='text-muted-foreground text-xs uppercase'>Age-gated enrollments</p>
-                <p className='text-2xl font-semibold'>
-                  {metrics?.age_gate_enrollments_30d ?? '—'}
-                </p>
+                <p className='text-2xl font-semibold'>{metrics?.age_gate_enrollments_30d ?? '—'}</p>
               </div>
-              <div className='rounded-xl border border-border/60 p-3'>
+              <div className='border-border/60 rounded-xl border p-3'>
                 <p className='text-muted-foreground text-xs uppercase'>Age gate denials</p>
                 <p className='text-2xl font-semibold'>
                   {metrics?.age_gate_denials_30d ?? metrics?.age_restriction_exceptions_30d ?? '—'}
                 </p>
               </div>
-              <div className='rounded-xl border border-border/60 p-3'>
+              <div className='border-border/60 rounded-xl border p-3'>
                 <p className='text-muted-foreground text-xs uppercase'>Missing DOB</p>
                 <p className='text-2xl font-semibold'>
                   {metrics?.missing_dob_percentage !== undefined
@@ -62,7 +60,7 @@ export function EnrollmentComplianceCard({ metrics }: EnrollmentComplianceCardPr
                     : '—'}
                 </p>
               </div>
-              <div className='rounded-xl border border-border/60 p-3'>
+              <div className='border-border/60 rounded-xl border p-3'>
                 <p className='text-muted-foreground text-xs uppercase'>Exceptions</p>
                 <p className='text-2xl font-semibold'>
                   {metrics?.age_restriction_exceptions_30d ?? metrics?.age_gate_denials_30d ?? '—'}
@@ -72,14 +70,14 @@ export function EnrollmentComplianceCard({ metrics }: EnrollmentComplianceCardPr
 
             {topCourses.length > 0 && (
               <div className='space-y-2'>
-                <p className='text-xs font-semibold uppercase text-muted-foreground'>
+                <p className='text-muted-foreground text-xs font-semibold uppercase'>
                   Top exception sources
                 </p>
                 <div className='space-y-2'>
                   {topCourses.map(course => (
                     <div
                       key={course.course_uuid ?? course.course_name}
-                      className='flex items-center justify-between rounded-xl border border-dashed border-border/60 px-3 py-2 text-sm'
+                      className='border-border/60 flex items-center justify-between rounded-xl border border-dashed px-3 py-2 text-sm'
                     >
                       <div>
                         <p className='font-medium'>{course.course_name ?? 'Untitled course'}</p>
@@ -95,12 +93,12 @@ export function EnrollmentComplianceCard({ metrics }: EnrollmentComplianceCardPr
             )}
           </>
         ) : (
-          <div className='space-y-3 rounded-2xl border border-dashed border-border/60 p-4 text-sm'>
+          <div className='border-border/60 space-y-3 rounded-2xl border border-dashed p-4 text-sm'>
             <p className='font-medium'>No enrollment compliance telemetry yet.</p>
             <p className='text-muted-foreground text-xs'>
               Once the platform emits age-gate analytics, they will surface here automatically.
             </p>
-            <div className='flex flex-wrap gap-2 text-xs text-muted-foreground'>
+            <div className='text-muted-foreground flex flex-wrap gap-2 text-xs'>
               <Badge variant='outline'>
                 <Shield className='mr-1 h-3 w-3' />
                 Age gate

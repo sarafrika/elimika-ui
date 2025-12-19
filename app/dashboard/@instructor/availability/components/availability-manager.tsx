@@ -63,7 +63,10 @@ export default function AvailabilityManager({
   // data points
   // const [availability, setAvailability] = useState<DayAvailability[]>([]);
   const { data: availabilitySlots, refetch } = useQuery(
-    getInstructorCalendarOptions({ path: { instructorUuid: user?.instructor?.uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } })
+    getInstructorCalendarOptions({
+      path: { instructorUuid: user?.instructor?.uuid as string },
+      query: { start_date: '2025-09-11' as any, end_date: '2026-11-11' as any },
+    })
   );
 
   const [currentTab, setCurrentTab] = useState('weekly');
@@ -124,7 +127,7 @@ export default function AvailabilityManager({
             qc.invalidateQueries({
               queryKey: getInstructorCalendarQueryKey({
                 path: { instructorUuid: user?.instructor?.uuid as string },
-                query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any }
+                query: { start_date: '2025-09-11' as any, end_date: '2026-11-11' as any },
               }),
             });
           },
@@ -333,11 +336,11 @@ export default function AvailabilityManager({
               {/* Color Legend */}
               <div className='flex items-center gap-4 text-sm'>
                 <div className='flex items-center gap-1'>
-                  <div className='h-3 w-3 rounded bg-success' />
+                  <div className='bg-success h-3 w-3 rounded' />
                   <span>Available</span>
                 </div>
                 <div className='flex items-center gap-1'>
-                  <div className='h-3 w-3 rounded bg-destructive' />
+                  <div className='bg-destructive h-3 w-3 rounded' />
                   <span>Unavailable</span>
                 </div>
                 <div className='flex items-center gap-1'>
@@ -345,7 +348,7 @@ export default function AvailabilityManager({
                   <span>Reserved</span>
                 </div>
                 <div className='flex items-center gap-1'>
-                  <div className='h-3 w-3 rounded bg-primary' />
+                  <div className='bg-primary h-3 w-3 rounded' />
                   <span>Booked</span>
                 </div>
               </div>

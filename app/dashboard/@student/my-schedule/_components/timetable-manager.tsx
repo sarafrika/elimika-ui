@@ -30,8 +30,9 @@ export default function TimetableManager({
               <Calendar className='h-5 w-5' />
               Timetable Schedule
             </CardTitle>
-            <CardDescription className='flex gap-1' >
-              Found <p className='font-semibold'>{availabilityData?.events?.length}</p> class schedules
+            <CardDescription className='flex gap-1'>
+              Found <p className='font-semibold'>{availabilityData?.events?.length}</p> class
+              schedules
             </CardDescription>
           </div>
         </CardHeader>
@@ -61,25 +62,27 @@ export default function TimetableManager({
               />
             </TabsContent>
 
-            <TabsContent value="list" className="mt-6">
+            <TabsContent value='list' className='mt-6'>
               {availabilityData?.events?.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                <div className='mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
                   {availabilityData.events.map((data, idx) => {
                     const date = new Date(data.date);
                     return (
                       <Card
                         key={idx}
-                        className="shadow-sm border border-muted-foreground hover:shadow-md transition"
+                        className='border-muted-foreground border shadow-sm transition hover:shadow-md'
                       >
                         <CardHeader>
-                          <div className="text-lg font-semibold">{data.title}</div>
+                          <div className='text-lg font-semibold'>{data.title}</div>
                         </CardHeader>
-                        <CardContent className="text-sm text-muted-foreground space-y-1">
-                          <div className="flex flex-row items-center gap-2">
-                            <p>{data.day}</p> {" - "}
+                        <CardContent className='text-muted-foreground space-y-1 text-sm'>
+                          <div className='flex flex-row items-center gap-2'>
+                            <p>{data.day}</p> {' - '}
                             <p>{date.toDateString()}</p>
                           </div>
-                          <p>🕒 {data.startTime} - {data.endTime}</p>
+                          <p>
+                            🕒 {data.startTime} - {data.endTime}
+                          </p>
                           <p>📍 {data.location}</p>
                         </CardContent>
                       </Card>
@@ -87,7 +90,7 @@ export default function TimetableManager({
                   })}
                 </div>
               ) : (
-                <p className="mt-6 text-muted-foreground">No events available.</p>
+                <p className='text-muted-foreground mt-6'>No events available.</p>
               )}
             </TabsContent>
           </Tabs>

@@ -197,7 +197,7 @@ export default function TrainingApplicationsPage() {
   if (isLoading && !data) {
     return (
       <div className='flex min-h-[400px] items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+        <Loader2 className='text-muted-foreground h-8 w-8 animate-spin' />
       </div>
     );
   }
@@ -207,8 +207,8 @@ export default function TrainingApplicationsPage() {
       {/* Header */}
       <div className='flex items-start justify-between'>
         <div className='flex items-start gap-4'>
-          <div className='flex h-12 w-12 items-center justify-center rounded-lg border bg-primary/10'>
-            <FileText className='h-6 w-6 text-primary' />
+          <div className='bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg border'>
+            <FileText className='text-primary h-6 w-6' />
           </div>
           <div>
             <h1 className='text-2xl font-bold'>Training Applications</h1>
@@ -223,7 +223,7 @@ export default function TrainingApplicationsPage() {
       <div className='grid gap-4 sm:grid-cols-4'>
         <Card>
           <CardHeader className='pb-3'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>
+            <CardTitle className='text-muted-foreground text-sm font-medium'>
               Total Applications
             </CardTitle>
           </CardHeader>
@@ -233,7 +233,7 @@ export default function TrainingApplicationsPage() {
         </Card>
         <Card>
           <CardHeader className='pb-3'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>
+            <CardTitle className='text-muted-foreground text-sm font-medium'>
               Pending Review
             </CardTitle>
           </CardHeader>
@@ -243,7 +243,7 @@ export default function TrainingApplicationsPage() {
         </Card>
         <Card>
           <CardHeader className='pb-3'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>Approved</CardTitle>
+            <CardTitle className='text-muted-foreground text-sm font-medium'>Approved</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold text-green-600'>{stats.approved}</div>
@@ -251,7 +251,7 @@ export default function TrainingApplicationsPage() {
         </Card>
         <Card>
           <CardHeader className='pb-3'>
-            <CardTitle className='text-sm font-medium text-muted-foreground'>
+            <CardTitle className='text-muted-foreground text-sm font-medium'>
               Unique Trainers
             </CardTitle>
           </CardHeader>
@@ -266,7 +266,7 @@ export default function TrainingApplicationsPage() {
         <CardContent className='pt-6'>
           <div className='flex flex-col gap-4 sm:flex-row'>
             <div className='relative flex-1'>
-              <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+              <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
               <Input
                 placeholder='Search by course name, applicant...'
                 value={searchQuery}
@@ -306,7 +306,7 @@ export default function TrainingApplicationsPage() {
       {filteredApplications.length === 0 ? (
         <Card>
           <CardContent className='flex min-h-[300px] flex-col items-center justify-center py-12'>
-            <FileText className='mb-4 h-12 w-12 text-muted-foreground' />
+            <FileText className='text-muted-foreground mb-4 h-12 w-12' />
             <h3 className='mb-2 text-lg font-semibold'>No Applications Found</h3>
             <p className='text-muted-foreground text-center text-sm'>
               {statusFilter || searchQuery || applicantTypeFilter
@@ -331,7 +331,7 @@ export default function TrainingApplicationsPage() {
                         <CardTitle className='line-clamp-1 text-base'>
                           {application.course_name || 'Unknown Course'}
                         </CardTitle>
-                        <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                           {isInstructor ? (
                             <User className='h-3 w-3' />
                           ) : (
@@ -364,32 +364,32 @@ export default function TrainingApplicationsPage() {
                     {/* Rate Card */}
                     <div className='space-y-2'>
                       <div className='flex items-center gap-2 text-sm font-semibold'>
-                        <DollarSign className='h-4 w-4 text-muted-foreground' />
+                        <DollarSign className='text-muted-foreground h-4 w-4' />
                         <span>Rate Card</span>
                       </div>
                       <div className='grid grid-cols-2 gap-2 text-xs'>
-                        <div className='rounded-lg border bg-muted/20 p-2'>
+                        <div className='bg-muted/20 rounded-lg border p-2'>
                           <div className='text-muted-foreground'>Private Online</div>
                           <div className='font-semibold'>
                             {application.rate_card?.currency || 'USD'}{' '}
                             {application.rate_card?.private_online_rate || 0}
                           </div>
                         </div>
-                        <div className='rounded-lg border bg-muted/20 p-2'>
+                        <div className='bg-muted/20 rounded-lg border p-2'>
                           <div className='text-muted-foreground'>Private In-Person</div>
                           <div className='font-semibold'>
                             {application.rate_card?.currency || 'USD'}{' '}
                             {application.rate_card?.private_inperson_rate || 0}
                           </div>
                         </div>
-                        <div className='rounded-lg border bg-muted/20 p-2'>
+                        <div className='bg-muted/20 rounded-lg border p-2'>
                           <div className='text-muted-foreground'>Group Online</div>
                           <div className='font-semibold'>
                             {application.rate_card?.currency || 'USD'}{' '}
                             {application.rate_card?.group_online_rate || 0}
                           </div>
                         </div>
-                        <div className='rounded-lg border bg-muted/20 p-2'>
+                        <div className='bg-muted/20 rounded-lg border p-2'>
                           <div className='text-muted-foreground'>Group In-Person</div>
                           <div className='font-semibold'>
                             {application.rate_card?.currency || 'USD'}{' '}
@@ -405,10 +405,10 @@ export default function TrainingApplicationsPage() {
                         <Separator />
                         <div className='space-y-1'>
                           <div className='flex items-center gap-2 text-sm font-semibold'>
-                            <BookOpen className='h-4 w-4 text-muted-foreground' />
+                            <BookOpen className='text-muted-foreground h-4 w-4' />
                             <span>Application Notes</span>
                           </div>
-                          <p className='line-clamp-3 text-sm text-muted-foreground'>
+                          <p className='text-muted-foreground line-clamp-3 text-sm'>
                             {application.application_notes}
                           </p>
                         </div>
@@ -419,8 +419,8 @@ export default function TrainingApplicationsPage() {
                     {application.review_notes && (
                       <>
                         <Separator />
-                        <div className='rounded-lg border bg-primary/5 p-3'>
-                          <div className='mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                        <div className='bg-primary/5 rounded-lg border p-3'>
+                          <div className='text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase'>
                             Review Notes
                           </div>
                           <p className='text-sm'>{application.review_notes}</p>
@@ -518,7 +518,9 @@ export default function TrainingApplicationsPage() {
       {/* Review Dialog */}
       <Dialog
         open={reviewDialog.open}
-        onOpenChange={open => !open && setReviewDialog({ open: false, application: null, action: null })}
+        onOpenChange={open =>
+          !open && setReviewDialog({ open: false, application: null, action: null })
+        }
       >
         <DialogContent>
           <DialogHeader>
@@ -538,7 +540,7 @@ export default function TrainingApplicationsPage() {
           </DialogHeader>
 
           <div className='space-y-4'>
-            <div className='rounded-lg border bg-muted/20 p-4'>
+            <div className='bg-muted/20 rounded-lg border p-4'>
               <div className='space-y-2 text-sm'>
                 <div>
                   <span className='text-muted-foreground'>Course:</span>
@@ -579,7 +581,11 @@ export default function TrainingApplicationsPage() {
             </Button>
             <Button
               onClick={handleSubmitReview}
-              variant={reviewDialog.action === 'REJECT' || reviewDialog.action === 'REVOKE' ? 'destructive' : 'default'}
+              variant={
+                reviewDialog.action === 'REJECT' || reviewDialog.action === 'REVOKE'
+                  ? 'destructive'
+                  : 'default'
+              }
               disabled={decideMutation.isPending}
             >
               {decideMutation.isPending ? (

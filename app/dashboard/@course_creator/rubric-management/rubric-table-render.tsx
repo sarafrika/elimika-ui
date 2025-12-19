@@ -91,11 +91,11 @@ const RubricTable: React.FC<RubricTableProps> = ({
   return (
     <div className='overflow-hidden rounded-lg border shadow-sm'>
       {/* Header */}
-      <div className='flex items-center rounded-t-lg justify-between px-4 py-3 font-semibold'>
+      <div className='flex items-center justify-between rounded-t-lg px-4 py-3 font-semibold'>
         <div className='w-full'>
           <button onClick={() => setOpen(!open)} className='flex w-full flex-col gap-2 text-left'>
             <p>{rubric.title}</p>
-            <p className='line-clamp-2 max-w-[95%] text-sm font-normal text-muted-foreground'>
+            <p className='text-muted-foreground line-clamp-2 max-w-[95%] text-sm font-normal'>
               {rubric.description}
             </p>
 
@@ -109,20 +109,26 @@ const RubricTable: React.FC<RubricTableProps> = ({
               </p>
             </div>
 
-            <div className="flex gap-2">
-              {linked ? <Button onClick={() => onRemoveRubricAssociation(rubric.uuid)} variant="destructive">
-                Remove rubric from course
-              </Button> : <Button onClick={() => onAssociateRubricWithCourse(rubric.uuid)} variant="default">
-                Link rubric to course
-              </Button>}
+            <div className='flex gap-2'>
+              {linked ? (
+                <Button
+                  onClick={() => onRemoveRubricAssociation(rubric.uuid)}
+                  variant='destructive'
+                >
+                  Remove rubric from course
+                </Button>
+              ) : (
+                <Button onClick={() => onAssociateRubricWithCourse(rubric.uuid)} variant='default'>
+                  Link rubric to course
+                </Button>
+              )}
             </div>
-
           </button>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className='hover:bg-blue-700 p-2.5 rounded-sm'>
+            <div className='rounded-sm p-2.5 hover:bg-blue-700'>
               <EllipsisVertical className='h-4 w-4' />
             </div>
           </DropdownMenuTrigger>
@@ -140,7 +146,10 @@ const RubricTable: React.FC<RubricTableProps> = ({
               Add Scoring Level
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onDeleteRubric(rubric.uuid)} className='text-destructive'>
+            <DropdownMenuItem
+              onClick={() => onDeleteRubric(rubric.uuid)}
+              className='text-destructive'
+            >
               <TrashIcon className='mr-2 h-4 w-4' />
               Delete Rubric
             </DropdownMenuItem>
@@ -168,23 +177,25 @@ const RubricTable: React.FC<RubricTableProps> = ({
                         <div>
                           {level.name}
                           <br />
-                          <span className='text-sm text-muted-foreground'>({level.points} pts)</span>
+                          <span className='text-muted-foreground text-sm'>
+                            ({level.points} pts)
+                          </span>
                         </div>
 
                         <div className='absolute top-1 right-1 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
                           <button
                             onClick={() => onEditScoringLevel(rubric.uuid, level)}
-                            className='rounded-md bg-card/80 p-1 transition hover:bg-card'
+                            className='bg-card/80 hover:bg-card rounded-md p-1 transition'
                             title='Edit'
                           >
-                            <PencilIcon className='h-4 w-4 text-foreground' />
+                            <PencilIcon className='text-foreground h-4 w-4' />
                           </button>
                           <button
                             onClick={() => onDeleteScoringLevel(rubric.uuid, level.uuid)}
-                            className='rounded-md bg-card/80 p-1 transition hover:bg-card'
+                            className='bg-card/80 hover:bg-card rounded-md p-1 transition'
                             title='Delete'
                           >
-                            <TrashIcon className='h-4 w-4 text-destructive' />
+                            <TrashIcon className='text-destructive h-4 w-4' />
                           </button>
                         </div>
                       </TableHead>
@@ -199,7 +210,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
                       <div className='flex items-start justify-between gap-2 py-2'>
                         <div className='flex-1'>
                           <div className='font-medium'>{crit.component_name}</div>
-                          <div className='text-xs whitespace-pre-wrap text-muted-foreground'>
+                          <div className='text-muted-foreground text-xs whitespace-pre-wrap'>
                             {crit.description}
                           </div>
                         </div>
@@ -248,15 +259,17 @@ const RubricTable: React.FC<RubricTableProps> = ({
                         >
                           {cell ? (
                             <>
-                              <div className='w-auto text-xs whitespace-pre-wrap text-muted-foreground'>
+                              <div className='text-muted-foreground w-auto text-xs whitespace-pre-wrap'>
                                 {cell.description ? (
                                   <p className='mb-1'>{cell.description}</p>
                                 ) : (
-                                  <span className='text-muted-foreground italic'>No description</span>
+                                  <span className='text-muted-foreground italic'>
+                                    No description
+                                  </span>
                                 )}
                               </div>
 
-                              <div className='text-xs text-muted-foreground'>{cell.points} pts</div>
+                              <div className='text-muted-foreground text-xs'>{cell.points} pts</div>
 
                               <div className='absolute top-1 right-1 hidden gap-1 group-hover:flex'>
                                 <Button

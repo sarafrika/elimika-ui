@@ -36,7 +36,8 @@ export function GuardianEnrollmentNotice({ notice }: GuardianEnrollmentNoticePro
           <p>{notice.message ?? 'The course requires guardian confirmation before proceeding.'}</p>
           {ageRangeLabel ? (
             <p className='text-xs italic'>
-              Allowed age range: <span className='font-medium text-foreground'>{ageRangeLabel}</span>
+              Allowed age range:{' '}
+              <span className='text-foreground font-medium'>{ageRangeLabel}</span>
             </p>
           ) : null}
           <div className='flex flex-wrap gap-2 pt-2'>

@@ -28,11 +28,22 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useCreateSystemRule, useSystemRule, useUpdateSystemRule, type SystemRule } from '@/services/admin/system-config';
+import {
+  useCreateSystemRule,
+  useSystemRule,
+  useUpdateSystemRule,
+  type SystemRule,
+} from '@/services/admin/system-config';
 import {
   AlertCircle,
   ArrowRight,
@@ -115,13 +126,10 @@ const ruleFormSchema = z
     effectiveFrom: z.string().optional(),
     effectiveTo: z.string().optional(),
   })
-  .refine(
-    values => values.scope === 'GLOBAL' || Boolean(values.scopeReference?.trim()),
-    {
-      message: 'Provide a scope reference for non-global rules',
-      path: ['scopeReference'],
-    }
-  );
+  .refine(values => values.scope === 'GLOBAL' || Boolean(values.scopeReference?.trim()), {
+    message: 'Provide a scope reference for non-global rules',
+    path: ['scopeReference'],
+  });
 
 type RuleFormValues = z.infer<typeof ruleFormSchema>;
 
@@ -185,7 +193,7 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
   const isEdit = mode === 'edit';
 
   const { data: fetchedRule, isLoading: isRuleLoading } = useSystemRule(
-    isEdit ? ruleId ?? null : null,
+    isEdit ? (ruleId ?? null) : null,
     { enabled: isEdit && Boolean(ruleId) && open }
   );
 
@@ -214,7 +222,10 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
     if (!raw || !raw.trim()) return;
     try {
       const parsed = JSON.parse(raw);
-      form.setValue(field, JSON.stringify(parsed, null, 2), { shouldDirty: true, shouldValidate: true });
+      form.setValue(field, JSON.stringify(parsed, null, 2), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     } catch {
       toast.error('Unable to format invalid JSON');
     }
@@ -240,7 +251,8 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
       key: values.key.trim(),
       status: values.status,
       scope: values.scope,
-      scopeReference: values.scope === 'GLOBAL' ? undefined : values.scopeReference?.trim() || undefined,
+      scopeReference:
+        values.scope === 'GLOBAL' ? undefined : values.scopeReference?.trim() || undefined,
       priority: parsePriority(values.priority),
       valueType: values.valueType,
       valuePayload: JSON.parse(values.valuePayload),
@@ -300,7 +312,10 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
   );
 
   const summaryItems = [
-    { label: 'Category', value: categoryOptions.find(item => item.value === watchAll.category)?.label },
+    {
+      label: 'Category',
+      value: categoryOptions.find(item => item.value === watchAll.category)?.label,
+    },
     { label: 'Key', value: watchAll.key || 'Not set' },
     { label: 'Scope', value: watchAll.scope },
     {
@@ -317,19 +332,20 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent
         side='right'
-        className='w-full max-w-6xl overflow-y-auto border-l bg-background p-0 sm:max-w-5xl'
+        className='bg-background w-full max-w-6xl overflow-y-auto border-l p-0 sm:max-w-5xl'
       >
-        <SheetHeader className='sticky top-0 z-10 border-b bg-gradient-to-r from-background to-muted/20 px-6 py-5 shadow-sm backdrop-blur'>
+        <SheetHeader className='from-background to-muted/20 sticky top-0 z-10 border-b bg-gradient-to-r px-6 py-5 shadow-sm backdrop-blur'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-primary/10 p-2'>
-              <SlidersHorizontal className='h-5 w-5 text-primary' />
+            <div className='bg-primary/10 rounded-lg p-2'>
+              <SlidersHorizontal className='text-primary h-5 w-5' />
             </div>
             <div className='flex-1'>
-              <SheetTitle className='text-xl font-semibold text-foreground'>
+              <SheetTitle className='text-foreground text-xl font-semibold'>
                 {isEdit ? 'Edit system rule' : 'Create new system rule'}
               </SheetTitle>
               <SheetDescription className='mt-1'>
-                Configure category, scope, payload, and effective window. Changes take effect after save.
+                Configure category, scope, payload, and effective window. Changes take effect after
+                save.
               </SheetDescription>
             </div>
           </div>
@@ -338,12 +354,12 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
         <div className='grid gap-6 px-6 py-6 lg:grid-cols-[1.6fr_1fr]'>
           {/* Form Section - Submission Layer */}
           <div className='space-y-6'>
-            <div className='rounded-lg border border-primary/20 bg-primary/5 p-4'>
+            <div className='border-primary/20 bg-primary/5 rounded-lg border p-4'>
               <div className='flex items-center gap-2'>
-                <Pencil className='h-4 w-4 text-primary' />
-                <h3 className='text-sm font-semibold text-foreground'>Rule Configuration</h3>
+                <Pencil className='text-primary h-4 w-4' />
+                <h3 className='text-foreground text-sm font-semibold'>Rule Configuration</h3>
               </div>
-              <p className='mt-1 text-xs text-muted-foreground'>
+              <p className='text-muted-foreground mt-1 text-xs'>
                 Fill in the details below to configure your system rule
               </p>
             </div>
@@ -358,9 +374,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
 
             {isEdit && isRuleLoading ? (
               <div className='space-y-4'>
-                <div className='h-10 w-2/3 rounded-lg bg-muted animate-pulse' />
-                <div className='h-20 rounded-lg bg-muted animate-pulse' />
-                <div className='h-40 rounded-lg bg-muted animate-pulse' />
+                <div className='bg-muted h-10 w-2/3 animate-pulse rounded-lg' />
+                <div className='bg-muted h-20 animate-pulse rounded-lg' />
+                <div className='bg-muted h-40 animate-pulse rounded-lg' />
               </div>
             ) : (
               <Form {...form}>
@@ -440,7 +456,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                               </Button>
                             ))}
                           </div>
-                          <FormDescription>Draft before activation; inactive disables the rule.</FormDescription>
+                          <FormDescription>
+                            Draft before activation; inactive disables the rule.
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -457,7 +475,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                               type='button'
                               variant='outline'
                               size='icon'
-                              onClick={() => field.onChange(Math.max(Number(field.value ?? 0) - 1, 0))}
+                              onClick={() =>
+                                field.onChange(Math.max(Number(field.value ?? 0) - 1, 0))
+                              }
                               disabled={isSubmitting}
                               aria-label='Decrease priority'
                             >
@@ -492,7 +512,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                               <Plus className='h-4 w-4' />
                             </Button>
                           </div>
-                          <FormDescription>Lower numbers can be treated as higher priority.</FormDescription>
+                          <FormDescription>
+                            Lower numbers can be treated as higher priority.
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -522,7 +544,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                               ))}
                             </SelectContent>
                           </Select>
-                          <FormDescription>Where the rule applies across the platform.</FormDescription>
+                          <FormDescription>
+                            Where the rule applies across the platform.
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -563,7 +587,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                                 onChange={event => {
                                   const { time } = splitDateTime(field.value);
                                   const date = event.target.value;
-                                  field.onChange(date && time ? `${date}T${time}` : date ? `${date}T00:00` : '');
+                                  field.onChange(
+                                    date && time ? `${date}T${time}` : date ? `${date}T00:00` : ''
+                                  );
                                 }}
                                 disabled={isSubmitting}
                               />
@@ -574,7 +600,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                                 onChange={event => {
                                   const { date } = splitDateTime(field.value);
                                   const time = event.target.value;
-                                  field.onChange(date && time ? `${date}T${time}` : date ? `${date}T00:00` : '');
+                                  field.onChange(
+                                    date && time ? `${date}T${time}` : date ? `${date}T00:00` : ''
+                                  );
                                 }}
                                 disabled={isSubmitting}
                               />
@@ -599,7 +627,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                                 onChange={event => {
                                   const { time } = splitDateTime(field.value);
                                   const date = event.target.value;
-                                  field.onChange(date && time ? `${date}T${time}` : date ? `${date}T00:00` : '');
+                                  field.onChange(
+                                    date && time ? `${date}T${time}` : date ? `${date}T00:00` : ''
+                                  );
                                 }}
                                 disabled={isSubmitting}
                               />
@@ -610,7 +640,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                                 onChange={event => {
                                   const { date } = splitDateTime(field.value);
                                   const time = event.target.value;
-                                  field.onChange(date && time ? `${date}T${time}` : date ? `${date}T00:00` : '');
+                                  field.onChange(
+                                    date && time ? `${date}T${time}` : date ? `${date}T00:00` : ''
+                                  );
                                 }}
                                 disabled={isSubmitting}
                               />
@@ -689,7 +721,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                                 {...field}
                               />
                             </FormControl>
-                            <FormDescription>JSON payload describing the rule value.</FormDescription>
+                            <FormDescription>
+                              JSON payload describing the rule value.
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -704,7 +738,7 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                           <Code2 className='h-4 w-4' />
                           Conditions (optional)
                         </div>
-                        <Eye className='h-4 w-4 text-muted-foreground' />
+                        <Eye className='text-muted-foreground h-4 w-4' />
                       </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent className='mt-3 space-y-3'>
@@ -743,16 +777,22 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                     </CollapsibleContent>
                   </Collapsible>
 
-                  <SheetFooter className='sticky bottom-0 left-0 right-0 mt-6 border-t bg-background/95 px-0 py-4 backdrop-blur'>
+                  <SheetFooter className='bg-background/95 sticky right-0 bottom-0 left-0 mt-6 border-t px-0 py-4 backdrop-blur'>
                     <div className='flex flex-wrap items-center justify-between gap-3'>
-                      <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                      <div className='text-muted-foreground flex items-center gap-2 text-xs'>
                         <CalendarClock className='h-4 w-4' />
                         <span>
-                          {timeline.from} <ArrowRight className='mx-1 inline h-3 w-3 align-middle' /> {timeline.to}
+                          {timeline.from}{' '}
+                          <ArrowRight className='mx-1 inline h-3 w-3 align-middle' /> {timeline.to}
                         </span>
                       </div>
                       <div className='flex gap-2'>
-                        <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          onClick={onClose}
+                          disabled={isSubmitting}
+                        >
                           Cancel
                         </Button>
                         <Button type='submit' disabled={disableSave}>
@@ -775,13 +815,13 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
 
           {/* Presentation Section - Live Preview */}
           <div className='space-y-4'>
-            <div className='rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-background p-4 shadow-md'>
+            <div className='border-primary/20 from-primary/5 to-background rounded-lg border bg-gradient-to-br p-4 shadow-md'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
-                  <Eye className='h-4 w-4 text-primary' />
+                  <Eye className='text-primary h-4 w-4' />
                   <div>
-                    <p className='text-sm font-semibold text-foreground'>Rule Summary</p>
-                    <p className='text-xs text-muted-foreground'>Live preview as you edit</p>
+                    <p className='text-foreground text-sm font-semibold'>Rule Summary</p>
+                    <p className='text-muted-foreground text-xs'>Live preview as you edit</p>
                   </div>
                 </div>
                 <Badge variant='outline' className='rounded-full'>
@@ -791,47 +831,54 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
               <Separator className='my-4' />
               <div className='grid gap-2.5 text-sm'>
                 {summaryItems.map(item => (
-                  <div key={item.label} className='flex items-center justify-between gap-3 rounded-md bg-background/60 px-2 py-1.5'>
-                    <span className='text-xs font-medium text-muted-foreground'>{item.label}</span>
-                    <span className='text-right text-sm font-semibold text-foreground'>{item.value || '—'}</span>
+                  <div
+                    key={item.label}
+                    className='bg-background/60 flex items-center justify-between gap-3 rounded-md px-2 py-1.5'
+                  >
+                    <span className='text-muted-foreground text-xs font-medium'>{item.label}</span>
+                    <span className='text-foreground text-right text-sm font-semibold'>
+                      {item.value || '—'}
+                    </span>
                   </div>
                 ))}
               </div>
-              <div className='mt-3 rounded-lg border border-dashed border-border/80 p-3'>
-                <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+              <div className='border-border/80 mt-3 rounded-lg border border-dashed p-3'>
+                <div className='text-muted-foreground flex items-center gap-2 text-xs'>
                   <CalendarClock className='h-4 w-4' />
                   Effective window
                 </div>
                 <div className='mt-2 flex items-center gap-2 text-sm'>
                   <Badge variant='outline'>{timeline.from}</Badge>
-                  <ArrowRight className='h-4 w-4 text-muted-foreground' />
+                  <ArrowRight className='text-muted-foreground h-4 w-4' />
                   <Badge variant='outline'>{timeline.to}</Badge>
                 </div>
               </div>
             </div>
 
-            <div className='rounded-lg border bg-card p-4 shadow-sm'>
+            <div className='bg-card rounded-lg border p-4 shadow-sm'>
               <div className='flex items-center gap-2'>
-                <Code2 className='h-4 w-4 text-primary' />
-                <p className='text-sm font-semibold text-foreground'>Payload Preview</p>
+                <Code2 className='text-primary h-4 w-4' />
+                <p className='text-foreground text-sm font-semibold'>Payload Preview</p>
               </div>
-              <p className='mt-1 text-xs text-muted-foreground'>JSON value structure</p>
-              <ScrollArea className='mt-3 h-48 rounded-lg border border-dashed border-border/70 bg-muted/40 p-3 shadow-inner'>
-                <pre className='whitespace-pre-wrap break-all font-mono text-xs text-foreground'>
+              <p className='text-muted-foreground mt-1 text-xs'>JSON value structure</p>
+              <ScrollArea className='border-border/70 bg-muted/40 mt-3 h-48 rounded-lg border border-dashed p-3 shadow-inner'>
+                <pre className='text-foreground font-mono text-xs break-all whitespace-pre-wrap'>
                   {watchAll.valuePayload || '{}'}
                 </pre>
               </ScrollArea>
             </div>
 
-            <div className='rounded-lg border bg-card p-4 shadow-sm'>
+            <div className='bg-card rounded-lg border p-4 shadow-sm'>
               <div className='flex items-center gap-2'>
-                <CheckCircle2 className='h-4 w-4 text-green' />
-                <p className='text-sm font-semibold text-foreground'>Conditions</p>
+                <CheckCircle2 className='text-green h-4 w-4' />
+                <p className='text-foreground text-sm font-semibold'>Conditions</p>
               </div>
-              <p className='mt-1 text-xs text-muted-foreground'>Optional rule constraints</p>
-              <ScrollArea className='mt-3 h-32 rounded-lg border border-dashed border-border/70 bg-muted/30 p-3 shadow-inner'>
-                <pre className='whitespace-pre-wrap break-all font-mono text-xs text-muted-foreground'>
-                  {watchAll.conditions?.trim() ? watchAll.conditions : 'No conditions. Rule always applies.'}
+              <p className='text-muted-foreground mt-1 text-xs'>Optional rule constraints</p>
+              <ScrollArea className='border-border/70 bg-muted/30 mt-3 h-32 rounded-lg border border-dashed p-3 shadow-inner'>
+                <pre className='text-muted-foreground font-mono text-xs break-all whitespace-pre-wrap'>
+                  {watchAll.conditions?.trim()
+                    ? watchAll.conditions
+                    : 'No conditions. Rule always applies.'}
                 </pre>
               </ScrollArea>
             </div>

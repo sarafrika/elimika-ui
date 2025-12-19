@@ -1,4 +1,3 @@
-
 import { search } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';

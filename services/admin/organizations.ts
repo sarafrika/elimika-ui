@@ -74,23 +74,25 @@ export async function fetchAdminOrganisations(
 
   const response = hasFilters
     ? await fetchClient.GET('/api/v1/organisations/search', {
-      params: {
-        query: {
-          searchParams: filters,
-          pageable,
+        params: {
+          query: {
+            searchParams: filters,
+            pageable,
+          },
         },
-      },
-    })
+      })
     : await fetchClient.GET('/api/v1/organisations', {
-      params: {
-        query: {
-          pageable,
+        params: {
+          query: {
+            pageable,
+          },
         },
-      },
-    });
+      });
 
   if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to fetch organisations');
+    throw new Error(
+      typeof response.error === 'string' ? response.error : 'Failed to fetch organisations'
+    );
   }
 
   const parsed = organisationListResponseSchema.parse(response.data ?? {});
@@ -111,7 +113,8 @@ export async function fetchAdminOrganisations(
   };
 }
 
-export const adminOrganisationsQueryKey = (params: AdminOrganisationListParams) => ['admin-organisations', params] as const;
+export const adminOrganisationsQueryKey = (params: AdminOrganisationListParams) =>
+  ['admin-organisations', params] as const;
 
 export function useAdminOrganisations(
   params: AdminOrganisationListParams,

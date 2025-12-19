@@ -125,13 +125,13 @@ export default function ManageProfileActions({ className = '' }: { className?: s
         }
 
         const uuid = profile.courseCreator?.uuid;
-          return {
-            id: domain,
-            title: 'Course creator profile',
-            description:
-              'Design and publish courses. Removing this profile clears your creator data.',
-            icon: GraduationCap,
-            accent: 'text-accent',
+        return {
+          id: domain,
+          title: 'Course creator profile',
+          description:
+            'Design and publish courses. Removing this profile clears your creator data.',
+          icon: GraduationCap,
+          accent: 'text-accent',
           uuid,
           isLoading: courseCreatorRemoval.isPending,
           onRemove: () =>

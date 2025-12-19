@@ -26,9 +26,7 @@ export default function UserBadge({
   });
 
   if (isLoading) {
-    return (
-      <Loader2 />
-    );
+    return <Loader2 />;
   }
 
   if (!data || !data.data) {
@@ -42,7 +40,7 @@ export default function UserBadge({
       <Avatar>
         <AvatarImage src={user.profile_image_url} alt='@shadcn' />
         <AvatarFallback>
-          <div className='rounded-full bg-secondary p-3 text-primary'>
+          <div className='bg-secondary text-primary rounded-full p-3'>
             <UserIcon size={iconSize} />
           </div>
         </AvatarFallback>
@@ -51,13 +49,13 @@ export default function UserBadge({
         <h6>{user.full_name}</h6>
         {showContacts && (
           <div className='flex gap-3'>
-              <Badge variant={'outline'}>
-                <PhoneCall /> {user.phone_number}
-              </Badge>
-              <Badge variant={'outline'}>
-                <Send /> {user.email}
-              </Badge>
-            </div>
+            <Badge variant={'outline'}>
+              <PhoneCall /> {user.phone_number}
+            </Badge>
+            <Badge variant={'outline'}>
+              <Send /> {user.email}
+            </Badge>
+          </div>
         )}
       </div>
     </div>

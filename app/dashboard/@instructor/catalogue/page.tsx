@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { CatalogueWorkspace } from '@/app/dashboard/_components/catalogue-workspace';
 

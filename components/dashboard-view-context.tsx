@@ -77,7 +77,9 @@ export function DashboardViewProvider({
   };
 
   return (
-    <DashboardViewContext.Provider value={{ view, setView, availableViews: normalizedAvailableViews }}>
+    <DashboardViewContext.Provider
+      value={{ view, setView, availableViews: normalizedAvailableViews }}
+    >
       {children}
     </DashboardViewContext.Provider>
   );

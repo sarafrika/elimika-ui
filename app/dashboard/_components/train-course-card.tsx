@@ -11,7 +11,18 @@ import {
   getCourseCreatorByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, CheckCircle2, Clock, Heart, Pencil, Play, Share, Star, Users, XCircle } from 'lucide-react';
+import {
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Heart,
+  Pencil,
+  Play,
+  Share,
+  Star,
+  Users,
+  XCircle,
+} from 'lucide-react';
 import Image from 'next/image';
 
 interface TrainCourseCardProps {
@@ -20,7 +31,7 @@ interface TrainCourseCardProps {
   applicationReviewNote?: string | null;
   handleClick: () => void;
   handleQuickApply: () => void;
-  handleReapplyToTrain: () => void
+  handleReapplyToTrain: () => void;
 }
 
 export function TrainCourseCard({
@@ -29,7 +40,7 @@ export function TrainCourseCard({
   applicationReviewNote,
   handleClick,
   handleQuickApply,
-  handleReapplyToTrain
+  handleReapplyToTrain,
 }: TrainCourseCardProps) {
   const getInitials = (name: string) => {
     return name
@@ -70,13 +81,13 @@ export function TrainCourseCard({
   const renderIcon = () => {
     switch (applicationStatus) {
       case 'approved':
-        return <CheckCircle2 className="h-4 w-4 text-success" />;
+        return <CheckCircle2 className='text-success h-4 w-4' />;
       case 'pending':
-        return <Clock className="h-4 w-4 text-warning" />;
+        return <Clock className='text-warning h-4 w-4' />;
       case 'revoked':
-        return <XCircle className="h-4 w-4 text-destructive" />;
+        return <XCircle className='text-destructive h-4 w-4' />;
       default:
-        return <Pencil className="h-4 w-4 text-muted-foreground" />;
+        return <Pencil className='text-muted-foreground h-4 w-4' />;
     }
   };
 
@@ -91,10 +102,10 @@ export function TrainCourseCard({
     'border-border bg-card text-foreground hover:bg-accent';
 
   return (
-    <div className='group cursor-pointer rounded-lg border bg-border bg-card transition-all hover:-translate-y-1 hover:shadow-lg'>
+    <div className='group bg-border bg-card cursor-pointer rounded-lg border transition-all hover:-translate-y-1 hover:shadow-lg'>
       <div className='relative'>
         {/* Course Image */}
-        <div className='relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg bg-muted'>
+        <div className='bg-muted relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg'>
           {course?.banner_url ? (
             <Image
               src={course?.banner_url}
@@ -182,7 +193,7 @@ export function TrainCourseCard({
           {/* Stats */}
           <div className='text-muted-foreground mb-4 flex items-center gap-4 text-sm'>
             <div className='flex items-center gap-1'>
-              <Star className='h-4 w-4 fill-warning text-warning' />
+              <Star className='fill-warning text-warning h-4 w-4' />
               {/* <span>{course?.rating}</span> */}
               <span>{1.2}</span>
             </div>
@@ -214,11 +225,11 @@ export function TrainCourseCard({
           )}
         </CardContent>
 
-        <div className="w-full flex flex-col items-start gap-3 p-4">
+        <div className='flex w-full flex-col items-start gap-3 p-4'>
           {/* Action button */}
-          <div className='w-full flex flex-row items-center justify-between gap-4' >
+          <div className='flex w-full flex-row items-center justify-between gap-4'>
             <Button
-              size="sm"
+              size='sm'
               onClick={handleQuickApply}
               disabled={!!applicationStatus && applicationStatus !== 'revoked'}
               className={`relative flex items-center gap-2 rounded-md border font-medium transition-all duration-200 ${actionButtonClasses} disabled:cursor-not-allowed disabled:opacity-60`}
@@ -232,34 +243,31 @@ export function TrainCourseCard({
             {/* Secondary reapply button */}
             {applicationStatus === 'revoked' && (
               <Button
-                size="sm"
-                variant="outline"
+                size='sm'
+                variant='outline'
                 onClick={handleReapplyToTrain}
-                className='border-primary/50 text-primary transition-all duration-200 hover:bg-primary/10 hover:text-primary'
+                className='border-primary/50 text-primary hover:bg-primary/10 hover:text-primary transition-all duration-200'
               >
-                <Pencil className="w-4 h-4 mr-1" />
+                <Pencil className='mr-1 h-4 w-4' />
                 Reapply to Train
               </Button>
             )}
-
           </div>
           {/* Review note */}
           <span
-            className={`
-      text-xs text-center italic transition-colors duration-200
-      ${applicationStatus === 'pending'
+            className={`text-center text-xs italic transition-colors duration-200 ${
+              applicationStatus === 'pending'
                 ? 'text-warning'
                 : applicationStatus === 'approved'
                   ? 'text-success'
                   : applicationStatus === 'revoked'
                     ? 'text-destructive'
-                    : 'text-muted-foreground'}
-    `}
+                    : 'text-muted-foreground'
+            } `}
           >
             {applicationReviewNote || 'No review note provided'}
           </span>
         </div>
-
       </div>
     </div>
   );

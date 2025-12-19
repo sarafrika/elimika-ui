@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning>
       <body
-        className={`${nunitoSans.className} antialiased min-h-screen bg-background text-foreground`}
+        className={`${nunitoSans.className} bg-background text-foreground min-h-screen antialiased`}
       >
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
           <div className='relative min-h-screen'>

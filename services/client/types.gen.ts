@@ -272,8 +272,8 @@ export type Student = {
    */
   bio?: string;
   primaryGuardianContact?: string;
-  secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
+  secondaryGuardianContact?: string;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
    */
@@ -1294,10 +1294,6 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
-   */
-  readonly is_profile_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
@@ -1305,6 +1301,10 @@ export type Instructor = {
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   */
+  readonly is_profile_complete?: boolean;
 };
 
 /**
@@ -1420,10 +1420,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
@@ -1453,6 +1449,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1525,14 +1525,6 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string;
-  /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
   readonly employment_period?: string;
@@ -1557,6 +1549,14 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1617,9 +1617,14 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   * **[READ-ONLY]** Number of years since the qualification was completed.
    */
-  readonly is_complete?: boolean;
+  readonly years_since_completion?: number;
+  education_level?: EducationLevelEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
+   */
+  readonly has_certificate_number?: boolean;
   /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
@@ -1629,14 +1634,9 @@ export type InstructorEducation = {
    */
   readonly formatted_completion?: string;
   /**
-   * **[READ-ONLY]** Number of years since the qualification was completed.
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
-  readonly years_since_completion?: number;
-  education_level?: EducationLevelEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
-   */
-  readonly has_certificate_number?: boolean;
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -1754,10 +1754,6 @@ export type InstructorDocument = {
    */
   readonly is_expired?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable formatted file size.
-   */
-  readonly file_size_formatted?: string;
-  /**
    * **[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.
    */
   readonly days_until_expiry?: number;
@@ -1770,6 +1766,10 @@ export type InstructorDocument = {
    */
   readonly has_expiry_date?: boolean;
   verification_status?: VerificationStatusEnum;
+  /**
+   * **[READ-ONLY]** Human-readable formatted file size.
+   */
+  readonly file_size_formatted?: string;
 };
 
 export type ApiResponseInstructorDocument = {
@@ -3313,13 +3313,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
    */
   readonly assignment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -3809,6 +3809,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -3820,10 +3824,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -5733,13 +5733,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponseLong = {
@@ -7201,6 +7201,8 @@ export const StatusEnum7 = {
   CANCELLED: 'cancelled',
   PAYMENT_FAILED: 'payment_failed',
   EXPIRED: 'expired',
+  ACCEPTED: 'accepted',
+  DECLINED: 'declined',
 } as const;
 
 /**
@@ -15531,6 +15533,40 @@ export type PaymentCallbackResponses = {
 
 export type PaymentCallbackResponse = PaymentCallbackResponses[keyof PaymentCallbackResponses];
 
+export type DeclineBookingData = {
+  body?: never;
+  path: {
+    /**
+     * Booking UUID
+     */
+    bookingUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/bookings/{bookingUuid}/decline';
+};
+
+export type DeclineBookingErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeclineBookingError = DeclineBookingErrors[keyof DeclineBookingErrors];
+
+export type DeclineBookingResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseBookingResponse;
+};
+
+export type DeclineBookingResponse = DeclineBookingResponses[keyof DeclineBookingResponses];
+
 export type CancelBookingData = {
   body?: never;
   path: {
@@ -15564,6 +15600,40 @@ export type CancelBookingResponses = {
 };
 
 export type CancelBookingResponse = CancelBookingResponses[keyof CancelBookingResponses];
+
+export type AcceptBookingData = {
+  body?: never;
+  path: {
+    /**
+     * Booking UUID
+     */
+    bookingUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/bookings/{bookingUuid}/accept';
+};
+
+export type AcceptBookingErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AcceptBookingError = AcceptBookingErrors[keyof AcceptBookingErrors];
+
+export type AcceptBookingResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseBookingResponse;
+};
+
+export type AcceptBookingResponse = AcceptBookingResponses[keyof AcceptBookingResponses];
 
 export type GetAllAssignmentsData = {
   body?: never;

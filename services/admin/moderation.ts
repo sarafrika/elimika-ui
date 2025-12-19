@@ -105,7 +105,9 @@ function buildModerationFilters(params: ModerationQueueParams) {
   return filters;
 }
 
-export async function fetchModerationQueue(params: ModerationQueueParams = {}): Promise<ModerationQueueResult> {
+export async function fetchModerationQueue(
+  params: ModerationQueueParams = {}
+): Promise<ModerationQueueResult> {
   const normalizedParams = normalizeModerationParams(params);
   const { page = 0, size = 20 } = normalizedParams;
   const filters = buildModerationFilters(normalizedParams);
@@ -124,7 +126,9 @@ export async function fetchModerationQueue(params: ModerationQueueParams = {}): 
   });
 
   if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to fetch moderation queue');
+    throw new Error(
+      typeof response.error === 'string' ? response.error : 'Failed to fetch moderation queue'
+    );
   }
 
   const parsed = moderationQueueResponseSchema.parse(response.data ?? {});
@@ -145,7 +149,8 @@ export async function fetchModerationQueue(params: ModerationQueueParams = {}): 
   };
 }
 
-export const adminModerationQueueQueryKey = (params: ModerationQueueParams) => ['admin-moderation', params] as const;
+export const adminModerationQueueQueryKey = (params: ModerationQueueParams) =>
+  ['admin-moderation', params] as const;
 
 export function useModerationQueue(
   params: ModerationQueueParams,
@@ -170,7 +175,9 @@ async function runModerationAction({ queueUuid, action, reason }: ModerationActi
   });
 
   if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to update moderation item');
+    throw new Error(
+      typeof response.error === 'string' ? response.error : 'Failed to update moderation item'
+    );
   }
 
   return moderationActionResponseSchema.parse(response.data ?? {});
@@ -184,41 +191,43 @@ type ModerationActionContext = {
 export function useModerationAction() {
   const queryClient = useQueryClient();
 
-  return useMutation<ModerationActionResult, Error, ModerationActionInput, ModerationActionContext>({
-    mutationFn: (input: ModerationActionInput) => runModerationAction(input),
-    onMutate: async variables => {
-      const normalizedParams = normalizeModerationParams(variables.listParams);
-      const queryKey = adminModerationQueueQueryKey(normalizedParams);
-      await queryClient.cancelQueries({ queryKey });
+  return useMutation<ModerationActionResult, Error, ModerationActionInput, ModerationActionContext>(
+    {
+      mutationFn: (input: ModerationActionInput) => runModerationAction(input),
+      onMutate: async variables => {
+        const normalizedParams = normalizeModerationParams(variables.listParams);
+        const queryKey = adminModerationQueueQueryKey(normalizedParams);
+        await queryClient.cancelQueries({ queryKey });
 
-      const previous = queryClient.getQueryData<ModerationQueueResult>(queryKey);
+        const previous = queryClient.getQueryData<ModerationQueueResult>(queryKey);
 
-      if (previous) {
-        const nextItems = previous.items.map(item =>
-          item.uuid === variables.queueUuid
-            ? {
-                ...item,
-                status: variables.action === 'approve' ? 'APPROVED' : 'DISMISSED',
-              }
-            : item
-        );
+        if (previous) {
+          const nextItems = previous.items.map(item =>
+            item.uuid === variables.queueUuid
+              ? {
+                  ...item,
+                  status: variables.action === 'approve' ? 'APPROVED' : 'DISMISSED',
+                }
+              : item
+          );
 
-        queryClient.setQueryData<ModerationQueueResult>(queryKey, {
-          ...previous,
-          items: nextItems,
-        });
-      }
+          queryClient.setQueryData<ModerationQueueResult>(queryKey, {
+            ...previous,
+            items: nextItems,
+          });
+        }
 
-      return { previous, queryKey } satisfies ModerationActionContext;
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previous && context.queryKey) {
-        queryClient.setQueryData(context.queryKey, context.previous);
-      }
-    },
-    onSettled: (_data, _error, variables) => {
-      const normalizedParams = normalizeModerationParams(variables.listParams);
-      queryClient.invalidateQueries({ queryKey: adminModerationQueueQueryKey(normalizedParams) });
-    },
-  });
+        return { previous, queryKey } satisfies ModerationActionContext;
+      },
+      onError: (_error, _variables, context) => {
+        if (context?.previous && context.queryKey) {
+          queryClient.setQueryData(context.queryKey, context.previous);
+        }
+      },
+      onSettled: (_data, _error, variables) => {
+        const normalizedParams = normalizeModerationParams(variables.listParams);
+        queryClient.invalidateQueries({ queryKey: adminModerationQueueQueryKey(normalizedParams) });
+      },
+    }
+  );
 }

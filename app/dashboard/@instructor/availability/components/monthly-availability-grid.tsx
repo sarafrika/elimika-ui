@@ -18,22 +18,22 @@ interface MonthlyAvailabilityGridProps {
 
 const eventColorMap = {
   SCHEDULED_INSTANCE: {
-    border: "border-primary/40",
-    text: "text-primary",
-    icon: "text-primary",
-    bg: "bg-primary/10",
+    border: 'border-primary/40',
+    text: 'text-primary',
+    icon: 'text-primary',
+    bg: 'bg-primary/10',
   },
   BLOCKED: {
-    border: "border-destructive/40",
-    text: "text-destructive",
-    icon: "text-destructive",
-    bg: "bg-destructive/10",
+    border: 'border-destructive/40',
+    text: 'text-destructive',
+    icon: 'text-destructive',
+    bg: 'bg-destructive/10',
   },
   AVAILABILITY: {
-    border: "border-green-500/40",
-    text: "text-green-600",
-    icon: "text-green-600",
-    bg: "bg-green-500/10",
+    border: 'border-green-500/40',
+    text: 'text-green-600',
+    icon: 'text-green-600',
+    bg: 'bg-green-500/10',
   },
 };
 
@@ -97,7 +97,6 @@ export function MonthlyAvailabilityGrid({
       }
       // For recurring slots, check by day name
       return slot.day === dayName;
-
     });
 
     // Check for scheduled classes
@@ -116,23 +115,16 @@ export function MonthlyAvailabilityGrid({
 
     // Check for events on this day
     const dayEvents = [
-      ...availabilityData.events
-        .filter(event => {
-          const eventDate = new Date(event.date);
-          return eventDate.toDateString() === date.toDateString();
-        }),
+      ...availabilityData.events.filter(event => {
+        const eventDate = new Date(event.date);
+        return eventDate.toDateString() === date.toDateString();
+      }),
     ];
 
     // const availableSlots = daySlots.filter(slot => slot.status === 'SCHEDULED').length;
-    const blockedEvents = daySlots.filter(
-      slot => slot.entry_type === "BLOCKED"
-    );
+    const blockedEvents = daySlots.filter(slot => slot.entry_type === 'BLOCKED');
 
-    const bookedEvents = [
-      ...daySlots.filter(
-        slot => slot.entry_type === "SCHEDULED_INSTANCE"
-      ),
-    ];
+    const bookedEvents = [...daySlots.filter(slot => slot.entry_type === 'SCHEDULED_INSTANCE')];
 
     return {
       // available: availableSlots,
@@ -303,27 +295,27 @@ export function MonthlyAvailabilityGrid({
                         {/* Status Indicators */}
                         <div className='flex flex-col gap-1'>
                           {status.booked.length > 0 && (
-                            <div className="h-2 w-2 rounded-full bg-primary" />
+                            <div className='bg-primary h-2 w-2 rounded-full' />
                           )}
 
                           {status.blocked.length > 0 && (
-                            <div className="h-2 w-2 rounded-full bg-destructive" />
+                            <div className='bg-destructive h-2 w-2 rounded-full' />
                           )}
-
                         </div>
                       </div>
 
                       {/* Event blocks and bottom indicators */}
                       {status.events.length > 0 && (
                         <div className='absolute top-6 right-1 left-1'>
-                          {status.events.slice(0, 2).map((event) => {
-                            const colors = eventColorMap[event?.entry_type || "SCHEDULED_INSTANCE"] ?? eventColorMap.SCHEDULED_INSTANCE;
+                          {status.events.slice(0, 2).map(event => {
+                            const colors =
+                              eventColorMap[event?.entry_type || 'SCHEDULED_INSTANCE'] ??
+                              eventColorMap.SCHEDULED_INSTANCE;
 
                             return (
                               <div
                                 key={event.id}
-                                className={`mb-1 truncate rounded px-1 py-0.5 text-xs 
-        ${colors.border} ${colors.text} ${colors.bg}`}
+                                className={`mb-1 truncate rounded px-1 py-0.5 text-xs ${colors.border} ${colors.text} ${colors.bg}`}
                               >
                                 <div className='flex items-center gap-1'>
                                   <Clock className={`h-2 w-2 ${colors.icon}`} />
@@ -343,9 +335,8 @@ export function MonthlyAvailabilityGrid({
                             );
                           })}
 
-
                           {status.events.length > 2 && (
-                            <div className='text-xs font-medium text-muted-foreground'>
+                            <div className='text-muted-foreground text-xs font-medium'>
                               +{status.events.length - 2} more events
                             </div>
                           )}
@@ -365,7 +356,6 @@ export function MonthlyAvailabilityGrid({
                               {status.blocked.length}
                             </Badge>
                           )}
-
                         </div>
                       </div>
                     </div>
@@ -392,9 +382,8 @@ export function MonthlyAvailabilityGrid({
                         </div>
                       )}
 
-
                       {status.events.length > 0 && (
-                        <div className='mt-1 text-xs text-accent'>
+                        <div className='text-accent mt-1 text-xs'>
                           Events:{' '}
                           {status.events
                             .map(e => `${e.title} (${e.startTime}-${e.endTime})`)
@@ -403,7 +392,7 @@ export function MonthlyAvailabilityGrid({
                       )}
 
                       {status.classes.length > 0 && (
-                        <div className='mt-2 text-xs text-muted-foreground'>
+                        <div className='text-muted-foreground mt-2 text-xs'>
                           Classes: {status.classes.map(c => c.classTitle).join(', ')}
                         </div>
                       )}
@@ -425,16 +414,16 @@ export function MonthlyAvailabilityGrid({
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-6 text-sm'>
             <div className='flex items-center gap-2'>
-              <div className='h-3 w-3 rounded-full bg-primary' />
+              <div className='bg-primary h-3 w-3 rounded-full' />
               <span>Classes & Bookings</span>
             </div>
             <div className='flex items-center gap-2'>
-              <div className='h-3 w-3 rounded-full bg-destructive' />
+              <div className='bg-destructive h-3 w-3 rounded-full' />
               <span>Blocked/Unavailable</span>
             </div>
           </div>
 
-          <div className='text-sm text-muted-foreground'>Click days to add or edit events</div>
+          <div className='text-muted-foreground text-sm'>Click days to add or edit events</div>
         </div>
       </Card>
 

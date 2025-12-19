@@ -264,14 +264,14 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
     switch (status) {
       case 'approved':
       case 'disbursed':
-        return <CheckCircle className='h-5 w-5 text-success' />;
+        return <CheckCircle className='text-success h-5 w-5' />;
       case 'rejected':
-        return <XCircle className='h-5 w-5 text-destructive' />;
+        return <XCircle className='text-destructive h-5 w-5' />;
       case 'under-review':
       case 'submitted':
-        return <Clock className='h-5 w-5 text-warning' />;
+        return <Clock className='text-warning h-5 w-5' />;
       default:
-        return <FileText className='h-5 w-5 text-muted-foreground' />;
+        return <FileText className='text-muted-foreground h-5 w-5' />;
     }
   };
 
@@ -298,8 +298,8 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-primary/10 p-2'>
-              <FileText className='h-5 w-5 text-primary' />
+            <div className='bg-primary/10 rounded-lg p-2'>
+              <FileText className='text-primary h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Applications</p>
@@ -310,8 +310,8 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
 
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-success/10 p-2'>
-              <CheckCircle className='h-5 w-5 text-success' />
+            <div className='bg-success/10 rounded-lg p-2'>
+              <CheckCircle className='text-success h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Approved</p>
@@ -346,8 +346,8 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
 
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-accent/10 p-2'>
-              <DollarSign className='h-5 w-5 text-accent' />
+            <div className='bg-accent/10 rounded-lg p-2'>
+              <DollarSign className='text-accent h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Total Funded</p>
@@ -503,9 +503,9 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
                     className={`rounded-lg p-2 ${txn.type === 'credit' ? 'bg-success/10' : 'bg-destructive/10'}`}
                   >
                     {txn.type === 'credit' ? (
-                      <TrendingUp className='h-4 w-4 text-success' />
+                      <TrendingUp className='text-success h-4 w-4' />
                     ) : (
-                      <BookOpen className='h-4 w-4 text-destructive' />
+                      <BookOpen className='text-destructive h-4 w-4' />
                     )}
                   </div>
                   <div>
