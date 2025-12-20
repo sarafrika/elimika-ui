@@ -48,6 +48,7 @@ import {
   convertToCalendarEvents,
 } from '../../@instructor/availability/components/types';
 import type { Booking } from '../browse-courses/instructor/page';
+import BookInstructorTimeTableManager from './book-instructor-schedule';
 
 type Props = {
   instructor: any;
@@ -344,12 +345,22 @@ export const InstructorProfileComponent: React.FC<Props> = ({
           </Card>
         )}
 
-        {/* {showBooking && <>
-          <TimetableManager
+        {showBooking && <>
+          <BookInstructorTimeTableManager
             availabilityData={availabilityData || []}
             onAvailabilityUpdate={setAvailabilityData}
+            studentBookingData={{
+              course_uuid: courseId || '',
+              student_uuid: student?.uuid || '',
+              instructor_uuid: instructor?.uuid || '',
+              booking_id: '',
+              price_amount: totalAmount,
+              purpose: reason,
+              rate_key: selectedRateKey as any,
+              rates: matchedCourse?.rate_card
+            }}
           />
-        </>} */}
+        </>}
 
         {/* Content Tabs */}
         <Tabs defaultValue='overview' className='w-full'>
@@ -372,7 +383,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               </Card>
 
               {/* Skills */}
-              <Card className='p-6'>
+              {/* <Card className='p-6'>
                 <h3 className='mb-3'>Skills & Expertise</h3>
                 <div className='flex flex-wrap gap-2'>
                   {skills?.length > 0 ? (
@@ -384,14 +395,14 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                       ))}
                     </div>
                   ) : (
-                    <p className='text-muted-foreground text-sm'>No specializations added</p>
+                    <p className='text-muted-foreground text-sm'>No skills or expertise added</p>
                   )}
                 </div>
-              </Card>
+              </Card> */}
 
               {/* Specializations */}
               <Card className='p-6'>
-                <h3 className='mb-3'>Specializations</h3>
+                <h3 className='mb-3'>Skills & Expertise</h3>
 
                 {instructor?.specializations?.length > 0 ? (
                   <div className='flex flex-wrap gap-2'>
@@ -475,11 +486,10 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`h-4 w-4 ${
-                                    i < review.rating
-                                      ? 'fill-yellow-500 text-yellow-500'
-                                      : 'text-muted-foreground'
-                                  }`}
+                                  className={`h-4 w-4 ${i < review.rating
+                                    ? 'fill-yellow-500 text-yellow-500'
+                                    : 'text-muted-foreground'
+                                    }`}
                                 />
                               ))}
                             </div>
@@ -622,7 +632,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
   );
 };
 
-const skills = ['Python', 'TensorFlow', 'Pandas', 'Scikit-learn', 'SQL', 'Statistics'];
+const skills = [] as any[];
 const certifications = [
   { id: 'cert-3', name: 'Deep Learning Specialization', issuer: 'DeepLearning.AI', year: 2020 },
   { id: 'cert-4', name: 'Google Cloud Professional Data Engineer', issuer: 'Google', year: 2021 },
