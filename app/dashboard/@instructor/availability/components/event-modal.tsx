@@ -33,6 +33,33 @@ import { toast } from 'sonner';
 import Spinner from '../../../../../components/ui/spinner';
 import type { CalendarEvent } from './types';
 
+type RateKey =
+  | "private_online_rate"
+  | "private_inperson_rate"
+  | "group_online_rate"
+  | "group_inperson_rate";
+
+type Rates = {
+  currency: string;
+} & Record<RateKey, number>;
+
+
+
+export interface StudentBookingData {
+  booking_id?: string;           // present when editing
+  student_uuid: string;
+  instructor_uuid: string;
+  course_uuid: string;
+  price_amount?: number;         // computed in modal
+
+  rate_key?: RateKey
+
+  rates?: any;
+
+  purpose?: string;
+}
+
+
 interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -44,6 +71,8 @@ interface EventModalProps {
   } | null;
   onSave: (event: CalendarEvent) => void;
   onDelete?: (eventId: string) => void;
+
+  studentBookingData?: StudentBookingData;
 }
 
 interface DateTimeItem {
@@ -57,7 +86,7 @@ interface OutputItem {
   color_code: string;
 }
 
-export type EventType = 'BLOCKED' | 'AVAILABILITY' | 'SCHEDULED_INSTANCE';
+export type EventType = 'BLOCKED' | 'AVAILABILITY' | 'SCHEDULED_INSTANCE' | 'BOOKING';
 
 const eventTypes: {
   value: EventType;
@@ -65,25 +94,32 @@ const eventTypes: {
   icon: any;
   color: string;
 }[] = [
-  {
-    value: 'SCHEDULED_INSTANCE',
-    label: 'Class Schedule Instance',
-    icon: BookOpen,
-    color: 'bg-blue-500',
-  },
-  {
-    value: 'BLOCKED',
-    label: 'Blocked/Unavailable',
-    icon: Coffee,
-    color: 'bg-orange-500',
-  },
-  {
-    value: 'AVAILABILITY',
-    label: 'Available',
-    icon: Calendar,
-    color: 'bg-green-500',
-  },
-];
+    {
+      value: 'SCHEDULED_INSTANCE',
+      label: 'Class Schedule Instance',
+      icon: BookOpen,
+      color: 'bg-blue-500',
+    },
+    {
+      value: 'BLOCKED',
+      label: 'Blocked/Unavailable',
+      icon: Coffee,
+      color: 'bg-orange-500',
+    },
+    {
+      value: 'AVAILABILITY',
+      label: 'Available',
+      icon: Calendar,
+      color: 'bg-green-500',
+    },
+    {
+      value: 'BOOKING',
+      label: 'Student Booking',
+      icon: Clock,
+      color: 'bg-purple-500',
+    }
+
+  ];
 
 function extractDateTimeParts(date: Date) {
   const pad = (num: number) => String(num).padStart(2, '0');
@@ -123,6 +159,7 @@ export function EventModal({
   selectedSlot,
   onSave,
   onDelete,
+  studentBookingData
 }: EventModalProps) {
   const [formData, setFormData] = useState<Partial<CalendarEvent>>({
     title: '',
@@ -153,7 +190,7 @@ export function EventModal({
   const handleDatesChange = (selectedDates: any[]) => {
     const newDates: DateTimeItem[] = selectedDates.map(d => {
       const formatted = dayjs(d.toDate()).format('YYYY-MM-DD');
-      return { date: formatted, startTime: '09:00', endTime: '17:00' };
+      return { date: formatted, startTime: '09:00', endTime: '10:00' };
     });
     setBlockDates(newDates);
   };
@@ -263,9 +300,46 @@ export function EventModal({
   const blockTimeForInstructor = useMutation(blockInstructorTimeMutation());
   const createBookingForInstructor = useMutation(createBookingMutation());
 
-  const handleSave = () => {
-    // if (!validateForm()) return;
+  const [bookingStart, setBookingStart] = useState('');
+  const [bookingEnd, setBookingEnd] = useState('');
+  const [purpose, setPurpose] = useState('');
+  const [computedPrice, setComputedPrice] = useState<number>(0);
+  const [rateKey, setRateKey] = useState<RateKey | "">("");
 
+  const rates = studentBookingData?.rates as Rates | undefined;
+
+  const getHours = (start: Date, end: Date) => {
+    const diffMs = end.getTime() - start.getTime();
+    return diffMs / (1000 * 60 * 60);
+  };
+
+  const calculatePrice = (
+    rateKey: RateKey,
+    startTime: Date,
+    endTime: Date
+  ) => {
+    if (!rates) return 0;
+
+    const ratePerHour = rates[rateKey];
+    const hours = getHours(startTime, endTime);
+
+    return ratePerHour * hours;
+  };
+
+  useEffect(() => {
+    if (!rateKey || !bookingStart || !bookingEnd || !rates) return;
+
+    const start = new Date(bookingStart);
+    const end = new Date(bookingEnd);
+
+    if (end <= start) return;
+
+    const total = calculatePrice(rateKey, start, end);
+    setComputedPrice(total);
+  }, [rateKey, bookingStart, bookingEnd, rates]);
+
+
+  const handleSave = () => {
     const {
       startDateTime,
       endDateTime,
@@ -281,7 +355,7 @@ export function EventModal({
       notes,
     } = formData;
 
-    if (!startDateTime || !endDateTime || !title || !entry_type) {
+    if (!startDateTime || !endDateTime || !entry_type) {
       return;
     }
 
@@ -293,7 +367,7 @@ export function EventModal({
 
     const eventData: CalendarEvent = {
       id: event?.id || `event-${Date.now()}`,
-      title,
+      title: title || '',
       description: formData.description,
       entry_type: entry_type as any,
       startTime: startClock as any,
@@ -341,40 +415,47 @@ export function EventModal({
       return;
     }
 
-    if (eventData.entry_type === 'AVAILABILITY') {
-      const body = {
-        course_uuid: '',
-        end_time: endDateTime as any,
-        instructor_uuid: instrucor?.uuid as string,
-        start_time: startDateTime as any,
-        student_uuid: '',
-        currency: 'KES',
-        price_amount: 100,
-        purpose: 'Booking',
-      };
+    // book instructor logic
+    if (eventData.entry_type === 'BOOKING') {
+      if (!bookingStart || !bookingEnd || !rateKey) {
+        toast.error('Please complete booking details');
+        return;
+      }
 
-      // createBookingForInstructor.mutate({
-      //   body: {
-      //     course_uuid: "",
-      //     end_time: "" as any,
-      //     instructor_uuid: "",
-      //     start_time: "" as any,
-      //     student_uuid: "",
-      //     currency: "",
-      //     price_amount: 100,
-      //     purpose: ""
-      //   }
-      // }, {
-      //   onSuccess: (data) => {
-      //     qc.invalidateQueries({
-      //       queryKey: getInstructorCalendarQueryKey({ path: { instructorUuid: instrucor?.uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } })
-      //     })
-      //     toast.success(data?.message)
-      //   },
-      //   onError: (error: any) => {
-      //     toast.error(error?.message)
-      //   }
-      // })
+      const body = {
+        instructor_uuid: studentBookingData?.instructor_uuid!,
+        student_uuid: studentBookingData?.student_uuid!,
+        course_uuid: studentBookingData?.course_uuid!,
+        start_time: dayjs(bookingStart).toISOString() as any,
+        end_time: dayjs(bookingEnd).toISOString() as any,
+        currency: studentBookingData?.rates?.currency || 'KES',
+        price_amount: computedPrice,
+        purpose,
+      }
+
+      createBookingForInstructor.mutate(
+        { body },
+        {
+          onSuccess: data => {
+            toast.success(data?.message);
+            qc.invalidateQueries({
+              queryKey: getInstructorCalendarQueryKey({
+                query: { start_date: "" as any, end_date: "" as any }, path: { instructorUuid: instrucor?.uuid as string },
+              }),
+            });
+            onClose();
+          },
+          onError: (err: any) => {
+            toast.error(err?.message || 'Failed to create booking');
+          },
+        }
+      );
+
+      return;
+    }
+
+    if (eventData.entry_type === 'AVAILABILITY') {
+      return
     }
   };
 
@@ -398,6 +479,16 @@ export function EventModal({
 
   const selectedEventType = eventTypes.find(t => t.value === formData.entry_type);
 
+  useEffect(() => {
+    if (selectedEventType?.value !== 'BOOKING') return;
+
+    if (formData.startDateTime && formData.endDateTime) {
+      setBookingStart(formData.startDateTime);
+      setBookingEnd(formData.endDateTime);
+    }
+  }, [selectedEventType?.value]);
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
@@ -413,7 +504,7 @@ export function EventModal({
           <Select
             value={formData.entry_type}
             onValueChange={value =>
-              setFormData(prev => ({ ...prev, entry_type: value as EventType }))
+              setFormData((prev: any) => ({ ...prev, entry_type: value as EventType }))
             }
           >
             <SelectTrigger className='w-full'>
@@ -436,78 +527,198 @@ export function EventModal({
         <div className='space-y-6'>
           {/* Basic Information */}
           {selectedEventType?.value === 'BLOCKED' && (
-            <div>
-              <div className='w-full max-w-sm'>
-                <DatePicker
-                  multiple
-                  value={blockDates.map(d => d.date)}
-                  onChange={handleDatesChange}
-                  format='YYYY-MM-DD'
-                  placeholder='Select dates'
-                />
+            <div className="space-y-6">
+              {/* Date Picker */}
+              <div className="space-y-2">
+                <Label>Select Dates</Label>
+                <div className="max-w-sm">
+                  <DatePicker
+                    multiple
+                    value={blockDates.map(d => d.date)}
+                    onChange={handleDatesChange}
+                    format="YYYY-MM-DD"
+                    placeholder="Pick one or more dates"
+                    style={{
+                      borderRadius: '0.375rem', // optional for rounded corners
+                      padding: '16px',
+                      fontSize: '14px',
+                    }}
+                  />
+
+                </div>
               </div>
-              {/* Rows */}
-              <div className='mt-4 flex flex-col gap-3'>
-                {blockDates.map((item, index) => (
-                  <div key={item.date} className='flex items-center gap-3 rounded-md border p-3'>
-                    <span className='w-32'>{item.date}</span>
 
-                    <Input
-                      type='time'
-                      value={item.startTime}
-                      onChange={e => updateTime(index, 'startTime', e.target.value)}
-                      className='w-32'
-                    />
+              {/* Selected Dates */}
+              {blockDates.length > 0 && (
+                <div className="space-y-3">
+                  <Label>Blocked Time Ranges</Label>
 
-                    <Input
-                      type='time'
-                      value={item.endTime}
-                      onChange={e => updateTime(index, 'endTime', e.target.value)}
-                      className='w-32'
-                    />
+                  <div className="space-y-3">
+                    {blockDates.map((item, index) => (
+                      <div
+                        key={item.date}
+                        className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 rounded-md border p-4"
+                      >
+                        {/* Date */}
+                        <div className="font-medium">
+                          {dayjs(item.date).format('ddd, MMM D')}
+                        </div>
+
+                        {/* Start */}
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">Start</span>
+                          <Input
+                            type="time"
+                            value={item.startTime}
+                            onChange={e => updateTime(index, 'startTime', e.target.value)}
+                          />
+                        </div>
+
+                        {/* End */}
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">End</span>
+                          <Input
+                            type="time"
+                            value={item.endTime}
+                            onChange={e => updateTime(index, 'endTime', e.target.value)}
+                          />
+                        </div>
+
+                        {/* Remove */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setBlockDates(prev => prev.filter((_, i) => i !== index))
+                          }
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              <Button className='mt-4' onClick={() => setBlockDates([])}>
-                Clear dates
-              </Button>
+                  {/* Clear all */}
+                  <Button
+                    variant="outline"
+                    className="w-fit"
+                    onClick={() => setBlockDates([])}
+                  >
+                    Clear all blocked dates
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
-          <div className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='title'>Event Title *</Label>
-              <Input
-                id='title'
-                value={formData.title || ''}
-                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder='Enter event title...'
-                className={errors.title ? 'border-destructive' : ''}
-              />
-              {errors.title && (
-                <p className='text-destructive flex items-center gap-1 text-sm'>
-                  <AlertCircle className='h-3 w-3' />
-                  {errors.title}
-                </p>
+
+          {selectedEventType?.value === 'BOOKING' && (
+            <div className="space-y-4">
+              {/* Start / End */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Start Time</Label>
+                  <Input
+                    type="datetime-local"
+                    value={bookingStart}
+                    onChange={e => setBookingStart(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>End Time</Label>
+                  <Input
+                    type="datetime-local"
+                    value={bookingEnd}
+                    onChange={e => setBookingEnd(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Session Type */}
+              <div className="space-y-2">
+                <Label>Session Type</Label>
+                <Select
+                  value={rateKey}
+                  onValueChange={(v) => setRateKey(v as RateKey)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select session type" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="private_online_rate">
+                      Private Online (KES {rates?.private_online_rate}/hr)
+                    </SelectItem>
+
+                    <SelectItem value="private_inperson_rate">
+                      Private In-person (KES {rates?.private_inperson_rate}/hr)
+                    </SelectItem>
+
+                    <SelectItem value="group_online_rate">
+                      Group Online (KES {rates?.group_online_rate}/hr)
+                    </SelectItem>
+
+                    <SelectItem value="group_inperson_rate">
+                      Group In-person (KES {rates?.group_inperson_rate}/hr)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+              </div>
+
+              {/* Purpose */}
+              <div className="space-y-2">
+                <Label>Purpose</Label>
+                <Input
+                  value={purpose}
+                  onChange={e => setPurpose(e.target.value)}
+                  placeholder="What is this session for?"
+                />
+              </div>
+
+              {/* Price */}
+              {computedPrice && (
+                <div className="rounded-md bg-muted p-3 text-sm">
+                  Total: <strong>{computedPrice} {studentBookingData?.rates?.currency}</strong>
+                </div>
               )}
             </div>
+          )}
 
-            <div className='space-y-2'>
-              <Label htmlFor='description'>Description</Label>
-              <Textarea
-                id='description'
-                value={formData.description || ''}
-                onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder='Add a description...'
-                rows={3}
-              />
+          {selectedEventType?.value !== 'BLOCKED' && selectedEventType?.value !== "BOOKING" && (
+            <div className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='title'>Event Title *</Label>
+                <Input
+                  id='title'
+                  value={formData.title || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder='Enter event title...'
+                  className={errors.title ? 'border-destructive' : ''}
+                />
+                {errors.title && (
+                  <p className='text-destructive flex items-center gap-1 text-sm'>
+                    <AlertCircle className='h-3 w-3' />
+                    {errors.title}
+                  </p>
+                )}
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='description'>Description</Label>
+                <Textarea
+                  id='description'
+                  value={formData.description || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder='Add a description...'
+                  rows={3}
+                />
+              </div>
             </div>
+          )}
 
-            <Separator />
-          </div>
-
-          {selectedEventType?.value !== 'BLOCKED' && (
+          {selectedEventType?.value !== 'BLOCKED' && selectedEventType?.value !== "BOOKING" && (
             <div className='space-y-4'>
               <h4 className='flex items-center gap-2 font-medium'>
                 <Clock className='h-4 w-4' />
@@ -547,7 +758,6 @@ export function EventModal({
               </div>
             </div>
           )}
-          {/* Date & Time */}
 
           {/* Additional Details */}
           {selectedEventType?.value === 'SCHEDULED_INSTANCE' && (
@@ -657,6 +867,10 @@ export function EventModal({
 
             {selectedEventType?.value === 'SCHEDULED_INSTANCE' && (
               <Button onClick={handleSave}>{event ? 'Save Changes' : 'Schedeule Class'}</Button>
+            )}
+
+            {selectedEventType?.value === 'BOOKING' && (
+              <Button onClick={handleSave}>{event ? 'Cancel Booking' : 'Create Booking'}</Button>
             )}
           </div>
         </DialogFooter>

@@ -2,7 +2,7 @@ export type CalendarEvent = {
   id: string;
   title: string;
   description?: string;
-  entry_type?: 'BLOCKED' | 'AVAILABILITY' | 'SCHEDULED_INSTANCE';
+  entry_type?: 'BLOCKED' | 'AVAILABILITY' | 'SCHEDULED_INSTANCE' | 'BOOKING';
   startTime: string; // HH:mm
   endTime: string; // HH:mm
   startDateTime: string; // ISO YYYY-MM-DDTHH:mm:ss

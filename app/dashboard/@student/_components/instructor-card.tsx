@@ -10,7 +10,7 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { Briefcase, Building, MapPin, Star, Users, Video } from 'lucide-react';
+import { Briefcase, Building, MapPin, Star, Users } from 'lucide-react';
 import { InstructorSkillCard } from '../../@instructor/profile/skills/_component/instructor-skill-card';
 
 type Props = {
@@ -52,6 +52,15 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
   const matchedCourse = appliedCourses?.data?.content?.find(
     course => course.course_uuid === courseId
   );
+
+  const rateCard = matchedCourse?.rate_card;
+
+  const rates = rateCard
+    ? Object.values(rateCard).filter(value => typeof value === 'number')
+    : [];
+
+  const minRate = rates.length ? Math.min(...rates) : null;
+  const maxRate = rates.length ? Math.max(...rates) : null;
 
   return (
     <Card className='min-w-[300px] overflow-hidden transition-shadow hover:shadow-lg sm:min-w-[320px]'>
@@ -109,7 +118,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
             <div className='text-muted-foreground flex items-center gap-1'>
               <MapPin className='h-4 w-4' />
               <span>{'Laos'}</span>
-              {/* <span>{instructor.location.city || "LOCATION"}</span> */}
+              <span>{instructor?.formatted_location || "LOCATION"}</span>
             </div>
           )}
           {/* {instructor.mode.includes('online') && (
@@ -118,14 +127,14 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
                             Online
                         </Badge>
                     )} */}
-          <Badge variant='secondary' className='gap-1'>
+          {/* <Badge variant='secondary' className='gap-1'>
             <Video className='h-3 w-3' />
             Online
-          </Badge>
+          </Badge> */}
         </div>
 
         {/* Specializations */}
-        <div className='flex min-h-6 w-full flex-wrap gap-2'>
+        <div className='flex min-h-6 w-full flex-wrap h-12'>
           {skillNames?.length > 0 ? (
             <>
               {skillNames.slice(0, 3).map((spec, index) => (
@@ -168,14 +177,13 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
             <div>
               <p className='text-muted-foreground text-sm'>Starting from</p>
 
-              {matchedCourse ? (
-                <p className='text-lg'>
-                  KES {matchedCourse.rate_card?.private_online_rate ?? 'N/A'} -{' '}
-                  {matchedCourse.rate_card?.private_inperson_rate ?? 'N/A'}
-                  <span className='text-muted-foreground text-sm'>/hour</span>
+              {matchedCourse && minRate !== null ? (
+                <p className="text-lg">
+                  KES {minRate} - {maxRate}
+                  <span className="text-muted-foreground text-sm">/hour</span>
                 </p>
               ) : (
-                <p className='text-muted-foreground text-sm'>Hourly rate not available</p>
+                <p className="text-muted-foreground text-sm">Hourly rate not available</p>
               )}
             </div>
 
