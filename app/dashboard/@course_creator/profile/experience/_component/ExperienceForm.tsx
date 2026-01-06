@@ -25,7 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
 import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -34,6 +34,7 @@ import {
 } from '../../../../../../services/client';
 import {
   addCourseCreatorExperienceMutation,
+  getCourseCreatorExperienceOptions,
   updateCourseCreatorExperienceMutation,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
 import { zCourseCreatorExperience } from '../../../../../../services/client/zod.gen';
@@ -78,7 +79,12 @@ export default function ProfessionalExperienceSettings() {
   const { courseCreator, invalidateQuery } = user!;
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
-  const courseCreatorExperience = courseCreator?.experience as CourseCreatorExperience[];
+  const { data } = useQuery({
+    ...getCourseCreatorExperienceOptions({ query: { pageable: {} }, path: { courseCreatorUuid: courseCreator?.uuid as string } }),
+    enabled: !!courseCreator?.uuid
+  })
+
+  const courseCreatorExperience = data?.data?.content || [];
 
   const defaultExperience: ExperienceType = {
     organization_name: 'Google',

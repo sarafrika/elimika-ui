@@ -36,10 +36,11 @@ import type { CourseCreatorEducation } from '@/services/api/schema';
 import { deleteCourseCreatorEducation } from '@/services/client';
 import {
   addCourseCreatorEducationMutation,
+  getCourseCreatorEducationOptions,
   updateCourseCreatorEducationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zCourseCreatorEducation } from '@/services/client/zod.gen';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -63,10 +64,27 @@ const edSchema = zCourseCreatorEducation
     z.object({
       uuid: z.string().optional(),
       field_of_study: z.string(),
-      year_started: z.string(),
+      year_started: z.string().min(4, 'Start year is required'),
       year_completed: z.string().optional(),
+      is_recent_qualification: z.boolean(),
     })
-  );
+  )
+  .refine(
+    (data) => {
+      if (data.is_recent_qualification) return true
+      if (!data.year_completed) return true
+
+      const start = Number(data.year_started)
+      const end = Number(data.year_completed)
+
+      return !Number.isNaN(start) && !Number.isNaN(end) && end >= start
+    },
+    {
+      path: ['year_completed'],
+      message: 'End year must be the same as or after the start year',
+    }
+  )
+
 
 const educationSchema = z.object({
   educations: z.array(edSchema),
@@ -94,9 +112,12 @@ export default function EducationSettings() {
   const { courseCreator, invalidateQuery } = user!;
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
-  const courseCreatorEducation =
-    courseCreator?.educations ??
-    ([] as Omit<CourseCreatorEducation, 'created_date' | 'updated_date'>[]);
+  const { data } = useQuery({
+    ...getCourseCreatorEducationOptions({ query: { pageable: {} }, path: { courseCreatorUuid: courseCreator?.uuid as string } }),
+    enabled: !!courseCreator?.uuid
+  })
+
+  const courseCreatorEducation = data?.data?.content || []
 
   const defaultEducation: EdType = {
     school_name: '',
@@ -212,6 +233,9 @@ export default function EducationSettings() {
     if (!endYear) return `${startYear}`;
     return `${startYear} - ${endYear}`;
   };
+
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 70 }, (_, i) => currentYear - i)
 
   const domainBadges =
     // @ts-expect-error
@@ -393,56 +417,111 @@ export default function EducationSettings() {
                       />
                     </div>
 
-                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      {/* ================= START YEAR ================= */}
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_started`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Start year</FormLabel>
-                            <FormControl>
-                              <Input type='number' placeholder='YYYY' {...field} />
-                            </FormControl>
+
+                            <div className="flex gap-2">
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="YYYY"
+                                  value={field.value ?? ""}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                />
+                              </FormControl>
+
+                              <Select
+                                value={field.value?.toString()}
+                                onValueChange={field.onChange}
+                              >
+                                <SelectTrigger className="w-[110px]">
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {years.map((year) => (
+                                    <SelectItem key={year} value={year.toString()}>
+                                      {year}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
+                      {/* ================= END YEAR ================= */}
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_completed`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>End year</FormLabel>
-                            <FormControl>
-                              <Input
-                                type='number'
-                                placeholder='YYYY'
-                                disabled={form.watch(`educations.${index}.is_complete`)}
-                                {...field}
-                              />
-                            </FormControl>
-                            <div className='mt-2'>
-                              <FormField
-                                control={form.control}
-                                name={`educations.${index}.is_recent_qualification`}
-                                render={({ field }) => (
-                                  <FormItem className='flex flex-row items-center space-x-2'>
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className='font-normal'>
-                                      Currently studying here
-                                    </FormLabel>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const isDisabled = form.watch(`educations.${index}.is_complete`)
+
+                          return (
+                            <FormItem>
+                              <FormLabel>End year</FormLabel>
+
+                              <div className="flex gap-2">
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    placeholder="YYYY"
+                                    disabled={isDisabled}
+                                    value={field.value ?? ""}
+                                    onChange={(e) => field.onChange(e.target.value)}
+                                  />
+                                </FormControl>
+
+                                <Select
+                                  disabled={isDisabled}
+                                  value={field.value?.toString()}
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger className="w-[110px]">
+                                    <SelectValue placeholder="Select" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {years.map((year) => (
+                                      <SelectItem key={year} value={year.toString()}>
+                                        {year}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="mt-2">
+                                <FormField
+                                  control={form.control}
+                                  name={`educations.${index}.is_recent_qualification`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center space-x-2">
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value}
+                                          onCheckedChange={field.onChange}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal">
+                                        Currently studying here
+                                      </FormLabel>
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              <FormMessage />
+                            </FormItem>
+                          )
+                        }}
                       />
                     </div>
 
