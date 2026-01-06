@@ -29,20 +29,21 @@ import { useUserProfile } from '@/context/profile-context';
 import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
 import {
   deleteCourseCreatorMembership,
   type CourseCreatorProfessionalMembership,
-} from '../../../../../../services/client';
+} from '@/services/client';
 import {
   addCourseCreatorMembershipMutation,
   getCourseCreatorMembershipsOptions,
+  getCourseCreatorMembershipsQueryKey,
   updateCourseCreatorMembershipMutation,
-} from '../../../../../../services/client/@tanstack/react-query.gen';
-import { zCourseCreatorProfessionalMembership } from '../../../../../../services/client/zod.gen';
+} from '@/services/client/@tanstack/react-query.gen';
+import { zCourseCreatorProfessionalMembership } from '@/services/client/zod.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const CourseCreatorMembershipSchema = zCourseCreatorProfessionalMembership
   .omit({
@@ -66,6 +67,7 @@ type ProfessionalMembershipFormValues = z.infer<typeof professionalMembershipSch
 
 export default function ProfessionalBodySettings() {
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const qc = useQueryClient()
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -147,6 +149,12 @@ export default function ProfessionalBodySettings() {
             start_date: new Date(memData.start_date),
             end_date: new Date(memData.end_date),
           },
+        }, {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getCourseCreatorMembershipsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+            });
+          }
         });
       } else {
         const resp = await addMemMutation.mutateAsync({
@@ -158,6 +166,12 @@ export default function ProfessionalBodySettings() {
             start_date: new Date(memData.start_date),
             end_date: new Date(memData.end_date),
           },
+        }, {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getCourseCreatorMembershipsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+            });
+          }
         });
 
         if (!resp.error && resp.data) {
@@ -207,6 +221,9 @@ export default function ProfessionalBodySettings() {
     }
 
     await invalidateQuery?.();
+    qc.invalidateQueries({
+      queryKey: getCourseCreatorMembershipsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+    });
     toast('Membership removed successfully');
   }
 
@@ -266,7 +283,7 @@ export default function ProfessionalBodySettings() {
                     title={mem.organization_name || 'Organization name not specified'}
                     subtitle={`Membership No: ${mem.membership_number}`}
                     description={mem.summary}
-                    badge={mem.is_active ? 'Active' : undefined}
+                    badge={mem.status_label === "Inactive" ? 'Inctive' : "Active"}
                     dateRange={formatDateRange(mem.start_date, mem.end_date, mem.is_active)}
                   />
                 ))}

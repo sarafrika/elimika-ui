@@ -30,7 +30,7 @@ import { useUserProfile } from '@/context/profile-context';
 import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -41,6 +41,7 @@ import {
 import {
   addCourseCreatorCertificationMutation,
   getCourseCreatorCertificationsOptions,
+  getCourseCreatorCertificationsQueryKey,
   updateCourseCreatorCertificationMutation,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
 import { zCourseCreatorCertification } from '../../../../../../services/client/zod.gen';
@@ -69,6 +70,7 @@ type CertificationsFormValues = z.infer<typeof certificationsSchema>;
 
 export default function CertificatesSettings() {
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const qc = useQueryClient()
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -151,6 +153,12 @@ export default function CertificatesSettings() {
             issued_date: certData.issued_date ? new Date(certData.issued_date) : undefined,
             expiry_date: certData.expiry_date ? new Date(certData.expiry_date) : undefined,
           },
+        }, {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getCourseCreatorCertificationsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+            });
+          }
         });
       } else {
         const resp = await addCertMutation.mutateAsync({
@@ -162,6 +170,12 @@ export default function CertificatesSettings() {
             issued_date: certData.issued_date ? new Date(certData.issued_date) : undefined,
             expiry_date: certData.expiry_date ? new Date(certData.expiry_date) : undefined,
           },
+        }, {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getCourseCreatorCertificationsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+            });
+          }
         });
 
         if (resp.data) {
@@ -209,6 +223,9 @@ export default function CertificatesSettings() {
     }
 
     await invalidateQuery?.();
+    qc.invalidateQueries({
+      queryKey: getCourseCreatorCertificationsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+    });
     toast('Certification removed successfully');
   }
 
