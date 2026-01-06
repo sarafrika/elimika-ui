@@ -311,8 +311,6 @@ export const ManageBookings: React.FC<Props> = ({
     );
   };
 
-  console.log(bookings, "BOOKINGS")
-
   return (
     <div className='space-y-6'>
       {bookings?.length === 0 ? (
