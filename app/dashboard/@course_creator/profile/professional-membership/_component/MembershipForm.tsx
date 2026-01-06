@@ -25,11 +25,11 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -39,6 +39,7 @@ import {
 } from '../../../../../../services/client';
 import {
   addCourseCreatorMembershipMutation,
+  getCourseCreatorMembershipsOptions,
   updateCourseCreatorMembershipMutation,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
 import { zCourseCreatorProfessionalMembership } from '../../../../../../services/client/zod.gen';
@@ -82,10 +83,12 @@ export default function ProfessionalBodySettings() {
   const { courseCreator, invalidateQuery } = user!;
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
-  const courseCreatorMembership = courseCreator?.membership as Omit<
-    CourseCreatorProfessionalMembership,
-    'created_date' | 'updated_date' | 'created_by'
-  >[];
+  const { data } = useQuery({
+    ...getCourseCreatorMembershipsOptions({ query: { pageable: {} }, path: { courseCreatorUuid: courseCreator?.uuid as string } }),
+    enabled: !!courseCreator?.uuid
+  })
+
+  const courseCreatorMembership = data?.data?.content || [];
 
   const defaultMemebership: CourseCreatorMembershipType = {
     organization_name: 'Tech Experts Inc.',
@@ -109,7 +112,7 @@ export default function ProfessionalBodySettings() {
     resolver: zodResolver(professionalMembershipSchema),
     defaultValues: {
       professional_bodies:
-        courseCreatorMembership.length > 0
+        courseCreatorMembership?.length > 0
           ? courseCreatorMembership.map(passMember)
           : [defaultMemebership],
     },

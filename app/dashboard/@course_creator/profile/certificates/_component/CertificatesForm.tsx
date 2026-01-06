@@ -26,11 +26,11 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -40,6 +40,7 @@ import {
 } from '../../../../../../services/client';
 import {
   addCourseCreatorCertificationMutation,
+  getCourseCreatorCertificationsOptions,
   updateCourseCreatorCertificationMutation,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
 import { zCourseCreatorCertification } from '../../../../../../services/client/zod.gen';
@@ -85,10 +86,13 @@ export default function CertificatesSettings() {
   const { courseCreator, invalidateQuery } = user!;
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
-  const courseCreatorCertifications = courseCreator?.certifications as Omit<
-    CourseCreatorCertification,
-    'created_date' | 'updated_date' | 'created_by' | 'updated_by'
-  >[];
+
+  const { data } = useQuery({
+    ...getCourseCreatorCertificationsOptions({ query: { pageable: {} }, path: { courseCreatorUuid: courseCreator?.uuid as string } }),
+    enabled: !!courseCreator?.uuid
+  })
+
+  const courseCreatorCertifications = data?.data?.content || [];
 
   const defaultCertification: CertificationType = {
     certification_name: '',

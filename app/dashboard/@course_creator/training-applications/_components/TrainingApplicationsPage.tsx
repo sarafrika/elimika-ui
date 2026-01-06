@@ -20,6 +20,8 @@ import { elimikaDesignSystem } from '@/lib/design-system';
 import type { CourseTrainingApplication } from '@/services/client';
 import {
   decideOnTrainingApplicationMutation,
+  getInstructorByUuidOptions,
+  getOrganisationByUuidOptions,
   searchTrainingApplicationsOptions,
   searchTrainingApplicationsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -423,6 +425,19 @@ function ApplicationCard({
   const isPending = application.status?.toLowerCase() === 'pending';
   const isApproved = application.status?.toLowerCase() === 'approved';
 
+  const applicantUuid = application.applicant_uuid
+  const applicationType = application.applicant_type
+
+  const { data: instructor } = useQuery({
+    ...getInstructorByUuidOptions({ path: { uuid: applicantUuid as string } }),
+    enabled: applicationType === "instructor" && !!applicantUuid
+  })
+
+  const { data: organisation } = useQuery({
+    ...getOrganisationByUuidOptions({ path: { uuid: applicantUuid as string } }),
+    enabled: applicationType === "organisation" && !!applicantUuid
+  })
+
   return (
     <div className={elimikaDesignSystem.components.listCard.base}>
       <div className='mb-4 flex items-start justify-between'>
@@ -435,9 +450,17 @@ function ApplicationCard({
             )}
           </div>
           <div className='min-w-0 flex-1'>
-            <h3 className='text-foreground truncate font-semibold'>
-              {application.applicant_name || 'Unknown'}
-            </h3>
+            {application.applicant_type?.toLowerCase() === 'instructor' ? (
+              <h3 className='text-foreground truncate font-semibold'>
+                {/* @ts-ignore */}
+                {instructor?.data?.full_name || 'Unknown'}
+              </h3>) : (
+              <h3 className='text-foreground truncate font-semibold'>
+                {/* @ts-ignore */}
+                {organisation?.data?.full_name || 'Unknown'}
+              </h3>)}
+
+
             <Badge variant='outline' className='mt-1 text-xs'>
               {application.applicant_type || 'Unknown'}
             </Badge>
