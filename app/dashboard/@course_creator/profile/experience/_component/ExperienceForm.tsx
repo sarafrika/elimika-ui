@@ -25,7 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
 import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -35,6 +35,7 @@ import {
 import {
   addCourseCreatorExperienceMutation,
   getCourseCreatorExperienceOptions,
+  getCourseCreatorExperienceQueryKey,
   updateCourseCreatorExperienceMutation,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
 import { zCourseCreatorExperience } from '../../../../../../services/client/zod.gen';
@@ -75,6 +76,7 @@ export default function ProfessionalExperienceSettings() {
     ]);
   }, [replaceBreadcrumbs]);
 
+  const qc = useQueryClient()
   const user = useUserProfile();
   const { courseCreator, invalidateQuery } = user!;
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
@@ -150,6 +152,12 @@ export default function ProfessionalExperienceSettings() {
             start_date: new Date(expData.start_date),
             end_date: new Date(expData.end_date),
           },
+        }, {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getCourseCreatorExperienceQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+            });
+          }
         });
       } else {
         const resp = await addExpMutation.mutateAsync({
@@ -161,6 +169,12 @@ export default function ProfessionalExperienceSettings() {
             start_date: new Date(expData.start_date),
             end_date: new Date(expData.end_date),
           },
+        }, {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getCourseCreatorExperienceQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+            });
+          }
         });
 
         if (resp.data) {
@@ -208,6 +222,9 @@ export default function ProfessionalExperienceSettings() {
     }
 
     await invalidateQuery?.();
+    qc.invalidateQueries({
+      queryKey: getCourseCreatorExperienceQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+    });
     toast('Experience removed successfully');
   }
 

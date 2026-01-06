@@ -37,10 +37,11 @@ import { deleteCourseCreatorEducation } from '@/services/client';
 import {
   addCourseCreatorEducationMutation,
   getCourseCreatorEducationOptions,
+  getCourseCreatorEducationQueryKey,
   updateCourseCreatorEducationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zCourseCreatorEducation } from '@/services/client/zod.gen';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -94,6 +95,7 @@ type EducationFormValues = z.infer<typeof educationSchema>;
 type EdType = z.infer<typeof edSchema>;
 
 export default function EducationSettings() {
+  const qc = useQueryClient()
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -179,14 +181,24 @@ export default function EducationSettings() {
             ...options.path,
             educationUuid: ed.uuid,
           },
+        }, {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getCourseCreatorEducationQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+            });
+          }
         });
       }
     }
 
     await invalidateQuery?.();
+    qc.invalidateQueries({
+      queryKey: getCourseCreatorEducationQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+    });
     toast.success('Education updated successfully');
     disableEditing();
   };
+
 
   const handleSubmit = (data: EducationFormValues) => {
     requestConfirmation({
@@ -194,7 +206,7 @@ export default function EducationSettings() {
       description: 'This refreshes your academic history for organizations and learners.',
       confirmLabel: 'Save education',
       cancelLabel: 'Keep editing',
-      onConfirm: () => saveEducations(data),
+      onConfirm: () => saveEducations(data)
     });
   };
 
@@ -220,6 +232,9 @@ export default function EducationSettings() {
     }
 
     await invalidateQuery?.();
+    qc.invalidateQueries({
+      queryKey: getCourseCreatorEducationQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+    });
     toast('Education removed successfully');
   }
 
@@ -276,7 +291,7 @@ export default function EducationSettings() {
                 {courseCreatorEducation?.map(edu => (
                   <ProfileViewListItem
                     key={edu.uuid}
-                    title={`${edu.qualification} in ${edu.field_of_study}`}
+                    title={`${edu.qualification} in ${edu.field_of_study ?? "--"}`}
                     subtitle={edu.school_name}
                     description={edu.full_description}
                     badge={edu.is_recent_qualification ? 'Current' : undefined}
@@ -285,6 +300,7 @@ export default function EducationSettings() {
                       edu.year_completed,
                       edu.is_recent_qualification
                     )}
+                    year_completed={edu.year_completed}
                   >
                     {edu.certificate_number && (
                       <div className='text-muted-foreground mt-2 text-xs'>

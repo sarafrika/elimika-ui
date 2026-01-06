@@ -23,7 +23,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { CheckCircle2, Globe, Mail, MapPin, Pencil, ShieldAlert, Sparkles } from 'lucide-react';
+import { CheckCircle2, Globe, Mail, MapPin, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
 function toDate(value?: Date | string | null) {
@@ -38,6 +38,7 @@ export default function CourseCreatorProfilePage() {
   const { data: educationData } = useQuery({
     ...getCourseCreatorEducationOptions({
       path: { courseCreatorUuid: profile?.uuid as string },
+      query: { pageable: {} }
     }),
     enabled: !!profile?.uuid,
   });
@@ -45,6 +46,7 @@ export default function CourseCreatorProfilePage() {
   const { data: experienceData } = useQuery({
     ...getCourseCreatorExperienceOptions({
       path: { courseCreatorUuid: profile?.uuid as string },
+      query: { pageable: {} }
     }),
     enabled: !!profile?.uuid,
   });
@@ -52,6 +54,7 @@ export default function CourseCreatorProfilePage() {
   const { data: certificationsData } = useQuery({
     ...getCourseCreatorCertificationsOptions({
       path: { courseCreatorUuid: profile?.uuid as string },
+      query: { pageable: {} }
     }),
     enabled: !!profile?.uuid,
   });
@@ -59,6 +62,7 @@ export default function CourseCreatorProfilePage() {
   const { data: membershipsData } = useQuery({
     ...getCourseCreatorMembershipsOptions({
       path: { courseCreatorUuid: profile?.uuid as string },
+      query: { pageable: {} }
     }),
     enabled: !!profile?.uuid,
   });
@@ -94,6 +98,7 @@ export default function CourseCreatorProfilePage() {
   const experiences = experienceData?.data?.content || [];
   const certifications: CourseCreatorCertification[] = certificationsData?.data?.content || [];
   const memberships: CourseCreatorProfessionalMembership[] = membershipsData?.data?.content || [];
+
 
   const sections: ProfileSummarySection[] = [
     {
@@ -228,11 +233,11 @@ export default function CourseCreatorProfilePage() {
               key={education.uuid ?? `${education.institution}-${index}`}
               className='border-border/50 rounded-lg border p-3'
             >
-              <p className='font-medium'>{education.degree}</p>
-              <p className='text-muted-foreground text-sm'>{education.institution}</p>
-              {education.graduation_date ? (
+              <p className='font-medium'>Degree: {education.qualification}</p>
+              <p className='text-muted-foreground text-sm'>{education.school_name}</p>
+              {education.year_completed ? (
                 <p className='text-muted-foreground text-xs'>
-                  Graduated: {format(new Date(education.graduation_date), 'MMM yyyy')}
+                  Graduated: {education.year_completed}
                 </p>
               ) : null}
             </div>
@@ -248,6 +253,24 @@ export default function CourseCreatorProfilePage() {
     });
   }
 
+  const formatDate = (dateString: string): string => {
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short' };
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, options); // e.g., "Jan 2020"
+  };
+
+  const renderTenure = (tenureLabel?: string) => {
+    if (!tenureLabel) return null;
+
+    const dates = tenureLabel.split(' - ');
+    if (dates.length !== 2) return tenureLabel;
+
+    const [start, end] = dates;
+    // @ts-ignore
+    return `${formatDate(start)} – ${formatDate(end)}`;
+  };
+
+
   // Add Experience section
   if (experiences.length > 0) {
     sections.push({
@@ -260,20 +283,21 @@ export default function CourseCreatorProfilePage() {
             const end = toDate(exp.end_date);
             const range =
               start || end
-                ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${
-                    exp.currently_working ? 'Present' : end ? format(end, 'MMM yyyy') : 'End?'
-                  }`
+                ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${exp.currently_working ? 'Present' : end ? format(end, 'MMM yyyy') : 'End?'
+                }`
                 : null;
             return (
               <div
                 key={exp.uuid ?? `${exp.company_name}-${index}`}
                 className='border-border/50 rounded-lg border p-3'
               >
-                <p className='font-medium'>{exp.job_title}</p>
-                <p className='text-muted-foreground text-sm'>{exp.company_name}</p>
-                {range ? <p className='text-muted-foreground text-xs'>{range}</p> : null}
-                {exp.description ? (
-                  <p className='text-muted-foreground mt-2 text-sm'>{exp.description}</p>
+                <p className='font-medium'>{exp.position}</p>
+                <p className='text-muted-foreground text-sm'>{exp.organization_name}</p>
+                <p className="text-muted-foreground text-xs">
+                  {renderTenure(exp.tenure_label)}
+                </p>
+                {exp.responsibilities ? (
+                  <p className='text-muted-foreground mt-2 text-sm'>{exp.responsibilities}</p>
                 ) : null}
               </div>
             );
@@ -338,16 +362,30 @@ export default function CourseCreatorProfilePage() {
             const end = toDate(membership.end_date);
             const range =
               start || end
-                ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${
-                    membership.is_active || !end ? 'Present' : format(end, 'MMM yyyy')
-                  }`
+                ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${membership.is_active || !end ? 'Present' : format(end, 'MMM yyyy')
+                }`
                 : null;
+
+            const badgeClass =
+              membership.status_label === 'Active'
+                ? 'bg-green-100 text-green-800'
+                : 'bg-gray-200 text-gray-700';
+
+            const badgeText = membership.status_label === 'Active' ? 'Active' : 'Inactive';
+
             return (
               <div
                 key={membership.uuid ?? `${membership.organization_name}-${index}`}
-                className='border-border/50 rounded-lg border p-3'
+                className='border-border/50 rounded-lg border p-3 flex flex-col gap-1'
               >
-                <p className='font-medium'>{membership.organization_name}</p>
+                <div className='flex flex-row items-center gap-4 ' >
+                  <p className='font-medium'>{membership.organization_name}</p>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${badgeClass}`}
+                  >
+                    {badgeText}
+                  </span>
+                </div>
                 {membership.membership_number ? (
                   <p className='text-muted-foreground text-xs'>
                     Membership #{membership.membership_number}
