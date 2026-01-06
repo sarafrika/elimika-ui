@@ -111,7 +111,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const shareToSocial = (platform: string) => {
@@ -225,11 +225,10 @@ export default function ClassPreviewPage() {
                 key={id}
                 size='lg'
                 onClick={() => setActiveTab(id)}
-                className={`flex w-full items-center justify-start gap-3 rounded-lg text-sm transition-colors ${
-                  activeTab === id
+                className={`flex w-full items-center justify-start gap-3 rounded-lg text-sm transition-colors ${activeTab === id
                     ? 'bg-card text-foreground font-medium'
                     : 'hover:bg-muted/70 text-muted-foreground'
-                }`}
+                  }`}
               >
                 <div className='flex items-center justify-center rounded-lg'>
                   <Icon className='size-4' />
@@ -336,9 +335,8 @@ export default function ClassPreviewPage() {
                             }
                           );
                         }}
-                        className={`rounded-lg px-3 py-1 text-xs ${
-                          isPresent ? 'text-muted-foreground' : 'text-text-muted-foreground'
-                        }`}
+                        className={`rounded-lg px-3 py-1 text-xs ${isPresent ? 'text-muted-foreground' : 'text-text-muted-foreground'
+                          }`}
                       >
                         {isPresent ? 'Present' : 'Mark Present'}
                       </button>

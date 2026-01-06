@@ -165,6 +165,19 @@ export const InstructorDirectory: React.FC<Props> = ({
     }
 
     return true;
+  })?.sort((a, b) => {
+    if (b.rating !== a.rating) {
+      return b.rating - a.rating;
+    }
+
+    if (b.total_experience_years !== a.total_experience_years) {
+      return b.total_experience_years - a.total_experience_years;
+    }
+
+    const aSpecs = a.specializations?.length ?? 0;
+    const bSpecs = b.specializations?.length ?? 0;
+
+    return bSpecs - aSpecs;
   });
 
   const clearFilters = () => {
@@ -208,7 +221,7 @@ export const InstructorDirectory: React.FC<Props> = ({
             <div className='w-60 flex-shrink-0 space-y-4 xl:w-80'>
               <Card className='space-y-6 p-4'>
                 <div className='flex items-center justify-between'>
-                  <h3 onClick={() => {}} className='flex items-center gap-2'>
+                  <h3 onClick={() => { }} className='flex items-center gap-2'>
                     <Filter className='h-4 w-4' />
                     Filters
                   </h3>
@@ -411,42 +424,42 @@ export const InstructorDirectory: React.FC<Props> = ({
               filters.mode.length > 0 ||
               filters.instructorType !== 'all' ||
               filters.minRating > 0) && (
-              <div className='mb-6 flex flex-wrap gap-2'>
-                {filters.specializations.map(spec => (
-                  <Badge key={spec} variant='secondary' className='gap-1'>
-                    {spec}
-                    <X
-                      className='h-3 w-3 cursor-pointer'
-                      onClick={() => toggleSpecialization(spec)}
-                    />
-                  </Badge>
-                ))}
-                {filters.mode.map(mode => (
-                  <Badge key={mode} variant='secondary' className='gap-1'>
-                    {mode}
-                    <X className='h-3 w-3 cursor-pointer' onClick={() => toggleMode(mode)} />
-                  </Badge>
-                ))}
-                {filters.instructorType !== 'all' && (
-                  <Badge variant='secondary' className='gap-1'>
-                    {filters.instructorType}
-                    <X
-                      className='h-3 w-3 cursor-pointer'
-                      onClick={() => setFilters({ ...filters, instructorType: 'all' })}
-                    />
-                  </Badge>
-                )}
-                {filters.minRating > 0 && (
-                  <Badge variant='secondary' className='gap-1'>
-                    {filters.minRating}+ rating
-                    <X
-                      className='h-3 w-3 cursor-pointer'
-                      onClick={() => setFilters({ ...filters, minRating: 0 })}
-                    />
-                  </Badge>
-                )}
-              </div>
-            )}
+                <div className='mb-6 flex flex-wrap gap-2'>
+                  {filters.specializations.map(spec => (
+                    <Badge key={spec} variant='secondary' className='gap-1'>
+                      {spec}
+                      <X
+                        className='h-3 w-3 cursor-pointer'
+                        onClick={() => toggleSpecialization(spec)}
+                      />
+                    </Badge>
+                  ))}
+                  {filters.mode.map(mode => (
+                    <Badge key={mode} variant='secondary' className='gap-1'>
+                      {mode}
+                      <X className='h-3 w-3 cursor-pointer' onClick={() => toggleMode(mode)} />
+                    </Badge>
+                  ))}
+                  {filters.instructorType !== 'all' && (
+                    <Badge variant='secondary' className='gap-1'>
+                      {filters.instructorType}
+                      <X
+                        className='h-3 w-3 cursor-pointer'
+                        onClick={() => setFilters({ ...filters, instructorType: 'all' })}
+                      />
+                    </Badge>
+                  )}
+                  {filters.minRating > 0 && (
+                    <Badge variant='secondary' className='gap-1'>
+                      {filters.minRating}+ rating
+                      <X
+                        className='h-3 w-3 cursor-pointer'
+                        onClick={() => setFilters({ ...filters, minRating: 0 })}
+                      />
+                    </Badge>
+                  )}
+                </div>
+              )}
 
             {/* Instructor Grid */}
             {filteredInstructors?.length === 0 ? (

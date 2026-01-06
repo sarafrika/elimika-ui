@@ -13,12 +13,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
   cancelBookingMutation,
   requestPaymentMutation,
+  submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation } from '@tanstack/react-query';
 import { Calendar, Clock, Eye, Star, X } from 'lucide-react';
@@ -27,6 +27,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCountdown } from '../../../hooks/use-countdown';
 import { BookingDetailsModal } from './booking-details-modal';
+import { FeedbackDialog } from './review-instructor-modal';
 
 // "cancelled" | "expired" | "confirmed" | "payment_required" | "payment_failed"
 export const getStatusColor = (status?: any): string => {
@@ -62,9 +63,16 @@ export const ManageBookings: React.FC<Props> = ({
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [openBookingDetails, setOpenBookingDetails] = useState(false)
+
   const [cancelReason, setCancelReason] = useState('');
-  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [rating, setRating] = useState(0);
+  const [clarityRating, setClarityRating] = useState(0);
+  const [engagementRating, setEngagementRating] = useState(0);
+  const [punctualityRating, setPunctualityRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState('');
+  const [headline, setHeadline] = useState('');
+
 
   const getInstructor = (instructorId: string) => {
     return instructors.find(i => i.uuid === instructorId);
@@ -111,15 +119,35 @@ export const ManageBookings: React.FC<Props> = ({
     );
   };
 
+  const reviewInstructor = useMutation(submitInstructorReviewMutation())
   const handleSubmitFeedback = () => {
     if (!selectedBooking) return;
 
-    toast.success(`Feedback submitted!\nRating: ${feedbackRating}/5\nComment: ${feedbackComment}`);
-
-    setShowFeedbackDialog(false);
-    setSelectedBooking(null);
-    setFeedbackRating(5);
-    setFeedbackComment('');
+    reviewInstructor.mutate({
+      body: {
+        enrollment_uuid: "",
+        instructor_uuid: selectedBooking?.instructor_uuid,
+        student_uuid: selectedBooking?.student_uuid,
+        comments: feedbackComment as string,
+        headline: headline,
+        is_anonymous: false,
+        rating: rating,
+        clarity_rating: clarityRating,
+        engagement_rating: engagementRating,
+        punctuality_rating: punctualityRating,
+      },
+      path: { instructorUuid: selectedBooking?.instructor_uuid }
+    }, {
+      onSuccess: (data) => {
+        toast.success(data?.message);
+        setShowFeedbackDialog(false);
+        setSelectedBooking(null);
+        setFeedbackComment('');
+      },
+      onError: (data) => {
+        toast.error(data?.message);
+      }
+    })
   };
 
   const pastBookings = bookings?.filter(b => {
@@ -252,7 +280,7 @@ export const ManageBookings: React.FC<Props> = ({
             variant='outline'
             size='sm'
             className='w-full gap-2 sm:w-auto'
-            onClick={() => setSelectedBooking(booking)}
+            onClick={() => { setSelectedBooking(booking); setOpenBookingDetails(true) }}
           >
             <Eye className='h-4 w-4' />
             View Details
@@ -264,24 +292,26 @@ export const ManageBookings: React.FC<Props> = ({
             </Button>
           )}
 
-          {booking.status === 'completed' && (
-            <Button
-              variant='outline'
-              size='sm'
-              className='w-full gap-2 sm:w-auto'
-              onClick={() => {
-                setSelectedBooking(booking);
-                setShowFeedbackDialog(true);
-              }}
-            >
-              <Star className='h-4 w-4' />
-              Rate
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-2 sm:w-auto"
+            onClick={() => {
+              setOpenBookingDetails(false);
+              setSelectedBooking(booking);
+              setShowFeedbackDialog(true);
+            }}
+          >
+            <Star className="h-4 w-4" />
+            Rate
+          </Button>
+
         </div>
       </Card>
     );
   };
+
+  console.log(bookings, "BOOKINGS")
 
   return (
     <div className='space-y-6'>
@@ -325,10 +355,10 @@ export const ManageBookings: React.FC<Props> = ({
       )}
 
       {/* Booking Details Dialog */}
-      {selectedBooking && !showCancelDialog && !showFeedbackDialog && (
+      {openBookingDetails && (
         <BookingDetailsModal
           booking={selectedBooking}
-          open={!!selectedBooking}
+          open={openBookingDetails}
           onClose={() => setSelectedBooking(null)}
           instructors={instructors}
         />
@@ -373,60 +403,24 @@ export const ManageBookings: React.FC<Props> = ({
       </Dialog>
 
       {/* Feedback Dialog */}
-      <Dialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rate Your Experience</DialogTitle>
-            <DialogDescription>
-              Help others by sharing your experience with this instructor
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className='space-y-4'>
-            <div>
-              <Label>Rating</Label>
-              <div className='mt-2 flex items-center gap-4'>
-                <Slider
-                  value={[feedbackRating]}
-                  onValueChange={value => setFeedbackRating(value[0] as number)}
-                  max={5}
-                  step={1}
-                  className='flex-1'
-                />
-                <div className='flex items-center gap-1'>
-                  <Star className='h-5 w-5 fill-yellow-500 text-yellow-500' />
-                  <span className='w-8 text-xl'>{feedbackRating}</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <Label>Your Feedback</Label>
-              <Textarea
-                placeholder='Share your experience...'
-                value={feedbackComment}
-                onChange={e => setFeedbackComment(e.target.value)}
-                className='mt-2'
-                rows={4}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setShowFeedbackDialog(false);
-                setFeedbackRating(5);
-                setFeedbackComment('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSubmitFeedback}>Submit Feedback</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <FeedbackDialog
+        open={showFeedbackDialog}
+        onOpenChange={setShowFeedbackDialog}
+        headline={headline}
+        onHeadlineChange={setHeadline}
+        feedback={feedbackComment}
+        onFeedbackChange={setFeedbackComment}
+        rating={rating}
+        onRatingChange={setRating}
+        clarityRating={clarityRating}
+        onClarityRatingChange={setClarityRating}
+        engagementRating={engagementRating}
+        onEngagementRatingChange={setEngagementRating}
+        punctualityRating={punctualityRating}
+        onPunctualityRatingChange={setPunctualityRating}
+        isSubmitting={reviewInstructor.isPending}
+        onSubmit={handleSubmitFeedback}
+      />
     </div>
   );
 };

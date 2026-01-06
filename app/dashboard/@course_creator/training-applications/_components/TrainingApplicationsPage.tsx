@@ -1,12 +1,7 @@
 'use client';
 
-import { elimikaDesignSystem } from '@/lib/design-system';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -15,35 +10,39 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { useCourseCreator } from '@/context/course-creator-context';
-import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { extractPage } from '@/lib/api-helpers';
+import { elimikaDesignSystem } from '@/lib/design-system';
+import type { CourseTrainingApplication } from '@/services/client';
 import {
-  searchTrainingApplicationsOptions,
   decideOnTrainingApplicationMutation,
+  searchTrainingApplicationsOptions,
   searchTrainingApplicationsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { CourseTrainingApplication } from '@/services/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useMemo, useState } from 'react';
 import {
-  Search,
-  Filter,
-  X,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Users,
-  DollarSign,
-  Mail,
+  AlertCircle,
   Building2,
   Calendar,
+  CheckCircle2,
+  Clock,
+  DollarSign,
   FileText,
-  ThumbsUp,
-  ThumbsDown,
+  Filter,
   Loader2,
-  AlertCircle,
+  Search,
+  ThumbsDown,
+  ThumbsUp,
+  Users,
+  X,
+  XCircle
 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const statusOptions = [
@@ -89,7 +88,7 @@ function getStatusIcon(status?: string) {
 }
 
 export default function TrainingApplicationsPage() {
-  const { profile: courseCreatorProfile } = useCourseCreator();
+  const { profile: courseCreator } = useCourseCreator();
   const qc = useQueryClient();
 
   const [statusFilter, setStatusFilter] = useState('');
@@ -105,9 +104,8 @@ export default function TrainingApplicationsPage() {
 
   const applicationsQuery = useQuery({
     ...searchTrainingApplicationsOptions({
-      body: {
-        searchCriteria: [],
-        pageable: { page, size: pageSize },
+      query: {
+        searchParams: {}, pageable: { page, size: pageSize },
       },
     }),
   });
@@ -183,7 +181,7 @@ export default function TrainingApplicationsPage() {
           applicationUuid: selectedApplication.uuid,
         },
         query: { action: reviewAction },
-        body: { action: reviewAction, review_notes: reviewNotes },
+        body: { review_notes: reviewNotes },
       },
       {
         onSuccess: () => {

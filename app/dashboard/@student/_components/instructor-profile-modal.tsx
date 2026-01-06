@@ -8,23 +8,18 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+  CardTitle
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudent } from '@/context/student-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import {
-  createBookingMutation,
   getInstructorCalendarOptions,
   getInstructorReviewsOptions,
-  getStudentBookingsQueryKey,
   listCatalogItemsOptions,
-  searchTrainingApplicationsOptions,
+  searchTrainingApplicationsOptions
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Award,
   BookOpen,
@@ -41,12 +36,12 @@ import {
 import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import {
   AvailabilityData,
   ClassScheduleItem,
   convertToCalendarEvents,
 } from '../../@instructor/availability/components/types';
+import { ReviewCard } from '../../@instructor/reviews/review-card';
 import type { Booking } from '../browse-courses/instructor/page';
 import BookInstructorTimeTableManager from './book-instructor-schedule';
 
@@ -67,8 +62,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({
   const courseId = searchParams.get('courseId');
 
   const [showBooking, setShowBooking] = useState(false);
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
   const [reason, setReason] = useState('');
 
   const { data: timetable } = useQuery({
@@ -136,65 +129,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({
   const [selectedRateKey, setSelectedRateKey] = useState('');
   const [totalAmount, setTotalAmount] = useState(0);
 
-  const calculateHours = (): number => {
-    if (!startTime || !endTime) return 0;
-
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-
-    const diffMs = end.getTime() - start.getTime();
-    if (diffMs <= 0) return 0;
-
-    return diffMs / (1000 * 60 * 60);
-  };
-
-  useEffect(() => {
-    if (!selectedRateKey) {
-      setTotalAmount(0);
-      return;
-    }
-
-    const hours = calculateHours();
-    // @ts-ignore
-    const ratePerHour = matchedCourse?.rate_card[selectedRateKey] || 0;
-
-    setTotalAmount(hours * ratePerHour);
-  }, [startTime, endTime, selectedRateKey]);
-
-  const bookInstructor = useMutation(createBookingMutation());
-  const handleBooking = () => {
-    if (!instructor?.uuid || !student?.uuid || !startTime || !endTime) return;
-
-    const utcStartTime = new Date(startTime).toISOString();
-    const utcEndTime = new Date(endTime).toISOString();
-
-    bookInstructor.mutate(
-      {
-        body: {
-          instructor_uuid: instructor.uuid,
-          student_uuid: student.uuid,
-          start_time: utcStartTime as any,
-          end_time: utcEndTime as any,
-          course_uuid: courseId as string,
-          currency: matchedCourse?.rate_card?.currency || 'KES',
-          price_amount: totalAmount,
-          purpose: reason,
-        },
-      },
-      {
-        onSuccess: (data: any) => {
-          qc.invalidateQueries({
-            queryKey: getStudentBookingsQueryKey({
-              path: { studentUuid: student?.uuid as string },
-              query: { pageable: {} },
-            }),
-          });
-          toast.success('Booking created successfully');
-          setShowBooking(false);
-        },
-      }
-    );
-  };
 
   return (
     <div className='relative mx-auto w-full max-w-7xl self-center overflow-y-auto'>
@@ -270,81 +204,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({
         </div>
 
         {/* Booking Form */}
-        {showBooking && (
-          <Card className='mx-auto mt-6 max-w-md'>
-            <CardHeader>
-              <CardTitle>Book a Time Slot</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='flex flex-col space-y-4'>
-                <div className='flex flex-col sm:flex-row sm:space-x-4'>
-                  <div className='flex flex-col'>
-                    <label className='mb-1'>Start Time</label>
-                    <Input
-                      type='datetime-local'
-                      value={startTime}
-                      onChange={e => setStartTime(e.target.value)}
-                    />
-                  </div>
-                  <div className='mt-4 flex flex-col sm:mt-0'>
-                    <label className='mb-1'>End Time</label>
-                    <Input
-                      type='datetime-local'
-                      value={endTime}
-                      onChange={e => setEndTime(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className='mt-4 flex flex-col'>
-                  <label className='mb-1'>Session Type</label>
-                  <select
-                    className='rounded border p-2'
-                    value={selectedRateKey}
-                    onChange={e => setSelectedRateKey(e.target.value as any)}
-                  >
-                    <option value=''>Select an option</option>
-                    <option value='private_online_rate'>
-                      Private Online ({matchedCourse?.rate_card?.private_online_rate}{' '}
-                      {matchedCourse?.rate_card?.currency}/hr)
-                    </option>
-                    <option value='private_inperson_rate'>
-                      Private In-person ({matchedCourse?.rate_card?.private_inperson_rate}{' '}
-                      {matchedCourse?.rate_card?.currency}/hr)
-                    </option>
-                    <option value='group_online_rate'>
-                      Group Online ({matchedCourse?.rate_card?.group_online_rate}{' '}
-                      {matchedCourse?.rate_card?.currency}/hr)
-                    </option>
-                    <option value='group_inperson_rate'>
-                      Group In-person ({matchedCourse?.rate_card?.group_inperson_rate}{' '}
-                      {matchedCourse?.rate_card?.currency}/hr)
-                    </option>
-                  </select>
-                </div>
-
-                <div className='mt-4 flex flex-col sm:mt-0'>
-                  <label className='mb-1'>Purpose</label>
-                  <Input value={reason} onChange={e => setReason(e.target.value)} />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className='flex flex-row items-center justify-between'>
-              <Button onClick={handleBooking} className='w-full sm:w-auto'>
-                Book
-              </Button>
-
-              <Button
-                onClick={() => setShowBooking(false)}
-                variant={'destructive'}
-                className='bg:destructive w-full sm:w-auto'
-              >
-                Cancel
-              </Button>
-            </CardFooter>
-          </Card>
-        )}
-
         {showBooking && <>
           <BookInstructorTimeTableManager
             availabilityData={availabilityData || []}
@@ -466,57 +325,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
             <TabsContent value='reviews' className='space-y-4'>
               {Array.isArray(instructorReviews) && instructorReviews.length > 0 ? (
                 instructorReviews.map((review: any) => (
-                  <Card key={review.uuid} className='hover:bg-muted/60 transition'>
-                    <CardContent className='flex flex-col gap-3 p-6'>
-                      {/* Reviewer Header */}
-                      <div className='flex items-center gap-4'>
-                        <Avatar className='h-12 w-12'>
-                          <AvatarImage src={review.studentImage} alt={review.studentName} />
-                          <AvatarFallback>
-                            {/* {review.studentName.charAt(0).toUpperCase()} */}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className='flex-1'>
-                          <div className='flex flex-row items-center justify-between'>
-                            <p className='text-foreground font-medium'>
-                              {review?.studentName || 'No name'}
-                            </p>
-                            <div className='flex items-center gap-0.5'>
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-4 w-4 ${i < review.rating
-                                    ? 'fill-yellow-500 text-yellow-500'
-                                    : 'text-muted-foreground'
-                                    }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-                            <BookOpen className='h-4 w-4' />
-                            {review.course || 'Class/Course Title'}
-                            <span className='text-muted-foreground'>•</span>
-                            <Calendar className='h-4 w-4' />
-                            {new Date(review.updated_date).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Comment */}
-                      <div>
-                        <CardTitle>{review.headline}</CardTitle>
-                        <CardDescription>{review.comments}</CardDescription>
-                      </div>
-                      {/* <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                      </p> */}
-                    </CardContent>
-                  </Card>
+                  <ReviewCard key={review.uuid} review={review} />
                 ))
               ) : (
                 <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>

@@ -286,7 +286,7 @@ export default {
     },
     {
       title: 'Reviews',
-      url: '/dashboard/profile/reviews',
+      url: '/dashboard/reviews',
       icon: Star,
     },
     {

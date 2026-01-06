@@ -27,17 +27,14 @@ import {
   FileText,
   ImageIcon,
   Lock,
-  Maximize,
   MessageCircle,
-  Pause,
   Play,
   Search,
   Settings,
   Users,
-  Volume2,
   X,
   ZoomIn,
-  ZoomOut,
+  ZoomOut
 } from 'lucide-react';
 import moment from 'moment';
 import { useParams, useRouter } from 'next/navigation';
@@ -53,6 +50,7 @@ import {
 } from '../../../../../../components/ui/collapsible';
 import { Skeleton } from '../../../../../../components/ui/skeleton';
 import PDFViewer from '../../../../@student/_components/pdf-viewer';
+import { VideoPlayer } from './video-player';
 
 const localizer = momentLocalizer(moment);
 
@@ -108,7 +106,7 @@ export default function ClassPreviewPage() {
   } = useCourseLessonsWithContent({ courseUuid: classData?.course_uuid as string });
 
   const [registrationLink] = useState(
-    `https://elimika.sarafrika.com/trainings/${classData?.uuid}/register`
+    `https://elimika.sarafrika.com/dashboard/browse-courses/enroll/${course?.uuid}`
   );
   const [copied, setCopied] = useState(false);
 
@@ -117,7 +115,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const shareToSocial = (platform: string) => {
@@ -162,7 +160,7 @@ export default function ClassPreviewPage() {
     }
   };
 
-  const handleSaveGrade = () => {};
+  const handleSaveGrade = () => { };
 
   const [isReading, setIsReading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -265,26 +263,23 @@ export default function ClassPreviewPage() {
                 <button
                   key={entry?.user?.uuid}
                   onClick={() => setSelectedStudent(entry)}
-                  className={`group relative w-full rounded-lg px-3 py-2.5 text-left transition-all duration-150 ${
-                    isSelected ? 'bg-primary/10 shadow-sm' : 'hover:bg-accent/50'
-                  }`}
+                  className={`group relative w-full rounded-lg px-3 py-2.5 text-left transition-all duration-150 ${isSelected ? 'bg-primary/10 shadow-sm' : 'hover:bg-accent/50'
+                    }`}
                 >
                   {/* Left accent bar */}
                   <div
-                    className={`absolute top-0 left-0 h-full w-1 rounded-r transition-all ${
-                      isSelected ? 'bg-primary' : 'opacity-0'
-                    }`}
+                    className={`absolute top-0 left-0 h-full w-1 rounded-r transition-all ${isSelected ? 'bg-primary' : 'opacity-0'
+                      }`}
                   />
 
                   <div className='flex items-center justify-between gap-2 pl-1'>
                     <div className='flex min-w-0 flex-1 items-center gap-2.5'>
                       {/* Avatar */}
                       <div
-                        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                          isSelected
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-primary/15 text-primary'
-                        }`}
+                        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold ${isSelected
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-primary/15 text-primary'
+                          }`}
                       >
                         {name
                           .split(' ')
@@ -296,16 +291,14 @@ export default function ClassPreviewPage() {
                       {/* Name & Status */}
                       <div className='flex min-w-0 flex-1 flex-col'>
                         <span
-                          className={`truncate text-sm ${
-                            isSelected ? 'text-foreground font-semibold' : 'font-medium'
-                          }`}
+                          className={`truncate text-sm ${isSelected ? 'text-foreground font-semibold' : 'font-medium'
+                            }`}
                         >
                           {name}
                         </span>
                         <span
-                          className={`text-xs ${
-                            isActive ? 'text-success' : 'text-muted-foreground'
-                          }`}
+                          className={`text-xs ${isActive ? 'text-success' : 'text-muted-foreground'
+                            }`}
                         >
                           {isActive ? 'Active' : 'Inactive'}
                         </span>
@@ -313,11 +306,10 @@ export default function ClassPreviewPage() {
                     </div>
 
                     <ChevronRight
-                      className={`h-4 w-4 flex-shrink-0 transition-opacity ${
-                        isSelected
-                          ? 'text-primary opacity-100'
-                          : 'text-muted-foreground opacity-0 group-hover:opacity-70'
-                      }`}
+                      className={`h-4 w-4 flex-shrink-0 transition-opacity ${isSelected
+                        ? 'text-primary opacity-100'
+                        : 'text-muted-foreground opacity-0 group-hover:opacity-70'
+                        }`}
                     />
                   </div>
                 </button>
@@ -412,11 +404,10 @@ export default function ClassPreviewPage() {
                                   <button
                                     key={content.uuid}
                                     onClick={() => handleLessonSelect(content)}
-                                    className={`border-border/50 hover:border-primary/50 hover:bg-accent/30 w-full rounded-lg border-2 p-3 transition-all ${
-                                      selectedLesson?.uuid === content.uuid
-                                        ? 'border-primary bg-primary/5'
-                                        : ''
-                                    }`}
+                                    className={`border-border/50 hover:border-primary/50 hover:bg-accent/30 w-full rounded-lg border-2 p-3 transition-all ${selectedLesson?.uuid === content.uuid
+                                      ? 'border-primary bg-primary/5'
+                                      : ''
+                                      }`}
                                   >
                                     <div className='flex items-center justify-between gap-3'>
                                       <div className='flex min-w-0 flex-1 items-center gap-3'>
@@ -482,41 +473,12 @@ export default function ClassPreviewPage() {
 
             {/* Video Player */}
             {isPlaying && contentTypeName === 'video' && (
-              <Card className='border-border overflow-hidden'>
-                <div className='relative bg-black'>
-                  <button
-                    onClick={() => setIsPlaying(false)}
-                    className='absolute top-3 right-3 z-50 rounded-full bg-black/60 p-2 text-white transition-colors hover:bg-black/80'
-                  >
-                    <X className='h-5 w-5' />
-                  </button>
-
-                  <div className='flex aspect-video items-center justify-center'>
-                    <Play className='h-20 w-20 text-white opacity-50' />
-                  </div>
-
-                  {/* Video Controls */}
-                  <div className='absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/80 to-transparent p-4'>
-                    <div className='flex items-center gap-4'>
-                      <Button size='sm' variant='ghost' className='text-white hover:bg-white/20'>
-                        <Pause className='h-5 w-5' />
-                      </Button>
-                      <span className='text-xs text-white/80'>3:15 / 9:00</span>
-                      <Button size='sm' variant='ghost' className='text-white hover:bg-white/20'>
-                        <Volume2 className='h-5 w-5' />
-                      </Button>
-                      <div className='flex-1' />
-                      <Button size='sm' variant='ghost' className='text-white hover:bg-white/20'>
-                        <Settings className='h-5 w-5' />
-                      </Button>
-                      <Button size='sm' variant='ghost' className='text-white hover:bg-white/20'>
-                        <Maximize className='h-5 w-5' />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+              <VideoPlayer
+                src='https://www.youtube.com/shorts/qYrG2qRyJR0'
+                onClose={() => setIsPlaying(false)}
+              />
             )}
+
 
             {/* Reading Mode */}
             {isReading && (contentTypeName === 'pdf' || contentTypeName === 'text') && (

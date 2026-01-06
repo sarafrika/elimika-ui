@@ -14,9 +14,11 @@ import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import {
   getClassDefinitionOptions,
   getCourseByUuidOptions,
+  getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
+  submitInstructorReviewMutation
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   Award,
   BarChart3,
@@ -33,6 +35,7 @@ import {
   Pause,
   Play,
   Settings,
+  Star,
   User,
   Video,
   Volume2,
@@ -44,13 +47,22 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
+import { FeedbackDialog } from '../../../_components/review-instructor-modal';
 import PDFViewer from '../../_components/pdf-viewer';
 
 export default function ClassDetailsPage() {
   const params = useParams();
   const classId = params?.id as string;
-  const _student = useStudent();
+  const student = useStudent();
   const { difficultyMap } = useDifficultyLevels();
+
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [clarityRating, setClarityRating] = useState(0);
+  const [engagementRating, setEngagementRating] = useState(0);
+  const [punctualityRating, setPunctualityRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [headline, setHeadline] = useState('');
 
   const { data, isLoading: classLoading } = useQuery({
     ...getClassDefinitionOptions({ path: { uuid: classId as string } }),
@@ -88,6 +100,17 @@ export default function ClassDetailsPage() {
     enabled: !!classData?.course_uuid,
   });
 
+  const { data: classEnrollments } = useQuery({
+    ...getEnrollmentsForClassOptions({
+      path: { uuid: classData?.uuid as string },
+    }),
+    enabled: !!classData?.uuid,
+  });
+
+  const studentEnrollment = classEnrollments?.data?.find(
+    (enrollment: any) => enrollment?.student_uuid === student?.uuid
+  );
+
   const {
     isLoading: isAllLessonsDataLoading,
     lessons: lessonsWithContent,
@@ -103,6 +126,41 @@ export default function ClassDetailsPage() {
   const [expandedModules, setExpandedModules] = useState<string[]>([firstLesson?.uuid as string]);
   const [selectedLesson, setSelectedLesson] = useState<any>(firstLesson);
   const contentTypeName = contentTypeMap[selectedLesson?.content_type_uuid] || 'text';
+
+
+  const reviewInstructor = useMutation(submitInstructorReviewMutation())
+  const handleSubmitFeedback = () => {
+    if (!classData || !studentEnrollment) {
+      toast.error("Class or student enrollment not found")
+      return
+    };
+
+    reviewInstructor.mutate({
+      body: {
+        enrollment_uuid: studentEnrollment?.uuid as string,
+        instructor_uuid: classInstructor?.uuid,
+        student_uuid: student?.uuid as string,
+        comments: feedbackComment as string,
+        headline: headline,
+        is_anonymous: false,
+        rating: rating,
+        clarity_rating: clarityRating,
+        engagement_rating: engagementRating,
+        punctuality_rating: punctualityRating,
+      },
+      path: { instructorUuid: classInstructor?.uuid }
+    }, {
+      onSuccess: (data) => {
+        toast.success(data?.message);
+        setShowFeedbackDialog(false);
+        // setSelectedBooking(null);
+        setFeedbackComment('');
+      },
+      onError: (data) => {
+        toast.error(data?.message);
+      }
+    })
+  };
 
   const calculateProgress = (): any => {
     const totalLessons: number =
@@ -268,6 +326,18 @@ export default function ClassDetailsPage() {
                       <User className='h-4 w-4' />
                       <span>{classInstructor?.full_name}</span>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2 sm:w-auto"
+                      onClick={() => {
+                        // setSelectedBooking(booking);
+                        setShowFeedbackDialog(true);
+                      }}
+                    >
+                      <Star className="h-4 w-4" />
+                      Rate Instructor
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -500,8 +570,8 @@ export default function ClassDetailsPage() {
                   <Button
                     variant='outline'
                     className='flex-1 gap-2'
-                    // onClick={goToPreviousLesson}
-                    // disabled={modules[0].lessons[0].id === selectedLesson.uuid}
+                  // onClick={goToPreviousLesson}
+                  // disabled={modules[0].lessons[0].id === selectedLesson.uuid}
                   >
                     <ChevronLeft className='h-4 w-4' />
                     Previous
@@ -509,7 +579,7 @@ export default function ClassDetailsPage() {
                   <Button
                     variant='outline'
                     className='flex-1 gap-2'
-                    // onClick={goToNextLesson}
+                  // onClick={goToNextLesson}
                   >
                     Next
                     <ChevronRight className='h-4 w-4' />
@@ -643,6 +713,25 @@ export default function ClassDetailsPage() {
               </div>
             </Card>
           )}
+
+          <FeedbackDialog
+            open={showFeedbackDialog}
+            onOpenChange={setShowFeedbackDialog}
+            headline={headline}
+            onHeadlineChange={setHeadline}
+            feedback={feedbackComment}
+            onFeedbackChange={setFeedbackComment}
+            rating={rating}
+            onRatingChange={setRating}
+            clarityRating={clarityRating}
+            onClarityRatingChange={setClarityRating}
+            engagementRating={engagementRating}
+            onEngagementRatingChange={setEngagementRating}
+            punctualityRating={punctualityRating}
+            onPunctualityRatingChange={setPunctualityRating}
+            isSubmitting={reviewInstructor.isPending}
+            onSubmit={handleSubmitFeedback}
+          />
         </div>
       )}
     </>

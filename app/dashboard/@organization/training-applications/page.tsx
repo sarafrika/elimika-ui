@@ -1,25 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import {
-  decideOnTrainingApplicationMutation,
-  searchTrainingApplicationsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useOptionalCourseCreator } from '@/context/course-creator-context';
-import { useOrganisation } from '@/context/organisation-context';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +12,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { useOptionalCourseCreator } from '@/context/course-creator-context';
+import { useOrganisation } from '@/context/organisation-context';
+import {
+  decideOnTrainingApplicationMutation,
+  searchTrainingApplicationsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
   Building2,
@@ -43,7 +43,7 @@ import {
   User,
   XCircle,
 } from 'lucide-react';
-import RichTextRenderer from '@/components/editors/richTextRenders';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function TrainingApplicationsPage() {
@@ -52,8 +52,8 @@ export default function TrainingApplicationsPage() {
   const [page, setPage] = useState(0);
   const pageSize = 12;
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [applicantTypeFilter, setApplicantTypeFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [applicantTypeFilter, setApplicantTypeFilter] = useState<string>('ALL');
   const [reviewDialog, setReviewDialog] = useState<{
     open: boolean;
     application: any;
@@ -72,26 +72,18 @@ export default function TrainingApplicationsPage() {
         searchCriteria: [
           {
             key: 'course_creator_uuid',
-            operation: 'EQUAL',
+            operation: 'eq',
             value: courseCreator?.profile?.uuid || organisation?.uuid,
           },
-          ...(statusFilter
-            ? [
-                {
-                  key: 'status',
-                  operation: 'EQUAL' as const,
-                  value: statusFilter,
-                },
-              ]
+          ...(statusFilter !== 'ALL'
+            ? [{ key: 'status', operation: 'eq' as const, value: statusFilter }]
             : []),
-          ...(applicantTypeFilter
-            ? [
-                {
-                  key: 'applicant_type',
-                  operation: 'EQUAL' as const,
-                  value: applicantTypeFilter,
-                },
-              ]
+          ...(applicantTypeFilter !== 'ALL'
+            ? [{
+              key: 'applicant_type',
+              operation: 'eq' as const,
+              value: applicantTypeFilter,
+            }]
             : []),
         ],
         pageable: {
@@ -279,7 +271,7 @@ export default function TrainingApplicationsPage() {
                 <SelectValue placeholder='All statuses' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=''>All statuses</SelectItem>
+                <SelectItem value='ALL'>All statuses</SelectItem>
                 <SelectItem value='PENDING'>Pending</SelectItem>
                 <SelectItem value='APPROVED'>Approved</SelectItem>
                 <SelectItem value='REJECTED'>Rejected</SelectItem>
@@ -290,7 +282,7 @@ export default function TrainingApplicationsPage() {
                 <SelectValue placeholder='All types' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=''>All types</SelectItem>
+                <SelectItem value='ALL'>All types</SelectItem>
                 <SelectItem value='instructor'>Instructors</SelectItem>
                 <SelectItem value='organisation'>Organizations</SelectItem>
               </SelectContent>
