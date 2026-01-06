@@ -1,13 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useOrganisation } from '@/context/organisation-context';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -17,6 +13,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { useOrganisation } from '@/context/organisation-context';
+import { searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
   Calendar,
@@ -28,7 +27,8 @@ import {
   Search,
   XCircle,
 } from 'lucide-react';
-import RichTextRenderer from '@/components/editors/richTextRenders';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function MyApplicationsPage() {
   const router = useRouter();
@@ -49,13 +49,7 @@ export default function MyApplicationsPage() {
             value: organisation?.uuid,
           },
           ...(statusFilter
-            ? [
-                {
-                  key: 'status',
-                  operation: 'EQUAL' as const,
-                  value: statusFilter,
-                },
-              ]
+            ? [{ key: 'status', operation: 'EQUAL', value: statusFilter }]
             : []),
         ],
         pageable: {
@@ -201,7 +195,7 @@ export default function MyApplicationsPage() {
                 <SelectValue placeholder='All statuses' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=''>All statuses</SelectItem>
+                <SelectItem value='ALL'>All statuses</SelectItem>
                 <SelectItem value='PENDING'>Pending</SelectItem>
                 <SelectItem value='APPROVED'>Approved</SelectItem>
                 <SelectItem value='REJECTED'>Rejected</SelectItem>

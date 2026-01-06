@@ -870,7 +870,11 @@ export function EventModal({
             )}
 
             {selectedEventType?.value === 'BOOKING' && (
-              <Button onClick={handleSave}>{event ? 'Cancel Booking' : 'Create Booking'}</Button>
+              <Button className='min-w-[130px]' onClick={handleSave}>
+                {createBookingForInstructor.isPending ? <Spinner /> : <>
+                  {event ? 'Cancel Booking' : 'Create Booking'}
+                </>}
+              </Button>
             )}
           </div>
         </DialogFooter>

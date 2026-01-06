@@ -133,7 +133,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
           <div>
             <h1 className='text-3xl font-bold'>{course?.name}</h1>
             <p className='text-muted-foreground text-sm'>
-              By {authorName || course?.course_creator_name || 'Course creator'}
+              By {authorName || course?.course_creator_uuid || 'Course creator'}
             </p>
             <div className='mt-2 flex flex-wrap items-center gap-2'>
               {course?.category_names?.map((cat: string) => (
@@ -239,9 +239,9 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
               <div key={assessment.uuid} className='border-b pt-2 pb-4 last:border-0'>
                 <div className='flex items-center gap-2'>
                   <BookOpenCheck className='h-4 w-4 text-primary' />
-                  <h3 className='font-semibold'>{assessment.rubric.title}</h3>
+                  <h3 className='font-semibold'>{assessment?.rubric?.title ?? "No title"}</h3>
                 </div>
-                <RichTextRenderer htmlString={assessment.rubric.description ?? 'No description.'} />
+                <RichTextRenderer htmlString={assessment?.rubric?.description ?? 'No description.'} />
 
                 <div className='mt-1 flex flex-row space-x-4'>
                   {assessment.rubric?.duration_display && (
@@ -251,17 +251,17 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                     </p>
                   )}
 
-                  {assessment.rubric.total_weight != null && (
+                  {assessment?.rubric?.total_weight != null && (
                     <p className='text-muted-foreground text-sm'>
                       <Scale className='mr-1 inline-block h-4 w-4' />
-                      Weight: {assessment.rubric.total_weight}%
+                      Weight: {assessment?.rubric?.total_weight}%
                     </p>
                   )}
 
-                  {assessment.rubric.min_passing_score != null && (
+                  {assessment?.rubric?.min_passing_score != null && (
                     <p className='text-muted-foreground text-sm'>
                       <CheckCircle className='mr-1 inline-block h-4 w-4' />
-                      Passing score: {assessment.rubric.min_passing_score}%
+                      Passing score: {assessment?.rubric?.min_passing_score}%
                     </p>
                   )}
 

@@ -124,9 +124,8 @@ export default function ClassPreviewPage() {
     lessons: lessonsWithContent,
     contentTypeMap,
   } = useCourseLessonsWithContent({ courseUuid: classData?.course_uuid as string });
-
   const [registrationLink] = useState(
-    `https://elimika.sarafrika.com/trainings/${classData?.uuid}/register`
+    `https://elimika.sarafrika.com/dashboard/browse-courses/enroll/${course?.uuid}`
   );
   const [copied, setCopied] = useState(false);
 
@@ -146,7 +145,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const shareToSocial = (platform: string) => {
@@ -532,7 +531,7 @@ export default function ClassPreviewPage() {
                   <div className='border-border border-t pt-4'>
                     <MonthlyAvailabilityGrid
                       availabilityData={availabilityData}
-                      onAvailabilityUpdate={() => {}}
+                      onAvailabilityUpdate={() => { }}
                       isEditing={false}
                       classes={[]}
                     />
