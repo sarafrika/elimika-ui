@@ -86,6 +86,7 @@ import {
   updateCourseAssessmentMutation,
   updateCourseLessonMutation,
   updateLessonContentMutation,
+  uploadLessonMediaMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -1089,13 +1090,7 @@ const lessonContentSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.any().optional(),
   value: z.any().optional(),
-  // duration_minutes: z.coerce
-  //   .number()
-  //   .min(0, 'Duration minutes must be positive')
-  //   .max(59, 'Minutes must be less than 60'),
-  // duration_hours: z.coerce.number().min(0, 'Duration hours must be positive'),
-  // estimated_duration: z.coerce.number().min(0, 'Estimated duration must be positive'),
-  display_order: z.coerce.number().min(0, 'Duration hours must be positive'),
+  display_order: z.coerce.number().min(0, 'Order number must be positive'),
   uuid: z.any().optional(),
 });
 
@@ -1251,6 +1246,10 @@ function LessonContentForm({
 
   const isPending = createLessonContent.isPending || updateLessonContent.isPending;
 
+  const [mediaFile, setMediaFile] = React.useState<File | null>(null);
+
+  const uploadLessonMedia = useMutation(uploadLessonMediaMutation())
+
   return (
     <Form {...form}>
       <form
@@ -1335,7 +1334,7 @@ function LessonContentForm({
                       {contentTypeData.map((value: any) => {
                         const Icon =
                           ContentTypeIcons[
-                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
                           ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
@@ -1398,8 +1397,8 @@ function LessonContentForm({
                   <FormItem>
                     <FormLabel>
                       {['VIDEO', 'AUDIO', 'PDF'].includes(selectedTypeKey || '')
-                        ? 'Or External URL'
-                        : 'URL'}
+                        ? 'External URL (optional)'
+                        : 'URL (optional)'}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -1415,34 +1414,74 @@ function LessonContentForm({
             </>
           )}
 
-          {/* Duration Hours */}
-          {/* <FormField
-            name="duration_hours"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Duration (hours)</FormLabel>
-                <FormControl>
-                  <Input type="number" min={0} step={1} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          /> */}
 
-          {/* Duration Minutes */}
-          {/* <FormField
-            name="duration_minutes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Duration (minutes)</FormLabel>
-                <FormControl>
-                  <Input type="number" min={0} max={59} step={1} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          /> */}
+          {/* Lesson Media Upload (Separate Endpoint) */}
+          <div className="rounded-lg border p-4 space-y-3">
+            <h4 className="text-sm font-medium">Lesson Media</h4>
+
+            <Input
+              type="file"
+              accept="image/*,application/pdf,video/*"
+              onChange={e => setMediaFile(e.target.files?.[0] || null)}
+            />
+
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!mediaFile || uploadLessonMedia.isPending}
+              onClick={() => {
+                if (!mediaFile) return;
+
+                uploadLessonMedia.mutate({
+                  body: {
+                    file: mediaFile
+                  },
+                  path: {
+                    courseUuid: courseId as string,
+                    lessonUuid: lessonId as string,
+                  },
+                  query: {
+                    content_type_uuid: contentTypeUuid,
+                    title: "Media",
+                    description: "",
+                    is_required: false
+                  }
+                }, {
+                  onSuccess: () => {
+                    toast.success('Media uploaded successfully');
+                    setMediaFile(null);
+
+                    qc.invalidateQueries({
+                      queryKey: getLessonContentQueryKey({
+                        path: {
+                          courseUuid: courseId as string,
+                          lessonUuid: lessonId as string,
+                        },
+                      }),
+                    });
+                  },
+                  onError: (err: any) => {
+                    toast.error(err?.message || 'Media upload failed');
+                  },
+                })
+              }}
+            >
+              {uploadLessonMedia.isPending ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Uploading...
+                </>
+              ) : (
+                'Upload Media'
+              )}
+            </Button>
+
+            <p className="text-xs text-muted-foreground">
+              Supported formats: Images (JPG, PNG) and PDFs
+            </p>
+          </div>
         </div>
+
 
         {/* Form Buttons */}
         <div className='flex justify-end gap-2 pt-6'>
@@ -1630,7 +1669,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   return (
@@ -2246,5 +2285,6 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList,
+  LessonList
 };
+

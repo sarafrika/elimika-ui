@@ -272,8 +272,8 @@ export type Student = {
    */
   bio?: string;
   primaryGuardianContact?: string;
-  allGuardianContacts?: Array<string>;
   secondaryGuardianContact?: string;
+  allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
    */
@@ -618,13 +618,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -846,13 +846,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -905,14 +905,6 @@ export type QuizQuestionOption = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the option based on its correctness status.
-   */
-  readonly option_category?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this option is an incorrect answer choice.
-   */
-  readonly is_incorrect?: boolean;
-  /**
    * **[READ-ONLY]** Formatted display of the option's position within the question.
    */
   readonly position_display?: string;
@@ -924,6 +916,14 @@ export type QuizQuestionOption = {
    * **[READ-ONLY]** Comprehensive summary of the option including correctness and position.
    */
   readonly option_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the option based on its correctness status.
+   */
+  readonly option_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this option is an incorrect answer choice.
+   */
+  readonly is_incorrect?: boolean;
 };
 
 export type ApiResponseQuizQuestionOption = {
@@ -1140,14 +1140,6 @@ export type ProgramCourse = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the course association based on requirement status.
-   */
-  readonly association_category?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this course has prerequisite requirements.
-   */
-  readonly has_prerequisites?: boolean;
-  /**
    * **[READ-ONLY]** Formatted display of the course position within the program sequence.
    */
   readonly sequence_display?: string;
@@ -1159,6 +1151,14 @@ export type ProgramCourse = {
    * **[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.
    */
   readonly curriculum_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the course association based on requirement status.
+   */
+  readonly association_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this course has prerequisite requirements.
+   */
+  readonly has_prerequisites?: boolean;
 };
 
 export type ApiResponseProgramCourse = {
@@ -1294,6 +1294,10 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   */
+  readonly is_profile_complete?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
@@ -1301,10 +1305,6 @@ export type Instructor = {
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
-   */
-  readonly is_profile_complete?: boolean;
 };
 
 /**
@@ -1525,6 +1525,10 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string;
+  /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
   readonly employment_period?: string;
@@ -1549,10 +1553,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string;
   /**
    * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
@@ -1617,6 +1617,14 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
+   * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
+   */
+  readonly is_recent_qualification?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted string showing year of completion and school name.
+   */
+  readonly formatted_completion?: string;
+  /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
   readonly years_since_completion?: number;
@@ -1625,14 +1633,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
   readonly has_certificate_number?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
-   */
-  readonly is_recent_qualification?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted string showing year of completion and school name.
-   */
-  readonly formatted_completion?: string;
   /**
    * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
@@ -1754,6 +1754,10 @@ export type InstructorDocument = {
    */
   readonly is_expired?: boolean;
   /**
+   * **[READ-ONLY]** Human-readable formatted file size.
+   */
+  readonly file_size_formatted?: string;
+  /**
    * **[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.
    */
   readonly days_until_expiry?: number;
@@ -1766,10 +1770,6 @@ export type InstructorDocument = {
    */
   readonly has_expiry_date?: boolean;
   verification_status?: VerificationStatusEnum;
-  /**
-   * **[READ-ONLY]** Human-readable formatted file size.
-   */
-  readonly file_size_formatted?: string;
 };
 
 export type ApiResponseInstructorDocument = {
@@ -3313,13 +3313,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
-   */
-  readonly assignment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
+   */
+  readonly assignment_category?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -4514,6 +4514,14 @@ export type BookingResponse = {
    */
   availability_block_uuid?: string;
   /**
+   * UUID of the scheduled class instance created for this booking
+   */
+  scheduled_instance_uuid?: string;
+  /**
+   * UUID of the enrollment created for this booking
+   */
+  enrollment_uuid?: string;
+  /**
    * Purpose or note for this booking
    */
   purpose?: string;
@@ -5326,13 +5334,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the program.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -5733,13 +5741,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if this class is upcoming.
-   */
-  readonly is_upcoming?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this class is upcoming.
+   */
+  readonly is_upcoming?: boolean;
 };
 
 export type ApiResponseLong = {
@@ -5937,13 +5945,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the course.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -7203,6 +7211,7 @@ export const StatusEnum7 = {
   EXPIRED: 'expired',
   ACCEPTED: 'accepted',
   DECLINED: 'declined',
+  ACCEPTED_CONFIRMED: 'accepted_confirmed',
 } as const;
 
 /**
