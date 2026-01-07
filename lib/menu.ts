@@ -19,6 +19,8 @@ import {
   LayoutDashboard,
   LibraryIcon,
   LucideBookUser,
+  LucideLandmark,
+  LucideReceipt,
   PlusCircle,
   School,
   Settings,
@@ -26,11 +28,12 @@ import {
   ShoppingBag,
   Sparkles,
   Star,
+  TrendingUp,
   UserCircle,
   UserIcon,
   Users,
   UsersIcon,
-  Wallet,
+  Wallet
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { UserDomain } from './types';
@@ -160,6 +163,16 @@ export default {
       title: 'My Certificates',
       url: '/dashboard/certificates',
       icon: Star,
+    },
+    {
+      title: 'Progress Analytics',
+      url: '/dashboard/progress-analytics',
+      icon: TrendingUp,
+    },
+    {
+      title: 'Payment History',
+      url: '/dashboard/payment-history',
+      icon: LucideReceipt,
     },
     {
       title: 'Profile',
@@ -399,6 +412,11 @@ export default {
       title: 'Administrators',
       url: '/dashboard/administrators',
       icon: ShieldCheck,
+    },
+    {
+      title: 'Financial Overview',
+      url: '/dashboard/financial-overview',
+      icon: LucideLandmark,
     },
     {
       title: 'System Config',

@@ -604,14 +604,14 @@ export const StudentSchema = {
     primaryGuardianContact: {
       type: 'string',
     },
+    secondaryGuardianContact: {
+      type: 'string',
+    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
-    },
-    secondaryGuardianContact: {
-      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -1285,19 +1285,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1748,16 +1748,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: 2,
-      readOnly: true,
-    },
     question_number: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
       example: 'Question 1',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: 2,
       readOnly: true,
     },
   },
@@ -1870,19 +1870,6 @@ export const QuizQuestionOptionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    option_category: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted category of the option based on its correctness status.',
-      example: 'Correct Answer Option',
-      readOnly: true,
-    },
-    is_incorrect: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this option is an incorrect answer choice.',
-      example: false,
-      readOnly: true,
-    },
     position_display: {
       type: 'string',
       description:
@@ -1902,6 +1889,19 @@ export const QuizQuestionOptionSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the option including correctness and position.',
       example: 'Correct answer option in position 2',
+      readOnly: true,
+    },
+    option_category: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted category of the option based on its correctness status.',
+      example: 'Correct Answer Option',
+      readOnly: true,
+    },
+    is_incorrect: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this option is an incorrect answer choice.',
+      example: false,
       readOnly: true,
     },
   },
@@ -2354,19 +2354,6 @@ export const ProgramCourseSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    association_category: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted category of the course association based on requirement status.',
-      example: 'Required Course',
-      readOnly: true,
-    },
-    has_prerequisites: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this course has prerequisite requirements.',
-      example: true,
-      readOnly: true,
-    },
     sequence_display: {
       type: 'string',
       description:
@@ -2385,6 +2372,19 @@ export const ProgramCourseSchema = {
       description:
         "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.",
       example: 'Required course with prerequisites in sequence position 3',
+      readOnly: true,
+    },
+    association_category: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted category of the course association based on requirement status.',
+      example: 'Required Course',
+      readOnly: true,
+    },
+    has_prerequisites: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this course has prerequisite requirements.',
+      example: true,
       readOnly: true,
     },
   },
@@ -2660,6 +2660,13 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_profile_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
+      example: true,
+      readOnly: true,
+    },
     has_location_coordinates: {
       type: 'boolean',
       description:
@@ -2672,13 +2679,6 @@ export const InstructorSchema = {
       description:
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
       example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
-    is_profile_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
-      example: true,
       readOnly: true,
     },
   },
@@ -3136,6 +3136,12 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
+    formatted_duration: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: 5,
+      readOnly: true,
+    },
     employment_period: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
@@ -3177,12 +3183,6 @@ export const InstructorExperienceSchema = {
       description:
         '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
       example: 66,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: 5,
       readOnly: true,
     },
     is_complete: {
@@ -3321,6 +3321,19 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
+    is_recent_qualification: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.',
+      example: true,
+      readOnly: true,
+    },
+    formatted_completion: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
+      example: 2020,
+      readOnly: true,
+    },
     years_since_completion: {
       type: 'integer',
       format: 'int32',
@@ -3336,19 +3349,6 @@ export const InstructorEducationSchema = {
       description:
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
       example: true,
-      readOnly: true,
-    },
-    is_recent_qualification: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.',
-      example: true,
-      readOnly: true,
-    },
-    formatted_completion: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
-      example: 2020,
       readOnly: true,
     },
     is_complete: {
@@ -3607,6 +3607,12 @@ export const InstructorDocumentSchema = {
       example: false,
       readOnly: true,
     },
+    file_size_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted file size.',
+      example: 2,
+      readOnly: true,
+    },
     days_until_expiry: {
       type: 'integer',
       format: 'int32',
@@ -3629,12 +3635,6 @@ export const InstructorDocumentSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum',
-    },
-    file_size_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted file size.',
-      example: 2,
-      readOnly: true,
     },
   },
   required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
@@ -6885,17 +6885,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: 100,
+      readOnly: true,
+    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
-      readOnly: true,
-    },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: 100,
       readOnly: true,
     },
     assignment_scope: {
@@ -8885,6 +8885,16 @@ export const BookingResponseSchema = {
       format: 'uuid',
       description: 'UUID of the availability block created for this booking',
     },
+    scheduled_instance_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the scheduled class instance created for this booking',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the enrollment created for this booking',
+    },
     purpose: {
       type: 'string',
       description: 'Purpose or note for this booking',
@@ -10589,16 +10599,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -11486,16 +11496,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    is_upcoming: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended this class.',
       example: false,
+      readOnly: true,
+    },
+    is_upcoming: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
+      example: true,
       readOnly: true,
     },
   },
@@ -11941,16 +11951,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -13748,6 +13758,7 @@ export const StatusEnum7Schema = {
     'expired',
     'accepted',
     'declined',
+    'accepted_confirmed',
   ],
 } as const;
 

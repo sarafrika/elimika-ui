@@ -17188,7 +17188,8 @@ export const searchTrainingApplicationsQueryKey = (
 /**
  * Search training applications
  * Advanced search for training applications using flexible operators on any DTO field.
- * Supports filters such as `status`, `applicantType`, `courseUuid`, `applicantUuid`, `createdDate_between`, and more.
+ * Supports filters such as `status`, `applicantType`, `courseUuid`, `applicantUuid`, `course_creator_uuid`,
+ * `createdDate_between`, and more.
  *
  */
 export const searchTrainingApplicationsOptions = (
@@ -17216,7 +17217,8 @@ export const searchTrainingApplicationsInfiniteQueryKey = (
 /**
  * Search training applications
  * Advanced search for training applications using flexible operators on any DTO field.
- * Supports filters such as `status`, `applicantType`, `courseUuid`, `applicantUuid`, `createdDate_between`, and more.
+ * Supports filters such as `status`, `applicantType`, `courseUuid`, `applicantUuid`, `course_creator_uuid`,
+ * `createdDate_between`, and more.
  *
  */
 export const searchTrainingApplicationsInfiniteOptions = (

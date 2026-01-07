@@ -25,7 +25,7 @@ import {
   searchTrainingApplicationsOptions,
   searchTrainingApplicationsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
   AlertCircle,
@@ -107,13 +107,78 @@ export default function TrainingApplicationsPage() {
   const applicationsQuery = useQuery({
     ...searchTrainingApplicationsOptions({
       query: {
-        searchParams: {}, pageable: { page, size: pageSize },
+        searchParams: {
+          // @ts-ignore
+          // course_creator_uuid: courseCreator?.uuid as string,
+          applicantType: "instructor"
+        }, pageable: { page, size: pageSize },
       },
     }),
   });
 
+
   const applicationsPage = extractPage<CourseTrainingApplication>(applicationsQuery.data);
   const allApplications = applicationsPage.items;
+
+  const instructorUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          allApplications
+            .filter(app => app.applicant_type === 'instructor')
+            .map(app => app.applicant_uuid)
+            .filter(Boolean)
+        )
+      ),
+    [allApplications]
+  );
+
+  const organisationUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          allApplications
+            .filter(app => app.applicant_type === 'organisation')
+            .map(app => app.applicant_uuid)
+            .filter(Boolean)
+        )
+      ),
+    [allApplications]
+  );
+
+  const instructorQueries = useQueries({
+    queries: instructorUuids.map(uuid => ({
+      ...getInstructorByUuidOptions({ path: { uuid: uuid as string } }),
+      enabled: !!uuid,
+    })),
+  });
+
+  const organisationQueries = useQueries({
+    queries: organisationUuids.map(uuid => ({
+      ...getOrganisationByUuidOptions({ path: { uuid: uuid as string } }),
+      enabled: !!uuid,
+    })),
+  });
+
+  const applicantNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+
+    instructorQueries.forEach((q: any) => {
+      const instructor = q.data?.data;
+      if (instructor?.uuid) {
+        map.set(instructor.uuid, instructor.full_name);
+      }
+    });
+
+    organisationQueries.forEach((q: any) => {
+      const org = q.data?.data;
+      if (org?.uuid) {
+        map.set(org.uuid, org.full_name);
+      }
+    });
+
+    return map;
+  }, [instructorQueries, organisationQueries]);
 
   // Apply filters
   const filteredApplications = useMemo(() => {
@@ -134,13 +199,18 @@ export default function TrainingApplicationsPage() {
     // Search filter
     if (searchValue) {
       const term = searchValue.toLowerCase();
-      items = items.filter(
-        app =>
-          app.applicant_name?.toLowerCase().includes(term) ||
+
+      items = items.filter(app => {
+        const name = applicantNameMap.get(app.applicant_uuid ?? '')?.toLowerCase() ?? '';
+
+        return (
+          name.includes(term) ||
           app.course_uuid?.toLowerCase().includes(term) ||
           app.application_notes?.toLowerCase().includes(term)
-      );
+        );
+      });
     }
+
 
     return items;
   }, [allApplications, statusFilter, applicantTypeFilter, searchValue]);
