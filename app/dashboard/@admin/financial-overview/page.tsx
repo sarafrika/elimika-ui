@@ -38,10 +38,10 @@ const revenueData = [
 ];
 
 const paymentMethodData = [
-    { name: 'Credit Card', value: 45, color: '#3b82f6' },
-    { name: 'PayPal', value: 30, color: '#10b981' },
-    { name: 'Stripe', value: 20, color: '#8b5cf6' },
-    { name: 'Bank Transfer', value: 5, color: '#f59e0b' },
+    { name: 'Credit Card', value: 45, color: 'blue' },
+    { name: 'PayPal', value: 30, color: 'green' },
+    { name: 'Stripe', value: 20, color: 'purple' },
+    { name: 'Bank Transfer', value: 5, color: 'yellow' },
 ];
 
 const transactionVolumeData = [
@@ -240,15 +240,15 @@ export default function AdminFinancialOverview() {
                                             <Area
                                                 type="monotone"
                                                 dataKey="actual"
-                                                stroke="#10b981"
-                                                fill="#86efac"
+                                                stroke="green"
+                                                fill="lime"
                                                 name="Actual Revenue"
                                             />
                                             <Area
                                                 type="monotone"
                                                 dataKey="forecast"
-                                                stroke="#3b82f6"
-                                                fill="#93c5fd"
+                                                stroke="primary"
+                                                fill="blue"
                                                 name="Forecasted"
                                                 strokeDasharray="5 5"
                                             />
@@ -319,9 +319,9 @@ export default function AdminFinancialOverview() {
                                                     <p className="text-sm text-muted-foreground">{category.percentage}% of total</p>
                                                 </div>
                                             </div>
-                                            <div className="w-full bg-muted-foreground rounded-full h-2">
+                                            <div className="w-full bg-muted/95 rounded-full h-2">
                                                 <div
-                                                    className="bg-blue-600 h-2 rounded-full transition-all"
+                                                    className="bg-primary/90 h-2 rounded-full transition-all"
                                                     style={{ width: `${category.percentage}%` }}
                                                 />
                                             </div>
@@ -346,12 +346,12 @@ export default function AdminFinancialOverview() {
                                         <YAxis yAxisId="right" orientation="right" />
                                         <Tooltip />
                                         <Legend />
-                                        <Bar yAxisId="left" dataKey="volume" fill="#8b5cf6" name="Transactions" />
+                                        <Bar yAxisId="left" dataKey="volume" fill="purple" name="Transactions" />
                                         <Line
                                             yAxisId="right"
                                             type="monotone"
                                             dataKey="amount"
-                                            stroke="#10b981"
+                                            stroke="green"
                                             strokeWidth={2}
                                             name="Amount ($)"
                                         />
@@ -380,14 +380,14 @@ export default function AdminFinancialOverview() {
                                             <Line
                                                 type="monotone"
                                                 dataKey="actual"
-                                                stroke="#10b981"
+                                                stroke="green"
                                                 strokeWidth={2}
                                                 name="Actual"
                                             />
                                             <Line
                                                 type="monotone"
                                                 dataKey="forecast"
-                                                stroke="#3b82f6"
+                                                stroke="primary"
                                                 strokeWidth={2}
                                                 strokeDasharray="5 5"
                                                 name="Forecast"
@@ -395,7 +395,7 @@ export default function AdminFinancialOverview() {
                                             <Line
                                                 type="monotone"
                                                 dataKey="previousYear"
-                                                stroke="#9ca3af"
+                                                stroke="orange"
                                                 strokeWidth={1}
                                                 name="Previous Year"
                                             />
@@ -468,9 +468,9 @@ export default function AdminFinancialOverview() {
                                         <YAxis />
                                         <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
                                         <Legend />
-                                        <Bar dataKey="inflow" fill="#10b981" name="Inflow" />
-                                        <Bar dataKey="outflow" fill="#ef4444" name="Outflow" />
-                                        <Bar dataKey="net" fill="#3b82f6" name="Net Cash Flow" />
+                                        <Bar dataKey="inflow" fill="green" name="Inflow" />
+                                        <Bar dataKey="outflow" fill="red" name="Outflow" />
+                                        <Bar dataKey="net" fill="blue" name="Net Cash Flow" />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </CardContent>
@@ -496,15 +496,15 @@ export default function AdminFinancialOverview() {
                                             <Area
                                                 type="monotone"
                                                 dataKey="actual"
-                                                stroke="#10b981"
-                                                fill="#86efac"
+                                                stroke="green"
+                                                fill="lime"
                                                 name="2024"
                                             />
                                             <Area
                                                 type="monotone"
                                                 dataKey="previousYear"
-                                                stroke="#9ca3af"
-                                                fill="#d1d5db"
+                                                stroke="primary"
+                                                fill="blue"
                                                 name="2023"
                                             />
                                         </AreaChart>
