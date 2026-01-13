@@ -18,7 +18,7 @@ import {
   getInstructorBookingsQueryKey,
   getStudentByIdOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Calendar, Clock, Eye, FilterIcon, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -77,7 +77,7 @@ function BookingsPage() {
   const [selected, setSelected] = useState<any | null>(null);
 
   // Fetch student and course details for the selected booking (lazy)
-  const studentQuery = useQuery({
+  const { data: studentQueryData } = useQuery({
     ...getStudentByIdOptions({ path: { uuid: selected?.student_uuid ?? '' } }),
     enabled: !!selected?.student_uuid,
   });
@@ -231,6 +231,32 @@ function BookingsPage() {
     );
   };
 
+
+  const studentUuids = useMemo(() => {
+    return Array.from(
+      new Set(bookings.map(b => b.student_uuid).filter(Boolean))
+    );
+  }, [bookings]);
+
+  const studentQueries = useQueries({
+    queries: studentUuids.map(uuid => ({
+      ...getStudentByIdOptions({ path: { uuid } }),
+    })),
+  });
+
+  const studentsById = useMemo(() => {
+    const map: Record<string, any> = {};
+    studentQueries.forEach(q => {
+      // @ts-ignore
+      const student = q.data?.data;
+      if (student?.uuid) {
+        map[student.uuid] = student;
+      }
+    });
+    return map;
+  }, [studentQueries]);
+
+
   return (
     <div className='space-y-6 pb-10'>
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)}>
@@ -320,15 +346,23 @@ function BookingsPage() {
                     const start = new Date(b.start_time);
                     const end = new Date(b.end_time);
 
+                    const student = studentsById[b.student_uuid];
+
                     return (
                       <button
                         key={key}
                         onClick={() => setSelected(b)}
                         className={`group w-full rounded-md border p-3 text-left transition ${isActive ? 'border-primary bg-primary/5' : 'hover:border-border hover:bg-muted/40 border-transparent'} `}
                       >
+
+                        <div className="text-foreground text-sm font-medium">
+                          {`${String(b?.uuid ?? 'Unknown').slice(0, 16)}...`}
+                        </div>
+
+
                         <div className='flex items-center justify-between'>
-                          <div className='text-foreground text-sm font-medium'>
-                            {String(b?.uuid ?? 'Unknown').slice(0, 8)}
+                          <div className="text-sm font-medium">
+                            {student?.full_name ?? b.student_uuid.slice(0, 8)}
                           </div>
 
                           <Badge
@@ -392,13 +426,14 @@ function BookingsPage() {
                   <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
                     <div>
                       <h2 className='text-foreground text-lg font-semibold'>
-                        {studentQuery.data?.full_name ??
-                          studentQuery.data?.full_name ??
+                        {/* @ts-ignore */}
+                        {studentQueryData?.data?.full_name ??
+                          studentQueryData?.data?.full_name ??
                           selected?.student_uuid?.slice(0, 8) ??
                           'Unknown student'}
                       </h2>
                       <p className='text-muted-foreground text-sm'>
-                        {studentQuery.data?.full_name ?? 'No contact info'}
+                        {'No contact info'}
                       </p>
 
                       <div className='text-muted-foreground mt-2 text-sm'>
