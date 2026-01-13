@@ -17,10 +17,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
   cancelBookingMutation,
+  getAllInstructorsOptions,
   requestPaymentMutation,
   submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Calendar, Clock, Eye, Star, X } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
@@ -73,10 +74,9 @@ export const ManageBookings: React.FC<Props> = ({
   const [feedbackComment, setFeedbackComment] = useState('');
   const [headline, setHeadline] = useState('');
 
-
-  const getInstructor = (instructorId: string) => {
-    return instructors.find(i => i.uuid === instructorId);
-  };
+  const { data } = useQuery(getAllInstructorsOptions({
+    query: { pageable: {} }
+  }))
 
   const cancelBooking = useMutation(cancelBookingMutation());
   const handleCancelBooking = () => {
@@ -167,7 +167,7 @@ export const ManageBookings: React.FC<Props> = ({
   const renderBookingCard = (booking: any) => {
     const countdown = useCountdown(booking.hold_expires_at);
 
-    const instructor = instructors.find(i => i.uuid === booking.instructor_uuid);
+    const instructor = data?.data?.content?.find(i => i.uuid === booking.instructor_uuid);
 
     if (!instructor) return null;
 
