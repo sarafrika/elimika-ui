@@ -175,151 +175,162 @@ export default function InlineNewRubric() {
             </div>
 
             {isVisible && (
-                <Form {...form}>
-                    <form
-                        onSubmit={form.handleSubmit(handleSubmit)}
-                        className="flex flex-col gap-6 rounded-lg border bg-muted/50 p-4"
-                    >
-                        <FormField
-                            control={form.control}
-                            name="title"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Rubric Title</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Enter rubric title" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Description</FormLabel>
-                                    <FormControl>
-                                        <Textarea rows={3} {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="w-full flex flex-col gap-3 sm:flex-row">
-                            <FormField
-                                control={form.control}
-                                name="type"
-                                render={({ field }) => (
-                                    <FormItem className="flex-1">
-                                        <FormLabel>Rubric Type</FormLabel>
-                                        <Select
-                                            value={field.value}
-                                            onValueChange={field.onChange}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {Object.values(RubricType).map((type) => (
-                                                    <SelectItem key={type} value={type}>
-                                                        {type}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="visibility"
-                                render={({ field }) => (
-                                    <FormItem className="w-[160px]">
-                                        <FormLabel>Visibility</FormLabel>
-                                        <Select
-                                            value={field.value}
-                                            onValueChange={field.onChange}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {Object.values(Visibility).map((v) => (
-                                                    <SelectItem key={v} value={v}>
-                                                        {v}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </FormItem>
-                                )}
-                            />
+                <Form {...form}  >
+                    <div className='border p-6 rounded-lg'>
+                        <div className="border-b px-6 py-4">
+                            <h2 className="text-xl font-semibold">
+                                Add New Rubric
+                            </h2>
+                            <p className="text-muted-foreground mt-1 text-sm">
+                                Create a new rubric by providing its title, description, and grading criteria.
+                            </p>
                         </div>
 
-                        <div className="flex flex-col gap-3 sm:flex-row">
+                        <form
+                            onSubmit={form.handleSubmit(handleSubmit)}
+                            className="flex flex-col gap-6 p-4"
+                        >
                             <FormField
                                 control={form.control}
-                                name="total_weight"
+                                name="title"
                                 render={({ field }) => (
-                                    <FormItem className="flex-1">
-                                        <FormLabel>Total Weight (%)</FormLabel>
+                                    <FormItem>
+                                        <FormLabel>Rubric Title</FormLabel>
                                         <FormControl>
-                                            <Input type="number" {...field} />
+                                            <Input placeholder="Enter rubric title" {...field} />
                                         </FormControl>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
 
                             <FormField
                                 control={form.control}
-                                name="max_score"
+                                name="description"
                                 render={({ field }) => (
-                                    <FormItem className="flex-1">
-                                        <FormLabel>Max Score</FormLabel>
+                                    <FormItem>
+                                        <FormLabel>Description</FormLabel>
                                         <FormControl>
-                                            <Input type="number" {...field} />
+                                            <Textarea rows={3} {...field} />
                                         </FormControl>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="min_passing_score"
-                                render={({ field }) => (
-                                    <FormItem className="flex-1">
-                                        <FormLabel>Passing Score</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" {...field} />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                            <div className="w-full flex flex-col gap-3 sm:flex-row">
+                                <FormField
+                                    control={form.control}
+                                    name="type"
+                                    render={({ field }) => (
+                                        <FormItem className="flex-1">
+                                            <FormLabel>Rubric Type</FormLabel>
+                                            <Select
+                                                value={field.value}
+                                                onValueChange={field.onChange}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {Object.values(RubricType).map((type) => (
+                                                        <SelectItem key={type} value={type}>
+                                                            {type}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                    )}
+                                />
 
-                        <div className="flex justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={resetForm}>
-                                Cancel
-                            </Button>
+                                <FormField
+                                    control={form.control}
+                                    name="visibility"
+                                    render={({ field }) => (
+                                        <FormItem className="w-[160px]">
+                                            <FormLabel>Visibility</FormLabel>
+                                            <Select
+                                                value={field.value}
+                                                onValueChange={field.onChange}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {Object.values(Visibility).map((v) => (
+                                                        <SelectItem key={v} value={v}>
+                                                            {v}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                            <Button
-                                type="submit"
-                                disabled={createRubric.isPending || updateRubric.isPending}
-                            >
-                                {editingRubricId
-                                    ? updateRubric.isPending
-                                        ? 'Updating...'
-                                        : 'Update Rubric'
-                                    : createRubric.isPending
-                                        ? 'Creating...'
-                                        : 'Create Rubric'}
-                            </Button>
-                        </div>
-                    </form>
+                            <div className="flex flex-col gap-3 sm:flex-row">
+                                <FormField
+                                    control={form.control}
+                                    name="total_weight"
+                                    render={({ field }) => (
+                                        <FormItem className="flex-1">
+                                            <FormLabel>Total Weight (%)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="max_score"
+                                    render={({ field }) => (
+                                        <FormItem className="flex-1">
+                                            <FormLabel>Max Score</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="min_passing_score"
+                                    render={({ field }) => (
+                                        <FormItem className="flex-1">
+                                            <FormLabel>Passing Score</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-2">
+                                <Button type="button" variant="outline" onClick={resetForm}>
+                                    Cancel
+                                </Button>
+
+                                <Button
+                                    type="submit"
+                                    disabled={createRubric.isPending || updateRubric.isPending}
+                                >
+                                    {editingRubricId
+                                        ? updateRubric.isPending
+                                            ? 'Updating...'
+                                            : 'Update Rubric'
+                                        : createRubric.isPending
+                                            ? 'Creating...'
+                                            : 'Create Rubric'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
                 </Form>
             )}
         </div>

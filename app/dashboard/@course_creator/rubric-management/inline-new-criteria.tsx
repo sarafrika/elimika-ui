@@ -146,11 +146,21 @@ export default function InlineNewRubricCriteria({ rubricId, onClose }: Props) {
 
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 border mx-2 rounded-sm">
+            <div className="border-b px-6 py-4">
+                <h2 className="text-xl font-semibold">
+                    Add New Criterion
+                </h2>
+
+                <p className="text-muted-foreground mt-1 text-sm">
+                    Add a new criterion to this rubric, including the grading components.
+                </p>
+            </div>
+
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(handleSubmit)}
-                    className="flex flex-col gap-6 rounded-lg border bg-muted/50 p-4"
+                    className="flex flex-col gap-6 p-4 pb-6"
                 >
                     <FormField
                         control={form.control}

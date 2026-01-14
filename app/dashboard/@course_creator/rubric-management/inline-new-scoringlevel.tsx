@@ -133,139 +133,155 @@ export default function InlineNewScoringLevel({
 
 
     return (
-        <Form {...form}>
-            <form
-                onSubmit={form.handleSubmit(handleSubmit)}
-                className="flex flex-col gap-6 rounded-lg border bg-muted/50 p-4 max-w-2xl"
-            >
-                {/* Passing */}
-                <FormField
-                    control={form.control}
-                    name="is_passing"
-                    render={({ field }) => (
-                        <FormItem className="flex items-start space-x-3">
-                            <FormControl>
-                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                            <div className="leading-none">
-                                <FormLabel>Passing Level</FormLabel>
-                                <FormDescription>
-                                    Marks this scoring level as passing.
-                                </FormDescription>
-                            </div>
-                        </FormItem>
-                    )}
-                />
 
-                {/* Order */}
-                <FormField
-                    control={form.control}
-                    name="level_order"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Display Order</FormLabel>
-                            <FormControl>
-                                <Input type="number" {...field} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
+        <div className='rounded-lg border mx-2'  >
 
-                {/* Color */}
-                <FormField
-                    control={form.control}
-                    name="color_code"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Color Code</FormLabel>
-                            <div className="flex items-center gap-4">
+            <div className="border-b px-6 py-4">
+                <h2 className="text-xl font-semibold">
+                    Add New Scoring Level
+                </h2>
+
+                <p className="text-muted-foreground mt-1 text-sm">
+                    Define a new scoring entry for this criterion.
+                </p>
+            </div>
+
+            <Form {...form}>
+                <form
+                    onSubmit={form.handleSubmit(handleSubmit)}
+                    className="flex flex-col gap-6 p-4 max-w-2xl pb-6"
+                >
+                    {/* Passing */}
+                    <FormField
+                        control={form.control}
+                        name="is_passing"
+                        render={({ field }) => (
+                            <FormItem className="flex items-start space-x-3">
                                 <FormControl>
-                                    <Input type="color" {...field} className="h-10 w-10 p-0" />
+                                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                 </FormControl>
-                                <span className="text-muted-foreground font-mono text-sm">
-                                    {field.value?.toUpperCase()}
-                                </span>
-                            </div>
-                        </FormItem>
-                    )}
-                />
+                                <div className="leading-none">
+                                    <FormLabel>Passing Level</FormLabel>
+                                    <FormDescription>
+                                        Marks this scoring level as passing.
+                                    </FormDescription>
+                                </div>
+                            </FormItem>
+                        )}
+                    />
 
-                {/* Name */}
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Scoring Level Name</FormLabel>
-                            <FormControl>
-                                <Input {...field} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
+                    {/* Order */}
+                    <FormField
+                        control={form.control}
+                        name="level_order"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Display Order</FormLabel>
+                                <FormControl>
+                                    <Input type="number" {...field} />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
 
-                {/* Description */}
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                                <Input {...field} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
+                    {/* Color */}
+                    <FormField
+                        control={form.control}
+                        name="color_code"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Color Code</FormLabel>
+                                <div className="flex items-center gap-4">
+                                    <FormControl>
+                                        <Input type="color" {...field} className="h-10 w-10 p-0" />
+                                    </FormControl>
+                                    <span className="text-muted-foreground font-mono text-sm">
+                                        {field.value?.toUpperCase()}
+                                    </span>
+                                </div>
+                            </FormItem>
+                        )}
+                    />
 
-                {/* Points */}
-                <FormField
-                    control={form.control}
-                    name="points"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Points</FormLabel>
-                            <FormControl>
-                                <Input type="number" {...field} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
+                    {/* Name */}
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Scoring Level Name</FormLabel>
+                                <FormControl>
+                                    <Input {...field} />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
 
-                {/* Performance Indicator */}
-                <FormField
-                    control={form.control}
-                    name="performance_indicator"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Performance Indicator</FormLabel>
-                            <FormControl>
-                                <Input {...field} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
+                    {/* Description */}
+                    <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Description</FormLabel>
+                                <FormControl>
+                                    <Input {...field} />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
 
-                {/* Actions */}
-                <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={resetForm}>
-                        Cancel
-                    </Button>
+                    {/* Points */}
+                    <FormField
+                        control={form.control}
+                        name="points"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Points</FormLabel>
+                                <FormControl>
+                                    <Input type="number" {...field} />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
 
-                    <Button
-                        type="submit"
-                        disabled={createLevel.isPending || updateLevel.isPending}
-                    >
-                        {editingLevel
-                            ? updateLevel.isPending
-                                ? 'Updating...'
-                                : 'Update Scoring Level'
-                            : createLevel.isPending
-                                ? 'Creating...'
-                                : 'Create Scoring Level'}
-                    </Button>
-                </div>
-            </form>
-        </Form>
+                    {/* Performance Indicator */}
+                    <FormField
+                        control={form.control}
+                        name="performance_indicator"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Performance Indicator</FormLabel>
+                                <FormControl>
+                                    <Input {...field} />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Actions */}
+                    <div className="flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={resetForm}>
+                            Cancel
+                        </Button>
+
+                        <Button
+                            type="submit"
+                            disabled={createLevel.isPending || updateLevel.isPending}
+                        >
+                            {editingLevel
+                                ? updateLevel.isPending
+                                    ? 'Updating...'
+                                    : 'Update Scoring Level'
+                                : createLevel.isPending
+                                    ? 'Creating...'
+                                    : 'Create Scoring Level'}
+                        </Button>
+                    </div>
+                </form>
+            </Form>
+
+        </div>
+
     );
 }

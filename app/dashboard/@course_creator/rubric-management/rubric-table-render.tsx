@@ -127,13 +127,13 @@ const RubricTable: React.FC<RubricTableProps> = ({
                   </Button>
                 )}
                 <div className="flex justify-end">
-                  <Button type="button" onClick={() => setIsCriteriaOpen(true)}>
+                  <Button type="button" onClick={() => { setIsCriteriaOpen(!isCriteriaOpen), setIsScoringOpen(false) }}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     New Criteria
                   </Button>
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={() => setIsScoringOpen(true)}>
+                  <Button onClick={() => { setIsScoringOpen(!isScoringOpen), setIsCriteriaOpen(false) }}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     New Scoring Level
                   </Button>
