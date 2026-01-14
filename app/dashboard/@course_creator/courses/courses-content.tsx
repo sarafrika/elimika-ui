@@ -24,6 +24,7 @@ import type { Course } from '@/services/client';
 import { format } from 'date-fns';
 import { Filter, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 type CourseStatusFilter = 'all' | 'draft' | 'in_review' | 'published' | 'archived';
@@ -66,7 +67,7 @@ export default function CourseCreatorCoursesContent() {
           </p>
         </div>
         <Button asChild>
-          <Link prefetch href='/dashboard/course-management'>
+          <Link prefetch href='/dashboard/course-management/create-new-course'>
             <PlusCircle className='mr-2 h-4 w-4' />
             Create course
           </Link>
@@ -144,6 +145,7 @@ export default function CourseCreatorCoursesContent() {
 }
 
 function CourseRow({ course }: { course: Course }) {
+  const router = useRouter()
   const statusMeta = STATUS_BADGE[course.status] ?? {
     label: course.status,
     variant: 'secondary',
@@ -151,7 +153,7 @@ function CourseRow({ course }: { course: Course }) {
   const requirementsCount = course.training_requirements?.length ?? 0;
 
   return (
-    <TableRow>
+    <TableRow className='cursor-pointer' onClick={() => router.push(`/dashboard/course-management/preview/${course?.uuid}`)}  >
       <TableCell>
         <div className='flex flex-col gap-1'>
           <span className='leading-tight font-semibold'>{course.name}</span>

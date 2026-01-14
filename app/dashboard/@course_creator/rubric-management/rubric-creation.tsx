@@ -20,7 +20,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import deepEqual from 'fast-deep-equal';
-import { PlusCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import ConfirmModal from '../../../../components/custom-modals/confirm-modal';
@@ -37,6 +36,7 @@ import {
   type ScoringLevelFormValues,
   Visibility,
 } from '../_components/rubric-management-form';
+import InlineNewRubric from './inline-new-rubric';
 import { useRubricsWithCriteriaAndScoring } from './rubric-chaining';
 import RubricTable from './rubric-table-render';
 
@@ -559,12 +559,7 @@ export default function RubricsCreationPage(course: any) {
 
   return (
     <div className='space-y-6'>
-      <div className='mb-6 flex w-full justify-end'>
-        <Button type='button' onClick={openCreateRubricModal}>
-          <PlusCircle className='mr-2 h-4 w-4' />
-          New Rubric
-        </Button>
-      </div>
+      <InlineNewRubric />
 
       {!rubricDataIsLoading && rubrics.length === 0 && (
         <div className='flex h-[40vh] w-full items-center justify-center'>
