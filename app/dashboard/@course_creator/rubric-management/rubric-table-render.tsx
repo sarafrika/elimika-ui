@@ -5,8 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import {
   Table,
@@ -19,19 +18,21 @@ import {
 
 import {
   CirclePlus,
-  DiamondPlus,
   EllipsisVertical,
   Globe,
   Lock,
   PencilIcon,
   PenIcon,
+  PlusCircle,
   TrashIcon,
-  Triangle,
+  Triangle
 } from 'lucide-react';
 
 import type React from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import InlineNewRubricCriteria from './inline-new-criteria';
+import InlineNewScoringLevel from './inline-new-scoringlevel';
 
 interface RubricTableProps {
   rubric: any;
@@ -84,6 +85,8 @@ const RubricTable: React.FC<RubricTableProps> = ({
   onInitializeMatrix,
 }) => {
   const [open, setOpen] = useState(true);
+  const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
+  const [isScoringOpen, setIsScoringOpen] = useState(false);
 
   const sortedLevels = [...scoringLevels].sort((a, b) => a.level_order - b.level_order);
   const sortedCriteria = [...criteria].sort((a, b) => a.display_order - b.display_order);
@@ -91,9 +94,9 @@ const RubricTable: React.FC<RubricTableProps> = ({
   return (
     <div className='overflow-hidden rounded-lg border shadow-sm'>
       {/* Header */}
-      <div className='flex items-center justify-between rounded-t-lg px-4 py-3 font-semibold'>
-        <div className='w-full'>
-          <button onClick={() => setOpen(!open)} className='flex w-full flex-col gap-2 text-left'>
+      <div className='flex items-center rounded-t-lg px-4 py-3 font-semibold'>
+        <div className='w-full flex flex-row items-center justify-between'>
+          <div onClick={() => setOpen(open)} className='flex w-full flex-col gap-2 text-left'>
             <p>{rubric.title}</p>
             <p className='text-muted-foreground line-clamp-2 max-w-[95%] text-sm font-normal'>
               {rubric.description}
@@ -109,53 +112,71 @@ const RubricTable: React.FC<RubricTableProps> = ({
               </p>
             </div>
 
-            <div className='flex gap-2'>
-              {linked ? (
-                <Button
-                  onClick={() => onRemoveRubricAssociation(rubric.uuid)}
-                  variant='destructive'
-                >
-                  Remove rubric from course
-                </Button>
-              ) : (
-                <Button onClick={() => onAssociateRubricWithCourse(rubric.uuid)} variant='default'>
-                  Link rubric to course
-                </Button>
-              )}
-            </div>
-          </button>
-        </div>
+            <div className='flex flex-row items-center justify-between mt-4'>
+              <div className='flex flex-row gap-2' >
+                {linked ? (
+                  <Button
+                    onClick={() => onRemoveRubricAssociation(rubric.uuid)}
+                    variant='destructive'
+                  >
+                    Remove rubric from course
+                  </Button>
+                ) : (
+                  <Button onClick={() => onAssociateRubricWithCourse(rubric.uuid)} variant='default'>
+                    Link rubric to course
+                  </Button>
+                )}
+                <div className="flex justify-end">
+                  <Button type="button" onClick={() => setIsCriteriaOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    New Criteria
+                  </Button>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={() => setIsScoringOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    New Scoring Level
+                  </Button>
+                </div>
+              </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <div className='rounded-sm p-2.5 hover:bg-blue-700'>
-              <EllipsisVertical className='h-4 w-4' />
+
+              <div className='flex flex-row gap-3' >
+                <Button variant="default" onClick={() => onEditRubric(rubric.uuid)}>
+                  <PenIcon className='h-4 w-4' />
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => onDeleteRubric(rubric.uuid)}
+                  className='text-destructive'
+                >
+                  <TrashIcon className='h-4 w-4' color='white' />
+                </Button>
+              </div>
             </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuItem onClick={() => onEditRubric(rubric.uuid)}>
-              <PenIcon className='mr-2 h-4 w-4' />
-              Edit Rubric
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onAddCriterion(rubric.uuid)}>
-              <CirclePlus className='mr-2 h-4 w-4' />
-              Add Criterion
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onAddScoringLevel(rubric.uuid)}>
-              <DiamondPlus className='mr-2 h-4 w-4' />
-              Add Scoring Level
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDeleteRubric(rubric.uuid)}
-              className='text-destructive'
-            >
-              <TrashIcon className='mr-2 h-4 w-4' />
-              Delete Rubric
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </div>
+        </div>
       </div>
+
+
+      <div className='my-8'>
+        {isCriteriaOpen && (
+          <InlineNewRubricCriteria
+            rubricId={rubric.uuid}
+            onClose={() => setIsCriteriaOpen(false)}
+          />
+        )}
+      </div>
+
+      <div className='mx-auto my-8'>
+        {isScoringOpen && (
+          <InlineNewScoringLevel
+            rubricId={rubric.uuid}
+            onClose={() => setIsScoringOpen(false)}
+          />
+        )}
+      </div>
+
 
       {open && (
         <div className='overflow-x-auto'>

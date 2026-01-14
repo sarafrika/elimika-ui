@@ -352,6 +352,11 @@ export default {
       ],
     },
     {
+      title: 'Rubrics Management',
+      url: '/dashboard/rubric-management',
+      icon: GraduationCap,
+    },
+    {
       title: 'Analytics',
       url: '/dashboard/analytics',
       icon: ChartNoAxesCombined,
