@@ -124,9 +124,10 @@ export default function ClassPreviewPage() {
     lessons: lessonsWithContent,
     contentTypeMap,
   } = useCourseLessonsWithContent({ courseUuid: classData?.course_uuid as string });
-  const [registrationLink] = useState(
-    `https://elimika.sarafrika.com/dashboard/browse-courses/enroll/${course?.uuid}`
-  );
+
+  const registrationLink = course?.uuid
+    ? `https://elimika.sarafrika.com/dashboard/browse-courses/enroll/${course.uuid}`
+    : '';
   const [copied, setCopied] = useState(false);
 
   // const totalLessons = classData.schedule.skills.reduce((acc, skill) => acc + skill.lessons.length, 0);
@@ -415,11 +416,10 @@ export default function ClassPreviewPage() {
 
       {/* Class Management Tabs */}
       <Tabs defaultValue='details' className='space-y-4'>
-        <TabsList className='grid w-full grid-cols-5'>
+        <TabsList className='grid w-full grid-cols-4'>
           <TabsTrigger value='details'>Class Details</TabsTrigger>
           <TabsTrigger value='schedule'>Schedule</TabsTrigger>
           <TabsTrigger value='skills'>Skills</TabsTrigger>
-          <TabsTrigger value='assignments'>Assessments</TabsTrigger>
           <TabsTrigger value='students'>Students</TabsTrigger>
         </TabsList>
 
@@ -595,38 +595,6 @@ export default function ClassPreviewPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value='assignments' className='space-y-4'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Assessments</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-3'>
-              {cAssesssment?.data?.content?.map((assessment, index) => {
-                return (
-                  <div
-                    key={index}
-                    className='bg-muted/60 flex items-center justify-between rounded-lg p-3'
-                  >
-                    <div className='flex items-center gap-3'>
-                      <div className='bg-primary/10 flex min-h-8 min-w-8 items-center justify-center rounded-full'>
-                        <span className='text-primary text-sm font-medium'>
-                          {assessment?.assessment_type?.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <div className='font-medium'>{assessment.title}</div>
-                        <div className='text-muted-foreground text-sm'>
-                          {assessment.description}
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant='outline'>{assessment?.assessment_type}</Badge>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value='students' className='space-y-4'>
           <Card>

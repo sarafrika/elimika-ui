@@ -51,6 +51,7 @@ import type {
   UpdateCourseCreatorMembershipResponse,
   UpdateCourseCreatorExperienceResponse,
   UpdateCourseCreatorEducationResponse,
+  UpdateCourseCreatorDocumentResponse,
   UpdateCourseCreatorCertificationResponse,
   UpdateGradingLevelResponse,
   UpdateDifficultyLevelResponse,
@@ -67,6 +68,9 @@ import type {
   UpdateCertificateTemplateResponse,
   GetAssignmentByUuidResponse,
   UpdateAssignmentResponse,
+  TransferResponse,
+  CreditSaleResponse,
+  DepositResponse,
   UploadProfileImageResponse,
   GetAllTrainingBranchesResponse,
   CreateTrainingBranchResponse,
@@ -158,6 +162,10 @@ import type {
   AddCourseCreatorExperienceResponse,
   GetCourseCreatorEducationResponse,
   AddCourseCreatorEducationResponse,
+  GetCourseCreatorDocumentsResponse,
+  AddCourseCreatorDocumentResponse,
+  VerifyCourseCreatorDocumentResponse,
+  UploadCourseCreatorDocumentResponse,
   GetCourseCreatorCertificationsResponse,
   AddCourseCreatorCertificationResponse,
   GetAllGradingLevelsResponse,
@@ -210,6 +218,8 @@ import type {
   UpdateCartResponse,
   UpdateQuizScheduleResponse,
   UpdateAssignmentScheduleResponse,
+  GetWalletResponse,
+  ListTransactionsResponse,
   GetAllUsersResponse,
   SearchResponse,
   Search1Response,
@@ -1292,6 +1302,36 @@ export const updateCourseCreatorEducationResponseTransformer = async (
   return data;
 };
 
+const courseCreatorDocumentDtoSchemaResponseTransformer = (data: any) => {
+  if (data.file_size_bytes) {
+    data.file_size_bytes = BigInt(data.file_size_bytes.toString());
+  }
+  if (data.verified_at) {
+    data.verified_at = new Date(data.verified_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseCreatorDocumentDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseCreatorDocumentDtoSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateCourseCreatorDocumentResponseTransformer = async (
+  data: any
+): Promise<UpdateCourseCreatorDocumentResponse> => {
+  data = apiResponseCourseCreatorDocumentDtoSchemaResponseTransformer(data);
+  return data;
+};
+
 const courseCreatorCertificationSchemaResponseTransformer = (data: any) => {
   if (data.issued_date) {
     data.issued_date = new Date(data.issued_date);
@@ -1636,6 +1676,55 @@ export const updateAssignmentResponseTransformer = async (
   data: any
 ): Promise<UpdateAssignmentResponse> => {
   data = apiResponseAssignmentSchemaResponseTransformer(data);
+  return data;
+};
+
+const walletSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const walletTransferResponseSchemaResponseTransformer = (data: any) => {
+  if (data.source_wallet) {
+    data.source_wallet = walletSchemaResponseTransformer(data.source_wallet);
+  }
+  if (data.target_wallet) {
+    data.target_wallet = walletSchemaResponseTransformer(data.target_wallet);
+  }
+  return data;
+};
+
+const apiResponseWalletTransferResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = walletTransferResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const transferResponseTransformer = async (data: any): Promise<TransferResponse> => {
+  data = apiResponseWalletTransferResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseWalletSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = walletSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const creditSaleResponseTransformer = async (data: any): Promise<CreditSaleResponse> => {
+  data = apiResponseWalletSchemaResponseTransformer(data);
+  return data;
+};
+
+export const depositResponseTransformer = async (data: any): Promise<DepositResponse> => {
+  data = apiResponseWalletSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2961,6 +3050,43 @@ export const addCourseCreatorEducationResponseTransformer = async (
   return data;
 };
 
+const apiResponseListCourseCreatorDocumentDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return courseCreatorDocumentDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getCourseCreatorDocumentsResponseTransformer = async (
+  data: any
+): Promise<GetCourseCreatorDocumentsResponse> => {
+  data = apiResponseListCourseCreatorDocumentDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addCourseCreatorDocumentResponseTransformer = async (
+  data: any
+): Promise<AddCourseCreatorDocumentResponse> => {
+  data = apiResponseCourseCreatorDocumentDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+export const verifyCourseCreatorDocumentResponseTransformer = async (
+  data: any
+): Promise<VerifyCourseCreatorDocumentResponse> => {
+  data = apiResponseCourseCreatorDocumentDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+export const uploadCourseCreatorDocumentResponseTransformer = async (
+  data: any
+): Promise<UploadCourseCreatorDocumentResponse> => {
+  data = apiResponseCourseCreatorDocumentDtoSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoCourseCreatorCertificationSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -3676,6 +3802,44 @@ export const updateAssignmentScheduleResponseTransformer = async (
   data: any
 ): Promise<UpdateAssignmentScheduleResponse> => {
   data = apiResponseClassAssignmentScheduleSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getWalletResponseTransformer = async (data: any): Promise<GetWalletResponse> => {
+  data = apiResponseWalletSchemaResponseTransformer(data);
+  return data;
+};
+
+const walletTransactionSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const pagedDtoWalletTransactionSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return walletTransactionSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoWalletTransactionSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoWalletTransactionSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listTransactionsResponseTransformer = async (
+  data: any
+): Promise<ListTransactionsResponse> => {
+  data = apiResponsePagedDtoWalletTransactionSchemaResponseTransformer(data);
   return data;
 };
 

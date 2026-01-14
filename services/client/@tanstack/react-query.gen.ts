@@ -84,6 +84,8 @@ import {
   updateCourseCreatorExperience,
   deleteCourseCreatorEducation,
   updateCourseCreatorEducation,
+  deleteCourseCreatorDocument,
+  updateCourseCreatorDocument,
   deleteCourseCreatorCertification,
   updateCourseCreatorCertification,
   deleteGradingLevel,
@@ -110,6 +112,9 @@ import {
   getAssignmentByUuid,
   updateAssignment,
   updateCurrency,
+  transfer,
+  creditSale,
+  deposit,
   uploadProfileImage,
   getAllTrainingBranches,
   createTrainingBranch,
@@ -208,6 +213,10 @@ import {
   addCourseCreatorExperience,
   getCourseCreatorEducation,
   addCourseCreatorEducation,
+  getCourseCreatorDocuments,
+  addCourseCreatorDocument,
+  verifyCourseCreatorDocument,
+  uploadCourseCreatorDocument,
   getCourseCreatorCertifications,
   addCourseCreatorCertification,
   getAllGradingLevels,
@@ -273,6 +282,8 @@ import {
   updateQuizSchedule,
   deleteAssignmentSchedule,
   updateAssignmentSchedule,
+  getWallet,
+  listTransactions,
   getAllUsers,
   search,
   getProfileImage,
@@ -624,6 +635,11 @@ import type {
   UpdateCourseCreatorEducationData,
   UpdateCourseCreatorEducationError,
   UpdateCourseCreatorEducationResponse,
+  DeleteCourseCreatorDocumentData,
+  DeleteCourseCreatorDocumentError,
+  UpdateCourseCreatorDocumentData,
+  UpdateCourseCreatorDocumentError,
+  UpdateCourseCreatorDocumentResponse,
   DeleteCourseCreatorCertificationData,
   DeleteCourseCreatorCertificationError,
   UpdateCourseCreatorCertificationData,
@@ -689,6 +705,15 @@ import type {
   UpdateCurrencyData,
   UpdateCurrencyError,
   UpdateCurrencyResponse,
+  TransferData,
+  TransferError,
+  TransferResponse,
+  CreditSaleData,
+  CreditSaleError,
+  CreditSaleResponse,
+  DepositData,
+  DepositError,
+  DepositResponse,
   UploadProfileImageData,
   UploadProfileImageError,
   UploadProfileImageResponse,
@@ -969,6 +994,16 @@ import type {
   AddCourseCreatorEducationData,
   AddCourseCreatorEducationError,
   AddCourseCreatorEducationResponse,
+  GetCourseCreatorDocumentsData,
+  AddCourseCreatorDocumentData,
+  AddCourseCreatorDocumentError,
+  AddCourseCreatorDocumentResponse,
+  VerifyCourseCreatorDocumentData,
+  VerifyCourseCreatorDocumentError,
+  VerifyCourseCreatorDocumentResponse,
+  UploadCourseCreatorDocumentData,
+  UploadCourseCreatorDocumentError,
+  UploadCourseCreatorDocumentResponse,
   GetCourseCreatorCertificationsData,
   GetCourseCreatorCertificationsError,
   GetCourseCreatorCertificationsResponse,
@@ -1150,6 +1185,10 @@ import type {
   UpdateAssignmentScheduleData,
   UpdateAssignmentScheduleError,
   UpdateAssignmentScheduleResponse,
+  GetWalletData,
+  ListTransactionsData,
+  ListTransactionsError,
+  ListTransactionsResponse,
   GetAllUsersData,
   GetAllUsersError,
   GetAllUsersResponse,
@@ -3675,6 +3714,62 @@ export const updateCourseCreatorEducationMutation = (
 };
 
 /**
+ * Delete course creator document
+ * Removes a document from a course creator profile
+ */
+export const deleteCourseCreatorDocumentMutation = (
+  options?: Partial<Options<DeleteCourseCreatorDocumentData>>
+): UseMutationOptions<
+  unknown,
+  DeleteCourseCreatorDocumentError,
+  Options<DeleteCourseCreatorDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCourseCreatorDocumentError,
+    Options<DeleteCourseCreatorDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseCreatorDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update course creator document
+ * Updates a specific course creator document
+ */
+export const updateCourseCreatorDocumentMutation = (
+  options?: Partial<Options<UpdateCourseCreatorDocumentData>>
+): UseMutationOptions<
+  UpdateCourseCreatorDocumentResponse,
+  UpdateCourseCreatorDocumentError,
+  Options<UpdateCourseCreatorDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseCreatorDocumentResponse,
+    UpdateCourseCreatorDocumentError,
+    Options<UpdateCourseCreatorDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseCreatorDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete certification record
  * Deletes a certification entry from a course creator profile.
  */
@@ -4336,6 +4431,134 @@ export const updateCurrencyMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCurrency({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const transferQueryKey = (options: Options<TransferData>) =>
+  createQueryKey('transfer', options);
+
+/**
+ * Transfer funds between wallets
+ */
+export const transferOptions = (options: Options<TransferData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await transfer({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: transferQueryKey(options),
+  });
+};
+
+/**
+ * Transfer funds between wallets
+ */
+export const transferMutation = (
+  options?: Partial<Options<TransferData>>
+): UseMutationOptions<TransferResponse, TransferError, Options<TransferData>> => {
+  const mutationOptions: UseMutationOptions<
+    TransferResponse,
+    TransferError,
+    Options<TransferData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await transfer({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const creditSaleQueryKey = (options: Options<CreditSaleData>) =>
+  createQueryKey('creditSale', options);
+
+/**
+ * Record a wallet sale credit
+ */
+export const creditSaleOptions = (options: Options<CreditSaleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await creditSale({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: creditSaleQueryKey(options),
+  });
+};
+
+/**
+ * Record a wallet sale credit
+ */
+export const creditSaleMutation = (
+  options?: Partial<Options<CreditSaleData>>
+): UseMutationOptions<CreditSaleResponse, CreditSaleError, Options<CreditSaleData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreditSaleResponse,
+    CreditSaleError,
+    Options<CreditSaleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await creditSale({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const depositQueryKey = (options: Options<DepositData>) =>
+  createQueryKey('deposit', options);
+
+/**
+ * Record a wallet deposit
+ */
+export const depositOptions = (options: Options<DepositData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await deposit({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: depositQueryKey(options),
+  });
+};
+
+/**
+ * Record a wallet deposit
+ */
+export const depositMutation = (
+  options?: Partial<Options<DepositData>>
+): UseMutationOptions<DepositResponse, DepositError, Options<DepositData>> => {
+  const mutationOptions: UseMutationOptions<DepositResponse, DepositError, Options<DepositData>> = {
+    mutationFn: async localOptions => {
+      const { data } = await deposit({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9882,6 +10105,203 @@ export const addCourseCreatorEducationMutation = (
   return mutationOptions;
 };
 
+export const getCourseCreatorDocumentsQueryKey = (
+  options: Options<GetCourseCreatorDocumentsData>
+) => createQueryKey('getCourseCreatorDocuments', options);
+
+/**
+ * Get course creator documents
+ * Retrieves all documents for a specific course creator
+ */
+export const getCourseCreatorDocumentsOptions = (
+  options: Options<GetCourseCreatorDocumentsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorDocuments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorDocumentsQueryKey(options),
+  });
+};
+
+export const addCourseCreatorDocumentQueryKey = (options: Options<AddCourseCreatorDocumentData>) =>
+  createQueryKey('addCourseCreatorDocument', options);
+
+/**
+ * Add document to course creator
+ * Uploads and associates a document with a course creator
+ */
+export const addCourseCreatorDocumentOptions = (options: Options<AddCourseCreatorDocumentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCourseCreatorDocument({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCourseCreatorDocumentQueryKey(options),
+  });
+};
+
+/**
+ * Add document to course creator
+ * Uploads and associates a document with a course creator
+ */
+export const addCourseCreatorDocumentMutation = (
+  options?: Partial<Options<AddCourseCreatorDocumentData>>
+): UseMutationOptions<
+  AddCourseCreatorDocumentResponse,
+  AddCourseCreatorDocumentError,
+  Options<AddCourseCreatorDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCourseCreatorDocumentResponse,
+    AddCourseCreatorDocumentError,
+    Options<AddCourseCreatorDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCourseCreatorDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const verifyCourseCreatorDocumentQueryKey = (
+  options: Options<VerifyCourseCreatorDocumentData>
+) => createQueryKey('verifyCourseCreatorDocument', options);
+
+/**
+ * Verify course creator document
+ * Marks a course creator document as verified
+ */
+export const verifyCourseCreatorDocumentOptions = (
+  options: Options<VerifyCourseCreatorDocumentData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await verifyCourseCreatorDocument({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: verifyCourseCreatorDocumentQueryKey(options),
+  });
+};
+
+/**
+ * Verify course creator document
+ * Marks a course creator document as verified
+ */
+export const verifyCourseCreatorDocumentMutation = (
+  options?: Partial<Options<VerifyCourseCreatorDocumentData>>
+): UseMutationOptions<
+  VerifyCourseCreatorDocumentResponse,
+  VerifyCourseCreatorDocumentError,
+  Options<VerifyCourseCreatorDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    VerifyCourseCreatorDocumentResponse,
+    VerifyCourseCreatorDocumentError,
+    Options<VerifyCourseCreatorDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await verifyCourseCreatorDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const uploadCourseCreatorDocumentQueryKey = (
+  options: Options<UploadCourseCreatorDocumentData>
+) => createQueryKey('uploadCourseCreatorDocument', options);
+
+/**
+ * Upload course creator document file
+ * Uploads a PDF document for a course creator and creates a document record.
+ *
+ * **Use cases:**
+ * - Uploading certificates for course creator education records.
+ *
+ * **File requirements:**
+ * - Must be a PDF file (`application/pdf`).
+ * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by course creator UUID.
+ *
+ */
+export const uploadCourseCreatorDocumentOptions = (
+  options: Options<UploadCourseCreatorDocumentData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadCourseCreatorDocument({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadCourseCreatorDocumentQueryKey(options),
+  });
+};
+
+/**
+ * Upload course creator document file
+ * Uploads a PDF document for a course creator and creates a document record.
+ *
+ * **Use cases:**
+ * - Uploading certificates for course creator education records.
+ *
+ * **File requirements:**
+ * - Must be a PDF file (`application/pdf`).
+ * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by course creator UUID.
+ *
+ */
+export const uploadCourseCreatorDocumentMutation = (
+  options?: Partial<Options<UploadCourseCreatorDocumentData>>
+): UseMutationOptions<
+  UploadCourseCreatorDocumentResponse,
+  UploadCourseCreatorDocumentError,
+  Options<UploadCourseCreatorDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadCourseCreatorDocumentResponse,
+    UploadCourseCreatorDocumentError,
+    Options<UploadCourseCreatorDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadCourseCreatorDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getCourseCreatorCertificationsQueryKey = (
   options: Options<GetCourseCreatorCertificationsData>
 ) => createQueryKey('getCourseCreatorCertifications', options);
@@ -12866,6 +13286,92 @@ export const updateAssignmentScheduleMutation = (
     },
   };
   return mutationOptions;
+};
+
+export const getWalletQueryKey = (options: Options<GetWalletData>) =>
+  createQueryKey('getWallet', options);
+
+/**
+ * Get a user's wallet balance
+ */
+export const getWalletOptions = (options: Options<GetWalletData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getWallet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getWalletQueryKey(options),
+  });
+};
+
+export const listTransactionsQueryKey = (options: Options<ListTransactionsData>) =>
+  createQueryKey('listTransactions', options);
+
+/**
+ * List wallet transactions
+ */
+export const listTransactionsOptions = (options: Options<ListTransactionsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTransactions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTransactionsQueryKey(options),
+  });
+};
+
+export const listTransactionsInfiniteQueryKey = (
+  options: Options<ListTransactionsData>
+): QueryKey<Options<ListTransactionsData>> => createQueryKey('listTransactions', options, true);
+
+/**
+ * List wallet transactions
+ */
+export const listTransactionsInfiniteOptions = (options: Options<ListTransactionsData>) => {
+  return infiniteQueryOptions<
+    ListTransactionsResponse,
+    ListTransactionsError,
+    InfiniteData<ListTransactionsResponse>,
+    QueryKey<Options<ListTransactionsData>>,
+    number | Pick<QueryKey<Options<ListTransactionsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListTransactionsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listTransactions({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listTransactionsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getAllUsersQueryKey = (options: Options<GetAllUsersData>) =>

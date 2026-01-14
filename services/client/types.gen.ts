@@ -59,6 +59,10 @@ export type User = {
   gender?: GenderEnum;
   user_domain?: UserDomainEnum;
   /**
+   * **[READ-ONLY]** Unique numeric identifier used for payments and admissions. Auto-generated with a Verhoeff check digit.
+   */
+  readonly user_no?: string;
+  /**
    * **[READ-ONLY]** URL to the user's profile image/avatar. Automatically generated after image upload and cannot be directly modified.
    */
   readonly profile_image_url?: string;
@@ -618,13 +622,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -846,13 +850,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -905,6 +909,14 @@ export type QuizQuestionOption = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted category of the option based on its correctness status.
+   */
+  readonly option_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this option is an incorrect answer choice.
+   */
+  readonly is_incorrect?: boolean;
+  /**
    * **[READ-ONLY]** Formatted display of the option's position within the question.
    */
   readonly position_display?: string;
@@ -916,14 +928,6 @@ export type QuizQuestionOption = {
    * **[READ-ONLY]** Comprehensive summary of the option including correctness and position.
    */
   readonly option_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted category of the option based on its correctness status.
-   */
-  readonly option_category?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this option is an incorrect answer choice.
-   */
-  readonly is_incorrect?: boolean;
 };
 
 export type ApiResponseQuizQuestionOption = {
@@ -1140,6 +1144,14 @@ export type ProgramCourse = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted category of the course association based on requirement status.
+   */
+  readonly association_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this course has prerequisite requirements.
+   */
+  readonly has_prerequisites?: boolean;
+  /**
    * **[READ-ONLY]** Formatted display of the course position within the program sequence.
    */
   readonly sequence_display?: string;
@@ -1151,14 +1163,6 @@ export type ProgramCourse = {
    * **[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.
    */
   readonly curriculum_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted category of the course association based on requirement status.
-   */
-  readonly association_category?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this course has prerequisite requirements.
-   */
-  readonly has_prerequisites?: boolean;
 };
 
 export type ApiResponseProgramCourse = {
@@ -1294,10 +1298,6 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
-   */
-  readonly is_profile_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
@@ -1305,6 +1305,10 @@ export type Instructor = {
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   */
+  readonly is_profile_complete?: boolean;
 };
 
 /**
@@ -1420,10 +1424,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
-   */
-  readonly formatted_duration?: string;
-  /**
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
@@ -1449,6 +1449,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   */
+  readonly formatted_duration?: string;
   /**
    * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
@@ -1524,6 +1528,19 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Brief summary of the experience for display in listings.
    */
   readonly summary?: string;
+  experience_level?: ExperienceLevelEnum;
+  /**
+   * **[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).
+   */
+  readonly is_recent_experience?: boolean;
+  /**
+   * **[READ-ONLY]** Calculated years of experience based on start and end dates.
+   */
+  readonly calculated_years?: number;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number;
   /**
    * **[READ-ONLY]** Human-readable formatted duration of employment.
    */
@@ -1540,19 +1557,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Indicates if the position has responsibilities documented.
    */
   readonly has_responsibilities?: boolean;
-  experience_level?: ExperienceLevelEnum;
-  /**
-   * **[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).
-   */
-  readonly is_recent_experience?: boolean;
-  /**
-   * **[READ-ONLY]** Calculated years of experience based on start and end dates.
-   */
-  readonly calculated_years?: number;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number;
   /**
    * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
@@ -1617,14 +1621,6 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
-   */
-  readonly is_recent_qualification?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted string showing year of completion and school name.
-   */
-  readonly formatted_completion?: string;
-  /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
   readonly years_since_completion?: number;
@@ -1637,6 +1633,14 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
+   */
+  readonly is_recent_qualification?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted string showing year of completion and school name.
+   */
+  readonly formatted_completion?: string;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -2505,6 +2509,35 @@ export type ApiResponseCourseCreatorEducation = {
   };
 };
 
+export type CourseCreatorDocumentDto = {
+  readonly uuid?: string;
+  course_creator_uuid: string;
+  document_type_uuid: string;
+  education_uuid?: string;
+  original_filename: string;
+  readonly stored_filename?: string;
+  readonly file_path?: string;
+  readonly file_size_bytes?: bigint;
+  readonly mime_type?: string;
+  readonly is_verified?: boolean;
+  readonly verified_by?: string;
+  readonly verified_at?: Date;
+  readonly verification_notes?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+};
+
+export type ApiResponseCourseCreatorDocumentDto = {
+  success?: boolean;
+  data?: CourseCreatorDocumentDto;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
 /**
  * Professional certification or accreditation evidence associated with a course creator
  */
@@ -3313,13 +3346,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
    */
   readonly assignment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -3403,6 +3436,128 @@ export type Currency = {
    * Indicates whether this is the platform default currency
    */
   defaultCurrency?: boolean;
+};
+
+/**
+ * Payload for transferring funds between wallets
+ */
+export type WalletTransferRequest = {
+  /**
+   * **[REQUIRED]** Target user UUID that receives the transfer.
+   */
+  target_user_uuid: string;
+  /**
+   * **[REQUIRED]** Amount to transfer.
+   */
+  amount: number;
+  /**
+   * **[OPTIONAL]** ISO currency code. Defaults to platform currency when omitted.
+   */
+  currency_code?: string;
+  /**
+   * **[OPTIONAL]** External reference for the transfer.
+   */
+  reference?: string;
+  /**
+   * **[OPTIONAL]** Description for the transfer.
+   */
+  description?: string;
+};
+
+export type ApiResponseWalletTransferResponse = {
+  success?: boolean;
+  data?: WalletTransferResponse;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * User wallet summary for a specific currency
+ */
+export type Wallet = {
+  /**
+   * **[READ-ONLY]** Unique identifier for the wallet.
+   */
+  readonly uuid?: string;
+  /**
+   * **[READ-ONLY]** User UUID that owns this wallet.
+   */
+  readonly user_uuid?: string;
+  /**
+   * **[READ-ONLY]** ISO currency code for this wallet balance.
+   */
+  readonly currency_code?: string;
+  /**
+   * **[READ-ONLY]** Current wallet balance.
+   */
+  readonly balance_amount?: number;
+  /**
+   * **[READ-ONLY]** Wallet creation timestamp.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Wallet last update timestamp.
+   */
+  readonly updated_date?: Date;
+};
+
+/**
+ * Summary of a wallet transfer operation
+ */
+export type WalletTransferResponse = {
+  /**
+   * **[READ-ONLY]** Transfer reference UUID linking both wallet entries.
+   */
+  readonly transfer_reference?: string;
+  /**
+   * **[READ-ONLY]** Amount transferred.
+   */
+  readonly amount?: number;
+  /**
+   * **[READ-ONLY]** ISO currency code for the transfer.
+   */
+  readonly currency_code?: string;
+  /**
+   * **[READ-ONLY]** Updated source wallet summary.
+   */
+  source_wallet?: Wallet;
+  /**
+   * **[READ-ONLY]** Updated target wallet summary.
+   */
+  target_wallet?: Wallet;
+};
+
+/**
+ * Payload for crediting a user's wallet
+ */
+export type WalletCreditRequest = {
+  /**
+   * **[REQUIRED]** Amount to credit the wallet.
+   */
+  amount: number;
+  /**
+   * **[OPTIONAL]** ISO currency code. Defaults to platform currency when omitted.
+   */
+  currency_code?: string;
+  /**
+   * **[OPTIONAL]** External reference for the credit source.
+   */
+  reference?: string;
+  /**
+   * **[OPTIONAL]** Description for the credit entry.
+   */
+  description?: string;
+};
+
+export type ApiResponseWallet = {
+  success?: boolean;
+  data?: Wallet;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
 };
 
 /**
@@ -3809,10 +3964,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -3824,6 +3975,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -4824,9 +4979,9 @@ export type Pageable = {
   sort?: Array<string>;
 };
 
-export type ApiResponsePagedDtoUser = {
+export type ApiResponsePagedDtoWalletTransaction = {
   success?: boolean;
-  data?: PagedDtoUser;
+  data?: PagedDtoWalletTransaction;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -4850,6 +5005,72 @@ export type PageMetadata = {
   hasPrevious?: boolean;
   first?: boolean;
   last?: boolean;
+};
+
+export type PagedDtoWalletTransaction = {
+  content?: Array<WalletTransaction>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+/**
+ * Wallet ledger entry capturing balance changes
+ */
+export type WalletTransaction = {
+  /**
+   * **[READ-ONLY]** Unique identifier for the transaction.
+   */
+  readonly uuid?: string;
+  /**
+   * **[READ-ONLY]** Wallet UUID linked to this transaction.
+   */
+  readonly wallet_uuid?: string;
+  transaction_type?: TransactionTypeEnum;
+  /**
+   * **[READ-ONLY]** Transaction amount.
+   */
+  readonly amount?: number;
+  /**
+   * **[READ-ONLY]** ISO currency code for the transaction.
+   */
+  readonly currency_code?: string;
+  /**
+   * **[READ-ONLY]** Wallet balance before the transaction.
+   */
+  readonly balance_before?: number;
+  /**
+   * **[READ-ONLY]** Wallet balance after the transaction.
+   */
+  readonly balance_after?: number;
+  /**
+   * **[READ-ONLY]** External reference identifier, if provided.
+   */
+  readonly reference?: string;
+  /**
+   * **[READ-ONLY]** Human-readable description of the transaction.
+   */
+  readonly description?: string;
+  /**
+   * **[READ-ONLY]** Transfer group UUID when the transaction is part of a wallet transfer.
+   */
+  readonly transfer_reference?: string;
+  /**
+   * **[READ-ONLY]** Counterparty user UUID when the transaction involves another wallet.
+   */
+  readonly counterparty_user_uuid?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the transaction was recorded.
+   */
+  readonly created_date?: Date;
+};
+
+export type ApiResponsePagedDtoUser = {
+  success?: boolean;
+  data?: PagedDtoUser;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
 };
 
 export type PagedDtoUser = {
@@ -5334,13 +5555,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the program.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the program.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -5945,13 +6166,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the course.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the course.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -6115,6 +6336,15 @@ export type PagedDtoCourseCreatorEducation = {
   content?: Array<CourseCreatorEducation>;
   metadata?: PageMetadata;
   links?: PageLinks;
+};
+
+export type ApiResponseListCourseCreatorDocumentDto = {
+  success?: boolean;
+  data?: Array<CourseCreatorDocumentDto>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
 };
 
 export type ApiResponsePagedDtoCourseCreatorCertification = {
@@ -7276,6 +7506,21 @@ export const DomainNameEnum = {
  * Domain/role to assign within the organisation
  */
 export type DomainNameEnum = (typeof DomainNameEnum)[keyof typeof DomainNameEnum];
+
+/**
+ * **[READ-ONLY]** Transaction category for this wallet entry.
+ */
+export const TransactionTypeEnum = {
+  DEPOSIT: 'DEPOSIT',
+  SALE: 'SALE',
+  TRANSFER_IN: 'TRANSFER_IN',
+  TRANSFER_OUT: 'TRANSFER_OUT',
+} as const;
+
+/**
+ * **[READ-ONLY]** Transaction category for this wallet entry.
+ */
+export type TransactionTypeEnum = (typeof TransactionTypeEnum)[keyof typeof TransactionTypeEnum];
 
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
@@ -10118,6 +10363,71 @@ export type UpdateCourseCreatorEducationResponses = {
 export type UpdateCourseCreatorEducationResponse =
   UpdateCourseCreatorEducationResponses[keyof UpdateCourseCreatorEducationResponses];
 
+export type DeleteCourseCreatorDocumentData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    documentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/documents/{documentUuid}';
+};
+
+export type DeleteCourseCreatorDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCourseCreatorDocumentError =
+  DeleteCourseCreatorDocumentErrors[keyof DeleteCourseCreatorDocumentErrors];
+
+export type DeleteCourseCreatorDocumentResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCourseCreatorDocumentData = {
+  body: CourseCreatorDocumentDto;
+  path: {
+    courseCreatorUuid: string;
+    documentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/documents/{documentUuid}';
+};
+
+export type UpdateCourseCreatorDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseCreatorDocumentError =
+  UpdateCourseCreatorDocumentErrors[keyof UpdateCourseCreatorDocumentErrors];
+
+export type UpdateCourseCreatorDocumentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorDocumentDto;
+};
+
+export type UpdateCourseCreatorDocumentResponse =
+  UpdateCourseCreatorDocumentResponses[keyof UpdateCourseCreatorDocumentResponses];
+
 export type DeleteCourseCreatorCertificationData = {
   body?: never;
   path: {
@@ -10963,6 +11273,99 @@ export type UpdateCurrencyResponses = {
 };
 
 export type UpdateCurrencyResponse = UpdateCurrencyResponses[keyof UpdateCurrencyResponses];
+
+export type TransferData = {
+  body: WalletTransferRequest;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/wallets/{userUuid}/transfers';
+};
+
+export type TransferErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type TransferError = TransferErrors[keyof TransferErrors];
+
+export type TransferResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseWalletTransferResponse;
+};
+
+export type TransferResponse = TransferResponses[keyof TransferResponses];
+
+export type CreditSaleData = {
+  body: WalletCreditRequest;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/wallets/{userUuid}/sales';
+};
+
+export type CreditSaleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreditSaleError = CreditSaleErrors[keyof CreditSaleErrors];
+
+export type CreditSaleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseWallet;
+};
+
+export type CreditSaleResponse = CreditSaleResponses[keyof CreditSaleResponses];
+
+export type DepositData = {
+  body: WalletCreditRequest;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/wallets/{userUuid}/deposits';
+};
+
+export type DepositErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DepositError = DepositErrors[keyof DepositErrors];
+
+export type DepositResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseWallet;
+};
+
+export type DepositResponse = DepositResponses[keyof DepositResponses];
 
 export type UploadProfileImageData = {
   body?: {
@@ -14359,6 +14762,147 @@ export type AddCourseCreatorEducationResponses = {
 export type AddCourseCreatorEducationResponse =
   AddCourseCreatorEducationResponses[keyof AddCourseCreatorEducationResponses];
 
+export type GetCourseCreatorDocumentsData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/documents';
+};
+
+export type GetCourseCreatorDocumentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorDocumentsError =
+  GetCourseCreatorDocumentsErrors[keyof GetCourseCreatorDocumentsErrors];
+
+export type GetCourseCreatorDocumentsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCourseCreatorDocumentDto;
+};
+
+export type GetCourseCreatorDocumentsResponse =
+  GetCourseCreatorDocumentsResponses[keyof GetCourseCreatorDocumentsResponses];
+
+export type AddCourseCreatorDocumentData = {
+  body: CourseCreatorDocumentDto;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/documents';
+};
+
+export type AddCourseCreatorDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCourseCreatorDocumentError =
+  AddCourseCreatorDocumentErrors[keyof AddCourseCreatorDocumentErrors];
+
+export type AddCourseCreatorDocumentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorDocumentDto;
+};
+
+export type AddCourseCreatorDocumentResponse =
+  AddCourseCreatorDocumentResponses[keyof AddCourseCreatorDocumentResponses];
+
+export type VerifyCourseCreatorDocumentData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    documentUuid: string;
+  };
+  query: {
+    verifiedBy: string;
+    verificationNotes?: string;
+  };
+  url: '/api/v1/course-creators/{courseCreatorUuid}/documents/{documentUuid}/verify';
+};
+
+export type VerifyCourseCreatorDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type VerifyCourseCreatorDocumentError =
+  VerifyCourseCreatorDocumentErrors[keyof VerifyCourseCreatorDocumentErrors];
+
+export type VerifyCourseCreatorDocumentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorDocumentDto;
+};
+
+export type VerifyCourseCreatorDocumentResponse =
+  VerifyCourseCreatorDocumentResponses[keyof VerifyCourseCreatorDocumentResponses];
+
+export type UploadCourseCreatorDocumentData = {
+  body?: {
+    file: Blob | File;
+  };
+  path: {
+    courseCreatorUuid: string;
+  };
+  query: {
+    document_type_uuid: string;
+    education_uuid?: string;
+  };
+  url: '/api/v1/course-creators/{courseCreatorUuid}/documents/upload';
+};
+
+export type UploadCourseCreatorDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadCourseCreatorDocumentError =
+  UploadCourseCreatorDocumentErrors[keyof UploadCourseCreatorDocumentErrors];
+
+export type UploadCourseCreatorDocumentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorDocumentDto;
+};
+
+export type UploadCourseCreatorDocumentResponse =
+  UploadCourseCreatorDocumentResponses[keyof UploadCourseCreatorDocumentResponses];
+
 export type GetCourseCreatorCertificationsData = {
   body?: never;
   path: {
@@ -16607,6 +17151,73 @@ export type UpdateAssignmentScheduleResponses = {
 
 export type UpdateAssignmentScheduleResponse =
   UpdateAssignmentScheduleResponses[keyof UpdateAssignmentScheduleResponses];
+
+export type GetWalletData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: {
+    currency_code?: string;
+  };
+  url: '/api/v1/wallets/{userUuid}';
+};
+
+export type GetWalletErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetWalletError = GetWalletErrors[keyof GetWalletErrors];
+
+export type GetWalletResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseWallet;
+};
+
+export type GetWalletResponse = GetWalletResponses[keyof GetWalletResponses];
+
+export type ListTransactionsData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query: {
+    currency_code?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/wallets/{userUuid}/transactions';
+};
+
+export type ListTransactionsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListTransactionsError = ListTransactionsErrors[keyof ListTransactionsErrors];
+
+export type ListTransactionsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoWalletTransaction;
+};
+
+export type ListTransactionsResponse = ListTransactionsResponses[keyof ListTransactionsResponses];
 
 export type GetAllUsersData = {
   body?: never;

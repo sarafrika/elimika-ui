@@ -210,6 +210,44 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       })
     );
 
+    const creatorShare = form.watch('creator_share_percentage');
+    const instructorShare = form.watch('instructor_share_percentage');
+
+    useEffect(() => {
+      if (
+        typeof instructorShare === 'number' &&
+        instructorShare >= 0 &&
+        instructorShare <= 100
+      ) {
+        const calculated = 100 - instructorShare;
+
+        if (form.getValues('creator_share_percentage') !== calculated) {
+          form.setValue('creator_share_percentage', calculated, {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
+        }
+      }
+    }, [instructorShare, form]);
+
+    useEffect(() => {
+      if (
+        typeof creatorShare === 'number' &&
+        creatorShare >= 0 &&
+        creatorShare <= 100
+      ) {
+        const calculated = 100 - creatorShare;
+
+        if (form.getValues('instructor_share_percentage') !== calculated) {
+          form.setValue('instructor_share_percentage', calculated, {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
+        }
+      }
+    }, [creatorShare, form]);
+
+
     const onSubmit = (data: CourseCreationFormValues) => {
       const resolvedCourseCreatorUuid = authorUuid;
 
@@ -546,12 +584,28 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 <FormField
                   control={form.control}
-                  name='creator_share_percentage'
+                  name="creator_share_percentage"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Creator Share (%)</FormLabel>
                       <FormControl>
-                        <Input type='number' min='0' max='100' step='1' {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={1}
+                          value={field.value ?? 0}
+                          onChange={(e) => {
+                            const value = Math.min(100, Math.max(0, Number(e.target.value)));
+
+                            field.onChange(value);
+                            form.setValue(
+                              'instructor_share_percentage',
+                              100 - value,
+                              { shouldDirty: true, shouldValidate: true }
+                            );
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -560,17 +614,34 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                 <FormField
                   control={form.control}
-                  name='instructor_share_percentage'
+                  name="instructor_share_percentage"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Instructor Share (%)</FormLabel>
                       <FormControl>
-                        <Input type='number' min='0' max='100' step='1' {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={1}
+                          value={field.value ?? 0}
+                          onChange={(e) => {
+                            const value = Math.min(100, Math.max(0, Number(e.target.value)));
+
+                            field.onChange(value);
+                            form.setValue(
+                              'creator_share_percentage',
+                              100 - value,
+                              { shouldDirty: true, shouldValidate: true }
+                            );
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
               </div>
             </div>
 
