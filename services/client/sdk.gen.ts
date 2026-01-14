@@ -253,6 +253,12 @@ import type {
   UpdateCourseCreatorEducationData,
   UpdateCourseCreatorEducationResponses,
   UpdateCourseCreatorEducationErrors,
+  DeleteCourseCreatorDocumentData,
+  DeleteCourseCreatorDocumentResponses,
+  DeleteCourseCreatorDocumentErrors,
+  UpdateCourseCreatorDocumentData,
+  UpdateCourseCreatorDocumentResponses,
+  UpdateCourseCreatorDocumentErrors,
   DeleteCourseCreatorCertificationData,
   DeleteCourseCreatorCertificationResponses,
   DeleteCourseCreatorCertificationErrors,
@@ -331,6 +337,15 @@ import type {
   UpdateCurrencyData,
   UpdateCurrencyResponses,
   UpdateCurrencyErrors,
+  TransferData,
+  TransferResponses,
+  TransferErrors,
+  CreditSaleData,
+  CreditSaleResponses,
+  CreditSaleErrors,
+  DepositData,
+  DepositResponses,
+  DepositErrors,
   UploadProfileImageData,
   UploadProfileImageResponses,
   UploadProfileImageErrors,
@@ -625,6 +640,18 @@ import type {
   AddCourseCreatorEducationData,
   AddCourseCreatorEducationResponses,
   AddCourseCreatorEducationErrors,
+  GetCourseCreatorDocumentsData,
+  GetCourseCreatorDocumentsResponses,
+  GetCourseCreatorDocumentsErrors,
+  AddCourseCreatorDocumentData,
+  AddCourseCreatorDocumentResponses,
+  AddCourseCreatorDocumentErrors,
+  VerifyCourseCreatorDocumentData,
+  VerifyCourseCreatorDocumentResponses,
+  VerifyCourseCreatorDocumentErrors,
+  UploadCourseCreatorDocumentData,
+  UploadCourseCreatorDocumentResponses,
+  UploadCourseCreatorDocumentErrors,
   GetCourseCreatorCertificationsData,
   GetCourseCreatorCertificationsResponses,
   GetCourseCreatorCertificationsErrors,
@@ -820,6 +847,12 @@ import type {
   UpdateAssignmentScheduleData,
   UpdateAssignmentScheduleResponses,
   UpdateAssignmentScheduleErrors,
+  GetWalletData,
+  GetWalletResponses,
+  GetWalletErrors,
+  ListTransactionsData,
+  ListTransactionsResponses,
+  ListTransactionsErrors,
   GetAllUsersData,
   GetAllUsersResponses,
   GetAllUsersErrors,
@@ -1311,6 +1344,7 @@ import {
   updateCourseCreatorMembershipResponseTransformer,
   updateCourseCreatorExperienceResponseTransformer,
   updateCourseCreatorEducationResponseTransformer,
+  updateCourseCreatorDocumentResponseTransformer,
   updateCourseCreatorCertificationResponseTransformer,
   updateGradingLevelResponseTransformer,
   updateDifficultyLevelResponseTransformer,
@@ -1327,6 +1361,9 @@ import {
   updateCertificateTemplateResponseTransformer,
   getAssignmentByUuidResponseTransformer,
   updateAssignmentResponseTransformer,
+  transferResponseTransformer,
+  creditSaleResponseTransformer,
+  depositResponseTransformer,
   uploadProfileImageResponseTransformer,
   getAllTrainingBranchesResponseTransformer,
   createTrainingBranchResponseTransformer,
@@ -1418,6 +1455,10 @@ import {
   addCourseCreatorExperienceResponseTransformer,
   getCourseCreatorEducationResponseTransformer,
   addCourseCreatorEducationResponseTransformer,
+  getCourseCreatorDocumentsResponseTransformer,
+  addCourseCreatorDocumentResponseTransformer,
+  verifyCourseCreatorDocumentResponseTransformer,
+  uploadCourseCreatorDocumentResponseTransformer,
   getCourseCreatorCertificationsResponseTransformer,
   addCourseCreatorCertificationResponseTransformer,
   getAllGradingLevelsResponseTransformer,
@@ -1470,6 +1511,8 @@ import {
   updateCartResponseTransformer,
   updateQuizScheduleResponseTransformer,
   updateAssignmentScheduleResponseTransformer,
+  getWalletResponseTransformer,
+  listTransactionsResponseTransformer,
   getAllUsersResponseTransformer,
   searchResponseTransformer,
   search1ResponseTransformer,
@@ -4023,6 +4066,65 @@ export const updateCourseCreatorEducation = <ThrowOnError extends boolean = fals
 };
 
 /**
+ * Delete course creator document
+ * Removes a document from a course creator profile
+ */
+export const deleteCourseCreatorDocument = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseCreatorDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseCreatorDocumentResponses,
+    DeleteCourseCreatorDocumentErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/documents/{documentUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update course creator document
+ * Updates a specific course creator document
+ */
+export const updateCourseCreatorDocument = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseCreatorDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseCreatorDocumentResponses,
+    UpdateCourseCreatorDocumentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseCreatorDocumentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/documents/{documentUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete certification record
  * Deletes a certification entry from a course creator profile.
  */
@@ -4774,6 +4876,91 @@ export const updateCurrency = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/currencies/{code}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Transfer funds between wallets
+ */
+export const transfer = <ThrowOnError extends boolean = false>(
+  options: Options<TransferData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<TransferResponses, TransferErrors, ThrowOnError>({
+    responseTransformer: transferResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/wallets/{userUuid}/transfers',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Record a wallet sale credit
+ */
+export const creditSale = <ThrowOnError extends boolean = false>(
+  options: Options<CreditSaleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreditSaleResponses,
+    CreditSaleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: creditSaleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/wallets/{userUuid}/sales',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Record a wallet deposit
+ */
+export const deposit = <ThrowOnError extends boolean = false>(
+  options: Options<DepositData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<DepositResponses, DepositErrors, ThrowOnError>({
+    responseTransformer: depositResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/wallets/{userUuid}/deposits',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7851,6 +8038,135 @@ export const addCourseCreatorEducation = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get course creator documents
+ * Retrieves all documents for a specific course creator
+ */
+export const getCourseCreatorDocuments = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorDocumentsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorDocumentsResponses,
+    GetCourseCreatorDocumentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorDocumentsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/documents',
+    ...options,
+  });
+};
+
+/**
+ * Add document to course creator
+ * Uploads and associates a document with a course creator
+ */
+export const addCourseCreatorDocument = <ThrowOnError extends boolean = false>(
+  options: Options<AddCourseCreatorDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCourseCreatorDocumentResponses,
+    AddCourseCreatorDocumentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCourseCreatorDocumentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/documents',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Verify course creator document
+ * Marks a course creator document as verified
+ */
+export const verifyCourseCreatorDocument = <ThrowOnError extends boolean = false>(
+  options: Options<VerifyCourseCreatorDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    VerifyCourseCreatorDocumentResponses,
+    VerifyCourseCreatorDocumentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: verifyCourseCreatorDocumentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/documents/{documentUuid}/verify',
+    ...options,
+  });
+};
+
+/**
+ * Upload course creator document file
+ * Uploads a PDF document for a course creator and creates a document record.
+ *
+ * **Use cases:**
+ * - Uploading certificates for course creator education records.
+ *
+ * **File requirements:**
+ * - Must be a PDF file (`application/pdf`).
+ * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by course creator UUID.
+ *
+ */
+export const uploadCourseCreatorDocument = <ThrowOnError extends boolean = false>(
+  options: Options<UploadCourseCreatorDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadCourseCreatorDocumentResponses,
+    UploadCourseCreatorDocumentErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadCourseCreatorDocumentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/documents/upload',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get certifications
  * Retrieves certification records for a course creator.
  */
@@ -9741,6 +10057,56 @@ export const updateAssignmentSchedule = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+};
+
+/**
+ * Get a user's wallet balance
+ */
+export const getWallet = <ThrowOnError extends boolean = false>(
+  options: Options<GetWalletData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetWalletResponses, GetWalletErrors, ThrowOnError>({
+    responseTransformer: getWalletResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/wallets/{userUuid}',
+    ...options,
+  });
+};
+
+/**
+ * List wallet transactions
+ */
+export const listTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<ListTransactionsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListTransactionsResponses,
+    ListTransactionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listTransactionsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/wallets/{userUuid}/transactions',
+    ...options,
   });
 };
 

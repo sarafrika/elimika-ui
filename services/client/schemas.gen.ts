@@ -32,6 +32,7 @@ export const UserSchema = {
     'Complete user profile information including personal details, authentication, and organizational data',
   example: {
     uuid: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    user_no: '123456789',
     first_name: 'Jane',
     middle_name: 'A.',
     last_name: 'Doe',
@@ -134,6 +135,15 @@ export const UserSchema = {
     },
     user_domain: {
       $ref: '#/components/schemas/UserDomainEnum',
+    },
+    user_no: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Unique numeric identifier used for payments and admissions. Auto-generated with a Verhoeff check digit.',
+      example: 123456789,
+      maxLength: 9,
+      minLength: 9,
+      readOnly: true,
     },
     profile_image_url: {
       type: 'string',
@@ -1285,19 +1295,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -1748,16 +1758,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: 2,
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -1870,6 +1880,19 @@ export const QuizQuestionOptionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    option_category: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted category of the option based on its correctness status.',
+      example: 'Correct Answer Option',
+      readOnly: true,
+    },
+    is_incorrect: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this option is an incorrect answer choice.',
+      example: false,
+      readOnly: true,
+    },
     position_display: {
       type: 'string',
       description:
@@ -1889,19 +1912,6 @@ export const QuizQuestionOptionSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the option including correctness and position.',
       example: 'Correct answer option in position 2',
-      readOnly: true,
-    },
-    option_category: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted category of the option based on its correctness status.',
-      example: 'Correct Answer Option',
-      readOnly: true,
-    },
-    is_incorrect: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this option is an incorrect answer choice.',
-      example: false,
       readOnly: true,
     },
   },
@@ -2354,6 +2364,19 @@ export const ProgramCourseSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    association_category: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted category of the course association based on requirement status.',
+      example: 'Required Course',
+      readOnly: true,
+    },
+    has_prerequisites: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this course has prerequisite requirements.',
+      example: true,
+      readOnly: true,
+    },
     sequence_display: {
       type: 'string',
       description:
@@ -2372,19 +2395,6 @@ export const ProgramCourseSchema = {
       description:
         "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.",
       example: 'Required course with prerequisites in sequence position 3',
-      readOnly: true,
-    },
-    association_category: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted category of the course association based on requirement status.',
-      example: 'Required Course',
-      readOnly: true,
-    },
-    has_prerequisites: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this course has prerequisite requirements.',
-      example: true,
       readOnly: true,
     },
   },
@@ -2660,13 +2670,6 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_profile_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
-      example: true,
-      readOnly: true,
-    },
     has_location_coordinates: {
       type: 'boolean',
       description:
@@ -2679,6 +2682,13 @@ export const InstructorSchema = {
       description:
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
       example: '-1.292100, 36.821900',
+      readOnly: true,
+    },
+    is_profile_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
+      example: true,
       readOnly: true,
     },
   },
@@ -2922,12 +2932,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    formatted_duration: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: 4,
-      readOnly: true,
-    },
     membership_duration_months: {
       type: 'integer',
       format: 'int32',
@@ -2974,6 +2978,12 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
       example: true,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: 4,
       readOnly: true,
     },
     is_complete: {
@@ -3136,30 +3146,6 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    formatted_duration: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: 5,
-      readOnly: true,
-    },
-    employment_period: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
-      example: 'Jan 2019 - Jun 2024',
-      readOnly: true,
-    },
-    is_long_term_position: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this position was held for 2 years or more.',
-      example: true,
-      readOnly: true,
-    },
-    has_responsibilities: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the position has responsibilities documented.',
-      example: true,
-      readOnly: true,
-    },
     experience_level: {
       $ref: '#/components/schemas/ExperienceLevelEnum',
     },
@@ -3183,6 +3169,30 @@ export const InstructorExperienceSchema = {
       description:
         '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
       example: 66,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: 5,
+      readOnly: true,
+    },
+    employment_period: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
+      example: 'Jan 2019 - Jun 2024',
+      readOnly: true,
+    },
+    is_long_term_position: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this position was held for 2 years or more.',
+      example: true,
+      readOnly: true,
+    },
+    has_responsibilities: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the position has responsibilities documented.',
+      example: true,
       readOnly: true,
     },
     is_complete: {
@@ -3321,19 +3331,6 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    is_recent_qualification: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.',
-      example: true,
-      readOnly: true,
-    },
-    formatted_completion: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
-      example: 2020,
-      readOnly: true,
-    },
     years_since_completion: {
       type: 'integer',
       format: 'int32',
@@ -3356,6 +3353,19 @@ export const InstructorEducationSchema = {
       description:
         '**[READ-ONLY]** Indicates if the education record has all essential information.',
       example: true,
+      readOnly: true,
+    },
+    is_recent_qualification: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.',
+      example: true,
+      readOnly: true,
+    },
+    formatted_completion: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
+      example: 2020,
       readOnly: true,
     },
   },
@@ -5281,6 +5291,105 @@ export const ApiResponseCourseCreatorEducationSchema = {
   },
 } as const;
 
+export const CourseCreatorDocumentDTOSchema = {
+  type: 'object',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    document_type_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    education_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    original_filename: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    stored_filename: {
+      type: 'string',
+      readOnly: true,
+    },
+    file_path: {
+      type: 'string',
+      readOnly: true,
+    },
+    file_size_bytes: {
+      type: 'integer',
+      format: 'int64',
+      readOnly: true,
+    },
+    mime_type: {
+      type: 'string',
+      readOnly: true,
+    },
+    is_verified: {
+      type: 'boolean',
+      readOnly: true,
+    },
+    verified_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    verified_at: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    verification_notes: {
+      type: 'string',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['course_creator_uuid', 'document_type_uuid', 'original_filename'],
+} as const;
+
+export const ApiResponseCourseCreatorDocumentDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorDocumentDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
 export const CourseCreatorCertificationSchema = {
   type: 'object',
   description:
@@ -6885,17 +6994,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: 100,
-      readOnly: true,
-    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: 100,
       readOnly: true,
     },
     assignment_scope: {
@@ -7026,6 +7135,189 @@ export const CurrencySchema = {
     defaultCurrency: {
       type: 'boolean',
       description: 'Indicates whether this is the platform default currency',
+    },
+  },
+} as const;
+
+export const WalletTransferRequestSchema = {
+  type: 'object',
+  description: 'Payload for transferring funds between wallets',
+  properties: {
+    target_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Target user UUID that receives the transfer.',
+    },
+    amount: {
+      type: 'number',
+      description: '**[REQUIRED]** Amount to transfer.',
+      example: 250,
+    },
+    currency_code: {
+      type: 'string',
+      description: '**[OPTIONAL]** ISO currency code. Defaults to platform currency when omitted.',
+      example: 'KES',
+      maxLength: 3,
+      minLength: 0,
+    },
+    reference: {
+      type: 'string',
+      description: '**[OPTIONAL]** External reference for the transfer.',
+      example: 'TRANSFER-2025-0001',
+      maxLength: 128,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: '**[OPTIONAL]** Description for the transfer.',
+      example: 'Reward payout',
+    },
+  },
+  required: ['amount', 'target_user_uuid'],
+} as const;
+
+export const ApiResponseWalletTransferResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/WalletTransferResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const WalletSchema = {
+  type: 'object',
+  description: 'User wallet summary for a specific currency',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the wallet.',
+      readOnly: true,
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** User UUID that owns this wallet.',
+      readOnly: true,
+    },
+    currency_code: {
+      type: 'string',
+      description: '**[READ-ONLY]** ISO currency code for this wallet balance.',
+      example: 'KES',
+      readOnly: true,
+    },
+    balance_amount: {
+      type: 'number',
+      description: '**[READ-ONLY]** Current wallet balance.',
+      example: 1500,
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Wallet creation timestamp.',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Wallet last update timestamp.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const WalletTransferResponseSchema = {
+  type: 'object',
+  description: 'Summary of a wallet transfer operation',
+  properties: {
+    transfer_reference: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Transfer reference UUID linking both wallet entries.',
+      readOnly: true,
+    },
+    amount: {
+      type: 'number',
+      description: '**[READ-ONLY]** Amount transferred.',
+      example: 250,
+      readOnly: true,
+    },
+    currency_code: {
+      type: 'string',
+      description: '**[READ-ONLY]** ISO currency code for the transfer.',
+      example: 'KES',
+      readOnly: true,
+    },
+    source_wallet: {
+      $ref: '#/components/schemas/Wallet',
+      description: '**[READ-ONLY]** Updated source wallet summary.',
+      readOnly: true,
+    },
+    target_wallet: {
+      $ref: '#/components/schemas/Wallet',
+      description: '**[READ-ONLY]** Updated target wallet summary.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const WalletCreditRequestSchema = {
+  type: 'object',
+  description: "Payload for crediting a user's wallet",
+  properties: {
+    amount: {
+      type: 'number',
+      description: '**[REQUIRED]** Amount to credit the wallet.',
+      example: 500,
+    },
+    currency_code: {
+      type: 'string',
+      description: '**[OPTIONAL]** ISO currency code. Defaults to platform currency when omitted.',
+      example: 'KES',
+      maxLength: 3,
+      minLength: 0,
+    },
+    reference: {
+      type: 'string',
+      description: '**[OPTIONAL]** External reference for the credit source.',
+      example: 'PAY-2025-0001',
+      maxLength: 128,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: '**[OPTIONAL]** Description for the credit entry.',
+      example: 'Wallet deposit via M-Pesa',
+    },
+  },
+  required: ['amount'],
+} as const;
+
+export const ApiResponseWalletSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/Wallet',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
     },
   },
 } as const;
@@ -7782,12 +8074,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -7804,6 +8090,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -9432,14 +9724,14 @@ export const PageableSchema = {
   },
 } as const;
 
-export const ApiResponsePagedDTOUserSchema = {
+export const ApiResponsePagedDTOWalletTransactionSchema = {
   type: 'object',
   properties: {
     success: {
       type: 'boolean',
     },
     data: {
-      $ref: '#/components/schemas/PagedDTOUser',
+      $ref: '#/components/schemas/PagedDTOWalletTransaction',
     },
     message: {
       type: 'string',
@@ -9501,6 +9793,120 @@ export const PageMetadataSchema = {
     },
     last: {
       type: 'boolean',
+    },
+  },
+} as const;
+
+export const PagedDTOWalletTransactionSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/WalletTransaction',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const WalletTransactionSchema = {
+  type: 'object',
+  description: 'Wallet ledger entry capturing balance changes',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the transaction.',
+      readOnly: true,
+    },
+    wallet_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Wallet UUID linked to this transaction.',
+      readOnly: true,
+    },
+    transaction_type: {
+      $ref: '#/components/schemas/TransactionTypeEnum',
+    },
+    amount: {
+      type: 'number',
+      description: '**[READ-ONLY]** Transaction amount.',
+      example: 500,
+      readOnly: true,
+    },
+    currency_code: {
+      type: 'string',
+      description: '**[READ-ONLY]** ISO currency code for the transaction.',
+      example: 'KES',
+      readOnly: true,
+    },
+    balance_before: {
+      type: 'number',
+      description: '**[READ-ONLY]** Wallet balance before the transaction.',
+      example: 1000,
+      readOnly: true,
+    },
+    balance_after: {
+      type: 'number',
+      description: '**[READ-ONLY]** Wallet balance after the transaction.',
+      example: 1500,
+      readOnly: true,
+    },
+    reference: {
+      type: 'string',
+      description: '**[READ-ONLY]** External reference identifier, if provided.',
+      example: 'PAY-2025-0001',
+      readOnly: true,
+    },
+    description: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable description of the transaction.',
+      example: 'Wallet deposit via M-Pesa',
+      readOnly: true,
+    },
+    transfer_reference: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Transfer group UUID when the transaction is part of a wallet transfer.',
+      readOnly: true,
+    },
+    counterparty_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Counterparty user UUID when the transaction involves another wallet.',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the transaction was recorded.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOUserSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOUser',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
     },
   },
 } as const;
@@ -10599,16 +11005,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
       example: 'Completed Program Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
+      example: '100.00% Complete',
       readOnly: true,
     },
     enrollment_duration: {
@@ -11951,16 +12357,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
       example: 'Completed Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
+      example: '100.00% Complete',
       readOnly: true,
     },
     enrollment_duration: {
@@ -12326,6 +12732,27 @@ export const PagedDTOCourseCreatorEducationSchema = {
     },
     links: {
       $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCourseCreatorDocumentDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorDocumentDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
     },
   },
 } as const;
@@ -13788,6 +14215,14 @@ export const DomainNameEnumSchema = {
   description: 'Domain/role to assign within the organisation',
   enum: ['student', 'instructor', 'admin', 'organisation_user', 'course_creator'],
   example: 'organisation_user',
+} as const;
+
+export const TransactionTypeEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Transaction category for this wallet entry.',
+  enum: ['DEPOSIT', 'SALE', 'TRANSFER_IN', 'TRANSFER_OUT'],
+  example: 'DEPOSIT',
+  readOnly: true,
 } as const;
 
 export const StatusEnum9Schema = {

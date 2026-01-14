@@ -109,9 +109,7 @@ export default function TrainingApplicationsPage() {
     ...searchTrainingApplicationsOptions({
       query: {
         searchParams: {
-          // @ts-ignore
-          // course_creator_uuid: courseCreator?.uuid as string,
-          applicantType: "instructor"
+          course_creator_uuid: courseCreator?.uuid as string,
         }, pageable: { page, size: pageSize },
       },
     }),
@@ -260,7 +258,13 @@ export default function TrainingApplicationsPage() {
         onSuccess: () => {
           toast.success(`Application ${reviewAction}d successfully`);
           qc.invalidateQueries({
-            queryKey: searchTrainingApplicationsQueryKey({}),
+            queryKey: searchTrainingApplicationsQueryKey({
+              query: {
+                searchParams: {
+                  course_creator_uuid: courseCreator?.uuid as string,
+                }, pageable: { page, size: pageSize },
+              },
+            }),
           });
           setReviewDialogOpen(false);
           setSelectedApplication(null);

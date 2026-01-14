@@ -55,12 +55,13 @@ import {
   MoreVertical,
   PenLine,
   PlusCircle,
+  Save,
   Trash,
   VideoIcon,
   X,
   Youtube,
 } from 'lucide-react';
-import React, { type ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
   type Control,
   type FieldErrors,
@@ -92,6 +93,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import Link from 'next/link';
 import { useUserProfile } from '../../../../context/profile-context';
+import { cn } from '../../../../lib/utils';
 import { useRubricsWithCriteriaAndScoring } from '../rubric-management/rubric-chaining';
 
 export const CONTENT_TYPES = {
@@ -155,8 +157,6 @@ const lessonFormSchema = z.object({
     .max(350, 'Description cannot exceed 500 characters'),
   objectives: z.string().max(400, 'Objectives cannot exceed 500 characters').optional(),
   uuid: z.any(),
-  duration_hours: z.any(),
-  duration_minutes: z.any(),
 });
 
 export type LessonFormValues = z.infer<typeof lessonFormSchema>;
@@ -571,8 +571,6 @@ function LessonCreationForm({
       title: '',
       description: '',
       objectives: '',
-      duration_hours: '',
-      duration_minutes: '',
       resources: [],
     },
   });
@@ -616,9 +614,6 @@ function LessonCreationForm({
       title: values?.title,
       description: values?.description as string,
       learning_objectives: values?.objectives as string,
-      duration_hours: values.duration_hours,
-      duration_minutes: values.duration_minutes,
-      duration_display: `${values.duration_hours} ${values.duration_minutes}`,
       status: course?.status as any,
       active: course?.active,
       is_published: course?.is_published,
@@ -719,34 +714,6 @@ function LessonCreationForm({
                 <FormLabel>Skill Objectives</FormLabel>
                 <FormControl>
                   <SimpleEditor value={field.value} onChange={field.onChange} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Duration Hours */}
-          <FormField
-            name='duration_hours'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Duration (hours)</FormLabel>
-                <FormControl>
-                  <Input type='number' min={0} step={1} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Duration Minutes */}
-          <FormField
-            name='duration_minutes'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Duration (minutes)</FormLabel>
-                <FormControl>
-                  <Input type='number' min={0} max={59} step={1} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -879,9 +846,6 @@ function LessonEditingForm({
       title: values?.title,
       description: values?.description ?? '',
       learning_objectives: values.description,
-      duration_hours: values.duration_hours,
-      duration_minutes: values.duration_minutes,
-      duration_display: `${values.duration_hours} ${values.duration_minutes}`,
       status: courseData?.data?.status,
       active: courseData?.data?.active,
       is_published: courseData?.data?.is_published,
@@ -1112,6 +1076,12 @@ function LessonContentForm({
     };
   }, [initialValues]);
 
+  const draftKey = React.useMemo(
+    () =>
+      `lesson-content-draft:${courseId}:${lessonId}:${contentId ?? 'new'}`,
+    [courseId, lessonId, contentId]
+  );
+
   const form = useForm<ContentFormValues>({
     resolver: zodResolver(lessonContentSchema),
     defaultValues: {
@@ -1140,9 +1110,40 @@ function LessonContentForm({
     }
   }, [mappedInitialValues, form]);
 
-  const isEditMode = !!initialValues?.uuid;
+  React.useEffect(() => {
+    const savedDraft = localStorage.getItem(draftKey);
+
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        form.reset({
+          ...form.getValues(),
+          ...parsed,
+        });
+      } catch {
+        // ignore invalid drafts
+      }
+    }
+  }, [draftKey]);
+
 
   const { setValue, watch } = form;
+  const watchedValues = form.watch();
+
+
+  const [draftSaved, setDraftSaved] = useState(false);
+
+
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      localStorage.setItem(draftKey, JSON.stringify(watchedValues));
+    }, 600); // debounce
+
+    return () => clearTimeout(timeout);
+  }, [watchedValues, draftKey]);
+
+
+  const isEditMode = !!initialValues?.uuid;
   const contentTypeUuid = watch('content_type_uuid');
 
   // GET COURSE CONTENT TYPES
@@ -1217,6 +1218,8 @@ function LessonContentForm({
                 }),
               });
               toast.success(data?.message);
+              localStorage.removeItem(draftKey);
+
             },
           }
         );
@@ -1234,6 +1237,7 @@ function LessonContentForm({
                 }),
               });
               toast.success(data?.message);
+              localStorage.removeItem(draftKey);
               onCancel();
             },
           }
@@ -1246,6 +1250,9 @@ function LessonContentForm({
 
   const isPending = createLessonContent.isPending || updateLessonContent.isPending;
 
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [mediaFile, setMediaFile] = React.useState<File | null>(null);
 
   const uploadLessonMedia = useMutation(uploadLessonMediaMutation())
@@ -1254,8 +1261,27 @@ function LessonContentForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit, handleSubmitError)}
-        className={`space-y-8 ${className ?? ''}`}
+        className={`space-y-6 ${className ?? ''}`}
       >
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            className="ml-auto flex items-center gap-2"
+            onClick={() => {
+              localStorage.setItem(draftKey, JSON.stringify(form.getValues()));
+              setDraftSaved(true);
+              toast.success("Draft saved");
+
+              setTimeout(() => setDraftSaved(false), 2000);
+            }}
+          >
+            <Save className="h-4 w-4" />
+            {draftSaved ? "Draft Saved" : "Save Draft"}
+          </Button>
+        </div>
+
+
         <div className='flex flex-col gap-3 space-y-4'>
           <FormField
             control={form.control}
@@ -1414,16 +1440,62 @@ function LessonContentForm({
             </>
           )}
 
-
           {/* Lesson Media Upload (Separate Endpoint) */}
-          <div className="rounded-lg border p-4 space-y-3">
+          <div
+            className={cn(
+              "rounded-lg border-2 border-dashed p-6 space-y-4 transition-colors",
+              isDragging
+                ? "border-primary bg-primary/5"
+                : "border-muted-foreground/30"
+            )}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+
+              const file = e.dataTransfer.files?.[0];
+              if (file) {
+                setMediaFile(file);
+              }
+            }}
+          >
             <h4 className="text-sm font-medium">Lesson Media</h4>
 
+            {/* Hidden file input */}
             <Input
+              ref={fileInputRef}
               type="file"
               accept="image/*,application/pdf,video/*"
-              onChange={e => setMediaFile(e.target.files?.[0] || null)}
+              className="hidden"
+              onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
             />
+
+            {/* Clickable drop area */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-2 rounded-md border bg-muted/40 px-6 py-8 text-center cursor-pointer hover:bg-muted"
+            >
+              <p className="text-sm font-medium">
+                Drag & drop a file here, or click to browse
+              </p>
+
+              {mediaFile ? (
+                <p className="text-[13px] text-primary truncate max-w-full">
+                  {mediaFile.name}
+                </p>
+              ) : (
+                <p className="text-[13px] text-muted-foreground">
+                  Audios, PDFs, or Videos
+                </p>
+              )}
+            </div>
 
             <Button
               type="button"
@@ -1432,38 +1504,39 @@ function LessonContentForm({
               onClick={() => {
                 if (!mediaFile) return;
 
-                uploadLessonMedia.mutate({
-                  body: {
-                    file: mediaFile
+                uploadLessonMedia.mutate(
+                  {
+                    body: { file: mediaFile },
+                    path: {
+                      courseUuid: courseId as string,
+                      lessonUuid: lessonId as string,
+                    },
+                    query: {
+                      content_type_uuid: contentTypeUuid,
+                      title: "Media",
+                      description: "Description",
+                      is_required: true,
+                    },
                   },
-                  path: {
-                    courseUuid: courseId as string,
-                    lessonUuid: lessonId as string,
-                  },
-                  query: {
-                    content_type_uuid: contentTypeUuid,
-                    title: "Media",
-                    description: "",
-                    is_required: false
-                  }
-                }, {
-                  onSuccess: () => {
-                    toast.success('Media uploaded successfully');
-                    setMediaFile(null);
+                  {
+                    onSuccess: () => {
+                      toast.success("Media uploaded successfully");
+                      setMediaFile(null);
 
-                    qc.invalidateQueries({
-                      queryKey: getLessonContentQueryKey({
-                        path: {
-                          courseUuid: courseId as string,
-                          lessonUuid: lessonId as string,
-                        },
-                      }),
-                    });
-                  },
-                  onError: (err: any) => {
-                    toast.error(err?.message || 'Media upload failed');
-                  },
-                })
+                      qc.invalidateQueries({
+                        queryKey: getLessonContentQueryKey({
+                          path: {
+                            courseUuid: courseId as string,
+                            lessonUuid: lessonId as string,
+                          },
+                        }),
+                      });
+                    },
+                    onError: (err: any) => {
+                      toast.error(err?.message || "Media upload failed");
+                    },
+                  }
+                );
               }}
             >
               {uploadLessonMedia.isPending ? (
@@ -1472,16 +1545,16 @@ function LessonContentForm({
                   Uploading...
                 </>
               ) : (
-                'Upload Media'
+                "Upload Media"
               )}
             </Button>
 
             <p className="text-xs text-muted-foreground">
-              Supported formats: Images (JPG, PNG) and PDFs
+              Supported formats: Audios, PDFs, and Videos
             </p>
           </div>
-        </div>
 
+        </div>
 
         {/* Form Buttons */}
         <div className='flex justify-end gap-2 pt-6'>
@@ -2185,6 +2258,8 @@ function LessonContentDialog({
   initialValues,
 }: AddLessonDialogProps) {
   const isEditMode = initialValues?.uuid ?? '';
+  const draftKey = `lesson-content-draft:${courseId}:${lessonId}:${contentId ?? 'new'}`;
+
 
   return (
     <Dialog
@@ -2203,6 +2278,8 @@ function LessonContentDialog({
               ? 'Update the details of your skill content below.'
               : 'Fill in the contents of your skill below.'}
           </DialogDescription>
+
+
         </DialogHeader>
 
         <ScrollArea className='h-[calc(90vh-4rem)] sm:h-[calc(90vh-8rem)]'>
