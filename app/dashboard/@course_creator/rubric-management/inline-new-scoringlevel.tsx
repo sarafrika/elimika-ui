@@ -133,9 +133,7 @@ export default function InlineNewScoringLevel({
 
 
     return (
-
         <div className='rounded-lg border mx-2'  >
-
             <div className="border-b px-6 py-4">
                 <h2 className="text-xl font-semibold">
                     Add New Scoring Level

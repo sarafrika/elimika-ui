@@ -1,10 +1,9 @@
 'use client';
 
-import { buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface CourseManagementLayoutProps {
   children: React.ReactNode;
@@ -21,21 +20,28 @@ const sidebarNavItems = [
   },
 ];
 
+const navItems = [
+  { label: "All", href: "/dashboard/course-management/all" },
+  { label: "Drafts", href: "/dashboard/course-management/drafts" },
+  { label: "Published", href: "/dashboard/course-management/published" },
+]
+
 export default function CourseManagementLayout({ children }: CourseManagementLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter()
   const hideNav = pathname.startsWith('/dashboard/course-management/create-new-course');
 
   return (
     <div className='space-y-6 p-4 pb-16 md:py-10'>
       <div className='flex items-center justify-between'>
         <div>
-          <h2 className='text-2xl font-bold tracking-tight'>Course Management</h2>
-          <p className='text-muted-foreground'>Manage your course drafts and published courses.</p>
+          <h2 className='text-[22px] font-bold tracking-tight'>Course Management</h2>
+          <p className='text-muted-foreground text-[14px]'>Manage your course drafts and published courses.</p>
         </div>
       </div>
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6'>
-        {!hideNav && (
+        {/* {!hideNav && (
           <aside className=''>
             <nav className='flex space-x-2 lg:mb-6 lg:flex-row lg:space-y-1 lg:space-x-6'>
               {sidebarNavItems.map(item => (
@@ -55,8 +61,32 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
               ))}
             </nav>
           </aside>
-        )}
+        )} */}
         <div className='lg:auto max-w-7xl flex-1 xl:max-w-[110rem] 2xl:max-w-[130rem]'>
+          {!hideNav && <div className="mx-auto flex w-6xl gap-4 rounded-xl p-2">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href
+
+              return (
+                <Button
+                  key={item.href}
+                  onClick={() => router.push(item.href)}
+                  variant="ghost"
+                  className={cn(
+                    "rounded-lg transition-colors",
+                    "bg-muted/100 hover:bg-muted",
+                    "text-muted-foreground px-5 py-2 minw-fit",
+                    isActive &&
+                    "bg-primary text-primary-foreground hover:bg-primary"
+                  )}
+                >
+                  {item.label}
+                </Button>
+              )
+            })}
+          </div>}
+
+
           {children}
         </div>
       </div>

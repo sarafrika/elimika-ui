@@ -4,12 +4,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { format } from 'date-fns';
+import { useState } from 'react';
+
+type CourseReview = {
+  id: string;
+  rating: number; // 1–5
+  comment: string;
+  author?: string;
+  createdAt: Date;
+};
+
+type Course = {
+  id: string;
+  title: string;
+  reviews?: CourseReview[];
+};
 
 export default function CourseCreatorAnalyticsPage() {
-  const { data } = useCourseCreator();
+  const [openCourseId, setOpenCourseId] = useState<string | null>(null);
+
+  const { data, courses } = useCourseCreator();
   const { analytics, monetization, trainingRequirements, verification } = data;
 
-  const totalCourses = analytics.totalCourses || 1; // avoid divide by zero
+  const totalCourses = analytics.totalCourses || 1;
   const statusBreakdown = [
     { label: 'Published', count: analytics.publishedCourses },
     { label: 'In review', count: analytics.inReviewCourses },
@@ -26,6 +43,33 @@ export default function CourseCreatorAnalyticsPage() {
           operational compliance.
         </p>
       </header>
+
+      <Card className='lg:col-span-2'>
+        <CardHeader>
+          <CardTitle className='text-base font-semibold'>
+            Course ratings & feedback
+          </CardTitle>
+          <CardDescription>
+            Learner-submitted ratings and qualitative feedback per course.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className='space-y-4'>
+          {courses.map(course => (
+            <CourseReviewSummary
+              key={course.uuid}
+              course={course}
+              isOpen={openCourseId === course.uuid}
+              onToggle={() =>
+                setOpenCourseId((prev: any) =>
+                  prev === course?.uuid ? null : course?.uuid as string
+                )
+              }
+            />
+          ))}
+        </CardContent>
+      </Card>
+
 
       <section className='grid gap-4 lg:grid-cols-2'>
         <Card>
@@ -166,3 +210,119 @@ function formatCurrency(value: number | null) {
     maximumFractionDigits: 0,
   }).format(value);
 }
+
+function RatingStars({ value }: { value: number }) {
+  return (
+    <div className='flex items-center gap-1'>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <span
+          key={i}
+          className={i < value ? 'text-yellow-500' : 'text-muted-foreground'}
+        >
+          ★
+        </span>
+      ))}
+    </div>
+  );
+}
+
+
+function CourseReviewSummary({
+  course,
+  isOpen,
+  onToggle,
+}: {
+  course: any;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const reviews =
+    course.reviews ?? [
+      {
+        uuid: 'rev-1234',
+        rating: 5,
+        student_uuid: "student-uuid-1",
+        comments: 'Very clear explanations and engaging sessions.',
+        created_date: '2025-11-18T09:00:00',
+        is_anonymous: false,
+        created_by: 'student@example.com',
+      },
+    ];
+
+  const reviewCount = reviews.length;
+
+  const averageRating =
+    reviewCount > 0
+      ? Math.round(
+        (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) /
+          reviewCount) *
+        10
+      ) / 10
+      : null;
+
+  return (
+    <div className='border-border/60 rounded-lg border'>
+      {/* Header */}
+      <button
+        onClick={onToggle}
+        className='flex w-full items-center justify-between p-4 text-left'
+        aria-expanded={isOpen}
+      >
+        <div>
+          <p className='font-medium'>{course.name}</p>
+
+          <div className='flex flex-row items-center gap-4'>
+            <p className='text-muted-foreground text-xs'>
+              {reviewCount
+                ? `${reviewCount} review${reviewCount > 1 ? 's' : ''}`
+                : 'No reviews yet'}
+            </p>
+            <p className='text-muted-foreground text-xs'>
+              {"2 enrollments"}
+            </p>
+          </div>
+        </div>
+
+        <div className='flex items-center gap-2'>
+          {averageRating !== null ? (
+            <>
+              <RatingStars value={Math.round(averageRating)} />
+              <span className='text-sm font-medium'>{averageRating}</span>
+            </>
+          ) : (
+            <span className='text-muted-foreground text-sm'>—</span>
+          )}
+        </div>
+      </button>
+
+      {/* Body */}
+      {isOpen && reviewCount > 0 && (
+        <div className='border-border/60 border-t p-4 space-y-3'>
+          {reviews.map((review: any) => (
+            <div
+              key={review.uuid}
+              className='border-border/60 bg-muted/40 rounded-lg border p-3 text-sm'
+            >
+              <div className='flex items-center justify-between'>
+                <p className=''>{review.student_uuid}</p>
+                <span className='flex text-muted-foreground self-end justify-end text-xs'>
+                  {format(new Date(review.created_date), 'dd MMM yyyy')}
+                </span>
+              </div>
+
+              <p className='mt-2'>{review.comments}</p>
+
+              {!review.is_anonymous && (
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  {review.created_by}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+

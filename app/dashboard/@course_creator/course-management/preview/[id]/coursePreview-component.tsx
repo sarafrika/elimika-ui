@@ -24,6 +24,7 @@ import {
   FileWarning,
   GraduationCap,
   Layers,
+  MessageSquare,
   Scale,
   Users,
   Video,
@@ -323,6 +324,63 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-primary" />
+              Course Reviews
+
+              <p className='text-muted-foreground text-xs'>
+                ({reviews.length
+                  ? `${reviews.length} review${reviews.length > 1 ? 's' : ''}`
+                  : 'No reviews yet'})
+              </p>
+            </CardTitle>
+            <CardDescription>
+              Student feedback and course ratings.
+            </CardDescription>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          {reviews?.length ? (
+            <div className="border-border/60 border-t p-4 space-y-3">
+              {reviews.slice(0, 3).map((review: any) => (
+                <div
+                  key={review.uuid}
+                  className="border-border/60 bg-muted/40 rounded-lg border p-3 text-sm"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium">
+                      {review.student_uuid}
+                    </p>
+
+                    <span className="text-muted-foreground text-xs">
+                      {format(new Date(review.created_date), "dd MMM yyyy")}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-sm leading-relaxed">
+                    {review.comments}
+                  </p>
+
+                  {!review.is_anonymous && (
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      {review.created_by}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="border-border/60 border-t p-6 text-center text-sm text-muted-foreground">
+              No reviews yet for this course.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Edit Confirmation Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className='sm:max-w-md'>
@@ -371,3 +429,17 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: a
     </div>
   );
 }
+
+
+const reviews =
+  [
+    {
+      uuid: 'rev-1234',
+      rating: 5,
+      student_uuid: "student-uuid-1",
+      comments: 'Very clear explanations and engaging sessions.',
+      created_date: '2025-11-18T09:00:00',
+      is_anonymous: false,
+      created_by: 'student@example.com',
+    },
+  ];
