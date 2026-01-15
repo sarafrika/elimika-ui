@@ -60,7 +60,7 @@ export default function CourseCreatorCoursesContent() {
     <div className='mx-auto w-full max-w-6xl space-y-6 px-4 py-10'>
       <header className='flex flex-col items-start justify-between gap-4 md:flex-row md:items-center'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Courses</h1>
+          {/* <h1 className='text-3xl font-semibold tracking-tight'>Courses</h1> */}
           <p className='text-muted-foreground mt-2 max-w-2xl text-sm'>
             Monitor each course&apos;s publishing status, monetization settings, and delivery
             requirements at a glance.

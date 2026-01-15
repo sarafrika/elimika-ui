@@ -315,10 +315,37 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Courses',
-      url: '/dashboard/courses',
-      icon: BookOpen,
+      title: 'Course Management',
+      url: '/dashboard/course-management',
+      icon: ClipboardList,
+      // items: [
+      //   {
+      //     title: 'Create New Course',
+      //     url: '/dashboard/course-management/create-new-course',
+      //     icon: PlusCircle,
+      //   },
+      //   {
+      //     title: 'All',
+      //     url: '/dashboard/course-management/all',
+      //     icon: BookOpen,
+      //   },
+      //   {
+      //     title: 'Drafts',
+      //     url: '/dashboard/course-management/drafts',
+      //     icon: FileText,
+      //   },
+      //   {
+      //     title: 'Published',
+      //     url: '/dashboard/course-management/published',
+      //     icon: FileCheck,
+      //   },
+      // ],
     },
+    // {
+    //   title: 'Courses',
+    //   url: '/dashboard/courses',
+    //   icon: BookOpen,
+    // },
     {
       title: 'Catalogue',
       url: '/dashboard/catalogue',
@@ -329,28 +356,7 @@ export default {
       url: '/dashboard/training-applications',
       icon: GraduationCap,
     },
-    {
-      title: 'Course Management',
-      url: '/dashboard/course-management',
-      icon: ClipboardList,
-      items: [
-        {
-          title: 'Create New Course',
-          url: '/dashboard/course-management/create-new-course',
-          icon: PlusCircle,
-        },
-        {
-          title: 'Drafts',
-          url: '/dashboard/course-management/drafts',
-          icon: FileText,
-        },
-        {
-          title: 'Published',
-          url: '/dashboard/course-management/published',
-          icon: FileCheck,
-        },
-      ],
-    },
+
     {
       title: 'Rubrics Management',
       url: '/dashboard/rubric-management',

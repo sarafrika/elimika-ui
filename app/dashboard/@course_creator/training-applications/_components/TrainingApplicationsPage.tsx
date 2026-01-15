@@ -222,6 +222,8 @@ export default function TrainingApplicationsPage() {
       total: allApplications.length,
       pending: allApplications.filter(a => a.status?.toLowerCase() === 'pending').length,
       approved: allApplications.filter(a => a.status?.toLowerCase() === 'approved').length,
+      revoked: allApplications.filter(a => a.status?.toLowerCase() === 'revoked').length,
+      rejected: allApplications.filter(a => a.status?.toLowerCase() === 'rejected').length,
       instructors: allApplications.filter(a => a.applicant_type?.toLowerCase() === 'instructor')
         .length,
     };
@@ -327,17 +329,32 @@ export default function TrainingApplicationsPage() {
             </div>
           </div>
 
-          <div className='border-border bg-card rounded-lg border p-3'>
+          <div className='flex flex-row items-center justify-between border-border bg-card rounded-lg border p-3'>
+            {/* Revoked */}
             <div className='flex items-center gap-3'>
-              <div className='bg-muted rounded-lg p-2'>
-                <Users className='text-primary h-4 w-4' />
+              <div className='bg-destructive/10 rounded-lg p-2'>
+                <XCircle className='text-destructive h-4 w-4' />
               </div>
               <div>
-                <p className='text-muted-foreground text-xs'>Instructors</p>
-                <p className='text-foreground text-lg font-bold'>{stats.instructors}</p>
+                <p className='text-muted-foreground text-xs'>Revoked</p>
+                <p className='text-foreground text-lg font-bold'>{stats.revoked}</p>
+              </div>
+            </div>
+
+            <div>{" | "}</div>
+
+            {/* Rejected */}
+            <div className='flex items-center gap-3'>
+              <div className='bg-warning/10 rounded-lg p-2'>
+                <AlertCircle className='text-warning/60 h-4 w-4' />
+              </div>
+              <div>
+                <p className='text-muted-foreground text-xs'>Rejected</p>
+                <p className='text-foreground text-lg font-bold'>{stats.rejected}</p>
               </div>
             </div>
           </div>
+
         </div>
       </section>
 

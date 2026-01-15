@@ -1,8 +1,12 @@
 'use client';
 
+import ConfirmModal from '@/components/custom-modals/confirm-modal';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useCourseCreator } from '@/context/course-creator-context';
 import {
   associateRubricMutation,
   deleteAssessmentRubricMutation,
@@ -22,8 +26,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import deepEqual from 'fast-deep-equal';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import ConfirmModal from '../../../../components/custom-modals/confirm-modal';
-import { useCourseCreator } from '../../../../context/course-creator-context';
 import { CustomLoadingState } from '../_components/loading-state';
 import {
   CriteriaDialog,
@@ -44,6 +46,9 @@ export default function RubricsCreationPage(course: any) {
   const qc = useQueryClient();
   const creator = useCourseCreator();
   const { replaceBreadcrumbs } = useBreadcrumb();
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState<'all' | 'linked' | 'unlinked'>('all');
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -101,6 +106,30 @@ export default function RubricsCreationPage(course: any) {
       isLinked: associatedRubricUuids.has(rubric.rubric.uuid as string),
     }));
   }, [rubrics, associatedRubricUuids]);
+
+  // Filtered rubrics based on search term and linked status
+  const filteredRubrics = useMemo(() => {
+    return rubricsWithLinkedStatus.filter(item => {
+      const { rubric, isLinked } = item;
+
+      const title = rubric.title || '';
+      const description = rubric.description || '';
+      const rubricType = rubric.rubric_type || '';
+
+      const matchesSearch =
+        title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        rubricType.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesFilter =
+        filter === 'all' ||
+        (filter === 'linked' && isLinked) ||
+        (filter === 'unlinked' && !isLinked);
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [rubricsWithLinkedStatus, searchTerm, filter]);
+
 
   const [editingRubric, setEditingRubric] = useState<RubricDetailsFormValues | null>(null);
   const [editingCriterion, setEditingCriterion] = useState<RubricCriteriaFormValues | null>(null);
@@ -559,6 +588,38 @@ export default function RubricsCreationPage(course: any) {
 
   return (
     <div className='space-y-6'>
+      <div className='flex flex-row items-center justify-between' >
+        <Input
+          placeholder="Search rubrics by title, description, type..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="flex-1"
+        />
+
+        <Select onValueChange={value => setFilter(value as 'all' | 'linked' | 'unlinked')} value={filter}>
+          <SelectTrigger className="w-48 ml-2">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Rubrics</SelectItem>
+            <SelectItem value="linked">Linked Rubrics</SelectItem>
+            <SelectItem value="unlinked">Unlinked Rubrics</SelectItem>
+
+          </SelectContent>
+        </Select>
+
+        <Button
+          variant="outline"
+          className="ml-2"
+          onClick={() => {
+            setSearchTerm('');
+            setFilter('all');
+          }}
+        >
+          Reset
+        </Button>
+      </div>
+
       <InlineNewRubric />
 
       {!rubricDataIsLoading && rubrics.length === 0 && (
@@ -572,9 +633,18 @@ export default function RubricsCreationPage(course: any) {
         </div>
       )}
 
-      {rubricsDataIsFetched && rubrics.length >= 1 && (
+
+      {!rubricDataIsLoading && filteredRubrics.length === 0 && (
+        <div className='flex h-[40vh] w-full items-center justify-center'>
+          <div className='bg-muted/20 w-full rounded-md border px-6 py-12 text-center'>
+            <p className='text-muted-foreground mt-2'>No rubric matches your search and filter category.</p>
+          </div>
+        </div>
+      )}
+
+      {rubricsDataIsFetched && filteredRubrics.length >= 1 && (
         <div className='space-y-6'>
-          {rubricsWithLinkedStatus.map(item => {
+          {filteredRubrics.map(item => {
             const rubric = item.rubric;
             const matrixData = item.matrix?.data?.data;
             const linked = item.isLinked;

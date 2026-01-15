@@ -4,6 +4,7 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { CustomPagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,12 +28,11 @@ import {
   searchCoursesQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { EyeIcon, MoreVertical, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
+import { EyeIcon, MoreVertical, PenIcon, PlusCircle, TrashIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Card } from '../../../../../components/ui/card';
 import { CustomEmptyState } from '../../_components/loading-state';
 
 export default function DraftCoursesComponent({ courseCreatorId }: { courseCreatorId?: string }) {
@@ -94,26 +94,25 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const draftCourses = data?.data?.content || [];
   const paginationMetadata = data?.data?.metadata;
 
   return (
-    <div className='max-w-6xl space-y-6'>
+    <div className='mx-auto w-full max-w-6xl space-y-6 px-4 py-10'>
       <div className='mb-6 flex items-end justify-between'>
         <div>
-          <h1 className='text-2xl font-semibold'>Your Draft Courses</h1>
-          <p className='text-muted-foreground mt-1 text-base'>
+          <p className='text-muted-foreground mt-2 max-w-2xl text-sm'>
             You have {draftCourses?.length} course
             {draftCourses?.length > 1 ? 's' : ''} waiting to be published.
           </p>
         </div>
-        <Button type='button' className='cursor-pointer px-4 py-2 text-sm' asChild>
-          <Link href='/dashboard/course-management/create-new-course'>
-            <PlusIcon className='h-4 w-4' />
-            New Course
+        <Button asChild>
+          <Link prefetch href='/dashboard/course-management/create-new-course'>
+            <PlusCircle className='mr-2 h-4 w-4' />
+            Create course
           </Link>
         </Button>
       </div>
@@ -140,105 +139,120 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
         </>
       )}
 
-      {draftCourses?.length >= 1 && (
-        <Card className='bg-card border-border/50 rounded-t-0 overflow-hidden rounded-t-lg py-0'>
-          <Table>
-            {/* <TableCaption className='py-4'>A list of your course drafts</TableCaption> */}
-            <TableHeader className=''>
-              <TableRow>
-                <TableHead>
+
+      <Card>
+        <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div>
+            <CardTitle className='text-base font-semibold'>Draft Courses</CardTitle>
+            <CardDescription>
+              {draftCourses.length} draft course{draftCourses.length === 1 ? '' : 's'} owned by this creator.
+            </CardDescription>
+          </div>
+
+        </CardHeader>
+
+        <CardContent className='p-0' >
+          {draftCourses?.length >= 1 && (
+            <div className='bg-card border-border/50 rounded-t-0 overflow-hidden rounded-t-lg '>
+              <Table>
+                {/* <TableCaption className='py-4'>A list of your course drafts</TableCaption> */}
+                <TableHeader className=''>
+                  <TableRow>
+                    {/* <TableHead>
                   <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
-                </TableHead>
-                <TableHead></TableHead>
-                <TableHead>Course Name</TableHead>
-                <TableHead>Categories</TableHead>
-                <TableHead>Class Limit</TableHead>
-                <TableHead>Last Updated</TableHead>
-                <TableHead className='mx-auto text-center'>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+                </TableHead> */}
+                    <TableHead></TableHead>
+                    <TableHead>Course Name</TableHead>
+                    <TableHead>Categories</TableHead>
+                    <TableHead>Class Limit</TableHead>
+                    <TableHead>Last Updated</TableHead>
+                    <TableHead className='mx-auto text-center'>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
 
-            <TableBody>
-              {draftCourses?.map((course: any) => (
-                <TableRow key={course.uuid} className=''>
-                  <TableHead>
+                <TableBody className='pb-12'>
+                  {draftCourses?.map((course: any) => (
+                    <TableRow key={course.uuid} >
+                      {/* <TableHead>
                     <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
-                  </TableHead>
+                  </TableHead> */}
 
-                  <TableCell className='py-2'>
-                    <Image
-                      src={(course?.thumbnail_url as string) || '/illustration.png'}
-                      alt='thumbnail'
-                      width={48}
-                      height={48}
-                      className='min-h-12 min-w-12 rounded-md'
-                    />
-                  </TableCell>
+                      <TableCell className='py-1'>
+                        <Image
+                          src={(course?.thumbnail_url as string) || '/illustration.png'}
+                          alt='thumbnail'
+                          width={48}
+                          height={48}
+                          className='min-h-12 min-w-12 rounded-md bg-muted-foreground/30'
+                        />
+                      </TableCell>
 
-                  <TableCell className='font-medium'>
-                    <div>
-                      <h1 className='max-w-[270px] truncate'>{course.name}</h1>
-                      <div className='text-muted-foreground text-xs'>
-                        <RichTextRenderer htmlString={course?.description} maxChars={42} />
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className='flex max-w-[250px] flex-wrap gap-1'>
-                      {Array.isArray(course.category_names) &&
-                        course.category_names.map((name: string) => (
-                          <Badge key={name} variant='default' className='rounded-full capitalize'>
-                            {name}
-                          </Badge>
-                        ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>{course.class_limit || 'Unlimited'}</TableCell>
-                  <TableCell>{formatCourseDate(course.updated_date)}</TableCell>
-                  <TableCell className='text-center'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant='ghost' size='icon'>
-                          <span className='sr-only'>Open menu</span>
-                          <MoreVertical className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuItem>
-                          <Link
-                            href={`/dashboard/course-management/create-new-course?id=${course.uuid}`}
-                            className='flex w-full items-center'
-                          >
-                            <PenIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Link
-                            href={`/dashboard/course-management/preview/${course.uuid}`}
-                            className='flex w-full items-center'
-                          >
-                            <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
-                            Preview
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          variant='destructive'
-                          onClick={() => handleDeleteCourse(course?.uuid)}
-                        >
-                          <TrashIcon className='mr-2 h-4 w-4' />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
-      )}
+                      <TableCell className='font-medium'>
+                        <div>
+                          <h1 className='max-w-[270px] truncate'>{course.name}</h1>
+                          <div className='text-muted-foreground text-xs'>
+                            <RichTextRenderer htmlString={course?.description} maxChars={42} />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex max-w-[250px] flex-wrap gap-1'>
+                          {Array.isArray(course.category_names) &&
+                            course.category_names.map((name: string) => (
+                              <Badge key={name} className='rounded-full capitalize bg-muted/70 text-black dark:text-white'>
+                                {name}
+                              </Badge>
+                            ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>{course.class_limit || 'Unlimited'}</TableCell>
+                      <TableCell>{formatCourseDate(course.updated_date)}</TableCell>
+                      <TableCell className='text-center'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' size='icon'>
+                              <span className='sr-only'>Open menu</span>
+                              <MoreVertical className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem>
+                              <Link
+                                href={`/dashboard/course-management/create-new-course?id=${course.uuid}`}
+                                className='flex w-full items-center'
+                              >
+                                <PenIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
+                                Edit
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Link
+                                href={`/dashboard/course-management/preview/${course.uuid}`}
+                                className='flex w-full items-center'
+                              >
+                                <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
+                                Preview
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant='destructive'
+                              onClick={() => handleDeleteCourse(course?.uuid)}
+                            >
+                              <TrashIcon className='mr-2 h-4 w-4' />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* @ts-ignore */}
       {paginationMetadata?.totalPages >= 1 && (

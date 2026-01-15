@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function CourseManagementPage() {
-  redirect('/dashboard/course-management/drafts');
+  redirect('/dashboard/course-management/all');
 }
