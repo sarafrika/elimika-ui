@@ -45,8 +45,8 @@ const instructorMenuItems = [
     icon: ClipboardList,
   },
   {
-    title: 'Rubrics Management',
-    url: '/dashboard/rubric-management',
+    title: 'Rubrics',
+    url: '/dashboard/rubrics',
     icon: CheckSquare,
   },
   {

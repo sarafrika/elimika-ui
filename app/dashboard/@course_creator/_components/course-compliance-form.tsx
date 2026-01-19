@@ -4,12 +4,11 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
-  FormLabel,
-  FormMessage,
+  FormLabel
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import Spinner from '@/components/ui/spinner';
 import { useStepper } from '@/components/ui/stepper';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
@@ -24,7 +23,7 @@ import { forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type * as z from 'zod';
-import { FormSection } from './course-creation-form';
+import { Checkbox } from '../../../../components/ui/checkbox';
 import { courseCreationSchema } from './course-creation-types';
 
 type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & { [key: string]: any };
@@ -41,7 +40,7 @@ export type CourseFormRef = {
   submit: () => void;
 };
 
-export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
+export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
   ({ showSubmitButton, initialValues, editingCourseId, successResponse }, _ref) => {
     const form = useForm<CourseCreationFormValues>({
       resolver: zodResolver(courseCreationSchema),
@@ -150,99 +149,70 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
     return (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
-          {/* Class Limit */}
-          <FormSection
-            title='Class Limit'
-            description='Set the maximum number of students allowed to enroll'
-          >
+          <div className="space-y-6 py-10 px-6 border-border border-1 rounded-3xl">
             <FormField
               control={form.control}
-              name='class_limit'
+              name="compliance.copyright_confirmed"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-row items-start space-x-3">
                   <FormControl>
-                    <Input
-                      type='number'
-                      min='1'
-                      placeholder='Maximum number of students'
-                      {...field}
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Copyright ownership confirmed</FormLabel>
+                    <FormDescription>
+                      You own the content or have the rights to distribute it
+                    </FormDescription>
+                  </div>
                 </FormItem>
               )}
             />
-          </FormSection>
 
-          {/* Age Limit */}
-          <FormSection title='Age Limit' description='Set the age limit for your course'>
-            <div className='space-y-0'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                <FormField
-                  control={form.control}
-                  name='age_lower_limit'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Age Lower Limit</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="compliance.accessibility_captions"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Accessibility captions added</FormLabel>
+                    <FormDescription>
+                      Captions or transcripts are available where required
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name='age_upper_limit'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Age Upper Limit</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-          </FormSection>
-
-          {/* Course Duration */}
-          <FormSection title='Course Duration' description='Set the time duration for your course'>
-            <div className='space-y-0'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                <FormField
-                  control={form.control}
-                  name='duration_hours'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration Hours</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='duration_minutes'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration Minutes</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-          </FormSection>
+            <FormField
+              control={form.control}
+              name="compliance.certificate_enabled"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Certificate enabled</FormLabel>
+                    <FormDescription>
+                      Learners will receive a certificate upon completion
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
 
           {/* Submit Button */}
           {showSubmitButton && (
@@ -258,6 +228,6 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
   }
 );
 
-CourseLicensingForm.displayName = 'CourseLicensingForm';
+CourseComplianceForm.displayName = 'CourseComplianceForm';
 
-export default CourseLicensingForm;
+export default CourseComplianceForm;

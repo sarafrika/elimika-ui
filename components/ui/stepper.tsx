@@ -90,7 +90,7 @@ export function StepperRoot({ children }: { children: ReactNode }) {
         defaultValue='0'
         value={activeStep.toString()}
         onValueChange={value => setActiveStep(parseInt(value, 10))}
-        className='w-full'
+        className='w-full flex-1 flex-row items-start justify-center'
       >
         {children}
       </Tabs>
@@ -99,7 +99,7 @@ export function StepperRoot({ children }: { children: ReactNode }) {
 }
 
 export function StepperList({ children }: { children: ReactNode }) {
-  return <TabsList className='flex flex-row'>{children}</TabsList>;
+  return <TabsList className='flex flex-col h-auto items-start gap-4 rounded-0'>{children}</TabsList>;
 }
 
 export interface TriggerProps {
@@ -109,16 +109,17 @@ export interface TriggerProps {
 }
 
 export function StepperTrigger(props: TriggerProps) {
-  const { activeStep } = useStepper();
+  const { activeStep, setActiveStep } = useStepper();
   const isCompleted = props.step < activeStep;
   const isCurrent = props.step === activeStep;
 
   return (
     <TabsTrigger
       value={props.step.toString()}
-      disabled={props.step > activeStep}
+      // disabled={props.step > activeStep}
       className='flex items-center justify-center gap-2 disabled:opacity-100'
       data-state={isCurrent ? 'active' : 'inactive'}
+      onClick={() => setActiveStep(props.step)} // ✅ jump directly
     >
       {isCompleted ? (
         <Check className='h-4 w-4' />
@@ -165,7 +166,7 @@ export function StepperContent({
 
   return (
     <TabsContent value={step.toString()}>
-      <Card className='flex min-h-[300px] flex-col rounded-lg'>
+      <Card className='flex-1 w-full min-h-[300px] flex-col rounded-lg'>
         <CardHeader>
           <CardTitle className='text-xl font-medium'>{title}</CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
