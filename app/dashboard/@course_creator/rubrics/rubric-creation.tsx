@@ -24,6 +24,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import deepEqual from 'fast-deep-equal';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { CustomLoadingState } from '../_components/loading-state';
@@ -632,6 +633,10 @@ export default function RubricsCreationPage(course: any) {
           </div>
         </div>
       )}
+
+      <Link className='mt-4 mb-4' href={'/dashboard/rubrics/new'}>
+        New Rubric Set Up
+      </Link>
 
 
       {!rubricDataIsLoading && filteredRubrics.length === 0 && (

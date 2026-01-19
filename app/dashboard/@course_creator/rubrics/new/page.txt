@@ -1,0 +1,622 @@
+'use client';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Edit2, PenIcon, PlusCircle, Save, Trash2, Triangle, X } from 'lucide-react';
+import { useState } from 'react';
+import { Card } from '../../../../../components/ui/card';
+import { Label } from '../../../../../components/ui/label';
+
+
+type Level = {
+    name: string;
+    weight: any;
+    description: string;
+};
+
+type Criterion = {
+    id: number;
+    name: string;
+    levels: Level[];
+};
+
+type Rubric = {
+    id?: number;
+    title: string;
+    description: string;
+    level: string;
+    category: string;
+    course: string;
+    criteria: Criterion[];
+};
+
+const defaultLevels = (): Level[] => [
+    { name: 'Excellent', weight: 25, description: 'Excellent' },
+    { name: 'Good', weight: 20, description: 'Good' },
+    { name: 'Satisfactory', weight: 15, description: 'Satisfactory' },
+    { name: 'Needs Improvement', weight: 10, description: 'Needs Improvement' },
+];
+
+const RubricManager: React.FC = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filter, setFilter] = useState<'all' | 'linked' | 'unlinked'>('all');
+
+
+    const [rubrics, setRubrics] = useState<Rubric[]>([
+        {
+            id: 1,
+            title: 'Essay Writing Assessment',
+            description: 'Comprehensive rubric for evaluating student essays',
+            level: 'High School',
+            category: 'Writing',
+            course: 'English 101',
+            criteria: [
+                { id: 1, name: 'Thesis Statement', levels: defaultLevels().map((l, i) => ({ ...l, weight: [25, 20, 15, 10][i] })) },
+                { id: 2, name: 'Organization', levels: defaultLevels().map((l, i) => ({ ...l, weight: [25, 20, 15, 10][i] })) },
+                { id: 3, name: 'Evidence & Support', levels: defaultLevels().map((l, i) => ({ ...l, weight: [25, 20, 15, 10][i] })) },
+                { id: 4, name: 'Grammar & Mechanics', levels: defaultLevels().map((l, i) => ({ ...l, weight: [25, 20, 15, 10][i] })) },
+            ],
+        },
+        {
+            id: 2,
+            title: 'Science Lab Report',
+            description: 'Rubric for evaluating laboratory experiment reports',
+            level: 'Middle School',
+            category: 'Science',
+            course: 'Physical Science',
+            criteria: [
+                { id: 1, name: 'Hypothesis', levels: defaultLevels().map((l, i) => ({ ...l, weight: [20, 15, 10, 5][i] })) },
+                { id: 2, name: 'Procedure', levels: defaultLevels().map((l, i) => ({ ...l, weight: [30, 23, 15, 8][i] })) },
+                { id: 3, name: 'Data Collection', levels: defaultLevels().map((l, i) => ({ ...l, weight: [30, 23, 15, 8][i] })) },
+                { id: 4, name: 'Conclusion', levels: defaultLevels().map((l, i) => ({ ...l, weight: [20, 15, 10, 5][i] })) },
+            ],
+        },
+    ]);
+
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentRubric, setCurrentRubric] = useState<Rubric | null>(null);
+
+
+    const emptyRubric = (): Rubric => ({
+        title: '',
+        description: '',
+        level: '',
+        category: '',
+        course: '',
+        criteria: [
+            { id: 1, name: '', levels: defaultLevels().map(l => ({ ...l, weight: '' })) },
+            { id: 2, name: '', levels: defaultLevels().map(l => ({ ...l, weight: '' })) },
+            { id: 3, name: '', levels: defaultLevels().map(l => ({ ...l, weight: '' })) },
+            { id: 4, name: '', levels: defaultLevels().map(l => ({ ...l, weight: '' })) },
+        ],
+    });
+
+    const handleAddNewRubric = () => {
+        setCurrentRubric(emptyRubric());
+        setIsEditing(true);
+    };
+
+    const handleEditRubric = (rubric: Rubric) => {
+        setCurrentRubric({ ...rubric });
+        setIsEditing(true);
+    };
+
+    const handleDeleteRubric = (id?: number) => {
+        if (!id) return;
+        if (window.confirm('Are you sure you want to delete this rubric?')) {
+            setRubrics(prev => prev.filter(r => r.id !== id));
+        }
+    };
+
+    const handleSaveRubric = () => {
+        if (!currentRubric) return;
+        if (currentRubric.id) {
+            setRubrics(prev => prev.map(r => (r.id === currentRubric.id ? currentRubric : r)));
+        } else {
+            const maxId = rubrics.length ? Math.max(...rubrics.map(r => r.id ?? 0)) : 0;
+            const newId = maxId + 1;
+            setRubrics(prev => [...prev, { ...currentRubric, id: newId }]);
+        }
+        setIsEditing(false);
+        setCurrentRubric(null);
+    };
+
+    const handleCancel = () => {
+        setIsEditing(false);
+        setCurrentRubric(null);
+    };
+
+    const updateRubricField = (field: keyof Omit<Rubric, 'criteria'>, value: string) => {
+        if (!currentRubric) return;
+        setCurrentRubric({ ...currentRubric, [field]: value } as Rubric);
+    };
+
+    const updateCriteriaName = (criteriaIndex: number, value: string) => {
+        if (!currentRubric) return;
+        const newCriteria = currentRubric.criteria.map((c, i) => (i === criteriaIndex ? { ...c, name: value } : c));
+        setCurrentRubric({ ...currentRubric, criteria: newCriteria });
+    };
+
+    const updateLevel = (criteriaIndex: number, levelIndex: number, field: keyof Level, value: string | number) => {
+        if (!currentRubric) return;
+        const newCriteria = currentRubric.criteria.map((c, ci) => {
+            if (ci !== criteriaIndex) return c;
+            const newLevels = c.levels.map((lv, li) => (li === levelIndex ? { ...lv, [field]: value } : lv));
+            return { ...c, levels: newLevels };
+        });
+        setCurrentRubric({ ...currentRubric, criteria: newCriteria });
+    };
+
+    const updateLevelWeightForAllCriteria = (levelIndex: number, value: number | string) => {
+        if (!currentRubric) return;
+
+        const newCriteria = currentRubric.criteria.map(criteria => ({
+            ...criteria,
+            levels: criteria.levels.map((level, idx) =>
+                idx === levelIndex ? { ...level, weight: value } : level
+            ),
+        }));
+
+        setCurrentRubric({ ...currentRubric, criteria: newCriteria });
+    };
+
+
+    const addCriteria = () => {
+        if (!currentRubric) return;
+        const newId = currentRubric.criteria.length ? Math.max(...currentRubric.criteria.map(c => c.id)) + 1 : 1;
+        const newCriteria: Criterion = {
+            id: newId,
+            name: '',
+            levels: currentRubric?.criteria[0]?.levels.map((l: any) => ({ name: l.name, weight: '', description: '' })) as any,
+        };
+        setCurrentRubric({ ...currentRubric, criteria: [...currentRubric.criteria, newCriteria] });
+    };
+
+    const addLevel = () => {
+        if (!currentRubric) return;
+        const newCriteria = currentRubric.criteria.map(c => ({
+            ...c,
+            levels: [...c.levels, { name: '', weight: '', description: '' }],
+        }));
+        setCurrentRubric({ ...currentRubric, criteria: newCriteria });
+    };
+
+    const deleteCriteria = (criteriaIndex: number) => {
+        if (!currentRubric) return;
+        if (currentRubric.criteria.length > 1) {
+            const newCriteria = currentRubric.criteria.filter((_, i) => i !== criteriaIndex);
+            setCurrentRubric({ ...currentRubric, criteria: newCriteria });
+        }
+    };
+
+    if (isEditing && currentRubric) {
+        return (
+            <Card className="min-h-screen">
+                <div className="w-full max-w-7xl mx-auto">
+                    <div className="bg-white rounded-lg p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h1 className="text-2xl font-bold">
+                                {currentRubric.id ? 'Edit Rubric' : 'Create New Rubric'}
+                            </h1>
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={handleSaveRubric}
+                                >
+                                    <Save size={18} />
+                                    Save
+                                </Button>
+                                <Button
+                                    onClick={handleCancel}
+                                    variant={"secondary"}
+                                >
+                                    <X size={18} />
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            <div className='flex flex-col gap-2' >
+                                <Label>Rubric Title</Label>
+                                <Input
+                                    type="text"
+                                    value={currentRubric.title}
+                                    onChange={(e) => updateRubricField('title', e.target.value)}
+                                    placeholder="Enter rubric title"
+                                />
+                            </div>
+                            <div className='flex flex-col gap-2' >
+                                <Label>Description</Label>
+                                <Input
+                                    type="text"
+                                    value={currentRubric.description}
+                                    onChange={(e) => updateRubricField('description', e.target.value)}
+                                    placeholder="Enter description"
+                                />
+                            </div>
+                            <div className='flex flex-col gap-2' >
+                                <Label>Leve/Grade</Label>
+                                <Input
+                                    type="text"
+                                    value={currentRubric.level}
+                                    onChange={(e) => updateRubricField('level', e.target.value)}
+                                    placeholder="Enter level/grade"
+                                />
+                            </div>
+                            <div className='flex flex-col gap-2' >
+                                <Label>Category</Label>
+                                <Input
+                                    type="text"
+                                    value={currentRubric.category}
+                                    onChange={(e) => updateRubricField('category', e.target.value)}
+                                    placeholder="Enter category"
+                                />
+                            </div>
+                            <div className='flex flex-col gap-2' >
+                                <Label>Course/Subject</Label>
+                                <Input
+                                    type="text"
+                                    value={currentRubric.course}
+                                    onChange={(e) => updateRubricField('course', e.target.value)}
+                                    placeholder="Enter course/subject"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mb-4 flex gap-2">
+                            <Button
+                                onClick={addLevel}
+                                className="bg-success hover:bg-success/90 text-sm"
+                            >
+                                Add Level
+                            </Button>
+                        </div>
+
+                        <div className="overflow-x-auto rounded-md">
+                            <table className="w-full border-collapse border border-muted/30 rounded-md">
+                                <thead>
+                                    <tr className="bg-muted-foreground/20 rounded-md">
+                                        <th className="border border-muted-foreground/30 px-4 py-2 text-left">Level</th>
+                                        {currentRubric.criteria[0]?.levels.map((level, idx) => (
+                                            <th key={idx} className="border border-muted-foreground/30 px-4 py-2">
+                                                <input
+                                                    type="text"
+                                                    value={level.name}
+                                                    onChange={(e) => {
+                                                        const newCriteria = currentRubric.criteria.map(c => {
+                                                            const newLevels = [...c.levels];
+                                                            // @ts-ignore
+                                                            newLevels[idx] = { ...newLevels[idx], name: e.target.value };
+                                                            return { ...c, levels: newLevels };
+                                                        });
+                                                        setCurrentRubric({ ...currentRubric, criteria: newCriteria });
+                                                    }}
+                                                    className="w-full border border-muted-foreground/30 rounded px-2 py-1 italic"
+                                                    placeholder="Enter level"
+                                                />
+                                            </th>
+                                        ))}
+                                    </tr>
+                                    <tr className="bg-muted-foreground/10">
+                                        <th className="border border-muted-foreground/30 px-4 py-2 text-left">
+                                            Weight (Points)
+                                        </th>
+
+                                        {currentRubric.criteria[0]?.levels.map((level, idx) => (
+                                            <th
+                                                key={idx}
+                                                className="border border-muted-foreground/30 px-4 py-2"
+                                            >
+                                                <input
+                                                    type="number"
+                                                    value={level.weight}
+                                                    onChange={(e) =>
+                                                        updateLevelWeightForAllCriteria(idx, e.target.value)
+                                                    }
+                                                    className="w-full border border-muted-foreground/30 rounded px-2 py-1 text-center italic"
+                                                    placeholder="Points"
+                                                />
+                                            </th>
+                                        ))}
+                                    </tr>
+
+                                </thead>
+                                <tbody>
+                                    {currentRubric.criteria.map((criteria, cIdx) => (
+                                        <tr key={criteria.id}>
+                                            <td className="border border-muted-foreground/30 px-4 py-2">
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={criteria.name}
+                                                        onChange={(e) => updateCriteriaName(cIdx, e.target.value)}
+                                                        className="flex-1 border border-muted-foreground/30 rounded px-2 py-1"
+                                                        placeholder={`Add Criteria ${cIdx + 1}`}
+                                                    />
+                                                    {currentRubric.criteria.length > 1 && (
+                                                        <button
+                                                            onClick={() => deleteCriteria(cIdx)}
+                                                            className="text-destructive hover:text-destructive/80"
+                                                            aria-label="Delete criterion"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            {criteria.levels.map((level, lIdx) => (
+                                                <td key={lIdx} className="border border-muted-foreground/30 px-2 py-2">
+                                                    <div className="space-y-2">
+                                                        {/* <p>{level.weight as string | number}</p> */}
+                                                        <textarea
+                                                            value={level.description}
+                                                            onChange={(e) => updateLevel(cIdx, lIdx, 'description', e.target.value)}
+                                                            className="w-full border border-muted-foreground/30 rounded px-2 py-1 italic text-sm"
+                                                            rows={3}
+                                                            placeholder="Enter Description"
+                                                        />
+                                                    </div>
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="mt-4">
+                            <Button
+                                onClick={addCriteria}
+                            >
+                                Add Criteria
+                            </Button>
+                        </div>
+
+                        <div className="mt-6 p-4 bg-muted/50 rounded">
+                            <h3 className="font-semibold mb-2">User Actions:</h3>
+                            <ul className="space-y-1 text-sm">
+                                <li>a) Add criteria - Add new row to rubric</li>
+                                <li>b) Add section - Not implemented (future feature)</li>
+                                <li>c) Add Sub Rubric - Not implemented (future feature)</li>
+                                <li>d) Add Level - Add new column for performance levels</li>
+                                <li>e) Delete criteria and Levels - Click trash icon next to criteria</li>
+                                <li>f) Arrange criteria and levels (Drag and drop) - Not implemented (future feature)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+        );
+    }
+
+    return (
+        <div className="min-h-screen p-6">
+            <div className="w-full max-w-7xl mx-auto">
+                <div className='flex flex-row items-center justify-between' >
+                    <Input
+                        placeholder="Search rubrics by title, description, type..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="flex-1"
+                    />
+
+                    <Select onValueChange={value => setFilter(value as 'all' | 'linked' | 'unlinked')} value={filter}>
+                        <SelectTrigger className="w-48 ml-2">
+                            <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Rubrics</SelectItem>
+                            <SelectItem value="linked">Linked Rubrics</SelectItem>
+                            <SelectItem value="unlinked">Unlinked Rubrics</SelectItem>
+
+                        </SelectContent>
+                    </Select>
+
+                    <Button
+                        variant="outline"
+                        className="ml-2"
+                        onClick={() => {
+                            setSearchTerm('');
+                            setFilter('all');
+                        }}
+                    >
+                        Reset
+                    </Button>
+                </div>
+
+                <div className="flex items-end justify-end self-end my-6">
+                    <Button type="button" onClick={handleAddNewRubric}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> New Rubric
+                    </Button>
+                </div>
+
+                {/* // view individual rubrics here  */}
+                <div className="space-y-6">
+                    {rubrics.map((rubric) => {
+                        return (
+                            <div key={rubric.id} className="overflow-hidden rounded-lg border shadow-sm bg-white">
+                                <div className="flex items-center rounded-t-lg px-4 py-3 font-semibold">
+                                    <div className="w-full flex flex-row items-center justify-between">
+                                        <div className="flex w-full flex-col gap-2 text-left">
+                                            <p className="text-xl cursor-pointer">
+                                                {rubric.title}
+                                            </p>
+                                            <p className="text-gray-600 line-clamp-2 max-w-[95%] text-sm font-normal">
+                                                {rubric.description}
+                                            </p>
+
+                                            <div className="flex flex-row gap-6 text-sm font-normal">
+                                                <p className="flex items-center gap-1">
+                                                    <Triangle size={14} fill="green" /> Type: {"Rubric type?"}
+                                                </p>
+                                                <p className="flex items-center gap-1">
+                                                    {/* {rubric. ? <Globe size={14} /> : <Lock size={14} />} */}
+                                                    {'Public Rubric or Private Rubric'}
+                                                </p>
+                                            </div>
+
+
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-row items-center justify-between mt-4">
+                                        <div className="flex flex-row gap-3">
+                                            <button
+                                                onClick={() => handleEditRubric(rubric)}
+                                                className="bg-success text-white px-4 py-2 rounded-lg hover:bg-success/90 flex items-center gap-2"
+                                            >
+                                                <PenIcon className="h-4 w-4" />
+
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteRubric(rubric.id)}
+                                                className="bg-destructive text-white px-4 py-2 rounded-lg hover:bg-destructive/90 flex items-center gap-2"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="overflow-x-auto p-4">
+                                    {rubric.criteria.length === 0 ? (
+                                        <div className="text-gray-500 p-4 text-sm italic">No criteria added.</div>
+                                    ) : (
+                                        <table className="w-full border-collapse border border-gray-200">
+                                            <thead>
+                                                <tr>
+                                                    <th className="min-w-[240px] border bg-gray-50 px-4 py-3 text-left font-semibold">
+                                                        Criteria
+                                                    </th>
+
+                                                    {rubric.criteria[0]?.levels.map((level, idx) => (
+                                                        <th
+                                                            key={idx}
+                                                            className="border px-4 py-3 text-center font-semibold"
+                                                        >
+                                                            <div>
+                                                                {level.name}
+                                                                <br />
+                                                                <span className="text-gray-600 text-sm font-normal">
+                                                                    {level.weight} pts
+                                                                </span>
+                                                            </div>
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {rubric.criteria.map((crit) => (
+                                                    <tr key={crit.id}>
+                                                        {/* Criteria column */}
+                                                        <td className="w-[300px] align-top border px-4 py-3">
+                                                            <div className="font-medium mb-1">{crit.name}</div>
+                                                            <div className="text-xs text-muted-foreground">
+                                                                No description
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Level columns */}
+                                                        {crit.levels.map((_, levelIndex) => {
+                                                            const cell = crit.levels[levelIndex]
+                                                            console.log(cell, "Cell logged")
+
+                                                            return (
+                                                                <td
+                                                                    key={levelIndex}
+                                                                    className="border px-3 py-3 align-middle text-sm min-w-[120px]"
+                                                                >
+                                                                    {cell ? (
+                                                                        <>
+                                                                            <div className="text-[13px] text-muted-foreground mb-2 whitespace-pre-wrap">
+                                                                                {cell.description ? (
+                                                                                    cell.description
+                                                                                ) : (
+                                                                                    <span className="italic text-muted-foreground">
+                                                                                        No description
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </>
+                                                                    ) : (
+                                                                        <span className="text-muted-foreground">–</span>
+                                                                    )}
+                                                                </td>
+                                                            )
+                                                        })}
+                                                    </tr>
+
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* // list of rubrics */}
+                <div className="gap-6 grid md:grid-cols-2 lg:grid-cols-3">
+                    {rubrics.map((rubric) => (
+                        <div key={rubric.id ?? rubric.title} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="flex-1">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-2">{rubric.title}</h2>
+                                    <p className="text-gray-600 text-sm mb-3">{rubric.description}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 mb-4 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Level:</span>
+                                    <span className="font-semibold">{rubric.level}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Category:</span>
+                                    <span className="font-semibold">{rubric.category}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Course:</span>
+                                    <span className="font-semibold">{rubric.course}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Criteria:</span>
+                                    <span className="font-semibold">{rubric.criteria.length}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 pt-4 border-t">
+                                {/* // change this button to view individual rubric */}
+                                <button
+                                    onClick={() => handleEditRubric(rubric)}
+                                    className="flex-1 flex items-center justify-center gap-2 bg-success text-white px-4 py-2 rounded hover:bg-success/90"
+                                >
+                                    <Edit2 size={16} />
+                                    View
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteRubric(rubric.id)}
+                                    className="flex-1 flex items-center justify-center gap-2 bg-destructive text-white px-4 py-2 rounded hover:bg-destructive/90"
+                                >
+                                    <Trash2 size={16} />
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {rubrics.length === 0 && (
+                    <div className="text-center py-12">
+                        <p className="text-gray-500 text-lg">No rubrics created yet. Click "Add New Rubric" to get started.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default RubricManager;

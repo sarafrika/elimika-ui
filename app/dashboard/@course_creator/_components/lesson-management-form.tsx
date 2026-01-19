@@ -94,7 +94,7 @@ import clsx from 'clsx';
 import Link from 'next/link';
 import { useUserProfile } from '../../../../context/profile-context';
 import { cn } from '../../../../lib/utils';
-import { useRubricsWithCriteriaAndScoring } from '../rubric-management/rubric-chaining';
+import { useRubricsWithCriteriaAndScoring } from '../rubrics/rubric-chaining';
 
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',

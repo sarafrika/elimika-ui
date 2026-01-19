@@ -61,9 +61,8 @@ import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
 import {
   type CourseCreationFormValues,
   courseCreationSchema,
-  CURRENCIES,
   providedByOptions,
-  requirementTypes,
+  requirementTypes
 } from './course-creation-types';
 
 export type FormSectionProps = {
@@ -73,14 +72,15 @@ export type FormSectionProps = {
 };
 
 export const FormSection = ({ title, description, children }: FormSectionProps) => (
-  <section className='border-border bg-card rounded-3xl border p-6 shadow-lg transition lg:p-8'>
-    <div className='flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10'>
-      <div className='lg:w-1/3'>
-        <p className='text-primary/80 text-xs font-semibold tracking-[0.4em] uppercase'>Section</p>
-        <h3 className='text-foreground mt-2 text-lg font-semibold'>{title}</h3>
-        <p className='text-muted-foreground mt-2 text-sm'>{description}</p>
+  <section className='border-border rounded-3xl border p-6 shadow-lg transition' >
+    <div className='flex flex-col gap-6 lg:flex-col lg:items-start lg:gap-4'>
+      <div className='flex flex-col'>
+        {/* <p className='text-primary/80 text-xs font-semibold tracking-[0.4em] uppercase'>Section</p> */}
+        <h3 className='text-foreground text-lg font-semibold'>{title}</h3>
+        <p className='text-muted-foreground text-sm'>{description}</p>
       </div>
-      <div className='lg:flex-1'>{children}</div>
+
+      <div className='lg:flex-1 w-full'>{children}</div>
     </div>
   </section>
 );
@@ -428,7 +428,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className='border-border bg-card space-y-8 rounded-[32px] border p-6 shadow-xl transition lg:p-10'
+          className='bg-card space-y-6 rounded-[32px] transition'
         >
           {/* Course Name */}
           <FormSection
@@ -468,6 +468,116 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             />
           </FormSection>
 
+          {/* Categories */}
+          <FormSection
+            title='Course Categories'
+            description='Add relevant categories for your course'
+          >
+            <FormItem>
+              <div className='mb-4 flex items-center gap-2'>
+                <Select
+                  value=''
+                  onValueChange={uuid => {
+                    if (uuid && !form.watch('categories').includes(uuid)) {
+                      appendCategory(uuid);
+                    }
+                  }}
+                >
+                  <FormControl className='w-full'>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select category' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <div className='max-h-[250px] overflow-auto'>
+                      {/* @ts-ignore */}
+                      {categories?.data?.content
+                        ?.filter((cat: any) => !form.watch('categories').includes(cat.uuid))
+                        .map((cat: any) => (
+                          <SelectItem key={cat.uuid} value={cat.uuid}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                    </div>
+                  </SelectContent>
+                </Select>
+                {/* Dialog to add new category */}
+                <Dialog>
+                  <DialogTrigger className='hidden sm:flex' asChild>
+                    <Button variant='outline' className='hidden sm:flex'>
+                      Add new
+                    </Button>
+                  </DialogTrigger>
+
+                  <DialogTrigger className='flex sm:hidden' asChild>
+                    <Button variant='outline' className='flex sm:hidden'>
+                      <Plus />
+                    </Button>
+                  </DialogTrigger>
+
+                  <DialogContent className='w-full sm:max-w-[350px]'>
+                    <DialogHeader>
+                      <DialogTitle>Add new category</DialogTitle>
+                      <DialogDescription>Add a new category here.</DialogDescription>
+                    </DialogHeader>
+                    <div className='flex w-full items-center gap-2 py-2'>
+                      <div className='grid w-full gap-3'>
+                        <Label htmlFor='category-name'>Category Name</Label>
+                        <Input
+                          id='category-name'
+                          name='category'
+                          value={categoryInput}
+                          onChange={e => setCategoryInput(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter className='justify-end'>
+                      <Button
+                        type='button'
+                        className='min-w-[75px]'
+                        onClick={() => {
+                          if (categoryInput?.trim()) {
+                            createCategoryMutation({ body: { name: categoryInput.trim() } });
+                          }
+                        }}
+                      >
+                        {createCategoryPending ? <Spinner /> : 'Add'}
+                      </Button>
+
+                      {/* Hidden button that will close the dialog when clicked */}
+                      <DialogClose asChild>
+                        <button ref={dialogCloseRef} style={{ display: 'none' }} />
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </FormItem>
+
+            {/* Show badges of selected categories */}
+            <div className='flex flex-wrap gap-2'>
+              {form.watch('categories').map((uuid: string, index: number) => {
+                //@ts-expect-error
+                const cat = categories?.data?.content?.find((c: any) => c.uuid === uuid);
+                if (!cat) return null;
+                return (
+                  <Badge key={uuid} variant='secondary' className='flex items-center gap-1'>
+                    {cat.name}
+                    <button
+                      type='button'
+                      className='ml-2'
+                      onClick={() => removeCategory(index)}
+                      aria-label={`Remove category ${cat.name}`}
+                    >
+                      <XIcon className='h-3 w-3' />
+                    </button>
+                  </Badge>
+                );
+              })}
+            </div>
+          </FormSection>
+
           {/* Learning Objectives */}
           <FormSection
             title='Learning Objectives'
@@ -487,6 +597,165 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             />
           </FormSection>
 
+
+          {/* Target Audience*/}
+          <FormSection
+            title='Target Audience'
+            description='Set the set the target audience your course'
+          >
+            <div>
+              target audience details here</div>
+            <FormMessage />
+          </FormSection>
+
+          {/* Class Limit */}
+          <FormSection
+            title='Class Limit'
+            description='Set the maximum number of students allowed to enroll'
+          >
+            <FormField
+              control={form.control}
+              name='class_limit'
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      type='number'
+                      min='1'
+                      placeholder='Maximum number of students'
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+
+          {/* Age Limit */}
+          <FormSection title='Age Limit' description='Set the age limit for your course'>
+            <div className='space-y-0'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+                <FormField
+                  control={form.control}
+                  name='age_lower_limit'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Age Lower Limit</FormLabel>
+                      <FormControl>
+                        <Input type='number' min='0' step='1' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='age_upper_limit'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Age Upper Limit</FormLabel>
+                      <FormControl>
+                        <Input type='number' min='0' step='1' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </FormSection>
+
+          {/* Course Duration */}
+          <FormSection title='Course Duration' description='Set the time duration for your course'>
+            <div className='space-y-0'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+                <FormField
+                  control={form.control}
+                  name='duration_hours'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration Hours</FormLabel>
+                      <FormControl>
+                        <Input type='number' min='0' step='1' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='duration_minutes'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration Minutes</FormLabel>
+                      <FormControl>
+                        <Input type='number' min='0' step='1' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </FormSection>
+
+          {/* Difficulty Level */}
+          <FormSection
+            title='Difficulty Level'
+            description='Set the difficulty level of your course'
+          >
+            <FormField
+              control={form.control}
+              name='difficulty'
+              render={({ field }) => (
+                <FormItem>
+                  <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                    <FormControl className='w-full'>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select difficulty level' />
+                      </SelectTrigger>
+                    </FormControl>
+                    {difficultyIsLoading ? (
+                      <SelectContent>
+                        <Spinner />
+                      </SelectContent>
+                    ) : (
+                      <SelectContent>
+                        {Array.isArray(difficultyLevels) &&
+                          difficultyLevels.map((level: any) => (
+                            <SelectItem key={level.uuid} value={level.uuid as string}>
+                              {level.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    )}
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+
+          {/* Target Audience*/}
+          <FormSection
+            title='Language'
+            description='What languages can this course be taught in?'
+          >
+            <FormField
+              control={form.control}
+              name='difficulty'
+              render={({ field }) => (
+                <FormItem>
+                  language details here
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+
           {/* Prerequisites */}
           <FormSection
             title='Course Prerequisites'
@@ -499,164 +768,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 <FormItem>
                   <FormControl>
                     <SimpleEditor value={field.value} onChange={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </FormSection>
-
-          {/* Pricing */}
-          <FormSection title='Course Pricing' description='Set the pricing details for your course'>
-            <div className='w-full space-y-4'>
-              <FormField
-                control={form.control}
-                name='is_free'
-                render={({ field }) => (
-                  <FormItem className='hidden flex-row items-start space-x-3'>
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className='space-y-1 leading-none'>
-                      <FormLabel>Free Course</FormLabel>
-                      <FormDescription>Make this course available for free</FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {/* Full width form fields */}
-              <div className='w-full space-y-4'>
-                <FormField
-                  control={form.control}
-                  name='currency'
-                  render={({ field }) => (
-                    <FormItem className='w-full'>
-                      <FormLabel>Currency</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isFree}
-                      >
-                        <FormControl>
-                          <SelectTrigger className='w-full'>
-                            <SelectValue placeholder='Select currency' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.values(CURRENCIES).map(currency => (
-                            <SelectItem key={currency} value={currency}>
-                              {currency}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-          </FormSection>
-
-          <FormSection
-            title='Monetization Controls'
-            description='Configure minimum training fee expectations and the revenue split inherited by every instructor.'
-          >
-            <div className='flex flex-col gap-4'>
-              <FormField
-                control={form.control}
-                name='minimum_training_fee'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minimum Training Fee (per hour per head)</FormLabel>
-                    <FormControl>
-                      <Input type='number' min='0' step='0.01' {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Instructor-led classes must charge at least this amount.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                <FormField
-                  control={form.control}
-                  name="creator_share_percentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Creator Share (%)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          step={1}
-                          value={field.value ?? 0}
-                          onChange={(e) => {
-                            const value = Math.min(100, Math.max(0, Number(e.target.value)));
-
-                            field.onChange(value);
-                            form.setValue(
-                              'instructor_share_percentage',
-                              100 - value,
-                              { shouldDirty: true, shouldValidate: true }
-                            );
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="instructor_share_percentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Instructor Share (%)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          step={1}
-                          value={field.value ?? 0}
-                          onChange={(e) => {
-                            const value = Math.min(100, Math.max(0, Number(e.target.value)));
-
-                            field.onChange(value);
-                            form.setValue(
-                              'creator_share_percentage',
-                              100 - value,
-                              { shouldDirty: true, shouldValidate: true }
-                            );
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-              </div>
-            </div>
-
-            <FormField
-              control={form.control}
-              name='revenue_share_notes'
-              render={({ field }) => (
-                <FormItem className='mt-4'>
-                  <FormLabel>Revenue Share Notes (optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      rows={3}
-                      placeholder='Add extra context for instructors about this revenue policy.'
-                      {...field}
-                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -842,152 +953,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             </div>
           </FormSection>
 
-          {/* Categories */}
-          <FormSection
-            title='Course Categories'
-            description='Add relevant categories for your course'
-          >
-            <FormItem>
-              <div className='mb-4 flex items-center gap-2'>
-                <Select
-                  value=''
-                  onValueChange={uuid => {
-                    if (uuid && !form.watch('categories').includes(uuid)) {
-                      appendCategory(uuid);
-                    }
-                  }}
-                >
-                  <FormControl className='w-full'>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select category' />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <div className='max-h-[250px] overflow-auto'>
-                      {/* @ts-ignore */}
-                      {categories?.data?.content
-                        ?.filter((cat: any) => !form.watch('categories').includes(cat.uuid))
-                        .map((cat: any) => (
-                          <SelectItem key={cat.uuid} value={cat.uuid}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                    </div>
-                  </SelectContent>
-                </Select>
-                {/* Dialog to add new category */}
-                <Dialog>
-                  <DialogTrigger className='hidden sm:flex' asChild>
-                    <Button variant='outline' className='hidden sm:flex'>
-                      Add new
-                    </Button>
-                  </DialogTrigger>
 
-                  <DialogTrigger className='flex sm:hidden' asChild>
-                    <Button variant='outline' className='flex sm:hidden'>
-                      <Plus />
-                    </Button>
-                  </DialogTrigger>
 
-                  <DialogContent className='w-full sm:max-w-[350px]'>
-                    <DialogHeader>
-                      <DialogTitle>Add new category</DialogTitle>
-                      <DialogDescription>Add a new category here.</DialogDescription>
-                    </DialogHeader>
-                    <div className='flex w-full items-center gap-2 py-2'>
-                      <div className='grid w-full gap-3'>
-                        <Label htmlFor='category-name'>Category Name</Label>
-                        <Input
-                          id='category-name'
-                          name='category'
-                          value={categoryInput}
-                          onChange={e => setCategoryInput(e.target.value)}
-                          autoFocus
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter className='justify-end'>
-                      <Button
-                        type='button'
-                        className='min-w-[75px]'
-                        onClick={() => {
-                          if (categoryInput?.trim()) {
-                            createCategoryMutation({ body: { name: categoryInput.trim() } });
-                          }
-                        }}
-                      >
-                        {createCategoryPending ? <Spinner /> : 'Add'}
-                      </Button>
 
-                      {/* Hidden button that will close the dialog when clicked */}
-                      <DialogClose asChild>
-                        <button ref={dialogCloseRef} style={{ display: 'none' }} />
-                      </DialogClose>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </FormItem>
-
-            {/* Show badges of selected categories */}
-            <div className='flex flex-wrap gap-2'>
-              {form.watch('categories').map((uuid: string, index: number) => {
-                //@ts-expect-error
-                const cat = categories?.data?.content?.find((c: any) => c.uuid === uuid);
-                if (!cat) return null;
-                return (
-                  <Badge key={uuid} variant='secondary' className='flex items-center gap-1'>
-                    {cat.name}
-                    <button
-                      type='button'
-                      className='ml-2'
-                      onClick={() => removeCategory(index)}
-                      aria-label={`Remove category ${cat.name}`}
-                    >
-                      <XIcon className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                );
-              })}
-            </div>
-          </FormSection>
-
-          {/* Difficulty Level */}
-          <FormSection
-            title='Difficulty Level'
-            description='Set the difficulty level of your course'
-          >
-            <FormField
-              control={form.control}
-              name='difficulty'
-              render={({ field }) => (
-                <FormItem>
-                  <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                    <FormControl className='w-full'>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select difficulty level' />
-                      </SelectTrigger>
-                    </FormControl>
-                    {difficultyIsLoading ? (
-                      <SelectContent>
-                        <Spinner />
-                      </SelectContent>
-                    ) : (
-                      <SelectContent>
-                        {Array.isArray(difficultyLevels) &&
-                          difficultyLevels.map((level: any) => (
-                            <SelectItem key={level.uuid} value={level.uuid as string}>
-                              {level.name}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    )}
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </FormSection>
 
           {showSubmitButton && (
             <div className='xxs:flex-col flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>

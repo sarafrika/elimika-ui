@@ -13,6 +13,7 @@ import { forwardRef, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import { Textarea } from '../../../../components/ui/textarea';
 import {
   getCourseByUuidQueryKey,
   updateCourseMutation,
@@ -71,6 +72,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
         instructor_share_percentage: 50,
         revenue_share_notes: '',
         training_requirements: [],
+        welcome_message: '',
+        theme_color: '',
         ...initialValues,
       },
       mode: 'onChange',
@@ -184,6 +187,53 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     return (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+          {/* Welcome Message */}
+          <FormSection
+            title="Welcome message"
+            description="Write a short message to welcome learners and set expectations for this course."
+          >
+            <FormField
+              control={form.control}
+              name="welcome_message"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Textarea
+                      className='min-h-28'
+                      cols={20}
+                      placeholder="Welcome! In this course, you'll learn..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+
+          {/* Theme Color */}
+          <FormSection
+            title="Theme Color"
+            description="Choose a theme color for your course."
+          >
+            <FormField
+              control={form.control}
+              name="theme_color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      type="color"
+                      {...field}
+                      className="h-16 w-16 cursor-pointer p-1"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+
           {/* Intro Video Upload */}
           <FormSection
             title='Promotional Video'
