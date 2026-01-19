@@ -64,7 +64,7 @@ export const ManageBookings: React.FC<Props> = ({
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
-  const [openBookingDetails, setOpenBookingDetails] = useState(false)
+  const [openBookingDetails, setOpenBookingDetails] = useState(false);
 
   const [cancelReason, setCancelReason] = useState('');
   const [rating, setRating] = useState(0);
@@ -74,9 +74,11 @@ export const ManageBookings: React.FC<Props> = ({
   const [feedbackComment, setFeedbackComment] = useState('');
   const [headline, setHeadline] = useState('');
 
-  const { data } = useQuery(getAllInstructorsOptions({
-    query: { pageable: {} }
-  }))
+  const { data } = useQuery(
+    getAllInstructorsOptions({
+      query: { pageable: {} },
+    })
+  );
 
   const cancelBooking = useMutation(cancelBookingMutation());
   const handleCancelBooking = () => {
@@ -119,35 +121,38 @@ export const ManageBookings: React.FC<Props> = ({
     );
   };
 
-  const reviewInstructor = useMutation(submitInstructorReviewMutation())
+  const reviewInstructor = useMutation(submitInstructorReviewMutation());
   const handleSubmitFeedback = () => {
     if (!selectedBooking) return;
 
-    reviewInstructor.mutate({
-      body: {
-        enrollment_uuid: "",
-        instructor_uuid: selectedBooking?.instructor_uuid,
-        student_uuid: selectedBooking?.student_uuid,
-        comments: feedbackComment as string,
-        headline: headline,
-        is_anonymous: false,
-        rating: rating,
-        clarity_rating: clarityRating,
-        engagement_rating: engagementRating,
-        punctuality_rating: punctualityRating,
+    reviewInstructor.mutate(
+      {
+        body: {
+          enrollment_uuid: '',
+          instructor_uuid: selectedBooking?.instructor_uuid,
+          student_uuid: selectedBooking?.student_uuid,
+          comments: feedbackComment as string,
+          headline: headline,
+          is_anonymous: false,
+          rating: rating,
+          clarity_rating: clarityRating,
+          engagement_rating: engagementRating,
+          punctuality_rating: punctualityRating,
+        },
+        path: { instructorUuid: selectedBooking?.instructor_uuid },
       },
-      path: { instructorUuid: selectedBooking?.instructor_uuid }
-    }, {
-      onSuccess: (data) => {
-        toast.success(data?.message);
-        setShowFeedbackDialog(false);
-        setSelectedBooking(null);
-        setFeedbackComment('');
-      },
-      onError: (data) => {
-        toast.error(data?.message);
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          setShowFeedbackDialog(false);
+          setSelectedBooking(null);
+          setFeedbackComment('');
+        },
+        onError: data => {
+          toast.error(data?.message);
+        },
       }
-    })
+    );
   };
 
   const pastBookings = bookings?.filter(b => {
@@ -280,7 +285,10 @@ export const ManageBookings: React.FC<Props> = ({
             variant='outline'
             size='sm'
             className='w-full gap-2 sm:w-auto'
-            onClick={() => { setSelectedBooking(booking); setOpenBookingDetails(true) }}
+            onClick={() => {
+              setSelectedBooking(booking);
+              setOpenBookingDetails(true);
+            }}
           >
             <Eye className='h-4 w-4' />
             View Details
@@ -293,19 +301,18 @@ export const ManageBookings: React.FC<Props> = ({
           )}
 
           <Button
-            variant="outline"
-            size="sm"
-            className="w-full gap-2 sm:w-auto"
+            variant='outline'
+            size='sm'
+            className='w-full gap-2 sm:w-auto'
             onClick={() => {
               setOpenBookingDetails(false);
               setSelectedBooking(booking);
               setShowFeedbackDialog(true);
             }}
           >
-            <Star className="h-4 w-4" />
+            <Star className='h-4 w-4' />
             Rate
           </Button>
-
         </div>
       </Card>
     );

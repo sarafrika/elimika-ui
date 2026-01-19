@@ -34,31 +34,28 @@ import Spinner from '../../../../../components/ui/spinner';
 import type { CalendarEvent } from './types';
 
 type RateKey =
-  | "private_online_rate"
-  | "private_inperson_rate"
-  | "group_online_rate"
-  | "group_inperson_rate";
+  | 'private_online_rate'
+  | 'private_inperson_rate'
+  | 'group_online_rate'
+  | 'group_inperson_rate';
 
 type Rates = {
   currency: string;
 } & Record<RateKey, number>;
 
-
-
 export interface StudentBookingData {
-  booking_id?: string;           // present when editing
+  booking_id?: string; // present when editing
   student_uuid: string;
   instructor_uuid: string;
   course_uuid: string;
-  price_amount?: number;         // computed in modal
+  price_amount?: number; // computed in modal
 
-  rate_key?: RateKey
+  rate_key?: RateKey;
 
   rates?: any;
 
   purpose?: string;
 }
-
 
 interface EventModalProps {
   isOpen: boolean;
@@ -94,32 +91,31 @@ const eventTypes: {
   icon: any;
   color: string;
 }[] = [
-    {
-      value: 'SCHEDULED_INSTANCE',
-      label: 'Class Schedule Instance',
-      icon: BookOpen,
-      color: 'bg-blue-500',
-    },
-    {
-      value: 'BLOCKED',
-      label: 'Blocked/Unavailable',
-      icon: Coffee,
-      color: 'bg-orange-500',
-    },
-    {
-      value: 'AVAILABILITY',
-      label: 'Available',
-      icon: Calendar,
-      color: 'bg-green-500',
-    },
-    {
-      value: 'BOOKING',
-      label: 'Student Booking',
-      icon: Clock,
-      color: 'bg-purple-500',
-    }
-
-  ];
+  {
+    value: 'SCHEDULED_INSTANCE',
+    label: 'Class Schedule Instance',
+    icon: BookOpen,
+    color: 'bg-blue-500',
+  },
+  {
+    value: 'BLOCKED',
+    label: 'Blocked/Unavailable',
+    icon: Coffee,
+    color: 'bg-orange-500',
+  },
+  {
+    value: 'AVAILABILITY',
+    label: 'Available',
+    icon: Calendar,
+    color: 'bg-green-500',
+  },
+  {
+    value: 'BOOKING',
+    label: 'Student Booking',
+    icon: Clock,
+    color: 'bg-purple-500',
+  },
+];
 
 function extractDateTimeParts(date: Date) {
   const pad = (num: number) => String(num).padStart(2, '0');
@@ -159,7 +155,7 @@ export function EventModal({
   selectedSlot,
   onSave,
   onDelete,
-  studentBookingData
+  studentBookingData,
 }: EventModalProps) {
   const [formData, setFormData] = useState<Partial<CalendarEvent>>({
     title: '',
@@ -304,7 +300,7 @@ export function EventModal({
   const [bookingEnd, setBookingEnd] = useState('');
   const [purpose, setPurpose] = useState('');
   const [computedPrice, setComputedPrice] = useState<number>(0);
-  const [rateKey, setRateKey] = useState<RateKey | "">("");
+  const [rateKey, setRateKey] = useState<RateKey | ''>('');
 
   const rates = studentBookingData?.rates as Rates | undefined;
 
@@ -313,11 +309,7 @@ export function EventModal({
     return diffMs / (1000 * 60 * 60);
   };
 
-  const calculatePrice = (
-    rateKey: RateKey,
-    startTime: Date,
-    endTime: Date
-  ) => {
+  const calculatePrice = (rateKey: RateKey, startTime: Date, endTime: Date) => {
     if (!rates) return 0;
 
     const ratePerHour = rates[rateKey];
@@ -337,7 +329,6 @@ export function EventModal({
     const total = calculatePrice(rateKey, start, end);
     setComputedPrice(total);
   }, [rateKey, bookingStart, bookingEnd, rates]);
-
 
   const handleSave = () => {
     const {
@@ -431,7 +422,7 @@ export function EventModal({
         currency: studentBookingData?.rates?.currency || 'KES',
         price_amount: computedPrice,
         purpose,
-      }
+      };
 
       createBookingForInstructor.mutate(
         { body },
@@ -440,7 +431,8 @@ export function EventModal({
             toast.success(data?.message);
             qc.invalidateQueries({
               queryKey: getInstructorCalendarQueryKey({
-                query: { start_date: "" as any, end_date: "" as any }, path: { instructorUuid: instrucor?.uuid as string },
+                query: { start_date: '' as any, end_date: '' as any },
+                path: { instructorUuid: instrucor?.uuid as string },
               }),
             });
             onClose();
@@ -455,7 +447,7 @@ export function EventModal({
     }
 
     if (eventData.entry_type === 'AVAILABILITY') {
-      return
+      return;
     }
   };
 
@@ -487,7 +479,6 @@ export function EventModal({
       setBookingEnd(formData.endDateTime);
     }
   }, [selectedEventType?.value]);
-
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -527,58 +518,55 @@ export function EventModal({
         <div className='space-y-6'>
           {/* Basic Information */}
           {selectedEventType?.value === 'BLOCKED' && (
-            <div className="space-y-6">
+            <div className='space-y-6'>
               {/* Date Picker */}
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Label>Select Dates</Label>
-                <div className="max-w-sm">
+                <div className='max-w-sm'>
                   <DatePicker
                     multiple
                     value={blockDates.map(d => d.date)}
                     onChange={handleDatesChange}
-                    format="YYYY-MM-DD"
-                    placeholder="Pick one or more dates"
+                    format='YYYY-MM-DD'
+                    placeholder='Pick one or more dates'
                     style={{
                       borderRadius: '0.375rem', // optional for rounded corners
                       padding: '16px',
                       fontSize: '14px',
                     }}
                   />
-
                 </div>
               </div>
 
               {/* Selected Dates */}
               {blockDates.length > 0 && (
-                <div className="space-y-3">
+                <div className='space-y-3'>
                   <Label>Blocked Time Ranges</Label>
 
-                  <div className="space-y-3">
+                  <div className='space-y-3'>
                     {blockDates.map((item, index) => (
                       <div
                         key={item.date}
-                        className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 rounded-md border p-4"
+                        className='grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 rounded-md border p-4'
                       >
                         {/* Date */}
-                        <div className="font-medium">
-                          {dayjs(item.date).format('ddd, MMM D')}
-                        </div>
+                        <div className='font-medium'>{dayjs(item.date).format('ddd, MMM D')}</div>
 
                         {/* Start */}
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs text-muted-foreground">Start</span>
+                        <div className='flex flex-col gap-1'>
+                          <span className='text-muted-foreground text-xs'>Start</span>
                           <Input
-                            type="time"
+                            type='time'
                             value={item.startTime}
                             onChange={e => updateTime(index, 'startTime', e.target.value)}
                           />
                         </div>
 
                         {/* End */}
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs text-muted-foreground">End</span>
+                        <div className='flex flex-col gap-1'>
+                          <span className='text-muted-foreground text-xs'>End</span>
                           <Input
-                            type="time"
+                            type='time'
                             value={item.endTime}
                             onChange={e => updateTime(index, 'endTime', e.target.value)}
                           />
@@ -586,24 +574,18 @@ export function EventModal({
 
                         {/* Remove */}
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setBlockDates(prev => prev.filter((_, i) => i !== index))
-                          }
+                          variant='ghost'
+                          size='icon'
+                          onClick={() => setBlockDates(prev => prev.filter((_, i) => i !== index))}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className='text-destructive h-4 w-4' />
                         </Button>
                       </div>
                     ))}
                   </div>
 
                   {/* Clear all */}
-                  <Button
-                    variant="outline"
-                    className="w-fit"
-                    onClick={() => setBlockDates([])}
-                  >
+                  <Button variant='outline' className='w-fit' onClick={() => setBlockDates([])}>
                     Clear all blocked dates
                   </Button>
                 </div>
@@ -611,24 +593,23 @@ export function EventModal({
             </div>
           )}
 
-
           {selectedEventType?.value === 'BOOKING' && (
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {/* Start / End */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
                   <Label>Start Time</Label>
                   <Input
-                    type="datetime-local"
+                    type='datetime-local'
                     value={bookingStart}
                     onChange={e => setBookingStart(e.target.value)}
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>End Time</Label>
                   <Input
-                    type="datetime-local"
+                    type='datetime-local'
                     value={bookingEnd}
                     onChange={e => setBookingEnd(e.target.value)}
                   />
@@ -636,57 +617,56 @@ export function EventModal({
               </div>
 
               {/* Session Type */}
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Label>Session Type</Label>
-                <Select
-                  value={rateKey}
-                  onValueChange={(v) => setRateKey(v as RateKey)}
-                >
+                <Select value={rateKey} onValueChange={v => setRateKey(v as RateKey)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select session type" />
+                    <SelectValue placeholder='Select session type' />
                   </SelectTrigger>
 
                   <SelectContent>
-                    <SelectItem value="private_online_rate">
+                    <SelectItem value='private_online_rate'>
                       Private Online (KES {rates?.private_online_rate}/hr)
                     </SelectItem>
 
-                    <SelectItem value="private_inperson_rate">
+                    <SelectItem value='private_inperson_rate'>
                       Private In-person (KES {rates?.private_inperson_rate}/hr)
                     </SelectItem>
 
-                    <SelectItem value="group_online_rate">
+                    <SelectItem value='group_online_rate'>
                       Group Online (KES {rates?.group_online_rate}/hr)
                     </SelectItem>
 
-                    <SelectItem value="group_inperson_rate">
+                    <SelectItem value='group_inperson_rate'>
                       Group In-person (KES {rates?.group_inperson_rate}/hr)
                     </SelectItem>
                   </SelectContent>
                 </Select>
-
               </div>
 
               {/* Purpose */}
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Label>Purpose</Label>
                 <Input
                   value={purpose}
                   onChange={e => setPurpose(e.target.value)}
-                  placeholder="What is this session for?"
+                  placeholder='What is this session for?'
                 />
               </div>
 
               {/* Price */}
               {computedPrice && (
-                <div className="rounded-md bg-muted p-3 text-sm">
-                  Total: <strong>{computedPrice} {studentBookingData?.rates?.currency}</strong>
+                <div className='bg-muted rounded-md p-3 text-sm'>
+                  Total:{' '}
+                  <strong>
+                    {computedPrice} {studentBookingData?.rates?.currency}
+                  </strong>
                 </div>
               )}
             </div>
           )}
 
-          {selectedEventType?.value !== 'BLOCKED' && selectedEventType?.value !== "BOOKING" && (
+          {selectedEventType?.value !== 'BLOCKED' && selectedEventType?.value !== 'BOOKING' && (
             <div className='space-y-4'>
               <div className='space-y-2'>
                 <Label htmlFor='title'>Event Title *</Label>
@@ -718,7 +698,7 @@ export function EventModal({
             </div>
           )}
 
-          {selectedEventType?.value !== 'BLOCKED' && selectedEventType?.value !== "BOOKING" && (
+          {selectedEventType?.value !== 'BLOCKED' && selectedEventType?.value !== 'BOOKING' && (
             <div className='space-y-4'>
               <h4 className='flex items-center gap-2 font-medium'>
                 <Clock className='h-4 w-4' />
@@ -871,9 +851,11 @@ export function EventModal({
 
             {selectedEventType?.value === 'BOOKING' && (
               <Button className='min-w-[130px]' onClick={handleSave}>
-                {createBookingForInstructor.isPending ? <Spinner /> : <>
-                  {event ? 'Cancel Booking' : 'Create Booking'}
-                </>}
+                {createBookingForInstructor.isPending ? (
+                  <Spinner />
+                ) : (
+                  <>{event ? 'Cancel Booking' : 'Create Booking'}</>
+                )}
               </Button>
             )}
           </div>

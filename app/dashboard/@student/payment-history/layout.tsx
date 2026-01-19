@@ -11,7 +11,7 @@ export default function PaymentHistoryLayout({ children }: PaymentHistoryLayoutP
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Payment History</h2>
           <div className='text-muted-foreground'>
-            <p className="mt-1 text-muted-foreground">
+            <p className='text-muted-foreground mt-1'>
               View and manage your past payments and transactions
             </p>
           </div>

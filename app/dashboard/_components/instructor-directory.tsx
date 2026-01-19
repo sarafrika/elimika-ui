@@ -86,99 +86,103 @@ export const InstructorDirectory: React.FC<Props> = ({
   const _allCourses = [...new Set(instructors?.flatMap(i => i.courses))] as any;
 
   // Filter instructors based on criteria
-  const filteredInstructors = instructors?.filter(instructor => {
-    if (
-      filters.searchQuery &&
-      !instructor.full_name.toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
-      !instructor.professional_headline.toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
-      !instructor.bio.toLowerCase().includes(filters.searchQuery.toLowerCase())
-    ) {
-      return false;
-    }
-
-    // Instructor type
-    if (filters.instructorType !== 'all') {
-      const isOrganization = instructor.user_domain?.includes('organization');
-      const instructorType = isOrganization ? 'organization' : 'individual';
-      if (instructorType !== filters.instructorType) {
+  const filteredInstructors = instructors
+    ?.filter(instructor => {
+      if (
+        filters.searchQuery &&
+        !instructor.full_name.toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
+        !instructor.professional_headline
+          .toLowerCase()
+          .includes(filters.searchQuery.toLowerCase()) &&
+        !instructor.bio.toLowerCase().includes(filters.searchQuery.toLowerCase())
+      ) {
         return false;
       }
-    }
 
-    // Gender
-    if (filters.gender !== 'all' && instructor.gender.toLowerCase() !== filters.gender) {
-      return false;
-    }
+      // Instructor type
+      if (filters.instructorType !== 'all') {
+        const isOrganization = instructor.user_domain?.includes('organization');
+        const instructorType = isOrganization ? 'organization' : 'individual';
+        if (instructorType !== filters.instructorType) {
+          return false;
+        }
+      }
 
-    // Rating
-    if (instructor.rating < filters.minRating) {
-      return false;
-    }
-
-    // Experience
-    if (
-      // @ts-expect-error
-      instructor.total_experience_years < filters.experience[0] ||
-      // @ts-expect-error
-      instructor.total_experience_years > filters.experience[1]
-    ) {
-      return false;
-    }
-
-    // Specializations
-    // Specializations
-    if (filters.specializations.length > 0) {
-      const instructorSkillNames =
-        instructor.specializations?.map((s: any) => s.skill_name.toLowerCase()) ?? [];
-
-      const hasMatch = filters.specializations.some(spec =>
-        instructorSkillNames.includes(spec.toLowerCase())
-      );
-
-      if (!hasMatch) {
+      // Gender
+      if (filters.gender !== 'all' && instructor.gender.toLowerCase() !== filters.gender) {
         return false;
       }
-    }
 
-    // Fee range
-    // if (
-    //     instructor.rateCard.hourly < filters.feeRange[0] ||
-    //     instructor.rateCard.hourly > filters.feeRange[1]
-    // ) {
-    //     return false;
-    // }
+      // Rating
+      if (instructor.rating < filters.minRating) {
+        return false;
+      }
 
-    // Mode
-    // if (
-    //   filters.mode.length > 0 &&
-    //   !filters.mode.some(m => instructor.mode.includes(m as 'online' | 'onsite'))
-    // ) {
-    //   return false;
-    // }
+      // Experience
+      if (
+        // @ts-expect-error
+        instructor.total_experience_years < filters.experience[0] ||
+        // @ts-expect-error
+        instructor.total_experience_years > filters.experience[1]
+      ) {
+        return false;
+      }
 
-    // Location
-    if (
-      filters.location &&
-      !instructor.location?.city.toLowerCase().includes(filters.location.toLowerCase())
-    ) {
-      return false;
-    }
+      // Specializations
+      // Specializations
+      if (filters.specializations.length > 0) {
+        const instructorSkillNames =
+          instructor.specializations?.map((s: any) => s.skill_name.toLowerCase()) ?? [];
 
-    return true;
-  })?.sort((a, b) => {
-    if (b.rating !== a.rating) {
-      return b.rating - a.rating;
-    }
+        const hasMatch = filters.specializations.some(spec =>
+          instructorSkillNames.includes(spec.toLowerCase())
+        );
 
-    if (b.total_experience_years !== a.total_experience_years) {
-      return b.total_experience_years - a.total_experience_years;
-    }
+        if (!hasMatch) {
+          return false;
+        }
+      }
 
-    const aSpecs = a.specializations?.length ?? 0;
-    const bSpecs = b.specializations?.length ?? 0;
+      // Fee range
+      // if (
+      //     instructor.rateCard.hourly < filters.feeRange[0] ||
+      //     instructor.rateCard.hourly > filters.feeRange[1]
+      // ) {
+      //     return false;
+      // }
 
-    return bSpecs - aSpecs;
-  });
+      // Mode
+      // if (
+      //   filters.mode.length > 0 &&
+      //   !filters.mode.some(m => instructor.mode.includes(m as 'online' | 'onsite'))
+      // ) {
+      //   return false;
+      // }
+
+      // Location
+      if (
+        filters.location &&
+        !instructor.location?.city.toLowerCase().includes(filters.location.toLowerCase())
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    ?.sort((a, b) => {
+      if (b.rating !== a.rating) {
+        return b.rating - a.rating;
+      }
+
+      if (b.total_experience_years !== a.total_experience_years) {
+        return b.total_experience_years - a.total_experience_years;
+      }
+
+      const aSpecs = a.specializations?.length ?? 0;
+      const bSpecs = b.specializations?.length ?? 0;
+
+      return bSpecs - aSpecs;
+    });
 
   const clearFilters = () => {
     setFilters({
@@ -221,7 +225,7 @@ export const InstructorDirectory: React.FC<Props> = ({
             <div className='w-60 flex-shrink-0 space-y-4 xl:w-80'>
               <Card className='space-y-6 p-4'>
                 <div className='flex items-center justify-between'>
-                  <h3 onClick={() => { }} className='flex items-center gap-2'>
+                  <h3 onClick={() => {}} className='flex items-center gap-2'>
                     <Filter className='h-4 w-4' />
                     Filters
                   </h3>
@@ -424,42 +428,42 @@ export const InstructorDirectory: React.FC<Props> = ({
               filters.mode.length > 0 ||
               filters.instructorType !== 'all' ||
               filters.minRating > 0) && (
-                <div className='mb-6 flex flex-wrap gap-2'>
-                  {filters.specializations.map(spec => (
-                    <Badge key={spec} variant='secondary' className='gap-1'>
-                      {spec}
-                      <X
-                        className='h-3 w-3 cursor-pointer'
-                        onClick={() => toggleSpecialization(spec)}
-                      />
-                    </Badge>
-                  ))}
-                  {filters.mode.map(mode => (
-                    <Badge key={mode} variant='secondary' className='gap-1'>
-                      {mode}
-                      <X className='h-3 w-3 cursor-pointer' onClick={() => toggleMode(mode)} />
-                    </Badge>
-                  ))}
-                  {filters.instructorType !== 'all' && (
-                    <Badge variant='secondary' className='gap-1'>
-                      {filters.instructorType}
-                      <X
-                        className='h-3 w-3 cursor-pointer'
-                        onClick={() => setFilters({ ...filters, instructorType: 'all' })}
-                      />
-                    </Badge>
-                  )}
-                  {filters.minRating > 0 && (
-                    <Badge variant='secondary' className='gap-1'>
-                      {filters.minRating}+ rating
-                      <X
-                        className='h-3 w-3 cursor-pointer'
-                        onClick={() => setFilters({ ...filters, minRating: 0 })}
-                      />
-                    </Badge>
-                  )}
-                </div>
-              )}
+              <div className='mb-6 flex flex-wrap gap-2'>
+                {filters.specializations.map(spec => (
+                  <Badge key={spec} variant='secondary' className='gap-1'>
+                    {spec}
+                    <X
+                      className='h-3 w-3 cursor-pointer'
+                      onClick={() => toggleSpecialization(spec)}
+                    />
+                  </Badge>
+                ))}
+                {filters.mode.map(mode => (
+                  <Badge key={mode} variant='secondary' className='gap-1'>
+                    {mode}
+                    <X className='h-3 w-3 cursor-pointer' onClick={() => toggleMode(mode)} />
+                  </Badge>
+                ))}
+                {filters.instructorType !== 'all' && (
+                  <Badge variant='secondary' className='gap-1'>
+                    {filters.instructorType}
+                    <X
+                      className='h-3 w-3 cursor-pointer'
+                      onClick={() => setFilters({ ...filters, instructorType: 'all' })}
+                    />
+                  </Badge>
+                )}
+                {filters.minRating > 0 && (
+                  <Badge variant='secondary' className='gap-1'>
+                    {filters.minRating}+ rating
+                    <X
+                      className='h-3 w-3 cursor-pointer'
+                      onClick={() => setFilters({ ...filters, minRating: 0 })}
+                    />
+                  </Badge>
+                )}
+              </div>
+            )}
 
             {/* Instructor Grid */}
             {filteredInstructors?.length === 0 ? (

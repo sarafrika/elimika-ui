@@ -38,7 +38,7 @@ export default function CourseCreatorProfilePage() {
   const { data: educationData } = useQuery({
     ...getCourseCreatorEducationOptions({
       path: { courseCreatorUuid: profile?.uuid as string },
-      query: { pageable: {} }
+      query: { pageable: {} },
     }),
     enabled: !!profile?.uuid,
   });
@@ -46,7 +46,7 @@ export default function CourseCreatorProfilePage() {
   const { data: experienceData } = useQuery({
     ...getCourseCreatorExperienceOptions({
       path: { courseCreatorUuid: profile?.uuid as string },
-      query: { pageable: {} }
+      query: { pageable: {} },
     }),
     enabled: !!profile?.uuid,
   });
@@ -54,7 +54,7 @@ export default function CourseCreatorProfilePage() {
   const { data: certificationsData } = useQuery({
     ...getCourseCreatorCertificationsOptions({
       path: { courseCreatorUuid: profile?.uuid as string },
-      query: { pageable: {} }
+      query: { pageable: {} },
     }),
     enabled: !!profile?.uuid,
   });
@@ -62,7 +62,7 @@ export default function CourseCreatorProfilePage() {
   const { data: membershipsData } = useQuery({
     ...getCourseCreatorMembershipsOptions({
       path: { courseCreatorUuid: profile?.uuid as string },
-      query: { pageable: {} }
+      query: { pageable: {} },
     }),
     enabled: !!profile?.uuid,
   });
@@ -98,7 +98,6 @@ export default function CourseCreatorProfilePage() {
   const experiences = experienceData?.data?.content || [];
   const certifications: CourseCreatorCertification[] = certificationsData?.data?.content || [];
   const memberships: CourseCreatorProfessionalMembership[] = membershipsData?.data?.content || [];
-
 
   const sections: ProfileSummarySection[] = [
     {
@@ -270,7 +269,6 @@ export default function CourseCreatorProfilePage() {
     return `${formatDate(start)} – ${formatDate(end)}`;
   };
 
-
   // Add Experience section
   if (experiences.length > 0) {
     sections.push({
@@ -283,8 +281,9 @@ export default function CourseCreatorProfilePage() {
             const end = toDate(exp.end_date);
             const range =
               start || end
-                ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${exp.currently_working ? 'Present' : end ? format(end, 'MMM yyyy') : 'End?'
-                }`
+                ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${
+                    exp.currently_working ? 'Present' : end ? format(end, 'MMM yyyy') : 'End?'
+                  }`
                 : null;
             return (
               <div
@@ -293,9 +292,7 @@ export default function CourseCreatorProfilePage() {
               >
                 <p className='font-medium'>{exp.position}</p>
                 <p className='text-muted-foreground text-sm'>{exp.organization_name}</p>
-                <p className="text-muted-foreground text-xs">
-                  {renderTenure(exp.tenure_label)}
-                </p>
+                <p className='text-muted-foreground text-xs'>{renderTenure(exp.tenure_label)}</p>
                 {exp.responsibilities ? (
                   <p className='text-muted-foreground mt-2 text-sm'>{exp.responsibilities}</p>
                 ) : null}
@@ -362,8 +359,9 @@ export default function CourseCreatorProfilePage() {
             const end = toDate(membership.end_date);
             const range =
               start || end
-                ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${membership.is_active || !end ? 'Present' : format(end, 'MMM yyyy')
-                }`
+                ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${
+                    membership.is_active || !end ? 'Present' : format(end, 'MMM yyyy')
+                  }`
                 : null;
 
             const badgeClass =
@@ -376,13 +374,11 @@ export default function CourseCreatorProfilePage() {
             return (
               <div
                 key={membership.uuid ?? `${membership.organization_name}-${index}`}
-                className='border-border/50 rounded-lg border p-3 flex flex-col gap-1'
+                className='border-border/50 flex flex-col gap-1 rounded-lg border p-3'
               >
-                <div className='flex flex-row items-center gap-4 ' >
+                <div className='flex flex-row items-center gap-4'>
                   <p className='font-medium'>{membership.organization_name}</p>
-                  <span
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${badgeClass}`}
-                  >
+                  <span className={`rounded-full px-2 py-1 text-xs font-semibold ${badgeClass}`}>
                     {badgeText}
                   </span>
                 </div>

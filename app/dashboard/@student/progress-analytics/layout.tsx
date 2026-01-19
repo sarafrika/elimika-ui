@@ -11,7 +11,7 @@ export default function ProgressAnalyticsLayout({ children }: ProgressAnalyticsL
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Progress Analytics</h2>
           <div className='text-muted-foreground'>
-            <p className="mt-1 text-muted-foreground">
+            <p className='text-muted-foreground mt-1'>
               Overview of your course progress and learning metrics
             </p>
           </div>

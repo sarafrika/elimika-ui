@@ -46,9 +46,7 @@ export default function CourseCreatorAnalyticsPage() {
 
       <Card className='lg:col-span-2'>
         <CardHeader>
-          <CardTitle className='text-base font-semibold'>
-            Course ratings & feedback
-          </CardTitle>
+          <CardTitle className='text-base font-semibold'>Course ratings & feedback</CardTitle>
           <CardDescription>
             Learner-submitted ratings and qualitative feedback per course.
           </CardDescription>
@@ -62,14 +60,13 @@ export default function CourseCreatorAnalyticsPage() {
               isOpen={openCourseId === course.uuid}
               onToggle={() =>
                 setOpenCourseId((prev: any) =>
-                  prev === course?.uuid ? null : course?.uuid as string
+                  prev === course?.uuid ? null : (course?.uuid as string)
                 )
               }
             />
           ))}
         </CardContent>
       </Card>
-
 
       <section className='grid gap-4 lg:grid-cols-2'>
         <Card>
@@ -215,17 +212,13 @@ function RatingStars({ value }: { value: number }) {
   return (
     <div className='flex items-center gap-1'>
       {Array.from({ length: 5 }).map((_, i) => (
-        <span
-          key={i}
-          className={i < value ? 'text-yellow-500' : 'text-muted-foreground'}
-        >
+        <span key={i} className={i < value ? 'text-yellow-500' : 'text-muted-foreground'}>
           ★
         </span>
       ))}
     </div>
   );
 }
-
 
 function CourseReviewSummary({
   course,
@@ -236,28 +229,25 @@ function CourseReviewSummary({
   isOpen: boolean;
   onToggle: () => void;
 }) {
-  const reviews =
-    course.reviews ?? [
-      {
-        uuid: 'rev-1234',
-        rating: 5,
-        student_uuid: "student-uuid-1",
-        comments: 'Very clear explanations and engaging sessions.',
-        created_date: '2025-11-18T09:00:00',
-        is_anonymous: false,
-        created_by: 'student@example.com',
-      },
-    ];
+  const reviews = course.reviews ?? [
+    {
+      uuid: 'rev-1234',
+      rating: 5,
+      student_uuid: 'student-uuid-1',
+      comments: 'Very clear explanations and engaging sessions.',
+      created_date: '2025-11-18T09:00:00',
+      is_anonymous: false,
+      created_by: 'student@example.com',
+    },
+  ];
 
   const reviewCount = reviews.length;
 
   const averageRating =
     reviewCount > 0
       ? Math.round(
-        (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) /
-          reviewCount) *
-        10
-      ) / 10
+          (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
+        ) / 10
       : null;
 
   return (
@@ -277,9 +267,7 @@ function CourseReviewSummary({
                 ? `${reviewCount} review${reviewCount > 1 ? 's' : ''}`
                 : 'No reviews yet'}
             </p>
-            <p className='text-muted-foreground text-xs'>
-              {"2 enrollments"}
-            </p>
+            <p className='text-muted-foreground text-xs'>{'2 enrollments'}</p>
           </div>
         </div>
 
@@ -297,7 +285,7 @@ function CourseReviewSummary({
 
       {/* Body */}
       {isOpen && reviewCount > 0 && (
-        <div className='border-border/60 border-t p-4 space-y-3'>
+        <div className='border-border/60 space-y-3 border-t p-4'>
           {reviews.map((review: any) => (
             <div
               key={review.uuid}
@@ -305,7 +293,7 @@ function CourseReviewSummary({
             >
               <div className='flex items-center justify-between'>
                 <p className=''>{review.student_uuid}</p>
-                <span className='flex text-muted-foreground self-end justify-end text-xs'>
+                <span className='text-muted-foreground flex justify-end self-end text-xs'>
                   {format(new Date(review.created_date), 'dd MMM yyyy')}
                 </span>
               </div>
@@ -313,9 +301,7 @@ function CourseReviewSummary({
               <p className='mt-2'>{review.comments}</p>
 
               {!review.is_anonymous && (
-                <p className='text-muted-foreground mt-1 text-xs'>
-                  {review.created_by}
-                </p>
+                <p className='text-muted-foreground mt-1 text-xs'>{review.created_by}</p>
               )}
             </div>
           ))}
@@ -324,5 +310,3 @@ function CourseReviewSummary({
     </div>
   );
 }
-
-

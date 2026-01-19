@@ -7,7 +7,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { ReviewCard } from './review-card';
 
-
 export default function ReviewsPage() {
   const instructor = useInstructor();
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -34,20 +33,17 @@ export default function ReviewsPage() {
   }, [replaceBreadcrumbs]);
 
   return (
-    <div className="space-y-6">
-
+    <div className='space-y-6'>
       {isLoading ? (
-        <p className="text-muted-foreground text-sm">Loading reviews...</p>
+        <p className='text-muted-foreground text-sm'>Loading reviews...</p>
       ) : reviews.length === 0 ? (
-        <div className="text-muted-foreground mt-10 text-center">
-          <p className="text-lg">No reviews yet</p>
-          <p className="text-sm">
-            Once students start leaving feedback, you&apos;ll see it here.
-          </p>
+        <div className='text-muted-foreground mt-10 text-center'>
+          <p className='text-lg'>No reviews yet</p>
+          <p className='text-sm'>Once students start leaving feedback, you&apos;ll see it here.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {reviews.map((review) => (
+        <div className='space-y-4'>
+          {reviews.map(review => (
             <ReviewCard key={review.uuid} review={review} />
           ))}
         </div>

@@ -34,7 +34,7 @@ import {
   Users,
   X,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
 } from 'lucide-react';
 import moment from 'moment';
 import { useParams, useRouter } from 'next/navigation';
@@ -115,7 +115,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const shareToSocial = (platform: string) => {
@@ -160,7 +160,7 @@ export default function ClassPreviewPage() {
     }
   };
 
-  const handleSaveGrade = () => { };
+  const handleSaveGrade = () => {};
 
   const [isReading, setIsReading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -263,23 +263,26 @@ export default function ClassPreviewPage() {
                 <button
                   key={entry?.user?.uuid}
                   onClick={() => setSelectedStudent(entry)}
-                  className={`group relative w-full rounded-lg px-3 py-2.5 text-left transition-all duration-150 ${isSelected ? 'bg-primary/10 shadow-sm' : 'hover:bg-accent/50'
-                    }`}
+                  className={`group relative w-full rounded-lg px-3 py-2.5 text-left transition-all duration-150 ${
+                    isSelected ? 'bg-primary/10 shadow-sm' : 'hover:bg-accent/50'
+                  }`}
                 >
                   {/* Left accent bar */}
                   <div
-                    className={`absolute top-0 left-0 h-full w-1 rounded-r transition-all ${isSelected ? 'bg-primary' : 'opacity-0'
-                      }`}
+                    className={`absolute top-0 left-0 h-full w-1 rounded-r transition-all ${
+                      isSelected ? 'bg-primary' : 'opacity-0'
+                    }`}
                   />
 
                   <div className='flex items-center justify-between gap-2 pl-1'>
                     <div className='flex min-w-0 flex-1 items-center gap-2.5'>
                       {/* Avatar */}
                       <div
-                        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold ${isSelected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-primary/15 text-primary'
-                          }`}
+                        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-primary/15 text-primary'
+                        }`}
                       >
                         {name
                           .split(' ')
@@ -291,14 +294,16 @@ export default function ClassPreviewPage() {
                       {/* Name & Status */}
                       <div className='flex min-w-0 flex-1 flex-col'>
                         <span
-                          className={`truncate text-sm ${isSelected ? 'text-foreground font-semibold' : 'font-medium'
-                            }`}
+                          className={`truncate text-sm ${
+                            isSelected ? 'text-foreground font-semibold' : 'font-medium'
+                          }`}
                         >
                           {name}
                         </span>
                         <span
-                          className={`text-xs ${isActive ? 'text-success' : 'text-muted-foreground'
-                            }`}
+                          className={`text-xs ${
+                            isActive ? 'text-success' : 'text-muted-foreground'
+                          }`}
                         >
                           {isActive ? 'Active' : 'Inactive'}
                         </span>
@@ -306,10 +311,11 @@ export default function ClassPreviewPage() {
                     </div>
 
                     <ChevronRight
-                      className={`h-4 w-4 flex-shrink-0 transition-opacity ${isSelected
-                        ? 'text-primary opacity-100'
-                        : 'text-muted-foreground opacity-0 group-hover:opacity-70'
-                        }`}
+                      className={`h-4 w-4 flex-shrink-0 transition-opacity ${
+                        isSelected
+                          ? 'text-primary opacity-100'
+                          : 'text-muted-foreground opacity-0 group-hover:opacity-70'
+                      }`}
                     />
                   </div>
                 </button>
@@ -404,10 +410,11 @@ export default function ClassPreviewPage() {
                                   <button
                                     key={content.uuid}
                                     onClick={() => handleLessonSelect(content)}
-                                    className={`border-border/50 hover:border-primary/50 hover:bg-accent/30 w-full rounded-lg border-2 p-3 transition-all ${selectedLesson?.uuid === content.uuid
-                                      ? 'border-primary bg-primary/5'
-                                      : ''
-                                      }`}
+                                    className={`border-border/50 hover:border-primary/50 hover:bg-accent/30 w-full rounded-lg border-2 p-3 transition-all ${
+                                      selectedLesson?.uuid === content.uuid
+                                        ? 'border-primary bg-primary/5'
+                                        : ''
+                                    }`}
                                   >
                                     <div className='flex items-center justify-between gap-3'>
                                       <div className='flex min-w-0 flex-1 items-center gap-3'>
@@ -478,7 +485,6 @@ export default function ClassPreviewPage() {
                 onClose={() => setIsPlaying(false)}
               />
             )}
-
 
             {/* Reading Mode */}
             {isReading && (contentTypeName === 'pdf' || contentTypeName === 'text') && (

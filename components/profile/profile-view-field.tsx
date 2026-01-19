@@ -50,7 +50,7 @@ interface ProfileViewListItemProps {
   dateRange?: string;
   children?: ReactNode;
   className?: string;
-  year_completed?: string
+  year_completed?: string;
 }
 
 export function ProfileViewListItem({
@@ -61,7 +61,7 @@ export function ProfileViewListItem({
   dateRange,
   children,
   className,
-  year_completed
+  year_completed,
 }: ProfileViewListItemProps) {
   return (
     <div className={cn('border-border/60 bg-card/30 space-y-2 rounded-lg border p-4', className)}>
@@ -78,7 +78,9 @@ export function ProfileViewListItem({
       </div>
       <div className='flex flex-row items-center justify-between'>
         {dateRange && <p className='text-muted-foreground text-xs'>{dateRange}</p>}
-        {year_completed && <p className='text-muted-foreground text-xs'>Completed: {year_completed}</p>}
+        {year_completed && (
+          <p className='text-muted-foreground text-xs'>Completed: {year_completed}</p>
+        )}
       </div>
 
       {description && <p className='text-foreground text-sm'>{description}</p>}

@@ -33,7 +33,7 @@ import {
   UserIcon,
   Users,
   UsersIcon,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { UserDomain } from './types';

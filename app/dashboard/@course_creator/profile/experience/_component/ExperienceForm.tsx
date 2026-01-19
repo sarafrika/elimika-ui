@@ -76,15 +76,18 @@ export default function ProfessionalExperienceSettings() {
     ]);
   }, [replaceBreadcrumbs]);
 
-  const qc = useQueryClient()
+  const qc = useQueryClient();
   const user = useUserProfile();
   const { courseCreator, invalidateQuery } = user!;
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   const { data } = useQuery({
-    ...getCourseCreatorExperienceOptions({ query: { pageable: {} }, path: { courseCreatorUuid: courseCreator?.uuid as string } }),
-    enabled: !!courseCreator?.uuid
-  })
+    ...getCourseCreatorExperienceOptions({
+      query: { pageable: {} },
+      path: { courseCreatorUuid: courseCreator?.uuid as string },
+    }),
+    enabled: !!courseCreator?.uuid,
+  });
 
   const courseCreatorExperience = data?.data?.content || [];
 
@@ -142,40 +145,52 @@ export default function ProfessionalExperienceSettings() {
       };
 
       if (exp.uuid) {
-        await updateExpMutation.mutateAsync({
-          path: {
-            courseCreatorUuid: courseCreator?.uuid!,
-            experienceUuid: exp.uuid,
+        await updateExpMutation.mutateAsync(
+          {
+            path: {
+              courseCreatorUuid: courseCreator?.uuid!,
+              experienceUuid: exp.uuid,
+            },
+            body: {
+              ...expData,
+              start_date: new Date(expData.start_date),
+              end_date: new Date(expData.end_date),
+            },
           },
-          body: {
-            ...expData,
-            start_date: new Date(expData.start_date),
-            end_date: new Date(expData.end_date),
-          },
-        }, {
-          onSuccess: () => {
-            qc.invalidateQueries({
-              queryKey: getCourseCreatorExperienceQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
-            });
+          {
+            onSuccess: () => {
+              qc.invalidateQueries({
+                queryKey: getCourseCreatorExperienceQueryKey({
+                  path: { courseCreatorUuid: courseCreator?.uuid as string },
+                  query: { pageable: {} },
+                }),
+              });
+            },
           }
-        });
+        );
       } else {
-        const resp = await addExpMutation.mutateAsync({
-          path: {
-            courseCreatorUuid: courseCreator?.uuid!,
+        const resp = await addExpMutation.mutateAsync(
+          {
+            path: {
+              courseCreatorUuid: courseCreator?.uuid!,
+            },
+            body: {
+              ...expData,
+              start_date: new Date(expData.start_date),
+              end_date: new Date(expData.end_date),
+            },
           },
-          body: {
-            ...expData,
-            start_date: new Date(expData.start_date),
-            end_date: new Date(expData.end_date),
-          },
-        }, {
-          onSuccess: () => {
-            qc.invalidateQueries({
-              queryKey: getCourseCreatorExperienceQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
-            });
+          {
+            onSuccess: () => {
+              qc.invalidateQueries({
+                queryKey: getCourseCreatorExperienceQueryKey({
+                  path: { courseCreatorUuid: courseCreator?.uuid as string },
+                  query: { pageable: {} },
+                }),
+              });
+            },
           }
-        });
+        );
 
         if (resp.data) {
           const exps = form.getValues('experiences');
@@ -223,7 +238,10 @@ export default function ProfessionalExperienceSettings() {
 
     await invalidateQuery?.();
     qc.invalidateQueries({
-      queryKey: getCourseCreatorExperienceQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+      queryKey: getCourseCreatorExperienceQueryKey({
+        path: { courseCreatorUuid: courseCreator?.uuid as string },
+        query: { pageable: {} },
+      }),
     });
     toast('Experience removed successfully');
   }

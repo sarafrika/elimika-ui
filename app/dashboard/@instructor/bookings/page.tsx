@@ -6,7 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInstructor } from '@/context/instructor-context';
@@ -27,9 +33,9 @@ import { getStatusColor } from '../../_components/manage-bookings';
 
 function BookingsPage() {
   const instructor = useInstructor();
-  const qc = useQueryClient()
-  const acceptBooking = useMutation(acceptBookingMutation())
-  const declineBooking = useMutation(declineBookingMutation())
+  const qc = useQueryClient();
+  const acceptBooking = useMutation(acceptBookingMutation());
+  const declineBooking = useMutation(declineBookingMutation());
 
   const [activeTab, setActiveTab] = useState<'all' | 'upcoming' | 'past'>('all');
 
@@ -109,27 +115,39 @@ function BookingsPage() {
   const handleNext = () => setPage(p => Math.min(totalPages, p + 1));
 
   const handleAcceptBooking = () => {
-    acceptBooking.mutate({ path: { bookingUuid: selected.uuid } }, {
-      onSuccess: (data) => {
-        qc.invalidateQueries({
-          queryKey: getInstructorBookingsQueryKey({ path: { instructorUuid: instructor?.uuid! }, query: { pageable: { page: Math.max(0, page - 1), size: PAGE_SIZE } } }),
-        });
-        toast.success(data?.message || `Accepted booking ${selected.uuid}`);
-        setOpenAcceptModal(false);
+    acceptBooking.mutate(
+      { path: { bookingUuid: selected.uuid } },
+      {
+        onSuccess: data => {
+          qc.invalidateQueries({
+            queryKey: getInstructorBookingsQueryKey({
+              path: { instructorUuid: instructor?.uuid! },
+              query: { pageable: { page: Math.max(0, page - 1), size: PAGE_SIZE } },
+            }),
+          });
+          toast.success(data?.message || `Accepted booking ${selected.uuid}`);
+          setOpenAcceptModal(false);
+        },
       }
-    });
+    );
   };
 
   const handleDeclineBooking = () => {
-    declineBooking.mutate({ path: { bookingUuid: selected.uuid } }, {
-      onSuccess: (data) => {
-        qc.invalidateQueries({
-          queryKey: getInstructorBookingsQueryKey({ path: { instructorUuid: instructor?.uuid! }, query: { pageable: { page: Math.max(0, page - 1), size: PAGE_SIZE } } }),
-        });
-        toast.success(data?.message || `Accepted booking ${selected.uuid}`);
-        setOpenDeclineModal(false);
+    declineBooking.mutate(
+      { path: { bookingUuid: selected.uuid } },
+      {
+        onSuccess: data => {
+          qc.invalidateQueries({
+            queryKey: getInstructorBookingsQueryKey({
+              path: { instructorUuid: instructor?.uuid! },
+              query: { pageable: { page: Math.max(0, page - 1), size: PAGE_SIZE } },
+            }),
+          });
+          toast.success(data?.message || `Accepted booking ${selected.uuid}`);
+          setOpenDeclineModal(false);
+        },
       }
-    });
+    );
   };
 
   const renderBookingCard = (booking: any) => {
@@ -231,11 +249,8 @@ function BookingsPage() {
     );
   };
 
-
   const studentUuids = useMemo(() => {
-    return Array.from(
-      new Set(bookings.map(b => b.student_uuid).filter(Boolean))
-    );
+    return Array.from(new Set(bookings.map(b => b.student_uuid).filter(Boolean)));
   }, [bookings]);
 
   const studentQueries = useQueries({
@@ -256,7 +271,6 @@ function BookingsPage() {
     return map;
   }, [studentQueries]);
 
-
   return (
     <div className='space-y-6 pb-10'>
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)}>
@@ -273,17 +287,17 @@ function BookingsPage() {
               <div className='space-y-4'>
                 {/* Search */}
                 <div className='flex gap-2'>
-                  <div className="relative w-full">
-                    <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                  <div className='relative w-full'>
+                    <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                     <Input
-                      placeholder="Search by student id, course id or purpose…"
+                      placeholder='Search by student id, course id or purpose…'
                       value={query}
                       onChange={e => setQuery(e.target.value)}
-                      className="pl-9"
+                      className='pl-9'
                     />
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className='flex items-center gap-2'>
                     <Select
                       value={statusFilter}
                       onValueChange={value => {
@@ -291,19 +305,19 @@ function BookingsPage() {
                         setPage(1);
                       }}
                     >
-                      <SelectTrigger className="flex w-[140px] items-center gap-0.5">
-                        <FilterIcon className="text-muted-foreground h-4 w-4" />
-                        <SelectValue placeholder="Filter status" />
+                      <SelectTrigger className='flex w-[140px] items-center gap-0.5'>
+                        <FilterIcon className='text-muted-foreground h-4 w-4' />
+                        <SelectValue placeholder='Filter status' />
                       </SelectTrigger>
 
                       <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                        <SelectItem value="payment_required">Payment Required</SelectItem>
-                        <SelectItem value="payment_failed">Payment Failed</SelectItem>
-                        <SelectItem value="expired">Expired</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                        <SelectItem value='all'>All</SelectItem>
+                        <SelectItem value='pending'>Pending</SelectItem>
+                        <SelectItem value='confirmed'>Confirmed</SelectItem>
+                        <SelectItem value='payment_required'>Payment Required</SelectItem>
+                        <SelectItem value='payment_failed'>Payment Failed</SelectItem>
+                        <SelectItem value='expired'>Expired</SelectItem>
+                        <SelectItem value='cancelled'>Cancelled</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -354,14 +368,12 @@ function BookingsPage() {
                         onClick={() => setSelected(b)}
                         className={`group w-full rounded-md border p-3 text-left transition ${isActive ? 'border-primary bg-primary/5' : 'hover:border-border hover:bg-muted/40 border-transparent'} `}
                       >
-
-                        <div className="text-foreground text-sm font-medium">
+                        <div className='text-foreground text-sm font-medium'>
                           {`${String(b?.uuid ?? 'Unknown').slice(0, 16)}...`}
                         </div>
 
-
                         <div className='flex items-center justify-between'>
-                          <div className="text-sm font-medium">
+                          <div className='text-sm font-medium'>
                             {student?.full_name ?? b.student_uuid.slice(0, 8)}
                           </div>
 
@@ -432,9 +444,7 @@ function BookingsPage() {
                           selected?.student_uuid?.slice(0, 8) ??
                           'Unknown student'}
                       </h2>
-                      <p className='text-muted-foreground text-sm'>
-                        {'No contact info'}
-                      </p>
+                      <p className='text-muted-foreground text-sm'>{'No contact info'}</p>
 
                       <div className='text-muted-foreground mt-2 text-sm'>
                         Course: {courseQuery.data?.data?.name ?? selected?.course_uuid?.slice(0, 8)}
@@ -510,13 +520,17 @@ function BookingsPage() {
 
                   <div className='flex flex-col justify-end gap-2 self-end sm:flex-row'>
                     <Button
-                      onClick={() => { setSelected(selected), setOpenAcceptModal(true) }}
+                      onClick={() => {
+                        setSelected(selected), setOpenAcceptModal(true);
+                      }}
                       className='w-full sm:w-auto'
                     >
                       Accept
                     </Button>
                     <Button
-                      onClick={() => { setSelected(selected), setOpenDeclineModal(true) }}
+                      onClick={() => {
+                        setSelected(selected), setOpenDeclineModal(true);
+                      }}
                       variant='destructive'
                       className='w-full sm:w-auto'
                     >
@@ -586,29 +600,28 @@ function BookingsPage() {
         />
       )}
 
-
       <ConfirmModal
         open={openAcceptModal}
         setOpen={setOpenAcceptModal}
-        title="Confirm Booking"
-        description="Are you sure you want to accept booking for this class or program? Please review the details before confirming."
+        title='Confirm Booking'
+        description='Are you sure you want to accept booking for this class or program? Please review the details before confirming.'
         onConfirm={handleAcceptBooking}
         isLoading={acceptBooking.isPending}
-        confirmText="Yes, Confirm"
-        cancelText="No, Cancel"
-        variant="destructive"
+        confirmText='Yes, Confirm'
+        cancelText='No, Cancel'
+        variant='destructive'
       />
 
       <ConfirmModal
         open={openDeclineModal}
         setOpen={setOpenDeclineModal}
-        title="Decline Booking"
-        description="Are you sure you want to decline this booking request? This action cannot be undone."
+        title='Decline Booking'
+        description='Are you sure you want to decline this booking request? This action cannot be undone.'
         onConfirm={handleDeclineBooking}
         isLoading={declineBooking.isPending}
-        confirmText="Yes, Decline"
-        cancelText="No, Keep Booking"
-        variant="destructive"
+        confirmText='Yes, Decline'
+        cancelText='No, Keep Booking'
+        variant='destructive'
       />
     </div>
   );

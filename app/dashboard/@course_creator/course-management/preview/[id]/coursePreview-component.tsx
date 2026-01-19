@@ -239,10 +239,12 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
             courseRubrics.map((assessment: any) => (
               <div key={assessment.uuid} className='border-b pt-2 pb-4 last:border-0'>
                 <div className='flex items-center gap-2'>
-                  <BookOpenCheck className='h-4 w-4 text-primary' />
-                  <h3 className='font-semibold'>{assessment?.rubric?.title ?? "No title"}</h3>
+                  <BookOpenCheck className='text-primary h-4 w-4' />
+                  <h3 className='font-semibold'>{assessment?.rubric?.title ?? 'No title'}</h3>
                 </div>
-                <RichTextRenderer htmlString={assessment?.rubric?.description ?? 'No description.'} />
+                <RichTextRenderer
+                  htmlString={assessment?.rubric?.description ?? 'No description.'}
+                />
 
                 <div className='mt-1 flex flex-row space-x-4'>
                   {assessment.rubric?.duration_display && (
@@ -325,56 +327,49 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-primary" />
+        <CardHeader className='flex flex-row items-center justify-between space-y-0'>
+          <div className='space-y-1'>
+            <CardTitle className='flex items-center gap-2'>
+              <MessageSquare className='text-primary h-4 w-4' />
               Course Reviews
-
               <p className='text-muted-foreground text-xs'>
-                ({reviews.length
+                (
+                {reviews.length
                   ? `${reviews.length} review${reviews.length > 1 ? 's' : ''}`
-                  : 'No reviews yet'})
+                  : 'No reviews yet'}
+                )
               </p>
             </CardTitle>
-            <CardDescription>
-              Student feedback and course ratings.
-            </CardDescription>
+            <CardDescription>Student feedback and course ratings.</CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className='p-0'>
           {reviews?.length ? (
-            <div className="border-border/60 border-t p-4 space-y-3">
+            <div className='border-border/60 space-y-3 border-t p-4'>
               {reviews.slice(0, 3).map((review: any) => (
                 <div
                   key={review.uuid}
-                  className="border-border/60 bg-muted/40 rounded-lg border p-3 text-sm"
+                  className='border-border/60 bg-muted/40 rounded-lg border p-3 text-sm'
                 >
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium">
-                      {review.student_uuid}
-                    </p>
+                  <div className='flex items-center justify-between'>
+                    <p className='font-medium'>{review.student_uuid}</p>
 
-                    <span className="text-muted-foreground text-xs">
-                      {format(new Date(review.created_date), "dd MMM yyyy")}
+                    <span className='text-muted-foreground text-xs'>
+                      {format(new Date(review.created_date), 'dd MMM yyyy')}
                     </span>
                   </div>
 
-                  <p className="mt-2 text-sm leading-relaxed">
-                    {review.comments}
-                  </p>
+                  <p className='mt-2 text-sm leading-relaxed'>{review.comments}</p>
 
                   {!review.is_anonymous && (
-                    <p className="text-muted-foreground mt-1 text-xs">
-                      {review.created_by}
-                    </p>
+                    <p className='text-muted-foreground mt-1 text-xs'>{review.created_by}</p>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="border-border/60 border-t p-6 text-center text-sm text-muted-foreground">
+            <div className='border-border/60 text-muted-foreground border-t p-6 text-center text-sm'>
               No reviews yet for this course.
             </div>
           )}
@@ -430,16 +425,14 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: a
   );
 }
 
-
-const reviews =
-  [
-    {
-      uuid: 'rev-1234',
-      rating: 5,
-      student_uuid: "student-uuid-1",
-      comments: 'Very clear explanations and engaging sessions.',
-      created_date: '2025-11-18T09:00:00',
-      is_anonymous: false,
-      created_by: 'student@example.com',
-    },
-  ];
+const reviews = [
+  {
+    uuid: 'rev-1234',
+    rating: 5,
+    student_uuid: 'student-uuid-1',
+    comments: 'Very clear explanations and engaging sessions.',
+    created_date: '2025-11-18T09:00:00',
+    is_anonymous: false,
+    created_by: 'student@example.com',
+  },
+];

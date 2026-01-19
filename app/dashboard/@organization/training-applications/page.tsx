@@ -79,11 +79,13 @@ export default function TrainingApplicationsPage() {
             ? [{ key: 'status', operation: 'eq' as const, value: statusFilter }]
             : []),
           ...(applicantTypeFilter !== 'ALL'
-            ? [{
-              key: 'applicant_type',
-              operation: 'eq' as const,
-              value: applicantTypeFilter,
-            }]
+            ? [
+                {
+                  key: 'applicant_type',
+                  operation: 'eq' as const,
+                  value: applicantTypeFilter,
+                },
+              ]
             : []),
         ],
         pageable: {

@@ -55,9 +55,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
 
   const rateCard = matchedCourse?.rate_card;
 
-  const rates = rateCard
-    ? Object.values(rateCard).filter(value => typeof value === 'number')
-    : [];
+  const rates = rateCard ? Object.values(rateCard).filter(value => typeof value === 'number') : [];
 
   const minRate = rates.length ? Math.min(...rates) : null;
   const maxRate = rates.length ? Math.max(...rates) : null;
@@ -118,7 +116,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
             <div className='text-muted-foreground flex items-center gap-1'>
               <MapPin className='h-4 w-4' />
               <span>{'Laos'}</span>
-              <span>{instructor?.formatted_location || "LOCATION"}</span>
+              <span>{instructor?.formatted_location || 'LOCATION'}</span>
             </div>
           )}
           {/* {instructor.mode.includes('online') && (
@@ -134,7 +132,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
         </div>
 
         {/* Specializations */}
-        <div className='flex min-h-6 w-full flex-wrap h-12'>
+        <div className='flex h-12 min-h-6 w-full flex-wrap'>
           {skillNames?.length > 0 ? (
             <>
               {skillNames.slice(0, 3).map((spec, index) => (
@@ -178,12 +176,12 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
               <p className='text-muted-foreground text-sm'>Starting from</p>
 
               {matchedCourse && minRate !== null ? (
-                <p className="text-lg">
+                <p className='text-lg'>
                   KES {minRate} - {maxRate}
-                  <span className="text-muted-foreground text-sm">/hour</span>
+                  <span className='text-muted-foreground text-sm'>/hour</span>
                 </p>
               ) : (
-                <p className="text-muted-foreground text-sm">Hourly rate not available</p>
+                <p className='text-muted-foreground text-sm'>Hourly rate not available</p>
               )}
             </div>
 

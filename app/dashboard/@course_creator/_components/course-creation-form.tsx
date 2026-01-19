@@ -62,7 +62,7 @@ import {
   type CourseCreationFormValues,
   courseCreationSchema,
   providedByOptions,
-  requirementTypes
+  requirementTypes,
 } from './course-creation-types';
 
 export type FormSectionProps = {
@@ -72,7 +72,7 @@ export type FormSectionProps = {
 };
 
 export const FormSection = ({ title, description, children }: FormSectionProps) => (
-  <section className='border-border rounded-3xl border p-6 shadow-lg transition' >
+  <section className='border-border rounded-3xl border p-6 shadow-lg transition'>
     <div className='flex flex-col gap-6 lg:flex-col lg:items-start lg:gap-4'>
       <div className='flex flex-col'>
         {/* <p className='text-primary/80 text-xs font-semibold tracking-[0.4em] uppercase'>Section</p> */}
@@ -80,7 +80,7 @@ export const FormSection = ({ title, description, children }: FormSectionProps) 
         <p className='text-muted-foreground text-sm'>{description}</p>
       </div>
 
-      <div className='lg:flex-1 w-full'>{children}</div>
+      <div className='w-full lg:flex-1'>{children}</div>
     </div>
   </section>
 );
@@ -214,11 +214,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const instructorShare = form.watch('instructor_share_percentage');
 
     useEffect(() => {
-      if (
-        typeof instructorShare === 'number' &&
-        instructorShare >= 0 &&
-        instructorShare <= 100
-      ) {
+      if (typeof instructorShare === 'number' && instructorShare >= 0 && instructorShare <= 100) {
         const calculated = 100 - instructorShare;
 
         if (form.getValues('creator_share_percentage') !== calculated) {
@@ -231,11 +227,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     }, [instructorShare, form]);
 
     useEffect(() => {
-      if (
-        typeof creatorShare === 'number' &&
-        creatorShare >= 0 &&
-        creatorShare <= 100
-      ) {
+      if (typeof creatorShare === 'number' && creatorShare >= 0 && creatorShare <= 100) {
         const calculated = 100 - creatorShare;
 
         if (form.getValues('instructor_share_percentage') !== calculated) {
@@ -246,7 +238,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         }
       }
     }, [creatorShare, form]);
-
 
     const onSubmit = (data: CourseCreationFormValues) => {
       const resolvedCourseCreatorUuid = authorUuid;
@@ -597,14 +588,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             />
           </FormSection>
 
-
           {/* Target Audience*/}
           <FormSection
             title='Target Audience'
             description='Set the set the target audience your course'
           >
-            <div>
-              target audience details here</div>
+            <div>target audience details here</div>
             <FormMessage />
           </FormSection>
 
@@ -740,10 +729,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           {/* Target Audience*/}
-          <FormSection
-            title='Language'
-            description='What languages can this course be taught in?'
-          >
+          <FormSection title='Language' description='What languages can this course be taught in?'>
             <FormField
               control={form.control}
               name='difficulty'
@@ -952,10 +938,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               </Button>
             </div>
           </FormSection>
-
-
-
-
 
           {showSubmitButton && (
             <div className='xxs:flex-col flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>

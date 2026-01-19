@@ -59,18 +59,19 @@ export const courseCreationSchema = z.object({
   welcome_message: z.string().max(300).optional(),
   theme_color: z.string().optional(),
   coupon_code: z.string().optional(),
-  org_access: z.object({
-    educational: z.boolean().optional(),
-    corporate: z.boolean().optional(),
-    non_profit: z.boolean().optional(),
-    individual: z.boolean().optional(),
-  }).optional(),
+  org_access: z
+    .object({
+      educational: z.boolean().optional(),
+      corporate: z.boolean().optional(),
+      non_profit: z.boolean().optional(),
+      individual: z.boolean().optional(),
+    })
+    .optional(),
   learning_rules: z.object({
     prerequisites_required: z.boolean().default(false),
     drip_schedule_enabled: z.boolean().default(false),
     completion_rules_enabled: z.boolean().default(false),
   }),
-
 });
 
 export type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & {

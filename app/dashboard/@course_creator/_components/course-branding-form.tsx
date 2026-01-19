@@ -189,12 +189,12 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
         <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
           {/* Welcome Message */}
           <FormSection
-            title="Welcome message"
-            description="Write a short message to welcome learners and set expectations for this course."
+            title='Welcome message'
+            description='Write a short message to welcome learners and set expectations for this course.'
           >
             <FormField
               control={form.control}
-              name="welcome_message"
+              name='welcome_message'
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
@@ -212,21 +212,14 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           {/* Theme Color */}
-          <FormSection
-            title="Theme Color"
-            description="Choose a theme color for your course."
-          >
+          <FormSection title='Theme Color' description='Choose a theme color for your course.'>
             <FormField
               control={form.control}
-              name="theme_color"
+              name='theme_color'
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input
-                      type="color"
-                      {...field}
-                      className="h-16 w-16 cursor-pointer p-1"
-                    />
+                    <Input type='color' {...field} className='h-16 w-16 cursor-pointer p-1' />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
