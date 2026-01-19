@@ -4,12 +4,7 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardTitle
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudent } from '@/context/student-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
@@ -17,7 +12,7 @@ import {
   getInstructorCalendarOptions,
   getInstructorReviewsOptions,
   listCatalogItemsOptions,
-  searchTrainingApplicationsOptions
+  searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -129,7 +124,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({
   const [selectedRateKey, setSelectedRateKey] = useState('');
   const [totalAmount, setTotalAmount] = useState(0);
 
-
   return (
     <div className='relative mx-auto w-full max-w-7xl self-center overflow-y-auto'>
       <Button
@@ -204,22 +198,24 @@ export const InstructorProfileComponent: React.FC<Props> = ({
         </div>
 
         {/* Booking Form */}
-        {showBooking && <>
-          <BookInstructorTimeTableManager
-            availabilityData={availabilityData || []}
-            onAvailabilityUpdate={setAvailabilityData}
-            studentBookingData={{
-              course_uuid: courseId || '',
-              student_uuid: student?.uuid || '',
-              instructor_uuid: instructor?.uuid || '',
-              booking_id: '',
-              price_amount: totalAmount,
-              purpose: reason,
-              rate_key: selectedRateKey as any,
-              rates: matchedCourse?.rate_card
-            }}
-          />
-        </>}
+        {showBooking && (
+          <>
+            <BookInstructorTimeTableManager
+              availabilityData={availabilityData || []}
+              onAvailabilityUpdate={setAvailabilityData}
+              studentBookingData={{
+                course_uuid: courseId || '',
+                student_uuid: student?.uuid || '',
+                instructor_uuid: instructor?.uuid || '',
+                booking_id: '',
+                price_amount: totalAmount,
+                purpose: reason,
+                rate_key: selectedRateKey as any,
+                rates: matchedCourse?.rate_card,
+              }}
+            />
+          </>
+        )}
 
         {/* Content Tabs */}
         <Tabs defaultValue='overview' className='w-full'>

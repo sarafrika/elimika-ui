@@ -19,7 +19,7 @@ export default function AnalyticsLayout({ children }: AnalyticsLayoutProps) {
         </div>
       </div>
       <Separator />
-      <div className='w-full items-center justify-center flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
+      <div className='flex w-full flex-col items-center justify-center space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
         <div className='flex-1 lg:max-w-6xl'>{children}</div>
       </div>
     </div>

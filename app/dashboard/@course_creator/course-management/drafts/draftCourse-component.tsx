@@ -94,7 +94,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const draftCourses = data?.data?.content || [];
@@ -139,21 +139,20 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
         </>
       )}
 
-
       <Card>
         <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
           <div>
             <CardTitle className='text-base font-semibold'>Draft Courses</CardTitle>
             <CardDescription>
-              {draftCourses.length} draft course{draftCourses.length === 1 ? '' : 's'} owned by this creator.
+              {draftCourses.length} draft course{draftCourses.length === 1 ? '' : 's'} owned by this
+              creator.
             </CardDescription>
           </div>
-
         </CardHeader>
 
-        <CardContent className='p-0' >
+        <CardContent className='p-0'>
           {draftCourses?.length >= 1 && (
-            <div className='bg-card border-border/50 rounded-t-0 overflow-hidden rounded-t-lg '>
+            <div className='bg-card border-border/50 rounded-t-0 overflow-hidden rounded-t-lg'>
               <Table>
                 {/* <TableCaption className='py-4'>A list of your course drafts</TableCaption> */}
                 <TableHeader className=''>
@@ -172,7 +171,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
 
                 <TableBody className='pb-12'>
                   {draftCourses?.map((course: any) => (
-                    <TableRow key={course.uuid} >
+                    <TableRow key={course.uuid}>
                       {/* <TableHead>
                     <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                   </TableHead> */}
@@ -183,7 +182,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
                           alt='thumbnail'
                           width={48}
                           height={48}
-                          className='min-h-12 min-w-12 rounded-md bg-muted-foreground/30'
+                          className='bg-muted-foreground/30 min-h-12 min-w-12 rounded-md'
                         />
                       </TableCell>
 
@@ -199,7 +198,10 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
                         <div className='flex max-w-[250px] flex-wrap gap-1'>
                           {Array.isArray(course.category_names) &&
                             course.category_names.map((name: string) => (
-                              <Badge key={name} className='rounded-full capitalize bg-muted/70 text-black dark:text-white'>
+                              <Badge
+                                key={name}
+                                className='bg-muted/70 rounded-full text-black capitalize dark:text-white'
+                              >
                                 {name}
                               </Badge>
                             ))}

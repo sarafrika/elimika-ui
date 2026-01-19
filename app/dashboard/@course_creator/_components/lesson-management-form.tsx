@@ -1077,8 +1077,7 @@ function LessonContentForm({
   }, [initialValues]);
 
   const draftKey = React.useMemo(
-    () =>
-      `lesson-content-draft:${courseId}:${lessonId}:${contentId ?? 'new'}`,
+    () => `lesson-content-draft:${courseId}:${lessonId}:${contentId ?? 'new'}`,
     [courseId, lessonId, contentId]
   );
 
@@ -1126,13 +1125,10 @@ function LessonContentForm({
     }
   }, [draftKey]);
 
-
   const { setValue, watch } = form;
   const watchedValues = form.watch();
 
-
   const [draftSaved, setDraftSaved] = useState(false);
-
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -1141,7 +1137,6 @@ function LessonContentForm({
 
     return () => clearTimeout(timeout);
   }, [watchedValues, draftKey]);
-
 
   const isEditMode = !!initialValues?.uuid;
   const contentTypeUuid = watch('content_type_uuid');
@@ -1219,7 +1214,6 @@ function LessonContentForm({
               });
               toast.success(data?.message);
               localStorage.removeItem(draftKey);
-
             },
           }
         );
@@ -1250,12 +1244,11 @@ function LessonContentForm({
 
   const isPending = createLessonContent.isPending || updateLessonContent.isPending;
 
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [mediaFile, setMediaFile] = React.useState<File | null>(null);
 
-  const uploadLessonMedia = useMutation(uploadLessonMediaMutation())
+  const uploadLessonMedia = useMutation(uploadLessonMediaMutation());
 
   return (
     <Form {...form}>
@@ -1263,24 +1256,23 @@ function LessonContentForm({
         onSubmit={form.handleSubmit(onSubmit, handleSubmitError)}
         className={`space-y-6 ${className ?? ''}`}
       >
-        <div className="flex items-center justify-end gap-2">
+        <div className='flex items-center justify-end gap-2'>
           <Button
-            type="button"
-            variant="ghost"
-            className="ml-auto flex items-center gap-2"
+            type='button'
+            variant='ghost'
+            className='ml-auto flex items-center gap-2'
             onClick={() => {
               localStorage.setItem(draftKey, JSON.stringify(form.getValues()));
               setDraftSaved(true);
-              toast.success("Draft saved");
+              toast.success('Draft saved');
 
               setTimeout(() => setDraftSaved(false), 2000);
             }}
           >
-            <Save className="h-4 w-4" />
-            {draftSaved ? "Draft Saved" : "Save Draft"}
+            <Save className='h-4 w-4' />
+            {draftSaved ? 'Draft Saved' : 'Save Draft'}
           </Button>
         </div>
-
 
         <div className='flex flex-col gap-3 space-y-4'>
           <FormField
@@ -1360,7 +1352,7 @@ function LessonContentForm({
                       {contentTypeData.map((value: any) => {
                         const Icon =
                           ContentTypeIcons[
-                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
                           ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
@@ -1443,17 +1435,15 @@ function LessonContentForm({
           {/* Lesson Media Upload (Separate Endpoint) */}
           <div
             className={cn(
-              "rounded-lg border-2 border-dashed p-6 space-y-4 transition-colors",
-              isDragging
-                ? "border-primary bg-primary/5"
-                : "border-muted-foreground/30"
+              'space-y-4 rounded-lg border-2 border-dashed p-6 transition-colors',
+              isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
             )}
-            onDragOver={(e) => {
+            onDragOver={e => {
               e.preventDefault();
               setIsDragging(true);
             }}
             onDragLeave={() => setIsDragging(false)}
-            onDrop={(e) => {
+            onDrop={e => {
               e.preventDefault();
               setIsDragging(false);
 
@@ -1463,43 +1453,37 @@ function LessonContentForm({
               }
             }}
           >
-            <h4 className="text-sm font-medium">Lesson Media</h4>
+            <h4 className='text-sm font-medium'>Lesson Media</h4>
 
             {/* Hidden file input */}
             <Input
               ref={fileInputRef}
-              type="file"
-              accept="image/*,application/pdf,video/*"
-              className="hidden"
-              onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
+              type='file'
+              accept='image/*,application/pdf,video/*'
+              className='hidden'
+              onChange={e => setMediaFile(e.target.files?.[0] || null)}
             />
 
             {/* Clickable drop area */}
             <div
-              role="button"
+              role='button'
               tabIndex={0}
               onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center gap-2 rounded-md border bg-muted/40 px-6 py-8 text-center cursor-pointer hover:bg-muted"
+              onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
+              className='bg-muted/40 hover:bg-muted flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border px-6 py-8 text-center'
             >
-              <p className="text-sm font-medium">
-                Drag & drop a file here, or click to browse
-              </p>
+              <p className='text-sm font-medium'>Drag & drop a file here, or click to browse</p>
 
               {mediaFile ? (
-                <p className="text-[13px] text-primary truncate max-w-full">
-                  {mediaFile.name}
-                </p>
+                <p className='text-primary max-w-full truncate text-[13px]'>{mediaFile.name}</p>
               ) : (
-                <p className="text-[13px] text-muted-foreground">
-                  Audios, PDFs, or Videos
-                </p>
+                <p className='text-muted-foreground text-[13px]'>Audios, PDFs, or Videos</p>
               )}
             </div>
 
             <Button
-              type="button"
-              variant="secondary"
+              type='button'
+              variant='secondary'
               disabled={!mediaFile || uploadLessonMedia.isPending}
               onClick={() => {
                 if (!mediaFile) return;
@@ -1513,14 +1497,14 @@ function LessonContentForm({
                     },
                     query: {
                       content_type_uuid: contentTypeUuid,
-                      title: "Media",
-                      description: "Description",
+                      title: 'Media',
+                      description: 'Description',
                       is_required: true,
                     },
                   },
                   {
                     onSuccess: () => {
-                      toast.success("Media uploaded successfully");
+                      toast.success('Media uploaded successfully');
                       setMediaFile(null);
 
                       qc.invalidateQueries({
@@ -1533,7 +1517,7 @@ function LessonContentForm({
                       });
                     },
                     onError: (err: any) => {
-                      toast.error(err?.message || "Media upload failed");
+                      toast.error(err?.message || 'Media upload failed');
                     },
                   }
                 );
@@ -1541,19 +1525,18 @@ function LessonContentForm({
             >
               {uploadLessonMedia.isPending ? (
                 <>
-                  <Spinner className="mr-2 h-4 w-4" />
+                  <Spinner className='mr-2 h-4 w-4' />
                   Uploading...
                 </>
               ) : (
-                "Upload Media"
+                'Upload Media'
               )}
             </Button>
 
-            <p className="text-xs text-muted-foreground">
+            <p className='text-muted-foreground text-xs'>
               Supported formats: Audios, PDFs, and Videos
             </p>
           </div>
-
         </div>
 
         {/* Form Buttons */}
@@ -1742,7 +1725,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   return (
@@ -2260,7 +2243,6 @@ function LessonContentDialog({
   const isEditMode = initialValues?.uuid ?? '';
   const draftKey = `lesson-content-draft:${courseId}:${lessonId}:${contentId ?? 'new'}`;
 
-
   return (
     <Dialog
       open={isOpen}
@@ -2278,8 +2260,6 @@ function LessonContentDialog({
               ? 'Update the details of your skill content below.'
               : 'Fill in the contents of your skill below.'}
           </DialogDescription>
-
-
         </DialogHeader>
 
         <ScrollArea className='h-[calc(90vh-4rem)] sm:h-[calc(90vh-8rem)]'>
@@ -2362,6 +2342,5 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList
+  LessonList,
 };
-

@@ -179,10 +179,10 @@ export default function ClassDetailsForm({
       classData?.session_templates?.[0]?.recurrence ||
       (availabilityDays?.length
         ? {
-          recurrence_type: 'WEEKLY',
-          interval_value: 1,
-          days_of_week: availabilityDays.join(','),
-        }
+            recurrence_type: 'WEEKLY',
+            interval_value: 1,
+            days_of_week: availabilityDays.join(','),
+          }
         : undefined);
 
     const conflictResolution = classData?.session_templates?.[0]?.conflict_resolution || 'FAIL';
@@ -217,9 +217,9 @@ export default function ClassDetailsForm({
     const classTimeValidity =
       resolvedStartTime && resolvedEndTime
         ? `${Math.ceil(
-          (new Date(resolvedEndTime).getTime() - new Date(resolvedStartTime).getTime()) /
-          (1000 * 60 * 60 * 24 * 30)
-        )} months`
+            (new Date(resolvedEndTime).getTime() - new Date(resolvedStartTime).getTime()) /
+              (1000 * 60 * 60 * 24 * 30)
+          )} months`
         : undefined;
 
     const payload = {
@@ -546,7 +546,7 @@ export default function ClassDetailsForm({
                       {...field}
                       value={field.value}
                       readOnly
-                      className='cursor-not-allowed bg-muted-foreground/10'
+                      className='bg-muted-foreground/10 cursor-not-allowed'
                     />
                   </FormControl>
 

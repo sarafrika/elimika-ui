@@ -5,7 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
   Table,
@@ -25,7 +25,7 @@ import {
   PenIcon,
   PlusCircle,
   TrashIcon,
-  Triangle
+  Triangle,
 } from 'lucide-react';
 
 import type React from 'react';
@@ -95,7 +95,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
     <div className='overflow-hidden rounded-lg border shadow-sm'>
       {/* Header */}
       <div className='flex items-center rounded-t-lg px-4 py-3 font-semibold'>
-        <div className='w-full flex flex-row items-center justify-between'>
+        <div className='flex w-full flex-row items-center justify-between'>
           <div onClick={() => setOpen(open)} className='flex w-full flex-col gap-2 text-left'>
             <p>{rubric.title}</p>
             <p className='text-muted-foreground line-clamp-2 max-w-[95%] text-sm font-normal'>
@@ -112,8 +112,8 @@ const RubricTable: React.FC<RubricTableProps> = ({
               </p>
             </div>
 
-            <div className='flex flex-row items-center justify-between mt-4'>
-              <div className='flex flex-row gap-2' >
+            <div className='mt-4 flex flex-row items-center justify-between'>
+              <div className='flex flex-row gap-2'>
                 {linked ? (
                   <Button
                     onClick={() => onRemoveRubricAssociation(rubric.uuid)}
@@ -122,31 +122,42 @@ const RubricTable: React.FC<RubricTableProps> = ({
                     Remove rubric from course
                   </Button>
                 ) : (
-                  <Button onClick={() => onAssociateRubricWithCourse(rubric.uuid)} variant='default'>
+                  <Button
+                    onClick={() => onAssociateRubricWithCourse(rubric.uuid)}
+                    variant='default'
+                  >
                     Link rubric to course
                   </Button>
                 )}
-                <div className="flex justify-end">
-                  <Button type="button" onClick={() => { setIsCriteriaOpen(!isCriteriaOpen), setIsScoringOpen(false) }}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
+                <div className='flex justify-end'>
+                  <Button
+                    type='button'
+                    onClick={() => {
+                      setIsCriteriaOpen(!isCriteriaOpen), setIsScoringOpen(false);
+                    }}
+                  >
+                    <PlusCircle className='mr-2 h-4 w-4' />
                     New Criteria
                   </Button>
                 </div>
-                <div className="flex justify-end">
-                  <Button onClick={() => { setIsScoringOpen(!isScoringOpen), setIsCriteriaOpen(false) }}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
+                <div className='flex justify-end'>
+                  <Button
+                    onClick={() => {
+                      setIsScoringOpen(!isScoringOpen), setIsCriteriaOpen(false);
+                    }}
+                  >
+                    <PlusCircle className='mr-2 h-4 w-4' />
                     New Scoring Level
                   </Button>
                 </div>
               </div>
 
-
-              <div className='flex flex-row gap-3' >
-                <Button variant="default" onClick={() => onEditRubric(rubric.uuid)}>
+              <div className='flex flex-row gap-3'>
+                <Button variant='default' onClick={() => onEditRubric(rubric.uuid)}>
                   <PenIcon className='h-4 w-4' />
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant='destructive'
                   onClick={() => onDeleteRubric(rubric.uuid)}
                   className='text-destructive'
                 >
@@ -157,7 +168,6 @@ const RubricTable: React.FC<RubricTableProps> = ({
           </div>
         </div>
       </div>
-
 
       <div className='my-8'>
         {isCriteriaOpen && (
@@ -170,13 +180,9 @@ const RubricTable: React.FC<RubricTableProps> = ({
 
       <div className='mx-auto my-8'>
         {isScoringOpen && (
-          <InlineNewScoringLevel
-            rubricId={rubric.uuid}
-            onClose={() => setIsScoringOpen(false)}
-          />
+          <InlineNewScoringLevel rubricId={rubric.uuid} onClose={() => setIsScoringOpen(false)} />
         )}
       </div>
-
 
       {open && (
         <div className='overflow-x-auto'>

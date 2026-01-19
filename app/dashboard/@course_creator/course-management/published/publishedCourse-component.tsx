@@ -138,30 +138,29 @@ export default function PublishedCoursesComponent({
       )}
 
       {isFetched && publishedCourses?.length === 0 && (
-        <div className='bg-muted/20 rounded-md  py-12 text-center'>
+        <div className='bg-muted/20 rounded-md py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-8 w-8' />
-          <h3 className='mt-4 text-md font-medium'>No published courses</h3>
+          <h3 className='text-md mt-4 font-medium'>No published courses</h3>
           <p className='text-muted-foreground mt-2 text-sm'>
             You don&apos;t have any published courses yet.
           </p>
         </div>
       )}
 
-
       <Card>
         <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
           <div>
             <CardTitle className='text-base font-semibold'>Published Courses</CardTitle>
             <CardDescription>
-              {publishedCourses.length} draft course{publishedCourses.length === 1 ? '' : 's'} owned by this creator.
+              {publishedCourses.length} draft course{publishedCourses.length === 1 ? '' : 's'} owned
+              by this creator.
             </CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent className='p-0' >
-
+        <CardContent className='p-0'>
           {publishedCourses?.length >= 1 && (
-            <div className='bg-card border-border/50 rounded-t-0 overflow-hidden rounded-t-lg '>
+            <div className='bg-card border-border/50 rounded-t-0 overflow-hidden rounded-t-lg'>
               <Table>
                 {/* <TableCaption className='py-4'>A list of your published courses</TableCaption> */}
                 <TableHeader className=''>
@@ -180,7 +179,7 @@ export default function PublishedCoursesComponent({
 
                 <TableBody>
                   {publishedCourses?.map((course: any) => (
-                    <TableRow key={course.uuid}  >
+                    <TableRow key={course.uuid}>
                       {/* <TableHead>
                     <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                   </TableHead> */}
@@ -191,7 +190,7 @@ export default function PublishedCoursesComponent({
                           alt='thumbnail'
                           width={48}
                           height={48}
-                          className='min-h-12 min-w-12 rounded-md bg-muted-foreground/30'
+                          className='bg-muted-foreground/30 min-h-12 min-w-12 rounded-md'
                         />
                       </TableCell>
 
@@ -207,7 +206,10 @@ export default function PublishedCoursesComponent({
                         <div className='flex max-w-[250px] flex-wrap gap-1'>
                           {Array.isArray(course.category_names) &&
                             course.category_names.map((name: string) => (
-                              <Badge key={name} className='rounded-full capitalize bg-muted/70 text-black dark:text-white'>
+                              <Badge
+                                key={name}
+                                className='bg-muted/70 rounded-full text-black capitalize dark:text-white'
+                              >
                                 {name}
                               </Badge>
                             ))}
@@ -252,7 +254,6 @@ export default function PublishedCoursesComponent({
           )}
         </CardContent>
       </Card>
-
 
       {/*  @ts-ignore */}
       {paginationMetadata?.totalPages >= 1 && (

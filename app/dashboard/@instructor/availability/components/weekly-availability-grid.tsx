@@ -14,7 +14,7 @@ interface WeeklyAvailabilityGridProps {
   onAvailabilityUpdate: (data: AvailabilityData) => void;
   isEditing: boolean;
   classes: ClassData[];
-  studentBookingData?: StudentBookingData
+  studentBookingData?: StudentBookingData;
 }
 
 export const mapEventTypeToStatus = (entry_type: EventType) => {
@@ -35,7 +35,7 @@ export function WeeklyAvailabilityGrid({
   onAvailabilityUpdate,
   isEditing,
   classes,
-  studentBookingData
+  studentBookingData,
 }: WeeklyAvailabilityGridProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
@@ -442,36 +442,36 @@ export function WeeklyAvailabilityGrid({
                                 // ✅ Available block
                                 availabilitySlot && isAvailabilityStart
                                   ? {
-                                    height: `${getEventSpanHeight(availabilitySlot) * 32 + (getEventSpanHeight(availabilitySlot) + 0.5) * 8}px`,
-                                    zIndex: 1,
-                                    position: 'absolute',
-                                    top: '4px',
-                                    left: '4px',
-                                    right: '4px',
-                                    backgroundColor: 'rgba(34,197,94,0.3)', // green tint
-                                  }
-                                  : // ✅ Classes/Bookings block
-                                  eventInSlot && isEventStart
-                                    ? {
-                                      height: `${getEventSpanHeight(eventInSlot) * 36 + (getEventSpanHeight(eventInSlot) + 0.5) * 8}px`,
-                                      zIndex: 10,
+                                      height: `${getEventSpanHeight(availabilitySlot) * 32 + (getEventSpanHeight(availabilitySlot) + 0.5) * 8}px`,
+                                      zIndex: 1,
                                       position: 'absolute',
-                                      top: '1px',
-                                      left: '1px',
+                                      top: '4px',
+                                      left: '4px',
                                       right: '4px',
+                                      backgroundColor: 'rgba(34,197,94,0.3)', // green tint
                                     }
-                                    : // Blocked sllots
-                                    blockedSlot && isBlockedStart
-                                      ? {
-                                        height: `${getEventSpanHeight(blockedSlot) * 32 + (getEventSpanHeight(blockedSlot) + 0.5) * 8}px`,
-                                        zIndex: 1,
+                                  : // ✅ Classes/Bookings block
+                                    eventInSlot && isEventStart
+                                    ? {
+                                        height: `${getEventSpanHeight(eventInSlot) * 36 + (getEventSpanHeight(eventInSlot) + 0.5) * 8}px`,
+                                        zIndex: 10,
                                         position: 'absolute',
                                         top: '1px',
                                         left: '1px',
                                         right: '4px',
-                                        border: '2px solid rgba(239,68,68,0.4)',
-                                        backgroundColor: 'rgba(239,68,68,0.25)',
                                       }
+                                    : // Blocked sllots
+                                      blockedSlot && isBlockedStart
+                                      ? {
+                                          height: `${getEventSpanHeight(blockedSlot) * 32 + (getEventSpanHeight(blockedSlot) + 0.5) * 8}px`,
+                                          zIndex: 1,
+                                          position: 'absolute',
+                                          top: '1px',
+                                          left: '1px',
+                                          right: '4px',
+                                          border: '2px solid rgba(239,68,68,0.4)',
+                                          backgroundColor: 'rgba(239,68,68,0.25)',
+                                        }
                                       : {}
                               }
                             >

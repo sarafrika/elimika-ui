@@ -48,9 +48,7 @@ export default function MyApplicationsPage() {
             operation: 'EQUAL',
             value: organisation?.uuid,
           },
-          ...(statusFilter
-            ? [{ key: 'status', operation: 'EQUAL', value: statusFilter }]
-            : []),
+          ...(statusFilter ? [{ key: 'status', operation: 'EQUAL', value: statusFilter }] : []),
         ],
         pageable: {
           page,

@@ -67,7 +67,7 @@ type ProfessionalMembershipFormValues = z.infer<typeof professionalMembershipSch
 
 export default function ProfessionalBodySettings() {
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const qc = useQueryClient()
+  const qc = useQueryClient();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -86,9 +86,12 @@ export default function ProfessionalBodySettings() {
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   const { data } = useQuery({
-    ...getCourseCreatorMembershipsOptions({ query: { pageable: {} }, path: { courseCreatorUuid: courseCreator?.uuid as string } }),
-    enabled: !!courseCreator?.uuid
-  })
+    ...getCourseCreatorMembershipsOptions({
+      query: { pageable: {} },
+      path: { courseCreatorUuid: courseCreator?.uuid as string },
+    }),
+    enabled: !!courseCreator?.uuid,
+  });
 
   const courseCreatorMembership = data?.data?.content || [];
 
@@ -139,40 +142,52 @@ export default function ProfessionalBodySettings() {
       };
 
       if (memData.uuid) {
-        await updateMemMutation.mutateAsync({
-          path: {
-            courseCreatorUuid: courseCreator?.uuid!,
-            membershipUuid: memData.uuid,
+        await updateMemMutation.mutateAsync(
+          {
+            path: {
+              courseCreatorUuid: courseCreator?.uuid!,
+              membershipUuid: memData.uuid,
+            },
+            body: {
+              ...memData,
+              start_date: new Date(memData.start_date),
+              end_date: new Date(memData.end_date),
+            },
           },
-          body: {
-            ...memData,
-            start_date: new Date(memData.start_date),
-            end_date: new Date(memData.end_date),
-          },
-        }, {
-          onSuccess: () => {
-            qc.invalidateQueries({
-              queryKey: getCourseCreatorMembershipsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
-            });
+          {
+            onSuccess: () => {
+              qc.invalidateQueries({
+                queryKey: getCourseCreatorMembershipsQueryKey({
+                  path: { courseCreatorUuid: courseCreator?.uuid as string },
+                  query: { pageable: {} },
+                }),
+              });
+            },
           }
-        });
+        );
       } else {
-        const resp = await addMemMutation.mutateAsync({
-          path: {
-            courseCreatorUuid: courseCreator?.uuid!,
+        const resp = await addMemMutation.mutateAsync(
+          {
+            path: {
+              courseCreatorUuid: courseCreator?.uuid!,
+            },
+            body: {
+              ...memData,
+              start_date: new Date(memData.start_date),
+              end_date: new Date(memData.end_date),
+            },
           },
-          body: {
-            ...memData,
-            start_date: new Date(memData.start_date),
-            end_date: new Date(memData.end_date),
-          },
-        }, {
-          onSuccess: () => {
-            qc.invalidateQueries({
-              queryKey: getCourseCreatorMembershipsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
-            });
+          {
+            onSuccess: () => {
+              qc.invalidateQueries({
+                queryKey: getCourseCreatorMembershipsQueryKey({
+                  path: { courseCreatorUuid: courseCreator?.uuid as string },
+                  query: { pageable: {} },
+                }),
+              });
+            },
           }
-        });
+        );
 
         if (!resp.error && resp.data) {
           const memberships = form.getValues('professional_bodies');
@@ -222,7 +237,10 @@ export default function ProfessionalBodySettings() {
 
     await invalidateQuery?.();
     qc.invalidateQueries({
-      queryKey: getCourseCreatorMembershipsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+      queryKey: getCourseCreatorMembershipsQueryKey({
+        path: { courseCreatorUuid: courseCreator?.uuid as string },
+        query: { pageable: {} },
+      }),
     });
     toast('Membership removed successfully');
   }
@@ -283,7 +301,7 @@ export default function ProfessionalBodySettings() {
                     title={mem.organization_name || 'Organization name not specified'}
                     subtitle={`Membership No: ${mem.membership_number}`}
                     description={mem.summary}
-                    badge={mem.status_label === "Inactive" ? 'Inctive' : "Active"}
+                    badge={mem.status_label === 'Inactive' ? 'Inctive' : 'Active'}
                     dateRange={formatDateRange(mem.start_date, mem.end_date, mem.is_active)}
                   />
                 ))}

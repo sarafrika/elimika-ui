@@ -7,7 +7,7 @@ import {
   FormDescription,
   FormField,
   FormItem,
-  FormLabel
+  FormLabel,
 } from '@/components/ui/form';
 import Spinner from '@/components/ui/spinner';
 import { useStepper } from '@/components/ui/stepper';
@@ -150,20 +150,17 @@ export const CourseLearningRulesForm = forwardRef<CourseFormRef, CourseFormProps
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
           {/* Course Learning Rules */}
-          <div className="space-y-6 py-10 px-6 border-border border-1 rounded-3xl">
+          <div className='border-border space-y-6 rounded-3xl border-1 px-6 py-10'>
             {/* Prerequisites */}
             <FormField
               control={form.control}
-              name="learning_rules.prerequisites_required"
+              name='learning_rules.prerequisites_required'
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3">
+                <FormItem className='flex flex-row items-start space-x-3'>
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
+                  <div className='space-y-1 leading-none'>
                     <FormLabel>Prerequisites required</FormLabel>
                     <FormDescription>
                       Learners must complete previous lessons before unlocking the next
@@ -176,16 +173,13 @@ export const CourseLearningRulesForm = forwardRef<CourseFormRef, CourseFormProps
             {/* Drip schedule */}
             <FormField
               control={form.control}
-              name="learning_rules.drip_schedule_enabled"
+              name='learning_rules.drip_schedule_enabled'
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3">
+                <FormItem className='flex flex-row items-start space-x-3'>
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
+                  <div className='space-y-1 leading-none'>
                     <FormLabel>Drip schedule enabled</FormLabel>
                     <FormDescription>
                       Lessons unlock after a specified number of days (e.g., Lesson 2 after 7 days)
@@ -198,26 +192,23 @@ export const CourseLearningRulesForm = forwardRef<CourseFormRef, CourseFormProps
             {/* Completion rules */}
             <FormField
               control={form.control}
-              name="learning_rules.completion_rules_enabled"
+              name='learning_rules.completion_rules_enabled'
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3">
+                <FormItem className='flex flex-row items-start space-x-3'>
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
+                  <div className='space-y-1 leading-none'>
                     <FormLabel>Completion requirements enforced</FormLabel>
                     <FormDescription>
-                      Course completion requires at least 80% content viewed and a final quiz score of 70% or higher
+                      Course completion requires at least 80% content viewed and a final quiz score
+                      of 70% or higher
                     </FormDescription>
                   </div>
                 </FormItem>
               )}
             />
           </div>
-
 
           {/* Submit Button */}
           {showSubmitButton && (

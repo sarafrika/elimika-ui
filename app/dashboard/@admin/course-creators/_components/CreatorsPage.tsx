@@ -53,13 +53,13 @@ export default function CourseCreatorsPage() {
             // @ts-expect-error
             toast.success(data?.message || 'Course creator verified successfully');
           },
-          onError: (data) => {
+          onError: data => {
             //@ts-ignore
-            toast.error(data?.error)
-          }
+            toast.error(data?.error);
+          },
         }
       );
-    } catch (_error) { }
+    } catch (_error) {}
   };
 
   const handleUnverifyCourseCreator = async (courseCreator: CourseCreator) => {
@@ -76,7 +76,7 @@ export default function CourseCreatorsPage() {
           },
         }
       );
-    } catch (_error) { }
+    } catch (_error) {}
   };
 
   const handleDeclineCourseCreator = async (_courseCreator: CourseCreator) => {

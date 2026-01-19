@@ -71,21 +71,20 @@ const edSchema = zCourseCreatorEducation
     })
   )
   .refine(
-    (data) => {
-      if (data.is_recent_qualification) return true
-      if (!data.year_completed) return true
+    data => {
+      if (data.is_recent_qualification) return true;
+      if (!data.year_completed) return true;
 
-      const start = Number(data.year_started)
-      const end = Number(data.year_completed)
+      const start = Number(data.year_started);
+      const end = Number(data.year_completed);
 
-      return !Number.isNaN(start) && !Number.isNaN(end) && end >= start
+      return !Number.isNaN(start) && !Number.isNaN(end) && end >= start;
     },
     {
       path: ['year_completed'],
       message: 'End year must be the same as or after the start year',
     }
-  )
-
+  );
 
 const educationSchema = z.object({
   educations: z.array(edSchema),
@@ -95,7 +94,7 @@ type EducationFormValues = z.infer<typeof educationSchema>;
 type EdType = z.infer<typeof edSchema>;
 
 export default function EducationSettings() {
-  const qc = useQueryClient()
+  const qc = useQueryClient();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -115,11 +114,14 @@ export default function EducationSettings() {
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   const { data } = useQuery({
-    ...getCourseCreatorEducationOptions({ query: { pageable: {} }, path: { courseCreatorUuid: courseCreator?.uuid as string } }),
-    enabled: !!courseCreator?.uuid
-  })
+    ...getCourseCreatorEducationOptions({
+      query: { pageable: {} },
+      path: { courseCreatorUuid: courseCreator?.uuid as string },
+    }),
+    enabled: !!courseCreator?.uuid,
+  });
 
-  const courseCreatorEducation = data?.data?.content || []
+  const courseCreatorEducation = data?.data?.content || [];
 
   const defaultEducation: EdType = {
     school_name: '',
@@ -175,30 +177,38 @@ export default function EducationSettings() {
         eds[index] = passEducation(resp.data!);
         form.setValue('educations', eds);
       } else {
-        await updateMutation.mutateAsync({
-          ...options,
-          path: {
-            ...options.path,
-            educationUuid: ed.uuid,
+        await updateMutation.mutateAsync(
+          {
+            ...options,
+            path: {
+              ...options.path,
+              educationUuid: ed.uuid,
+            },
           },
-        }, {
-          onSuccess: () => {
-            qc.invalidateQueries({
-              queryKey: getCourseCreatorEducationQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
-            });
+          {
+            onSuccess: () => {
+              qc.invalidateQueries({
+                queryKey: getCourseCreatorEducationQueryKey({
+                  path: { courseCreatorUuid: courseCreator?.uuid as string },
+                  query: { pageable: {} },
+                }),
+              });
+            },
           }
-        });
+        );
       }
     }
 
     await invalidateQuery?.();
     qc.invalidateQueries({
-      queryKey: getCourseCreatorEducationQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+      queryKey: getCourseCreatorEducationQueryKey({
+        path: { courseCreatorUuid: courseCreator?.uuid as string },
+        query: { pageable: {} },
+      }),
     });
     toast.success('Education updated successfully');
     disableEditing();
   };
-
 
   const handleSubmit = (data: EducationFormValues) => {
     requestConfirmation({
@@ -206,7 +216,7 @@ export default function EducationSettings() {
       description: 'This refreshes your academic history for organizations and learners.',
       confirmLabel: 'Save education',
       cancelLabel: 'Keep editing',
-      onConfirm: () => saveEducations(data)
+      onConfirm: () => saveEducations(data),
     });
   };
 
@@ -233,7 +243,10 @@ export default function EducationSettings() {
 
     await invalidateQuery?.();
     qc.invalidateQueries({
-      queryKey: getCourseCreatorEducationQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+      queryKey: getCourseCreatorEducationQueryKey({
+        path: { courseCreatorUuid: courseCreator?.uuid as string },
+        query: { pageable: {} },
+      }),
     });
     toast('Education removed successfully');
   }
@@ -249,8 +262,8 @@ export default function EducationSettings() {
     return `${startYear} - ${endYear}`;
   };
 
-  const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: 70 }, (_, i) => currentYear - i)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 70 }, (_, i) => currentYear - i);
 
   const domainBadges =
     // @ts-expect-error
@@ -291,7 +304,7 @@ export default function EducationSettings() {
                 {courseCreatorEducation?.map(edu => (
                   <ProfileViewListItem
                     key={edu.uuid}
-                    title={`${edu.qualification} in ${edu.field_of_study ?? "--"}`}
+                    title={`${edu.qualification} in ${edu.field_of_study ?? '--'}`}
                     subtitle={edu.school_name}
                     description={edu.full_description}
                     badge={edu.is_recent_qualification ? 'Current' : undefined}
@@ -433,7 +446,7 @@ export default function EducationSettings() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
                       {/* ================= START YEAR ================= */}
                       <FormField
                         control={form.control}
@@ -442,13 +455,13 @@ export default function EducationSettings() {
                           <FormItem>
                             <FormLabel>Start year</FormLabel>
 
-                            <div className="flex gap-2">
+                            <div className='flex gap-2'>
                               <FormControl>
                                 <Input
-                                  type="number"
-                                  placeholder="YYYY"
-                                  value={field.value ?? ""}
-                                  onChange={(e) => field.onChange(e.target.value)}
+                                  type='number'
+                                  placeholder='YYYY'
+                                  value={field.value ?? ''}
+                                  onChange={e => field.onChange(e.target.value)}
                                 />
                               </FormControl>
 
@@ -456,11 +469,11 @@ export default function EducationSettings() {
                                 value={field.value?.toString()}
                                 onValueChange={field.onChange}
                               >
-                                <SelectTrigger className="w-[110px]">
-                                  <SelectValue placeholder="Select" />
+                                <SelectTrigger className='w-[110px]'>
+                                  <SelectValue placeholder='Select' />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {years.map((year) => (
+                                  {years.map(year => (
                                     <SelectItem key={year} value={year.toString()}>
                                       {year}
                                     </SelectItem>
@@ -479,20 +492,20 @@ export default function EducationSettings() {
                         control={form.control}
                         name={`educations.${index}.year_completed`}
                         render={({ field }) => {
-                          const isDisabled = form.watch(`educations.${index}.is_complete`)
+                          const isDisabled = form.watch(`educations.${index}.is_complete`);
 
                           return (
                             <FormItem>
                               <FormLabel>End year</FormLabel>
 
-                              <div className="flex gap-2">
+                              <div className='flex gap-2'>
                                 <FormControl>
                                   <Input
-                                    type="number"
-                                    placeholder="YYYY"
+                                    type='number'
+                                    placeholder='YYYY'
                                     disabled={isDisabled}
-                                    value={field.value ?? ""}
-                                    onChange={(e) => field.onChange(e.target.value)}
+                                    value={field.value ?? ''}
+                                    onChange={e => field.onChange(e.target.value)}
                                   />
                                 </FormControl>
 
@@ -501,11 +514,11 @@ export default function EducationSettings() {
                                   value={field.value?.toString()}
                                   onValueChange={field.onChange}
                                 >
-                                  <SelectTrigger className="w-[110px]">
-                                    <SelectValue placeholder="Select" />
+                                  <SelectTrigger className='w-[110px]'>
+                                    <SelectValue placeholder='Select' />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {years.map((year) => (
+                                    {years.map(year => (
                                       <SelectItem key={year} value={year.toString()}>
                                         {year}
                                       </SelectItem>
@@ -514,19 +527,19 @@ export default function EducationSettings() {
                                 </Select>
                               </div>
 
-                              <div className="mt-2">
+                              <div className='mt-2'>
                                 <FormField
                                   control={form.control}
                                   name={`educations.${index}.is_recent_qualification`}
                                   render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center space-x-2">
+                                    <FormItem className='flex flex-row items-center space-x-2'>
                                       <FormControl>
                                         <Checkbox
                                           checked={field.value}
                                           onCheckedChange={field.onChange}
                                         />
                                       </FormControl>
-                                      <FormLabel className="font-normal">
+                                      <FormLabel className='font-normal'>
                                         Currently studying here
                                       </FormLabel>
                                     </FormItem>
@@ -536,7 +549,7 @@ export default function EducationSettings() {
 
                               <FormMessage />
                             </FormItem>
-                          )
+                          );
                         }}
                       />
                     </div>

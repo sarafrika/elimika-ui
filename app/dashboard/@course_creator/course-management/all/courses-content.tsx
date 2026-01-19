@@ -145,7 +145,7 @@ export default function CourseCreatorCoursesContent() {
 }
 
 function CourseRow({ course }: { course: Course }) {
-  const router = useRouter()
+  const router = useRouter();
   const statusMeta = STATUS_BADGE[course.status] ?? {
     label: course.status,
     variant: 'secondary',
@@ -153,7 +153,10 @@ function CourseRow({ course }: { course: Course }) {
   const requirementsCount = course.training_requirements?.length ?? 0;
 
   return (
-    <TableRow className='cursor-pointer' onClick={() => router.push(`/dashboard/course-management/preview/${course?.uuid}`)}  >
+    <TableRow
+      className='cursor-pointer'
+      onClick={() => router.push(`/dashboard/course-management/preview/${course?.uuid}`)}
+    >
       <TableCell>
         <div className='flex flex-col gap-1'>
           <span className='leading-tight font-semibold'>{course.name}</span>

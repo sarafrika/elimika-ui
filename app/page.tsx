@@ -1,7 +1,19 @@
 import LoginButton from '@/components/LoginButton';
 import { PublicTopNav } from '@/components/PublicTopNav';
 import { BrandPill } from '@/components/ui/brand-pill';
-import { ArrowRight, BookOpenCheck, GraduationCap, LayoutDashboard, Sparkles, Briefcase, FolderOpen, DollarSign, BookOpen, Users, Building2 } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpenCheck,
+  GraduationCap,
+  LayoutDashboard,
+  Sparkles,
+  Briefcase,
+  FolderOpen,
+  DollarSign,
+  BookOpen,
+  Users,
+  Building2,
+} from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -164,7 +176,9 @@ export default function Home() {
                 What is Skills Wallet?
               </h2>
               <p className='text-muted-foreground text-base'>
-                Skills Wallet is a secure digital platform that records and validates your skills, certificates, and experiences. Whether you&rsquo;re a student, professional, or employer, Skills Wallet makes learning and employment smarter and more connected.
+                Skills Wallet is a secure digital platform that records and validates your skills,
+                certificates, and experiences. Whether you&rsquo;re a student, professional, or
+                employer, Skills Wallet makes learning and employment smarter and more connected.
               </p>
               <Link
                 href='/skills-wallet'
@@ -185,9 +199,7 @@ export default function Home() {
         <section id='key-features' className='border-border/60 bg-background/70 border-y py-20'>
           <div className='mx-auto w-full max-w-6xl px-6'>
             <div className='mb-12 text-center'>
-              <h2 className='text-foreground text-3xl font-semibold sm:text-4xl'>
-                Key Features
-              </h2>
+              <h2 className='text-foreground text-3xl font-semibold sm:text-4xl'>Key Features</h2>
             </div>
 
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-2'>
@@ -238,15 +250,9 @@ export default function Home() {
           <div className='mx-auto w-full max-w-6xl px-6'>
             <div className='border-border/60 bg-card/80 rounded-[36px] border p-10 shadow-xl shadow-black/10 md:p-14'>
               <div className='mb-8 flex flex-wrap items-center justify-center gap-4'>
-                <BrandPill className='text-xs font-semibold tracking-[0.2em]'>
-                  Fund
-                </BrandPill>
-                <BrandPill className='text-xs font-semibold tracking-[0.2em]'>
-                  Student
-                </BrandPill>
-                <BrandPill className='text-xs font-semibold tracking-[0.2em]'>
-                  Courses
-                </BrandPill>
+                <BrandPill className='text-xs font-semibold tracking-[0.2em]'>Fund</BrandPill>
+                <BrandPill className='text-xs font-semibold tracking-[0.2em]'>Student</BrandPill>
+                <BrandPill className='text-xs font-semibold tracking-[0.2em]'>Courses</BrandPill>
                 <BrandPill className='text-xs font-semibold tracking-[0.2em]'>
                   Opportunities
                 </BrandPill>
@@ -257,7 +263,9 @@ export default function Home() {
                   Invest in Your Future
                 </h2>
                 <p className='text-muted-foreground mx-auto max-w-3xl text-base'>
-                  The Skills Fund empowers learners by connecting them with funding opportunities for training, workshops, and courses. Employers can also contribute to support skill development.
+                  The Skills Fund empowers learners by connecting them with funding opportunities
+                  for training, workshops, and courses. Employers can also contribute to support
+                  skill development.
                 </p>
 
                 <div className='flex flex-col items-center gap-4 pt-4 sm:flex-row sm:justify-center'>
@@ -288,7 +296,8 @@ export default function Home() {
                 </div>
                 <h3 className='text-foreground mb-4 text-xl font-semibold'>For Students</h3>
                 <p className='text-muted-foreground text-sm leading-6'>
-                  Build a verified record of achievements, skills, and certificates to showcase your learning and work opportunities.
+                  Build a verified record of achievements, skills, and certificates to showcase your
+                  learning and work opportunities.
                 </p>
               </div>
 
@@ -298,7 +307,8 @@ export default function Home() {
                 </div>
                 <h3 className='text-foreground mb-4 text-xl font-semibold'>For Professionals</h3>
                 <p className='text-muted-foreground text-sm leading-6'>
-                  Showcase career milestones, skills development, and professional achievements to employers and peers.
+                  Showcase career milestones, skills development, and professional achievements to
+                  employers and peers.
                 </p>
               </div>
 
@@ -306,9 +316,12 @@ export default function Home() {
                 <div className='bg-primary/15 text-primary mb-6 inline-flex items-center justify-center rounded-full p-4'>
                   <Building2 className='h-6 w-6' />
                 </div>
-                <h3 className='text-foreground mb-4 text-xl font-semibold'>For Schools & Colleges</h3>
+                <h3 className='text-foreground mb-4 text-xl font-semibold'>
+                  For Schools & Colleges
+                </h3>
                 <p className='text-muted-foreground text-sm leading-6'>
-                  Manage student growth, track achievements, and provide verifiable credentials that follow learners throughout their careers.
+                  Manage student growth, track achievements, and provide verifiable credentials that
+                  follow learners throughout their careers.
                 </p>
               </div>
             </div>

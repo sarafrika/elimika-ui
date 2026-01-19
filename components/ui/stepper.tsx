@@ -99,7 +99,9 @@ export function StepperRoot({ children }: { children: ReactNode }) {
 }
 
 export function StepperList({ children }: { children: ReactNode }) {
-  return <TabsList className='flex flex-col h-auto items-start gap-4 rounded-0'>{children}</TabsList>;
+  return (
+    <TabsList className='rounded-0 flex h-auto flex-col items-start gap-4'>{children}</TabsList>
+  );
 }
 
 export interface TriggerProps {
@@ -166,7 +168,7 @@ export function StepperContent({
 
   return (
     <TabsContent value={step.toString()}>
-      <Card className='flex-1 w-full min-h-[300px] flex-col rounded-lg'>
+      <Card className='min-h-[300px] w-full flex-1 flex-col rounded-lg'>
         <CardHeader>
           <CardTitle className='text-xl font-medium'>{title}</CardTitle>
           {description && <CardDescription>{description}</CardDescription>}

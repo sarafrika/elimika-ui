@@ -70,7 +70,7 @@ type CertificationsFormValues = z.infer<typeof certificationsSchema>;
 
 export default function CertificatesSettings() {
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const qc = useQueryClient()
+  const qc = useQueryClient();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -88,11 +88,13 @@ export default function CertificatesSettings() {
   const { courseCreator, invalidateQuery } = user!;
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
-
   const { data } = useQuery({
-    ...getCourseCreatorCertificationsOptions({ query: { pageable: {} }, path: { courseCreatorUuid: courseCreator?.uuid as string } }),
-    enabled: !!courseCreator?.uuid
-  })
+    ...getCourseCreatorCertificationsOptions({
+      query: { pageable: {} },
+      path: { courseCreatorUuid: courseCreator?.uuid as string },
+    }),
+    enabled: !!courseCreator?.uuid,
+  });
 
   const courseCreatorCertifications = data?.data?.content || [];
 
@@ -143,40 +145,52 @@ export default function CertificatesSettings() {
       };
 
       if (certData.uuid) {
-        await updateCertMutation.mutateAsync({
-          path: {
-            courseCreatorUuid: courseCreator?.uuid!,
-            certificationUuid: certData.uuid,
+        await updateCertMutation.mutateAsync(
+          {
+            path: {
+              courseCreatorUuid: courseCreator?.uuid!,
+              certificationUuid: certData.uuid,
+            },
+            body: {
+              ...certData,
+              issued_date: certData.issued_date ? new Date(certData.issued_date) : undefined,
+              expiry_date: certData.expiry_date ? new Date(certData.expiry_date) : undefined,
+            },
           },
-          body: {
-            ...certData,
-            issued_date: certData.issued_date ? new Date(certData.issued_date) : undefined,
-            expiry_date: certData.expiry_date ? new Date(certData.expiry_date) : undefined,
-          },
-        }, {
-          onSuccess: () => {
-            qc.invalidateQueries({
-              queryKey: getCourseCreatorCertificationsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
-            });
+          {
+            onSuccess: () => {
+              qc.invalidateQueries({
+                queryKey: getCourseCreatorCertificationsQueryKey({
+                  path: { courseCreatorUuid: courseCreator?.uuid as string },
+                  query: { pageable: {} },
+                }),
+              });
+            },
           }
-        });
+        );
       } else {
-        const resp = await addCertMutation.mutateAsync({
-          path: {
-            courseCreatorUuid: courseCreator?.uuid!,
+        const resp = await addCertMutation.mutateAsync(
+          {
+            path: {
+              courseCreatorUuid: courseCreator?.uuid!,
+            },
+            body: {
+              ...certData,
+              issued_date: certData.issued_date ? new Date(certData.issued_date) : undefined,
+              expiry_date: certData.expiry_date ? new Date(certData.expiry_date) : undefined,
+            },
           },
-          body: {
-            ...certData,
-            issued_date: certData.issued_date ? new Date(certData.issued_date) : undefined,
-            expiry_date: certData.expiry_date ? new Date(certData.expiry_date) : undefined,
-          },
-        }, {
-          onSuccess: () => {
-            qc.invalidateQueries({
-              queryKey: getCourseCreatorCertificationsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
-            });
+          {
+            onSuccess: () => {
+              qc.invalidateQueries({
+                queryKey: getCourseCreatorCertificationsQueryKey({
+                  path: { courseCreatorUuid: courseCreator?.uuid as string },
+                  query: { pageable: {} },
+                }),
+              });
+            },
           }
-        });
+        );
 
         if (resp.data) {
           const certs = form.getValues('certifications');
@@ -224,7 +238,10 @@ export default function CertificatesSettings() {
 
     await invalidateQuery?.();
     qc.invalidateQueries({
-      queryKey: getCourseCreatorCertificationsQueryKey({ path: { courseCreatorUuid: courseCreator?.uuid as string }, query: { pageable: {} } }),
+      queryKey: getCourseCreatorCertificationsQueryKey({
+        path: { courseCreatorUuid: courseCreator?.uuid as string },
+        query: { pageable: {} },
+      }),
     });
     toast('Certification removed successfully');
   }

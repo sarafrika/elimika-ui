@@ -4,7 +4,13 @@ import ConfirmModal from '@/components/custom-modals/confirm-modal';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseCreator } from '@/context/course-creator-context';
 import {
@@ -130,7 +136,6 @@ export default function RubricsCreationPage(course: any) {
       return matchesSearch && matchesFilter;
     });
   }, [rubricsWithLinkedStatus, searchTerm, filter]);
-
 
   const [editingRubric, setEditingRubric] = useState<RubricDetailsFormValues | null>(null);
   const [editingCriterion, setEditingCriterion] = useState<RubricCriteriaFormValues | null>(null);
@@ -589,29 +594,31 @@ export default function RubricsCreationPage(course: any) {
 
   return (
     <div className='space-y-6'>
-      <div className='flex flex-row items-center justify-between' >
+      <div className='flex flex-row items-center justify-between'>
         <Input
-          placeholder="Search rubrics by title, description, type..."
+          placeholder='Search rubrics by title, description, type...'
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="flex-1"
+          className='flex-1'
         />
 
-        <Select onValueChange={value => setFilter(value as 'all' | 'linked' | 'unlinked')} value={filter}>
-          <SelectTrigger className="w-48 ml-2">
-            <SelectValue placeholder="Filter by status" />
+        <Select
+          onValueChange={value => setFilter(value as 'all' | 'linked' | 'unlinked')}
+          value={filter}
+        >
+          <SelectTrigger className='ml-2 w-48'>
+            <SelectValue placeholder='Filter by status' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Rubrics</SelectItem>
-            <SelectItem value="linked">Linked Rubrics</SelectItem>
-            <SelectItem value="unlinked">Unlinked Rubrics</SelectItem>
-
+            <SelectItem value='all'>All Rubrics</SelectItem>
+            <SelectItem value='linked'>Linked Rubrics</SelectItem>
+            <SelectItem value='unlinked'>Unlinked Rubrics</SelectItem>
           </SelectContent>
         </Select>
 
         <Button
-          variant="outline"
-          className="ml-2"
+          variant='outline'
+          className='ml-2'
           onClick={() => {
             setSearchTerm('');
             setFilter('all');
@@ -638,11 +645,12 @@ export default function RubricsCreationPage(course: any) {
         New Rubric Set Up
       </Link>
 
-
       {!rubricDataIsLoading && filteredRubrics.length === 0 && (
         <div className='flex h-[40vh] w-full items-center justify-center'>
           <div className='bg-muted/20 w-full rounded-md border px-6 py-12 text-center'>
-            <p className='text-muted-foreground mt-2'>No rubric matches your search and filter category.</p>
+            <p className='text-muted-foreground mt-2'>
+              No rubric matches your search and filter category.
+            </p>
           </div>
         </div>
       )}

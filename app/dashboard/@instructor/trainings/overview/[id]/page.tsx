@@ -146,7 +146,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const shareToSocial = (platform: string) => {
@@ -531,7 +531,7 @@ export default function ClassPreviewPage() {
                   <div className='border-border border-t pt-4'>
                     <MonthlyAvailabilityGrid
                       availabilityData={availabilityData}
-                      onAvailabilityUpdate={() => { }}
+                      onAvailabilityUpdate={() => {}}
                       isEditing={false}
                       classes={[]}
                     />
@@ -594,7 +594,6 @@ export default function ClassPreviewPage() {
             </CardContent>
           </Card>
         </TabsContent>
-
 
         <TabsContent value='students' className='space-y-4'>
           <Card>

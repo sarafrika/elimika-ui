@@ -42,7 +42,7 @@ import {
   ThumbsUp,
   Users,
   X,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -110,11 +110,11 @@ export default function TrainingApplicationsPage() {
       query: {
         searchParams: {
           course_creator_uuid: courseCreator?.uuid as string,
-        }, pageable: { page, size: pageSize },
+        },
+        pageable: { page, size: pageSize },
       },
     }),
   });
-
 
   const applicationsPage = extractPage<CourseTrainingApplication>(applicationsQuery.data);
   const allApplications = applicationsPage.items;
@@ -210,7 +210,6 @@ export default function TrainingApplicationsPage() {
       });
     }
 
-
     return items;
   }, [allApplications, statusFilter, applicantTypeFilter, searchValue]);
 
@@ -264,7 +263,8 @@ export default function TrainingApplicationsPage() {
               query: {
                 searchParams: {
                   course_creator_uuid: courseCreator?.uuid as string,
-                }, pageable: { page, size: pageSize },
+                },
+                pageable: { page, size: pageSize },
               },
             }),
           });
@@ -329,7 +329,7 @@ export default function TrainingApplicationsPage() {
             </div>
           </div>
 
-          <div className='flex flex-row items-center justify-between border-border bg-card rounded-lg border p-3'>
+          <div className='border-border bg-card flex flex-row items-center justify-between rounded-lg border p-3'>
             {/* Revoked */}
             <div className='flex items-center gap-3'>
               <div className='bg-destructive/10 rounded-lg p-2'>
@@ -341,7 +341,7 @@ export default function TrainingApplicationsPage() {
               </div>
             </div>
 
-            <div>{" | "}</div>
+            <div>{' | '}</div>
 
             {/* Rejected */}
             <div className='flex items-center gap-3'>
@@ -354,7 +354,6 @@ export default function TrainingApplicationsPage() {
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -517,18 +516,18 @@ function ApplicationCard({
   const isPending = application.status?.toLowerCase() === 'pending';
   const isApproved = application.status?.toLowerCase() === 'approved';
 
-  const applicantUuid = application.applicant_uuid
-  const applicationType = application.applicant_type
+  const applicantUuid = application.applicant_uuid;
+  const applicationType = application.applicant_type;
 
   const { data: instructor } = useQuery({
     ...getInstructorByUuidOptions({ path: { uuid: applicantUuid as string } }),
-    enabled: applicationType === "instructor" && !!applicantUuid
-  })
+    enabled: applicationType === 'instructor' && !!applicantUuid,
+  });
 
   const { data: organisation } = useQuery({
     ...getOrganisationByUuidOptions({ path: { uuid: applicantUuid as string } }),
-    enabled: applicationType === "organisation" && !!applicantUuid
-  })
+    enabled: applicationType === 'organisation' && !!applicantUuid,
+  });
 
   return (
     <div className={elimikaDesignSystem.components.listCard.base}>
@@ -546,12 +545,13 @@ function ApplicationCard({
               <h3 className='text-foreground truncate font-semibold'>
                 {/* @ts-ignore */}
                 {instructor?.data?.full_name || 'Unknown'}
-              </h3>) : (
+              </h3>
+            ) : (
               <h3 className='text-foreground truncate font-semibold'>
                 {/* @ts-ignore */}
                 {organisation?.data?.full_name || 'Unknown'}
-              </h3>)}
-
+              </h3>
+            )}
 
             <Badge variant='outline' className='mt-1 text-xs'>
               {application.applicant_type || 'Unknown'}
