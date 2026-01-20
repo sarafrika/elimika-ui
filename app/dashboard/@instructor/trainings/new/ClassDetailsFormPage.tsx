@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useBreadcrumb } from "../../../../../context/breadcrumb-provider";
 import { useInstructor } from "../../../../../context/instructor-context";
 import {
@@ -34,6 +34,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
+import { toast } from "sonner";
 import z from "zod";
 import { ClassDetails } from "./page";
 
@@ -65,10 +66,14 @@ const LOCATION_OPTIONS = [
 
 export const ClassDetailsFormPage = ({
     data,
-    onChange
+    onChange,
+    onNext,
+    isActive = true
 }: {
     data: ClassDetails;
-    onChange: (field: keyof ClassDetails, value: string) => void;
+    onChange: (updates: Partial<ClassDetails>) => void;
+    onNext: () => void;
+    isActive?: boolean;
 }) => {
     const instructor = useInstructor();
     const { replaceBreadcrumbs } = useBreadcrumb();
@@ -78,7 +83,7 @@ export const ClassDetailsFormPage = ({
         defaultValues: {
             course_uuid: "",
             title: "",
-            categories: ["none"],
+            categories: [],
             class_type: "",
             rate_card: "",
             location_type: "",
@@ -132,7 +137,7 @@ export const ClassDetailsFormPage = ({
             }));
     }, [courses, appliedCourses]);
 
-    const selectedCourseUuid = form.watch("course_uuid") || data?.course_uuid;
+    const selectedCourseUuid = form.watch("course_uuid");
     const selectedClassType = form.watch("class_type");
 
     const selectedCourse = useMemo(() => {
@@ -141,66 +146,90 @@ export const ClassDetailsFormPage = ({
         );
     }, [approvedCourses, selectedCourseUuid]);
 
-    const hasHydrated = useRef(false);
+    // Sync form with parent data whenever it changes or page becomes active
     useEffect(() => {
-        if (hasHydrated.current) return;
-        if (!data?.course_uuid) return;
-        if (!approvedCourses.length) return;
+        // Only sync if we have approved courses loaded and data exists
+        if (!approvedCourses.length || !data?.course_uuid) return;
 
-        const exists = approvedCourses.some(
-            (c) => c.uuid === data.course_uuid
-        );
-
+        const exists = approvedCourses.some((c) => c.uuid === data.course_uuid);
         if (!exists) return;
 
-        hasHydrated.current = true;
+        // Only update if page is active to avoid unnecessary re-renders
+        if (!isActive) return;
 
-        form.reset({
-            course_uuid: data.course_uuid || selectedCourseUuid,
-            title: data.title ?? "",
-            categories: Array.isArray(data.categories)
-                ? data.categories
-                : data.categories
-                    ? [data.categories]
-                    : ["none"],
-            class_type: data.class_type ?? "",
-            rate_card: data.rate_card ?? "",
-            location_type: data.location_type ?? "",
-            location_name: data.location_name ?? "",
-            class_limit: data.class_limit ?? selectedCourse?.class_limit,
-        });
-    }, [data, approvedCourses, form]);
+        // Get current form values
+        const currentValues = form.getValues();
 
+        // Check if parent data differs from current form state
+        const hasChanges =
+            currentValues.course_uuid !== data.course_uuid ||
+            currentValues.title !== data.title ||
+            currentValues.class_type !== data.class_type ||
+            currentValues.location_type !== data.location_type ||
+            currentValues.location_name !== data.location_name;
+
+        // Only update if there are actual changes
+        if (hasChanges) {
+            form.reset({
+                course_uuid: data.course_uuid,
+                title: data.title || "",
+                categories: Array.isArray(data.categories)
+                    ? data.categories
+                    : data.categories
+                        ? [data.categories]
+                        : [],
+                class_type: data.class_type || "",
+                rate_card: data.rate_card || "",
+                location_type: data.location_type || "",
+                location_name: data.location_name || "",
+                class_limit: data.class_limit,
+            });
+        }
+    }, [data, approvedCourses, form, isActive]);
+
+    // Auto-populate rate card when class type changes
     useEffect(() => {
         if (!selectedClassType || !selectedCourse?.application?.rate_card) return;
 
-        const rate =
-            selectedCourse.application.rate_card[
+        const rate = selectedCourse.application.rate_card[
             selectedClassType as keyof typeof selectedCourse.application.rate_card
-            ];
+        ];
 
         if (rate !== undefined) {
             form.setValue("rate_card", rate);
         }
     }, [selectedClassType, selectedCourse, form]);
 
+    // Auto-populate categories from selected course
     useEffect(() => {
         if (!selectedCourse) return;
-
         form.setValue("categories", selectedCourse.category_names ?? []);
     }, [selectedCourse, form]);
 
     const onSubmit = (values: ClassFormValues) => {
-        Object.entries(values).forEach(([key, value]) => {
-            onChange(key as keyof ClassDetails, value as string);
+        // Update parent state with all form values
+        onChange({
+            course_uuid: values.course_uuid,
+            title: values.title,
+            categories: Array.isArray(values.categories)
+                ? values.categories
+                : values.categories
+                    ? [values.categories]
+                    : [],
+            class_type: values.class_type,
+            rate_card: values.rate_card,
+            location_type: values.location_type,
+            location_name: values.location_name || "",
+            class_limit: selectedCourse?.class_limit || 0,
+            targetAudience: getDifficultyNameFromUUID(selectedCourse?.difficulty_uuid || "") || ""
         });
-        if (selectedCourse?.class_limit !== undefined) {
-            onChange("class_limit" as keyof ClassDetails, selectedCourse?.class_limit);
-        }
+
+        // Proceed to next page
+        onNext();
     };
 
     const onSubmitError = (errors: any) => {
-        console.error("Form validation errors:", errors);
+        toast.error("Form validation errors:", errors);
     };
 
     return (
@@ -287,7 +316,12 @@ export const ClassDetailsFormPage = ({
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input placeholder="Optional (comma separated)" {...field} />
+                                                    <Input
+                                                        placeholder="Optional (comma separated)"
+                                                        value={Array.isArray(field.value) ? field.value.join(', ') : field.value || ''}
+                                                        onChange={(e) => field.onChange(e.target.value.split(',').map(s => s.trim()))}
+                                                        disabled
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -302,9 +336,15 @@ export const ClassDetailsFormPage = ({
                                     Target Audience
                                 </TableCell>
                                 <TableCell className="bg-card space-y-1">
-                                    <p className="text-sm text-foreground">{getDifficultyNameFromUUID(selectedCourse?.difficulty_uuid!) || "–"}</p>
-                                    <p className="text-sm text-muted-foreground">Ages {selectedCourse?.age_lower_limit ?? "–"} - {selectedCourse?.age_upper_limit ?? "–"}</p>
-                                    <p className="text-sm text-muted-foreground">{selectedCourse?.class_limit ?? "–"} max participants</p>
+                                    <p className="text-sm text-foreground">
+                                        {getDifficultyNameFromUUID(selectedCourse?.difficulty_uuid || "") || "–"}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Ages {selectedCourse?.age_lower_limit ?? "–"} - {selectedCourse?.age_upper_limit ?? "–"}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {selectedCourse?.class_limit ?? "–"} max participants
+                                    </p>
                                 </TableCell>
                             </TableRow>
 
