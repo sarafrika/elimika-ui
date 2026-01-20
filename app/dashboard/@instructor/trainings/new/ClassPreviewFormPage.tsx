@@ -11,36 +11,25 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useState } from "react";
-import { getAllDifficultyLevelsOptions, getClassDefinitionOptions, getCourseByUuidOptions, getCourseLessonsOptions } from "../../../../../services/client/@tanstack/react-query.gen";
+import { toast } from "sonner";
+import { getAllDifficultyLevelsOptions } from "../../../../../services/client/@tanstack/react-query.gen";
 import { ClassDetails, ScheduleSettings } from "./page";
-
-interface Lesson {
-    id: number;
-    duration: string;
-    date: string;
-    time: string;
-}
 
 export const ClassPreviewFormPage = ({
     classDetails,
     classUuid,
-    scheduleSettings
+    scheduleSettings,
+    courseData,
+    courseLessons
 }: {
     classDetails: ClassDetails;
-    classUuid: string
+    classUuid: string;
     scheduleSettings: ScheduleSettings;
+    courseData?: any;
+    courseLessons?: any[];
 }) => {
-    const [lessons, setLessons] = useState<Lesson[]>(
-        Array.from({ length: 12 }, (_, i) => ({
-            id: i + 1,
-            duration: '1h',
-            date: 'Dates',
-            time: 'Time'
-        }))
-    );
-
     const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
     const difficultyLevels = difficulty?.data;
 
@@ -48,27 +37,8 @@ export const ClassPreviewFormPage = ({
         return difficultyLevels?.find(level => level.uuid === uuid)?.name;
     };
 
-    const { data } = useQuery({
-        ...getClassDefinitionOptions({ path: { uuid: classUuid } }),
-        enabled: !!classUuid
-    })
-    const classData = data?.data
-
-    const {
-        data: courseDetail,
-    } = useQuery({
-        ...getCourseByUuidOptions({ path: { uuid: classData?.course_uuid as string } }),
-        enabled: !!classData?.course_uuid,
-    });
-    const course = courseDetail?.data;
-
-    const { data: courseLessons } = useQuery({
-        ...getCourseLessonsOptions({ path: { courseUuid: classData?.course_uuid as string }, query: { pageable: {} } }),
-        enabled: !!classData?.course_uuid
-    })
-
-    const registrationLink = course?.uuid
-        ? `https://elimika.sarafrika.com/dashboard/browse-courses/enroll/${course.uuid}`
+    const registrationLink = courseData?.uuid
+        ? `https://elimika.sarafrika.com/dashboard/browse-courses/enroll/${courseData.uuid}`
         : '';
     const [copied, setCopied] = useState(false);
 
@@ -77,23 +47,50 @@ export const ClassPreviewFormPage = ({
             await navigator.clipboard.writeText(text);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
-        } catch (_err) { }
+        } catch (err) {
+            toast.error("Failed to copy link to clipboard");
+        }
     };
 
-    const ratePerLesson = 500;
-    const totalFee = ratePerLesson * lessons.length;
+    const totalHours = (() => {
+        if (scheduleSettings.allDay) { return 12; }
 
-    const addLesson = () => {
-        setLessons([...lessons, {
-            id: lessons.length + 1,
-            duration: '1h',
-            date: 'Dates',
-            time: 'Time'
-        }]);
+        const { startTime, endTime } = scheduleSettings.startClass;
+
+        if (!startTime || !endTime) return 0;
+
+        const [startH, startM] = startTime.split(":").map(Number);
+        const [endH, endM] = endTime.split(":").map(Number);
+
+        const start = startH + startM / 60;
+        const end = endH + endM / 60;
+
+        const diff = end >= start ? end - start : 24 - start + end;
+
+        return Number(diff.toFixed(2));
+    })();
+
+    const ratePerLesson = parseFloat(classDetails.rate_card) * totalHours || 0;
+    const lessonsCount = courseLessons?.length || 0;
+    const totalFee = ratePerLesson * lessonsCount;
+
+    const handlePublish = () => {
+        // Implement publish logic here
     };
 
-    const deleteLesson = (id: number) => {
-        setLessons(lessons.filter(lesson => lesson.id !== id));
+    const handleSaveDraft = () => {
+        // Implement save draft logic here
+    };
+
+    // Format class type for display
+    const formatClassType = (classType: string) => {
+        const typeMap: Record<string, string> = {
+            'group_inperson_rate': 'In-person Group Class',
+            'group_online_rate': 'Online Group Class',
+            'private_inperson_rate': 'In-person Private Class',
+            'private_online_rate': 'Online Private Class'
+        };
+        return typeMap[classType] || classType;
     };
 
     return (
@@ -107,14 +104,14 @@ export const ClassPreviewFormPage = ({
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={() => console.log("Save as Draft")}
+                    onClick={handleSaveDraft}
                 >
                     Save as Draft
                 </Button>
 
                 <Button
                     type="button"
-                    onClick={() => console.log("Publish")}
+                    onClick={handlePublish}
                 >
                     Publish Class
                 </Button>
@@ -128,39 +125,51 @@ export const ClassPreviewFormPage = ({
                             <TableCell className="bg-muted font-semibold w-1/4">Course Title</TableCell>
                             <TableCell className="bg-card">
                                 <div className="flex items-center justify-between">
-                                    <span>{course?.name || '-'}</span>
-                                    <button
-                                        onClick={() => copyToClipboard(registrationLink)}
-                                        className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
-                                    >
-                                        <Copy className='h-4 w-4' />
-                                        {copied ? 'Copied!' : 'Copy registration link'}
-                                    </button>
+                                    <span>{courseData?.name || classDetails.course_uuid || '-'}</span>
+                                    {registrationLink && (
+                                        <button
+                                            onClick={() => copyToClipboard(registrationLink)}
+                                            className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                                        >
+                                            <Copy className='h-4 w-4' />
+                                            {copied ? 'Copied!' : 'Copy registration link'}
+                                        </button>
+                                    )}
                                 </div>
                             </TableCell>
                         </TableRow>
                         <TableRow className="border-b border-border">
                             <TableCell className="bg-muted font-semibold">Class Title</TableCell>
-                            <TableCell className="bg-card">{classData?.title || '-'}</TableCell>
+                            <TableCell className="bg-card">{classDetails.title || '-'}</TableCell>
                         </TableRow>
                         <TableRow className="border-b border-border">
-                            <TableCell className="bg-muted font-semibold">Tagline</TableCell>
-                            <TableCell className="bg-card">{course?.category_names || '-'}</TableCell>
+                            <TableCell className="bg-muted font-semibold">Tagline/Categories</TableCell>
+                            <TableCell className="bg-card">
+                                {Array.isArray(classDetails.categories)
+                                    ? classDetails.categories.join(', ')
+                                    : classDetails.categories || courseData?.category_names?.join(', ') || '-'}
+                            </TableCell>
                         </TableRow>
                         <TableRow className="border-b border-border">
                             <TableCell className="bg-muted font-semibold">Target Audience</TableCell>
                             <TableCell className="bg-card space-y-1">
-                                <p>{getDifficultyNameFromUUID(course?.difficulty_uuid as string)}</p>
-                                <p className="text-sm text-muted-foreground">Ages {course?.age_lower_limit} - {course?.age_upper_limit}</p>
-                                <p className="text-sm text-muted-foreground">{course?.class_limit} max participants</p>
+                                <p>{getDifficultyNameFromUUID(courseData?.difficulty_uuid) || classDetails.targetAudience || '-'}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    Ages {courseData?.age_lower_limit || '-'} - {courseData?.age_upper_limit || '-'}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    {classDetails.class_limit || courseData?.class_limit || '-'} max participants
+                                </p>
                             </TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell className="bg-muted font-semibold">Class Type</TableCell>
                             <TableCell className="bg-card">
                                 <div className="flex justify-between items-center">
-                                    <span className="italic">{classData?.location_type || '(Online Group Class | Online Private Class | In-person group class | In person Private Class)'}</span>
-                                    <span className="font-semibold text-foreground">{classData?.training_fee} (Ksh)</span>
+                                    <span>{formatClassType(classDetails.class_type) || 'Not specified'}</span>
+                                    <span className="font-semibold text-foreground">
+                                        Rate/Hr -  Ksh {parseFloat(classDetails.rate_card || '0').toLocaleString()}
+                                    </span>
                                 </div>
                             </TableCell>
                         </TableRow>
@@ -173,78 +182,121 @@ export const ClassPreviewFormPage = ({
                 <Table>
                     <TableBody>
                         <TableRow className="border-b border-border">
-                            <TableCell className="bg-muted font-semibold w-1/4">Location</TableCell>
-                            <TableCell className="bg-card italic">{classData?.location_name || '(Type /Pindrop)'}</TableCell>
+                            <TableCell className="bg-muted font-semibold w-1/4">Location Type</TableCell>
+                            <TableCell className="bg-card">
+                                {classDetails.location_type ?
+                                    classDetails.location_type.charAt(0).toUpperCase() + classDetails.location_type.slice(1).replace('_', ' ')
+                                    : '-'}
+                            </TableCell>
                         </TableRow>
                         <TableRow>
-                            <TableCell className="bg-muted font-semibold">Classroom</TableCell>
-                            <TableCell className="bg-card italic">(Insert) / Meeting link</TableCell>
+                            <TableCell className="bg-muted font-semibold">Classroom/Meeting Link</TableCell>
+                            <TableCell className="bg-card">{classDetails.location_name || 'Not specified'}</TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </Card>
+
+            {/* Schedule Details Card */}
+            <Card className="border-border mb-8 overflow-hidden">
+                <div className="bg-muted p-4 border-b border-border">
+                    <span className="font-semibold text-foreground">Schedule Details</span>
+                </div>
+                <Table>
+                    <TableBody>
+                        <TableRow className="border-b border-border">
+                            <TableCell className="bg-muted font-semibold w-1/4">Start Date</TableCell>
+                            <TableCell className="bg-card">
+                                {scheduleSettings.startClass.date
+                                    ? new Date(scheduleSettings.startClass.date).toLocaleDateString()
+                                    : '-'}
+                            </TableCell>
+                        </TableRow>
+                        <TableRow className="border-b border-border">
+                            <TableCell className="bg-muted font-semibold">Time</TableCell>
+                            <TableCell className="bg-card flex flex-row items-center gap-4">
+                                <p>
+                                    {scheduleSettings.allDay
+                                        ? 'All Day'
+                                        : `${scheduleSettings.startClass.startTime || '-'} - ${scheduleSettings.startClass.endTime || '-'}`}
+                                </p>
+                                <p>
+                                    ({totalHours} hours)
+                                </p>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow className="border-b border-border">
+                            <TableCell className="bg-muted font-semibold">Recurrence</TableCell>
+                            <TableCell className="bg-card">
+                                {scheduleSettings.repeat.unit === "week" && scheduleSettings.repeat.days?.length
+                                    ? `Every ${scheduleSettings.repeat.interval} week(s) on ${scheduleSettings.repeat.days.map((d) => ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][d]).join(", ")}`
+                                    : `Every ${scheduleSettings.repeat.interval} ${scheduleSettings.repeat.unit}(s)`}
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell className="bg-muted font-semibold">Registration Period</TableCell>
+                            <TableCell className="bg-card">
+                                {scheduleSettings.registrationPeriod.continuous
+                                    ? 'Continuous registration'
+                                    : scheduleSettings.registrationPeriod.start && scheduleSettings.registrationPeriod.end
+                                        ? `${new Date(scheduleSettings.registrationPeriod.start).toLocaleDateString()} - ${new Date(scheduleSettings.registrationPeriod.end).toLocaleDateString()}`
+                                        : 'Not set'}
+                            </TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
             </Card>
 
             {/* Lessons Order Card */}
-            <Card className="border-border mb-8 overflow-hidden">
-                <div className="bg-muted p-4 border-b border-border flex justify-between items-center">
-                    <span className="font-semibold text-foreground">Lessons Order</span>
-                    <span className="text-sm text-muted-foreground">{courseLessons?.data?.content?.length} half hour lessons</span>
-                </div>
+            {courseLessons && courseLessons.length > 0 && (
+                <Card className="border-border mb-8 overflow-hidden">
+                    <div className="bg-muted p-4 border-b border-border flex justify-between items-center">
+                        <span className="font-semibold text-foreground">Lessons Order</span>
+                        <span className="text-sm text-muted-foreground">
+                            {lessonsCount} lesson{lessonsCount !== 1 ? 's' : ''}
+                        </span>
+                    </div>
 
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-b border-border bg-card hover:bg-card">
-                            <TableHead className="text-foreground">Lesson #</TableHead>
-                            <TableHead className="text-foreground">Duration</TableHead>
-                            <TableHead className="text-foreground">Pick Dates</TableHead>
-                            <TableHead className="text-foreground">Pick Time</TableHead>
-                            <TableHead className="text-center text-foreground">Add</TableHead>
-                            <TableHead className="text-center text-foreground">Edit</TableHead>
-                            <TableHead className="text-center text-foreground">Delete</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {courseLessons?.data?.content
-                            ?.slice()
-                            ?.sort((a, b) => Number(a.lesson_sequence) - Number(b.lesson_sequence))
-                            ?.map((lesson) => (
-                                <TableRow key={lesson.uuid} className="border-b border-border hover:bg-muted/30">
-                                    <TableCell>Lesson {lesson.lesson_number}</TableCell>
-                                    <TableCell>{lesson?.duration || "Duration"}</TableCell>
-                                    <TableCell>{lesson.date || "Dates"}</TableCell>
-                                    <TableCell>{lesson.time || "Time"}</TableCell>
-                                    <TableCell className="text-center">
-                                        <button className="text-primary hover:text-primary/80 transition-colors">+</button>
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <button className="text-primary hover:text-primary/80 transition-colors">✏️</button>
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <button
-                                            onClick={() => deleteLesson(lesson.id)}
-                                            className="text-destructive hover:text-destructive/80 transition-colors"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                    </TableBody>
-                </Table>
-            </Card>
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-b border-border bg-card hover:bg-card">
+                                <TableHead className="text-foreground">Lesson #</TableHead>
+                                <TableHead className="text-foreground">Title</TableHead>
+                                <TableHead className="text-foreground">Duration</TableHead>
+                                <TableHead className="text-foreground">Sequence</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {courseLessons
+                                .slice()
+                                .sort((a, b) => Number(a.lesson_sequence || 0) - Number(b.lesson_sequence || 0))
+                                .map((lesson, index) => (
+                                    <TableRow key={lesson.uuid || index} className="border-b border-border hover:bg-muted/30">
+                                        <TableCell>Lesson {lesson.lesson_number || index + 1}</TableCell>
+                                        <TableCell>{lesson.title || 'Untitled'}</TableCell>
+                                        <TableCell>{lesson.duration || '-'}</TableCell>
+                                        <TableCell>{lesson.lesson_sequence || index + 1}</TableCell>
+                                    </TableRow>
+                                ))}
+                        </TableBody>
+                    </Table>
+                </Card>
+            )}
 
             {/* Order Total Card */}
             <Card className="border-border overflow-hidden">
                 <div className="bg-muted p-4 flex justify-between items-center">
                     <div>
                         <span className="font-semibold text-foreground block mb-1">
-                            Order Total
+                            Estimated Total Fee
                         </span>
                         <span className="text-sm text-muted-foreground">
-                            Total Fee = Rate × Total Number of Lessons (Multiple currency)
+                            Rate per lesson: Ksh {ratePerLesson.toLocaleString()} × {lessonsCount} lesson{lessonsCount !== 1 ? 's' : ''}
                         </span>
                     </div>
-                    <span className="font-bold text-lg text-foreground">Ksh {totalFee.toLocaleString()}</span>
+                    <span className="font-bold text-lg text-foreground">
+                        Ksh {totalFee.toLocaleString()}
+                    </span>
                 </div>
             </Card>
         </div>
