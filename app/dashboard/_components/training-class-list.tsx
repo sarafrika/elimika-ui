@@ -282,7 +282,7 @@ export function TrainingClassList({
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
-                              router.push(`/dashboard/trainings/create-new?id=${cls.uuid}`)
+                              router.push(`/dashboard/trainings/new?id=${cls.uuid}`)
                             }
                             className='flex w-full cursor-pointer items-center'
                           >
@@ -380,9 +380,8 @@ export function TrainingClassList({
                       </div>
                       <div className='bg-primary/10 h-2 overflow-hidden rounded-full'>
                         <div
-                          className={`h-full transition-all duration-500 ${
-                            enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
-                          }`}
+                          className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                            }`}
                           style={{ width: `${enrolledPercentage}%` }}
                         />
                       </div>
