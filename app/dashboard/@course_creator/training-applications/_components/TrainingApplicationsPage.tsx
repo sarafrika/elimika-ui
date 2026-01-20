@@ -48,7 +48,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Label } from '../../../../../components/ui/label';
 
-const statusOptions = [
+export const statusOptions = [
   { value: '', label: 'All statuses' },
   { value: 'pending', label: 'Pending' },
   { value: 'approved', label: 'Approved' },
@@ -56,7 +56,7 @@ const statusOptions = [
   { value: 'revoked', label: 'Revoked' },
 ];
 
-const applicantTypeOptions = [
+export const applicantTypeOptions = [
   { value: '', label: 'All types' },
   { value: 'instructor', label: 'Instructor' },
   { value: 'organisation', label: 'Organisation' },
@@ -502,7 +502,7 @@ export default function TrainingApplicationsPage() {
   );
 }
 
-function ApplicationCard({
+export function ApplicationCard({
   application,
   onApprove,
   onReject,
@@ -645,7 +645,7 @@ function ApplicationCard({
   );
 }
 
-function ReviewDialog({
+export function ReviewDialog({
   open,
   onOpenChange,
   application,

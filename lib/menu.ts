@@ -1,8 +1,10 @@
 import {
   Award,
+  BadgeCheck,
   Bell,
   BoltIcon,
   Book,
+  BookAIcon,
   BookOpen,
   Building,
   Building2,
@@ -17,6 +19,7 @@ import {
   Handshake,
   Layers,
   LayoutDashboard,
+  Library,
   LibraryIcon,
   LucideBookUser,
   LucideLandmark,
@@ -315,9 +318,9 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Course Management',
+      title: 'Courses',
       url: '/dashboard/course-management',
-      icon: ClipboardList,
+      icon: BookAIcon,
       // items: [
       //   {
       //     title: 'Create New Course',
@@ -347,20 +350,40 @@ export default {
     //   icon: BookOpen,
     // },
     {
-      title: 'Catalogue',
-      url: '/dashboard/catalogue',
-      icon: ShoppingBag,
+      title: 'My Skills',
+      url: '/dashboard/my-skills',
+      icon: BadgeCheck,
     },
-    {
-      title: 'Training Applications',
-      url: '/dashboard/training-applications',
-      icon: GraduationCap,
-    },
-
     {
       title: 'Rubrics',
       url: '/dashboard/rubrics',
-      icon: GraduationCap,
+      icon: ClipboardList,
+    },
+    {
+      title: 'Instructors',
+      url: '/dashboard/instructors',
+      icon: Users,
+    },
+
+    {
+      title: 'Notifications',
+      url: '/dashboard/notifications',
+      icon: Bell,
+    },
+    {
+      title: 'Enrollments',
+      url: '/dashboard/enrollments',
+      icon: BookOpen,
+    },
+    {
+      title: 'Library',
+      url: '/dashboard/library',
+      icon: Library,
+    },
+    {
+      title: 'Revenue',
+      url: '/dashboard/revenue',
+      icon: DollarSign,
     },
     {
       title: 'Analytics',
@@ -376,6 +399,22 @@ export default {
       title: 'Profile',
       url: '/dashboard/profile',
       icon: UserCircle,
+    },
+    {
+      title: 'Settings',
+      url: '/dashboard/settings',
+      icon: Settings,
+    },
+    // to be removed
+    {
+      title: 'Catalogue',
+      url: '/dashboard/catalogue',
+      icon: ShoppingBag,
+    },
+    {
+      title: 'Training Applications',
+      url: '/dashboard/training-applications',
+      icon: GraduationCap,
     },
   ],
   admin: [
