@@ -95,11 +95,15 @@ export function TrainingClassList({
   const [statusFilter, _setStatusFilter] = useState('all');
   const [activeFilter, setActiveFilter] = useState('all');
 
+  const normalizeText = (value?: string | null) =>
+    typeof value === 'string' ? value.toLowerCase() : '';
+
   const filteredClasses = classesWithCourseAndInstructor?.filter((cls: any) => {
+    const normalizedQuery = normalizeText(searchQuery);
     const matchesSearch =
-      cls.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cls?.course?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cls?.instructor?.full_name.toLowerCase().includes(searchQuery.toLowerCase());
+      normalizeText(cls?.title).includes(normalizedQuery) ||
+      normalizeText(cls?.course?.name).includes(normalizedQuery) ||
+      normalizeText(cls?.instructor?.full_name).includes(normalizedQuery);
 
     const matchesLocation = locationFilter === 'all' || cls.location_type === locationFilter;
 
