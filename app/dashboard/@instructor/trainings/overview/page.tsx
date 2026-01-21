@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useInstructor } from '@/context/instructor-context';
 import {
   deactivateClassDefinitionMutation,
-  getClassDefinitionsForInstructorQueryKey,
+  getClassDefinitionsForInstructorQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon } from 'lucide-react';

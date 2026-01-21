@@ -64,7 +64,7 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
             </nav>
           </aside>
         )} */}
-        <div className='lg:auto max-w-7xl flex-1 xl:max-w-[110rem] 2xl:max-w-[130rem]'>
+        <div className='lg:auto w-full flex-1'>
           {!hideNav && (
             <div className='mx-auto flex w-6xl gap-4 rounded-xl p-2'>
               {navItems.map(item => {

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Edit2, PlusCircle, Save, Trash2, X } from 'lucide-react';
+import { Edit2, FileText, PlusCircle, Save, Search, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -16,6 +16,9 @@ import {
   deleteAssessmentRubricMutation,
   deleteRubricCriterionMutation,
   deleteScoringLevelMutation,
+  getRubricCriteriaQueryKey,
+  getRubricScoringQueryKey,
+  searchAssessmentRubricsQueryKey,
   updateAssessmentRubricMutation,
   updateRubricCriterionMutation,
   updateRubricScoringMutation,
@@ -177,9 +180,21 @@ const RubricManager: React.FC = () => {
           onSuccess: () => {
             toast.success('Rubric deleted successfully');
             // Invalidate all related queries
-            qc.invalidateQueries({ queryKey: ['searchAssessmentRubrics'] });
-            qc.invalidateQueries({ queryKey: ['getRubricCriteria'] });
-            qc.invalidateQueries({ queryKey: ['getRubricScoring'] });
+            qc.invalidateQueries({
+              queryKey: searchAssessmentRubricsQueryKey({
+                query: {
+                  pageable: {},
+                  searchParams: {
+                    course_creator_uuid_eq: creator?.data?.profile?.uuid as string,
+                  },
+                },
+              }),
+            });
+            qc.invalidateQueries({
+              queryKey: getRubricCriteriaQueryKey({
+                path: { rubricUuid: uuid }, query: { pageable: {} }
+              })
+            });
           },
           onError: error => {
             toast.error('Failed to delete rubric');
@@ -241,10 +256,10 @@ const RubricManager: React.FC = () => {
 
           // Create criterion
           const criteriaResponse = await addCriteria.mutateAsync({
-            body: criteriaPayload as any, path: { rubricUuid: currentRubric.uuid }
+            body: criteriaPayload as any, path: { rubricUuid: newRubricUuid || currentRubric.uuid }
           });
 
-          const newCriteriaUuid = criteriaResponse.data?.uuid;
+          const newCriteriaUuid = criteriaResponse.data?.criteria?.uuid;
 
           if (!newCriteriaUuid) {
             throw new Error('Failed to get criteria UUID');
@@ -259,14 +274,20 @@ const RubricManager: React.FC = () => {
               score_range: scoring.score_range || '0',
               is_passing_level: scoring.is_passing_level,
               feedback_category: scoring.feedback_category || '',
-              rubric_scoring_level_uuid: 'd40ddb48-6d7e-4100-95e3-3b6965fe3021'
+              rubric_scoring_level_uuid: ''
             };
 
-            return addScoring.mutateAsync({ body: scoringPayload as any, path: { rubricUuid: currentRubric.uuid, criteriaUuid: newCriteriaUuid as string } });
+            return addScoring.mutateAsync({ body: scoringPayload as any, path: { rubricUuid: newRubricUuid || currentRubric.uuid, criteriaUuid: newCriteriaUuid as string } });
           });
 
           // Wait for all scoring levels of this criterion to be created
           await Promise.all(scoringPromises);
+
+          qc.invalidateQueries({
+            queryKey: getRubricScoringQueryKey({
+              path: { criteriaUuid: newCriteriaUuid, rubricUuid: newRubricUuid }, query: { pageable: {} }
+            })
+          });
 
           return criteriaResponse;
         });
@@ -275,9 +296,23 @@ const RubricManager: React.FC = () => {
         await Promise.all(criteriaPromises);
 
         // Invalidate all related queries
-        qc.invalidateQueries({ queryKey: ['searchAssessmentRubrics'] });
-        qc.invalidateQueries({ queryKey: ['getRubricCriteria'] });
-        qc.invalidateQueries({ queryKey: ['getRubricScoring'] });
+        qc.invalidateQueries({
+          queryKey: searchAssessmentRubricsQueryKey({
+            query: {
+              pageable: {},
+              searchParams: {
+                course_creator_uuid_eq: creator?.data?.profile?.uuid as string,
+              },
+            },
+          }),
+        });
+        qc.invalidateQueries({
+          queryKey: getRubricCriteriaQueryKey({
+            path: { rubricUuid: newRubricUuid }, query: { pageable: {} }
+          })
+        });
+
+
 
         setIsEditing(false);
         setCurrentRubric(null);
@@ -357,7 +392,7 @@ const RubricManager: React.FC = () => {
               score_range: scoring.score_range || '0',
               is_passing_level: scoring.is_passing_level,
               feedback_category: scoring.feedback_category || '',
-              rubric_scoring_level_uuid: 'd40ddb48-6d7e-4100-95e3-3b6965fe3021'
+              rubric_scoring_level_uuid: ''
             };
 
             // Check if new scoring level
@@ -378,13 +413,33 @@ const RubricManager: React.FC = () => {
           });
 
           await Promise.all(scoringPromises);
+
+          qc.invalidateQueries({
+            queryKey: getRubricScoringQueryKey({
+              path: { criteriaUuid: criteriaUuid, rubricUuid: currentRubric.uuid }, query: { pageable: {} }
+            })
+          });
         });
 
         await Promise.all(criteriaPromises);
 
         // Invalidate all related queries
-        qc.invalidateQueries({ queryKey: ['searchAssessmentRubrics'] });
-        qc.invalidateQueries({ queryKey: ['getRubricCriteria'] });
+        qc.invalidateQueries({
+          queryKey: searchAssessmentRubricsQueryKey({
+            query: {
+              pageable: {},
+              searchParams: {
+                course_creator_uuid_eq: creator?.data?.profile?.uuid as string,
+              },
+            },
+          }),
+        });
+
+        qc.invalidateQueries({
+          queryKey: getRubricCriteriaQueryKey({
+            path: { rubricUuid: currentRubric.uuid }, query: { pageable: {} }
+          })
+        });
         qc.invalidateQueries({ queryKey: ['getRubricScoring'] });
 
         setIsEditing(false);
@@ -518,20 +573,34 @@ const RubricManager: React.FC = () => {
     const criterionToDelete = currentRubric.criteria[index];
 
     // Track deleted criterion UUID for API call (if it's not a temp UUID)
-    if (criterionToDelete.uuid && !criterionToDelete.uuid.includes('-')) {
-      setDeletedCriteria(prev => [...prev, criterionToDelete.uuid]);
+    if (criterionToDelete?.uuid) {
+      deleteCriteriaApi.mutate({ path: { criteriaUuid: criterionToDelete?.uuid as string, rubricUuid: currentRubric?.uuid } }, {
+        onSuccess: () => {
+          qc.invalidateQueries({
+            queryKey: searchAssessmentRubricsQueryKey({
+              query: {
+                pageable: {},
+                searchParams: {
+                  course_creator_uuid_eq: creator?.data?.profile?.uuid as string,
+                },
+              },
+            }),
+          });
+          qc.invalidateQueries({
+            queryKey: getRubricCriteriaQueryKey({
+              path: { rubricUuid: currentRubric?.uuid }, query: { pageable: {} }
+            })
+          });
+          toast.success("Criteria deleted successfully")
 
-      // Also track all scoring levels for deletion
-      const scoringUuids = criterionToDelete.scoring
-        .map(s => s.uuid)
-        .filter(uuid => uuid && !uuid.includes('-'));
-      setDeletedScoring(prev => [...prev, ...scoringUuids]);
+          setCurrentRubric({
+            ...currentRubric,
+            criteria: currentRubric.criteria.filter((_, i) => i !== index),
+          });
+
+        }
+      })
     }
-
-    setCurrentRubric({
-      ...currentRubric,
-      criteria: currentRubric.criteria.filter((_, i) => i !== index),
-    });
   };
 
 
@@ -709,55 +778,102 @@ const RubricManager: React.FC = () => {
   }
 
   return (
-    <div className='mx-auto min-h-screen max-w-7xl space-y-6 p-6'>
-      <div className='flex gap-2'>
-        <Input
-          placeholder='Search rubrics...'
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-        />
+    <div className="mx-auto min-h-screen max-w-7xl space-y-6 p-6">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search rubrics..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
         <Button onClick={handleAddNewRubric}>
-          <PlusCircle className='mr-2 h-4 w-4' /> New Rubric
+          <PlusCircle className="mr-2 h-4 w-4" /> New Rubric
         </Button>
       </div>
 
-      {isLoading && <p>Loading rubrics...</p>}
-      {isError && <p className='text-red-500'>Error loading rubrics</p>}
-
-      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+      {isLoading ? (
+        <div className="rounded-lg border border-border bg-card p-4 dark:border-border">
+          <p className="text-sm text-muted-foreground">Loading rubrics...</p>
+        </div>
+      ) : (<div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {rubrics
           .filter(rubric =>
             rubric.title?.toLowerCase().includes(searchTerm.toLowerCase())
           )
           .map(rubric => (
-            <Card key={rubric.uuid} className='space-y-3 p-4'>
-              <h2 className='text-lg font-bold'>{rubric.title || 'Untitled Rubric'}</h2>
-              <p className='text-sm text-muted-foreground'>{rubric.description || 'No description'}</p>
-              <div className='text-xs text-muted-foreground'>
-                <p>Type: {rubric.rubric_type || 'N/A'}</p>
-                <p>Criteria: {rubric.criteria?.length || 0}</p>
+            <Card key={rubric.uuid} className="group p-5 transition-shadow hover:shadow-md dark:border-border">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="truncate text-lg font-bold">{rubric.title || 'Untitled Rubric'}</h2>
+                </div>
               </div>
 
-              <div className='flex gap-2'>
-                <Button onClick={() => handleEditRubric(rubric)}>
+              <p className="line-clamp-2 text-sm text-muted-foreground">
+                {rubric.description || 'No description'}
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                {rubric.rubric_type && (
+                  <span className="inline-flex items-center rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
+                    {rubric.rubric_type}
+                  </span>
+                )}
+                <span className="inline-flex items-center rounded-md border border-border bg-background px-2 py-1 text-xs font-medium dark:border-border">
+                  {rubric.criteria?.length || 0} criteria
+                </span>
+              </div>
+
+              <div className="flex gap-2 border-t border-border pt-3 dark:border-border">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEditRubric(rubric)}
+                  className="flex-1 gap-2"
+                >
                   <Edit2 size={14} /> Edit
                 </Button>
                 <Button
-                  variant='destructive'
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleDeleteRubric(rubric.uuid)}
                   disabled={deleteRubric.isPending}
+                  className="gap-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                 >
                   <Trash2 size={14} /> Delete
                 </Button>
               </div>
             </Card>
           ))}
-      </div>
+      </div>)}
+
+      {isError && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 dark:border-destructive/50">
+          <p className="text-sm text-destructive">Error loading rubrics</p>
+        </div>
+      )}
+
+
 
       {rubrics.length === 0 && isFetched && (
-        <div className='py-12 text-center text-muted-foreground'>
-          <p>No rubrics found. Create your first rubric to get started.</p>
-        </div>
+        <Card className="border-dashed p-12 text-center dark:border-border">
+          <div className="mx-auto mb-4 w-fit rounded-full bg-muted p-4">
+            <FileText className="h-10 w-10 text-muted-foreground" />
+          </div>
+          <h3 className="mb-2 text-lg font-semibold">No rubrics found</h3>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Create your first rubric to get started.
+          </p>
+          <Button onClick={handleAddNewRubric} className="gap-2">
+            <PlusCircle className="h-4 w-4" />
+            Create Rubric
+          </Button>
+        </Card>
       )}
     </div>
   );

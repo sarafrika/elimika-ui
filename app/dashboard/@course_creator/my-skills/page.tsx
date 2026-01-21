@@ -3,7 +3,6 @@
 import { elimikaDesignSystem } from "@/lib/design-system";
 
 const MySkillsPage = () => {
-
     return (
         <div className={elimikaDesignSystem.components.pageContainer}>
             {/* Header */}
@@ -26,7 +25,12 @@ const MySkillsPage = () => {
             </div>
 
             {/* Library Component */}
-            <section></section>
+            <section>
+                {/* My Skills - List and progress Assessment of the courses user is enrolled */}
+                {/* • Progress bar of each course (e.g., "65% Skills Verified") */}
+                {/* • Badges for top 3 skills (with icons) */}
+                {/* • Button → Add New Skill */}
+            </section>
         </div>
     );
 };

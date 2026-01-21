@@ -1,10 +1,14 @@
+
+
 'use client'
 
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Card } from '../../../../../components/ui/card';
+import { cn } from '../../../../../lib/utils';
 import { getClassDefinitionOptions, getCourseByUuidOptions, getCourseLessonsOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import { ClassDetailsFormPage } from './ClassDetailsFormPage';
 import { ClassPreviewFormPage } from './ClassPreviewFormPage';
@@ -189,27 +193,62 @@ const ClassBuilderPage = () => {
     const totalPages = 3;
 
     return (
-        <div className="min-h-screen bg-background">
-            <div className="bg-card border-b border-border shadow-sm">
-                <div className="max-w-4xl mx-auto px-6 py-4">
-                    <h1 className="text-3xl font-bold text-foreground">Class Builder</h1>
-                    <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                        <span className={currentPage >= 1 ? 'text-primary font-semibold' : ''}>
-                            Class Details
-                        </span>
-                        <span>→</span>
-                        <span className={currentPage >= 2 ? 'text-primary font-semibold' : ''}>
-                            Schedule
-                        </span>
-                        <span>→</span>
-                        <span className={currentPage >= 3 ? 'text-primary font-semibold' : ''}>
-                            Preview
-                        </span>
+        <Card className="min-h-screen mx-auto max-w-6xl bg-gradient-to-br from-background via-muted/20 to-background">
+            {/* Enhanced Header */}
+            <div className="border-b shadow-sm sticky top-0 z-10 backdrop-blur-sm bg-card/95">
+                <div className="max-w-5xl mx-auto px-6 py-6">
+                    <div className='mb-4'>
+                        <h1 className="text-xl font-bold text-foreground mb-1">Class Builder</h1>
+                        <p className="text-muted-foreground">
+                            Create and customize your class by selecting abilities, attributes, and features.
+                            Use the builder to experiment with different setups before saving your final version.
+                        </p>
+                    </div>
+
+                    {/* Progress Steps */}
+                    <div className="flex items-center gap-3">
+                        {[
+                            { step: 1, label: 'Class Details' },
+                            { step: 2, label: 'Schedule' },
+                            { step: 3, label: 'Preview' }
+                        ].map((item, idx) => (
+                            <div key={item.step} className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
+                                    <div className={cn(
+                                        "w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300",
+                                        currentPage > item.step
+                                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+                                            : currentPage === item.step
+                                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-4 ring-primary/20"
+                                                : "bg-muted text-muted-foreground"
+                                    )}>
+                                        {currentPage > item.step ? (
+                                            <Check className="w-4 h-4" />
+                                        ) : (
+                                            item.step
+                                        )}
+                                    </div>
+                                    <span className={cn(
+                                        "text-sm font-medium transition-colors",
+                                        currentPage >= item.step ? 'text-foreground' : 'text-muted-foreground'
+                                    )}>
+                                        {item.label}
+                                    </span>
+                                </div>
+                                {idx < 2 && (
+                                    <div className={cn(
+                                        "h-0.5 w-12 transition-all duration-300",
+                                        currentPage > item.step ? "bg-primary" : "bg-border"
+                                    )} />
+                                )}
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            <div className="py-8 pb-28">
+            {/* Content Area */}
+            <div className="py-12 pb-32">
                 {currentPage === 1 && (
                     <ClassDetailsFormPage
                         data={classDetails}
@@ -240,33 +279,38 @@ const ClassBuilderPage = () => {
                 )}
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
-                <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+            {/* Enhanced Fixed Footer */}
+            <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t shadow-2xl">
+                <div className="max-w-5xl mx-auto px-6 py-5 flex justify-between items-center">
                     <Button
                         onClick={handlePreviousPage}
                         disabled={currentPage === 1}
                         variant="outline"
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 px-6"
+                        size="lg"
                     >
-                        <ChevronLeft size={20} />
+                        <ChevronLeft className="w-5 h-5" />
                         Previous
                     </Button>
 
-                    <div className="text-sm text-muted-foreground">
-                        Page {currentPage} of {totalPages}
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <span className="text-foreground font-semibold">{currentPage}</span>
+                        <span>/</span>
+                        <span>{totalPages}</span>
                     </div>
 
                     <Button
                         onClick={handleNextPage}
                         disabled={currentPage === totalPages}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 px-6"
+                        size="lg"
                     >
                         Next
-                        <ChevronRight size={20} />
+                        <ChevronRight className="w-5 h-5" />
                     </Button>
                 </div>
             </div>
-        </div>
+        </Card>
     );
 };
 

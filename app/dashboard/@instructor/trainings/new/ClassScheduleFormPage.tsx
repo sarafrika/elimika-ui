@@ -20,6 +20,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FormEvent } from "react";
 import { toast } from "sonner";
 import { useInstructor } from "../../../../../context/instructor-context";
+import { cn } from "../../../../../lib/utils";
 import {
     createClassDefinitionMutation,
     getClassDefinitionQueryKey,
@@ -56,7 +57,6 @@ export const ClassScheduleFormPage = ({
     const createClassDefinition = useMutation(createClassDefinitionMutation());
     const updateClassDefinition = useMutation(updateClassDefinitionMutation());
 
-    // Validate required fields before allowing submit
     const isFormValid = () => {
         if (!classDetails?.course_uuid || !classDetails?.title) {
             toast.error("Please complete Class Details first");
@@ -120,7 +120,6 @@ export const ClassScheduleFormPage = ({
             };
 
             if (resolvedId) {
-                // Update existing class
                 updateClassDefinition.mutate(
                     { path: { uuid: resolvedId }, body: payload as any },
                     {
@@ -146,7 +145,6 @@ export const ClassScheduleFormPage = ({
                     }
                 );
             } else {
-                // Create new class
                 createClassDefinition.mutate(
                     { body: payload as any },
                     {
@@ -178,23 +176,23 @@ export const ClassScheduleFormPage = ({
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
+        <div className="max-w-5xl mx-auto">
             <div className="mb-8">
-                <h2 className="text-3xl font-bold text-foreground mb-2">Class Schedule</h2>
+                <h2 className="text-xl font-bold text-foreground mb-2">Class Schedule</h2>
                 <p className="text-muted-foreground">Set up your class schedule and recurrence</p>
             </div>
 
             <form onSubmit={handleSubmit}>
-                <Card className="border-border overflow-hidden">
+                <Card className="overflow-hidden shadow-lg rounded-xl">
                     <Table>
                         <TableBody>
                             {/* Academic Period */}
-                            <TableRow className="border-b border-border">
-                                <TableCell className="bg-muted font-semibold w-1/3">
+                            <TableRow className="border-b hover:bg-transparent">
+                                <TableCell className="bg-muted/50 font-semibold w-1/3 py-5">
                                     Academic Period
                                 </TableCell>
-                                <TableCell className="bg-card">
-                                    <div className="flex gap-2 items-center flex-wrap">
+                                <TableCell className="bg-card py-5">
+                                    <div className="flex gap-3 items-center flex-wrap">
                                         <Input
                                             type="date"
                                             value={data.academicPeriod.start}
@@ -203,9 +201,9 @@ export const ClassScheduleFormPage = ({
                                                     academicPeriod: { ...data.academicPeriod, start: e.target.value }
                                                 })
                                             }
-                                            className="w-40"
+                                            className="w-44"
                                         />
-                                        <span className="text-sm text-muted-foreground">to</span>
+                                        <span className="text-sm font-medium text-muted-foreground">to</span>
                                         <Input
                                             type="date"
                                             value={data.academicPeriod.end}
@@ -214,19 +212,19 @@ export const ClassScheduleFormPage = ({
                                                     academicPeriod: { ...data.academicPeriod, end: e.target.value }
                                                 })
                                             }
-                                            className="w-40"
+                                            className="w-44"
                                         />
                                     </div>
                                 </TableCell>
                             </TableRow>
 
                             {/* Registration Period */}
-                            <TableRow className="border-b border-border">
-                                <TableCell className="bg-muted font-semibold">
+                            <TableRow className="border-b hover:bg-transparent">
+                                <TableCell className="bg-muted/50 font-semibold py-5">
                                     Registration Period
                                 </TableCell>
-                                <TableCell className="bg-card">
-                                    <div className="space-y-3">
+                                <TableCell className="bg-card py-5">
+                                    <div className="space-y-4">
                                         <div className="flex flex-wrap gap-4 items-end">
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-sm font-semibold text-foreground">Start Date</label>
@@ -241,7 +239,7 @@ export const ClassScheduleFormPage = ({
                                                             }
                                                         })
                                                     }
-                                                    className="w-40"
+                                                    className="w-44"
                                                 />
                                             </div>
 
@@ -259,12 +257,12 @@ export const ClassScheduleFormPage = ({
                                                             }
                                                         })
                                                     }
-                                                    className="w-40"
+                                                    className="w-44"
                                                 />
                                             </div>
                                         </div>
 
-                                        <label className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer">
+                                        <label className="flex items-center gap-3 text-sm font-medium text-foreground cursor-pointer w-fit">
                                             <input
                                                 type="checkbox"
                                                 checked={data.registrationPeriod.continuous || false}
@@ -277,7 +275,7 @@ export const ClassScheduleFormPage = ({
                                                         }
                                                     })
                                                 }
-                                                className="rounded"
+                                                className="rounded w-4 h-4"
                                             />
                                             Continuous Registration (no closing date)
                                         </label>
@@ -285,13 +283,13 @@ export const ClassScheduleFormPage = ({
                                 </TableCell>
                             </TableRow>
 
-                            {/* Start Classes + All Day */}
-                            <TableRow className="border-b border-border">
-                                <TableCell className="bg-muted font-semibold">
+                            {/* Start Classes */}
+                            <TableRow className="border-b hover:bg-transparent">
+                                <TableCell className="bg-muted/50 font-semibold py-5">
                                     Start Classes *
                                 </TableCell>
-                                <TableCell className="bg-card">
-                                    <div className="space-y-3">
+                                <TableCell className="bg-card py-5">
+                                    <div className="space-y-4">
                                         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-sm font-semibold text-foreground">Class Day</label>
@@ -306,7 +304,7 @@ export const ClassScheduleFormPage = ({
                                                             }
                                                         })
                                                     }
-                                                    className="w-40"
+                                                    className="w-44"
                                                     required
                                                 />
                                             </div>
@@ -325,7 +323,7 @@ export const ClassScheduleFormPage = ({
                                                         })
                                                     }
                                                     disabled={data.allDay}
-                                                    className="w-40"
+                                                    className="w-44"
                                                     required={!data.allDay}
                                                 />
                                             </div>
@@ -344,18 +342,18 @@ export const ClassScheduleFormPage = ({
                                                         })
                                                     }
                                                     disabled={data.allDay}
-                                                    className="w-40"
+                                                    className="w-44"
                                                     required={!data.allDay}
                                                 />
                                             </div>
                                         </div>
 
-                                        <label className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer">
+                                        <label className="flex items-center gap-3 text-sm font-medium text-foreground cursor-pointer w-fit">
                                             <input
                                                 type="checkbox"
                                                 checked={data.allDay}
                                                 onChange={(e) => onChange({ allDay: e.target.checked })}
-                                                className="rounded"
+                                                className="rounded w-4 h-4"
                                             />
                                             All Day (entire day booked)
                                         </label>
@@ -364,12 +362,12 @@ export const ClassScheduleFormPage = ({
                             </TableRow>
 
                             {/* Class Schedule */}
-                            <TableRow className="border-b border-border">
-                                <TableCell className="bg-muted font-semibold">
+                            <TableRow className="border-b hover:bg-transparent">
+                                <TableCell className="bg-muted/50 font-semibold py-5">
                                     Classes Schedule *
                                 </TableCell>
-                                <TableCell className="bg-card">
-                                    <div className="space-y-3">
+                                <TableCell className="bg-card py-5">
+                                    <div className="space-y-4">
                                         {/* Repeat Frequency */}
                                         <div className="flex flex-wrap items-end gap-3">
                                             <label className="text-sm font-semibold text-foreground">Repeat every:</label>
@@ -412,13 +410,18 @@ export const ClassScheduleFormPage = ({
 
                                         {/* Weekly: Select Days */}
                                         {data.repeat.unit === "week" && (
-                                            <div className="space-y-2">
+                                            <div className="space-y-3">
                                                 <label className="text-sm font-semibold text-foreground">Select days:</label>
                                                 <div className="flex flex-wrap gap-2">
                                                     {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => (
                                                         <label
                                                             key={day}
-                                                            className="flex items-center gap-2 border border-border rounded px-3 py-2 cursor-pointer select-none hover:bg-muted transition-colors"
+                                                            className={cn(
+                                                                "flex items-center gap-2 border rounded-lg px-4 py-2.5 cursor-pointer select-none transition-all",
+                                                                data.repeat.days?.includes(idx)
+                                                                    ? "bg-primary/10 border-primary text-primary font-medium"
+                                                                    : "border-border hover:bg-muted"
+                                                            )}
                                                         >
                                                             <input
                                                                 type="checkbox"
@@ -434,7 +437,7 @@ export const ClassScheduleFormPage = ({
                                                                         }
                                                                     });
                                                                 }}
-                                                                className="rounded"
+                                                                className="rounded w-4 h-4"
                                                             />
                                                             <span className="text-sm font-medium">{day}</span>
                                                         </label>
@@ -444,7 +447,7 @@ export const ClassScheduleFormPage = ({
                                         )}
 
                                         {/* Display selected summary */}
-                                        <div className="text-sm text-muted-foreground">
+                                        <div className="text-sm text-muted-foreground bg-muted/30 px-4 py-3 rounded-lg">
                                             {data.repeat.unit === "week" && data.repeat.days?.length
                                                 ? `Repeats on: ${data.repeat.days.map((d) => ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][d]).join(", ")}`
                                                 : `Repeats every ${data.repeat.interval || 1} ${data.repeat.unit}(s)`}
@@ -454,35 +457,35 @@ export const ClassScheduleFormPage = ({
                             </TableRow>
 
                             {/* End Repeat */}
-                            <TableRow className="border-b border-border">
-                                <TableCell className="bg-muted font-semibold">
+                            <TableRow className="border-b hover:bg-transparent">
+                                <TableCell className="bg-muted/50 font-semibold py-5">
                                     End Repeat
                                 </TableCell>
-                                <TableCell className="bg-card">
+                                <TableCell className="bg-card py-5">
                                     <div className="flex items-end gap-3">
                                         <label className="text-sm font-semibold text-foreground">On date:</label>
                                         <Input
                                             type="date"
                                             value={data.endRepeat}
                                             onChange={(e) => onChange({ endRepeat: e.target.value })}
-                                            className="w-40"
+                                            className="w-44"
                                         />
                                     </div>
                                 </TableCell>
                             </TableRow>
 
                             {/* Alert Attendee */}
-                            <TableRow>
-                                <TableCell className="bg-muted font-semibold">
+                            <TableRow className="hover:bg-transparent">
+                                <TableCell className="bg-muted/50 font-semibold py-5">
                                     Alert Attendee
                                 </TableCell>
-                                <TableCell className="bg-card">
-                                    <label className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer">
+                                <TableCell className="bg-card py-5">
+                                    <label className="flex items-center gap-3 text-sm font-medium text-foreground cursor-pointer w-fit">
                                         <input
                                             type="checkbox"
                                             checked={data.alertAttendee}
                                             onChange={(e) => onChange({ alertAttendee: e.target.checked })}
-                                            className="rounded"
+                                            className="rounded w-4 h-4"
                                         />
                                         Send notifications to attendees
                                     </label>
@@ -492,10 +495,12 @@ export const ClassScheduleFormPage = ({
                     </Table>
                 </Card>
 
-                <div className="mt-6 flex justify-end">
+                <div className="mt-8 flex justify-end">
                     <Button
                         type="submit"
                         disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
+                        size="lg"
+                        className="px-8"
                     >
                         {(createClassDefinition.isPending || updateClassDefinition.isPending)
                             ? "Saving..."

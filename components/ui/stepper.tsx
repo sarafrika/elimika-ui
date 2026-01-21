@@ -100,7 +100,7 @@ export function StepperRoot({ children }: { children: ReactNode }) {
 
 export function StepperList({ children }: { children: ReactNode }) {
   return (
-    <TabsList className='rounded-0 flex h-auto flex-col items-start gap-4'>{children}</TabsList>
+    <TabsList className='rounded-sm w-1/4 max-w-[250px] flex h-auto flex-col items-start gap-4'>{children}</TabsList>
   );
 }
 
@@ -119,7 +119,7 @@ export function StepperTrigger(props: TriggerProps) {
     <TabsTrigger
       value={props.step.toString()}
       // disabled={props.step > activeStep}
-      className='flex items-center justify-center gap-2 disabled:opacity-100'
+      className='flex w-full items-center justify-start gap-3 disabled:opacity-100'
       data-state={isCurrent ? 'active' : 'inactive'}
       onClick={() => setActiveStep(props.step)} // ✅ jump directly
     >

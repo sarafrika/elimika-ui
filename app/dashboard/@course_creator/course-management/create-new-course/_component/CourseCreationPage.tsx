@@ -12,7 +12,7 @@ const CourseCreationPage = () => {
   const [activeTab, setActiveTab] = useState('builder');
 
   return (
-    <div className='mx-auto w-6xl space-y-5'>
+    <div className='mx-auto space-y-5'>
       <div
         onClick={() => router.push('/dashboard/course-management/all')}
         className='flex w-fit cursor-pointer flex-row items-center gap-2 py-2 pr-3'

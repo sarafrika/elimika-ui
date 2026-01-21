@@ -419,7 +419,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className='bg-card space-y-6 rounded-[32px] transition'
+          className='bg-card space-y-6 rounded-[32px] transition max-w-4xl'
         >
           {/* Course Name */}
           <FormSection
