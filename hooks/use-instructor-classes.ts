@@ -9,7 +9,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   const { data, isLoading, isPending, isFetching } = useQuery({
     ...getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructorUuid ?? '' },
-      query: { activeOnly: false },
+      query: {},
     }),
     enabled: !!instructorUuid,
   });

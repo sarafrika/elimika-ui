@@ -8,17 +8,22 @@ import { Button } from '../../../../components/ui/button';
 import {
     addQuestionOptionMutation,
     addQuizQuestionMutation,
+    createAssignmentMutation,
     createQuizMutation,
+    deleteAssignmentMutation,
     deleteQuestionOptionMutation,
     deleteQuizMutation,
     deleteQuizQuestionMutation,
     getQuizQuestionsOptions,
     getQuizQuestionsQueryKey,
+    searchAssignmentsQueryKey,
     searchQuizzesQueryKey,
+    updateAssignmentMutation,
     updateQuestionOptionMutation,
     updateQuizMutation,
-    updateQuizQuestionMutation,
+    updateQuizQuestionMutation
 } from '../../../../services/client/@tanstack/react-query.gen';
+import { AssignmentCreationForm } from './assignment-creation-form';
 import { QuizCreationForm } from './quiz-creation-form';
 
 const tabs = ['Quiz', 'Assignment', 'Project', 'Discussions', 'Attendance'];
@@ -71,6 +76,9 @@ const AssessmentCreationForm = ({
         setActiveQuizUuid(quizUuid);
     };
 
+    const [assignmentId, setAssignmentId] = useState<string | null>(null);
+
+
     // Mutations
     const createQuiz = useMutation(createQuizMutation());
     const updateQuiz = useMutation(updateQuizMutation());
@@ -83,6 +91,10 @@ const AssessmentCreationForm = ({
     const addQuestionOption = useMutation(addQuestionOptionMutation());
     const updateQuestionOption = useMutation(updateQuestionOptionMutation());
     const deleteQuestionOption = useMutation(deleteQuestionOptionMutation());
+
+    const createAssignmentMut = useMutation(createAssignmentMutation());
+    const updateAssignmentMut = useMutation(updateAssignmentMutation());
+    const deleteAssignmentMut = useMutation(deleteAssignmentMutation());
 
     const buildQuestionPayload = (
         q: Question,
@@ -466,6 +478,82 @@ const AssessmentCreationForm = ({
         });
     };
 
+    // Assignment CRUD operations
+    const createAssignmentForLesson = async (lessonId: string, payload: any) => {
+        return new Promise<string>((resolve, reject) => {
+            createAssignmentMut.mutate(
+                {
+                    body: {
+                        ...payload,
+                        lesson_uuid: lessonId,
+                    } as any,
+                },
+                {
+                    onSuccess: (data: any) => {
+                        qc.invalidateQueries({
+                            queryKey: searchAssignmentsQueryKey({ query: { searchParams: { lesson_uuid_eq: selectedLessonId }, pageable: {} } }),
+                        });
+                        // Assuming the API returns the created assignment with uuid
+                        resolve(data?.data?.uuid || data?.uuid);
+                    },
+                    onError: (error) => {
+                        reject(error);
+                    },
+                }
+            );
+        });
+    };
+
+    const updateAssignmentForLesson = async (assignmentUuid: string, payload: any) => {
+        return new Promise<void>((resolve, reject) => {
+            updateAssignmentMut.mutate(
+                {
+                    path: { uuid: assignmentUuid },
+                    body: payload as any,
+                },
+                {
+                    onSuccess: () => {
+                        qc.invalidateQueries({
+                            queryKey: searchAssignmentsQueryKey({ query: { searchParams: { lesson_uuid_eq: selectedLessonId }, pageable: {} } }),
+                        });
+                        resolve();
+                    },
+                    onError: (error) => {
+                        reject(error);
+                    },
+                }
+            );
+        });
+    };
+
+    const deleteAssignmentForLesson = async (assignmentUuid: string) => {
+        return new Promise<void>((resolve, reject) => {
+            deleteAssignmentMut.mutate(
+                {
+                    path: { uuid: assignmentUuid },
+                },
+                {
+                    onSuccess: () => {
+                        qc.invalidateQueries({
+                            queryKey: searchAssignmentsQueryKey({ query: { searchParams: { lesson_uuid_eq: selectedLessonId }, pageable: {} } }),
+                        });
+                        setAssignmentId(null);
+                        resolve();
+                    },
+                    onError: (error) => {
+                        reject(error);
+                    },
+                }
+            );
+        });
+    };
+
+
+    const handleSelectAssignment = (uuid: string | null) => {
+        setAssignmentId(uuid);
+        // Fetch questions for assignment here and set them using setQuestions()
+    };
+
     return (
         <div className='w-full'>
             <div className='mb-4 flex border-b'>
@@ -474,8 +562,8 @@ const AssessmentCreationForm = ({
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
-                                ? 'border-primary text-primary font-semibold'
-                                : 'text-muted-foreground hover:text-muted-foreground/90'
+                            ? 'border-primary text-primary font-semibold'
+                            : 'text-muted-foreground hover:text-muted-foreground/90'
                             }`}
                     >
                         {tab}
@@ -557,7 +645,31 @@ const AssessmentCreationForm = ({
                     </div>
                 )}
 
-                {activeTab === 'Assignment' && <div>Assignment Content</div>}
+                {activeTab === 'Assignment' && <div>
+                    <AssignmentCreationForm
+                        lessons={lessons}
+                        assignmentId={assignmentId}
+                        questions={questions}
+                        selectedLessonId={selectedLessonId}
+                        selectedLesson={selectedLesson}
+                        setSelectedLessonId={setSelectedLessonId}
+                        setSelectedLesson={setSelectedLesson}
+                        onSelectAssignment={handleSelectAssignment}
+                        addQuestion={addQuestion}
+                        updateQuestionText={updateQuestionText}
+                        updateQuestionPoint={() => { }}
+                        updateOptionText={updateOptionText}
+                        setCorrectOption={setCorrectOption}
+                        deleteQuestion={() => { }}
+                        deleteOption={() => { }}
+                        createAssignmentForLesson={createAssignmentForLesson}
+                        updateAssignmentForLesson={updateAssignmentForLesson}
+                        deleteAssignmentForLesson={deleteAssignmentForLesson}
+                        addAssignmentQuestion={() => { }}
+                        addQuestionOption={() => { }}
+                    />
+
+                </div>}
                 {activeTab === 'Project' && <div>Project Content</div>}
                 {activeTab === 'Discussions' && <div>Discussions Content</div>}
                 {activeTab === 'Attendance' && <div>Attendance Content</div>}
