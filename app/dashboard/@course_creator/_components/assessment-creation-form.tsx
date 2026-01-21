@@ -5,6 +5,7 @@ import { Disc } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
+import { getQuestionOptions } from '../../../../services/client';
 import {
     addQuestionOptionMutation,
     addQuizQuestionMutation,
@@ -136,17 +137,20 @@ const AssessmentCreationForm = ({
         enabled: !!activeQuizUuid,
     });
 
+
     // Fetch options for each question
     const questionOptionsQueries = useQueries({
         queries:
             quizquestions?.data?.map((q: any) => ({
                 queryKey: ['questionOptions', activeQuizUuid, q.uuid],
-                queryFn: async () => {
-                    const result = await fetch(
-                        `/api/quizzes/${activeQuizUuid}/questions/${q.uuid}/options?pageable={}`
-                    );
-                    return result.json();
-                },
+                queryFn: () =>
+                    getQuestionOptions({
+                        path: {
+                            quizUuid: activeQuizUuid!,
+                            questionUuid: q.uuid,
+                        },
+                        query: { pageable: {} }
+                    }),
                 enabled: !!activeQuizUuid && !!q.uuid,
             })) ?? [],
     });
@@ -396,19 +400,19 @@ const AssessmentCreationForm = ({
     const handleDeleteQuestion = async (qIndex: number) => {
         const question = questions[qIndex];
 
-        if (question.uuid) {
+        if (question?.uuid) {
             if (!confirm('Delete this question from the quiz?')) return;
 
             try {
                 await deleteQuizQuestion.mutateAsync({
                     path: {
                         quizUuid: activeQuizUuid!,
-                        questionUuid: question.uuid,
+                        questionUuid: question?.uuid as string,
                     },
                 });
 
                 qc.invalidateQueries({
-                    queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid! } }),
+                    queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid as string } }),
                 });
 
                 toast.success('Question deleted!');
@@ -597,6 +601,11 @@ const AssessmentCreationForm = ({
                                         lesson_uuid: lessonId,
                                     },
                                 });
+                                qc.invalidateQueries({
+                                    queryKey: searchQuizzesQueryKey({
+                                        query: { pageable: {}, searchParams: { lesson_uuid_eq: selectedLessonId as string } },
+                                    }),
+                                });
                                 return res?.data?.quiz_uuid || res?.quiz_uuid;
                             }}
                             updateQuizForLesson={handleUpdateQuiz}
@@ -606,9 +615,12 @@ const AssessmentCreationForm = ({
                                     path: { quizUuid: payload.quiz_uuid },
                                     body: payload,
                                 });
+                                qc.invalidateQueries({
+                                    queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid! } }),
+                                });
                                 return res;
                             }}
-                            addQuestionOption={async payload => {
+                            addQuestionOption={async (payload) => {
                                 const res: any = await addQuestionOption.mutateAsync({
                                     path: {
                                         quizUuid: payload.quiz_uuid,
@@ -616,8 +628,18 @@ const AssessmentCreationForm = ({
                                     },
                                     body: payload,
                                 });
+
+                                // question uuid here keeps failing
+
+                                // invalidate only the options query for this question
+                                qc.invalidateQueries({
+                                    queryKey: ['questionOptions', payload.quiz_uuid, payload.question_uuid],
+                                });
+
                                 return res;
                             }}
+
+                            isPending={createQuiz.isPending || updateQuiz.isPending}
                         />
 
                         <div className='mt-4 flex justify-end self-end'>
@@ -670,9 +692,27 @@ const AssessmentCreationForm = ({
                     />
 
                 </div>}
-                {activeTab === 'Project' && <div>Project Content</div>}
-                {activeTab === 'Discussions' && <div>Discussions Content</div>}
-                {activeTab === 'Attendance' && <div>Attendance Content</div>}
+
+                {activeTab === 'Project' && <div>
+                    <div className="min-h-[300px] flex flex-col items-center gap-6 justify-center px-3 py-2 text-sm text-muted-foreground text-center">
+                        <p>
+                            No projects created yet
+                        </p>
+
+                    </div>
+                </div>}
+                {activeTab === 'Discussions' && <div className="min-h-[300px] flex flex-col items-center gap-6 justify-center px-3 py-2 text-sm text-muted-foreground text-center">
+                    <p>
+                        No discussions yet
+                    </p>
+
+                </div>}
+                {activeTab === 'Attendance' && <div className="min-h-[300px] flex flex-col items-center gap-6 justify-center px-3 py-2 text-sm text-muted-foreground text-center">
+                    <p>
+                        No attendance recorded yet
+                    </p>
+
+                </div>}
             </div>
         </div>
     );

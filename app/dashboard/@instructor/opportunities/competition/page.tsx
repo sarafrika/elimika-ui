@@ -1,4 +1,4 @@
-function ApprenticeshipsPage() {
+function CompetitionPage() {
   return <div>
     <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 rounded-md shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -9,4 +9,4 @@ function ApprenticeshipsPage() {
   </div>;
 }
 
-export default ApprenticeshipsPage;
+export default CompetitionPage;

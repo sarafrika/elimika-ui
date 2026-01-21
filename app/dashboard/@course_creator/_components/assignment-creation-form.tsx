@@ -511,11 +511,7 @@ export const AssignmentCreationForm = ({
                 </Button>
               </div>
             </div>
-
-
           )}
-
-
 
 
           {/* Only show questions UI if assignmentUuid exists */}

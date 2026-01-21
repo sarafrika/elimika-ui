@@ -174,11 +174,10 @@ export default function StudentsPage({
               <li
                 key={student.name}
                 onClick={() => setSelectedStudent(student.name)}
-                className={`flex cursor-pointer flex-col items-start rounded-sm p-2 ${
-                  selectedStudent === student.name
-                    ? 'bg-accent/10 text-accent font-medium'
-                    : 'hover:bg-muted/60'
-                }`}
+                className={`flex cursor-pointer flex-col items-start rounded-sm p-2 ${selectedStudent === student.name
+                  ? 'bg-accent/10 text-accent font-medium'
+                  : 'hover:bg-muted/60'
+                  }`}
               >
                 {student.name}
                 <span className='ml-1 text-xs'>Section {student.section}</span>
