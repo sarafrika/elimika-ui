@@ -532,7 +532,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                     <DialogFooter className='justify-end'>
                       <Button
                         type='button'
-                        className='min-w-[75px]'
+                        className='min-w-[75px] hidden'
                         onClick={() => {
                           if (categoryInput?.trim()) {
                             createCategoryMutation({ body: { name: categoryInput.trim() } });
@@ -599,7 +599,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             title='Target Audience'
             description='Set the set the target audience your course'
           >
-            <div>target audience details here</div>
+            <div>
+
+            </div>
             <FormMessage />
           </FormSection>
 
