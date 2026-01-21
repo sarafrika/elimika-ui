@@ -1,16 +1,22 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Trash2, X } from 'lucide-react';
+import { PlusCircle, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
+import { Checkbox } from '../../../../components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../../../components/ui/dropdown-menu';
+import { Input } from '../../../../components/ui/input';
+import { Label } from '../../../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
+import { Separator } from '../../../../components/ui/separator';
+import { Textarea } from '../../../../components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../components/ui/tooltip';
 import { cn } from '../../../../lib/utils';
 import {
@@ -44,6 +50,8 @@ export type QuizCreationFormProps = {
   deleteQuizForLesson: (quizUuid: string) => Promise<void>;
   addQuizQuestion: (payload: any) => Promise<any>;
   addQuestionOption: (payload: any) => Promise<any>;
+
+  isPending: boolean
 };
 
 export const QuizCreationForm = ({
@@ -69,6 +77,8 @@ export const QuizCreationForm = ({
   deleteQuizForLesson,
   addQuizQuestion,
   addQuestionOption,
+
+  isPending
 }: QuizCreationFormProps) => {
   const { data: rubrics, isLoading: rubricsIsLoading } = useQuery(
     getAllAssessmentRubricsOptions({ query: { pageable: {} } })
@@ -223,123 +233,148 @@ export const QuizCreationForm = ({
             <h3 className='text-lg font-bold text-foreground uppercase'>
               QUIZ: {selectedLesson?.title || 'Select a lesson'}
             </h3>
+            {/* Create button */}
+
           </div>
 
-          <div className='flex flex-col gap-2'>
-            <label className='text-sm font-medium text-foreground'>Select Existing Quiz</label>
-            <select
-              className='w-full rounded-lg border border-input bg-background px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all'
-              value={quizUuid || ''}
-              onChange={e => handleQuizSelect(e.target.value || null)}
-            >
-              <option value=''>-- Create New Quiz --</option>
-              {quizzes?.data?.content?.map((quiz: any) => (
-                <option key={quiz.uuid} value={quiz.uuid}>
-                  {quiz.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className='flex flex-col gap-4'>
-            <div className='flex justify-end self-end'>
-              {quizUuid && (
-                <Button
-                  variant='destructive'
-                  onClick={handleDeleteQuiz}
-                >
-                  Delete Quiz
-                </Button>
-              )}
+          <div className="flex flex-col gap-2">
+            <div className='flex flex-row items-center justify-between ' >
+              <Label className="text-sm font-medium text-foreground">
+                Select Existing Quiz
+              </Label>
+              <Button
+                size="sm"
+                className="self-end"
+                onClick={() => handleQuizSelect(null)}
+              >
+                <PlusCircle size={16} /> Create Quiz
+              </Button>
             </div>
 
-            <div className='flex flex-col gap-2'>
-              <label className='text-sm font-medium text-foreground'>Quiz Title</label>
-              <input
-                type='text'
-                placeholder='Enter quiz title'
-                className='w-full rounded-lg border border-input bg-background px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all'
+            <Select
+              value={quizUuid || ''}
+              onValueChange={(value) => handleQuizSelect(value || null)}
+            >
+              <SelectTrigger className="w-full rounded-lg border border-input bg-background px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                <SelectValue placeholder="Create New Quiz" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value={null}>Create New Quiz</SelectItem>
+                {quizzes?.data?.content?.map((quiz: any) => (
+                  <SelectItem key={quiz.uuid} value={quiz.uuid}>
+                    {quiz.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            <Separator />
+
+            {/* Quiz Title */}
+            <div className="flex flex-col gap-2">
+              <Label>Quiz Title</Label>
+              <Input
+                placeholder="Enter quiz title"
                 value={quizData.title}
-                onChange={e => handleQuizInputChange('title', e.target.value)}
+                onChange={e => handleQuizInputChange("title", e.target.value)}
               />
             </div>
 
-            <div className='flex flex-col gap-2'>
-              <label className='text-sm font-medium text-foreground'>Instructions (optional)</label>
-              <textarea
-                placeholder='Enter quiz instructions'
-                className='w-full rounded-lg border border-input bg-background px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none'
+            {/* Instructions */}
+            <div className="flex flex-col gap-2">
+              <Label>Instructions (optional)</Label>
+              <Textarea
+                placeholder="Enter quiz instructions"
                 rows={3}
                 value={quizData.instructions}
-                onChange={e => handleQuizInputChange('instructions', e.target.value)}
+                onChange={e => handleQuizInputChange("instructions", e.target.value)}
               />
             </div>
 
-            <div className='grid grid-cols-3 gap-4'>
-              <div className='flex flex-col gap-2'>
-                <label className='text-sm font-medium text-foreground'>Time Limit (minutes)</label>
-                <input
-                  type='number'
-                  className='w-full rounded-lg border border-input bg-background px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all'
+            {/* Numbers Grid */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label>Time Limit (minutes)</Label>
+                <Input
+                  type="number"
                   value={quizData.time_limit_minutes}
                   onChange={e =>
-                    handleQuizInputChange('time_limit_minutes', Number(e.target.value))
+                    handleQuizInputChange("time_limit_minutes", Number(e.target.value))
                   }
                 />
               </div>
 
-              <div className='flex flex-col gap-2'>
-                <label className='text-sm font-medium text-foreground'>Attempts Allowed</label>
-                <input
-                  type='number'
-                  className='w-full rounded-lg border border-input bg-background px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all'
+              <div className="flex flex-col gap-2">
+                <Label>Attempts Allowed</Label>
+                <Input
+                  type="number"
                   value={quizData.attempts_allowed}
-                  onChange={e => handleQuizInputChange('attempts_allowed', Number(e.target.value))}
+                  onChange={e =>
+                    handleQuizInputChange("attempts_allowed", Number(e.target.value))
+                  }
                 />
               </div>
 
-              <div className='flex flex-col gap-2'>
-                <label className='text-sm font-medium text-foreground'>Passing Score (%)</label>
-                <input
-                  type='number'
-                  className='w-full rounded-lg border border-input bg-background px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all'
+              <div className="flex flex-col gap-2">
+                <Label>Passing Score (%)</Label>
+                <Input
+                  type="number"
                   value={quizData.passing_score}
-                  onChange={e => handleQuizInputChange('passing_score', Number(e.target.value))}
+                  onChange={e =>
+                    handleQuizInputChange("passing_score", Number(e.target.value))
+                  }
                 />
               </div>
             </div>
 
-            <div className='flex flex-col gap-2'>
-              <label className='text-sm font-medium text-foreground'>Assign Rubric</label>
-              <select
-                className='w-full rounded-lg border border-input bg-background px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all'
-                value={quizData.rubric_uuid || ''}
-                onChange={e => handleQuizInputChange('rubric_uuid', e.target.value)}
+            {/* Assign Rubric */}
+            <div className="flex flex-col gap-2">
+              <Label>Assign Rubric</Label>
+              <Select
+                value={quizData.rubric_uuid || ""}
+                onValueChange={value =>
+                  handleQuizInputChange("rubric_uuid", value || null)
+                }
               >
-                <option value=''>Select rubric</option>
-                {rubrics?.data?.content?.map((rubric: any) => (
-                  <option key={rubric.uuid} value={rubric.uuid}>
-                    {rubric.title}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select rubric" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>Select rubric</SelectItem>
+                  {rubrics?.data?.content?.map((rubric: any) => (
+                    <SelectItem key={rubric.uuid} value={rubric.uuid}>
+                      {rubric.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <label className='flex items-center gap-3 cursor-pointer'>
-              <input
-                type='checkbox'
+            {/* Active Checkbox */}
+            <Label className="flex items-center gap-3 cursor-pointer">
+              <Checkbox
                 checked={quizData.active}
-                onChange={e => handleQuizInputChange('active', e.target.checked)}
-                className='w-4 h-4 rounded border-input'
+                onCheckedChange={checked =>
+                  handleQuizInputChange("active", Boolean(checked))
+                }
               />
-              <span className='text-sm font-medium text-foreground'>Active</span>
-            </label>
+              <span>Active</span>
+            </Label>
 
-            <div className='flex items-end justify-end pt-2'>
-              <Button
-                onClick={handleSaveQuiz}
-              >
-                {quizUuid ? 'Update Quiz' : 'Save Quiz'}
+            {/* Buttons */}
+            <div className="flex flex-row gap-6 items-end justify-end pt-2">
+              {quizUuid && (
+                <Button variant="destructive" onClick={handleDeleteQuiz}>
+                  Delete Quiz
+                </Button>
+              )}
+              <Button onClick={handleSaveQuiz}>
+                {isPending ? "Saving..." : <>
+                  {quizUuid ? "Update Quiz" : "Save Quiz"}
+                </>}
               </Button>
             </div>
           </div>

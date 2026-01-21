@@ -195,12 +195,12 @@ export default {
       icon: BookOpen,
     },
     {
-      title: 'Catalogue',
-      url: '/dashboard/catalogue',
-      icon: ShoppingBag,
+      title: 'My Skills',
+      url: '/dashboard/my-skills',
+      icon: BadgeCheck,
     },
     {
-      title: 'Trainings',
+      title: 'Schedule',
       url: '/dashboard/trainings',
       icon: ClipboardList,
       // items: [
@@ -244,19 +244,14 @@ export default {
       // ],
     },
     {
-      title: 'Learning',
-      url: '/dashboard/learning',
+      title: 'Enrollments',
+      url: '/dashboard/enrollments',
+      icon: BookOpen,
+    },
+    {
+      title: 'Waiting List',
+      url: '/dashboard/waiting-list',
       icon: GraduationCap,
-    },
-    {
-      title: 'Bookings',
-      url: '/dashboard/bookings',
-      icon: CalendarClock,
-    },
-    {
-      title: 'Skills Fund',
-      url: '/dashboard/skills-fund',
-      icon: Wallet,
     },
     {
       title: 'Opportunities',
@@ -281,13 +276,24 @@ export default {
       // ],
     },
     {
-      title: 'Libraries',
-      url: '/dashboard/libraries',
+      title: 'Skills Fund',
+      url: '/dashboard/skills-fund',
+      icon: Wallet,
+    },
+
+    {
+      title: 'Communities',
+      url: '/dashboard/communities',
+      icon: Users,
+    },
+    {
+      title: 'Library',
+      url: '/dashboard/library',
       icon: LucideBookUser,
     },
     {
-      title: 'Earnings',
-      url: '/dashboard/earnings',
+      title: 'Revenue',
+      url: '/dashboard/revenue',
       icon: DollarSign,
     },
     {
@@ -300,16 +306,38 @@ export default {
       url: '/dashboard/analytics',
       icon: ChartNoAxesCombined,
     },
-    {
-      title: 'Reviews',
-      url: '/dashboard/reviews',
-      icon: Star,
-    },
+
     {
       title: 'Profile',
       url: '/dashboard/profile',
       icon: UserCircle,
     },
+    {
+      title: 'Settings',
+      url: '/dashboard/settings',
+      icon: Settings,
+    },
+    // to be removed
+    {
+      title: 'Catalogue XXX',
+      url: '/dashboard/catalogue',
+      icon: ShoppingBag,
+    },
+    {
+      title: 'Reviews XXX',
+      url: '/dashboard/reviews',
+      icon: Star,
+    },
+    {
+      title: 'Learning XXX',
+      url: '/dashboard/learning',
+      icon: GraduationCap,
+    },
+    // {
+    //   title: 'Bookings XXX',
+    //   url: '/dashboard/bookings',
+    //   icon: CalendarClock,
+    // },
   ],
   course_creator: [
     {

@@ -250,8 +250,8 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
   };
 
   return (
-    <div className='w-full space-y-6'>
-      <SkillsFundWalletCard wallet={sampleWallet} user={instructor} />
+    <div className='mx-auto w-full space-y-6'>
+      <SkillsFundWalletCard wallet={sampleWallet} user={instructor} role={''} />
 
       {/* Quick Stats */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>

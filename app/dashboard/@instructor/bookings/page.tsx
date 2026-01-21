@@ -283,7 +283,7 @@ function BookingsPage() {
         <TabsContent value='all' className='pt-4'>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
             {/* LEFT: Booking list */}
-            <Card className='col-span-1 p-3'>
+            <Card className='col-span-1 p-3 max-w-[400px]'>
               <div className='space-y-4'>
                 {/* Search */}
                 <div className='flex gap-2'>
@@ -547,22 +547,20 @@ function BookingsPage() {
           <div className='grid grid-cols-1 gap-4'>
             <Card className='p-4'>
               <h3 className='text-foreground text-lg font-medium'>Upcoming bookings</h3>
-              <p className='text-muted-foreground text-sm'>
-                Placeholder UI for upcoming bookings. You can update this panel with the UI you want
-                to show for future sessions.
-              </p>
+
+              <div className='flex flex-col gap-4 p-3'>
+                {upcomingBookings?.length === 0 ? (
+                  <Card className='p-12 text-center'>
+                    <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                    <p className='text-muted-foreground'>No upcoming bookings</p>
+                  </Card>
+                ) : (
+                  upcomingBookings?.map(renderBookingCard)
+                )}{' '}
+              </div>
             </Card>
 
-            <div className='flex flex-col gap-4 p-3'>
-              {upcomingBookings?.length === 0 ? (
-                <Card className='p-12 text-center'>
-                  <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-                  <p className='text-muted-foreground'>No upcoming bookings</p>
-                </Card>
-              ) : (
-                upcomingBookings?.map(renderBookingCard)
-              )}{' '}
-            </div>
+
           </div>
         </TabsContent>
 
@@ -570,22 +568,20 @@ function BookingsPage() {
           <div className='grid grid-cols-1 gap-4'>
             <Card className='p-4'>
               <p className='text-foreground text-lg font-medium'>Past bookings</p>
-              <p className='text-muted-foreground text-sm'>
-                Placeholder UI for past bookings. Replace with the desired historical view, reports,
-                or exports.
-              </p>
+
+              <div className='flex flex-col gap-4 p-3'>
+                {pastBookings?.length === 0 ? (
+                  <Card className='p-12 text-center'>
+                    <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                    <p className='text-muted-foreground'>No past bookings</p>
+                  </Card>
+                ) : (
+                  pastBookings?.map(renderBookingCard)
+                )}{' '}
+              </div>
             </Card>
 
-            <div className='flex flex-col gap-4 p-3'>
-              {pastBookings?.length === 0 ? (
-                <Card className='p-12 text-center'>
-                  <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-                  <p className='text-muted-foreground'>No past bookings</p>
-                </Card>
-              ) : (
-                pastBookings?.map(renderBookingCard)
-              )}{' '}
-            </div>
+
           </div>
         </TabsContent>
       </Tabs>
