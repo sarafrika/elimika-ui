@@ -272,83 +272,85 @@ function BookingsPage() {
   }, [studentQueries]);
 
   return (
-    <div className='space-y-6 pb-10'>
+    <div className="space-y-6 pb-10">
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)}>
-        <TabsList>
-          <TabsTrigger value='all'>All ({bookings?.length})</TabsTrigger>
-          <TabsTrigger value='upcoming'>Upcoming ({upcomingBookings.length})</TabsTrigger>
-          <TabsTrigger value='past'>Past ({pastBookings.length})</TabsTrigger>
+        {/* Tabs */}
+        <TabsList className="w-full justify-start overflow-x-auto">
+          <TabsTrigger value="all" className="shrink-0">
+            All ({bookings?.length})
+          </TabsTrigger>
+          <TabsTrigger value="upcoming" className="shrink-0">
+            Upcoming ({upcomingBookings.length})
+          </TabsTrigger>
+          <TabsTrigger value="past" className="shrink-0">
+            Past ({pastBookings.length})
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value='all' className='pt-4'>
-          <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-            {/* LEFT: Booking list */}
-            <Card className='col-span-1 p-3 max-w-[400px]'>
-              <div className='space-y-4'>
-                {/* Search */}
-                <div className='flex gap-2'>
-                  <div className='relative w-full'>
-                    <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+        {/* ================= ALL BOOKINGS ================= */}
+        <TabsContent value="all" className="pt-4">
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-3">
+            {/* LEFT: Booking List */}
+            <Card className="p-3 lg:col-span-1 lg:max-w-[400px]">
+              <div className="space-y-4">
+                {/* Search + Filter */}
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <div className="relative w-full">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder='Search by student id, course id or purpose…'
+                      placeholder="Search by student id, course id or purpose…"
                       value={query}
                       onChange={e => setQuery(e.target.value)}
-                      className='pl-9'
+                      className="pl-9"
                     />
                   </div>
 
-                  <div className='flex items-center gap-2'>
-                    <Select
-                      value={statusFilter}
-                      onValueChange={value => {
-                        setStatusFilter(value);
-                        setPage(1);
-                      }}
-                    >
-                      <SelectTrigger className='flex w-[140px] items-center gap-0.5'>
-                        <FilterIcon className='text-muted-foreground h-4 w-4' />
-                        <SelectValue placeholder='Filter status' />
-                      </SelectTrigger>
+                  <Select
+                    value={statusFilter}
+                    onValueChange={value => {
+                      setStatusFilter(value);
+                      setPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-full sm:w-[140px] flex items-center gap-1">
+                      <FilterIcon className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Filter status" />
+                    </SelectTrigger>
 
-                      <SelectContent>
-                        <SelectItem value='all'>All</SelectItem>
-                        <SelectItem value='pending'>Pending</SelectItem>
-                        <SelectItem value='confirmed'>Confirmed</SelectItem>
-                        <SelectItem value='payment_required'>Payment Required</SelectItem>
-                        <SelectItem value='payment_failed'>Payment Failed</SelectItem>
-                        <SelectItem value='expired'>Expired</SelectItem>
-                        <SelectItem value='cancelled'>Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* <Button variant='outline' size='sm' onClick={() => setQuery('')}>
-                    Clear
-                  </Button> */}
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="payment_required">Payment Required</SelectItem>
+                      <SelectItem value="payment_failed">Payment Failed</SelectItem>
+                      <SelectItem value="expired">Expired</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className='text-muted-foreground text-xs'>
+                <div className="text-xs text-muted-foreground">
                   Showing {filtered.length} of {totalElements}
                 </div>
 
                 <Separator />
 
-                {/* List */}
-                <div className='max-h-[56vh] space-y-1 overflow-y-auto pr-1'>
+                {/* Booking List */}
+                <div className="space-y-1 lg:max-h-[56vh] lg:overflow-y-auto pr-1">
                   {isLoading && (
-                    <div className='text-muted-foreground py-8 text-center text-sm'>
+                    <div className="py-8 text-center text-sm text-muted-foreground">
                       Loading bookings…
                     </div>
                   )}
 
                   {isError && (
-                    <div className='text-destructive py-8 text-center text-sm'>
+                    <div className="py-8 text-center text-sm text-destructive">
                       Failed to load bookings
                     </div>
                   )}
 
                   {!isLoading && filtered.length === 0 && (
-                    <div className='text-muted-foreground py-8 text-center text-sm'>
+                    <div className="py-8 text-center text-sm text-muted-foreground">
                       No bookings found
                     </div>
                   )}
@@ -356,44 +358,44 @@ function BookingsPage() {
                   {filtered.map(b => {
                     const key = b?.uuid ?? b?.id;
                     const isActive = selected?.uuid === b?.uuid;
-
-                    const start = new Date(b.start_time);
-                    const end = new Date(b.end_time);
-
                     const student = studentsById[b.student_uuid];
 
                     return (
                       <button
                         key={key}
                         onClick={() => setSelected(b)}
-                        className={`group w-full rounded-md border p-3 text-left transition ${isActive ? 'border-primary bg-primary/5' : 'hover:border-border hover:bg-muted/40 border-transparent'} `}
+                        className={`w-full rounded-md border p-4 sm:p-3 text-left transition
+                      ${isActive
+                            ? 'border-primary bg-primary/5'
+                            : 'border-transparent hover:border-border hover:bg-muted/40'
+                          }`}
                       >
-                        <div className='text-foreground text-sm font-medium'>
+                        <div className="text-sm font-medium text-foreground">
                           {`${String(b?.uuid ?? 'Unknown').slice(0, 16)}...`}
                         </div>
 
-                        <div className='flex items-center justify-between'>
-                          <div className='text-sm font-medium'>
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm font-medium">
                             {student?.full_name ?? b.student_uuid.slice(0, 8)}
                           </div>
 
                           <Badge
-                            variant='secondary'
-                            className={`text-xs text-white capitalize ${getStatusColor(b?.status)}`}
+                            variant="secondary"
+                            className={`text-xs capitalize text-white ${getStatusColor(b?.status)}`}
                           >
                             {b?.status?.replace('_', ' ') ?? 'pending'}
                           </Badge>
                         </div>
 
-                        <div className='text-muted-foreground mt-1 line-clamp-2 text-xs'>
+                        <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                           {b?.purpose ?? 'No purpose provided'}
                         </div>
 
-                        <div className='text-muted-foreground mt-1 line-clamp-2 text-xs'>
-                          {start.toLocaleDateString()}
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {new Date(b.start_time).toLocaleDateString()}
                         </div>
 
-                        <div className='text-muted-foreground mt-1 line-clamp-2 text-sm font-bold'>
+                        <div className="mt-1 text-sm font-bold text-muted-foreground">
                           {b?.currency} {b?.price_amount}
                         </div>
                       </button>
@@ -402,20 +404,15 @@ function BookingsPage() {
                 </div>
 
                 {/* Pagination */}
-                <div className='mt-3 flex items-center justify-between'>
-                  <div className='text-muted-foreground text-xs'>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="text-xs text-muted-foreground">
                     Page {page} of {totalPages}
                   </div>
-                  <div className='flex gap-2'>
-                    <Button size='sm' variant='outline' onClick={handlePrev} disabled={page <= 1}>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={handlePrev} disabled={page <= 1}>
                       Prev
                     </Button>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      onClick={handleNext}
-                      disabled={page >= totalPages}
-                    >
+                    <Button size="sm" variant="outline" onClick={handleNext} disabled={page >= totalPages}>
                       Next
                     </Button>
                   </div>
@@ -423,37 +420,36 @@ function BookingsPage() {
               </div>
             </Card>
 
-            {/* RIGHT: Booking details */}
-            <Card className='col-span-1 min-h-[240px] p-5 sm:col-span-2'>
+            {/* RIGHT: Booking Details */}
+            <Card className="min-h-[240px] p-4 sm:p-5 lg:col-span-2">
               {!selected ? (
-                <div className='flex h-full flex-col items-center justify-center space-y-2 text-center'>
-                  <h3 className='text-foreground text-lg font-medium'>Select a booking</h3>
-                  <p className='text-muted-foreground max-w-sm text-sm'>
+                <div className="flex h-full flex-col items-center justify-center space-y-2 text-center">
+                  <h3 className="text-lg font-medium text-foreground">Select a booking</h3>
+                  <p className="max-w-sm text-sm text-muted-foreground">
                     Choose a booking from the list to view details and take action.
                   </p>
                 </div>
               ) : (
-                <div className='space-y-5'>
+                <div className="space-y-5">
                   {/* Header */}
-                  <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className='text-foreground text-lg font-semibold'>
-                        {/* @ts-ignore */}
+                      <h2 className="text-lg font-semibold text-foreground">
                         {studentQueryData?.data?.full_name ??
-                          studentQueryData?.data?.full_name ??
                           selected?.student_uuid?.slice(0, 8) ??
                           'Unknown student'}
                       </h2>
-                      <p className='text-muted-foreground text-sm'>{'No contact info'}</p>
+                      <p className="text-sm text-muted-foreground">No contact info</p>
 
-                      <div className='text-muted-foreground mt-2 text-sm'>
-                        Course: {courseQuery.data?.data?.name ?? selected?.course_uuid?.slice(0, 8)}
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        Course:{' '}
+                        {courseQuery.data?.data?.name ?? selected?.course_uuid?.slice(0, 8)}
                       </div>
                     </div>
 
-                    <div className='text-muted-foreground text-right text-sm'>
+                    <div className="text-sm text-muted-foreground sm:text-right">
                       <div>Booked on</div>
-                      <div className='text-foreground font-medium'>
+                      <div className="font-medium text-foreground">
                         {new Date(
                           selected?.created_date ?? selected?.created_at ?? Date.now()
                         ).toLocaleString()}
@@ -464,14 +460,18 @@ function BookingsPage() {
                   <Separator />
 
                   {/* Details */}
-                  <div className='bg-background space-y-4 rounded-lg p-4'>
-                    <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-                      <h4 className='text-foreground text-lg font-semibold'>Booking Details</h4>
+                  <div className="space-y-4 rounded-lg bg-background p-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <h4 className="text-lg font-semibold text-foreground">
+                        Booking Details
+                      </h4>
                       <Badge
                         variant={
-                          selected?.status === 'payment_required' ? 'destructive' : 'secondary'
+                          selected?.status === 'payment_required'
+                            ? 'destructive'
+                            : 'secondary'
                         }
-                        className='capitalize'
+                        className="capitalize"
                       >
                         {selected?.status?.replace('_', ' ') ?? 'pending'}
                       </Badge>
@@ -479,38 +479,44 @@ function BookingsPage() {
 
                     <Separator />
 
-                    <div className='text-muted-foreground text-sm'>
-                      <span className='text-foreground font-medium'>Purpose:</span>{' '}
+                    <div className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">Purpose:</span>{' '}
                       {selected?.purpose ?? 'No additional details provided'}
                     </div>
 
-                    <div className='text-muted-foreground mt-2 grid grid-cols-2 gap-4 text-sm'>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-muted-foreground">
                       <div>
-                        <span className='text-foreground font-medium'>Start:</span>{' '}
+                        <span className="font-medium text-foreground">Start:</span>{' '}
                         {selected?.start_time
                           ? new Date(selected.start_time).toLocaleString()
                           : '—'}
                       </div>
                       <div>
-                        <span className='text-foreground font-medium'>End:</span>{' '}
-                        {selected?.end_time ? new Date(selected.end_time).toLocaleString() : '—'}
+                        <span className="font-medium text-foreground">End:</span>{' '}
+                        {selected?.end_time
+                          ? new Date(selected.end_time).toLocaleString()
+                          : '—'}
                       </div>
                     </div>
 
-                    <div className='text-muted-foreground mt-2 grid grid-cols-2 gap-4 text-sm'>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-muted-foreground">
                       <div>
-                        <span className='text-foreground font-medium'>Price:</span>{' '}
+                        <span className="font-medium text-foreground">Price:</span>{' '}
                         {selected?.currency ?? 'KES'} {selected?.price_amount ?? '—'}
                       </div>
                       <div>
-                        <span className='text-foreground font-medium'>Payment Engine:</span>{' '}
+                        <span className="font-medium text-foreground">
+                          Payment Engine:
+                        </span>{' '}
                         {selected?.payment_engine ?? '—'}
                       </div>
                     </div>
 
                     {selected?.hold_expires_at && (
-                      <div className='text-muted-foreground mt-3 text-sm'>
-                        <span className='text-foreground font-medium'>Hold Expires:</span>{' '}
+                      <div className="text-sm text-muted-foreground">
+                        <span className="font-medium text-foreground">
+                          Hold Expires:
+                        </span>{' '}
                         {new Date(selected.hold_expires_at).toLocaleString()}
                       </div>
                     )}
@@ -518,21 +524,24 @@ function BookingsPage() {
 
                   <Separator />
 
-                  <div className='flex flex-col justify-end gap-2 self-end sm:flex-row'>
+                  {/* Actions */}
+                  <div className="flex flex-col sm:flex-row gap-2 self-end">
                     <Button
+                      className="w-full sm:w-auto"
                       onClick={() => {
-                        setSelected(selected), setOpenAcceptModal(true);
+                        setSelected(selected);
+                        setOpenAcceptModal(true);
                       }}
-                      className='w-full sm:w-auto'
                     >
                       Accept
                     </Button>
                     <Button
+                      variant="destructive"
+                      className="w-full sm:w-auto"
                       onClick={() => {
-                        setSelected(selected), setOpenDeclineModal(true);
+                        setSelected(selected);
+                        setOpenDeclineModal(true);
                       }}
-                      variant='destructive'
-                      className='w-full sm:w-auto'
                     >
                       Reject
                     </Button>
@@ -543,50 +552,52 @@ function BookingsPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value='upcoming' className='pt-4'>
-          <div className='grid grid-cols-1 gap-4'>
-            <Card className='p-4'>
-              <h3 className='text-foreground text-lg font-medium'>Upcoming bookings</h3>
+        {/* ================= UPCOMING ================= */}
+        <TabsContent value="upcoming" className="pt-4">
+          <div className="grid grid-cols-1 gap-4">
+            <Card className="p-4">
+              <h3 className="text-lg font-medium text-foreground">
+                Upcoming bookings
+              </h3>
 
-              <div className='flex flex-col gap-4 p-3'>
+              <div className="flex flex-col gap-4 p-2 sm:p-3">
                 {upcomingBookings?.length === 0 ? (
-                  <Card className='p-12 text-center'>
-                    <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-                    <p className='text-muted-foreground'>No upcoming bookings</p>
+                  <Card className="p-12 text-center">
+                    <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                    <p className="text-muted-foreground">No upcoming bookings</p>
                   </Card>
                 ) : (
-                  upcomingBookings?.map(renderBookingCard)
-                )}{' '}
+                  upcomingBookings.map(renderBookingCard)
+                )}
               </div>
             </Card>
-
-
           </div>
         </TabsContent>
 
-        <TabsContent value='past' className='pt-4'>
-          <div className='grid grid-cols-1 gap-4'>
-            <Card className='p-4'>
-              <p className='text-foreground text-lg font-medium'>Past bookings</p>
+        {/* ================= PAST ================= */}
+        <TabsContent value="past" className="pt-4">
+          <div className="grid grid-cols-1 gap-4">
+            <Card className="p-4">
+              <h3 className="text-lg font-medium text-foreground">
+                Past bookings
+              </h3>
 
-              <div className='flex flex-col gap-4 p-3'>
+              <div className="flex flex-col gap-4 p-2 sm:p-3">
                 {pastBookings?.length === 0 ? (
-                  <Card className='p-12 text-center'>
-                    <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-                    <p className='text-muted-foreground'>No past bookings</p>
+                  <Card className="p-12 text-center">
+                    <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                    <p className="text-muted-foreground">No past bookings</p>
                   </Card>
                 ) : (
-                  pastBookings?.map(renderBookingCard)
-                )}{' '}
+                  pastBookings.map(renderBookingCard)
+                )}
               </div>
             </Card>
-
-
           </div>
         </TabsContent>
       </Tabs>
 
-      {/* Booking Details Dialog */}
+      {/* Modals */}
       {selectedBooking && (
         <BookingDetailsModal
           booking={selectedBooking}
@@ -599,27 +610,28 @@ function BookingsPage() {
       <ConfirmModal
         open={openAcceptModal}
         setOpen={setOpenAcceptModal}
-        title='Confirm Booking'
-        description='Are you sure you want to accept booking for this class or program? Please review the details before confirming.'
+        title="Confirm Booking"
+        description="Are you sure you want to accept booking for this class or program?"
         onConfirm={handleAcceptBooking}
         isLoading={acceptBooking.isPending}
-        confirmText='Yes, Confirm'
-        cancelText='No, Cancel'
-        variant='destructive'
+        confirmText="Yes, Confirm"
+        cancelText="No, Cancel"
+        variant="destructive"
       />
 
       <ConfirmModal
         open={openDeclineModal}
         setOpen={setOpenDeclineModal}
-        title='Decline Booking'
-        description='Are you sure you want to decline this booking request? This action cannot be undone.'
+        title="Decline Booking"
+        description="Are you sure you want to decline this booking request?"
         onConfirm={handleDeclineBooking}
         isLoading={declineBooking.isPending}
-        confirmText='Yes, Decline'
-        cancelText='No, Keep Booking'
-        variant='destructive'
+        confirmText="Yes, Decline"
+        cancelText="No, Keep Booking"
+        variant="destructive"
       />
     </div>
+
   );
 }
 

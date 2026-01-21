@@ -125,6 +125,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         creator_share_percentage: 50,
         instructor_share_percentage: 50,
         revenue_share_notes: '',
+        language: '',
+        learning_rules: { completion_rules_enabled: false, drip_schedule_enabled: false, prerequisites_required: false },
         training_requirements: [],
         ...initialValues,
       },
@@ -401,6 +403,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     };
 
+    const onError = (error: any) => {
+      toast.error(error)
+    }
+
     useImperativeHandle(ref, () => ({
       submit: () => form.handleSubmit(onSubmit)(),
     }));
@@ -418,7 +424,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     return (
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(onSubmit, onError)}
           className='bg-card space-y-6 rounded-[32px] transition max-w-4xl'
         >
           {/* Course Name */}
@@ -526,7 +532,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                     <DialogFooter className='justify-end'>
                       <Button
                         type='button'
-                        className='min-w-[75px]'
+                        className='min-w-[75px] hidden'
                         onClick={() => {
                           if (categoryInput?.trim()) {
                             createCategoryMutation({ body: { name: categoryInput.trim() } });
@@ -593,7 +599,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             title='Target Audience'
             description='Set the set the target audience your course'
           >
-            <div>target audience details here</div>
+            <div>
+
+            </div>
             <FormMessage />
           </FormSection>
 
@@ -658,7 +666,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
           {/* Course Duration */}
           <FormSection title='Course Duration' description='Set the time duration for your course'>
-            <div className='space-y-0'>
+            <div className='space-y-0 hidden'>
               <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
                 <FormField
                   control={form.control}
@@ -728,19 +736,30 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             />
           </FormSection>
 
-          {/* Target Audience*/}
-          <FormSection title='Language' description='What languages can this course be taught in?'>
+          {/* Language */}
+          <FormSection
+            title="Language"
+            description="What languages can this course be taught in?"
+          >
             <FormField
               control={form.control}
-              name='difficulty'
+              name="language"
               render={({ field }) => (
                 <FormItem>
-                  language details here
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full sm:w-[200px]">
+                      <SelectValue placeholder="Select a language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="english">English</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </FormSection>
+
 
           {/* Prerequisites */}
           <FormSection

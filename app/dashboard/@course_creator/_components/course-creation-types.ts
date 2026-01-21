@@ -72,6 +72,7 @@ export const courseCreationSchema = z.object({
     drip_schedule_enabled: z.boolean().default(false),
     completion_rules_enabled: z.boolean().default(false),
   }),
+  language: z.string().optional(),
 });
 
 export type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & {
