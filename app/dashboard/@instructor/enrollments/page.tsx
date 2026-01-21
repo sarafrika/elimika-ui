@@ -10,6 +10,7 @@ import { CheckCircle2, Clock } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "../../../../components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../components/ui/select";
 import { useInstructor } from "../../../../context/instructor-context";
 import {
     getAllCoursesOptions,
@@ -127,12 +128,14 @@ const EnrollmentsPage = () => {
     };
 
     return (
-        <div className={elimikaDesignSystem.components.pageContainer}>
+        <div className={`${elimikaDesignSystem.components.pageContainer} px-4 sm:px-6`}>
             {/* Header */}
             <section className="mb-6">
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Enrollments</h1>
+                        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                            Enrollments
+                        </h1>
                         <p className="text-sm text-muted-foreground">
                             Review all students enrolled in each course
                         </p>
@@ -141,56 +144,96 @@ const EnrollmentsPage = () => {
             </section>
 
             {/* Construction Banner */}
-            <Card className="mb-6 border-l-4 border-yellow-500 bg-yellow-50 p-4 dark:bg-yellow-950/20">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <p className="font-medium text-yellow-800 dark:text-yellow-200">🚧 Under Construction</p>
-                        <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                            Student data is being fetched and displayed dynamically.
-                        </p>
-                    </div>
+            <Card className="mb-6 border-l-4 border-yellow-500 bg-yellow-50 p-3 sm:p-4 dark:bg-yellow-950/20">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+                    <p className="font-medium text-yellow-800 dark:text-yellow-200">
+                        🚧 Under Construction
+                    </p>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                        Student data is being fetched and displayed dynamically.
+                    </p>
                 </div>
             </Card>
 
             {/* Two-column layout */}
             <div className="flex flex-col gap-6 lg:flex-row">
                 {/* Left: Course List */}
-                <div className="space-y-2 overflow-y-auto lg:w-1/3 lg:max-h-[calc(100vh-250px)]">
+                {/* Course Selector (Mobile) */}
+                <div className="lg:hidden flex flex-col gap-2">
+                    <p className="text-sm" >Select a course to see its enrollment details</p>
+                    <Select
+                        value={selectedCourseId ?? undefined}
+                        onValueChange={value => setSelectedCourseId(value)}
+                    >
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a course" />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                            {filteredCourses?.map(course => {
+                                const enrollmentCount = enrollmentsForSelectedCourse.filter(
+                                    e => e.course_uuid === course.uuid
+                                ).length;
+
+                                return (
+                                    <SelectItem key={course.uuid} value={course.uuid}>
+                                        <div className="flex w-full items-center justify-between gap-2">
+                                            <span className="truncate">{course.name}</span>
+                                            <span className="text-xs text-muted-foreground">
+                                                ({enrollmentCount})
+                                            </span>
+                                        </div>
+                                    </SelectItem>
+                                );
+                            })}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Course List (Desktop) */}
+                <div className="hidden space-y-2 lg:block lg:w-1/3 lg:max-h-[calc(100vh-250px)] lg:overflow-y-auto">
                     {filteredCourses?.map(course => {
                         const enrollmentCount = enrollmentsForSelectedCourse.filter(
                             e => e.course_uuid === course.uuid
                         ).length;
+
                         const isSelected = selectedCourseId === course.uuid;
 
                         return (
                             <button
                                 key={course.uuid}
                                 onClick={() => setSelectedCourseId(course.uuid)}
-                                className={`w-full rounded-xl border p-4 text-left text-sm transition-all duration-150 flex items-center justify-between
-                                    ${isSelected
-                                        ? 'border-primary bg-primary/10 shadow-md'
+                                className={`w-full rounded-xl border p-3 text-left text-sm transition-all
+          flex items-center justify-between gap-3
+          ${isSelected
+                                        ? 'border-primary bg-primary/10 shadow-sm'
                                         : 'border-border bg-background hover:bg-muted'
                                     }`}
                             >
-                                <span className="font-medium text-foreground">{course.name}</span>
-                                <Badge variant="secondary">{enrollmentCount}</Badge>
+                                <span className="truncate font-medium text-foreground">
+                                    {course.name}
+                                </span>
+                                <Badge variant="secondary" className="shrink-0">
+                                    {enrollmentCount}
+                                </Badge>
                             </button>
                         );
                     })}
                 </div>
 
                 {/* Right: Enrollments List */}
-                <div className="space-y-4 overflow-y-auto lg:w-2/3 lg:max-h-[calc(100vh-250px)]">
+                <div className="space-y-4 lg:w-2/3 lg:max-h-[calc(100vh-250px)] lg:overflow-y-auto">
                     {selectedCourseId === null ? (
-                        <Card className="p-12 text-center">
+                        <Card className="p-6 sm:p-12 text-center">
                             <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                            <p className="text-lg font-medium text-foreground">Select a course</p>
+                            <p className="text-lg font-medium text-foreground">
+                                Select a course
+                            </p>
                             <p className="text-sm text-muted-foreground">
                                 Choose a course on the left to view enrollments.
                             </p>
                         </Card>
                     ) : isLoadingEnrollments ? (
-                        // Loading state with skeletons
                         <div className="space-y-4">
                             {[...Array(3)].map((_, i) => (
                                 <Card key={i} className="p-4">
@@ -206,37 +249,45 @@ const EnrollmentsPage = () => {
                             ))}
                         </div>
                     ) : enrichedEnrollments.length === 0 ? (
-                        <Card className="p-12 text-center">
+                        <Card className="p-6 sm:p-12 text-center">
                             <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                            <p className="text-lg font-medium text-foreground">No enrollments</p>
+                            <p className="text-lg font-medium text-foreground">
+                                No enrollments
+                            </p>
                             <p className="text-sm text-muted-foreground">
                                 No students have enrolled in this course yet.
                             </p>
                         </Card>
                     ) : (
                         enrichedEnrollments.map(enrollment => (
-                            <Card key={enrollment.uuid} className="flex items-center gap-4 p-4">
+                            <Card
+                                key={enrollment.uuid}
+                                className="flex flex-col gap-3 sm:flex-row sm:items-center p-4"
+                            >
                                 <Avatar>
                                     <AvatarImage src={enrollment.studentAvatar} />
                                     <AvatarFallback>
                                         {enrollment.studentName
                                             .split(' ')
-                                            .map(n => n[0])
+                                            .map((n: any) => n[0])
                                             .join('')
                                             .toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
 
                                 <div className="min-w-0 flex-1">
-                                    <p className="font-semibold text-foreground">{enrollment.studentName}</p>
+                                    <p className="truncate font-semibold text-foreground">
+                                        {enrollment.studentName}
+                                    </p>
                                     <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                                        <Clock className="h-3 w-3" />
-                                        {/* Enrolled {formatDistanceToNow(new Date(enrollment.enrollment_date), { addSuffix: true })} */}
+                                        <Clock className="h-3 w-3 shrink-0" />
+                                        {/* enrollment time */}
                                     </p>
                                 </div>
 
                                 <Button
                                     size="sm"
+                                    className="w-full sm:w-auto"
                                     onClick={() => handleViewProfile(enrollment.studentName)}
                                 >
                                     View Profile
@@ -247,6 +298,7 @@ const EnrollmentsPage = () => {
                 </div>
             </div>
         </div>
+
     );
 };
 

@@ -1,7 +1,7 @@
 'use client';
 
+import { elimikaDesignSystem } from "@/lib/design-system";
 import { useState } from "react";
-import { elimikaDesignSystem } from "../../../../lib/design-system";
 import BookingsPage from "../bookings/page";
 
 const WaitingListPage = () => {
@@ -15,8 +15,8 @@ const WaitingListPage = () => {
     return (
         <div className={elimikaDesignSystem.components.pageContainer}>
             {/* Header */}
-            <section className='mb-6'>
-                <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+            <section className="mb-6">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-foreground">Class Waiting Lists</h1>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -33,22 +33,19 @@ const WaitingListPage = () => {
                 </div>
             </div>
 
-            {/* Stylish Tabs */}
+            {/* Tabs */}
             <section className="mb-8">
-                <div className="relative border-b border-border">
-                    <div className="flex gap-1">
+                <div className="relative border-b border-border overflow-x-auto">
+                    <div className="flex gap-1 min-w-max">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`
-                                    relative px-6 py-3 font-medium text-md transition-all duration-300 ease-in-out
-                                    hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-t-lg
-                                    ${activeTab === tab.id
-                                        ? 'text-primary'
-                                        : 'text-muted-foreground hover:bg-muted'
-                                    }
-                                `}
+              relative px-4 sm:px-6 py-2 sm:py-3 font-medium text-md transition-all duration-300 ease-in-out
+              hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-t-lg
+              ${activeTab === tab.id ? 'text-primary' : 'text-muted-foreground hover:bg-muted'}
+            `}
                             >
                                 <span className="flex items-center gap-2">
                                     <span className="text-md">{tab.label}</span>
@@ -56,19 +53,16 @@ const WaitingListPage = () => {
 
                                 {/* Active indicator */}
                                 {activeTab === tab.id && (
-                                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary to-primary/90 rounded-full transform transition-all duration-300" />
+                                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full transform transition-all duration-300" />
                                 )}
 
                                 {/* Hover effect background */}
                                 <span
                                     className={`
-                                        absolute inset-0 rounded-t-lg transition-opacity duration-300
-                                        ${activeTab === tab.id
-                                            ? 'bg-accent opacity-100'
-                                            : 'bg-transparent opacity-0 hover:opacity-100'
-                                        }
-                                        -z-10
-                                    `}
+                absolute inset-0 transition-opacity duration-300
+                ${activeTab === tab.id ? 'opacity-100' : 'bg-transparent opacity-0 hover:opacity-100'}
+                -z-10
+              `}
                                 />
                             </button>
                         ))}
@@ -79,9 +73,11 @@ const WaitingListPage = () => {
             {/* Tab Content */}
             <section className="animate-fadeIn">
                 {activeTab === "waiting-list" && (
-                    <div className="p-6 bg-card rounded-lg border border-border shadow-sm">
-                        <h2 className="text-xl font-semibold mb-4 text-foreground">Waiting List of Students</h2>
-                        <p className="text-muted-foreground">Student waiting list content will appear here.</p>
+                    <div className="p-4 sm:p-6 bg-card rounded-lg border border-border shadow-sm">
+                        <h2 className="text-xl font-semibold mb-2 sm:mb-4 text-foreground">Waiting List of Students</h2>
+                        <p className="text-sm sm:text-base text-muted-foreground">
+                            Student waiting list content will appear here.
+                        </p>
                     </div>
                 )}
 
@@ -93,22 +89,23 @@ const WaitingListPage = () => {
             </section>
 
             <style jsx>{`
-                @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(10px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                
-                .animate-fadeIn {
-                    animation: fadeIn 0.3s ease-out;
-                }
-            `}</style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.3s ease-out;
+    }
+  `}</style>
         </div>
+
     );
 };
 

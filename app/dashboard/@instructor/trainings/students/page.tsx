@@ -25,8 +25,7 @@ import {
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { Search, Upload } from 'lucide-react';
+import { Menu, Search, Upload, X } from 'lucide-react';
 import { useState } from 'react';
 
 const _sampleEnrollmentData = {
@@ -154,49 +153,78 @@ export default function StudentsPage({
     { name: 'Screencapture-Hexamoon-Admin.png' },
   ];
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+
   return (
-    <div className='space-y-6'>
-      <h2 className='text-2xl font-bold tracking-tight'>Your Students</h2>
-      <Card className='flex h-auto flex-row pb-20'>
-        {/* Sidebar */}
-        <aside className='border-border/100 flex w-64 flex-col border-r p-4'>
-          <h2 className='mb-4 text-lg font-semibold'>All Students</h2>
+    <div className='space-y-4 sm:space-y-6 p-4 sm:p-0'>
+      <div className="flex items-center justify-between">
+        <h2 className='text-xl sm:text-2xl font-bold tracking-tight'>Your Students</h2>
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden p-2 hover:bg-muted rounded-md"
+        >
+          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      <Card className='flex flex-col lg:flex-row h-auto pb-8 sm:pb-20'>
+        {/* Sidebar - Mobile drawer / Desktop sidebar */}
+        <aside className={`
+          ${sidebarOpen ? 'fixed inset-0 z-50 bg-background' : 'hidden'}
+          lg:flex lg:static lg:z-auto
+          w-full lg:w-64 flex-col border-b lg:border-b-0 lg:border-r border-border p-4
+        `}>
+          <div className="flex items-center justify-between mb-4 lg:mb-4">
+            <h2 className='text-base sm:text-lg font-semibold'>All Students</h2>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 hover:bg-muted rounded-md"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
           <div className='relative mb-3 flex flex-row items-center'>
             <Search size={16} className='text-muted-foreground absolute left-3' />
             <Input
               type='text'
               placeholder='Search Student'
-              className='border-border/100 w-full rounded-lg border py-2 pr-3 pl-10 text-sm'
+              className='w-full rounded-lg border border-border py-2 pr-3 pl-10 text-sm'
             />
           </div>
+
           <ul className='flex-1 space-y-2 overflow-y-auto'>
             {sampleStudents.map(student => (
               <li
                 key={student.name}
-                onClick={() => setSelectedStudent(student.name)}
-                className={`flex cursor-pointer flex-col items-start rounded-sm p-2 ${selectedStudent === student.name
-                  ? 'bg-accent/10 text-accent font-medium'
-                  : 'hover:bg-muted/60'
+                onClick={() => {
+                  setSelectedStudent(student.name);
+                  setSidebarOpen(false);
+                }}
+                className={`flex cursor-pointer flex-col items-start rounded-sm p-2 sm:p-3 ${selectedStudent === student.name
+                    ? 'bg-accent/10 text-accent font-medium'
+                    : 'hover:bg-muted/60'
                   }`}
               >
-                {student.name}
-                <span className='ml-1 text-xs'>Section {student.section}</span>
+                <span className="text-sm sm:text-base">{student.name}</span>
+                <span className='text-xs text-muted-foreground'>Section {student.section}</span>
               </li>
             ))}
           </ul>
         </aside>
 
         {/* Main Content */}
-        <main className='flex-1 overflow-y-auto p-6'>
-          <div className='mb-4 flex items-center justify-between'>
-            <h1 className='text-xl font-bold'>Final Exam</h1>
-            <span className='text-muted-foreground text-sm font-medium'>Speed Grade</span>
+        <main className='flex-1 overflow-y-auto p-4 sm:p-6'>
+          <div className='mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
+            <h1 className='text-lg sm:text-xl font-bold'>Final Exam</h1>
+            <span className='text-muted-foreground text-xs sm:text-sm font-medium'>Speed Grade</span>
           </div>
 
-          <Card className='grid gap-6 p-0 lg:grid-cols-3'>
-            {/* Middle: Assignment */}
-            <div className='border-border/100 rounded-xl border p-5 shadow-sm lg:col-span-2'>
-              <CardDescription className='mb-2 flex justify-between text-sm'>
+          <div className='grid gap-4 sm:gap-6 lg:grid-cols-3'>
+            {/* Assignment Card */}
+            <div className='border border-border rounded-xl p-4 sm:p-5 shadow-sm lg:col-span-2'>
+              <CardDescription className='mb-3 sm:mb-4 flex flex-col sm:flex-row sm:justify-between gap-2 text-xs sm:text-sm'>
                 <p>
                   Submission Date:{' '}
                   <span className='text-muted-foreground font-medium'>10/02/2024</span>
@@ -210,10 +238,10 @@ export default function StudentsPage({
               <img
                 src='https://cdn.dribbble.com/userupload/9452662/file/original-12d4e45f5c3d41b9d6b18e0d5c09c785.png?resize=752x'
                 alt='Assignment Preview'
-                className='mb-4 w-full rounded-xl object-cover'
+                className='mb-4 w-full rounded-lg sm:rounded-xl object-cover'
               />
 
-              <p className='text-muted-foreground mb-4 text-sm leading-relaxed'>
+              <p className='text-muted-foreground mb-4 text-xs sm:text-sm leading-relaxed'>
                 Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem
                 Ipsum has been the industry&apos;s standard dummy text ever since the 1500s, when an
                 unknown printer took a galley of type and scrambled it to make a type specimen book.
@@ -221,40 +249,38 @@ export default function StudentsPage({
                 typesetting, remaining essentially unchanged.
               </p>
 
-              <div className='flex aspect-video items-center justify-center rounded-lg'>
-                <button className='bg-primary hover:bg-primary/80 rounded-full p-3 text-white shadow'>
-                  ▶
+              <div className='flex aspect-video items-center justify-center rounded-lg bg-muted/30'>
+                <button className='bg-primary hover:bg-primary/80 rounded-full p-3 sm:p-4 text-white shadow-lg transition-all'>
+                  <span className="text-lg sm:text-xl">▶</span>
                 </button>
               </div>
             </div>
 
-            {/* Right: Submission Panel */}
-            <Card className='border-border/100 space-y-4 rounded-xl border p-5 text-sm shadow-sm'>
-              <h2 className='text-lg font-semibold'>Submission</h2>
+            {/* Submission Panel */}
+            <Card className='space-y-3 sm:space-y-4 rounded-xl p-4 sm:p-5 text-xs sm:text-sm shadow-sm'>
+              <h2 className='text-base sm:text-lg font-semibold'>Submission</h2>
 
               <div className='flex items-center justify-between'>
-                <span className=''>Due Date:</span>
+                <span>Due Date:</span>
                 <span className='font-medium text-green-600'>02/10/2024</span>
               </div>
 
               <div>
-                <label>Grade</label>
+                <label className="text-xs sm:text-sm font-medium">Grade</label>
                 <input
                   type='number'
                   value={grade}
                   onChange={e => setGrade(Number(e.target.value))}
-                  className='mt-1 w-full rounded-lg border p-2'
+                  className='mt-1 w-full rounded-lg border border-border p-2 text-sm'
                 />
               </div>
 
               <div>
-                <label className='text-sm font-medium'>Status</label>
-
+                <label className='text-xs sm:text-sm font-medium'>Status</label>
                 <Select value={status} onValueChange={(value: Status) => setStatus(value)}>
-                  <SelectTrigger className='mt-1 w-full rounded-lg border p-2 text-sm'>
-                    <SelectValue placeholder='Select status' />
+                  <SelectTrigger className='mt-1 w-full'>
+                    <SelectValue placeholder={status} />
                   </SelectTrigger>
-
                   <SelectContent>
                     <SelectItem value='Submit'>Submit</SelectItem>
                     <SelectItem value='Excused'>Excused</SelectItem>
@@ -264,46 +290,48 @@ export default function StudentsPage({
               </div>
 
               <div>
-                <label>Submission Details</label>
-                <div className='mt-2 space-y-2 text-sm'>
+                <label className="text-xs sm:text-sm font-medium">Submission Details</label>
+                <div className='mt-2 space-y-2 text-xs sm:text-sm'>
                   <p>
                     Word Count: <span className='font-medium'>500</span>
                   </p>
                   <p className='mt-3 font-semibold'>Files Uploaded:</p>
-                  <ul className='space-y-3'>
+                  <ul className='space-y-2 sm:space-y-3'>
                     {files.map(file => (
                       <li
                         key={file.name}
-                        className='text-muted-foreground/80 hover:text-muted-foreground/100 flex cursor-pointer items-center gap-2'
+                        className='text-muted-foreground/80 hover:text-muted-foreground flex items-center gap-2 cursor-pointer text-xs sm:text-sm truncate'
                       >
-                        <Upload size={18} className='text-muted-foreground' /> {file.name}
+                        <Upload size={16} className='text-muted-foreground flex-shrink-0' />
+                        <span className="truncate">{file.name}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               </div>
 
-              <div className='flex items-center justify-between pt-4'>
-                <button className='bg-primary/80 hover:bg-primary/100 rounded-sm px-4 py-2 text-sm'>
+              <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-4'>
+                <button className='bg-primary/80 hover:bg-primary rounded-sm px-4 py-2 text-xs sm:text-sm font-medium text-primary-foreground transition-colors'>
                   Save Grade
                 </button>
-                <span className='text-muted-foreground text-xs'>
-                  Graded {format(new Date(), 'dd/MM/yyyy')}
+                <span className='text-muted-foreground text-xs text-center sm:text-left'>
+                  Graded {new Date().toLocaleDateString()}
                 </span>
               </div>
             </Card>
-          </Card>
+          </div>
         </main>
       </Card>
 
+      {/* Enrolled Students Table */}
       <Card>
         <CardHeader>
           <CardTitle>Enrolled Students</CardTitle>
           <CardDescription>A list of students currently enrolled in your courses.</CardDescription>
         </CardHeader>
 
-        {isLoading || isFetching ? (
-          <div className='mx-auto flex items-center justify-center'>
+        {isLoading ? (
+          <div className='mx-auto flex items-center justify-center p-8'>
             <Spinner />
           </div>
         ) : (
@@ -312,72 +340,32 @@ export default function StudentsPage({
               <TableHeader>
                 <TableRow>
                   <TableHead>Student</TableHead>
-                  <TableHead>Enrolled Courses</TableHead>
+                  <TableHead className="hidden sm:table-cell">Enrolled Courses</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {detailedStudents?.map((student: any) => (
                   <TableRow key={student?.uuid}>
                     <TableCell>
-                      <div className='flex items-center gap-4'>
-                        <Avatar>
+                      <div className='flex items-center gap-2 sm:gap-4'>
+                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                           <AvatarImage src={student?.avatarUrl ?? ''} />
                           <AvatarFallback>{student?.display_name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className='font-medium'>{student?.display_name}</p>
-                          <p className='text-muted-foreground text-sm'>{student?.username}</p>
+                          <p className='font-medium text-sm sm:text-base'>{student?.display_name}</p>
+                          <p className='text-muted-foreground text-xs sm:text-sm'>{student?.username}</p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <div className='space-y-2'>
-                        {/* {student.enrolledCourses.map((course: any, index: any) => (
-                        <div key={index}>
-                          <div className='flex justify-between'>
-                            <p className='font-medium'>{course.name}</p>
-                            <p className='text-muted-foreground text-sm'>{course.progress}%</p>
-                          </div>
-                          <Progress value={course.progress} />
-                        </div>
-                      ))} */}
+                        {/* Enrollment data would go here */}
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
-
-              {/* <TableBody>
-                {sampleEnrollmentData?.data?.content?.map(student => (
-                  <TableRow key={student.uuid}>
-                    <TableCell>
-                      <div className='flex items-center gap-4'>
-                        <Avatar>
-                          <AvatarImage src={''} />
-                          <AvatarFallback>{"Student name"}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className='font-medium'>{'student name'}</p>
-                          <p className='text-muted-foreground text-sm'>{student?.created_by}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='space-y-2'>
-                        <div>
-                          <div className='flex justify-between'>
-                            <p className='font-medium'>{'course.name'}</p>
-                            <p className='text-muted-foreground text-sm'>
-                              {student.progress_display}
-                            </p>
-                          </div>
-                          <Progress value={student.progress_percentage} />
-                        </div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody> */}
             </Table>
           </CardContent>
         )}

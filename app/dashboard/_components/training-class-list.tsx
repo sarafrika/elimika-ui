@@ -136,77 +136,100 @@ export function TrainingClassList({
 
   return (
     <div className='container mx-auto space-y-6'>
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
-          <CardHeader className=''>
-            <CardTitle className='text-muted-foreground text-sm'>Total Classes</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground">
+              Total Classes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-3xl font-semibold'>{classesWithCourseAndInstructor?.length}</div>
+            <div className="text-3xl font-semibold">
+              {classesWithCourseAndInstructor?.length}
+            </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className=''>
-            <CardTitle className='text-muted-foreground text-sm'>Active Classes</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground">
+              Active Classes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-3xl font-semibold'>{publishedClasses?.length}</div>
+            <div className="text-3xl font-semibold">
+              {publishedClasses?.length}
+            </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className=''>
-            <CardTitle className='text-muted-foreground text-sm'>Inactive Classes</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground">
+              Inactive Classes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-3xl font-semibold'>{draftClasses?.length}</div>
+            <div className="text-3xl font-semibold">
+              {draftClasses?.length}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters and Search */}
-      <div className='border-border-100/50 flex flex-wrap items-center gap-4 rounded-xl border p-4 shadow-sm backdrop-blur-sm'>
-        <div className='relative min-w-[300px] flex-1'>
-          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
+
+      <div className="flex flex-col gap-4 rounded-xl border border-border-100/50 p-4 shadow-sm backdrop-blur-sm lg:flex-row lg:items-center">
+        {/* Search */}
+        <div className="relative w-full lg:flex-1 lg:min-w-[300px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder='Search classes, courses, or instructors...'
+            placeholder="Search classes, courses, or instructors..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className='pl-10'
+            className="pl-10"
           />
         </div>
-        <div className='flex items-center gap-2'>
-          <SlidersHorizontal className='text-muted-foreground h-4 w-4' />
-          <Select value={locationFilter} onValueChange={setLocationFilter}>
-            <SelectTrigger className='w-[150px] bg-white/80'>
-              <SelectValue placeholder='Location' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>All Locations</SelectItem>
-              <SelectItem value='ONLINE'>Online</SelectItem>
-              <SelectItem value='IN_PERSON'>In Person</SelectItem>
-              <SelectItem value='HYBRID'>Hybrid</SelectItem>
-            </SelectContent>
-          </Select>
 
-          <Select value={activeFilter} onValueChange={setActiveFilter}>
-            <SelectTrigger className='w-[150px] bg-white/80'>
-              <SelectValue placeholder='Class Status' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>All Classes</SelectItem>
-              <SelectItem value='active'>Active</SelectItem>
-              <SelectItem value='inactive'>Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Filters */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
 
-          <div className='flex items-center gap-2'>
-            <Badge variant='outline' className='gap-1 px-3 py-1.5'>
-              <BookOpen className='h-3.5 w-3.5' />
-              {filteredClasses.length} Classes
-            </Badge>
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger className="w-full sm:w-[150px] bg-white/80">
+                <SelectValue placeholder="Location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                <SelectItem value="ONLINE">Online</SelectItem>
+                <SelectItem value="IN_PERSON">In Person</SelectItem>
+                <SelectItem value="HYBRID">Hybrid</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={activeFilter} onValueChange={setActiveFilter}>
+              <SelectTrigger className="w-full sm:w-[150px] bg-white/80">
+                <SelectValue placeholder="Class Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Classes</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {/* Count Badge */}
+          <Badge
+            variant="outline"
+            className="w-fit gap-1 px-3 py-1.5"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            {filteredClasses.length} Classes
+          </Badge>
         </div>
       </div>
+
 
       {/* Classes Grid */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
