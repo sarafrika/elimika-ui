@@ -1,0 +1,50 @@
+Progress: resolved 0, reused 1, downloaded 0, added 0
+ WARN  deprecated @types/pdfjs-dist@2.10.378: This is a stub types definition. pdfjs-dist provides its own type definitions, so you do not need this installed.
+Progress: resolved 395, reused 390, downloaded 0, added 0
+Progress: resolved 651, reused 581, downloaded 1, added 0
+Packages: +32 -2
+++++++++++++++++++++++++++++++++--
+Progress: resolved 655, reused 585, downloaded 1, added 31
+Progress: resolved 655, reused 585, downloaded 2, added 31
+Progress: resolved 655, reused 585, downloaded 2, added 32, done
+ WARN  Issues with peer dependencies found
+.
+├─┬ @udecode/plate-serializer-html 21.5.1
+│ ├── ✕ missing peer slate-history@>=0.93.0
+│ └─┬ @udecode/plate-common 21.5.1
+│   ├── ✕ missing peer slate-history@>=0.93.0
+│   ├─┬ @udecode/plate-utils 21.5.1
+│   │ ├── ✕ missing peer slate-history@>=0.93.0
+│   │ ├─┬ @udecode/plate-core 21.5.1
+│   │ │ ├── ✕ missing peer slate-history@>=0.93.0
+│   │ │ ├─┬ @udecode/slate 21.4.1
+│   │ │ │ └── ✕ missing peer slate-history@>=0.93.0
+│   │ │ └─┬ @udecode/slate-react 21.4.1
+│   │ │   ├── ✕ missing peer slate-history@>=0.93.0
+│   │ │   └─┬ @udecode/slate 21.4.1
+│   │ │     └── ✕ missing peer slate-history@>=0.93.0
+│   │ ├─┬ @udecode/slate 21.4.1
+│   │ │ └── ✕ missing peer slate-history@>=0.93.0
+│   │ ├─┬ @udecode/slate-react 21.4.1
+│   │ │ └── ✕ missing peer slate-history@>=0.93.0
+│   │ └─┬ @udecode/slate-utils 21.4.1
+│   │   ├── ✕ missing peer slate-history@>=0.93.0
+│   │   └─┬ @udecode/slate 21.4.1
+│   │     └── ✕ missing peer slate-history@>=0.93.0
+│   ├─┬ @udecode/slate-react 21.4.1
+│   │ └── ✕ missing peer slate-history@>=0.93.0
+│   ├─┬ @udecode/plate-core 21.5.1
+│   │ └── ✕ missing peer slate-history@>=0.93.0
+│   ├─┬ @udecode/slate-utils 21.4.1
+│   │ └── ✕ missing peer slate-history@>=0.93.0
+│   └─┬ @udecode/slate 21.4.1
+│     └── ✕ missing peer slate-history@>=0.93.0
+└─┬ next-auth 5.0.0-beta.29
+  └── ✕ unmet peer next@"^14.0.0-0 || ^15.0.0-0": found 16.0.8
+Peer dependencies that should be installed:
+  slate-history@>=0.93.0
+
+dependencies:
++ mapbox-gl 3.18.0
+
+Done in 5.5s using pnpm v10.18.1

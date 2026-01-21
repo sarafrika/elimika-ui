@@ -1,0 +1,16 @@
+Progress: resolved 0, reused 1, downloaded 0, added 0
+ WARN  deprecated @types/pdfjs-dist@2.10.378: This is a stub types definition. pdfjs-dist provides its own type definitions, so you do not need this installed.
+Progress: resolved 107, reused 107, downloaded 0, added 0
+Progress: resolved 355, reused 264, downloaded 0, added 0
+Packages: +8 -7
+++++++++-------
+Progress: resolved 656, reused 588, downloaded 0, added 8, done
+ WARN  Issues with peer dependencies found
+.
+└─┬ next-auth 5.0.0-beta.29
+  └── ✕ unmet peer next@"^14.0.0-0 || ^15.0.0-0": found 16.0.8
+
+dependencies:
++ slate-history 0.113.1
+
+Done in 3.9s using pnpm v10.18.1

@@ -391,6 +391,8 @@ import {
   getOrder,
   searchCatalogue,
   resolveByCourseOrClass,
+  getClassSchedulingConflicts,
+  getClassSchedule,
   getEnrollmentsForClass,
   getClassDefinitionsForOrganisation,
   getClassDefinitionsForInstructor,
@@ -1426,6 +1428,12 @@ import type {
   SearchCatalogueError,
   SearchCatalogueResponse,
   ResolveByCourseOrClassData,
+  GetClassSchedulingConflictsData,
+  GetClassSchedulingConflictsError,
+  GetClassSchedulingConflictsResponse,
+  GetClassScheduleData,
+  GetClassScheduleError,
+  GetClassScheduleResponse,
   GetEnrollmentsForClassData,
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForInstructorData,
@@ -19290,6 +19298,146 @@ export const resolveByCourseOrClassOptions = (options?: Options<ResolveByCourseO
     },
     queryKey: resolveByCourseOrClassQueryKey(options),
   });
+};
+
+export const getClassSchedulingConflictsQueryKey = (
+  options: Options<GetClassSchedulingConflictsData>
+) => createQueryKey('getClassSchedulingConflicts', options);
+
+/**
+ * Get class scheduling conflicts
+ */
+export const getClassSchedulingConflictsOptions = (
+  options: Options<GetClassSchedulingConflictsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassSchedulingConflicts({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassSchedulingConflictsQueryKey(options),
+  });
+};
+
+export const getClassSchedulingConflictsInfiniteQueryKey = (
+  options: Options<GetClassSchedulingConflictsData>
+): QueryKey<Options<GetClassSchedulingConflictsData>> =>
+  createQueryKey('getClassSchedulingConflicts', options, true);
+
+/**
+ * Get class scheduling conflicts
+ */
+export const getClassSchedulingConflictsInfiniteOptions = (
+  options: Options<GetClassSchedulingConflictsData>
+) => {
+  return infiniteQueryOptions<
+    GetClassSchedulingConflictsResponse,
+    GetClassSchedulingConflictsError,
+    InfiniteData<GetClassSchedulingConflictsResponse>,
+    QueryKey<Options<GetClassSchedulingConflictsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetClassSchedulingConflictsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetClassSchedulingConflictsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getClassSchedulingConflicts({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getClassSchedulingConflictsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getClassScheduleQueryKey = (options: Options<GetClassScheduleData>) =>
+  createQueryKey('getClassSchedule', options);
+
+/**
+ * Get class schedule
+ */
+export const getClassScheduleOptions = (options: Options<GetClassScheduleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassSchedule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassScheduleQueryKey(options),
+  });
+};
+
+export const getClassScheduleInfiniteQueryKey = (
+  options: Options<GetClassScheduleData>
+): QueryKey<Options<GetClassScheduleData>> => createQueryKey('getClassSchedule', options, true);
+
+/**
+ * Get class schedule
+ */
+export const getClassScheduleInfiniteOptions = (options: Options<GetClassScheduleData>) => {
+  return infiniteQueryOptions<
+    GetClassScheduleResponse,
+    GetClassScheduleError,
+    InfiniteData<GetClassScheduleResponse>,
+    QueryKey<Options<GetClassScheduleData>>,
+    number | Pick<QueryKey<Options<GetClassScheduleData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetClassScheduleData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getClassSchedule({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getClassScheduleInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getEnrollmentsForClassQueryKey = (options: Options<GetEnrollmentsForClassData>) =>
