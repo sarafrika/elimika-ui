@@ -405,13 +405,6 @@ export default {
       url: '/dashboard/settings',
       icon: Settings,
     },
-    // to be removed
-    {
-      title: 'Catalogue',
-      url: '/dashboard/catalogue',
-      icon: ShoppingBag,
-    },
-
   ],
   admin: [
     {
