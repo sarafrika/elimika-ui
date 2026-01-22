@@ -294,22 +294,23 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
             setCreatingDraft(false);
             setActiveLessonId(data?.data?.uuid as string);
           },
-          onError: data => {
-            // @ts-expect-error
-            if (data?.error) {
-              // @ts-expect-error
-              const errorMessage = (data.error as string) || data?.message;
+          onError: (data: any) => {
+            const error = data?.error;
 
-              if (
-                typeof errorMessage === 'string' &&
-                errorMessage.includes('lessons_course_uuid_lesson_number_key')
-              ) {
+            if (error?.lesson_number) {
+              if (error.lesson_number.toLowerCase().includes('duplicate')) {
                 toast.error('Duplicate lesson number found.');
               } else {
-                toast.error('An unexpected error occurred.');
+                toast.error(error.lesson_number);
               }
+              // return;
             }
+
+            toast.error(
+              `${data?.message ?? 'An error occurred.'}. Check for duplicate lesson numbers.`
+            );
           },
+
         }
       );
     } else {
@@ -508,7 +509,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
   };
 
   return (
-    <div className='mb-20 flex h-auto'>
+    <div className='mb-10 flex h-auto'>
       <aside className='w-1/4 border-r border-border px-2 py-4'>
         <Button className="w-full mb-4" onClick={addLessonDraft}>
           <PlusCircle className="w-4 h-4" />

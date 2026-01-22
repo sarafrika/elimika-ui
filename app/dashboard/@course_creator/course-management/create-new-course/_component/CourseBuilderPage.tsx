@@ -31,18 +31,16 @@ import {
   BookOpen,
   CheckCircle,
   ClipboardList,
-  Eye,
-  FileQuestion,
   GraduationCap,
   Palette,
-  SlidersHorizontal,
+  SlidersHorizontal
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
-import { AssignmentDialog, AssignmentList } from '../../../_components/assignment-management-form';
+import { AssignmentDialog } from '../../../_components/assignment-management-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseComplianceForm } from '../../../_components/course-compliance-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
@@ -51,19 +49,16 @@ import { CoursePricingForm } from '../../../_components/course-pricing-form';
 import type { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
 import { LessonCreationForm } from '../../../_components/lesson-creation-form';
 import {
-  AssessmentDialog,
   type ContentFormValues,
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  type LessonFormValues,
+  type LessonFormValues
 } from '../../../_components/lesson-management-form';
 import {
   CourseCreatorEmptyState,
-  CourseCreatorLoadingState,
-  CustomLoadingState,
+  CourseCreatorLoadingState
 } from '../../../_components/loading-state';
-import { QuizDialog, QuizList } from '../../../_components/quiz-management-form';
 
 export default function CourseBuilderPage() {
   const router = useRouter();
@@ -452,10 +447,9 @@ export default function CourseBuilderPage() {
             <StepperTrigger step={4} title='Branding' icon={Palette} />
             <StepperTrigger step={5} title='Pricing' icon={BadgeDollarSign} />
             <StepperTrigger step={6} title='Compliance' icon={BadgeCheck} />
-            <StepperTrigger step={7} title='Review' icon={Eye} />
-            {/* /////// */}
-            <StepperTrigger step={8} title='Quizzes' icon={FileQuestion} />
-            <StepperTrigger step={9} title='Assignment' icon={ClipboardList} />
+            {/* <StepperTrigger step={7} title='Review' icon={Eye} /> */}
+            {/* <StepperTrigger step={8} title='Quizzes' icon={FileQuestion} />
+            <StepperTrigger step={9} title='Assignment' icon={ClipboardList} /> */}
           </StepperList>
 
           <div className='w-full'>
@@ -486,7 +480,7 @@ export default function CourseBuilderPage() {
               description='Add skills and learning materials for your course'
               showNavigation
               nextButtonText='Continue to Assessment'
-              previousButtonText='Back to Details'
+              previousButtonText='Back to Course Set Up'
             >
               <div className='space-y-4 p-0'>
                 <LessonCreationForm
@@ -596,8 +590,8 @@ export default function CourseBuilderPage() {
               title='Course Assessment'
               description='Create assessment rubrics to evaluate student performance'
               showNavigation
-              nextButtonText='Continue to Quizzes'
-              previousButtonText='Back to Skills & Resources'
+              nextButtonText='Continue to Rules'
+              previousButtonText='Back to Lessons'
             >
               <AssessmentCreationForm
                 course={course}
@@ -613,15 +607,15 @@ export default function CourseBuilderPage() {
               title='Course Learning Rules'
               description='Define the rules learners must follow to progress and complete the course.'
               showNavigation
-              nextButtonText='Continue to Assignment'
-              previousButtonText='Back to Assessment'
+              nextButtonText='Continue to Branding'
+              previousButtonText='Back to Rules'
             >
               <CourseLearningRulesForm
                 ref={formRef}
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={resolveId as string}
-                initialValues={courseInitialValues as any}
+                initialValues={course?.data as any}
                 successResponse={data => {
                   setCreatedCourseId(data?.uuid);
                 }}
@@ -633,15 +627,15 @@ export default function CourseBuilderPage() {
               title='Branding'
               description='Add visual elements to make your course more appealing'
               showNavigation
-              nextButtonText='Continue to Course Licensing'
-              previousButtonText='Back to Asessment'
+              nextButtonText='Continue to Pricing'
+              previousButtonText='Back to Rules'
             >
               <CourseBrandingForm
                 ref={formRef}
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={resolveId as string}
-                initialValues={courseInitialValues as any}
+                initialValues={course?.data as any}
                 successResponse={data => {
                   setCreatedCourseId(data?.uuid);
                 }}
@@ -653,15 +647,15 @@ export default function CourseBuilderPage() {
               title='Pricing'
               description='Set the price, discounts, and access options for your course.'
               showNavigation
-              nextButtonText='Continue to Course Licensing'
-              previousButtonText='Back to Asessment'
+              nextButtonText='Continue to Compliance'
+              previousButtonText='Back to Branding'
             >
               <CoursePricingForm
                 ref={formRef}
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={resolveId as string}
-                initialValues={courseInitialValues as any}
+                initialValues={course?.data as any}
                 successResponse={data => {
                   setCreatedCourseId(data?.uuid);
                 }}
@@ -672,16 +666,16 @@ export default function CourseBuilderPage() {
               step={6}
               title='Course Compliance & Q?A'
               description='Confirm that all required compliance and quality checks have been completed.'
-              showNavigation
-              nextButtonText='Continue to Review'
-              previousButtonText='Back to Branding'
+              // showNavigation
+              // nextButtonText='Continue to Review'
+              previousButtonText='Back to Pricing'
             >
               <CourseComplianceForm
                 ref={formRef}
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={resolveId as string}
-                initialValues={courseInitialValues as any}
+                initialValues={course?.data as any}
                 successResponse={(data: any) => {
                   setCreatedCourseId(data?.uuid);
                 }}
@@ -824,8 +818,7 @@ export default function CourseBuilderPage() {
               )}
             </StepperContent>
 
-            {/* //// */}
-            <StepperContent
+            {/* <StepperContent
               step={8}
               title='Course Quizzes'
               description='Create quizzes for each skill to test student understanding'
@@ -853,9 +846,9 @@ export default function CourseBuilderPage() {
                   courseId={resolveId}
                 />
               </div>
-            </StepperContent>
+            </StepperContent> */}
 
-            <StepperContent
+            {/* <StepperContent
               step={9}
               title='Course Assignments'
               description='Create assignments for each skill to reinforce learning through practice'
@@ -893,7 +886,7 @@ export default function CourseBuilderPage() {
                   onCancel={() => setAddAssessmentModalOpen(false)}
                 />
               </div>
-            </StepperContent>
+            </StepperContent> */}
           </div>
         </StepperRoot>
       </div>

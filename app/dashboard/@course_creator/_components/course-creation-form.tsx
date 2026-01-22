@@ -37,12 +37,14 @@ import { useStepper } from '@/components/ui/stepper';
 import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
+import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { createCategory, updateCourse } from '@/services/client';
 import {
   createCourseMutation,
   getAllCategoriesOptions,
   getAllCategoriesQueryKey,
   getCourseByUuidQueryKey,
+  searchCoursesQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -57,7 +59,6 @@ import {
 } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
 import {
   type CourseCreationFormValues,
   courseCreationSchema,
@@ -392,7 +393,14 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               queryClient.invalidateQueries({
                 queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
               });
-
+              queryClient.invalidateQueries({
+                queryKey: searchCoursesQueryKey({
+                  query: {
+                    searchParams: { course_creator_uuid_eq: resolvedCourseCreatorUuid },
+                    pageable: {},
+                  },
+                }),
+              });
               if (typeof successResponse === 'function') {
                 // @ts-expect-error
                 successResponse(data?.data);
@@ -499,56 +507,58 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   </SelectContent>
                 </Select>
                 {/* Dialog to add new category */}
-                <Dialog>
-                  <DialogTrigger className='hidden sm:flex' asChild>
-                    <Button variant='outline' className='hidden sm:flex'>
-                      Add new
-                    </Button>
-                  </DialogTrigger>
-
-                  <DialogTrigger className='flex sm:hidden' asChild>
-                    <Button variant='outline' className='flex sm:hidden'>
-                      <Plus />
-                    </Button>
-                  </DialogTrigger>
-
-                  <DialogContent className='w-full sm:max-w-[350px]'>
-                    <DialogHeader>
-                      <DialogTitle>Add new category</DialogTitle>
-                      <DialogDescription>Add a new category here.</DialogDescription>
-                    </DialogHeader>
-                    <div className='flex w-full items-center gap-2 py-2'>
-                      <div className='grid w-full gap-3'>
-                        <Label htmlFor='category-name'>Category Name</Label>
-                        <Input
-                          id='category-name'
-                          name='category'
-                          value={categoryInput}
-                          onChange={e => setCategoryInput(e.target.value)}
-                          autoFocus
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter className='justify-end'>
-                      <Button
-                        type='button'
-                        className='min-w-[75px] hidden'
-                        onClick={() => {
-                          if (categoryInput?.trim()) {
-                            createCategoryMutation({ body: { name: categoryInput.trim() } });
-                          }
-                        }}
-                      >
-                        {createCategoryPending ? <Spinner /> : 'Add'}
+                <div className='hidden'>
+                  <Dialog>
+                    <DialogTrigger className='hidden sm:flex' asChild>
+                      <Button variant='outline' className='hidden sm:flex'>
+                        Add new
                       </Button>
+                    </DialogTrigger>
 
-                      {/* Hidden button that will close the dialog when clicked */}
-                      <DialogClose asChild>
-                        <button ref={dialogCloseRef} style={{ display: 'none' }} />
-                      </DialogClose>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                    <DialogTrigger className='flex sm:hidden' asChild>
+                      <Button variant='outline' className='flex sm:hidden'>
+                        <Plus />
+                      </Button>
+                    </DialogTrigger>
+
+                    <DialogContent className='w-full sm:max-w-[350px]'>
+                      <DialogHeader>
+                        <DialogTitle>Add new category</DialogTitle>
+                        <DialogDescription>Add a new category here.</DialogDescription>
+                      </DialogHeader>
+                      <div className='flex w-full items-center gap-2 py-2'>
+                        <div className='grid w-full gap-3'>
+                          <Label htmlFor='category-name'>Category Name</Label>
+                          <Input
+                            id='category-name'
+                            name='category'
+                            value={categoryInput}
+                            onChange={e => setCategoryInput(e.target.value)}
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter className='justify-end'>
+                        <Button
+                          type='button'
+                          className='min-w-[75px]'
+                          onClick={() => {
+                            if (categoryInput?.trim()) {
+                              createCategoryMutation({ body: { name: categoryInput.trim() } });
+                            }
+                          }}
+                        >
+                          {createCategoryPending ? <Spinner /> : 'Add'}
+                        </Button>
+
+                        {/* Hidden button that will close the dialog when clicked */}
+                        <DialogClose asChild>
+                          <button ref={dialogCloseRef} style={{ display: 'none' }} />
+                        </DialogClose>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
             </FormItem>
 
@@ -665,39 +675,41 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           {/* Course Duration */}
-          <FormSection title='Course Duration' description='Set the time duration for your course'>
-            <div className='space-y-0 hidden'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                <FormField
-                  control={form.control}
-                  name='duration_hours'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration Hours</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          <div className='hidden'>
+            <FormSection title='Course Duration' description='Set the time duration for your course'>
+              <div className='space-y-0'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+                  <FormField
+                    control={form.control}
+                    name='duration_hours'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Duration Hours</FormLabel>
+                        <FormControl>
+                          <Input type='number' min='0' step='1' {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name='duration_minutes'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration Minutes</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name='duration_minutes'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Duration Minutes</FormLabel>
+                        <FormControl>
+                          <Input type='number' min='0' step='1' {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-            </div>
-          </FormSection>
+            </FormSection>
+          </div>
 
           {/* Difficulty Level */}
           <FormSection

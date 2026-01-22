@@ -15,6 +15,7 @@ import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Separator } from '../../../../components/ui/separator';
+import Spinner from '../../../../components/ui/spinner';
 import { Switch } from '../../../../components/ui/switch';
 import { Textarea } from '../../../../components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../components/ui/tooltip';
@@ -50,6 +51,8 @@ export type AssignmentCreationFormProps = {
   deleteAssignmentForLesson: (assignmentUuid: string) => Promise<void>;
   addAssignmentQuestion: (payload: any) => Promise<any>;
   addQuestionOption: (payload: any) => Promise<any>;
+
+  isPending: boolean
 };
 
 const SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
@@ -77,6 +80,8 @@ export const AssignmentCreationForm = ({
   deleteAssignmentForLesson,
   addAssignmentQuestion,
   addQuestionOption,
+
+  isPending
 }: AssignmentCreationFormProps) => {
 
   const { data: rubrics, isLoading: rubricsIsLoading } = useQuery(
@@ -215,47 +220,55 @@ export const AssignmentCreationForm = ({
       {/* Lessons */}
       <div className='rounded-xl border bg-card p-4 shadow-sm'>
         <h3 className='mb-4 text-lg font-semibold text-foreground'>Lessons</h3>
-        <ul className='space-y-2 gap-2 flex flex-col'>
-          {lessons?.content
-            ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
-            .map((lesson: any) => (
-              <li
-                key={lesson.uuid}
-                onClick={() => {
-                  setSelectedLessonId(lesson.uuid);
-                  setSelectedLesson(lesson);
-                  // Clear the selected assignment when changing lessons
-                  setSelectedAssignmentUuid(null);
-                  // Reset assignment form data
-                  setAssignmentData({
-                    title: '',
-                    description: '',
-                    instructions: '',
-                    max_points: 0,
-                    rubric_uuid: '',
-                    status: 'DRAFT',
-                    active: false,
-                    due_date: '',
-                    assignment_category: '',
-                    submission_types: [],
-                    lesson_uuid: '',
-                  });
-                  onSelectAssignment?.(null);
 
-                }}
-                className={cn(
-                  'flex flex-row items-start gap-2 cursor-pointer rounded-lg px-3 py-2.5 transition-all duration-200 font-medium text-sm',
-                  selectedLessonId === lesson.uuid
-                    ? 'bg-primary/10 border-2 border-primary text-primary shadow-sm'
-                    : 'hover:bg-muted border-2 border-transparent text-foreground'
-                )}
-              >
-                <p>{lesson.lesson_number}.</p>
-                <p>{lesson.title}</p>
-              </li>
-            ))}
-        </ul>
+        {lessons?.content?.length ? (
+          <ul className='space-y-2 gap-2 flex flex-col'>
+            {lessons.content
+              .sort((a: any, b: any) => a.lesson_number - b.lesson_number)
+              .map((lesson: any) => (
+                <li
+                  key={lesson.uuid}
+                  onClick={() => {
+                    setSelectedLessonId(lesson.uuid);
+                    setSelectedLesson(lesson);
+                    handleAssignmentSelect(null)
+                    setSelectedAssignmentUuid(null)
+
+                    // Reset assignment form data when changing lessons
+                    setAssignmentData({
+                      title: '',
+                      description: '',
+                      instructions: '',
+                      max_points: 0,
+                      rubric_uuid: '',
+                      status: 'DRAFT',
+                      active: false,
+                      due_date: '',
+                      assignment_category: '',
+                      submission_types: [],
+                      lesson_uuid: '',
+                    });
+                  }}
+                  className={cn(
+                    'flex flex-row items-start gap-2 cursor-pointer rounded-lg px-3 py-2.5 transition-all duration-200 font-medium text-sm',
+                    selectedLessonId === lesson.uuid
+                      ? 'bg-primary/10 border-2 border-primary text-primary shadow-sm'
+                      : 'hover:bg-muted border-2 border-transparent text-foreground'
+                  )}
+                >
+                  <p>{lesson.lesson_number}.</p>
+                  <p className='truncate'>{lesson.title}</p>
+                </li>
+              ))}
+          </ul>
+        ) : (
+          <div className='flex flex-col items-center justify-center py-10 text-center text-sm text-muted-foreground border border-dashed rounded-lg'>
+            <p>No lessons available yet</p>
+            <p className='mt-1'>Add lessons to start creating assignments</p>
+          </div>
+        )}
       </div>
+
 
       {/* Assignment creation form */}
       {!selectedLessonId ? (
@@ -267,77 +280,80 @@ export const AssignmentCreationForm = ({
         </div>
       ) : (
         <div className='col-span-3 space-y-6 rounded-xl border bg-card p-6 shadow-sm'>
-          <div className='border-b pb-4'>
-            <h3 className='text-lg font-bold text-foreground uppercase'>
+          <div className='border-b pb-4 flex items-center justify-between gap-4'>
+            <h3 className='text-lg font-bold text-foreground uppercase truncate max-w-[70%]'>
               ASSIGNMENT: {selectedLesson?.title || 'Select a lesson'}
             </h3>
+
+            <Button
+              size="sm"
+              onClick={() => {
+                handleAssignmentSelect('');
+                setSelectedAssignmentUuid('')
+              }}
+            >
+              <PlusCircle size={16} /> Create Assignment
+            </Button>
           </div>
 
           <div className="flex flex-col gap-2">
-            <div className='flex flex-row items-center justify-between' >
-              <label className="text-sm font-medium text-foreground">
-                Select Existing Assignment
-              </label>
-
-              {/* Create button */}
-              <Button
-                size="sm"
-                className="self-end"
-                onClick={() => handleAssignmentSelect(null)}
-              >
-                <PlusCircle size={16} /> Create Assignment
-              </Button>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              <div className="flex flex-col">
+                <h4 className="text-base font-semibold text-foreground">
+                  Existing Assignments
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Select an assignment   to edit or create a new one.
+                </p>
+              </div>
             </div>
 
-            {/* Assignments dropdown */}
-            <Select
-              value={selectedAssignmentUuid ?? undefined}
-              onValueChange={value => {
-                setSelectedAssignmentUuid(value);
-                handleAssignmentSelect(value);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select an assignment" />
-              </SelectTrigger>
-
-              <SelectContent>
-                <p>Select assignment</p>
-                {assignments?.data?.content?.length ? (
-                  assignments.data.content
-                    .filter((a: any) => a.assignment_category)
-                    .map((assignment: any) => (
-                      <SelectItem key={assignment.uuid} value={assignment.uuid}>
-                        {assignment.title}
-                      </SelectItem>
-                    ))
-                ) : (
-                  <div className="px-3 py-2 text-sm text-muted-foreground text-center">
-                    No assignments created yet
-                  </div>
-                )}
-              </SelectContent>
-            </Select>
+            {/* Assignments list */}
+            {assignments?.data?.content?.length ? (
+              <ul className="flex flex-col gap-2">
+                {assignments.data.content
+                  .filter((a: any) => a.assignment_category)
+                  .map((assignment: any, idx) => (
+                    <li
+                      key={assignment.uuid}
+                      onClick={() => {
+                        setSelectedAssignmentUuid(assignment.uuid);
+                        handleAssignmentSelect(assignment.uuid);
+                      }}
+                      className={cn(
+                        'cursor-pointer truncate rounded-md px-4 py-2 text-sm font-medium border transition-all',
+                        selectedAssignmentUuid === assignment.uuid
+                          ? 'bg-primary/20 border-primary text-primary'
+                          : 'bg-primary/5 hover:bg-muted border-transparent'
+                      )}
+                      title={assignment.title}
+                    >
+                      {idx + 1} -  {assignment.title}
+                    </li>
+                  ))}
+              </ul>
+            ) : (
+              <div className="px-3 py-4 text-sm text-muted-foreground text-center border border-dashed rounded-lg">
+                No assignments created yet
+              </div>
+            )}
           </div>
 
-          {assignments?.data?.content?.length === 0 ? (
-            <div className="min-h-[300px] flex flex-col items-center gap-6 justify-center px-3 py-2 text-sm text-muted-foreground text-center">
-              <p>
-                No assignments created yet
+
+          {assignmentUuid === null && (
+            <div className="flex flex-col items-center justify-center text-center gap-1 py-6 rounded-lg border border-dashed">
+              <p className="text-sm font-medium text-foreground">
+                No assignment selected yet
               </p>
-              <Button
-                size="sm"
-                variant={"secondary"}
-                onClick={() => handleAssignmentSelect(null)}
-              >
-                <PlusCircle size={16} /> Create Assignment
-              </Button>
+              <p className="text-xs text-muted-foreground">
+                Select an existing assignment or create a new one to continue.
+              </p>
             </div>
-          ) : (
+          )}
+
+          {assignmentUuid !== null &&
             <div className='flex flex-col gap-6'>
-              <p>
-                {selectedAssignmentUuid ?? "Nothing to show"}
-              </p>
               <Separator />
               <div className='flex flex-col gap-2'>
                 <Label className='text-sm font-medium text-foreground'>Assignment Title</Label>
@@ -501,18 +517,20 @@ export const AssignmentCreationForm = ({
               <div className='flex gap-4 items-end justify-end pt-2'>
                 <div className='flex justify-end self-end'>
                   {assignmentUuid && (
-                    <Button variant='destructive' onClick={handleDeleteAssignment}>
-                      Delete Assignment
+                    <Button size={"sm"} variant='destructive' onClick={handleDeleteAssignment}>
+                      {isPending ? <Spinner /> :
+                        <Trash2 />
+                      }
                     </Button>
                   )}
                 </div>
-                <Button onClick={handleSaveAssignment}>
-                  {assignmentUuid ? 'Update Assignment' : 'Save Assignment'}
+                <Button size={"sm"} onClick={handleSaveAssignment}>
+                  {isPending ? "Saving..." : <>
+                    {assignmentUuid ? 'Update Assignment' : 'Save Assignment'}
+                  </>}
                 </Button>
               </div>
-            </div>
-          )}
-
+            </div>}
 
           {/* Only show questions UI if assignmentUuid exists */}
           {assignmentUuid && (

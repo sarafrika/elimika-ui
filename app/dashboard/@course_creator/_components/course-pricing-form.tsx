@@ -29,19 +29,19 @@ import {
   createCourseMutation,
   getAllCategoriesOptions,
   getAllCategoriesQueryKey,
-  getCourseByUuidQueryKey,
+  getCourseByUuidQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import z from 'zod';
 import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
 import { FormSection } from './course-creation-form';
 import {
   type CourseCreationFormValues,
-  courseCreationSchema,
-  CURRENCIES,
+  CURRENCIES
 } from './course-creation-types';
 
 export type CourseFormProps = {
@@ -56,6 +56,33 @@ export type CourseFormRef = {
   submit: () => void;
 };
 
+export const coursePricingSchema = z.object({
+  is_free: z.boolean().default(false),
+  currency: z.string().optional(),
+  minimum_training_fee: z.coerce.number().min(0, 'Minimum training fee must be zero or greater'),
+  creator_share_percentage: z.coerce
+    .number()
+    .min(0, 'Creator share must be at least 0%')
+    .max(100, 'Creator share cannot exceed 100%'),
+  instructor_share_percentage: z.coerce
+    .number()
+    .min(0, 'Instructor share must be at least 0%')
+    .max(100, 'Instructor share cannot exceed 100%'),
+  revenue_share_notes: z.string().max(500).optional(),
+  coupon_code: z.string().optional(),
+  access_duration: z.string().optional(),
+  org_access: z
+    .object({
+      educational: z.boolean().optional(),
+      corporate: z.boolean().optional(),
+      non_profit: z.boolean().optional(),
+      individual: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+type coursePricingFormValues = z.infer<typeof coursePricingSchema>;
+
 export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
   function CoursePricingForm(
     { showSubmitButton, initialValues, editingCourseId, courseId, successResponse },
@@ -63,28 +90,23 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
   ) {
     const dialogCloseRef = useRef<HTMLButtonElement>(null);
 
-    const form = useForm<CourseCreationFormValues>({
-      resolver: zodResolver(courseCreationSchema),
+    const form = useForm<coursePricingFormValues>({
+      resolver: zodResolver(coursePricingSchema),
       defaultValues: {
-        name: '',
-        description: '',
         is_free: false,
-        objectives: '',
-        categories: [],
-        class_limit: 1,
-        prerequisites: '',
-        age_lower_limit: 1,
-        age_upper_limit: 1,
-        thumbnail_url: '',
-        banner_url: '',
-        intro_video_url: '',
-        duration_hours: 0,
-        duration_minutes: 1,
+        currency: 'KES',
         minimum_training_fee: 0,
         creator_share_percentage: 50,
         instructor_share_percentage: 50,
         revenue_share_notes: '',
-        training_requirements: [],
+        coupon_code: '',
+        access_duration: '',
+        org_access: {
+          educational: false,
+          corporate: false,
+          non_profit: false,
+          individual: true,
+        },
         ...initialValues,
       },
       mode: 'onChange',
@@ -98,24 +120,6 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
         });
       }
     }, [initialValues, form]);
-
-    const {
-      // fields: categoryFields,
-      append: appendCategory,
-      remove: removeCategory,
-    } = useFieldArray({
-      control: form.control,
-      name: 'categories',
-    });
-
-    const {
-      fields: trainingRequirementFields,
-      append: appendTrainingRequirement,
-      remove: removeTrainingRequirement,
-    } = useFieldArray({
-      control: form.control,
-      name: 'training_requirements',
-    });
 
     const queryClient = useQueryClient();
     const instructor = useInstructor();
@@ -198,7 +202,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     }, [creatorShare, form]);
 
-    const onSubmit = (data: CourseCreationFormValues) => {
+    const onSubmit = (data: coursePricingFormValues) => {
       const resolvedCourseCreatorUuid = authorUuid;
 
       if (!resolvedCourseCreatorUuid) {
@@ -214,54 +218,27 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
         toast.error('Creator and instructor shares must add up to 100%.');
         return;
       }
-
-      const trainingRequirementsPayload =
-        data?.training_requirements?.map(req => ({
-          uuid: req.uuid,
-          requirement_type: req.requirement_type,
-          name: req.name,
-          description: req.description || undefined,
-          quantity:
-            typeof req.quantity === 'number' && !Number.isNaN(req.quantity)
-              ? req.quantity
-              : undefined,
-          unit: req.unit || undefined,
-          provided_by: req.provided_by,
-          is_mandatory: !!req.is_mandatory,
-          course_uuid: editingCourseId ?? '',
-        })) ?? [];
-
       if (editingCourseId) {
         const editBody = {
-          total_duration_display: '',
-          created_by: authorName,
-          updated_by: authorName,
-          course_creator_uuid: resolvedCourseCreatorUuid,
-          name: data?.name,
-          description: data?.description,
-          objectives: data?.objectives,
-          thumbnail_url: data?.thumbnail_url,
-          banner_url: data?.banner_url,
-          intro_video_url: data?.intro_video_url,
-          category_uuids: data?.categories,
-          difficulty_uuid: data?.difficulty,
-          prerequisites: data?.prerequisites,
-          duration_hours: data?.duration_hours,
-          duration_minutes: data?.duration_minutes,
-          class_limit: data?.class_limit,
+          course_creator_uuid: authorUuid,
+          status: 'draft',
+          ...initialValues,
+          is_free: data?.is_free,
+          currency: data?.currency,
           minimum_training_fee: data?.minimum_training_fee,
           creator_share_percentage: data?.creator_share_percentage,
           instructor_share_percentage: data?.instructor_share_percentage,
           revenue_share_notes: data?.revenue_share_notes,
-          training_requirements: trainingRequirementsPayload,
-          status: 'draft',
-          active: false,
-          is_free: data?.is_free,
-          is_published: false,
-          is_draft: true,
-          age_lower_limit: data?.age_lower_limit,
-          age_upper_limit: data?.age_upper_limit,
+          coupon_code: data?.coupon_code,
+          access_duration: data?.access_duration,
+          org_access: {
+            educational: data?.org_access?.educational,
+            corporate: data?.org_access?.corporate,
+            non_profit: data?.org_access?.non_profit,
+            individual: data?.org_access?.individual,
+          },
         };
+
 
         updateCourseMutation(
           { body: editBody as any, uuid: editingCourseId },
@@ -271,13 +248,13 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
               const errorObj = data?.error;
 
               if (respObj) {
-                toast.success(data?.data?.message);
+                toast.success(data?.data?.message || "Course updated successfully");
                 // if (typeof successResponse === "function") {
                 //   // @ts-expect-error
                 //   successResponse(data?.data)
                 // }
 
-                setActiveStep(1);
+                setActiveStep(6);
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
                 });
@@ -304,61 +281,11 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
           }
         );
       }
-
-      if (!editingCourseId) {
-        createCourse(
-          {
-            body: {
-              total_duration_display: '',
-              updated_by: authorName,
-              created_by: authorName,
-              course_creator_uuid: resolvedCourseCreatorUuid,
-              name: data?.name,
-              description: data?.description,
-              objectives: data?.objectives,
-              category_uuids: data?.categories,
-              difficulty_uuid: data?.difficulty,
-              prerequisites: data?.prerequisites,
-              duration_hours: 0,
-              duration_minutes: 0,
-              class_limit: data?.class_limit,
-              minimum_training_fee: data?.minimum_training_fee,
-              creator_share_percentage: data?.creator_share_percentage,
-              instructor_share_percentage: data?.instructor_share_percentage,
-              revenue_share_notes: data?.revenue_share_notes,
-              training_requirements: trainingRequirementsPayload,
-              thumbnail_url: '',
-              banner_url: '',
-              intro_video_url: '',
-              status: 'draft',
-              active: false,
-              is_free: data?.is_free,
-              is_published: false,
-              is_draft: true,
-              age_lower_limit: data?.age_lower_limit,
-              age_upper_limit: data?.age_upper_limit,
-            },
-          },
-          {
-            onError(error, _variables, _context) {
-              toast.error(error?.message);
-            },
-            onSuccess: data => {
-              toast.success('Course created successfully');
-              setActiveStep(1);
-              queryClient.invalidateQueries({
-                queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
-              });
-
-              if (typeof successResponse === 'function') {
-                // @ts-expect-error
-                successResponse(data?.data);
-              }
-            },
-          }
-        );
-      }
     };
+
+    const onError = (error: any) => {
+      toast.error(error)
+    }
 
     useImperativeHandle(ref, () => ({
       submit: () => form.handleSubmit(onSubmit)(),
@@ -377,7 +304,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
     return (
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(onSubmit, onError)}
           className='bg-card space-y-6 rounded-[32px] transition'
         >
           {/* Pricing */}
@@ -655,13 +582,6 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
             <div className='xxs:flex-col flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>
               <Button type='submit' className='min-w-32'>
                 {createCourseIsPending || updateCourseIsPending ? <Spinner /> : 'Save Course'}
-              </Button>
-              <Button
-                disabled={!editingCourseId}
-                onClick={() => setActiveStep(1)}
-                className='min-w-32'
-              >
-                {'Continue →'}
               </Button>
             </div>
           )}

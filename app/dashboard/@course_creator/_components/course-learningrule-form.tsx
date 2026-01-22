@@ -15,14 +15,14 @@ import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import {
   getCourseByUuidQueryKey,
-  updateCourseMutation,
+  updateCourseMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import type * as z from 'zod';
+import * as z from 'zod';
 import { Checkbox } from '../../../../components/ui/checkbox';
 import { courseCreationSchema } from './course-creation-types';
 
@@ -40,14 +40,26 @@ export type CourseFormRef = {
   submit: () => void;
 };
 
+export const learningRulesSchema = z.object({
+  learning_rules: z.object({
+    prerequisites_required: z.boolean().default(false),
+    drip_schedule_enabled: z.boolean().default(false),
+    completion_rules_enabled: z.boolean().default(false),
+  }),
+});
+
+type LearningRulesFormValues = z.infer<typeof learningRulesSchema>;
+
 export const CourseLearningRulesForm = forwardRef<CourseFormRef, CourseFormProps>(
   ({ showSubmitButton, initialValues, editingCourseId, successResponse }, _ref) => {
-    const form = useForm<CourseCreationFormValues>({
-      resolver: zodResolver(courseCreationSchema),
+    const form = useForm<LearningRulesFormValues>({
+      resolver: zodResolver(learningRulesSchema),
       defaultValues: {
-        class_limit: 1,
-        age_lower_limit: 1,
-        age_upper_limit: 1,
+        learning_rules: {
+          prerequisites_required: false,
+          drip_schedule_enabled: false,
+          completion_rules_enabled: false,
+        },
         ...initialValues,
       },
       mode: 'onChange',
@@ -63,87 +75,62 @@ export const CourseLearningRulesForm = forwardRef<CourseFormRef, CourseFormProps
 
     const updateCourse = useMutation(updateCourseMutation());
 
-    const onSubmit = (data: CourseCreationFormValues) => {
+    const onSubmit = (data: LearningRulesFormValues) => {
       if (!editingCourseId) return;
 
-      if (editingCourseId) {
-        const editBody = {
-          total_duration_display: '',
-          created_by: authorName,
-          updated_by: authorName,
-          course_creator_uuid: authorUuid,
-          name: data?.name,
-          description: data?.description,
-          objectives: data?.objectives,
-          thumbnail_url: data?.thumbnail_url,
-          banner_url: data?.banner_url,
-          intro_video_url: data?.intro_video_url,
-          category_uuids: data?.categories,
-          difficulty_uuid: data?.difficulty,
-          prerequisites: data?.prerequisites,
-          duration_hours: data?.duration_hours,
-          duration_minutes: data?.duration_minutes,
-          class_limit: data?.class_limit,
-          minimum_training_fee: data?.minimum_training_fee,
-          creator_share_percentage: data?.creator_share_percentage,
-          instructor_share_percentage: data?.instructor_share_percentage,
-          revenue_share_notes: data?.revenue_share_notes,
-          training_requirements: '',
-          status: 'draft',
-          active: false,
-          is_free: data?.is_free,
-          is_published: false,
-          is_draft: true,
-          age_lower_limit: data?.age_lower_limit,
-          age_upper_limit: data?.age_upper_limit,
-        };
+      const editBody = {
+        course_creator_uuid: authorUuid,
+        status: 'draft',
+        ...initialValues,
+        learning_rules: data?.learning_rules,
+      };
 
-        updateCourse.mutate(
-          { body: editBody as any, path: { uuid: editingCourseId as string } },
-          {
-            onSuccess(data, _variables, _context) {
-              const respObj = data?.data;
-              const errorObj = data?.error;
+      updateCourse.mutate(
+        { body: editBody as any, path: { uuid: editingCourseId as string } },
+        {
+          onSuccess(data, _variables, _context) {
+            const respObj = data?.data;
+            const errorObj = data?.error;
 
-              if (respObj) {
-                // @ts-expect-error
-                toast.success(data?.data?.message);
-                // if (typeof successResponse === "function") {
-                //   // @ts-expect-error
-                //   successResponse(data?.data)
-                // }
+            if (respObj) {
+              // @ts-expect-error
+              toast.success(data?.data?.message);
+              // if (typeof successResponse === "function") {
+              //   // @ts-expect-error
+              //   successResponse(data?.data)
+              // }
 
-                queryClient.invalidateQueries({
-                  queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
-                });
-                setActiveStep(7);
-                return;
-              }
+              queryClient.invalidateQueries({
+                queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
+              });
+              setActiveStep(4);
+              return;
+            }
 
-              if (errorObj && typeof errorObj === 'object') {
-                Object.values(errorObj).forEach(errorMsg => {
-                  if (typeof errorMsg === 'string') {
-                    toast.error(errorMsg);
-                  }
-                });
-                return;
-                // @ts-expect-error
-              } else if (data?.message) {
-                // @ts-expect-error
-                toast.error('Course updated successfully' || data.message);
-                return;
-              } else {
-                toast.error('An unknown error occurred.');
-                return;
-              }
-            },
-          }
-        );
-      }
+            if (errorObj && typeof errorObj === 'object') {
+              Object.values(errorObj).forEach(errorMsg => {
+                if (typeof errorMsg === 'string') {
+                  toast.error(errorMsg);
+                }
+              });
+              return;
+              // @ts-expect-error
+            } else if (data?.message) {
+              // @ts-expect-error
+              toast.error('Course updated successfully' || data.message);
+              return;
+            } else {
+              toast.error('An unknown error occurred.');
+              return;
+            }
+          },
+        }
+      );
+
     };
 
-    const onError = (_errors: any) => {
-      // console.log(errors, "er")
+    const onError = (errors: any) => {
+      toast.error(errors)
     };
 
     return (
@@ -214,7 +201,7 @@ export const CourseLearningRulesForm = forwardRef<CourseFormRef, CourseFormProps
           {showSubmitButton && (
             <div className='flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>
               <Button type='submit' className='min-w-32'>
-                {updateCourse.isPending ? <Spinner /> : 'Save Changes'}
+                {updateCourse.isPending ? <Spinner /> : 'Save Learning Rules'}
               </Button>
             </div>
           )}

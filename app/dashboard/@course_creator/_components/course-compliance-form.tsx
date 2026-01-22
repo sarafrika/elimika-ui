@@ -10,19 +10,19 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import Spinner from '@/components/ui/spinner';
-import { useStepper } from '@/components/ui/stepper';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import {
   getCourseByUuidQueryKey,
-  updateCourseMutation,
+  updateCourseMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { forwardRef } from 'react';
+import { CheckCircle } from 'lucide-react';
+import { forwardRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import type * as z from 'zod';
+import * as z from 'zod';
 import { Checkbox } from '../../../../components/ui/checkbox';
 import { courseCreationSchema } from './course-creation-types';
 
@@ -40,14 +40,30 @@ export type CourseFormRef = {
   submit: () => void;
 };
 
+export const complianceSchema = z.object({
+  compliance: z.object({
+    copyright_confirmed: z.boolean().default(false),
+    accessibility_captions: z.boolean().default(false),
+    certificate_enabled: z.boolean().default(false),
+  }).default({
+    copyright_confirmed: false,
+    accessibility_captions: false,
+    certificate_enabled: false,
+  }),
+});
+
+type ComplianceFormValues = z.infer<typeof complianceSchema>;
+
 export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
   ({ showSubmitButton, initialValues, editingCourseId, successResponse }, _ref) => {
-    const form = useForm<CourseCreationFormValues>({
-      resolver: zodResolver(courseCreationSchema),
+    const form = useForm<ComplianceFormValues>({
+      resolver: zodResolver(complianceSchema),
       defaultValues: {
-        class_limit: 1,
-        age_lower_limit: 1,
-        age_upper_limit: 1,
+        compliance: {
+          copyright_confirmed: false,
+          accessibility_captions: false,
+          certificate_enabled: false,
+        },
         ...initialValues,
       },
       mode: 'onChange',
@@ -57,45 +73,20 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
     const instructor = useInstructor();
     const courseCreatorContext = useOptionalCourseCreator();
     const courseCreatorProfile = courseCreatorContext?.profile;
-    const authorName = courseCreatorProfile?.full_name ?? instructor?.full_name ?? '';
     const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
-    const { setActiveStep } = useStepper();
+    const [showSuccessUI, setShowSuccessUI] = useState(false);
 
     const updateCourse = useMutation(updateCourseMutation());
 
-    const onSubmit = (data: CourseCreationFormValues) => {
+    const onSubmit = (data: ComplianceFormValues) => {
       if (!editingCourseId) return;
 
       if (editingCourseId) {
         const editBody = {
-          total_duration_display: '',
-          created_by: authorName,
-          updated_by: authorName,
           course_creator_uuid: authorUuid,
-          name: data?.name,
-          description: data?.description,
-          objectives: data?.objectives,
-          thumbnail_url: data?.thumbnail_url,
-          banner_url: data?.banner_url,
-          intro_video_url: data?.intro_video_url,
-          category_uuids: data?.categories,
-          difficulty_uuid: data?.difficulty,
-          prerequisites: data?.prerequisites,
-          duration_hours: data?.duration_hours,
-          duration_minutes: data?.duration_minutes,
-          class_limit: data?.class_limit,
-          minimum_training_fee: data?.minimum_training_fee,
-          creator_share_percentage: data?.creator_share_percentage,
-          instructor_share_percentage: data?.instructor_share_percentage,
-          revenue_share_notes: data?.revenue_share_notes,
-          training_requirements: '',
           status: 'draft',
-          active: false,
-          is_free: data?.is_free,
-          is_published: false,
-          is_draft: true,
-          age_lower_limit: data?.age_lower_limit,
-          age_upper_limit: data?.age_upper_limit,
+          ...initialValues,
+          compliance: data?.compliance
         };
 
         updateCourse.mutate(
@@ -106,17 +97,14 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
               const errorObj = data?.error;
 
               if (respObj) {
-                // @ts-expect-error
-                toast.success(data?.data?.message);
-                // if (typeof successResponse === "function") {
-                //   // @ts-expect-error
-                //   successResponse(data?.data)
-                // }
+                toast.success(data?.message || "Course updated successfully");
 
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
                 });
-                setActiveStep(7);
+
+                setShowSuccessUI(true);
+
                 return;
               }
 
@@ -142,12 +130,27 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     };
 
-    const onError = (_errors: any) => {
-      // console.log(errors, "er")
+    const onError = (errors: any) => {
+      toast.error(errors)
     };
 
     return (
       <Form {...form}>
+        {showSuccessUI && <div className="flex flex-col items-center justify-center rounded-3xl border border-border bg-background px-6 py-16 text-center space-y-6">
+          <CheckCircle className="h-14 w-14 text-green-500" />
+
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold">
+              Your course is ready 🎉
+            </h2>
+            <p className="text-muted-foreground max-w-md">
+              You’ve completed all required steps. You can now preview your course
+              and publish it when you’re ready.
+            </p>
+          </div>
+        </div>}
+
+
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
           <div className='border-border space-y-6 rounded-3xl border-1 px-6 py-10'>
             <FormField
