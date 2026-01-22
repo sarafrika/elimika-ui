@@ -19,7 +19,6 @@ import {
   Handshake,
   Layers,
   LayoutDashboard,
-  Library,
   LibraryIcon,
   LucideBookUser,
   LucideLandmark,
@@ -36,7 +35,7 @@ import {
   UserIcon,
   Users,
   UsersIcon,
-  Wallet,
+  Wallet
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { UserDomain } from './types';
@@ -349,34 +348,7 @@ export default {
       title: 'Courses',
       url: '/dashboard/course-management',
       icon: BookAIcon,
-      // items: [
-      //   {
-      //     title: 'Create New Course',
-      //     url: '/dashboard/course-management/create-new-course',
-      //     icon: PlusCircle,
-      //   },
-      //   {
-      //     title: 'All',
-      //     url: '/dashboard/course-management/all',
-      //     icon: BookOpen,
-      //   },
-      //   {
-      //     title: 'Drafts',
-      //     url: '/dashboard/course-management/drafts',
-      //     icon: FileText,
-      //   },
-      //   {
-      //     title: 'Published',
-      //     url: '/dashboard/course-management/published',
-      //     icon: FileCheck,
-      //   },
-      // ],
     },
-    // {
-    //   title: 'Courses',
-    //   url: '/dashboard/courses',
-    //   icon: BookOpen,
-    // },
     {
       title: 'My Skills',
       url: '/dashboard/my-skills',
@@ -390,9 +362,9 @@ export default {
     {
       title: 'Instructors',
       url: '/dashboard/instructors',
+      // url: '/dashboard/training-applications',
       icon: Users,
     },
-
     {
       title: 'Notifications',
       url: '/dashboard/notifications',
@@ -403,11 +375,11 @@ export default {
       url: '/dashboard/enrollments',
       icon: BookOpen,
     },
-    {
-      title: 'Library',
-      url: '/dashboard/library',
-      icon: Library,
-    },
+    // {
+    //   title: 'Library',
+    //   url: '/dashboard/library',
+    //   icon: Library,
+    // },
     {
       title: 'Revenue',
       url: '/dashboard/revenue',
@@ -418,11 +390,11 @@ export default {
       url: '/dashboard/analytics',
       icon: ChartNoAxesCombined,
     },
-    {
-      title: 'Verification',
-      url: '/dashboard/verification',
-      icon: ShieldCheck,
-    },
+    // {
+    //   title: 'Verification',
+    //   url: '/dashboard/verification',
+    //   icon: ShieldCheck,
+    // },
     {
       title: 'Profile',
       url: '/dashboard/profile',
@@ -439,11 +411,7 @@ export default {
       url: '/dashboard/catalogue',
       icon: ShoppingBag,
     },
-    {
-      title: 'Training Applications',
-      url: '/dashboard/training-applications',
-      icon: GraduationCap,
-    },
+
   ],
   admin: [
     {

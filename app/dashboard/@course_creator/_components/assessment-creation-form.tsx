@@ -559,7 +559,7 @@ const AssessmentCreationForm = ({
     };
 
     return (
-        <div className='w-full'>
+        <div className='w-full mb-10'>
             <div className='mb-4 flex border-b'>
                 {tabs.map(tab => (
                     <button
@@ -689,6 +689,7 @@ const AssessmentCreationForm = ({
                         deleteAssignmentForLesson={deleteAssignmentForLesson}
                         addAssignmentQuestion={() => { }}
                         addQuestionOption={() => { }}
+                        isPending={createAssignmentMut.isPending || updateAssignmentMut.isPending || deleteAssignmentMut.isPending}
                     />
 
                 </div>}

@@ -86,7 +86,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
             queryClient.invalidateQueries({
               queryKey: searchCoursesQueryKey({
                 query: {
-                  searchParams: { status: 'draft', course_creator_uuid_eq: courseCreatorId },
+                  searchParams: { course_creator_uuid_eq: courseCreatorId },
                   pageable: { page, size },
                 },
               }),
@@ -94,7 +94,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const draftCourses = data?.data?.content || [];

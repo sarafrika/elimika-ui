@@ -103,7 +103,7 @@ export default function PublishedCoursesComponent({
             queryClient.invalidateQueries({
               queryKey: searchCoursesQueryKey({
                 query: {
-                  searchParams: { status: 'published', course_creator_uuid_eq: courseCreatorId },
+                  searchParams: { course_creator_uuid_eq: courseCreatorId },
                   pageable: { page, size },
                 },
               }),

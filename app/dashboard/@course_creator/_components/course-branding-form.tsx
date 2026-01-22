@@ -13,6 +13,9 @@ import { forwardRef, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import { Button } from '../../../../components/ui/button';
+import Spinner from '../../../../components/ui/spinner';
+import { useStepper } from '../../../../components/ui/stepper';
 import { Textarea } from '../../../../components/ui/textarea';
 import {
   getCourseByUuidQueryKey,
@@ -48,31 +51,19 @@ type UploadOptions = {
   onChange: (val: string) => void;
 };
 
+export const brandingSchema = z.object({
+  welcome_message: z.string().max(300).optional(),
+  theme_color: z.string().optional(),
+});
+
+type BrandingFormValues = z.infer<typeof brandingSchema>;
+
 export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
   ({ showSubmitButton, initialValues, editingCourseId, successResponse }, _ref) => {
-    const form = useForm<CourseCreationFormValues>({
-      resolver: zodResolver(courseCreationSchema),
+    const form = useForm<BrandingFormValues>({
+      resolver: zodResolver(brandingSchema),
       defaultValues: {
-        name: '',
-        description: '',
-        is_free: false,
-        objectives: '',
-        categories: [],
-        class_limit: 30,
-        prerequisites: '',
-        age_lower_limit: 5,
-        age_upper_limit: 70,
-        thumbnail_url: '',
-        banner_url: '',
-        intro_video_url: '',
-        duration_hours: 0,
-        duration_minutes: 1,
-        minimum_training_fee: 0,
-        creator_share_percentage: 50,
-        instructor_share_percentage: 50,
-        revenue_share_notes: '',
-        training_requirements: [],
-        welcome_message: '',
+        welcome_message: "",
         theme_color: '',
         ...initialValues,
       },
@@ -83,8 +74,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const instructor = useInstructor();
     const courseCreatorContext = useOptionalCourseCreator();
     const courseCreatorProfile = courseCreatorContext?.profile;
-    const _authorName = courseCreatorProfile?.full_name ?? instructor?.full_name ?? '';
-    const _authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
+    const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
+    const { setActiveStep } = useStepper();
 
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
@@ -160,11 +151,63 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       );
     };
 
-    const _updateCourse = useMutation(updateCourseMutation());
+    const updateCourse = useMutation(updateCourseMutation());
 
-    const onSubmit = (_data: CourseCreationFormValues) => {
+    const onSubmit = (data: BrandingFormValues) => {
       if (!editingCourseId) return;
+
+      if (editingCourseId) {
+        const editBody = {
+          course_creator_uuid: authorUuid,
+          status: 'draft',
+          ...initialValues,
+          welcome_message: data?.welcome_message,
+          theme_color: data?.theme_color
+        };
+
+        updateCourse.mutate(
+          { body: editBody as any, path: { uuid: editingCourseId as string } },
+          {
+            onSuccess(data, _variables, _context) {
+              const respObj = data?.data;
+              const errorObj = data?.error;
+
+              if (respObj) {
+                // @ts-expect-error
+                toast.success(data?.data?.message || "Course updated successfully");
+
+                queryClient.invalidateQueries({
+                  queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
+                });
+                setActiveStep(5);
+                return;
+              }
+
+              if (errorObj && typeof errorObj === 'object') {
+                Object.values(errorObj).forEach(errorMsg => {
+                  if (typeof errorMsg === 'string') {
+                    toast.error(errorMsg);
+                  }
+                });
+                return;
+                // @ts-expect-error
+              } else if (data?.message) {
+                // @ts-expect-error
+                toast.error('Course updated successfully' || data.message);
+                return;
+              } else {
+                toast.error('An unknown error occurred.');
+                return;
+              }
+            },
+          }
+        );
+      }
     };
+
+    const onError = (error: any) => {
+      toast.error(error)
+    }
 
     useEffect(() => {
       const thumbnail = initialValues?.thumbnail_url || form.getValues('thumbnail');
@@ -186,7 +229,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+        <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
           {/* Welcome Message */}
           <FormSection
             title='Welcome message'
@@ -462,6 +505,16 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
               )}
             />
           </FormSection>
+
+
+          {/* Submit Button */}
+          {showSubmitButton && (
+            <div className='flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>
+              <Button type='submit' className='min-w-32'>
+                {updateCourse.isPending ? <Spinner /> : 'Save'}
+              </Button>
+            </div>
+          )}
         </form>
       </Form>
     );

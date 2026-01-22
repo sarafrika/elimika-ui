@@ -22,10 +22,11 @@ import {
 import { useCourseCreator } from '@/context/course-creator-context';
 import type { Course } from '@/services/client';
 import { format } from 'date-fns';
-import { Filter, PlusCircle } from 'lucide-react';
+import { Filter, PlusCircle, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { CatalogueWorkspace } from '../../../_components/catalogue-workspace';
 
 type CourseStatusFilter = 'all' | 'draft' | 'in_review' | 'published' | 'archived';
 
@@ -50,6 +51,7 @@ const STATUS_BADGE: Record<
 export default function CourseCreatorCoursesContent() {
   const { courses, data } = useCourseCreator();
   const [statusFilter, setStatusFilter] = useState<CourseStatusFilter>('all');
+  const [open, setOpen] = useState(false);
 
   const filteredCourses = useMemo(() => {
     if (statusFilter === 'all') return courses;
@@ -66,80 +68,102 @@ export default function CourseCreatorCoursesContent() {
             requirements at a glance.
           </p>
         </div>
-        <Button asChild>
-          <Link prefetch href='/dashboard/course-management/create-new-course'>
-            <PlusCircle className='mr-2 h-4 w-4' />
-            Create course
-          </Link>
-        </Button>
+
+        <div className='flex flex-row items-center gap-4' >
+          <Button variant={"ghost"} onClick={() => setOpen(!open)} >View catalogues</Button>
+          <Button asChild>
+            <Link prefetch href='/dashboard/course-management/create-new-course'>
+              <PlusCircle className='mr-2 h-4 w-4' />
+              Create course
+            </Link>
+          </Button>
+        </div>
       </header>
 
-      <Card>
-        <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
-          <div>
-            <CardTitle className='text-base font-semibold'>Course catalogue</CardTitle>
-            <CardDescription>
-              {courses.length} course{courses.length === 1 ? '' : 's'} owned by this creator.
-            </CardDescription>
+      <>
+        {open ?
+          <div className='flex flex-col gap-4 mt-8' >            <Button
+            size={"sm"}
+            onClick={() => setOpen(false)}
+            className='w-fit self-end'
+            variant={"outline"}
+          >
+            <X /> Close
+          </Button>
+
+            <CatalogueWorkspace scope="course_creator" />
           </div>
-          <div className='flex items-center gap-2'>
-            <Filter className='text-muted-foreground hidden h-4 w-4 sm:block' />
-            <Select
-              value={statusFilter}
-              onValueChange={value => setStatusFilter(value as CourseStatusFilter)}
-            >
-              <SelectTrigger className='w-[200px]'>
-                <SelectValue placeholder='Filter by status' />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent className='p-0'>
-          {filteredCourses.length === 0 ? (
-            <div className='flex flex-col items-center justify-center space-y-4 py-16 text-center'>
-              <p className='text-lg font-medium'>No courses match this filter.</p>
-              <p className='text-muted-foreground text-sm'>
-                Adjust the status filter or create a new course to populate this view.
-              </p>
-              <Button variant='outline' asChild>
-                <Link prefetch href='/dashboard/course-management'>
-                  Create course
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className='w-[34%]'>Course</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>
-                    <div className='flex flex-col gap-0.5'>
-                      <p>Minimum training fee</p>
-                      <p>(per person per head)</p>
-                    </div>
-                  </TableHead>
-                  <TableHead>Revenue split</TableHead>
-                  <TableHead>Requirements</TableHead>
-                  <TableHead>Last updated</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCourses.map(course => (
-                  <CourseRow key={course.uuid ?? course.name} course={course} />
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+          :
+          <Card>
+            <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
+              <div>
+                <CardTitle className='text-base font-semibold'>Course catalogue</CardTitle>
+                <CardDescription>
+                  {courses.length} course{courses.length === 1 ? '' : 's'} owned by this creator.
+                </CardDescription>
+              </div>
+              <div className='flex items-center gap-2'>
+                <Filter className='text-muted-foreground hidden h-4 w-4 sm:block' />
+                <Select
+                  value={statusFilter}
+                  onValueChange={value => setStatusFilter(value as CourseStatusFilter)}
+                >
+                  <SelectTrigger className='w-[200px]'>
+                    <SelectValue placeholder='Filter by status' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent className='p-0'>
+              {filteredCourses.length === 0 ? (
+                <div className='flex flex-col items-center justify-center space-y-4 py-16 text-center'>
+                  <p className='text-lg font-medium'>No courses match this filter.</p>
+                  <p className='text-muted-foreground text-sm'>
+                    Adjust the status filter or create a new course to populate this view.
+                  </p>
+                  <Button variant='outline' asChild>
+                    <Link prefetch href='/dashboard/course-management'>
+                      Create course
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className='w-[34%]'>Course</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>
+                        <div className='flex flex-col gap-0.5'>
+                          <p>Minimum training fee</p>
+                          <p>(per person per head)</p>
+                        </div>
+                      </TableHead>
+                      <TableHead>Revenue split</TableHead>
+                      <TableHead>Requirements</TableHead>
+                      <TableHead>Last updated</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCourses.map(course => (
+                      <CourseRow key={course.uuid ?? course.name} course={course} />
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        }
+
+      </>
+
     </div>
   );
 }

@@ -211,9 +211,6 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                     <h3 className='font-semibold'>{lesson.title}</h3>
                   </div>
                   <RichTextRenderer htmlString={lesson.description ?? 'No description.'} />
-                  <p className='text-muted-foreground mt-1 text-sm'>
-                    <Clock className='mr-1 inline-block h-4 w-4' /> {lesson.duration_display}
-                  </p>
                 </div>
               ))
           ) : (
@@ -345,7 +342,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         </CardHeader>
 
         <CardContent className='p-0'>
-          {reviews?.length ? (
+          {/* {reviews?.length ? (
             <div className='border-border/60 space-y-3 border-t p-4'>
               {reviews.slice(0, 3).map((review: any) => (
                 <div
@@ -372,7 +369,10 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
             <div className='border-border/60 text-muted-foreground border-t p-6 text-center text-sm'>
               No reviews yet for this course.
             </div>
-          )}
+          )} */}
+          <div className='border-border/60 text-muted-foreground border-t p-6 text-center text-sm'>
+            No reviews yet for this course.
+          </div>
         </CardContent>
       </Card>
 
@@ -427,12 +427,6 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: a
 
 const reviews = [
   {
-    uuid: 'rev-1234',
-    rating: 5,
-    student_uuid: 'student-uuid-1',
-    comments: 'Very clear explanations and engaging sessions.',
-    created_date: '2025-11-18T09:00:00',
-    is_anonymous: false,
-    created_by: 'student@example.com',
+
   },
 ];

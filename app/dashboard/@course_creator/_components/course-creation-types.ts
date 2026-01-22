@@ -59,6 +59,8 @@ export const courseCreationSchema = z.object({
   welcome_message: z.string().max(300).optional(),
   theme_color: z.string().optional(),
   coupon_code: z.string().optional(),
+  access_duration: z.string().optional(),
+  target_audience: z.string().array().optional(),
   org_access: z
     .object({
       educational: z.boolean().optional(),
@@ -68,9 +70,22 @@ export const courseCreationSchema = z.object({
     })
     .optional(),
   learning_rules: z.object({
-    prerequisites_required: z.boolean().default(false),
-    drip_schedule_enabled: z.boolean().default(false),
     completion_rules_enabled: z.boolean().default(false),
+    drip_schedule_enabled: z.boolean().default(false),
+    prerequisites_required: z.boolean().default(false),
+  }).default({
+    completion_rules_enabled: false,
+    drip_schedule_enabled: false,
+    prerequisites_required: false,
+  }),
+  compliance: z.object({
+    copyright_confirmed: z.boolean().default(false),
+    accessibility_captions: z.boolean().default(false),
+    certificate_enabled: z.boolean().default(false),
+  }).default({
+    copyright_confirmed: false,
+    accessibility_captions: false,
+    certificate_enabled: false,
   }),
   language: z.string().optional(),
 });
