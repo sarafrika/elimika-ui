@@ -305,7 +305,11 @@ export default {
       url: '/dashboard/analytics',
       icon: ChartNoAxesCombined,
     },
-
+    {
+      title: 'Reviews',
+      url: '/dashboard/reviews',
+      icon: Star,
+    },
     {
       title: 'Profile',
       url: '/dashboard/profile',
@@ -316,22 +320,17 @@ export default {
       url: '/dashboard/settings',
       icon: Settings,
     },
-    // to be removed
-    {
-      title: 'Catalogue XXX',
-      url: '/dashboard/catalogue',
-      icon: ShoppingBag,
-    },
-    {
-      title: 'Reviews XXX',
-      url: '/dashboard/reviews',
-      icon: Star,
-    },
-    {
-      title: 'Learning XXX',
-      url: '/dashboard/learning',
-      icon: GraduationCap,
-    },
+    // {
+    //   title: 'Catalogue XXX',
+    //   url: '/dashboard/catalogue',
+    //   icon: ShoppingBag,
+    // },
+
+    // {
+    //   title: 'Learning XXX',
+    //   url: '/dashboard/learning',
+    //   icon: GraduationCap,
+    // },
     // {
     //   title: 'Bookings XXX',
     //   url: '/dashboard/bookings',

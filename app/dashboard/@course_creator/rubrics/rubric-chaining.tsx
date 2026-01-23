@@ -9,10 +9,11 @@ import {
 import { useQueries, useQuery } from '@tanstack/react-query';
 
 export type RubricScoringLevel = {
-  level_order: any;
+  level_order: number;
   uuid: string;
   rubric_uuid: string;
   description: string;
+  name: string;
   score_range: string;
   points: string;
   is_passing_level: boolean;
@@ -41,6 +42,26 @@ export type ScoringLevel = {
   uuid: string;
 };
 
+export type CriteriaScoring = {
+  uuid: string;
+  criteria_uuid: string;
+  rubric_scoring_level_uuid: string;
+
+  description: string;
+  feedback_category: string;
+  performance_expectation: string;
+  score_range: string;
+
+  is_passing_level: boolean;
+
+  created_by: string;
+  created_date: string; // ISO 8601 date-time
+
+  updated_by: string | null;
+  updated_date: string; // ISO 8601 date-time
+};
+
+
 export type Criterion = {
   component_name: string;
   created_by: string;
@@ -53,7 +74,7 @@ export type Criterion = {
   rubric_uuid: string;
   uuid: string;
   weight_suggestion?: string;
-  scoring: ScoringLevel[];
+  scoring: CriteriaScoring[];
 };
 
 export type Rubric = {
@@ -170,7 +191,7 @@ export const useRubricsData = (courseCreatorUuid?: string) => {
       const scoringQueryIndex = criteriaPairs.findIndex(
         p => p.rubricUuid === rubric.uuid && p.criteriaUuid === c.uuid
       );
-      const criteriaScoringLevels: ScoringLevel[] =
+      const criteriaScoringLevels: CriteriaScoring[] =
         scoringQueries[scoringQueryIndex]?.data?.data?.data?.content ?? [];
 
       return {

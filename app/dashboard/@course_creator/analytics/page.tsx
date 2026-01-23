@@ -3,8 +3,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useCourseCreator } from '@/context/course-creator-context';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useState } from 'react';
+import { getCourseEnrollmentsOptions } from '../../../../services/client/@tanstack/react-query.gen';
 
 type CourseReview = {
   id: string;
@@ -43,6 +45,13 @@ export default function CourseCreatorAnalyticsPage() {
           operational compliance.
         </p>
       </header>
+
+      <div className="bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-500 text-yellow-800 dark:text-yellow-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 rounded-md shadow-sm">
+        <div className="flex flex-col gap-2">
+          <p className="font-medium">🚧 This page is under construction. Mock data is currently being used.</p>
+          <p className="font-medium">Requires API to fetch course reviews.</p>
+        </div>
+      </div>
 
       <Card className='lg:col-span-2'>
         <CardHeader>
@@ -230,24 +239,30 @@ function CourseReviewSummary({
   onToggle: () => void;
 }) {
   const reviews = course.reviews ?? [
-    {
-      uuid: 'rev-1234',
-      rating: 5,
-      student_uuid: 'student-uuid-1',
-      comments: 'Very clear explanations and engaging sessions.',
-      created_date: '2025-11-18T09:00:00',
-      is_anonymous: false,
-      created_by: 'student@example.com',
-    },
+    // {
+    //   uuid: 'rev-1234',
+    //   rating: 5,
+    //   student_uuid: 'student-uuid-1',
+    //   comments: 'Very clear explanations and engaging sessions.',
+    //   created_date: '2025-11-18T09:00:00',
+    //   is_anonymous: false,
+    //   created_by: 'student@example.com',
+    // },
   ];
+
+  const { data } = useQuery({
+    ...getCourseEnrollmentsOptions({ path: { courseUuid: course?.uuid as string }, query: { pageable: {} } }),
+    enabled: !!course?.uuid
+  })
+  const enrollmentData = data?.data?.content || []
 
   const reviewCount = reviews.length;
 
   const averageRating =
     reviewCount > 0
       ? Math.round(
-          (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
-        ) / 10
+        (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
+      ) / 10
       : null;
 
   return (
@@ -267,7 +282,7 @@ function CourseReviewSummary({
                 ? `${reviewCount} review${reviewCount > 1 ? 's' : ''}`
                 : 'No reviews yet'}
             </p>
-            <p className='text-muted-foreground text-xs'>{'2 enrollments'}</p>
+            <p className='text-muted-foreground text-xs'>{enrollmentData?.length}</p>
           </div>
         </div>
 

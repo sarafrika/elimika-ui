@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCourseCreator } from '@/context/course-creator-context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit2, FileText, PlusCircle, Save, Search, Trash2, X } from 'lucide-react';
@@ -27,6 +28,8 @@ import {
   updateScoringLevelMutation
 } from '../../../../../services/client/@tanstack/react-query.gen';
 import { Criterion, Rubric, RubricScoringLevel, ScoringLevel, useRubricsData } from '../rubric-chaining';
+
+
 
 const DEFAULT_LEVEL_NAMES = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
 
@@ -92,6 +95,35 @@ const createEmptyRubric = (): Rubric => ({
     },
   ],
 });
+
+const RubricCardSkeleton = () => {
+  return (
+    <Card className="p-5 dark:border-border">
+      <div className="flex items-start gap-3">
+        <Skeleton className="h-9 w-9 rounded-lg" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-5 w-3/4" />
+        </div>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+      </div>
+
+      <div className="mt-3 flex gap-2">
+        <Skeleton className="h-6 w-20 rounded-md" />
+        <Skeleton className="h-6 w-24 rounded-md" />
+      </div>
+
+      <div className="mt-4 flex gap-2 border-t border-border pt-3 dark:border-border">
+        <Skeleton className="h-8 flex-1 rounded-md" />
+        <Skeleton className="h-8 w-20 rounded-md" />
+      </div>
+    </Card>
+  )
+}
+
 
 const RubricManager: React.FC = () => {
   const qc = useQueryClient();
@@ -752,7 +784,6 @@ const RubricManager: React.FC = () => {
         }
       );
     } else {
-      // Just remove from local state if it's a new criterion
       setCurrentRubric({
         ...currentRubric,
         criteria: currentRubric.criteria.filter((_, i) => i !== index),
@@ -890,16 +921,6 @@ const RubricManager: React.FC = () => {
               </thead>
               <tbody>
                 {currentRubric.criteria.map((c, cIdx) => {
-                  const levels = [...c.scoring];
-                  while (levels.length < 4) {
-                    levels.push({
-                      uuid: `empty-${cIdx}-${levels.length}`,
-                      performance_expectation: '',
-                    });
-                  }
-
-
-
                   return (
                     <tr key={c.uuid}>
                       <td className="border px-2">
@@ -920,19 +941,40 @@ const RubricManager: React.FC = () => {
                         </div>
                       </td>
 
-                      {levels.map((l, lIdx) => (
-                        <td key={l.uuid} className="border px-2">
-                          <textarea
-                            className="w-full rounded border p-1 text-sm"
-                            rows={3}
-                            value={l.description}
-                            onChange={e =>
-                              updateLevel(cIdx, lIdx, 'description', e.target.value)
-                            }
-                            placeholder="Describe Performance expectation"
-                          />
-                        </td>
-                      ))}
+                      {(currentRubric.scoringLevels || []).map((scoringLevel, slIdx) => {
+                        // Find the matching scoring entry for this criterion and scoring level
+                        const matchingScoring = c.scoring.find(
+                          s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                        );
+
+                        // If no match found, create an empty placeholder
+                        const scoringEntry = matchingScoring || {
+                          uuid: `empty-${cIdx}-${slIdx}`,
+                          description: '',
+                          performance_expectation: '',
+                          rubric_scoring_level_uuid: scoringLevel.uuid,
+                        };
+
+                        return (
+                          <td key={scoringLevel.uuid} className="border px-2">
+                            <textarea
+                              className="w-full rounded border p-1 text-sm"
+                              rows={3}
+                              value={scoringEntry.description || ''}
+                              onChange={e => {
+                                // Find the actual index of this scoring entry in the criterion's scoring array
+                                const actualIdx = c.scoring.findIndex(
+                                  s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                                );
+                                if (actualIdx !== -1) {
+                                  updateLevel(cIdx, actualIdx, 'description', e.target.value);
+                                }
+                              }}
+                              placeholder="Describe Performance expectation"
+                            />
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
@@ -945,6 +987,7 @@ const RubricManager: React.FC = () => {
       </Card>
     );
   }
+
 
   return (
     <div className="mx-auto min-h-screen max-w-7xl space-y-6 p-6">
@@ -964,8 +1007,10 @@ const RubricManager: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="rounded-lg border border-border bg-card p-4 dark:border-border">
-          <p className="text-sm text-muted-foreground">Loading rubrics...</p>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <RubricCardSkeleton key={index} />
+          ))}
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
