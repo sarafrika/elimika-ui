@@ -411,9 +411,9 @@ export const zStudent = z
         '**[OPTIONAL]** Short biography or notes about the student. Used in student profiles.'
       )
       .optional(),
+    allGuardianContacts: z.array(z.string()).optional(),
     primaryGuardianContact: z.string().optional(),
     secondaryGuardianContact: z.string().optional(),
-    allGuardianContacts: z.array(z.string()).optional(),
     full_name: z
       .string()
       .describe(
@@ -1918,6 +1918,13 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    is_profile_complete: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
+      )
+      .readonly()
+      .optional(),
     has_location_coordinates: z
       .boolean()
       .describe(
@@ -1929,13 +1936,6 @@ export const zInstructor = z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.'
-      )
-      .readonly()
-      .optional(),
-    is_profile_complete: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
       )
       .readonly()
       .optional(),
@@ -2144,12 +2144,14 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
-    membership_duration_months: z
-      .number()
-      .int()
-      .describe(
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
-      )
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .readonly()
+      .optional(),
+    formatted_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
       .readonly()
       .optional(),
     membership_status: zMembershipStatusEnum.optional(),
@@ -2179,14 +2181,12 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
       .readonly()
       .optional(),
-    formatted_duration: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+    membership_duration_months: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
+      )
       .readonly()
       .optional(),
   })
@@ -2308,15 +2308,9 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    experience_level: zExperienceLevelEnum.optional(),
-    is_recent_experience: z
+    is_complete: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).')
-      .readonly()
-      .optional(),
-    calculated_years: z
-      .number()
-      .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
     duration_in_months: z
@@ -2347,9 +2341,15 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Indicates if the position has responsibilities documented.')
       .readonly()
       .optional(),
-    is_complete: z
+    experience_level: zExperienceLevelEnum.optional(),
+    is_recent_experience: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+      .describe('**[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).')
+      .readonly()
+      .optional(),
+    calculated_years: z
+      .number()
+      .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
       .readonly()
       .optional(),
   })
@@ -2454,20 +2454,6 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
-    years_since_completion: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of years since the qualification was completed.')
-      .readonly()
-      .optional(),
-    education_level: zEducationLevelEnum.optional(),
-    has_certificate_number: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
-      )
-      .readonly()
-      .optional(),
     is_complete: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
@@ -2483,6 +2469,20 @@ export const zInstructorEducation = z
     formatted_completion: z
       .string()
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
+      .readonly()
+      .optional(),
+    years_since_completion: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of years since the qualification was completed.')
+      .readonly()
+      .optional(),
+    education_level: zEducationLevelEnum.optional(),
+    has_certificate_number: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
+      )
       .readonly()
       .optional(),
   })
@@ -4478,9 +4478,18 @@ export const zClassDefinition = z
   })
   .describe('Class definition template that defines what a class is, independent of scheduling');
 
-export const zApiResponseClassDefinition = z.object({
+/**
+ * Response payload for class definition operations
+ */
+export const zClassDefinitionResponse = z
+  .object({
+    class_definition: zClassDefinition.optional(),
+  })
+  .describe('Response payload for class definition operations');
+
+export const zApiResponseClassDefinitionResponse = z.object({
   success: z.boolean().optional(),
-  data: zClassDefinition.optional(),
+  data: zClassDefinitionResponse.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -4909,16 +4918,16 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
+      .readonly()
+      .optional(),
     assignment_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.'
       )
-      .readonly()
-      .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
     assignment_scope: z
@@ -5895,51 +5904,6 @@ export const zSelectPaymentSessionRequest = z
       .describe("Identifier of the payment provider (e.g. 'manual', 'stripe')"),
   })
   .describe('Specifies the payment provider to use for a cart');
-
-/**
- * Details of a conflicting schedule request during class creation
- */
-export const zClassSchedulingConflict = z
-  .object({
-    requested_start: z
-      .string()
-      .datetime()
-      .describe('Requested start date-time that conflicted')
-      .optional(),
-    requested_end: z
-      .string()
-      .datetime()
-      .describe('Requested end date-time that conflicted')
-      .optional(),
-    reasons: z.array(z.string()).describe('Reasons for the conflict').optional(),
-  })
-  .describe('Details of a conflicting schedule request during class creation');
-
-/**
- * Response payload for class definition creation including scheduled instances and conflicts
- */
-export const zClassDefinitionCreationResponse = z
-  .object({
-    class_definition: zClassDefinition.optional(),
-    scheduled_instances: z
-      .array(zScheduledInstance)
-      .describe('Instances scheduled from embedded session templates')
-      .optional(),
-    scheduling_conflicts: z
-      .array(zClassSchedulingConflict)
-      .describe('Conflicts encountered while scheduling')
-      .optional(),
-  })
-  .describe(
-    'Response payload for class definition creation including scheduled instances and conflicts'
-  );
-
-export const zApiResponseClassDefinitionCreationResponse = z.object({
-  success: z.boolean().optional(),
-  data: zClassDefinitionCreationResponse.optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
 
 /**
  * **[REQUIRED]** Strategy describing how this class schedule derives from the template.
@@ -8105,6 +8069,51 @@ export const zApiResponsePagedDtoCommerceCatalogueItem = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+/**
+ * Details of a conflicting schedule request during class creation
+ */
+export const zClassSchedulingConflict = z
+  .object({
+    requested_start: z
+      .string()
+      .datetime()
+      .describe('Requested start date-time that conflicted')
+      .optional(),
+    requested_end: z
+      .string()
+      .datetime()
+      .describe('Requested end date-time that conflicted')
+      .optional(),
+    reasons: z.array(z.string()).describe('Reasons for the conflict').optional(),
+  })
+  .describe('Details of a conflicting schedule request during class creation');
+
+export const zPagedDtoClassSchedulingConflict = z.object({
+  content: z.array(zClassSchedulingConflict).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoClassSchedulingConflict = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoClassSchedulingConflict.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPagedDtoScheduledInstance = z.object({
+  content: z.array(zScheduledInstance).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoScheduledInstance = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoScheduledInstance.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 export const zApiResponseListClassQuizSchedule = z.object({
   success: z.boolean().optional(),
   data: z.array(zClassQuizSchedule).optional(),
@@ -8119,9 +8128,9 @@ export const zApiResponseListClassAssignmentSchedule = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
-export const zApiResponseListClassDefinition = z.object({
+export const zApiResponseListClassDefinitionResponse = z.object({
   success: z.boolean().optional(),
-  data: z.array(zClassDefinition).optional(),
+  data: z.array(zClassDefinitionResponse).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -9794,7 +9803,7 @@ export const zGetClassDefinitionData = z.object({
 /**
  * Class definition retrieved successfully
  */
-export const zGetClassDefinitionResponse = zApiResponseClassDefinition;
+export const zGetClassDefinitionResponse = zApiResponseClassDefinitionResponse;
 
 export const zUpdateClassDefinitionData = z.object({
   body: zClassDefinition,
@@ -9807,7 +9816,7 @@ export const zUpdateClassDefinitionData = z.object({
 /**
  * Class definition updated successfully
  */
-export const zUpdateClassDefinitionResponse = zApiResponseClassDefinition;
+export const zUpdateClassDefinitionResponse = zApiResponseClassDefinitionResponse;
 
 export const zGetLessonPlanData = z.object({
   body: z.never().optional(),
@@ -11713,7 +11722,7 @@ export const zCreateClassDefinitionData = z.object({
 /**
  * Class definition created successfully
  */
-export const zCreateClassDefinitionResponse = zApiResponseClassDefinitionCreationResponse;
+export const zCreateClassDefinitionResponse = zApiResponseClassDefinitionResponse;
 
 export const zGetQuizSchedulesData = z.object({
   body: z.never().optional(),
@@ -13901,6 +13910,36 @@ export const zResolveByCourseOrClassData = z.object({
  */
 export const zResolveByCourseOrClassResponse = zApiResponseListCommerceCatalogueItem;
 
+export const zGetClassSchedulingConflictsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the class definition'),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Class scheduling conflicts retrieved successfully
+ */
+export const zGetClassSchedulingConflictsResponse = zApiResponsePagedDtoClassSchedulingConflict;
+
+export const zGetClassScheduleData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the class definition'),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Class schedule retrieved successfully
+ */
+export const zGetClassScheduleResponse = zApiResponsePagedDtoScheduledInstance;
+
 export const zGetEnrollmentsForClassData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -13925,7 +13964,7 @@ export const zGetClassDefinitionsForOrganisationData = z.object({
 /**
  * Class definitions retrieved successfully
  */
-export const zGetClassDefinitionsForOrganisationResponse = zApiResponseListClassDefinition;
+export const zGetClassDefinitionsForOrganisationResponse = zApiResponseListClassDefinitionResponse;
 
 export const zGetClassDefinitionsForInstructorData = z.object({
   body: z.never().optional(),
@@ -13946,7 +13985,7 @@ export const zGetClassDefinitionsForInstructorData = z.object({
 /**
  * Class definitions retrieved successfully
  */
-export const zGetClassDefinitionsForInstructorResponse = zApiResponseListClassDefinition;
+export const zGetClassDefinitionsForInstructorResponse = zApiResponseListClassDefinitionResponse;
 
 export const zGetClassDefinitionsForCourseData = z.object({
   body: z.never().optional(),
@@ -13967,7 +14006,7 @@ export const zGetClassDefinitionsForCourseData = z.object({
 /**
  * Class definitions retrieved successfully
  */
-export const zGetClassDefinitionsForCourseResponse = zApiResponseListClassDefinition;
+export const zGetClassDefinitionsForCourseResponse = zApiResponseListClassDefinitionResponse;
 
 export const zGetAllActiveClassDefinitionsData = z.object({
   body: z.never().optional(),
@@ -13978,7 +14017,7 @@ export const zGetAllActiveClassDefinitionsData = z.object({
 /**
  * Active class definitions retrieved successfully
  */
-export const zGetAllActiveClassDefinitionsResponse = zApiResponseListClassDefinition;
+export const zGetAllActiveClassDefinitionsResponse = zApiResponseListClassDefinitionResponse;
 
 export const zVerifyCertificateData = z.object({
   body: z.never().optional(),

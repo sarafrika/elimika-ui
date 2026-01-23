@@ -611,17 +611,17 @@ export const StudentSchema = {
       maxLength: 2000,
       minLength: 0,
     },
-    primaryGuardianContact: {
-      type: 'string',
-    },
-    secondaryGuardianContact: {
-      type: 'string',
-    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
+    },
+    primaryGuardianContact: {
+      type: 'string',
+    },
+    secondaryGuardianContact: {
+      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -2670,6 +2670,13 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_profile_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
+      example: true,
+      readOnly: true,
+    },
     has_location_coordinates: {
       type: 'boolean',
       description:
@@ -2682,13 +2689,6 @@ export const InstructorSchema = {
       description:
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
       example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
-    is_profile_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
-      example: true,
       readOnly: true,
     },
   },
@@ -2932,12 +2932,17 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    membership_duration_months: {
-      type: 'integer',
-      format: 'int32',
+    is_complete: {
+      type: 'boolean',
       description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: 4,
       readOnly: true,
     },
     membership_status: {
@@ -2980,17 +2985,12 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    formatted_duration: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: 4,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
+    membership_duration_months: {
+      type: 'integer',
+      format: 'int32',
       description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
   },
@@ -3146,21 +3146,11 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    experience_level: {
-      $ref: '#/components/schemas/ExperienceLevelEnum',
-    },
-    is_recent_experience: {
+    is_complete: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).',
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
       example: true,
-      readOnly: true,
-    },
-    calculated_years: {
-      type: 'number',
-      format: 'double',
-      description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
-      example: 5.46,
       readOnly: true,
     },
     duration_in_months: {
@@ -3195,11 +3185,21 @@ export const InstructorExperienceSchema = {
       example: true,
       readOnly: true,
     },
-    is_complete: {
+    experience_level: {
+      $ref: '#/components/schemas/ExperienceLevelEnum',
+    },
+    is_recent_experience: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+        '**[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).',
       example: true,
+      readOnly: true,
+    },
+    calculated_years: {
+      type: 'number',
+      format: 'double',
+      description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
+      example: 5.46,
       readOnly: true,
     },
   },
@@ -3331,23 +3331,6 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    years_since_completion: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
-      example: 4,
-      readOnly: true,
-    },
-    education_level: {
-      $ref: '#/components/schemas/EducationLevelEnum',
-    },
-    has_certificate_number: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
-      example: true,
-      readOnly: true,
-    },
     is_complete: {
       type: 'boolean',
       description:
@@ -3366,6 +3349,23 @@ export const InstructorEducationSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
       example: 2020,
+      readOnly: true,
+    },
+    years_since_completion: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
+      example: 4,
+      readOnly: true,
+    },
+    education_level: {
+      $ref: '#/components/schemas/EducationLevelEnum',
+    },
+    has_certificate_number: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
+      example: true,
       readOnly: true,
     },
   },
@@ -6388,20 +6388,31 @@ export const ClassSessionTemplateSchema = {
   required: ['end_time', 'start_time'],
 } as const;
 
-export const ApiResponseClassDefinitionSchema = {
+export const ApiResponseClassDefinitionResponseSchema = {
   type: 'object',
   properties: {
     success: {
       type: 'boolean',
     },
     data: {
-      $ref: '#/components/schemas/ClassDefinition',
+      $ref: '#/components/schemas/ClassDefinitionResponse',
     },
     message: {
       type: 'string',
     },
     error: {
       type: 'object',
+    },
+  },
+} as const;
+
+export const ClassDefinitionResponseSchema = {
+  type: 'object',
+  description: 'Response payload for class definition operations',
+  properties: {
+    class_definition: {
+      $ref: '#/components/schemas/ClassDefinition',
+      description: 'Persisted class definition',
     },
   },
 } as const;
@@ -6994,17 +7005,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: 100,
+      readOnly: true,
+    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
-      readOnly: true,
-    },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: 100,
       readOnly: true,
     },
     assignment_scope: {
@@ -8674,76 +8685,6 @@ export const SelectPaymentSessionRequestSchema = {
     },
   },
   required: ['provider_id'],
-} as const;
-
-export const ApiResponseClassDefinitionCreationResponseSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/ClassDefinitionCreationResponse',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
-    },
-  },
-} as const;
-
-export const ClassDefinitionCreationResponseSchema = {
-  type: 'object',
-  description:
-    'Response payload for class definition creation including scheduled instances and conflicts',
-  properties: {
-    class_definition: {
-      $ref: '#/components/schemas/ClassDefinition',
-      description: 'Persisted class definition',
-    },
-    scheduled_instances: {
-      type: 'array',
-      description: 'Instances scheduled from embedded session templates',
-      items: {
-        $ref: '#/components/schemas/ScheduledInstance',
-      },
-    },
-    scheduling_conflicts: {
-      type: 'array',
-      description: 'Conflicts encountered while scheduling',
-      items: {
-        $ref: '#/components/schemas/ClassSchedulingConflict',
-      },
-    },
-  },
-} as const;
-
-export const ClassSchedulingConflictSchema = {
-  type: 'object',
-  description: 'Details of a conflicting schedule request during class creation',
-  properties: {
-    requested_start: {
-      type: 'string',
-      format: 'date-time',
-      description: 'Requested start date-time that conflicted',
-      example: '2025-01-15T14:00:00',
-    },
-    requested_end: {
-      type: 'string',
-      format: 'date-time',
-      description: 'Requested end date-time that conflicted',
-      example: '2025-01-15T15:30:00',
-    },
-    reasons: {
-      type: 'array',
-      description: 'Reasons for the conflict',
-      items: {
-        type: 'string',
-      },
-    },
-  },
 } as const;
 
 export const ClassQuizScheduleSchema = {
@@ -13021,6 +12962,104 @@ export const PagedDTOCommerceCatalogueItemSchema = {
   },
 } as const;
 
+export const ApiResponsePagedDTOClassSchedulingConflictSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOClassSchedulingConflict',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ClassSchedulingConflictSchema = {
+  type: 'object',
+  description: 'Details of a conflicting schedule request during class creation',
+  properties: {
+    requested_start: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Requested start date-time that conflicted',
+      example: '2025-01-15T14:00:00',
+    },
+    requested_end: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Requested end date-time that conflicted',
+      example: '2025-01-15T15:30:00',
+    },
+    reasons: {
+      type: 'array',
+      description: 'Reasons for the conflict',
+      items: {
+        type: 'string',
+      },
+    },
+  },
+} as const;
+
+export const PagedDTOClassSchedulingConflictSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassSchedulingConflict',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOScheduledInstanceSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOScheduledInstance',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOScheduledInstanceSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ScheduledInstance',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const ApiResponseListClassQuizScheduleSchema = {
   type: 'object',
   properties: {
@@ -13063,7 +13102,7 @@ export const ApiResponseListClassAssignmentScheduleSchema = {
   },
 } as const;
 
-export const ApiResponseListClassDefinitionSchema = {
+export const ApiResponseListClassDefinitionResponseSchema = {
   type: 'object',
   properties: {
     success: {
@@ -13072,7 +13111,7 @@ export const ApiResponseListClassDefinitionSchema = {
     data: {
       type: 'array',
       items: {
-        $ref: '#/components/schemas/ClassDefinition',
+        $ref: '#/components/schemas/ClassDefinitionResponse',
       },
     },
     message: {

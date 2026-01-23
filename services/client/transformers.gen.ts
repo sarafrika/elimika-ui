@@ -304,6 +304,8 @@ import type {
   GetOrderResponse,
   SearchCatalogueResponse,
   ResolveByCourseOrClassResponse,
+  GetClassSchedulingConflictsResponse,
+  GetClassScheduleResponse,
   GetEnrollmentsForClassResponse,
   GetClassDefinitionsForOrganisationResponse,
   GetClassDefinitionsForInstructorResponse,
@@ -1523,9 +1525,16 @@ const classDefinitionSchemaResponseTransformer = (data: any) => {
   return data;
 };
 
-const apiResponseClassDefinitionSchemaResponseTransformer = (data: any) => {
+const classDefinitionResponseSchemaResponseTransformer = (data: any) => {
+  if (data.class_definition) {
+    data.class_definition = classDefinitionSchemaResponseTransformer(data.class_definition);
+  }
+  return data;
+};
+
+const apiResponseClassDefinitionResponseSchemaResponseTransformer = (data: any) => {
   if (data.data) {
-    data.data = classDefinitionSchemaResponseTransformer(data.data);
+    data.data = classDefinitionResponseSchemaResponseTransformer(data.data);
   }
   return data;
 };
@@ -1533,14 +1542,14 @@ const apiResponseClassDefinitionSchemaResponseTransformer = (data: any) => {
 export const getClassDefinitionResponseTransformer = async (
   data: any
 ): Promise<GetClassDefinitionResponse> => {
-  data = apiResponseClassDefinitionSchemaResponseTransformer(data);
+  data = apiResponseClassDefinitionResponseSchemaResponseTransformer(data);
   return data;
 };
 
 export const updateClassDefinitionResponseTransformer = async (
   data: any
 ): Promise<UpdateClassDefinitionResponse> => {
-  data = apiResponseClassDefinitionSchemaResponseTransformer(data);
+  data = apiResponseClassDefinitionResponseSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3321,44 +3330,10 @@ export const completeCartResponseTransformer = async (data: any): Promise<Comple
   return data;
 };
 
-const classSchedulingConflictSchemaResponseTransformer = (data: any) => {
-  if (data.requested_start) {
-    data.requested_start = new Date(data.requested_start);
-  }
-  if (data.requested_end) {
-    data.requested_end = new Date(data.requested_end);
-  }
-  return data;
-};
-
-const classDefinitionCreationResponseSchemaResponseTransformer = (data: any) => {
-  if (data.class_definition) {
-    data.class_definition = classDefinitionSchemaResponseTransformer(data.class_definition);
-  }
-  if (data.scheduled_instances) {
-    data.scheduled_instances = data.scheduled_instances.map((item: any) => {
-      return scheduledInstanceSchemaResponseTransformer(item);
-    });
-  }
-  if (data.scheduling_conflicts) {
-    data.scheduling_conflicts = data.scheduling_conflicts.map((item: any) => {
-      return classSchedulingConflictSchemaResponseTransformer(item);
-    });
-  }
-  return data;
-};
-
-const apiResponseClassDefinitionCreationResponseSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = classDefinitionCreationResponseSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
 export const createClassDefinitionResponseTransformer = async (
   data: any
 ): Promise<CreateClassDefinitionResponse> => {
-  data = apiResponseClassDefinitionCreationResponseSchemaResponseTransformer(data);
+  data = apiResponseClassDefinitionResponseSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4824,6 +4799,68 @@ export const resolveByCourseOrClassResponseTransformer = async (
   return data;
 };
 
+const classSchedulingConflictSchemaResponseTransformer = (data: any) => {
+  if (data.requested_start) {
+    data.requested_start = new Date(data.requested_start);
+  }
+  if (data.requested_end) {
+    data.requested_end = new Date(data.requested_end);
+  }
+  return data;
+};
+
+const pagedDtoClassSchedulingConflictSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return classSchedulingConflictSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoClassSchedulingConflictSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoClassSchedulingConflictSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getClassSchedulingConflictsResponseTransformer = async (
+  data: any
+): Promise<GetClassSchedulingConflictsResponse> => {
+  data = apiResponsePagedDtoClassSchedulingConflictSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoScheduledInstanceSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return scheduledInstanceSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoScheduledInstanceSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoScheduledInstanceSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getClassScheduleResponseTransformer = async (
+  data: any
+): Promise<GetClassScheduleResponse> => {
+  data = apiResponsePagedDtoScheduledInstanceSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getEnrollmentsForClassResponseTransformer = async (
   data: any
 ): Promise<GetEnrollmentsForClassResponse> => {
@@ -4831,10 +4868,10 @@ export const getEnrollmentsForClassResponseTransformer = async (
   return data;
 };
 
-const apiResponseListClassDefinitionSchemaResponseTransformer = (data: any) => {
+const apiResponseListClassDefinitionResponseSchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = data.data.map((item: any) => {
-      return classDefinitionSchemaResponseTransformer(item);
+      return classDefinitionResponseSchemaResponseTransformer(item);
     });
   }
   return data;
@@ -4843,28 +4880,28 @@ const apiResponseListClassDefinitionSchemaResponseTransformer = (data: any) => {
 export const getClassDefinitionsForOrganisationResponseTransformer = async (
   data: any
 ): Promise<GetClassDefinitionsForOrganisationResponse> => {
-  data = apiResponseListClassDefinitionSchemaResponseTransformer(data);
+  data = apiResponseListClassDefinitionResponseSchemaResponseTransformer(data);
   return data;
 };
 
 export const getClassDefinitionsForInstructorResponseTransformer = async (
   data: any
 ): Promise<GetClassDefinitionsForInstructorResponse> => {
-  data = apiResponseListClassDefinitionSchemaResponseTransformer(data);
+  data = apiResponseListClassDefinitionResponseSchemaResponseTransformer(data);
   return data;
 };
 
 export const getClassDefinitionsForCourseResponseTransformer = async (
   data: any
 ): Promise<GetClassDefinitionsForCourseResponse> => {
-  data = apiResponseListClassDefinitionSchemaResponseTransformer(data);
+  data = apiResponseListClassDefinitionResponseSchemaResponseTransformer(data);
   return data;
 };
 
 export const getAllActiveClassDefinitionsResponseTransformer = async (
   data: any
 ): Promise<GetAllActiveClassDefinitionsResponse> => {
-  data = apiResponseListClassDefinitionSchemaResponseTransformer(data);
+  data = apiResponseListClassDefinitionResponseSchemaResponseTransformer(data);
   return data;
 };
 

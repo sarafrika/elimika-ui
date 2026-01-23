@@ -902,7 +902,8 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
                                           content_type_uuid:
                                             contentForm.getValues('content_type_uuid'),
                                           title: contentForm.getValues('title') || 'Untitled',
-                                          is_required: true,
+                                          is_required: false,
+                                          description: 'N/A'
                                         },
                                       },
                                       {

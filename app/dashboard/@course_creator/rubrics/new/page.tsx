@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCourseCreator } from '@/context/course-creator-context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit2, FileText, PlusCircle, Save, Search, Trash2, X } from 'lucide-react';
@@ -27,6 +28,8 @@ import {
   updateScoringLevelMutation
 } from '../../../../../services/client/@tanstack/react-query.gen';
 import { Criterion, Rubric, RubricScoringLevel, ScoringLevel, useRubricsData } from '../rubric-chaining';
+
+
 
 const DEFAULT_LEVEL_NAMES = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
 
@@ -92,6 +95,35 @@ const createEmptyRubric = (): Rubric => ({
     },
   ],
 });
+
+const RubricCardSkeleton = () => {
+  return (
+    <Card className="p-5 dark:border-border">
+      <div className="flex items-start gap-3">
+        <Skeleton className="h-9 w-9 rounded-lg" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-5 w-3/4" />
+        </div>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+      </div>
+
+      <div className="mt-3 flex gap-2">
+        <Skeleton className="h-6 w-20 rounded-md" />
+        <Skeleton className="h-6 w-24 rounded-md" />
+      </div>
+
+      <div className="mt-4 flex gap-2 border-t border-border pt-3 dark:border-border">
+        <Skeleton className="h-8 flex-1 rounded-md" />
+        <Skeleton className="h-8 w-20 rounded-md" />
+      </div>
+    </Card>
+  )
+}
+
 
 const RubricManager: React.FC = () => {
   const qc = useQueryClient();
@@ -752,7 +784,6 @@ const RubricManager: React.FC = () => {
         }
       );
     } else {
-      // Just remove from local state if it's a new criterion
       setCurrentRubric({
         ...currentRubric,
         criteria: currentRubric.criteria.filter((_, i) => i !== index),
@@ -957,6 +988,7 @@ const RubricManager: React.FC = () => {
     );
   }
 
+
   return (
     <div className="mx-auto min-h-screen max-w-7xl space-y-6 p-6">
       <div className="flex gap-2">
@@ -975,8 +1007,10 @@ const RubricManager: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="rounded-lg border border-border bg-card p-4 dark:border-border">
-          <p className="text-sm text-muted-foreground">Loading rubrics...</p>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <RubricCardSkeleton key={index} />
+          ))}
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">

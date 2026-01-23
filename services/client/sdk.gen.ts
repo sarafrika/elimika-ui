@@ -1174,6 +1174,12 @@ import type {
   ResolveByCourseOrClassData,
   ResolveByCourseOrClassResponses,
   ResolveByCourseOrClassErrors,
+  GetClassSchedulingConflictsData,
+  GetClassSchedulingConflictsResponses,
+  GetClassSchedulingConflictsErrors,
+  GetClassScheduleData,
+  GetClassScheduleResponses,
+  GetClassScheduleErrors,
   GetEnrollmentsForClassData,
   GetEnrollmentsForClassResponses,
   GetEnrollmentsForClassErrors,
@@ -1597,6 +1603,8 @@ import {
   getOrderResponseTransformer,
   searchCatalogueResponseTransformer,
   resolveByCourseOrClassResponseTransformer,
+  getClassSchedulingConflictsResponseTransformer,
+  getClassScheduleResponseTransformer,
   getEnrollmentsForClassResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
@@ -13356,6 +13364,60 @@ export const resolveByCourseOrClass = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/commerce/catalogue/resolve',
+    ...options,
+  });
+};
+
+/**
+ * Get class scheduling conflicts
+ */
+export const getClassSchedulingConflicts = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassSchedulingConflictsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassSchedulingConflictsResponses,
+    GetClassSchedulingConflictsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassSchedulingConflictsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/scheduling-conflicts',
+    ...options,
+  });
+};
+
+/**
+ * Get class schedule
+ */
+export const getClassSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassScheduleResponses,
+    GetClassScheduleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassScheduleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/schedule',
     ...options,
   });
 };

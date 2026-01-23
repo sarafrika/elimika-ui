@@ -275,9 +275,9 @@ export type Student = {
    * **[OPTIONAL]** Short biography or notes about the student. Used in student profiles.
    */
   bio?: string;
+  allGuardianContacts?: Array<string>;
   primaryGuardianContact?: string;
   secondaryGuardianContact?: string;
-  allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
    */
@@ -1298,6 +1298,10 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   */
+  readonly is_profile_complete?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
@@ -1305,10 +1309,6 @@ export type Instructor = {
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
-   */
-  readonly is_profile_complete?: boolean;
 };
 
 /**
@@ -1424,9 +1424,13 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
-  readonly membership_duration_months?: number;
+  readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   */
+  readonly formatted_duration?: string;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -1450,13 +1454,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
-  readonly formatted_duration?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
+  readonly membership_duration_months?: number;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1528,15 +1528,10 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Brief summary of the experience for display in listings.
    */
   readonly summary?: string;
-  experience_level?: ExperienceLevelEnum;
   /**
-   * **[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
-  readonly is_recent_experience?: boolean;
-  /**
-   * **[READ-ONLY]** Calculated years of experience based on start and end dates.
-   */
-  readonly calculated_years?: number;
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
@@ -1557,10 +1552,15 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Indicates if the position has responsibilities documented.
    */
   readonly has_responsibilities?: boolean;
+  experience_level?: ExperienceLevelEnum;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   * **[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).
    */
-  readonly is_complete?: boolean;
+  readonly is_recent_experience?: boolean;
+  /**
+   * **[READ-ONLY]** Calculated years of experience based on start and end dates.
+   */
+  readonly calculated_years?: number;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1621,15 +1621,6 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Number of years since the qualification was completed.
-   */
-  readonly years_since_completion?: number;
-  education_level?: EducationLevelEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
-   */
-  readonly has_certificate_number?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
   readonly is_complete?: boolean;
@@ -1641,6 +1632,15 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
+  /**
+   * **[READ-ONLY]** Number of years since the qualification was completed.
+   */
+  readonly years_since_completion?: number;
+  education_level?: EducationLevelEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
+   */
+  readonly has_certificate_number?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -3045,13 +3045,23 @@ export type ClassSessionTemplate = {
   conflict_resolution?: ConflictResolutionEnum;
 };
 
-export type ApiResponseClassDefinition = {
+export type ApiResponseClassDefinitionResponse = {
   success?: boolean;
-  data?: ClassDefinition;
+  data?: ClassDefinitionResponse;
   message?: string;
   error?: {
     [key: string]: unknown;
   };
+};
+
+/**
+ * Response payload for class definition operations
+ */
+export type ClassDefinitionResponse = {
+  /**
+   * Persisted class definition
+   */
+  class_definition?: ClassDefinition;
 };
 
 /**
@@ -3346,13 +3356,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
-   */
-  readonly assignment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
+   */
+  readonly assignment_category?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -4353,51 +4363,6 @@ export type SelectPaymentSessionRequest = {
    * Identifier of the payment provider (e.g. 'manual', 'stripe')
    */
   provider_id: string;
-};
-
-export type ApiResponseClassDefinitionCreationResponse = {
-  success?: boolean;
-  data?: ClassDefinitionCreationResponse;
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
-};
-
-/**
- * Response payload for class definition creation including scheduled instances and conflicts
- */
-export type ClassDefinitionCreationResponse = {
-  /**
-   * Persisted class definition
-   */
-  class_definition?: ClassDefinition;
-  /**
-   * Instances scheduled from embedded session templates
-   */
-  scheduled_instances?: Array<ScheduledInstance>;
-  /**
-   * Conflicts encountered while scheduling
-   */
-  scheduling_conflicts?: Array<ClassSchedulingConflict>;
-};
-
-/**
- * Details of a conflicting schedule request during class creation
- */
-export type ClassSchedulingConflict = {
-  /**
-   * Requested start date-time that conflicted
-   */
-  requested_start?: Date;
-  /**
-   * Requested end date-time that conflicted
-   */
-  requested_end?: Date;
-  /**
-   * Reasons for the conflict
-   */
-  reasons?: Array<string>;
 };
 
 /**
@@ -6458,6 +6423,54 @@ export type PagedDtoCommerceCatalogueItem = {
   links?: PageLinks;
 };
 
+export type ApiResponsePagedDtoClassSchedulingConflict = {
+  success?: boolean;
+  data?: PagedDtoClassSchedulingConflict;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Details of a conflicting schedule request during class creation
+ */
+export type ClassSchedulingConflict = {
+  /**
+   * Requested start date-time that conflicted
+   */
+  requested_start?: Date;
+  /**
+   * Requested end date-time that conflicted
+   */
+  requested_end?: Date;
+  /**
+   * Reasons for the conflict
+   */
+  reasons?: Array<string>;
+};
+
+export type PagedDtoClassSchedulingConflict = {
+  content?: Array<ClassSchedulingConflict>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoScheduledInstance = {
+  success?: boolean;
+  data?: PagedDtoScheduledInstance;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoScheduledInstance = {
+  content?: Array<ScheduledInstance>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
 export type ApiResponseListClassQuizSchedule = {
   success?: boolean;
   data?: Array<ClassQuizSchedule>;
@@ -6476,9 +6489,9 @@ export type ApiResponseListClassAssignmentSchedule = {
   };
 };
 
-export type ApiResponseListClassDefinition = {
+export type ApiResponseListClassDefinitionResponse = {
   success?: boolean;
-  data?: Array<ClassDefinition>;
+  data?: Array<ClassDefinitionResponse>;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -10875,7 +10888,7 @@ export type GetClassDefinitionResponses = {
   /**
    * Class definition retrieved successfully
    */
-  200: ApiResponseClassDefinition;
+  200: ApiResponseClassDefinitionResponse;
 };
 
 export type GetClassDefinitionResponse =
@@ -10897,7 +10910,7 @@ export type UpdateClassDefinitionErrors = {
   /**
    * Invalid input data
    */
-  400: ApiResponseClassDefinition;
+  400: ApiResponseClassDefinitionResponse;
   /**
    * Class definition not found
    */
@@ -10915,7 +10928,7 @@ export type UpdateClassDefinitionResponses = {
   /**
    * Class definition updated successfully
    */
-  200: ApiResponseClassDefinition;
+  200: ApiResponseClassDefinitionResponse;
 };
 
 export type UpdateClassDefinitionResponse =
@@ -15512,7 +15525,7 @@ export type CreateClassDefinitionErrors = {
   /**
    * Invalid input data
    */
-  400: ApiResponseClassDefinitionCreationResponse;
+  400: ApiResponseClassDefinitionResponse;
   /**
    * Not Found
    */
@@ -15530,7 +15543,7 @@ export type CreateClassDefinitionResponses = {
   /**
    * Class definition created successfully
    */
-  201: ApiResponseClassDefinitionCreationResponse;
+  201: ApiResponseClassDefinitionResponse;
 };
 
 export type CreateClassDefinitionResponse =
@@ -21043,6 +21056,80 @@ export type ResolveByCourseOrClassResponses = {
 export type ResolveByCourseOrClassResponse =
   ResolveByCourseOrClassResponses[keyof ResolveByCourseOrClassResponses];
 
+export type GetClassSchedulingConflictsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the class definition
+     */
+    uuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/classes/{uuid}/scheduling-conflicts';
+};
+
+export type GetClassSchedulingConflictsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetClassSchedulingConflictsError =
+  GetClassSchedulingConflictsErrors[keyof GetClassSchedulingConflictsErrors];
+
+export type GetClassSchedulingConflictsResponses = {
+  /**
+   * Class scheduling conflicts retrieved successfully
+   */
+  200: ApiResponsePagedDtoClassSchedulingConflict;
+};
+
+export type GetClassSchedulingConflictsResponse =
+  GetClassSchedulingConflictsResponses[keyof GetClassSchedulingConflictsResponses];
+
+export type GetClassScheduleData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the class definition
+     */
+    uuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/classes/{uuid}/schedule';
+};
+
+export type GetClassScheduleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetClassScheduleError = GetClassScheduleErrors[keyof GetClassScheduleErrors];
+
+export type GetClassScheduleResponses = {
+  /**
+   * Class schedule retrieved successfully
+   */
+  200: ApiResponsePagedDtoScheduledInstance;
+};
+
+export type GetClassScheduleResponse = GetClassScheduleResponses[keyof GetClassScheduleResponses];
+
 export type GetEnrollmentsForClassData = {
   body?: never;
   path: {
@@ -21109,7 +21196,7 @@ export type GetClassDefinitionsForOrganisationResponses = {
   /**
    * Class definitions retrieved successfully
    */
-  200: ApiResponseListClassDefinition;
+  200: ApiResponseListClassDefinitionResponse;
 };
 
 export type GetClassDefinitionsForOrganisationResponse =
@@ -21150,7 +21237,7 @@ export type GetClassDefinitionsForInstructorResponses = {
   /**
    * Class definitions retrieved successfully
    */
-  200: ApiResponseListClassDefinition;
+  200: ApiResponseListClassDefinitionResponse;
 };
 
 export type GetClassDefinitionsForInstructorResponse =
@@ -21191,7 +21278,7 @@ export type GetClassDefinitionsForCourseResponses = {
   /**
    * Class definitions retrieved successfully
    */
-  200: ApiResponseListClassDefinition;
+  200: ApiResponseListClassDefinitionResponse;
 };
 
 export type GetClassDefinitionsForCourseResponse =
@@ -21222,7 +21309,7 @@ export type GetAllActiveClassDefinitionsResponses = {
   /**
    * Active class definitions retrieved successfully
    */
-  200: ApiResponseListClassDefinition;
+  200: ApiResponseListClassDefinitionResponse;
 };
 
 export type GetAllActiveClassDefinitionsResponse =
