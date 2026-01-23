@@ -425,7 +425,7 @@ export default function CourseBuilderPage() {
   return (
     <div className='relative w-full'>
       <div className='relative mx-auto flex w-full flex-col gap-10 px-4 pb-12 lg:pb-16'>
-        <header className='border-border bg-card/90 rounded-[36px] border p-8 shadow-xl backdrop-blur'>
+        {/* <header className='border-border bg-card/90 rounded-[36px] border p-8 shadow-xl backdrop-blur'>
           <span className='border-primary/40 bg-primary/10 text-primary inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs font-semibold tracking-[0.4em] uppercase'>
             Course creator studio
           </span>
@@ -436,7 +436,22 @@ export default function CourseBuilderPage() {
             Outline your course blueprint, orchestrate lessons, and refine assessments with
             guardrails that echo the Elimika brand.
           </p>
+        </header> */}
+
+        <header className="border-border bg-card rounded-xl border px-5 py-4">
+          <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-widest">
+            Course creator studio
+          </span>
+
+          <h1 className="text-foreground mt-2 text-xl font-semibold">
+            Design learning experiences that match your vision
+          </h1>
+
+          <p className="text-muted-foreground mt-1 max-w-xl text-sm">
+            Outline your course blueprint, orchestrate lessons, and refine assessments with guardrails that echo the Elimika brand.
+          </p>
         </header>
+
 
         <StepperRoot>
           <StepperList>

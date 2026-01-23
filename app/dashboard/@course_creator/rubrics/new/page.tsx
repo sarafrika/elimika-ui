@@ -890,16 +890,6 @@ const RubricManager: React.FC = () => {
               </thead>
               <tbody>
                 {currentRubric.criteria.map((c, cIdx) => {
-                  const levels = [...c.scoring];
-                  while (levels.length < 4) {
-                    levels.push({
-                      uuid: `empty-${cIdx}-${levels.length}`,
-                      performance_expectation: '',
-                    });
-                  }
-
-
-
                   return (
                     <tr key={c.uuid}>
                       <td className="border px-2">
@@ -920,19 +910,40 @@ const RubricManager: React.FC = () => {
                         </div>
                       </td>
 
-                      {levels.map((l, lIdx) => (
-                        <td key={l.uuid} className="border px-2">
-                          <textarea
-                            className="w-full rounded border p-1 text-sm"
-                            rows={3}
-                            value={l.description}
-                            onChange={e =>
-                              updateLevel(cIdx, lIdx, 'description', e.target.value)
-                            }
-                            placeholder="Describe Performance expectation"
-                          />
-                        </td>
-                      ))}
+                      {(currentRubric.scoringLevels || []).map((scoringLevel, slIdx) => {
+                        // Find the matching scoring entry for this criterion and scoring level
+                        const matchingScoring = c.scoring.find(
+                          s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                        );
+
+                        // If no match found, create an empty placeholder
+                        const scoringEntry = matchingScoring || {
+                          uuid: `empty-${cIdx}-${slIdx}`,
+                          description: '',
+                          performance_expectation: '',
+                          rubric_scoring_level_uuid: scoringLevel.uuid,
+                        };
+
+                        return (
+                          <td key={scoringLevel.uuid} className="border px-2">
+                            <textarea
+                              className="w-full rounded border p-1 text-sm"
+                              rows={3}
+                              value={scoringEntry.description || ''}
+                              onChange={e => {
+                                // Find the actual index of this scoring entry in the criterion's scoring array
+                                const actualIdx = c.scoring.findIndex(
+                                  s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                                );
+                                if (actualIdx !== -1) {
+                                  updateLevel(cIdx, actualIdx, 'description', e.target.value);
+                                }
+                              }}
+                              placeholder="Describe Performance expectation"
+                            />
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
