@@ -13,7 +13,7 @@ function useBundledClassInfo(courseUuid?: string, startDate?: any, endDate?: any
     ...getClassDefinitionsForCourseOptions({ path: { courseUuid: courseUuid ?? '' } }),
     enabled: !!courseUuid,
   });
-  const classes = data?.data ?? [];
+  const classes = data?.data?.map(item => item?.class_definition) ?? [];
 
   const courseQueries = useQueries({
     queries:

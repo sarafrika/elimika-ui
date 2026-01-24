@@ -199,7 +199,7 @@ export function CourseCard({
                     // router.push(`/dashboard/browse-courses/enroll/${course.uuid}`);
                   }}
                 >
-                  Enroll
+                  Search Classes
                 </Button>
               </>
             ) : (
