@@ -16,7 +16,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addYears, format } from 'date-fns';
 import { ShoppingCart } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../../../components/ui/button';
@@ -28,6 +28,7 @@ import EnrollCourseCard from '../../../../_components/enroll-course-card';
 const EnrollmentPage = () => {
   const params = useParams();
   const courseId = params?.id as string;
+  const router = useRouter()
 
   const { replaceBreadcrumbs } = useBreadcrumb();
   const student = useStudent();
@@ -43,8 +44,8 @@ const EnrollmentPage = () => {
         { id: 'courses', title: 'Browse Courses', url: `/dashboard/browse-courses` },
         {
           id: 'course-details',
-          title: `Enroll`,
-          url: `/dashboard/browse-courses/enroll/${courseId}`,
+          title: `Available classes`,
+          url: `/dashboard/browse-courses/available-classes/${courseId}`,
         },
       ]);
     }
@@ -225,56 +226,47 @@ const EnrollmentPage = () => {
       </div>
 
       {/* Date filter controls */}
-      <Card className='space-y-3 p-4'>
+      <Card className="space-y-2 p-4">
         {/* Info */}
-        <div className='text-muted-foreground text-sm'>
+        <div className="text-sm text-muted-foreground">
           {!appliedStart || !appliedEnd ? (
-            <span>
-              Showing default date range. Adjust dates and click <strong>Apply</strong>.
-            </span>
+            <>Showing default range. Adjust dates and click <strong>Apply</strong>.</>
           ) : (
-            <span>
+            <>
               Showing <strong>{format(new Date(appliedStart), 'MMM dd, yyyy')}</strong> –{' '}
               <strong>{format(new Date(appliedEnd), 'MMM dd, yyyy')}</strong>
-            </span>
+            </>
           )}
-
-          {dateError && <p className='text-destructive mt-1'>{dateError}</p>}
+          {dateError && <div className="mt-1 text-destructive">{dateError}</div>}
         </div>
 
         {/* Controls */}
-        <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end'>
-          <div className='w-full sm:w-auto'>
-            <Label className='text-xs'>Start</Label>
+        <div className="flex flex-wrap items-end gap-2">
+          <div>
+            <Label className="text-xs">Start</Label>
             <Input
-              type='date'
+              type="date"
               value={startDateInput}
               onChange={e => setStartDateInput(e.target.value)}
-              className='mt-1 w-full sm:w-[160px]'
+              className="mt-1 w-[160px]"
             />
           </div>
 
-          <div className='w-full sm:w-auto'>
-            <Label className='text-xs'>End</Label>
+          <div>
+            <Label className="text-xs">End</Label>
             <Input
-              type='date'
+              type="date"
               value={endDateInput}
               onChange={e => setEndDateInput(e.target.value)}
-              className='mt-1 w-full sm:w-[160px]'
+              className="mt-1 w-[160px]"
             />
           </div>
 
-          {/* Actions */}
-          <div className='flex gap-2 pt-1 sm:pt-0'>
-            <Button size='sm' onClick={applyDates}>
-              Apply
-            </Button>
-            <Button size='sm' variant='outline' onClick={clearDates}>
-              Reset
-            </Button>
-          </div>
+          <Button size="sm" onClick={applyDates}>Apply</Button>
+          <Button size="sm" variant="outline" onClick={clearDates}>Reset</Button>
         </div>
       </Card>
+
 
       {loading ? (
         <CustomLoadingState subHeading='Loading available classes...' />
@@ -319,7 +311,8 @@ const EnrollmentPage = () => {
                   disableEnroll={false}
                   handleEnroll={() => {
                     setEnrollingClass(cls);
-                    setOpenEnrollModal(true);
+                    // setOpenEnrollModal(true);
+                    router.push(`/dashboard/browse-courses/available-classes/${courseId}/enroll?id=${cls?.uuid}`)
                   }}
                   variant='full'
                 />
@@ -329,7 +322,7 @@ const EnrollmentPage = () => {
         </>
       )}
 
-      <ConfirmModal
+      {/* <ConfirmModal
         open={openEnrollModal}
         setOpen={setOpenEnrollModal}
         title='Confirm Enrollment'
@@ -378,7 +371,7 @@ const EnrollmentPage = () => {
         confirmText='Yes, Enroll Me'
         cancelText='No, Cancel'
         variant='primary'
-      />
+      /> */}
 
       <ConfirmModal
         open={openCartModal}

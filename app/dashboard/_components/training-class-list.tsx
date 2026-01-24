@@ -309,7 +309,7 @@ export function TrainingClassList({
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
-                              router.push(`/dashboard/trainings/new?id=${cls.uuid}`)
+                              router.push(`/dashboard/trainings/create-new?id=${cls.uuid}`)
                             }
                             className='flex w-full cursor-pointer items-center'
                           >
