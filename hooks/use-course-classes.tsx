@@ -1,11 +1,11 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   getClassDefinitionsForCourseOptions,
+  getClassScheduleOptions,
   getCourseByUuidOptions,
   getInstructorByUuidOptions,
-  getInstructorCalendarOptions,
   getStudentScheduleOptions,
-  listCatalogItemsOptions,
+  listCatalogItemsOptions
 } from '../services/client/@tanstack/react-query.gen';
 
 function useBundledClassInfo(courseUuid?: string, startDate?: any, endDate?: any, student?: any) {
@@ -19,6 +19,14 @@ function useBundledClassInfo(courseUuid?: string, startDate?: any, endDate?: any
     queries:
       classes.map((cls: any) => ({
         ...getCourseByUuidOptions({ path: { uuid: cls.course_uuid } }),
+        enabled: !!cls.course_uuid,
+      })) || [],
+  });
+
+  const scheduleQueries = useQueries({
+    queries:
+      classes.map((cls: any) => ({
+        ...getClassScheduleOptions({ path: { uuid: cls.uuid as string }, query: { pageable: {} } }),
         enabled: !!cls.course_uuid,
       })) || [],
   });
@@ -49,21 +57,10 @@ function useBundledClassInfo(courseUuid?: string, startDate?: any, endDate?: any
   });
   const enrollments = enrollmentsData?.data ?? [];
 
-  const scheduleQueries = useQueries({
-    queries:
-      classes.map((cls: any) => ({
-        ...getInstructorCalendarOptions({
-          path: { instructorUuid: cls?.default_instructor_uuid as string },
-          query: { start_date: startDate, end_date: endDate },
-        }),
-        enabled: !!cls?.default_instructor_uuid && !!startDate && !!endDate,
-      })) || [],
-  });
-
   const courses = courseQueries.map(q => q.data?.data ?? null);
   // @ts-expect-error
   const instructors = instructorQueries.map(q => q.data?.data ?? null);
-  const schedules = scheduleQueries.map(q => q.data?.data ?? null);
+  const schedules = scheduleQueries.map(q => q.data?.data?.content ?? null);
 
   const bundledClassInfo = classes.map((cls: any, i: number) => {
     const classEnrollments = enrollments.filter((en: any) => en.class_definition_uuid === cls.uuid);

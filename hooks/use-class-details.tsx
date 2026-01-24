@@ -29,6 +29,18 @@ export const useClassDetails = (classId?: string) => {
         enabled: !!classId,
     });
 
+    // 2️⃣ Fetch class enrollment
+    const {
+        data: classEnrollments,
+        isLoading: isLoadingEnrollments,
+    } = useQuery({
+        ...getClassScheduleOptions({
+            path: { uuid: classId as string },
+            query: { pageable: {} },
+        }),
+        enabled: !!classId,
+    });
+
     // 3️⃣ Fetch course details
     const {
         data: courseDetailData,
@@ -56,6 +68,7 @@ export const useClassDetails = (classId?: string) => {
     const isLoading =
         isLoadingClass ||
         isLoadingSchedule ||
+        isLoadingEnrollments ||
         isLoadingCourse ||
         isLoadingLessons;
 
@@ -65,6 +78,7 @@ export const useClassDetails = (classId?: string) => {
             schedule: classScheduleData?.data?.content ?? [],
             course: courseDetailData?.data,
             lessons: courseLessonsData?.data?.content ?? [],
+            enrollments: classEnrollments?.data?.content ?? []
         },
         isLoading,
         isError: isClassError,

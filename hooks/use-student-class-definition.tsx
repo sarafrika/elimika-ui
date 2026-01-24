@@ -1,6 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   getClassDefinitionOptions,
+  getClassScheduleOptions,
   getCourseByUuidOptions,
   getStudentScheduleOptions,
 } from '../services/client/@tanstack/react-query.gen';
@@ -31,6 +32,15 @@ function useStudentClassDefinitions(student?: any) {
       })) || [],
   });
 
+  // 3️⃣ Fetch each class definition
+  const scheduleQueries = useQueries({
+    queries:
+      classDefinitionUuids.map((uuid: string) => ({
+        ...getClassScheduleOptions({ path: { uuid }, query: { pageable: {} } }),
+        enabled: !!uuid,
+      })) || [],
+  });
+
   // Extract class details after fetching
   const classDetailsArray = classQueries.map(q => q.data?.data ?? null);
 
@@ -52,6 +62,7 @@ function useStudentClassDefinitions(student?: any) {
       })) || [],
   });
 
+  const classScheduleArray = scheduleQueries.map(q => q.data?.data?.content)
   const courseDetailsArray = courseQueries.map(q => q.data?.data ?? null);
 
   // 6️⃣ Merge class + course + enrollment data
@@ -64,6 +75,7 @@ function useStudentClassDefinitions(student?: any) {
       classDetails,
       course,
       enrollments: enrollments.filter((en: any) => en.class_definition_uuid === uuid),
+      schedules: classScheduleArray
     };
   });
 

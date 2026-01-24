@@ -138,7 +138,7 @@ export default function EnrollCourseCard({
           <div className='absolute top-4 left-4 z-20 flex flex-wrap gap-2'>
             <Badge className='bg-card/95 text-foreground shadow-lg backdrop-blur-sm hover:bg-card border border-border'>
               <MapPin className='mr-1.5 h-3.5 w-3.5' />
-              {cls?.location_type.replace('_', ' ')}
+              {/* {cls?.location_type.replace('_', ' ')} */}
             </Badge>
 
             {variant === 'full' && (
