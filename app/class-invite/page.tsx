@@ -22,22 +22,37 @@ import {
     startOfWeek
 } from 'date-fns';
 import { ChevronLeft, ChevronRight, Clock, Layers, MapPin, Users } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useClassDetails } from '../../hooks/use-class-details';
 import { useDifficultyLevels } from '../../hooks/use-difficultyLevels';
+import { useUserDomains } from '../../hooks/use-user-query';
 
 function ClassInviteContent() {
     const searchParams = useSearchParams();
     const uuid = searchParams.get('id');
-    const router = useRouter()
     const [copied, setCopied] = useState(false);
+    const user = useUserDomains()
 
     const { data: combinedClass, isLoading } = useClassDetails(uuid as string);
     const data = combinedClass?.class;
     const schedules = combinedClass?.schedule;
     const course = combinedClass?.course;
 
+    const handleRegister = () => {
+        if (user?.activeDomain !== "student") {
+            toast.message(
+                "To enroll in a class, please switch to your student profile or create a student profile."
+            );
+            return;
+        }
+
+        window.open(
+            `/dashboard/browse-courses/available-classes/${course?.uuid}/enroll?id=${uuid}`,
+            "_blank"
+        );
+    };
 
     const copyLink = async () => {
         await navigator.clipboard.writeText(
@@ -135,17 +150,13 @@ function ClassInviteContent() {
 
                         <div className="flex items-center gap-3">
                             <Button
-                                onClick={() =>
-                                    window.open(
-                                        `/dashboard/browse-courses/available-classes/${course?.uuid}/enroll?id=${uuid}`,
-                                        "_blank"
-                                    )
-                                }
+                                onClick={handleRegister}
                                 size="lg"
                                 className="rounded-full px-10"
                             >
                                 Register for Class
                             </Button>
+
 
                             <Button
                                 variant="outline"

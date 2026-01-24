@@ -68,7 +68,7 @@ export default function ClassDetailsPage() {
     ...getClassDefinitionOptions({ path: { uuid: classId as string } }),
     enabled: !!classId,
   });
-  const classData = data?.data;
+  const classData = data?.data?.class_definition;
 
   const { replaceBreadcrumbs } = useBreadcrumb();
   useEffect(() => {
@@ -572,8 +572,8 @@ export default function ClassDetailsPage() {
                   <Button
                     variant='outline'
                     className='flex-1 gap-2'
-                    // onClick={goToPreviousLesson}
-                    // disabled={modules[0].lessons[0].id === selectedLesson.uuid}
+                  // onClick={goToPreviousLesson}
+                  // disabled={modules[0].lessons[0].id === selectedLesson.uuid}
                   >
                     <ChevronLeft className='h-4 w-4' />
                     Previous
@@ -581,7 +581,7 @@ export default function ClassDetailsPage() {
                   <Button
                     variant='outline'
                     className='flex-1 gap-2'
-                    // onClick={goToNextLesson}
+                  // onClick={goToNextLesson}
                   >
                     Next
                     <ChevronRight className='h-4 w-4' />
