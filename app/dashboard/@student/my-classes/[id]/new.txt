@@ -27,15 +27,15 @@ import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
 import { FeedbackDialog } from '../../../_components/review-instructor-modal';
-import { ClassPageHeader } from './ClassPageHeader';
-import { CourseProgramSection } from './CourseProgram';
-import { LessonDetailsSidebar } from './LessonDetailsSidebar';
-import { NextClassCard } from './NextClassCard';
-import { ReadingMode } from './ReadingMode';
-import { ScheduleDetailsDialog } from './StudentDetailsDialog';
-import { ClassScheduleCalendar } from './SudentClassSchedule';
-import { VideoPlayer } from './VideoPlayer';
-import { WeeklyScheduleList } from './WeeklyScheduleList';
+import { ClassPageHeader } from './new/ClassPageHeader';
+import { CourseProgramSection } from './new/CourseProgram';
+import { LessonDetailsSidebar } from './new/LessonDetailsSidebar';
+import { NextClassCard } from './new/NextClassCard';
+import { ReadingMode } from './new/ReadingMode';
+import { ScheduleDetailsDialog } from './new/StudentDetailsDialog';
+import { ClassScheduleCalendar } from './new/SudentClassSchedule';
+import { VideoPlayer } from './new/VideoPlayer';
+import { WeeklyScheduleList } from './new/WeeklyScheduleList';
 
 // Import components
 
@@ -52,7 +52,6 @@ export default function ClassDetailsPage() {
     const [selectedSchedule, setSelectedSchedule] = useState(null);
     const [showCourseProgram, setShowCourseProgram] = useState(true);
     const [expandedModules, setExpandedModules] = useState<string[]>([]);
-    const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
     const [selectedLesson, setSelectedLesson] = useState(null);
 
     // Feedback/Rating states
@@ -233,10 +232,11 @@ export default function ClassDetailsPage() {
         toast.message('This feature is under development');
     };
 
-    const handleToggleModule = (uuid: string) => {
-        setExpandedModuleId((prev) => (prev === uuid ? null : uuid));
+    const toggleModule = (uuid: string) => {
+        setExpandedModules((prev) =>
+            prev.includes(uuid) ? prev.filter((id) => id !== uuid) : [...prev, uuid]
+        );
     };
-
 
     // Loading State
     const loading = classLoading || instructorLoading || courseLoading || isAllLessonsDataLoading;
@@ -317,8 +317,8 @@ export default function ClassDetailsPage() {
                                 isVisible={showCourseProgram}
                                 onToggleVisibility={() => setShowCourseProgram(false)}
                                 lessons={lessonsWithContent || []}
-                                expandedModuleId={expandedModuleId}
-                                onToggleModule={handleToggleModule}
+                                expandedModules={expandedModules}
+                                onToggleModule={toggleModule}
                                 selectedLesson={selectedLesson}
                                 onLessonSelect={handleLessonSelect}
                             />
