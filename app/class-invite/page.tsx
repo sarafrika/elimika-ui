@@ -21,7 +21,7 @@ import {
     startOfMonth,
     startOfWeek
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Clock, Layers, MapPin, Users } from 'lucide-react';
+import { Armchair, ChevronLeft, ChevronRight, Clock, Layers, MapPin, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -135,6 +135,17 @@ function ClassInviteContent() {
                                         : 'Free'
                                 }
                             />
+
+                            {/*
+                            /////////////////////////////////////////////////////
+                            NEEDS TO BE UPDATED WITH ACTUAL CLASS ENROLLMENT LIST
+                            /////////////////////////////////////////////////////
+                            */ }
+                            <InfoRow
+                                icon={<Armchair className="h-4 w-4" />}
+                                label="Available Seats"
+                                value={<div>{data?.max_participants} of  {data?.max_participants}</div>}
+                            />
                         </div>
                     </CardContent>
 
@@ -233,7 +244,7 @@ interface Props {
 }
 
 function getCalendarBounds(schedules: ClassScheduleItem[]) {
-    if (!schedules.length) {
+    if (!schedules?.length) {
         const now = new Date();
         return {
             minMonth: startOfMonth(now),
@@ -241,9 +252,7 @@ function getCalendarBounds(schedules: ClassScheduleItem[]) {
         };
     }
 
-    const sorted = schedules
-        .map(s => new Date(s.start_time))
-        .sort((a, b) => a.getTime() - b.getTime());
+    const sorted = schedules?.map(s => new Date(s.start_time))?.sort((a, b) => a.getTime() - b.getTime());
 
     return {
         minMonth: startOfMonth(addWeeks(sorted[0], -2)),
@@ -281,7 +290,7 @@ export function ClassScheduleCalendar({ schedules }: Props) {
     const sessionsByDay = useMemo(() => {
         const map = new Map<string, ClassScheduleItem[]>();
 
-        schedules.forEach(s => {
+        schedules?.forEach((s: any) => {
             const key = format(new Date(s.start_time), 'yyyy-MM-dd');
             if (!map.has(key)) map.set(key, []);
             map.get(key)!.push(s);

@@ -15,7 +15,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertCircle, ArrowLeft, Calendar, DollarSign, MapPin, User } from 'lucide-react';
+import { AlertCircle, Armchair, ArrowLeft, Calendar, DollarSign, MapPin, User } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -412,6 +412,17 @@ const EnrollClassPage = () => {
                                 </div>
                             </div>
 
+                            <div className="flex items-start gap-3">
+                                <div className="rounded-lg bg-primary/10 p-2">
+                                    <Armchair className="h-5 w-5 text-primary" />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium">Available Seats</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {enrollingClass?.max_participants - enrollingClass?.enrollments?.length} of {enrollingClass?.max_participants} seats
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </Card>
@@ -488,6 +499,7 @@ const EnrollClassPage = () => {
                             <Button
                                 onClick={() => handleCreateCartAndPay(enrollingClass)}
                                 disabled={payIsPending}
+                                variant={"outline"}
                                 className="
         w-full sm:w-auto min-w-[120px]
         animate-pulse
