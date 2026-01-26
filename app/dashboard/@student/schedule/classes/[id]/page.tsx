@@ -25,8 +25,8 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
-import { FeedbackDialog } from '../../../_components/review-instructor-modal';
+import { CustomLoadingState } from '../../../../@course_creator/_components/loading-state';
+import { FeedbackDialog } from '../../../../_components/review-instructor-modal';
 import { ClassPageHeader } from './ClassPageHeader';
 import { CourseProgramSection } from './CourseProgram';
 import { LessonDetailsSidebar } from './LessonDetailsSidebar';
@@ -151,11 +151,11 @@ export default function ClassDetailsPage() {
         if (classDefinition) {
             replaceBreadcrumbs([
                 { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-                { id: 'my-classes', title: 'My Classes', url: '/dashboard/my-classes' },
+                { id: 'schedule', title: 'Schedule', url: '/dashboard/schedule' },
                 {
                     id: 'training-page',
                     title: classDefinition.title,
-                    url: `/dashboard/my-classes/${classDefinition.uuid}`,
+                    url: `/dashboard/schedule/classes/${classDefinition.uuid}`,
                     isLast: true,
                 },
             ]);

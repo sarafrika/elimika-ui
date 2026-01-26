@@ -226,24 +226,31 @@ const EnrollmentPage = () => {
       </div>
 
       {/* Date filter controls */}
-      <Card className="space-y-2 p-4">
-        {/* Info */}
-        <div className="text-sm text-muted-foreground">
-          {!appliedStart || !appliedEnd ? (
-            <>Showing default range. Adjust dates and click <strong>Apply</strong>.</>
-          ) : (
-            <>
-              Showing <strong>{format(new Date(appliedStart), 'MMM dd, yyyy')}</strong> –{' '}
-              <strong>{format(new Date(appliedEnd), 'MMM dd, yyyy')}</strong>
-            </>
-          )}
-          {dateError && <div className="mt-1 text-destructive">{dateError}</div>}
+      <Card className="flex flex-row items-center justify-between p-4 space-y-4">
+        {/* Active range display */}
+        <div className="flex items-center justify-between">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Date range</span>
+            <div className="font-medium">
+              {!appliedStart || !appliedEnd ? (
+                <span className="text-muted-foreground">Default range</span>
+              ) : (
+                <>
+                  {format(new Date(appliedStart), 'MMM dd, yyyy')}
+                  <span className="mx-2 text-muted-foreground">→</span>
+                  {format(new Date(appliedEnd), 'MMM dd, yyyy')}
+                </>
+              )}
+            </div>
+          </div>
+
+
         </div>
 
         {/* Controls */}
-        <div className="flex flex-wrap items-end gap-2">
+        <div className="flex flex-wrap items-end gap-3">
           <div>
-            <Label className="text-xs">Start</Label>
+            <Label className="text-xs text-muted-foreground">Start date</Label>
             <Input
               type="date"
               value={startDateInput}
@@ -253,7 +260,7 @@ const EnrollmentPage = () => {
           </div>
 
           <div>
-            <Label className="text-xs">End</Label>
+            <Label className="text-xs text-muted-foreground">End date</Label>
             <Input
               type="date"
               value={endDateInput}
@@ -262,10 +269,22 @@ const EnrollmentPage = () => {
             />
           </div>
 
-          <Button size="sm" onClick={applyDates}>Apply</Button>
-          <Button size="sm" variant="outline" onClick={clearDates}>Reset</Button>
+          <Button size="sm" onClick={applyDates}>
+            Apply
+          </Button>
+
+          <Button size="sm" variant="outline" onClick={clearDates}>
+            Reset
+          </Button>
         </div>
+
+
+
+        {dateError && (
+          <p className="text-sm text-destructive">{dateError}</p>
+        )}
       </Card>
+
 
 
       {loading ? (
