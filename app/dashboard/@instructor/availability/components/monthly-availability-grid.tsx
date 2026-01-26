@@ -25,7 +25,8 @@ const eventColorMap = {
   BLOCKED: {
     badge: 'bg-destructive/10 text-destructive border-destructive/20',
     dot: 'bg-destructive',
-    gradient: 'from-destructive/5 to-destructive/10 dark:from-destructive/20 dark:to-destructive/15',
+    gradient:
+      'from-destructive/5 to-destructive/10 dark:from-destructive/20 dark:to-destructive/15',
   },
   AVAILABILITY: {
     badge: 'bg-success/10 text-success border-success/20',
@@ -85,16 +86,16 @@ export function MonthlyAvailabilityGrid({
   const getDayStatus = (date: Date) => {
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
 
-    const daySlots = availabilityData.events.filter((slot) => {
+    const daySlots = availabilityData.events.filter(slot => {
       if (slot.date) {
         return slot.date.toDateString() === date.toDateString();
       }
       return slot.day === dayName;
     });
 
-    const dayClasses = classes.filter((classItem) => {
+    const dayClasses = classes.filter(classItem => {
       if (classItem.status !== 'published') return false;
-      return classItem.timetable.timeSlots.some((timeSlot) => {
+      return classItem.timetable.timeSlots.some(timeSlot => {
         const isCorrectDay = timeSlot.day.toLowerCase() === dayName.toLowerCase();
         const isWithinPeriod =
           date >= new Date(classItem.academicPeriod.startDate) &&
@@ -104,14 +105,14 @@ export function MonthlyAvailabilityGrid({
     });
 
     const dayEvents = [
-      ...availabilityData.events.filter((event) => {
+      ...availabilityData.events.filter(event => {
         const eventDate = new Date(event.date);
         return eventDate.toDateString() === date.toDateString();
       }),
     ];
 
-    const blockedEvents = daySlots.filter((slot) => slot.entry_type === 'BLOCKED');
-    const bookedEvents = [...daySlots.filter((slot) => slot.entry_type === 'SCHEDULED_INSTANCE')];
+    const blockedEvents = daySlots.filter(slot => slot.entry_type === 'BLOCKED');
+    const bookedEvents = [...daySlots.filter(slot => slot.entry_type === 'SCHEDULED_INSTANCE')];
 
     return {
       blocked: blockedEvents,
@@ -132,7 +133,8 @@ export function MonthlyAvailabilityGrid({
     if (!isCurrentMonth) {
       baseClasses += ' bg-muted/30 text-muted-foreground';
     } else if (isToday) {
-      baseClasses += ' ring-2 ring-primary bg-gradient-to-br from-primary/5 to-primary/10 shadow-sm';
+      baseClasses +=
+        ' ring-2 ring-primary bg-gradient-to-br from-primary/5 to-primary/10 shadow-sm';
     } else {
       baseClasses += ' bg-card hover:bg-muted/30';
     }
@@ -147,7 +149,7 @@ export function MonthlyAvailabilityGrid({
   const handleDayClick = (date: Date) => {
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
 
-    const eventsForDay = availabilityData.events.filter((event) => {
+    const eventsForDay = availabilityData.events.filter(event => {
       const eventDate = new Date(event.date);
       return eventDate.toDateString() === date.toDateString();
     });
@@ -177,43 +179,39 @@ export function MonthlyAvailabilityGrid({
   const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className='mx-auto max-w-5xl space-y-6'>
       {/* Header Card */}
-      <Card className="p-0 border-0 shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <Card className='border-0 p-0 shadow-sm'>
+        <CardContent className='p-6'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
               <Button
-                variant="outline"
-                size="icon"
+                variant='outline'
+                size='icon'
                 onClick={() => navigateMonth('prev')}
-                className="h-9 w-9"
+                className='h-9 w-9'
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className='h-4 w-4' />
               </Button>
 
-              <div className="text-center min-w-[180px]">
-                <h3 className="text-xl font-bold flex items-center justify-center gap-2 text-foreground">
-                  <Calendar className="h-5 w-5 text-primary" />
+              <div className='min-w-[180px] text-center'>
+                <h3 className='text-foreground flex items-center justify-center gap-2 text-xl font-bold'>
+                  <Calendar className='text-primary h-5 w-5' />
                   {monthName}
                 </h3>
               </div>
 
               <Button
-                variant="outline"
-                size="icon"
+                variant='outline'
+                size='icon'
                 onClick={() => navigateMonth('next')}
-                className="h-9 w-9"
+                className='h-9 w-9'
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className='h-4 w-4' />
               </Button>
             </div>
 
-            <Button
-              onClick={() => setCurrentMonth(new Date())}
-              variant="outline"
-              size="sm"
-            >
+            <Button onClick={() => setCurrentMonth(new Date())} variant='outline' size='sm'>
               Current Month
             </Button>
           </div>
@@ -221,13 +219,13 @@ export function MonthlyAvailabilityGrid({
       </Card>
 
       {/* Calendar Grid */}
-      <Card className="overflow-hidden border-0 shadow-sm">
+      <Card className='overflow-hidden border-0 shadow-sm'>
         {/* Weekday Headers */}
-        <div className="grid grid-cols-7 border-b border-border bg-muted/30">
-          {weekdays.map((day) => (
+        <div className='border-border bg-muted/30 grid grid-cols-7 border-b'>
+          {weekdays.map(day => (
             <div
               key={day}
-              className="border-r border-border last:border-r-0 p-4 text-center text-sm font-semibold text-muted-foreground"
+              className='border-border text-muted-foreground border-r p-4 text-center text-sm font-semibold last:border-r-0'
             >
               {day}
             </div>
@@ -235,7 +233,7 @@ export function MonthlyAvailabilityGrid({
         </div>
 
         {/* Calendar Days */}
-        <div className="grid grid-cols-7 gap-px bg-border">
+        <div className='bg-border grid grid-cols-7 gap-px'>
           {monthData.days.map((date, index) => {
             const status = getDayStatus(date);
             const isCurrentMonth = date.getMonth() === monthData.month;
@@ -245,39 +243,37 @@ export function MonthlyAvailabilityGrid({
               <TooltipProvider key={index}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div
-                      className={getDayClass(date, status)}
-                      onClick={() => handleDayClick(date)}
-                    >
+                    <div className={getDayClass(date, status)} onClick={() => handleDayClick(date)}>
                       {/* Date Number */}
-                      <div className="flex items-center justify-between mb-2">
+                      <div className='mb-2 flex items-center justify-between'>
                         <span
-                          className={`text-sm font-semibold ${isToday
-                            ? 'flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground'
-                            : !isCurrentMonth
-                              ? 'text-muted-foreground/60'
-                              : 'text-foreground'
-                            }`}
+                          className={`text-sm font-semibold ${
+                            isToday
+                              ? 'bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-full'
+                              : !isCurrentMonth
+                                ? 'text-muted-foreground/60'
+                                : 'text-foreground'
+                          }`}
                         >
                           {date.getDate()}
                         </span>
 
                         {/* Status Dots */}
                         {status.events.length > 0 && (
-                          <div className="flex gap-1">
+                          <div className='flex gap-1'>
                             {status.booked.length > 0 && (
-                              <div className="h-2 w-2 rounded-full bg-info" />
+                              <div className='bg-info h-2 w-2 rounded-full' />
                             )}
                             {status.blocked.length > 0 && (
-                              <div className="h-2 w-2 rounded-full bg-destructive" />
+                              <div className='bg-destructive h-2 w-2 rounded-full' />
                             )}
                           </div>
                         )}
                       </div>
 
                       {/* Event Previews */}
-                      <div className="space-y-1.5">
-                        {status.events.slice(0, 3).map((event) => {
+                      <div className='space-y-1.5'>
+                        {status.events.slice(0, 3).map(event => {
                           const colors =
                             eventColorMap[event?.entry_type || 'SCHEDULED_INSTANCE'] ??
                             eventColorMap.SCHEDULED_INSTANCE;
@@ -285,23 +281,19 @@ export function MonthlyAvailabilityGrid({
                           return (
                             <div
                               key={event.id}
-                              className={`rounded-md px-2 py-1 text-xs font-medium border ${colors.badge} truncate transition-all hover:scale-105`}
+                              className={`rounded-md border px-2 py-1 text-xs font-medium ${colors.badge} truncate transition-all hover:scale-105`}
                             >
-                              <div className="flex items-center gap-1.5">
-                                <Clock className="h-2.5 w-2.5 flex-shrink-0" />
-                                <span className="truncate">
-                                  {event.title || event.entry_type}
-                                </span>
+                              <div className='flex items-center gap-1.5'>
+                                <Clock className='h-2.5 w-2.5 flex-shrink-0' />
+                                <span className='truncate'>{event.title || event.entry_type}</span>
                               </div>
-                              <div className="text-xs opacity-75 mt-0.5">
-                                {event.startTime}
-                              </div>
+                              <div className='mt-0.5 text-xs opacity-75'>{event.startTime}</div>
                             </div>
                           );
                         })}
 
                         {status.events.length > 3 && (
-                          <div className="text-muted-foreground text-xs font-medium text-center py-1">
+                          <div className='text-muted-foreground py-1 text-center text-xs font-medium'>
                             +{status.events.length - 3} more
                           </div>
                         )}
@@ -309,14 +301,14 @@ export function MonthlyAvailabilityGrid({
 
                       {/* Count Badges at Bottom */}
                       {(status.booked.length > 0 || status.blocked.length > 0) && (
-                        <div className="absolute bottom-2 right-2 flex gap-1">
+                        <div className='absolute right-2 bottom-2 flex gap-1'>
                           {status.booked.length > 0 && (
-                            <Badge className="h-5 text-xs bg-info/10 text-info border-info/20">
+                            <Badge className='bg-info/10 text-info border-info/20 h-5 text-xs'>
                               {status.booked.length}
                             </Badge>
                           )}
                           {status.blocked.length > 0 && (
-                            <Badge className="h-5 text-xs bg-destructive/10 text-destructive border-destructive/20">
+                            <Badge className='bg-destructive/10 text-destructive border-destructive/20 h-5 text-xs'>
                               {status.blocked.length}
                             </Badge>
                           )}
@@ -324,9 +316,9 @@ export function MonthlyAvailabilityGrid({
                       )}
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    <div className="space-y-2 text-sm">
-                      <div className="font-semibold text-foreground">
+                  <TooltipContent side='top' className='max-w-xs'>
+                    <div className='space-y-2 text-sm'>
+                      <div className='text-foreground font-semibold'>
                         {date.toLocaleDateString('en-US', {
                           weekday: 'long',
                           month: 'long',
@@ -335,24 +327,24 @@ export function MonthlyAvailabilityGrid({
                       </div>
 
                       {status.booked.length > 0 && (
-                        <div className="flex items-center gap-2 text-info">
-                          <div className="h-2 w-2 rounded-full bg-info" />
+                        <div className='text-info flex items-center gap-2'>
+                          <div className='bg-info h-2 w-2 rounded-full' />
                           <span>{status.booked.length} booked event(s)</span>
                         </div>
                       )}
 
                       {status.blocked.length > 0 && (
-                        <div className="flex items-center gap-2 text-destructive">
-                          <div className="h-2 w-2 rounded-full bg-destructive" />
+                        <div className='text-destructive flex items-center gap-2'>
+                          <div className='bg-destructive h-2 w-2 rounded-full' />
                           <span>{status.blocked.length} blocked slot(s)</span>
                         </div>
                       )}
 
                       {status.events.length > 0 && (
-                        <div className="border-t border-border pt-2 mt-2 text-xs space-y-1">
-                          <div className="font-medium text-foreground">Events:</div>
-                          {status.events.slice(0, 5).map((e) => (
-                            <div key={e.id} className="text-muted-foreground">
+                        <div className='border-border mt-2 space-y-1 border-t pt-2 text-xs'>
+                          <div className='text-foreground font-medium'>Events:</div>
+                          {status.events.slice(0, 5).map(e => (
+                            <div key={e.id} className='text-muted-foreground'>
                               • {e.title} ({e.startTime}-{e.endTime})
                             </div>
                           ))}
@@ -360,16 +352,16 @@ export function MonthlyAvailabilityGrid({
                       )}
 
                       {status.classes.length > 0 && (
-                        <div className="border-t border-border pt-2 text-xs">
-                          <div className="font-medium text-foreground">Classes:</div>
-                          <div className="text-muted-foreground">
-                            {status.classes.map((c) => c.classTitle).join(', ')}
+                        <div className='border-border border-t pt-2 text-xs'>
+                          <div className='text-foreground font-medium'>Classes:</div>
+                          <div className='text-muted-foreground'>
+                            {status.classes.map(c => c.classTitle).join(', ')}
                           </div>
                         </div>
                       )}
 
                       {status.total === 0 && status.events.length === 0 && (
-                        <div className="text-muted-foreground text-xs">Click to add event</div>
+                        <div className='text-muted-foreground text-xs'>Click to add event</div>
                       )}
                     </div>
                   </TooltipContent>

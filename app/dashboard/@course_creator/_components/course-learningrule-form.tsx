@@ -15,7 +15,7 @@ import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import {
   getCourseByUuidQueryKey,
-  updateCourseMutation
+  updateCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -126,11 +126,10 @@ export const CourseLearningRulesForm = forwardRef<CourseFormRef, CourseFormProps
           },
         }
       );
-
     };
 
     const onError = (errors: any) => {
-      toast.error(errors)
+      toast.error(errors);
     };
 
     return (

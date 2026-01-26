@@ -63,7 +63,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const form = useForm<BrandingFormValues>({
       resolver: zodResolver(brandingSchema),
       defaultValues: {
-        welcome_message: "",
+        welcome_message: '',
         theme_color: '',
         ...initialValues,
       },
@@ -162,7 +162,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
           status: 'draft',
           ...initialValues,
           welcome_message: data?.welcome_message,
-          theme_color: data?.theme_color
+          theme_color: data?.theme_color,
         };
 
         updateCourse.mutate(
@@ -174,7 +174,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
               if (respObj) {
                 // @ts-expect-error
-                toast.success(data?.data?.message || "Course updated successfully");
+                toast.success(data?.data?.message || 'Course updated successfully');
 
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
@@ -206,8 +206,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     };
 
     const onError = (error: any) => {
-      toast.error(error)
-    }
+      toast.error(error);
+    };
 
     useEffect(() => {
       const thumbnail = initialValues?.thumbnail_url || form.getValues('thumbnail');
@@ -505,7 +505,6 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
               )}
             />
           </FormSection>
-
 
           {/* Submit Button */}
           {showSubmitButton && (

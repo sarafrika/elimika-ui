@@ -36,7 +36,7 @@ import {
   UserPlus,
   Users,
   UsersIcon,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { UserDomain } from './types';
@@ -175,7 +175,7 @@ export default {
     {
       title: 'Opportunities',
       url: '/dashboard/opportunities',
-      icon: Handshake
+      icon: Handshake,
     },
     {
       title: 'Contacts',

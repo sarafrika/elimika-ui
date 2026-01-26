@@ -5,7 +5,7 @@ import {
   getCourseByUuidOptions,
   getInstructorByUuidOptions,
   getStudentScheduleOptions,
-  listCatalogItemsOptions
+  listCatalogItemsOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
 function useBundledClassInfo(courseUuid?: string, startDate?: any, endDate?: any, student?: any) {

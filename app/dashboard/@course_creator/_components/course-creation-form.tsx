@@ -127,7 +127,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         instructor_share_percentage: 50,
         revenue_share_notes: '',
         language: '',
-        learning_rules: { completion_rules_enabled: false, drip_schedule_enabled: false, prerequisites_required: false },
+        learning_rules: {
+          completion_rules_enabled: false,
+          drip_schedule_enabled: false,
+          prerequisites_required: false,
+        },
         training_requirements: [],
         ...initialValues,
       },
@@ -412,8 +416,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     };
 
     const onError = (error: any) => {
-      toast.error(error)
-    }
+      toast.error(error);
+    };
 
     useImperativeHandle(ref, () => ({
       submit: () => form.handleSubmit(onSubmit)(),
@@ -433,7 +437,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit, onError)}
-          className='bg-card space-y-6 rounded-[32px] transition max-w-4xl'
+          className='bg-card max-w-4xl space-y-6 rounded-[32px] transition'
         >
           {/* Course Name */}
           <FormSection
@@ -609,9 +613,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             title='Target Audience'
             description='Set the set the target audience your course'
           >
-            <div>
-
-            </div>
+            <div></div>
             <FormMessage />
           </FormSection>
 
@@ -676,7 +678,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
           {/* Course Duration */}
           <div className='hidden'>
-            <FormSection title='Course Duration' description='Set the time duration for your course'>
+            <FormSection
+              title='Course Duration'
+              description='Set the time duration for your course'
+            >
               <div className='space-y-0'>
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
                   <FormField
@@ -749,21 +754,18 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           {/* Language */}
-          <FormSection
-            title="Language"
-            description="What languages can this course be taught in?"
-          >
+          <FormSection title='Language' description='What languages can this course be taught in?'>
             <FormField
               control={form.control}
-              name="language"
+              name='language'
               render={({ field }) => (
                 <FormItem>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full sm:w-[200px]">
-                      <SelectValue placeholder="Select a language" />
+                    <SelectTrigger className='w-full sm:w-[200px]'>
+                      <SelectValue placeholder='Select a language' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="english">English</SelectItem>
+                      <SelectItem value='english'>English</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -771,7 +773,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               )}
             />
           </FormSection>
-
 
           {/* Prerequisites */}
           <FormSection

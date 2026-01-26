@@ -47,9 +47,7 @@ export default function MyClassesPage() {
     const startDate = classDetails?.default_start_time
       ? new Date(classDetails.default_start_time)
       : null;
-    const endDate = classDetails?.default_end_time
-      ? new Date(classDetails.default_end_time)
-      : null;
+    const endDate = classDetails?.default_end_time ? new Date(classDetails.default_end_time) : null;
     const now = new Date();
 
     if (!startDate || !endDate) return 'upcoming';
@@ -88,132 +86,124 @@ export default function MyClassesPage() {
   // Count classes by status
   const counts = {
     all: classes.length,
-    inProgress: classes.filter(
-      (c: any) => getClassStatus(c.classDetails) === 'in-progress'
-    ).length,
-    upcoming: classes.filter(
-      (c: any) => getClassStatus(c.classDetails) === 'upcoming'
-    ).length,
-    completed: classes.filter(
-      (c: any) => getClassStatus(c.classDetails) === 'completed'
-    ).length,
+    inProgress: classes.filter((c: any) => getClassStatus(c.classDetails) === 'in-progress').length,
+    upcoming: classes.filter((c: any) => getClassStatus(c.classDetails) === 'upcoming').length,
+    completed: classes.filter((c: any) => getClassStatus(c.classDetails) === 'completed').length,
   };
 
   if (loading) {
-    return <CustomLoadingState subHeading="Fetching your classes..." />;
+    return <CustomLoadingState subHeading='Fetching your classes...' />;
   }
 
   if (isError) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Card className="p-6 text-center">
-          <p className="text-destructive">Failed to load classes. Please try again.</p>
+      <div className='flex min-h-[400px] items-center justify-center'>
+        <Card className='p-6 text-center'>
+          <p className='text-destructive'>Failed to load classes. Please try again.</p>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen space-y-6">
+    <div className='min-h-screen space-y-6'>
       {/* Header */}
-      <div className="flex items-end gap-4 self-end justify-end max-w-fit">
+      <div className='flex max-w-fit items-end justify-end gap-4 self-end'>
         <Button onClick={() => router.push('/dashboard/browse-courses')}>
-          <GraduationCap className="mr-2 h-4 w-4" />
+          <GraduationCap className='mr-2 h-4 w-4' />
           Browse More Classes
         </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         {/* Total Classes */}
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
+        <Card className='p-4'>
+          <div className='flex items-center justify-between'>
             <div>
-              <p className="text-sm text-muted-foreground">Total Classes</p>
-              <p className="text-2xl font-bold text-foreground">{counts.all}</p>
+              <p className='text-muted-foreground text-sm'>Total Classes</p>
+              <p className='text-foreground text-2xl font-bold'>{counts.all}</p>
             </div>
-            <div className="rounded-full bg-primary/10 p-3">
-              <BookOpen className="h-5 w-5 text-primary" />
+            <div className='bg-primary/10 rounded-full p-3'>
+              <BookOpen className='text-primary h-5 w-5' />
             </div>
           </div>
         </Card>
 
         {/* In Progress */}
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
+        <Card className='p-4'>
+          <div className='flex items-center justify-between'>
             <div>
-              <p className="text-sm text-muted-foreground">In Progress</p>
-              <p className="text-2xl font-bold text-foreground">{counts.inProgress}</p>
+              <p className='text-muted-foreground text-sm'>In Progress</p>
+              <p className='text-foreground text-2xl font-bold'>{counts.inProgress}</p>
             </div>
-            <div className="rounded-full bg-info/10 p-3">
-              <GraduationCap className="h-5 w-5 text-info" />
+            <div className='bg-info/10 rounded-full p-3'>
+              <GraduationCap className='text-info h-5 w-5' />
             </div>
           </div>
         </Card>
 
         {/* Upcoming */}
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
+        <Card className='p-4'>
+          <div className='flex items-center justify-between'>
             <div>
-              <p className="text-sm text-muted-foreground">Upcoming</p>
-              <p className="text-2xl font-bold text-foreground">{counts.upcoming}</p>
+              <p className='text-muted-foreground text-sm'>Upcoming</p>
+              <p className='text-foreground text-2xl font-bold'>{counts.upcoming}</p>
             </div>
-            <div className="rounded-full bg-warning/10 p-3">
-              <BookOpen className="h-5 w-5 text-warning" />
+            <div className='bg-warning/10 rounded-full p-3'>
+              <BookOpen className='text-warning h-5 w-5' />
             </div>
           </div>
         </Card>
 
         {/* Completed */}
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
+        <Card className='p-4'>
+          <div className='flex items-center justify-between'>
             <div>
-              <p className="text-sm text-muted-foreground">Completed</p>
-              <p className="text-2xl font-bold text-foreground">{counts.completed}</p>
+              <p className='text-muted-foreground text-sm'>Completed</p>
+              <p className='text-foreground text-2xl font-bold'>{counts.completed}</p>
             </div>
-            <div className="rounded-full bg-success/10 p-3">
-              <BookOpen className="h-5 w-5 text-success" />
+            <div className='bg-success/10 rounded-full p-3'>
+              <BookOpen className='text-success h-5 w-5' />
             </div>
           </div>
         </Card>
       </div>
 
       {/* Search and Tabs */}
-      <Card className="p-4">
-        <div className="space-y-4">
+      <Card className='p-4'>
+        <div className='space-y-4'>
           {/* Search and Filter Controls */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className='flex flex-col gap-3 sm:flex-row'>
+            <div className='relative flex-1'>
+              <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
               <Input
-                placeholder="Search classes by name or course..."
-                className="pl-10"
+                placeholder='Search classes by name or course...'
+                className='pl-10'
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
 
             <Select value={selectedTab} onValueChange={setSelectedTab}>
-              <SelectTrigger className="w-full sm:w-[220px]">
-                <SelectValue placeholder="Filter classes" />
+              <SelectTrigger className='w-full sm:w-[220px]'>
+                <SelectValue placeholder='Filter classes' />
               </SelectTrigger>
 
               <SelectContent>
-                <SelectItem value="all">All ({counts.all})</SelectItem>
-                <SelectItem value="in-progress">
-                  Active ({counts.inProgress})
-                </SelectItem>
-                <SelectItem value="upcoming">Upcoming ({counts.upcoming})</SelectItem>
-                <SelectItem value="completed">Completed ({counts.completed})</SelectItem>
+                <SelectItem value='all'>All ({counts.all})</SelectItem>
+                <SelectItem value='in-progress'>Active ({counts.inProgress})</SelectItem>
+                <SelectItem value='upcoming'>Upcoming ({counts.upcoming})</SelectItem>
+                <SelectItem value='completed'>Completed ({counts.completed})</SelectItem>
               </SelectContent>
             </Select>
 
             <Button
-              variant="outline"
+              variant='outline'
               onClick={() => setShowFilters(!showFilters)}
-              className="hidden sm:flex"
+              className='hidden sm:flex'
             >
-              <Filter className="mr-2 h-4 w-4" />
+              <Filter className='mr-2 h-4 w-4' />
               Filters
             </Button>
           </div>
@@ -221,12 +211,12 @@ export default function MyClassesPage() {
       </Card>
 
       {/* Results Count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+      <div className='flex items-center justify-between'>
+        <p className='text-muted-foreground text-sm'>
           {filteredClasses.length} class{filteredClasses.length !== 1 ? 'es' : ''} found
         </p>
         {searchQuery && (
-          <Button variant="ghost" size="sm" onClick={() => setSearchQuery('')}>
+          <Button variant='ghost' size='sm' onClick={() => setSearchQuery('')}>
             Clear search
           </Button>
         )}
@@ -234,7 +224,7 @@ export default function MyClassesPage() {
 
       {/* Course Grid */}
       {filteredClasses.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
           {filteredClasses.map((item: any) => (
             <EnrolledClassCard
               key={item.uuid}
@@ -246,20 +236,20 @@ export default function MyClassesPage() {
           ))}
         </div>
       ) : (
-        <div className="py-16 text-center">
-          <BookOpen className="mx-auto mb-4 h-16 w-16 text-muted-foreground opacity-50" />
-          <h3 className="mb-2 text-lg font-semibold text-foreground">
+        <div className='py-16 text-center'>
+          <BookOpen className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
+          <h3 className='text-foreground mb-2 text-lg font-semibold'>
             {searchQuery ? 'No classes found' : 'No classes yet'}
           </h3>
-          <p className="mb-4 text-muted-foreground">
+          <p className='text-muted-foreground mb-4'>
             {searchQuery
               ? 'Try adjusting your search query'
               : 'Start your learning journey by enrolling in a class'}
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-3">
+          <div className='flex flex-col justify-center gap-3 sm:flex-row'>
             {searchQuery && (
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={() => {
                   setSearchQuery('');
                   setSelectedTab('all');
@@ -269,7 +259,7 @@ export default function MyClassesPage() {
               </Button>
             )}
             <Button onClick={() => router.push('/dashboard/browse-courses')}>
-              <GraduationCap className="mr-2 h-4 w-4" />
+              <GraduationCap className='mr-2 h-4 w-4' />
               Browse Classes
             </Button>
           </div>

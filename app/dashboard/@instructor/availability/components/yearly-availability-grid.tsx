@@ -3,12 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Calendar, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { AvailabilityData, AvailabilitySlot } from './types';
@@ -20,10 +15,13 @@ interface YearlyAvailabilityGridProps {
 }
 
 const statusColorMap = {
-  available: 'bg-success/10 dark:bg-success/20 text-success border-success/30 dark:border-success/40',
+  available:
+    'bg-success/10 dark:bg-success/20 text-success border-success/30 dark:border-success/40',
   booked: 'bg-info/10 dark:bg-info/20 text-info border-info/30 dark:border-info/40',
-  unavailable: 'bg-destructive/10 dark:bg-destructive/20 text-destructive border-destructive/30 dark:border-destructive/40',
-  reserved: 'bg-warning/10 dark:bg-warning/20 text-warning border-warning/30 dark:border-warning/40',
+  unavailable:
+    'bg-destructive/10 dark:bg-destructive/20 text-destructive border-destructive/30 dark:border-destructive/40',
+  reserved:
+    'bg-warning/10 dark:bg-warning/20 text-warning border-warning/30 dark:border-warning/40',
   empty: 'bg-muted/50 text-muted-foreground border-muted',
 };
 
@@ -44,7 +42,8 @@ const statusDotMap = {
 const statusRowColorMap = {
   available: 'bg-success/5 dark:bg-success/15 border-success/20 dark:border-success/30',
   booked: 'bg-info/5 dark:bg-info/15 border-info/20 dark:border-info/30',
-  unavailable: 'bg-destructive/5 dark:bg-destructive/15 border-destructive/20 dark:border-destructive/30',
+  unavailable:
+    'bg-destructive/5 dark:bg-destructive/15 border-destructive/20 dark:border-destructive/30',
   reserved: 'bg-warning/5 dark:bg-warning/15 border-warning/20 dark:border-warning/30',
 };
 
@@ -74,15 +73,15 @@ export function YearlyAvailabilityGrid({
   }, [currentYear]);
 
   const getMonthStatus = (month: number) => {
-    const monthSlots = availabilityData?.slots?.filter((slot) => {
+    const monthSlots = availabilityData?.slots?.filter(slot => {
       if (slot.date) {
         return slot.date.getMonth() === month && slot.date.getFullYear() === currentYear;
       }
       return slot.recurring;
     });
 
-    const available = monthSlots?.filter((slot) => slot.is_available === true).length ?? 0;
-    const booked = monthSlots?.filter((slot) => slot.is_available === false).length ?? 0;
+    const available = monthSlots?.filter(slot => slot.is_available === true).length ?? 0;
+    const booked = monthSlots?.filter(slot => slot.is_available === false).length ?? 0;
 
     return {
       available,
@@ -119,7 +118,7 @@ export function YearlyAvailabilityGrid({
     const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
     const updatedSlots = [...availabilityData.slots];
 
-    const filteredSlots = updatedSlots.filter((slot) => {
+    const filteredSlots = updatedSlots.filter(slot => {
       if (slot.date) {
         return !(slot.date.getMonth() === month && slot.date.getFullYear() === currentYear);
       }
@@ -136,7 +135,7 @@ export function YearlyAvailabilityGrid({
         const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
         const defaultTimeSlots = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
 
-        defaultTimeSlots.forEach((time) => {
+        defaultTimeSlots.forEach(time => {
           const newSlot: AvailabilitySlot = {
             id: `${dayName}-${time}-${date.toISOString()}`,
             day: dayName,
@@ -165,11 +164,11 @@ export function YearlyAvailabilityGrid({
   };
 
   const navigateYear = (direction: 'prev' | 'next') => {
-    setCurrentYear((prev) => prev + (direction === 'next' ? 1 : -1));
+    setCurrentYear(prev => prev + (direction === 'next' ? 1 : -1));
   };
 
   const getTotalAvailabilityForYear = () => {
-    const yearSlots = availabilityData?.slots?.filter((slot) => {
+    const yearSlots = availabilityData?.slots?.filter(slot => {
       if (slot.date) {
         return slot.date.getFullYear() === currentYear;
       }
@@ -177,8 +176,8 @@ export function YearlyAvailabilityGrid({
     });
 
     return {
-      available: yearSlots?.filter((slot) => slot.is_available === true).length ?? 0,
-      booked: yearSlots?.filter((slot) => slot.is_available === false).length ?? 0,
+      available: yearSlots?.filter(slot => slot.is_available === true).length ?? 0,
+      booked: yearSlots?.filter(slot => slot.is_available === false).length ?? 0,
       total: yearSlots?.length ?? 0,
     };
   };
@@ -186,42 +185,42 @@ export function YearlyAvailabilityGrid({
   const yearTotals = getTotalAvailabilityForYear();
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className='mx-auto max-w-5xl space-y-6'>
       {/* Header Card */}
-      <Card className="p-0 border-0 shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <Card className='border-0 p-0 shadow-sm'>
+        <CardContent className='p-6'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
               <Button
-                variant="outline"
-                size="icon"
+                variant='outline'
+                size='icon'
                 onClick={() => navigateYear('prev')}
-                className="h-9 w-9"
+                className='h-9 w-9'
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className='h-4 w-4' />
               </Button>
 
-              <div className="text-center min-w-[120px]">
-                <h3 className="text-2xl font-bold flex items-center justify-center gap-2 text-foreground">
-                  <Calendar className="h-6 w-6 text-primary" />
+              <div className='min-w-[120px] text-center'>
+                <h3 className='text-foreground flex items-center justify-center gap-2 text-2xl font-bold'>
+                  <Calendar className='text-primary h-6 w-6' />
                   {currentYear}
                 </h3>
               </div>
 
               <Button
-                variant="outline"
-                size="icon"
+                variant='outline'
+                size='icon'
                 onClick={() => navigateYear('next')}
-                className="h-9 w-9"
+                className='h-9 w-9'
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className='h-4 w-4' />
               </Button>
             </div>
 
             <Button
               onClick={() => setCurrentYear(new Date().getFullYear())}
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
             >
               Current Year
             </Button>
@@ -230,23 +229,18 @@ export function YearlyAvailabilityGrid({
       </Card>
 
       {/* Year Summary */}
-      <Card className="border-0 shadow-sm overflow-hidden">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <h4 className="text-lg font-semibold text-foreground">
-                Year {currentYear} Summary
-              </h4>
+      <Card className='overflow-hidden border-0 shadow-sm'>
+        <CardContent className='p-6'>
+          <div className='flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
+            <div className='flex items-center gap-2'>
+              <TrendingUp className='text-primary h-5 w-5' />
+              <h4 className='text-foreground text-lg font-semibold'>Year {currentYear} Summary</h4>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge
-                className={`border ${statusBadgeMap.available}`}
-                variant="outline"
-              >
+            <div className='flex flex-wrap items-center gap-3'>
+              <Badge className={`border ${statusBadgeMap.available}`} variant='outline'>
                 {yearTotals.available} Available
               </Badge>
-              <Badge className={`border ${statusBadgeMap.booked}`} variant="outline">
+              <Badge className={`border ${statusBadgeMap.booked}`} variant='outline'>
                 {yearTotals.booked} Booked
               </Badge>
             </div>
@@ -255,13 +249,12 @@ export function YearlyAvailabilityGrid({
       </Card>
 
       {/* Months Grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {yearData.map((month) => {
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+        {yearData.map(month => {
           const status = getMonthStatus(month.index);
           const currentMonth = new Date().getMonth();
           const currentYearCheck = new Date().getFullYear();
-          const isCurrentMonth =
-            month.index === currentMonth && currentYear === currentYearCheck;
+          const isCurrentMonth = month.index === currentMonth && currentYear === currentYearCheck;
 
           return (
             <TooltipProvider key={month.index}>
@@ -271,79 +264,71 @@ export function YearlyAvailabilityGrid({
                     className={getMonthClass(month.index)}
                     onClick={() => handleMonthClick(month.index)}
                   >
-                    <div className="flex h-full flex-col">
+                    <div className='flex h-full flex-col'>
                       {/* Month Header */}
-                      <div className="mb-4 flex items-center justify-between">
-                        <h4 className="text-lg font-bold flex items-center gap-2 text-foreground">
+                      <div className='mb-4 flex items-center justify-between'>
+                        <h4 className='text-foreground flex items-center gap-2 text-lg font-bold'>
                           {isCurrentMonth && (
-                            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                            <div className='bg-primary h-2 w-2 animate-pulse rounded-full' />
                           )}
                           {month.name}
                         </h4>
-                        <Calendar className="text-muted-foreground h-5 w-5" />
+                        <Calendar className='text-muted-foreground h-5 w-5' />
                       </div>
 
                       {/* Status Breakdown */}
-                      <div className="flex-1 space-y-2.5">
+                      <div className='flex-1 space-y-2.5'>
                         {status.available > 0 && (
                           <div
-                            className={`flex items-center justify-between p-2 rounded-lg border ${statusRowColorMap.available}`}
+                            className={`flex items-center justify-between rounded-lg border p-2 ${statusRowColorMap.available}`}
                           >
-                            <span className="text-sm font-medium text-success">
-                              Available
-                            </span>
-                            <Badge className={statusBadgeMap.available}>
-                              {status.available}
-                            </Badge>
+                            <span className='text-success text-sm font-medium'>Available</span>
+                            <Badge className={statusBadgeMap.available}>{status.available}</Badge>
                           </div>
                         )}
 
                         {status.booked > 0 && (
                           <div
-                            className={`flex items-center justify-between p-2 rounded-lg border ${statusRowColorMap.booked}`}
+                            className={`flex items-center justify-between rounded-lg border p-2 ${statusRowColorMap.booked}`}
                           >
-                            <span className="text-sm font-medium text-info">
-                              Booked
-                            </span>
-                            <Badge className={statusBadgeMap.booked}>
-                              {status.booked}
-                            </Badge>
+                            <span className='text-info text-sm font-medium'>Booked</span>
+                            <Badge className={statusBadgeMap.booked}>{status.booked}</Badge>
                           </div>
                         )}
                       </div>
 
                       {status.total === 0 && (
-                        <div className="text-muted-foreground py-8 text-center text-sm bg-muted/30 rounded-lg">
+                        <div className='text-muted-foreground bg-muted/30 rounded-lg py-8 text-center text-sm'>
                           No availability set
                         </div>
                       )}
 
                       {/* Footer Stats */}
-                      <div className="border-t border-border/50 mt-4 pt-3">
-                        <div className="text-muted-foreground text-center text-xs font-medium">
+                      <div className='border-border/50 mt-4 border-t pt-3'>
+                        <div className='text-muted-foreground text-center text-xs font-medium'>
                           {month.daysInMonth} days • {status.total} total slots
                         </div>
                       </div>
                     </div>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs">
-                  <div className="space-y-2 text-sm">
-                    <div className="font-semibold text-base text-foreground">
+                <TooltipContent side='top' className='max-w-xs'>
+                  <div className='space-y-2 text-sm'>
+                    <div className='text-foreground text-base font-semibold'>
                       {month.name} {currentYear}
                     </div>
-                    <div className="space-y-1.5 border-t border-border pt-2">
-                      <div className="flex items-center gap-2 text-success">
+                    <div className='border-border space-y-1.5 border-t pt-2'>
+                      <div className='text-success flex items-center gap-2'>
                         <div className={`h-2 w-2 rounded-full ${statusDotMap.available}`} />
                         <span>{status.available} available slots</span>
                       </div>
-                      <div className="flex items-center gap-2 text-info">
+                      <div className='text-info flex items-center gap-2'>
                         <div className={`h-2 w-2 rounded-full ${statusDotMap.booked}`} />
                         <span>{status.booked} booked slots</span>
                       </div>
                     </div>
                     {isEditing && (
-                      <div className="text-muted-foreground border-t border-border pt-2 text-xs">
+                      <div className='text-muted-foreground border-border border-t pt-2 text-xs'>
                         Click to toggle month availability
                       </div>
                     )}

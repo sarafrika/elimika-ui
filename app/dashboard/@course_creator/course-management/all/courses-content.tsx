@@ -69,8 +69,10 @@ export default function CourseCreatorCoursesContent() {
           </p>
         </div>
 
-        <div className='flex flex-row items-center gap-4' >
-          <Button variant={"ghost"} onClick={() => setOpen(!open)} >View catalogues</Button>
+        <div className='flex flex-row items-center gap-4'>
+          <Button variant={'ghost'} onClick={() => setOpen(!open)}>
+            View catalogues
+          </Button>
           <Button asChild>
             <Link prefetch href='/dashboard/course-management/create-new-course'>
               <PlusCircle className='mr-2 h-4 w-4' />
@@ -81,19 +83,20 @@ export default function CourseCreatorCoursesContent() {
       </header>
 
       <>
-        {open ?
-          <div className='flex flex-col gap-4 mt-8' >            <Button
-            size={"sm"}
-            onClick={() => setOpen(false)}
-            className='w-fit self-end'
-            variant={"outline"}
-          >
-            <X /> Close
-          </Button>
-
-            <CatalogueWorkspace scope="course_creator" />
+        {open ? (
+          <div className='mt-8 flex flex-col gap-4'>
+            {' '}
+            <Button
+              size={'sm'}
+              onClick={() => setOpen(false)}
+              className='w-fit self-end'
+              variant={'outline'}
+            >
+              <X /> Close
+            </Button>
+            <CatalogueWorkspace scope='course_creator' />
           </div>
-          :
+        ) : (
           <Card>
             <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
               <div>
@@ -160,10 +163,8 @@ export default function CourseCreatorCoursesContent() {
               )}
             </CardContent>
           </Card>
-        }
-
+        )}
       </>
-
     </div>
   );
 }

@@ -33,7 +33,7 @@ import {
   ClipboardList,
   GraduationCap,
   Palette,
-  SlidersHorizontal
+  SlidersHorizontal,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -53,11 +53,11 @@ import {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  type LessonFormValues
+  type LessonFormValues,
 } from '../../../_components/lesson-management-form';
 import {
   CourseCreatorEmptyState,
-  CourseCreatorLoadingState
+  CourseCreatorLoadingState,
 } from '../../../_components/loading-state';
 
 export default function CourseBuilderPage() {
@@ -180,15 +180,15 @@ export default function CourseBuilderPage() {
       // @ts-expect-error
       training_requirements: Array.isArray(c.training_requirements)
         ? c.training_requirements.map(req => ({
-          uuid: req.uuid,
-          requirement_type: req.requirement_type,
-          name: req.name,
-          description: req.description ?? '',
-          quantity: req.quantity ?? undefined,
-          unit: req.unit ?? '',
-          provided_by: req.provided_by ?? 'course_creator',
-          is_mandatory: !!req.is_mandatory,
-        }))
+            uuid: req.uuid,
+            requirement_type: req.requirement_type,
+            name: req.name,
+            description: req.description ?? '',
+            quantity: req.quantity ?? undefined,
+            unit: req.unit ?? '',
+            provided_by: req.provided_by ?? 'course_creator',
+            is_mandatory: !!req.is_mandatory,
+          }))
         : [],
     });
   }, [courseId, course]);
@@ -267,33 +267,33 @@ export default function CourseBuilderPage() {
   const _content =
     lesson && lessonContent
       ? lessonContent.map((item: any) => {
-        const matchedType = Array.isArray(contentTypeList?.data)
-          ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
-          : undefined;
+          const matchedType = Array.isArray(contentTypeList?.data)
+            ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
+            : undefined;
 
-        const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
+          const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
 
-        return {
-          contentType: typeName.toUpperCase() as
-            | 'AUDIO'
-            | 'VIDEO'
-            | 'TEXT'
-            | 'LINK'
-            | 'PDF'
-            | 'YOUTUBE',
-          title: item?.title || '',
-          uuid: item?.uuid || '',
-          value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
-          duration:
-            typeof item?.estimated_duration === 'string'
-              ? parseInt(item.estimated_duration, 10) || 0
-              : 0,
-          durationHours: item?.duration_hours || 0,
-          durationMinutes: item?.duration_minutes || 0,
-          contentTypeUuid: item?.content_type || '',
-          contentCategory: matchedType?.upload_category ?? '',
-        };
-      })
+          return {
+            contentType: typeName.toUpperCase() as
+              | 'AUDIO'
+              | 'VIDEO'
+              | 'TEXT'
+              | 'LINK'
+              | 'PDF'
+              | 'YOUTUBE',
+            title: item?.title || '',
+            uuid: item?.uuid || '',
+            value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
+            duration:
+              typeof item?.estimated_duration === 'string'
+                ? parseInt(item.estimated_duration, 10) || 0
+                : 0,
+            durationHours: item?.duration_hours || 0,
+            durationMinutes: item?.duration_minutes || 0,
+            contentTypeUuid: item?.content_type || '',
+            contentCategory: matchedType?.upload_category ?? '',
+          };
+        })
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
@@ -355,7 +355,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   // DELETE LESSON MUTATION
@@ -380,7 +380,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const deleteLessonContent = useMutation(deleteLessonContentMutation());
@@ -407,7 +407,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   if (creatorLoading) {
@@ -438,20 +438,20 @@ export default function CourseBuilderPage() {
           </p>
         </header> */}
 
-        <header className="border-border bg-card rounded-xl border px-5 py-4">
-          <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-widest">
+        <header className='border-border bg-card rounded-xl border px-5 py-4'>
+          <span className='text-muted-foreground text-[10px] font-medium tracking-widest uppercase'>
             Course creator studio
           </span>
 
-          <h1 className="text-foreground mt-2 text-xl font-semibold">
+          <h1 className='text-foreground mt-2 text-xl font-semibold'>
             Design learning experiences that match your vision
           </h1>
 
-          <p className="text-muted-foreground mt-1 max-w-xl text-sm">
-            Outline your course blueprint, orchestrate lessons, and refine assessments with guardrails that echo the Elimika brand.
+          <p className='text-muted-foreground mt-1 max-w-xl text-sm'>
+            Outline your course blueprint, orchestrate lessons, and refine assessments with
+            guardrails that echo the Elimika brand.
           </p>
         </header>
-
 
         <StepperRoot>
           <StepperList>
@@ -539,7 +539,7 @@ export default function CourseBuilderPage() {
                     courseId={courseId as string}
                     lessonId={selectedLesson?.uuid}
                     initialValues={lessonInitialValues}
-                    onCancel={() => { }}
+                    onCancel={() => {}}
                     onSuccess={data => {
                       setCreatedCourseId(data?.uuid);
 
