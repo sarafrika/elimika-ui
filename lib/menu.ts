@@ -11,6 +11,7 @@ import {
   Calendar,
   CalendarClock,
   ChartNoAxesCombined,
+  ClipboardCheck,
   ClipboardList,
   DollarSign,
   FileCheck,
@@ -22,7 +23,6 @@ import {
   LibraryIcon,
   LucideBookUser,
   LucideLandmark,
-  LucideReceipt,
   PlusCircle,
   School,
   Settings,
@@ -33,6 +33,7 @@ import {
   TrendingUp,
   UserCircle,
   UserIcon,
+  UserPlus,
   Users,
   UsersIcon,
   Wallet
@@ -142,6 +143,11 @@ export default {
       icon: Book,
     },
     {
+      title: 'My Skills',
+      url: '/dashboard/my-skills',
+      icon: BadgeCheck,
+    },
+    {
       title: 'My Classes',
       url: '/dashboard/my-classes',
       icon: BookOpen,
@@ -152,19 +158,49 @@ export default {
       icon: Calendar,
     },
     {
+      title: 'Assignment',
+      url: '/dashboard/assignment',
+      icon: ClipboardCheck,
+    },
+    {
+      title: 'Assessment (Grades)',
+      url: '/dashboard/assessment',
+      icon: Award,
+    },
+    {
+      title: 'Invites',
+      url: '/dashboard/invites',
+      icon: UserPlus,
+    },
+    {
       title: 'Skills Fund',
       url: '/dashboard/skills-fund',
       icon: Wallet,
     },
     {
-      title: 'My Grades',
-      url: '/dashboard/grades',
-      icon: Award,
+      title: 'Opportunities',
+      url: '/dashboard/opportunities',
+      icon: Handshake
     },
     {
-      title: 'My Certificates',
-      url: '/dashboard/certificates',
-      icon: Star,
+      title: 'Contacts',
+      url: '/dashboard/contacts',
+      icon: Users,
+    },
+    {
+      title: 'Communities',
+      url: '/dashboard/communities',
+      icon: Users,
+    },
+    {
+      title: 'Library',
+      url: '/dashboard/library',
+      icon: LucideBookUser,
+    },
+    {
+      title: 'Notifications',
+      url: '/dashboard/notifications',
+      icon: Bell,
     },
     {
       title: 'Progress Analytics',
@@ -172,14 +208,14 @@ export default {
       icon: TrendingUp,
     },
     {
-      title: 'Payment History',
-      url: '/dashboard/payment-history',
-      icon: LucideReceipt,
-    },
-    {
       title: 'Profile',
       url: '/dashboard/profile',
       icon: UserCircle,
+    },
+    {
+      title: 'Settings',
+      url: '/dashboard/settings',
+      icon: Settings,
     },
   ],
   instructor: [
@@ -279,7 +315,6 @@ export default {
       url: '/dashboard/skills-fund',
       icon: Wallet,
     },
-
     {
       title: 'Communities',
       url: '/dashboard/communities',
