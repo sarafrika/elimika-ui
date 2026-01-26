@@ -168,7 +168,6 @@ export function VideoPlayer({ isOpen, onClose, videoUrl, title }: VideoPlayerPro
         setIsFullscreen(false);
       }
     } catch (err) {
-      console.error('Fullscreen error:', err);
     }
   };
 
@@ -285,9 +284,8 @@ export function VideoPlayer({ isOpen, onClose, videoUrl, title }: VideoPlayerPro
           {/* Control Bar (bottom) - Only for direct videos */}
           {videoSource === 'direct' && (
             <div
-              className={`bg-black/90 p-3 transition-opacity duration-300 sm:p-4 ${
-                showControls ? 'opacity-100' : 'opacity-0'
-              }`}
+              className={`bg-black/90 p-3 transition-opacity duration-300 sm:p-4 ${showControls ? 'opacity-100' : 'opacity-0'
+                }`}
             >
               <div className='flex items-center gap-2 sm:gap-4'>
                 {/* Play/Pause Button */}
