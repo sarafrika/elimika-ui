@@ -1,6 +1,7 @@
 'use client';
 
 import { BookOpen, CheckCircle, Clock, PlusCircle, Star, TrendingUp, XCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '../../../../components/ui/button';
 
@@ -11,6 +12,7 @@ const elimikaDesignSystem = {
 };
 
 const MySkillsPage = () => {
+    const router = useRouter()
     // Mock data - replace with actual data from your backend
     const [overallProgress] = useState(65);
     const [topSkills] = useState([
@@ -114,7 +116,7 @@ const MySkillsPage = () => {
                             Review, track, and develop your skills. Add new competencies, monitor your progress, and showcase your expertise.
                         </p>
                     </div>
-                    <Button size={"default"} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm">
+                    <Button onClick={() => router.push('/dashboard/browse-courses')} size={"default"} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm">
                         <PlusCircle className="w-5 h-5" />
                         Add New Skill
                     </Button>

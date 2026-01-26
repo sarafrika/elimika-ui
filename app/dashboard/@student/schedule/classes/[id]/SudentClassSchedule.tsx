@@ -185,7 +185,7 @@ export function ClassScheduleCalendar({
                                     key={key}
                                     className={`min-h-[60px] sm:min-h-[90px] rounded-md border p-0.5 sm:p-1 text-xs transition-colors
                     ${isOutsideMonth ? 'bg-muted/30 text-muted-foreground' : 'bg-card'}
-                    ${sessions.length ? 'border-primary/50 hover:bg-primary/5' : ''}
+                    ${sessions.length ? 'border-primary hover:bg-primary/5' : ''}
                     ${isToday ? 'ring-1 sm:ring-2 ring-primary' : ''}
                   `}
                                 >
@@ -204,13 +204,13 @@ export function ClassScheduleCalendar({
                                                 <button
                                                     key={s.uuid}
                                                     onClick={() => onScheduleClick?.(s)}
-                                                    className={`w-full rounded bg-primary/10 px-0.5 sm:px-1 py-0.5 text-[8px] sm:text-[10px] text-left hover:bg-primary/20 transition-colors ${isPast ? 'opacity-60' : ''
+                                                    className={`w-full rounded px-0.5 sm:px-1 py-0.5 text-[8px] sm:text-[10px] text-left hover:bg-primary/20 transition-colors ${isPast ? 'opacity-60' : ''
                                                         }`}
                                                 >
-                                                    <div className="font-semibold truncate hidden sm:block">
+                                                    <div className="text-sm font-semibold truncate hidden sm:block">
                                                         {s.title}
                                                     </div>
-                                                    <div className="text-muted-foreground">
+                                                    <div className="text-xs font-bold">
                                                         {format(new Date(s.start_time), 'HH:mm')}
                                                     </div>
                                                 </button>
@@ -228,7 +228,7 @@ export function ClassScheduleCalendar({
                     </div>
 
                     {/* Range Hint */}
-                    <p className="mt-3 text-[10px] sm:text-xs text-muted-foreground text-center">
+                    <p className="mt-3 text-[11px] sm:text-xs text-muted-foreground text-center">
                         Showing schedule from{' '}
                         <strong>{format(minMonth, 'MMM d, yyyy')}</strong> to{' '}
                         <strong>{format(maxMonth, 'MMM d, yyyy')}</strong>

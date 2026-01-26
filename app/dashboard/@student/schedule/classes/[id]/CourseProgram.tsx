@@ -47,6 +47,7 @@ interface CourseProgramSectionProps {
     onLessonSelect: (lesson: LessonContent) => void;
     completedLessons?: Set<string>;
     lockedLessons?: Set<string>;
+    contentTypeMap: any
 }
 
 export function CourseProgramSection({
@@ -59,17 +60,20 @@ export function CourseProgramSection({
     onLessonSelect,
     completedLessons = new Set(),
     lockedLessons = new Set(),
+    contentTypeMap
 }: CourseProgramSectionProps) {
-    const getLessonIcon = (type: string, uuid: string) => {
+    const getLessonIcon = (uuid: string) => {
         const isCompleted = completedLessons.has(uuid);
         const isLocked = lockedLessons.has(uuid);
+
+        const contentTypeName = contentTypeMap[uuid];
 
         if (isLocked)
             return <Lock className="h-4 w-4 text-muted-foreground" />;
         if (isCompleted)
             return <CheckCircle className="h-4 w-4 text-green-600" />;
 
-        switch (type) {
+        switch (contentTypeName) {
             case 'video':
                 return <Play className="h-4 w-4 text-primary" />;
             case 'text':
@@ -167,12 +171,13 @@ export function CourseProgramSection({
                                                             >
                                                                 <div className="flex items-center gap-3">
                                                                     {getLessonIcon(
-                                                                        content.type,
-                                                                        content.uuid
+                                                                        content.content_type_uuid
                                                                     )}
+
                                                                     <div className="text-left">
                                                                         <p className="text-sm font-medium">
                                                                             {content.title}
+
                                                                         </p>
                                                                         <div className="flex flex-wrap items-center gap-2">
                                                                             <p className="text-xs capitalize text-muted-foreground">

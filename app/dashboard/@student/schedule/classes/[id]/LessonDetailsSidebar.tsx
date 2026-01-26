@@ -9,6 +9,7 @@ export type LessonContent = {
     type: string;
     duration?: string;
     description?: string;
+    content_type_uuid?: string
 };
 
 interface LessonDetailsSidebarProps {
@@ -20,6 +21,7 @@ interface LessonDetailsSidebarProps {
     completedLessons: number;
     overallProgress: number;
     timeSpent?: string;
+    contentTypeMap: any
 }
 
 export function LessonDetailsSidebar({
@@ -31,6 +33,7 @@ export function LessonDetailsSidebar({
     completedLessons,
     overallProgress,
     timeSpent = '0h 0m',
+    contentTypeMap
 }: LessonDetailsSidebarProps) {
     if (!lesson) {
         return (
@@ -46,7 +49,9 @@ export function LessonDetailsSidebar({
     }
 
     const getLessonTypeInfo = () => {
-        switch (lesson.type) {
+        const contentTypeName = contentTypeMap[lesson?.content_type_uuid as string];
+
+        switch (contentTypeName) {
             case 'video':
                 return {
                     icon: <Video className="text-primary h-5 w-5 sm:h-6 sm:w-6" />,
@@ -136,7 +141,7 @@ export function LessonDetailsSidebar({
                                 onClick={onStartLesson}
                             >
                                 <Play className="w-4 h-4 sm:w-5 sm:h-5" />
-                                Start Lesson
+                                View Lesson Content
                             </Button>
 
                             <Button

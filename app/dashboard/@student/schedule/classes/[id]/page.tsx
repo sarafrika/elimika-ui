@@ -321,6 +321,7 @@ export default function ClassDetailsPage() {
                                 onToggleModule={handleToggleModule}
                                 selectedLesson={selectedLesson}
                                 onLessonSelect={handleLessonSelect}
+                                contentTypeMap={contentTypeMap}
                             />
                         </div>
                     )}
@@ -334,7 +335,8 @@ export default function ClassDetailsPage() {
                             totalLessons={progress.totalLessons}
                             completedLessons={progress.completedLessons}
                             overallProgress={Math.round(progress.percentage)}
-                            timeSpent="2h 45m"
+                            timeSpent="0"
+                            contentTypeMap={contentTypeMap}
                         />
                     </div>
                 </div>
