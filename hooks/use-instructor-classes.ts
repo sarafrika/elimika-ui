@@ -2,9 +2,8 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   getClassDefinitionsForInstructorOptions,
   getCourseByUuidOptions,
-  getInstructorByUuidOptions
+  getInstructorByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
-
 
 // hook
 function useInstructorClassesWithDetails(instructorUuid?: string) {
@@ -17,7 +16,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   });
 
   const classesData = data?.data ?? [];
-  const classes = classesData?.map(item => item.class_definition)
+  const classes = classesData?.map(item => item.class_definition);
 
   const courseQueries = useQueries({
     queries:
@@ -64,7 +63,6 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   const isCoursesLoading = courseQueries.some(q => q.isLoading || q.isFetching);
   const isInstructorsLoading = instructorQueries.some(q => q.isLoading || q.isFetching);
   // const isSchedulesLoading = scheduleQueries.some(q => q.isLoading || q.isFetching);
-
 
   const loading = isLoading || isFetching || isCoursesLoading || isInstructorsLoading;
 

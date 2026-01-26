@@ -28,7 +28,7 @@ import EnrollCourseCard from '../../../../_components/enroll-course-card';
 const EnrollmentPage = () => {
   const params = useParams();
   const courseId = params?.id as string;
-  const router = useRouter()
+  const router = useRouter();
 
   const { replaceBreadcrumbs } = useBreadcrumb();
   const student = useStudent();
@@ -226,66 +226,58 @@ const EnrollmentPage = () => {
       </div>
 
       {/* Date filter controls */}
-      <Card className="flex flex-row items-center justify-between p-4 space-y-4">
+      <Card className='flex flex-row items-center justify-between space-y-4 p-4'>
         {/* Active range display */}
-        <div className="flex items-center justify-between">
-          <div className="text-sm">
-            <span className="text-muted-foreground">Date range</span>
-            <div className="font-medium">
+        <div className='flex items-center justify-between'>
+          <div className='text-sm'>
+            <span className='text-muted-foreground'>Date range</span>
+            <div className='font-medium'>
               {!appliedStart || !appliedEnd ? (
-                <span className="text-muted-foreground">Default range</span>
+                <span className='text-muted-foreground'>Default range</span>
               ) : (
                 <>
                   {format(new Date(appliedStart), 'MMM dd, yyyy')}
-                  <span className="mx-2 text-muted-foreground">→</span>
+                  <span className='text-muted-foreground mx-2'>→</span>
                   {format(new Date(appliedEnd), 'MMM dd, yyyy')}
                 </>
               )}
             </div>
           </div>
-
-
         </div>
 
         {/* Controls */}
-        <div className="flex flex-wrap items-end gap-3">
+        <div className='flex flex-wrap items-end gap-3'>
           <div>
-            <Label className="text-xs text-muted-foreground">Start date</Label>
+            <Label className='text-muted-foreground text-xs'>Start date</Label>
             <Input
-              type="date"
+              type='date'
               value={startDateInput}
               onChange={e => setStartDateInput(e.target.value)}
-              className="mt-1 w-[160px]"
+              className='mt-1 w-[160px]'
             />
           </div>
 
           <div>
-            <Label className="text-xs text-muted-foreground">End date</Label>
+            <Label className='text-muted-foreground text-xs'>End date</Label>
             <Input
-              type="date"
+              type='date'
               value={endDateInput}
               onChange={e => setEndDateInput(e.target.value)}
-              className="mt-1 w-[160px]"
+              className='mt-1 w-[160px]'
             />
           </div>
 
-          <Button size="sm" onClick={applyDates}>
+          <Button size='sm' onClick={applyDates}>
             Apply
           </Button>
 
-          <Button size="sm" variant="outline" onClick={clearDates}>
+          <Button size='sm' variant='outline' onClick={clearDates}>
             Reset
           </Button>
         </div>
 
-
-
-        {dateError && (
-          <p className="text-sm text-destructive">{dateError}</p>
-        )}
+        {dateError && <p className='text-destructive text-sm'>{dateError}</p>}
       </Card>
-
-
 
       {loading ? (
         <CustomLoadingState subHeading='Loading available classes...' />
@@ -331,7 +323,9 @@ const EnrollmentPage = () => {
                   handleEnroll={() => {
                     setEnrollingClass(cls);
                     // setOpenEnrollModal(true);
-                    router.push(`/dashboard/browse-courses/available-classes/${courseId}/enroll?id=${cls?.uuid}`)
+                    router.push(
+                      `/dashboard/browse-courses/available-classes/${courseId}/enroll?id=${cls?.uuid}`
+                    );
                   }}
                   variant='full'
                 />

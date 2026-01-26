@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit2, FileText, PlusCircle, Save, Search, Trash2, X } from 'lucide-react';
@@ -25,11 +25,15 @@ import {
   updateAssessmentRubricMutation,
   updateRubricCriterionMutation,
   updateRubricScoringMutation,
-  updateScoringLevelMutation
+  updateScoringLevelMutation,
 } from '../../../../../services/client/@tanstack/react-query.gen';
-import { Criterion, Rubric, RubricScoringLevel, ScoringLevel, useRubricsData } from '../rubric-chaining';
-
-
+import {
+  Criterion,
+  Rubric,
+  RubricScoringLevel,
+  ScoringLevel,
+  useRubricsData,
+} from '../rubric-chaining';
 
 const DEFAULT_LEVEL_NAMES = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
 
@@ -54,16 +58,16 @@ const createEmptyRubric = (): Rubric => ({
   scoringLevels: DEFAULT_LEVEL_NAMES.map((name, idx) => ({
     description: '',
     rubric_uuid: '',
-    feedback_category: "",
+    feedback_category: '',
     performance_expectation: '',
     uuid: '',
     score_range: String((4 - idx) * 25), // 100, 75, 50, 25
     points: String((4 - idx) * 25), // 100, 75, 50, 25
     is_passing_level: idx < 2,
-    created_by: "",
+    created_by: '',
     created_date: '',
     updated_by: '',
-    updated_date: ''
+    updated_date: '',
   })),
   criteria: [
     {
@@ -98,32 +102,31 @@ const createEmptyRubric = (): Rubric => ({
 
 const RubricCardSkeleton = () => {
   return (
-    <Card className="p-5 dark:border-border">
-      <div className="flex items-start gap-3">
-        <Skeleton className="h-9 w-9 rounded-lg" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-5 w-3/4" />
+    <Card className='dark:border-border p-5'>
+      <div className='flex items-start gap-3'>
+        <Skeleton className='h-9 w-9 rounded-lg' />
+        <div className='flex-1 space-y-2'>
+          <Skeleton className='h-5 w-3/4' />
         </div>
       </div>
 
-      <div className="mt-3 space-y-2">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
+      <div className='mt-3 space-y-2'>
+        <Skeleton className='h-4 w-full' />
+        <Skeleton className='h-4 w-5/6' />
       </div>
 
-      <div className="mt-3 flex gap-2">
-        <Skeleton className="h-6 w-20 rounded-md" />
-        <Skeleton className="h-6 w-24 rounded-md" />
+      <div className='mt-3 flex gap-2'>
+        <Skeleton className='h-6 w-20 rounded-md' />
+        <Skeleton className='h-6 w-24 rounded-md' />
       </div>
 
-      <div className="mt-4 flex gap-2 border-t border-border pt-3 dark:border-border">
-        <Skeleton className="h-8 flex-1 rounded-md" />
-        <Skeleton className="h-8 w-20 rounded-md" />
+      <div className='border-border dark:border-border mt-4 flex gap-2 border-t pt-3'>
+        <Skeleton className='h-8 flex-1 rounded-md' />
+        <Skeleton className='h-8 w-20 rounded-md' />
       </div>
     </Card>
-  )
-}
-
+  );
+};
 
 const RubricManager: React.FC = () => {
   const qc = useQueryClient();
@@ -182,9 +185,9 @@ const RubricManager: React.FC = () => {
       uuid: criterion.uuid || '',
       scoring: Array.isArray(criterion.scoring)
         ? criterion.scoring.map((score: any) => ({
-          ...score,
-          uuid: score.uuid || '',
-        }))
+            ...score,
+            uuid: score.uuid || '',
+          }))
         : [],
     }));
 
@@ -331,8 +334,7 @@ const RubricManager: React.FC = () => {
                 currentRubric.criteria[criteriaIndex]?.scoring[scoringIndex]
                   ?.performance_expectation || '',
               description:
-                currentRubric.criteria[criteriaIndex]?.scoring[scoringIndex]
-                  ?.description || '',
+                currentRubric.criteria[criteriaIndex]?.scoring[scoringIndex]?.description || '',
             };
 
             return addScoring.mutateAsync({
@@ -378,7 +380,6 @@ const RubricManager: React.FC = () => {
         toast.error('Failed to create rubric');
       }
     } else {
-
       /*
             ===== UPDATE EXISTING RUBRIC FLOW =====
       */
@@ -437,7 +438,7 @@ const RubricManager: React.FC = () => {
             feedback_category: level.feedback_category || '',
             level_order: level.level_order,
             name: level.description,
-            is_passing: level.is_passing_level || true
+            is_passing: level.is_passing_level || true,
           };
 
           // Check if new scoring level (temp UUID contains hyphens)
@@ -498,7 +499,7 @@ const RubricManager: React.FC = () => {
 
           if (!criterion) return [];
 
-          return scoringLevelResponses.map((scoringResponse) => {
+          return scoringLevelResponses.map(scoringResponse => {
             const scoringLevelUuid = scoringResponse.data?.uuid;
             if (!scoringLevelUuid) return Promise.resolve();
 
@@ -534,7 +535,6 @@ const RubricManager: React.FC = () => {
             });
           });
         });
-
 
         await Promise.all(linkingPromises);
 
@@ -625,14 +625,17 @@ const RubricManager: React.FC = () => {
     if (!currentRubric) return;
 
     // Update the scoring level itself
-    const scoringLevels = currentRubric.scoringLevels?.map((sl, i) =>
-      i === levelIndex ? { ...sl, score_range: value, points: value } : sl
-    ) || [];
+    const scoringLevels =
+      currentRubric.scoringLevels?.map((sl, i) =>
+        i === levelIndex ? { ...sl, score_range: value, points: value } : sl
+      ) || [];
 
     // Also update in all criteria for consistency
     const criteria = currentRubric.criteria.map(c => ({
       ...c,
-      scoring: c.scoring.map((s, i) => (i === levelIndex ? { ...s, score_range: value, points: value } : s)),
+      scoring: c.scoring.map((s, i) =>
+        i === levelIndex ? { ...s, score_range: value, points: value } : s
+      ),
     }));
 
     setCurrentRubric({ ...currentRubric, scoringLevels, criteria });
@@ -642,9 +645,10 @@ const RubricManager: React.FC = () => {
     if (!currentRubric) return;
 
     // Update the scoring level itself
-    const scoringLevels = currentRubric.scoringLevels?.map((sl, i) =>
-      i === levelIndex ? { ...sl, description: value } : sl
-    ) || [];
+    const scoringLevels =
+      currentRubric.scoringLevels?.map((sl, i) =>
+        i === levelIndex ? { ...sl, description: value } : sl
+      ) || [];
 
     // Also update in all criteria for consistency
     const criteria = currentRubric.criteria.map(c => ({
@@ -709,7 +713,7 @@ const RubricManager: React.FC = () => {
       updated_by: null,
       updated_date: null,
       level_order: 0,
-      is_passing: true
+      is_passing: true,
     };
 
     const scoringLevels = [...(currentRubric.scoringLevels || []), newScoringLevel];
@@ -791,7 +795,6 @@ const RubricManager: React.FC = () => {
     }
   };
 
-
   /*
     ////////////////////////////////
     CREATE OR EDIT RUBRIC TABLE HERE
@@ -809,80 +812,80 @@ const RubricManager: React.FC = () => {
       updateRubricScoringLevel.isPending;
 
     return (
-      <Card className="min-h-auto p-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">
+      <Card className='min-h-auto p-8'>
+        <div className='mx-auto max-w-7xl space-y-6'>
+          <div className='flex items-center justify-between'>
+            <h1 className='text-2xl font-bold'>
               {currentRubric.uuid ? 'Edit Rubric' : 'Create New Rubric'}
             </h1>
-            <div className="flex gap-2">
+            <div className='flex gap-2'>
               <Button onClick={handleSaveRubric} disabled={isSaving}>
                 <Save size={18} /> {isSaving ? 'Saving...' : 'Save'}
               </Button>
-              <Button variant="secondary" onClick={handleCancel} disabled={isSaving}>
+              <Button variant='secondary' onClick={handleCancel} disabled={isSaving}>
                 <X size={18} /> Cancel
               </Button>
             </div>
           </div>
 
           {/* Metadata */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="flex flex-col gap-1">
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <div className='flex flex-col gap-1'>
               <Label>Title *</Label>
               <Input
                 value={currentRubric.title}
                 onChange={e => updateRubricField('title', e.target.value)}
-                placeholder="Enter rubric title"
+                placeholder='Enter rubric title'
               />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className='flex flex-col gap-1'>
               <Label>Description</Label>
               <Input
                 value={currentRubric.description}
                 onChange={e => updateRubricField('description', e.target.value)}
-                placeholder="Enter description"
+                placeholder='Enter description'
               />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className='flex flex-col gap-1'>
               <Label>Rubric Type</Label>
               <Input
                 value={currentRubric.rubric_type}
                 onChange={e => updateRubricField('rubric_type', e.target.value)}
-                placeholder="e.g., Assessment, Grading"
+                placeholder='e.g., Assessment, Grading'
               />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className='flex flex-col gap-1'>
               <Label>Rubric Category</Label>
               <Input
                 value={currentRubric.rubric_category}
                 onChange={e => updateRubricField('rubric_category', e.target.value)}
-                placeholder="e.g., Skills, Knowledge"
+                placeholder='e.g., Skills, Knowledge'
               />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className='flex flex-col gap-1'>
               <Label>Assessment Scope</Label>
               <Input
                 value={currentRubric.assessment_scope}
                 onChange={e => updateRubricField('assessment_scope', e.target.value)}
-                placeholder="e.g., Course, Module"
+                placeholder='e.g., Course, Module'
               />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className='flex flex-col gap-1'>
               <Label>Total Weight</Label>
               <Input
-                type="number"
+                type='number'
                 value={currentRubric.total_weight}
                 onChange={e => updateRubricField('total_weight', Number(e.target.value))}
-                placeholder="100"
+                placeholder='100'
               />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className='flex flex-col gap-1'>
               <Label>Min Passing Score</Label>
               <Input
-                type="number"
+                type='number'
                 value={currentRubric.min_passing_score}
                 onChange={e => updateRubricField('min_passing_score', Number(e.target.value))}
-                placeholder="50"
+                placeholder='50'
               />
             </div>
           </div>
@@ -890,29 +893,29 @@ const RubricManager: React.FC = () => {
           <Button onClick={addLevel}>Add Level</Button>
 
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full border">
+          <div className='overflow-x-auto'>
+            <table className='w-full border'>
               <thead>
                 <tr>
-                  <th className="border px-4 py-2 text-left">Criteria</th>
+                  <th className='border px-4 py-2 text-left'>Criteria</th>
                   {(currentRubric.scoringLevels || []).map((level, idx) => {
                     // Use scoringLevels if available, otherwise fall back to first criterion's scoring
                     const scoringLevel = currentRubric.scoringLevels?.[idx] || level;
                     return (
-                      <th key={idx} className="border px-2 py-2">
-                        <Label className="text-xs">Level Name</Label>
+                      <th key={idx} className='border px-2 py-2'>
+                        <Label className='text-xs'>Level Name</Label>
                         <Input
                           value={scoringLevel.description}
                           onChange={e => updateScoringLevelName(idx, e.target.value)}
-                          placeholder="Level name"
+                          placeholder='Level name'
                         />
-                        <Label className="mt-2 text-xs">Weight/Score</Label>
+                        <Label className='mt-2 text-xs'>Weight/Score</Label>
                         <Input
-                          type="text"
+                          type='text'
                           value={scoringLevel.points}
                           onChange={e => updateLevelWeightForAllCriteria(idx, e.target.value)}
-                          className="mt-1"
-                          placeholder="Score"
+                          className='mt-1'
+                          placeholder='Score'
                         />
                       </th>
                     );
@@ -923,16 +926,16 @@ const RubricManager: React.FC = () => {
                 {currentRubric.criteria.map((c, cIdx) => {
                   return (
                     <tr key={c.uuid}>
-                      <td className="border px-2">
-                        <div className="flex gap-2">
+                      <td className='border px-2'>
+                        <div className='flex gap-2'>
                           <textarea
                             value={c.component_name}
                             onChange={e => updateCriteriaName(cIdx, e.target.value)}
-                            placeholder="Criterion name"
+                            placeholder='Criterion name'
                             rows={3}
                           />
                           <Button
-                            variant="ghost"
+                            variant='ghost'
                             onClick={() => deleteCriteriaRow(cIdx)}
                             disabled={currentRubric.criteria.length <= 1}
                           >
@@ -956,9 +959,9 @@ const RubricManager: React.FC = () => {
                         };
 
                         return (
-                          <td key={scoringLevel.uuid} className="border px-2">
+                          <td key={scoringLevel.uuid} className='border px-2'>
                             <textarea
-                              className="w-full rounded border p-1 text-sm"
+                              className='w-full rounded border p-1 text-sm'
                               rows={3}
                               value={scoringEntry.description || ''}
                               onChange={e => {
@@ -970,7 +973,7 @@ const RubricManager: React.FC = () => {
                                   updateLevel(cIdx, actualIdx, 'description', e.target.value);
                                 }
                               }}
-                              placeholder="Describe Performance expectation"
+                              placeholder='Describe Performance expectation'
                             />
                           </td>
                         );
@@ -988,80 +991,79 @@ const RubricManager: React.FC = () => {
     );
   }
 
-
   return (
-    <div className="mx-auto min-h-screen max-w-7xl space-y-6 p-6">
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className='mx-auto min-h-screen max-w-7xl space-y-6 p-6'>
+      <div className='flex gap-2'>
+        <div className='relative flex-1'>
+          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
           <Input
-            placeholder="Search rubrics..."
+            placeholder='Search rubrics...'
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className='pl-9'
           />
         </div>
         <Button onClick={handleAddNewRubric}>
-          <PlusCircle className="mr-2 h-4 w-4" /> New Rubric
+          <PlusCircle className='mr-2 h-4 w-4' /> New Rubric
         </Button>
       </div>
 
       {isLoading ? (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-3'>
           {Array.from({ length: 6 }).map((_, index) => (
             <RubricCardSkeleton key={index} />
           ))}
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-3'>
           {rubrics
             .filter(rubric => rubric.title?.toLowerCase().includes(searchTerm.toLowerCase()))
             .map(rubric => (
               <Card
                 key={rubric.uuid}
-                className="group p-5 transition-shadow hover:shadow-md dark:border-border"
+                className='group dark:border-border p-5 transition-shadow hover:shadow-md'
               >
-                <div className="flex items-start gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <FileText className="h-5 w-5 text-primary" />
+                <div className='flex items-start gap-3'>
+                  <div className='bg-primary/10 rounded-lg p-2'>
+                    <FileText className='text-primary h-5 w-5' />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-lg font-bold">
+                  <div className='min-w-0 flex-1'>
+                    <h2 className='truncate text-lg font-bold'>
                       {rubric.title || 'Untitled Rubric'}
                     </h2>
                   </div>
                 </div>
 
-                <p className="line-clamp-2 text-sm text-muted-foreground">
+                <p className='text-muted-foreground line-clamp-2 text-sm'>
                   {rubric.description || 'No description'}
                 </p>
 
-                <div className="flex flex-wrap gap-2">
+                <div className='flex flex-wrap gap-2'>
                   {rubric.rubric_type && (
-                    <span className="inline-flex items-center rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
+                    <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-md px-2 py-1 text-xs font-medium'>
                       {rubric.rubric_type}
                     </span>
                   )}
-                  <span className="inline-flex items-center rounded-md border border-border bg-background px-2 py-1 text-xs font-medium dark:border-border">
+                  <span className='border-border bg-background dark:border-border inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium'>
                     {rubric.criteria?.length || 0} criteria
                   </span>
                 </div>
 
-                <div className="flex gap-2 border-t border-border pt-3 dark:border-border">
+                <div className='border-border dark:border-border flex gap-2 border-t pt-3'>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant='outline'
+                    size='sm'
                     onClick={() => handleEditRubric(rubric)}
-                    className="flex-1 gap-2"
+                    className='flex-1 gap-2'
                   >
                     <Edit2 size={14} /> Edit
                   </Button>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant='outline'
+                    size='sm'
                     onClick={() => handleDeleteRubric(rubric.uuid)}
                     disabled={deleteRubric.isPending}
-                    className="gap-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    className='text-destructive hover:bg-destructive hover:text-destructive-foreground gap-2'
                   >
                     <Trash2 size={14} /> Delete
                   </Button>
@@ -1072,22 +1074,22 @@ const RubricManager: React.FC = () => {
       )}
 
       {isError && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 dark:border-destructive/50">
-          <p className="text-sm text-destructive">Error loading rubrics</p>
+        <div className='border-destructive/50 bg-destructive/10 dark:border-destructive/50 rounded-lg border p-4'>
+          <p className='text-destructive text-sm'>Error loading rubrics</p>
         </div>
       )}
 
       {rubrics.length === 0 && isFetched && (
-        <Card className="border-dashed p-12 text-center dark:border-border">
-          <div className="mx-auto mb-4 w-fit rounded-full bg-muted p-4">
-            <FileText className="h-10 w-10 text-muted-foreground" />
+        <Card className='dark:border-border border-dashed p-12 text-center'>
+          <div className='bg-muted mx-auto mb-4 w-fit rounded-full p-4'>
+            <FileText className='text-muted-foreground h-10 w-10' />
           </div>
-          <h3 className="mb-2 text-lg font-semibold">No rubrics found</h3>
-          <p className="mb-6 text-sm text-muted-foreground">
+          <h3 className='mb-2 text-lg font-semibold'>No rubrics found</h3>
+          <p className='text-muted-foreground mb-6 text-sm'>
             Create your first rubric to get started.
           </p>
-          <Button onClick={handleAddNewRubric} className="gap-2">
-            <PlusCircle className="h-4 w-4" />
+          <Button onClick={handleAddNewRubric} className='gap-2'>
+            <PlusCircle className='h-4 w-4' />
             Create Rubric
           </Button>
         </Card>

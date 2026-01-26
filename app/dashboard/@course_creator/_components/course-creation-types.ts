@@ -69,24 +69,28 @@ export const courseCreationSchema = z.object({
       individual: z.boolean().optional(),
     })
     .optional(),
-  learning_rules: z.object({
-    completion_rules_enabled: z.boolean().default(false),
-    drip_schedule_enabled: z.boolean().default(false),
-    prerequisites_required: z.boolean().default(false),
-  }).default({
-    completion_rules_enabled: false,
-    drip_schedule_enabled: false,
-    prerequisites_required: false,
-  }),
-  compliance: z.object({
-    copyright_confirmed: z.boolean().default(false),
-    accessibility_captions: z.boolean().default(false),
-    certificate_enabled: z.boolean().default(false),
-  }).default({
-    copyright_confirmed: false,
-    accessibility_captions: false,
-    certificate_enabled: false,
-  }),
+  learning_rules: z
+    .object({
+      completion_rules_enabled: z.boolean().default(false),
+      drip_schedule_enabled: z.boolean().default(false),
+      prerequisites_required: z.boolean().default(false),
+    })
+    .default({
+      completion_rules_enabled: false,
+      drip_schedule_enabled: false,
+      prerequisites_required: false,
+    }),
+  compliance: z
+    .object({
+      copyright_confirmed: z.boolean().default(false),
+      accessibility_captions: z.boolean().default(false),
+      certificate_enabled: z.boolean().default(false),
+    })
+    .default({
+      copyright_confirmed: false,
+      accessibility_captions: false,
+      certificate_enabled: false,
+    }),
   language: z.string().optional(),
 });
 

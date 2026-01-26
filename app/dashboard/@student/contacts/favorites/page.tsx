@@ -1,12 +1,14 @@
 function FavoritesPage() {
-  return <div>
-    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 rounded-md shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-        <p className="font-medium">🚧 This page is under construction.</p>
-        <p className="text-sm text-yellow-900"></p>
+  return (
+    <div>
+      <div className='flex flex-col gap-2 rounded-md border-l-4 border-yellow-500 bg-yellow-100 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
+        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+          <p className='font-medium'>🚧 This page is under construction.</p>
+          <p className='text-sm text-yellow-900'></p>
+        </div>
       </div>
     </div>
-  </div>;
+  );
 }
 
 export default FavoritesPage;

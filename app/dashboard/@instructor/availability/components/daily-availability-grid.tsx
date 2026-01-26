@@ -190,9 +190,9 @@ export function DailyAvailabilityGrid({
   const isToday = currentDate.toDateString() === new Date().toDateString();
 
   return (
-    <div className='space-y-6 items-start max-w-5xl mx-auto'>
+    <div className='mx-auto max-w-5xl items-start space-y-6'>
       {/* Header Card */}
-      <Card className='p-0 min-w-4xl'>
+      <Card className='min-w-4xl p-0'>
         <CardContent className='p-6'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-4'>
@@ -205,20 +205,16 @@ export function DailyAvailabilityGrid({
                 <ChevronLeft className='h-4 w-4' />
               </Button>
 
-              <div className='text-center min-w-[200px]'>
-                <h3 className='text-lg flex-row  font-semibold flex items-center justify-center gap-2'>
-                  <Calendar className='h-5 w-5 text-primary' />
+              <div className='min-w-[200px] text-center'>
+                <h3 className='flex flex-row items-center justify-center gap-2 text-lg font-semibold'>
+                  <Calendar className='text-primary h-5 w-5' />
                   {currentDate.toLocaleDateString('en-US', {
                     weekday: 'long',
                   })}
 
-                  {isToday && (
-                    <Badge variant='default'>
-                      Today
-                    </Badge>
-                  )}
+                  {isToday && <Badge variant='default'>Today</Badge>}
                 </h3>
-                <p className='text-sm text-muted-foreground mt-1'>
+                <p className='text-muted-foreground mt-1 text-sm'>
                   {currentDate.toLocaleDateString('en-US', {
                     month: 'long',
                     day: 'numeric',
@@ -246,17 +242,17 @@ export function DailyAvailabilityGrid({
 
       {/* Calendar Grid */}
       <Card className='overflow-hidden'>
-        <div className='border-b bg-muted/30'>
+        <div className='bg-muted/30 border-b'>
           <div className='grid grid-cols-2'>
-            <div className='border-r p-4 flex items-center justify-center bg-muted/50'>
-              <Clock className='text-muted-foreground h-5 w-5 mr-2' />
-              <span className='text-sm font-medium text-muted-foreground'>Time</span>
+            <div className='bg-muted/50 flex items-center justify-center border-r p-4'>
+              <Clock className='text-muted-foreground mr-2 h-5 w-5' />
+              <span className='text-muted-foreground text-sm font-medium'>Time</span>
             </div>
             <div className='p-4 text-center'>
               <div className='text-sm font-semibold'>
                 {currentDate.toLocaleDateString('en-US', { weekday: 'long' })}
               </div>
-              <div className='text-xs text-muted-foreground mt-1'>
+              <div className='text-muted-foreground mt-1 text-xs'>
                 {currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </div>
             </div>
@@ -273,8 +269,11 @@ export function DailyAvailabilityGrid({
             if (shouldSkipSlot(time, currentDate)) return null;
 
             return (
-              <div key={time} className='relative grid grid-cols-2 border-b last:border-b-0 hover:bg-muted/20 transition-colors'>
-                <div className='text-muted-foreground flex items-center justify-center border-r p-4 text-sm font-medium bg-muted/30'>
+              <div
+                key={time}
+                className='hover:bg-muted/20 relative grid grid-cols-2 border-b transition-colors last:border-b-0'
+              >
+                <div className='text-muted-foreground bg-muted/30 flex items-center justify-center border-r p-4 text-sm font-medium'>
                   {time}
                 </div>
 
@@ -296,13 +295,14 @@ export function DailyAvailabilityGrid({
                                 className='absolute inset-x-2 z-10 rounded-lg transition-all hover:shadow-md'
                                 style={{
                                   height: getEventSpanHeight(slot) * 52,
-                                  background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.05) 100%)',
+                                  background:
+                                    'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.05) 100%)',
                                   border: '2px solid rgba(34,197,94,0.3)',
                                 }}
                               >
-                                <div className='text-emerald-700 dark:text-emerald-400 flex h-full flex-col items-center justify-center text-sm font-medium px-3'>
+                                <div className='flex h-full flex-col items-center justify-center px-3 text-sm font-medium text-emerald-700 dark:text-emerald-400'>
                                   <span>Available</span>
-                                  <span className='text-xs text-muted-foreground mt-1'>
+                                  <span className='text-muted-foreground mt-1 text-xs'>
                                     {slot.startTime} - {slot.endTime}
                                   </span>
                                 </div>
@@ -321,13 +321,14 @@ export function DailyAvailabilityGrid({
                                 className='absolute inset-x-2 top-0 z-10 rounded-lg transition-all hover:shadow-md'
                                 style={{
                                   height: getEventSpanHeight(slot) * 52,
-                                  background: 'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.05) 100%)',
+                                  background:
+                                    'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.05) 100%)',
                                   border: '2px solid rgba(239,68,68,0.3)',
                                 }}
                               >
-                                <div className='text-red-700 dark:text-red-400 flex h-full flex-col items-center justify-center text-sm font-medium px-3'>
-                                  <span className='italic' >Blocked</span>
-                                  <span className='text-xs text-muted-foreground font-bold mt-1'>
+                                <div className='flex h-full flex-col items-center justify-center px-3 text-sm font-medium text-red-700 dark:text-red-400'>
+                                  <span className='italic'>Blocked</span>
+                                  <span className='text-muted-foreground mt-1 text-xs font-bold'>
                                     {slot.startTime} - {slot.endTime}
                                   </span>
                                 </div>
@@ -344,15 +345,16 @@ export function DailyAvailabilityGrid({
                               className='absolute inset-x-2 top-2 z-20 rounded-lg transition-all hover:shadow-md'
                               style={{
                                 height: getEventSpanHeight(event) * 52,
-                                background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(99,102,241,0.05) 100%)',
+                                background:
+                                  'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(99,102,241,0.05) 100%)',
                                 border: '2px solid rgba(59,130,246,0.3)',
                               }}
                             >
-                              <div className='flex h-full flex-col items-center justify-center text-sm font-medium px-3'>
-                                <span className='text-blue-700 italic dark:text-blue-400 line-clamp-2 text-center'>
+                              <div className='flex h-full flex-col items-center justify-center px-3 text-sm font-medium'>
+                                <span className='line-clamp-2 text-center text-blue-700 italic dark:text-blue-400'>
                                   {event.title}
                                 </span>
-                                <span className='text-[16px] font-bold text-muted-foreground mt-1'>
+                                <span className='text-muted-foreground mt-1 text-[16px] font-bold'>
                                   {event.startTime} - {event.endTime}
                                 </span>
                               </div>
@@ -360,15 +362,17 @@ export function DailyAvailabilityGrid({
                           )}
 
                         {/* Empty state */}
-                        {!event && !isAvailabilityStartSlot(weekday, time) && !isBlockedStartSlot(weekday, time, currentDate) && (
-                          <div className='flex h-full items-center justify-center text-muted-foreground/40 hover:text-muted-foreground transition-colors'>
-                            <span className='text-xs'>Click to add</span>
-                          </div>
-                        )}
+                        {!event &&
+                          !isAvailabilityStartSlot(weekday, time) &&
+                          !isBlockedStartSlot(weekday, time, currentDate) && (
+                            <div className='text-muted-foreground/40 hover:text-muted-foreground flex h-full items-center justify-center transition-colors'>
+                              <span className='text-xs'>Click to add</span>
+                            </div>
+                          )}
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side='right' className='max-w-xs'>
-                      <div className='text-sm space-y-1'>
+                      <div className='space-y-1 text-sm'>
                         <div className='font-medium'>{time}</div>
                         {event && (
                           <>

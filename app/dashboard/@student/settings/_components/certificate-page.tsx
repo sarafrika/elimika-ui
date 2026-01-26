@@ -61,9 +61,7 @@ export default function CertificatesPage() {
   const student = useStudent();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'valid' | 'pending' | 'invalid'>(
-    'all'
-  );
+  const [statusFilter, setStatusFilter] = useState<'all' | 'valid' | 'pending' | 'invalid'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [verifyCertificateNumber, setVerifyCertificateNumber] = useState<string | null>(null);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
@@ -92,15 +90,15 @@ export default function CertificatesPage() {
       Array.from(
         new Set(
           certificates
-            .map((cert) => cert.certificate_type || 'Unspecified')
-            .filter((type) => type && type.length > 0)
+            .map(cert => cert.certificate_type || 'Unspecified')
+            .filter(type => type && type.length > 0)
         )
       ),
     [certificates]
   );
 
   const filteredCertificates = useMemo(() => {
-    return certificates.filter((cert) => {
+    return certificates.filter(cert => {
       const matchesStatus =
         statusFilter === 'all'
           ? true
@@ -150,11 +148,11 @@ export default function CertificatesPage() {
   const summary = useMemo(() => {
     const total = certificates.length;
     const downloadable = certificates.filter(
-      (cert) => cert.is_downloadable && Boolean(cert.certificate_url)
+      cert => cert.is_downloadable && Boolean(cert.certificate_url)
     ).length;
-    const pending = certificates.filter((cert) => cert.validity_status === 'pending').length;
+    const pending = certificates.filter(cert => cert.validity_status === 'pending').length;
     const valid = certificates.filter(
-      (cert) => cert.is_valid !== false && cert.validity_status !== 'pending'
+      cert => cert.is_valid !== false && cert.validity_status !== 'pending'
     ).length;
     const invalid = total - valid - pending;
     return { total, downloadable, pending, valid, invalid };
@@ -245,7 +243,7 @@ export default function CertificatesPage() {
           <Button
             size='sm'
             onClick={handleUploadClick}
-            className='gap-2 bg-primary text-primary-foreground hover:bg-primary/90'
+            className='bg-primary text-primary-foreground hover:bg-primary/90 gap-2'
           >
             <Upload className='h-4 w-4' />
             Upload Certificate
@@ -271,7 +269,7 @@ export default function CertificatesPage() {
             icon: FileWarning,
             color: 'text-destructive',
           },
-        ].map((item) => (
+        ].map(item => (
           <Card key={item.label} className='border-0 shadow-sm'>
             <CardContent className='flex flex-col items-center justify-center gap-2 pt-4 text-center'>
               <item.icon className={`h-5 w-5 ${item.color}`} />
@@ -279,7 +277,7 @@ export default function CertificatesPage() {
               {isLoading ? (
                 <Skeleton className='h-6 w-8' />
               ) : (
-                <p className='text-xl font-semibold text-foreground'>{item.value}</p>
+                <p className='text-foreground text-xl font-semibold'>{item.value}</p>
               )}
             </CardContent>
           </Card>
@@ -298,14 +296,12 @@ export default function CertificatesPage() {
               placeholder='Search by number, type, or template'
               className='pl-10'
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              onChange={event => setSearchTerm(event.target.value)}
             />
           </div>
           <Select
             value={statusFilter}
-            onValueChange={(value) =>
-              setStatusFilter(value as typeof statusFilter)
-            }
+            onValueChange={value => setStatusFilter(value as typeof statusFilter)}
           >
             <SelectTrigger className='w-full sm:w-44'>
               <SelectValue placeholder='Status' />
@@ -323,7 +319,7 @@ export default function CertificatesPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='all'>All types</SelectItem>
-              {certificateTypes.map((type) => (
+              {certificateTypes.map(type => (
                 <SelectItem key={type} value={type}>
                   {type}
                 </SelectItem>
@@ -345,151 +341,143 @@ export default function CertificatesPage() {
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
         {isLoading || isFetching
           ? Array.from({ length: 4 }).map((_, index) => (
-            <Card key={`skeleton-${index}`} className='border-0 shadow-sm'>
-              <CardContent className='space-y-3 pt-6'>
-                <Skeleton className='h-5 w-32' />
-                <Skeleton className='h-4 w-48' />
-                <Skeleton className='h-4 w-full' />
-                <Skeleton className='h-4 w-1/2' />
-              </CardContent>
-            </Card>
-          ))
-          : filteredCertificates.map((certificate) => {
-            const status = getStatusBadge(certificate);
-            const StatusIcon = status.icon;
-            const canDownload =
-              certificate.is_downloadable && Boolean(certificate.certificate_url);
-            return (
-              <Card
-                key={
-                  certificate.uuid ??
-                  certificate.certificate_number ??
-                  certificate.template_uuid
-                }
-                className='border-0 shadow-sm transition hover:shadow-md'
-              >
-                <CardHeader className='flex flex-row items-start justify-between gap-3 pb-3'>
-                  <div className='space-y-2'>
-                    <CardTitle className='text-lg'>
-                      {certificate.certificate_type || 'Certificate'}
-                    </CardTitle>
-                    <p className='text-muted-foreground text-sm'>
-                      Number: {certificate.certificate_number ?? 'Pending'}
-                    </p>
-                    <div className='flex flex-wrap gap-2'>
-                      <Badge variant={status.variant}>
-                        <StatusIcon className='mr-1.5 h-3.5 w-3.5' />
-                        {status.label}
-                      </Badge>
-                      {certificate.is_downloadable && (
-                        <Badge
-                          variant='outline'
-                          className='border-primary/20 bg-primary/5 text-primary'
-                        >
-                          <Download className='mr-1 h-3 w-3' />
-                          Downloadable
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  <div className='text-muted-foreground grid grid-cols-2 gap-3 text-sm'>
-                    <div>
-                      <p className='text-xs tracking-wide uppercase text-muted-foreground'>
-                        Completion date
-                      </p>
-                      <p className='text-foreground font-medium'>
-                        {formatDate(certificate.completion_date)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className='text-xs tracking-wide uppercase text-muted-foreground'>
-                        Issued date
-                      </p>
-                      <p className='text-foreground font-medium'>
-                        {formatDate(certificate.issued_date)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className='text-xs tracking-wide uppercase text-muted-foreground'>
-                        Final grade
-                      </p>
-                      <p className='text-foreground font-medium'>
-                        {certificate.final_grade ?? '—'}{' '}
-                        {certificate.grade_letter
-                          ? `(${certificate.grade_letter})`
-                          : ''}
-                      </p>
-                    </div>
-                    <div>
-                      <p className='text-xs tracking-wide uppercase text-muted-foreground'>
-                        Template
-                      </p>
-                      <p className='text-foreground font-medium'>
-                        {certificate.template_uuid?.slice(0, 8) ?? 'Not set'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {certificate.validity_status === 'pending' && (
-                    <Alert className='border-warning/20 bg-warning/5'>
-                      <Clock className='h-4 w-4 text-warning' />
-                      <AlertTitle className='text-warning'>Verification Pending</AlertTitle>
-                      <AlertDescription className='text-sm text-warning/90'>
-                        This certificate is under review. It will be verified shortly.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  <div className='flex flex-wrap gap-2'>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      disabled={!canDownload}
-                      asChild={canDownload}
-                    >
-                      {canDownload ? (
-                        <a
-                          href={certificate.certificate_url}
-                          target='_blank'
-                          rel='noreferrer'
-                        >
-                          <Download className='mr-2 h-4 w-4' />
-                          Download
-                        </a>
-                      ) : (
-                        <>
-                          <Download className='mr-2 h-4 w-4' />
-                          Unavailable
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      onClick={() => handleVerify(certificate.certificate_number)}
-                      disabled={
-                        !certificate.certificate_number ||
-                        verifying ||
-                        certificate.validity_status === 'pending'
-                      }
-                    >
-                      <Shield className='mr-2 h-4 w-4' />
-                      Verify
-                    </Button>
-                  </div>
+              <Card key={`skeleton-${index}`} className='border-0 shadow-sm'>
+                <CardContent className='space-y-3 pt-6'>
+                  <Skeleton className='h-5 w-32' />
+                  <Skeleton className='h-4 w-48' />
+                  <Skeleton className='h-4 w-full' />
+                  <Skeleton className='h-4 w-1/2' />
                 </CardContent>
               </Card>
-            );
-          })}
+            ))
+          : filteredCertificates.map(certificate => {
+              const status = getStatusBadge(certificate);
+              const StatusIcon = status.icon;
+              const canDownload =
+                certificate.is_downloadable && Boolean(certificate.certificate_url);
+              return (
+                <Card
+                  key={
+                    certificate.uuid ?? certificate.certificate_number ?? certificate.template_uuid
+                  }
+                  className='border-0 shadow-sm transition hover:shadow-md'
+                >
+                  <CardHeader className='flex flex-row items-start justify-between gap-3 pb-3'>
+                    <div className='space-y-2'>
+                      <CardTitle className='text-lg'>
+                        {certificate.certificate_type || 'Certificate'}
+                      </CardTitle>
+                      <p className='text-muted-foreground text-sm'>
+                        Number: {certificate.certificate_number ?? 'Pending'}
+                      </p>
+                      <div className='flex flex-wrap gap-2'>
+                        <Badge variant={status.variant}>
+                          <StatusIcon className='mr-1.5 h-3.5 w-3.5' />
+                          {status.label}
+                        </Badge>
+                        {certificate.is_downloadable && (
+                          <Badge
+                            variant='outline'
+                            className='border-primary/20 bg-primary/5 text-primary'
+                          >
+                            <Download className='mr-1 h-3 w-3' />
+                            Downloadable
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <div className='text-muted-foreground grid grid-cols-2 gap-3 text-sm'>
+                      <div>
+                        <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                          Completion date
+                        </p>
+                        <p className='text-foreground font-medium'>
+                          {formatDate(certificate.completion_date)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                          Issued date
+                        </p>
+                        <p className='text-foreground font-medium'>
+                          {formatDate(certificate.issued_date)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                          Final grade
+                        </p>
+                        <p className='text-foreground font-medium'>
+                          {certificate.final_grade ?? '—'}{' '}
+                          {certificate.grade_letter ? `(${certificate.grade_letter})` : ''}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+                          Template
+                        </p>
+                        <p className='text-foreground font-medium'>
+                          {certificate.template_uuid?.slice(0, 8) ?? 'Not set'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {certificate.validity_status === 'pending' && (
+                      <Alert className='border-warning/20 bg-warning/5'>
+                        <Clock className='text-warning h-4 w-4' />
+                        <AlertTitle className='text-warning'>Verification Pending</AlertTitle>
+                        <AlertDescription className='text-warning/90 text-sm'>
+                          This certificate is under review. It will be verified shortly.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    <div className='flex flex-wrap gap-2'>
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        disabled={!canDownload}
+                        asChild={canDownload}
+                      >
+                        {canDownload ? (
+                          <a href={certificate.certificate_url} target='_blank' rel='noreferrer'>
+                            <Download className='mr-2 h-4 w-4' />
+                            Download
+                          </a>
+                        ) : (
+                          <>
+                            <Download className='mr-2 h-4 w-4' />
+                            Unavailable
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        onClick={() => handleVerify(certificate.certificate_number)}
+                        disabled={
+                          !certificate.certificate_number ||
+                          verifying ||
+                          certificate.validity_status === 'pending'
+                        }
+                      >
+                        <Shield className='mr-2 h-4 w-4' />
+                        Verify
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
       </div>
 
       {/* Empty State */}
       {!isLoading && filteredCertificates.length === 0 ? (
-        <div className='rounded-lg border border-dashed border-border p-8 text-center'>
-          <Shield className='mx-auto mb-3 h-12 w-12 text-muted-foreground opacity-50' />
-          <p className='text-lg font-semibold text-foreground'>No certificates found</p>
+        <div className='border-border rounded-lg border border-dashed p-8 text-center'>
+          <Shield className='text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-50' />
+          <p className='text-foreground text-lg font-semibold'>No certificates found</p>
           <p className='text-muted-foreground text-sm'>
             Adjust your filters or upload a certificate to get started.
           </p>

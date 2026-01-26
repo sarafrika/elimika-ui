@@ -62,7 +62,7 @@ function useStudentClassDefinitions(student?: any) {
       })) || [],
   });
 
-  const classScheduleArray = scheduleQueries.map(q => q.data?.data?.content)
+  const classScheduleArray = scheduleQueries.map(q => q.data?.data?.content);
   const courseDetailsArray = courseQueries.map(q => q.data?.data ?? null);
 
   // 6️⃣ Merge class + course + enrollment data
@@ -75,7 +75,7 @@ function useStudentClassDefinitions(student?: any) {
       classDetails,
       course,
       enrollments: enrollments.filter((en: any) => en.class_definition_uuid === uuid),
-      schedules: classScheduleArray
+      schedules: classScheduleArray,
     };
   });
 

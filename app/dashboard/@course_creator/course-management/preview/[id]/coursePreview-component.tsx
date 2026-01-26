@@ -425,8 +425,4 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: a
   );
 }
 
-const reviews = [
-  {
-
-  },
-];
+const reviews = [{}];

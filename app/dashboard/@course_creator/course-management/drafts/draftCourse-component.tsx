@@ -94,7 +94,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const draftCourses = data?.data?.content || [];

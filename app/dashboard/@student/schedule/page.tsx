@@ -89,48 +89,51 @@ const Page = () => {
         return (
           <TimetableManager
             availabilityData={availabilityData}
-            onAvailabilityUpdate={_updated => { }}
+            onAvailabilityUpdate={_updated => {}}
           />
         );
     }
   };
 
   return (
-    <div className="container mx-auto pb-12 space-y-6">
+    <div className='container mx-auto space-y-6 pb-12'>
       {/* Tab Navigation */}
       <div>
-        <CardContent className="p-6 px-0">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className='p-6 px-0'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
             {tabs.map(({ id, label, icon: Icon, description }) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`group relative overflow-hidden rounded-lg border-2 p-4 text-left transition-all ${activeTab === id
-                  ? 'border-primary bg-primary/5 shadow-sm'
-                  : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                  }`}
+                className={`group relative overflow-hidden rounded-lg border-2 p-4 text-left transition-all ${
+                  activeTab === id
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                }`}
               >
-                <div className="flex items-start gap-3">
+                <div className='flex items-start gap-3'>
                   <div
-                    className={`rounded-lg p-2 transition-colors ${activeTab === id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-                      }`}
+                    className={`rounded-lg p-2 transition-colors ${
+                      activeTab === id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                    }`}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className='h-5 w-5' />
                   </div>
-                  <div className="flex-1 space-y-1">
+                  <div className='flex-1 space-y-1'>
                     <h3
-                      className={`font-semibold transition-colors ${activeTab === id ? 'text-primary' : 'text-foreground'
-                        }`}
+                      className={`font-semibold transition-colors ${
+                        activeTab === id ? 'text-primary' : 'text-foreground'
+                      }`}
                     >
                       {label}
                     </h3>
-                    <p className="text-sm text-muted-foreground">{description}</p>
+                    <p className='text-muted-foreground text-sm'>{description}</p>
                   </div>
                 </div>
                 {activeTab === id && (
-                  <div className="absolute bottom-0 left-0 h-1 w-full bg-primary" />
+                  <div className='bg-primary absolute bottom-0 left-0 h-1 w-full' />
                 )}
               </button>
             ))}
@@ -169,9 +172,8 @@ const Page = () => {
         </div>
       )}
 
-
       {/* Tab Content */}
-      <div className="animate-in fade-in-50 duration-300">{renderTabContent()}</div>
+      <div className='animate-in fade-in-50 duration-300'>{renderTabContent()}</div>
     </div>
   );
 };

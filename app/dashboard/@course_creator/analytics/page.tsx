@@ -46,10 +46,12 @@ export default function CourseCreatorAnalyticsPage() {
         </p>
       </header>
 
-      <div className="bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-500 text-yellow-800 dark:text-yellow-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 rounded-md shadow-sm">
-        <div className="flex flex-col gap-2">
-          <p className="font-medium">🚧 This page is under construction. Mock data is currently being used.</p>
-          <p className="font-medium">Requires API to fetch course reviews.</p>
+      <div className='flex flex-col gap-2 rounded-md border-l-4 border-yellow-500 bg-yellow-50 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:bg-yellow-950/20 dark:text-yellow-200'>
+        <div className='flex flex-col gap-2'>
+          <p className='font-medium'>
+            🚧 This page is under construction. Mock data is currently being used.
+          </p>
+          <p className='font-medium'>Requires API to fetch course reviews.</p>
         </div>
       </div>
 
@@ -238,31 +240,36 @@ function CourseReviewSummary({
   isOpen: boolean;
   onToggle: () => void;
 }) {
-  const reviews = course.reviews ?? [
-    // {
-    //   uuid: 'rev-1234',
-    //   rating: 5,
-    //   student_uuid: 'student-uuid-1',
-    //   comments: 'Very clear explanations and engaging sessions.',
-    //   created_date: '2025-11-18T09:00:00',
-    //   is_anonymous: false,
-    //   created_by: 'student@example.com',
-    // },
-  ];
+  const reviews =
+    course.reviews ??
+    [
+      // {
+      //   uuid: 'rev-1234',
+      //   rating: 5,
+      //   student_uuid: 'student-uuid-1',
+      //   comments: 'Very clear explanations and engaging sessions.',
+      //   created_date: '2025-11-18T09:00:00',
+      //   is_anonymous: false,
+      //   created_by: 'student@example.com',
+      // },
+    ];
 
   const { data } = useQuery({
-    ...getCourseEnrollmentsOptions({ path: { courseUuid: course?.uuid as string }, query: { pageable: {} } }),
-    enabled: !!course?.uuid
-  })
-  const enrollmentData = data?.data?.content || []
+    ...getCourseEnrollmentsOptions({
+      path: { courseUuid: course?.uuid as string },
+      query: { pageable: {} },
+    }),
+    enabled: !!course?.uuid,
+  });
+  const enrollmentData = data?.data?.content || [];
 
   const reviewCount = reviews.length;
 
   const averageRating =
     reviewCount > 0
       ? Math.round(
-        (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
-      ) / 10
+          (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
+        ) / 10
       : null;
 
   return (

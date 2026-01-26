@@ -155,31 +155,28 @@ export default function StudentsPage({
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-
   return (
-    <div className='space-y-4 sm:space-y-6 p-4 sm:p-0'>
-      <div className="flex items-center justify-between">
-        <h2 className='text-xl sm:text-2xl font-bold tracking-tight'>Your Students</h2>
+    <div className='space-y-4 p-4 sm:space-y-6 sm:p-0'>
+      <div className='flex items-center justify-between'>
+        <h2 className='text-xl font-bold tracking-tight sm:text-2xl'>Your Students</h2>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden p-2 hover:bg-muted rounded-md"
+          className='hover:bg-muted rounded-md p-2 lg:hidden'
         >
           {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      <Card className='flex flex-col lg:flex-row h-auto pb-8 sm:pb-20'>
+      <Card className='flex h-auto flex-col pb-8 sm:pb-20 lg:flex-row'>
         {/* Sidebar - Mobile drawer / Desktop sidebar */}
-        <aside className={`
-          ${sidebarOpen ? 'fixed inset-0 z-50 bg-background' : 'hidden'}
-          lg:flex lg:static lg:z-auto
-          w-full lg:w-64 flex-col border-b lg:border-b-0 lg:border-r border-border p-4
-        `}>
-          <div className="flex items-center justify-between mb-4 lg:mb-4">
-            <h2 className='text-base sm:text-lg font-semibold'>All Students</h2>
+        <aside
+          className={` ${sidebarOpen ? 'bg-background fixed inset-0 z-50' : 'hidden'} border-border w-full flex-col border-b p-4 lg:static lg:z-auto lg:flex lg:w-64 lg:border-r lg:border-b-0`}
+        >
+          <div className='mb-4 flex items-center justify-between lg:mb-4'>
+            <h2 className='text-base font-semibold sm:text-lg'>All Students</h2>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 hover:bg-muted rounded-md"
+              className='hover:bg-muted rounded-md p-2 lg:hidden'
             >
               <X size={20} />
             </button>
@@ -190,7 +187,7 @@ export default function StudentsPage({
             <Input
               type='text'
               placeholder='Search Student'
-              className='w-full rounded-lg border border-border py-2 pr-3 pl-10 text-sm'
+              className='border-border w-full rounded-lg border py-2 pr-3 pl-10 text-sm'
             />
           </div>
 
@@ -202,13 +199,14 @@ export default function StudentsPage({
                   setSelectedStudent(student.name);
                   setSidebarOpen(false);
                 }}
-                className={`flex cursor-pointer flex-col items-start rounded-sm p-2 sm:p-3 ${selectedStudent === student.name
+                className={`flex cursor-pointer flex-col items-start rounded-sm p-2 sm:p-3 ${
+                  selectedStudent === student.name
                     ? 'bg-accent/10 text-accent font-medium'
                     : 'hover:bg-muted/60'
-                  }`}
+                }`}
               >
-                <span className="text-sm sm:text-base">{student.name}</span>
-                <span className='text-xs text-muted-foreground'>Section {student.section}</span>
+                <span className='text-sm sm:text-base'>{student.name}</span>
+                <span className='text-muted-foreground text-xs'>Section {student.section}</span>
               </li>
             ))}
           </ul>
@@ -216,15 +214,17 @@ export default function StudentsPage({
 
         {/* Main Content */}
         <main className='flex-1 overflow-y-auto p-4 sm:p-6'>
-          <div className='mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
-            <h1 className='text-lg sm:text-xl font-bold'>Final Exam</h1>
-            <span className='text-muted-foreground text-xs sm:text-sm font-medium'>Speed Grade</span>
+          <div className='mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+            <h1 className='text-lg font-bold sm:text-xl'>Final Exam</h1>
+            <span className='text-muted-foreground text-xs font-medium sm:text-sm'>
+              Speed Grade
+            </span>
           </div>
 
           <div className='grid gap-4 sm:gap-6 lg:grid-cols-3'>
             {/* Assignment Card */}
-            <div className='border border-border rounded-xl p-4 sm:p-5 shadow-sm lg:col-span-2'>
-              <CardDescription className='mb-3 sm:mb-4 flex flex-col sm:flex-row sm:justify-between gap-2 text-xs sm:text-sm'>
+            <div className='border-border rounded-xl border p-4 shadow-sm sm:p-5 lg:col-span-2'>
+              <CardDescription className='mb-3 flex flex-col gap-2 text-xs sm:mb-4 sm:flex-row sm:justify-between sm:text-sm'>
                 <p>
                   Submission Date:{' '}
                   <span className='text-muted-foreground font-medium'>10/02/2024</span>
@@ -238,10 +238,10 @@ export default function StudentsPage({
               <img
                 src='https://cdn.dribbble.com/userupload/9452662/file/original-12d4e45f5c3d41b9d6b18e0d5c09c785.png?resize=752x'
                 alt='Assignment Preview'
-                className='mb-4 w-full rounded-lg sm:rounded-xl object-cover'
+                className='mb-4 w-full rounded-lg object-cover sm:rounded-xl'
               />
 
-              <p className='text-muted-foreground mb-4 text-xs sm:text-sm leading-relaxed'>
+              <p className='text-muted-foreground mb-4 text-xs leading-relaxed sm:text-sm'>
                 Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem
                 Ipsum has been the industry&apos;s standard dummy text ever since the 1500s, when an
                 unknown printer took a galley of type and scrambled it to make a type specimen book.
@@ -249,16 +249,16 @@ export default function StudentsPage({
                 typesetting, remaining essentially unchanged.
               </p>
 
-              <div className='flex aspect-video items-center justify-center rounded-lg bg-muted/30'>
-                <button className='bg-primary hover:bg-primary/80 rounded-full p-3 sm:p-4 text-white shadow-lg transition-all'>
-                  <span className="text-lg sm:text-xl">▶</span>
+              <div className='bg-muted/30 flex aspect-video items-center justify-center rounded-lg'>
+                <button className='bg-primary hover:bg-primary/80 rounded-full p-3 text-white shadow-lg transition-all sm:p-4'>
+                  <span className='text-lg sm:text-xl'>▶</span>
                 </button>
               </div>
             </div>
 
             {/* Submission Panel */}
-            <Card className='space-y-3 sm:space-y-4 rounded-xl p-4 sm:p-5 text-xs sm:text-sm shadow-sm'>
-              <h2 className='text-base sm:text-lg font-semibold'>Submission</h2>
+            <Card className='space-y-3 rounded-xl p-4 text-xs shadow-sm sm:space-y-4 sm:p-5 sm:text-sm'>
+              <h2 className='text-base font-semibold sm:text-lg'>Submission</h2>
 
               <div className='flex items-center justify-between'>
                 <span>Due Date:</span>
@@ -266,17 +266,17 @@ export default function StudentsPage({
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm font-medium">Grade</label>
+                <label className='text-xs font-medium sm:text-sm'>Grade</label>
                 <input
                   type='number'
                   value={grade}
                   onChange={e => setGrade(Number(e.target.value))}
-                  className='mt-1 w-full rounded-lg border border-border p-2 text-sm'
+                  className='border-border mt-1 w-full rounded-lg border p-2 text-sm'
                 />
               </div>
 
               <div>
-                <label className='text-xs sm:text-sm font-medium'>Status</label>
+                <label className='text-xs font-medium sm:text-sm'>Status</label>
                 <Select value={status} onValueChange={(value: Status) => setStatus(value)}>
                   <SelectTrigger className='mt-1 w-full'>
                     <SelectValue placeholder={status} />
@@ -290,7 +290,7 @@ export default function StudentsPage({
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm font-medium">Submission Details</label>
+                <label className='text-xs font-medium sm:text-sm'>Submission Details</label>
                 <div className='mt-2 space-y-2 text-xs sm:text-sm'>
                   <p>
                     Word Count: <span className='font-medium'>500</span>
@@ -300,21 +300,21 @@ export default function StudentsPage({
                     {files.map(file => (
                       <li
                         key={file.name}
-                        className='text-muted-foreground/80 hover:text-muted-foreground flex items-center gap-2 cursor-pointer text-xs sm:text-sm truncate'
+                        className='text-muted-foreground/80 hover:text-muted-foreground flex cursor-pointer items-center gap-2 truncate text-xs sm:text-sm'
                       >
                         <Upload size={16} className='text-muted-foreground flex-shrink-0' />
-                        <span className="truncate">{file.name}</span>
+                        <span className='truncate'>{file.name}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               </div>
 
-              <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-4'>
-                <button className='bg-primary/80 hover:bg-primary rounded-sm px-4 py-2 text-xs sm:text-sm font-medium text-primary-foreground transition-colors'>
+              <div className='flex flex-col gap-2 pt-4 sm:flex-row sm:items-center sm:justify-between'>
+                <button className='bg-primary/80 hover:bg-primary text-primary-foreground rounded-sm px-4 py-2 text-xs font-medium transition-colors sm:text-sm'>
                   Save Grade
                 </button>
-                <span className='text-muted-foreground text-xs text-center sm:text-left'>
+                <span className='text-muted-foreground text-center text-xs sm:text-left'>
                   Graded {new Date().toLocaleDateString()}
                 </span>
               </div>
@@ -340,7 +340,7 @@ export default function StudentsPage({
               <TableHeader>
                 <TableRow>
                   <TableHead>Student</TableHead>
-                  <TableHead className="hidden sm:table-cell">Enrolled Courses</TableHead>
+                  <TableHead className='hidden sm:table-cell'>Enrolled Courses</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -348,20 +348,22 @@ export default function StudentsPage({
                   <TableRow key={student?.uuid}>
                     <TableCell>
                       <div className='flex items-center gap-2 sm:gap-4'>
-                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                        <Avatar className='h-8 w-8 sm:h-10 sm:w-10'>
                           <AvatarImage src={student?.avatarUrl ?? ''} />
                           <AvatarFallback>{student?.display_name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className='font-medium text-sm sm:text-base'>{student?.display_name}</p>
-                          <p className='text-muted-foreground text-xs sm:text-sm'>{student?.username}</p>
+                          <p className='text-sm font-medium sm:text-base'>
+                            {student?.display_name}
+                          </p>
+                          <p className='text-muted-foreground text-xs sm:text-sm'>
+                            {student?.username}
+                          </p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <div className='space-y-2'>
-                        {/* Enrollment data would go here */}
-                      </div>
+                    <TableCell className='hidden sm:table-cell'>
+                      <div className='space-y-2'>{/* Enrollment data would go here */}</div>
                     </TableCell>
                   </TableRow>
                 ))}

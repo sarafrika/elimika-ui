@@ -1,5 +1,4 @@
-'use client'
-
+'use client';
 
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { getCourseByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -15,58 +14,59 @@ export default function CustomCoursePreview() {
 
   const { data } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
-    enabled: !!courseId
-  })
+    enabled: !!courseId,
+  });
   const [activeTab, setActiveTab] = useState('overview');
 
   const [isPlaying, setIsPlaying] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background max-w-7xl mx-auto">
+    <div className='bg-background mx-auto min-h-screen max-w-7xl'>
       {/* Status Banner */}
       {data?.data?.status === 'draft' && (
-        <div className="bg-amber-500 text-white py-2 px-4 mb-2 text-center font-medium rounded-md">
-          <AlertCircle className="inline-block w-4 h-4 mr-2" />
-          This course is currently in draft mode. Publish you course to enable other users to access this course.
+        <div className='mb-2 rounded-md bg-amber-500 px-4 py-2 text-center font-medium text-white'>
+          <AlertCircle className='mr-2 inline-block h-4 w-4' />
+          This course is currently in draft mode. Publish you course to enable other users to access
+          this course.
         </div>
       )}
 
       {/* Hero Section with Banner */}
-      <div className="relative h-96 mt-4 overflow-hidden">
+      <div className='relative mt-4 h-96 overflow-hidden'>
         <img
           src={data?.data?.banner_url}
-          alt="Course Banner"
-          className="w-full h-full object-cover opacity-40 rounded-md"
+          alt='Course Banner'
+          className='h-full w-full rounded-md object-cover opacity-40'
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className='absolute inset-0 bg-gradient-to-t from-black/60 to-transparent' />
 
-        <div className="absolute bottom-0 left-0 right-0 p-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="px-3 py-1 bg-primary text-primary-foreground text-sm font-semibold rounded-full">
+        <div className='absolute right-0 bottom-0 left-0 p-8'>
+          <div className='mx-auto max-w-6xl'>
+            <div className='mb-4 flex items-center gap-2'>
+              <span className='bg-primary text-primary-foreground rounded-full px-3 py-1 text-sm font-semibold'>
                 {difficultyMap[data?.data?.difficulty_uuid as string]}
               </span>
               {!data?.data?.is_free && (
-                <span className="px-3 py-1 bg-green-500 text-white text-sm font-semibold rounded-full">
+                <span className='rounded-full bg-green-500 px-3 py-1 text-sm font-semibold text-white'>
                   Premium
                 </span>
               )}
             </div>
-            <h1 className="text-5xl font-bold text-white mb-4">{data?.data?.name}</h1>
-            <div className="flex items-center gap-6 text-white/90">
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
+            <h1 className='mb-4 text-5xl font-bold text-white'>{data?.data?.name}</h1>
+            <div className='flex items-center gap-6 text-white/90'>
+              <div className='flex items-center gap-2'>
+                <Users className='h-5 w-5' />
                 <span>{data?.data?.class_limit} seats available</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                <span>
-                  Self-paced
-                </span>
+              <div className='flex items-center gap-2'>
+                <Clock className='h-5 w-5' />
+                <span>Self-paced</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Target className="w-5 h-5" />
-                <span>Ages {data?.data?.age_lower_limit}-{data?.data?.age_upper_limit}</span>
+              <div className='flex items-center gap-2'>
+                <Target className='h-5 w-5' />
+                <span>
+                  Ages {data?.data?.age_lower_limit}-{data?.data?.age_upper_limit}
+                </span>
               </div>
             </div>
           </div>
@@ -74,25 +74,28 @@ export default function CustomCoursePreview() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className='mx-auto max-w-7xl px-4 py-8'>
+        <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
           {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className='space-y-6 lg:col-span-2'>
             {/* Video Preview */}
-            <div className="bg-card rounded-2xl shadow-lg overflow-hidden border border-border">
-              <div className="relative bg-black aspect-video">
+            <div className='bg-card border-border overflow-hidden rounded-2xl border shadow-lg'>
+              <div className='relative aspect-video bg-black'>
                 {!isPlaying ? (
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  <div className='absolute inset-0 flex items-center justify-center'>
                     <img
                       src={data?.data?.thumbnail_url}
-                      alt="Course Thumbnail"
-                      className="w-full h-full object-cover opacity-60"
+                      alt='Course Thumbnail'
+                      className='h-full w-full object-cover opacity-60'
                     />
                     <button
                       onClick={() => setIsPlaying(true)}
-                      className="absolute z-10 w-20 h-20 bg-primary hover:bg-primary/90 rounded-full flex items-center justify-center transition-all transform hover:scale-110 shadow-2xl"
+                      className='bg-primary hover:bg-primary/90 absolute z-10 flex h-20 w-20 transform items-center justify-center rounded-full shadow-2xl transition-all hover:scale-110'
                     >
-                      <Play className="w-10 h-10 text-primary-foreground ml-1" fill="currentColor" />
+                      <Play
+                        className='text-primary-foreground ml-1 h-10 w-10'
+                        fill='currentColor'
+                      />
                     </button>
                   </div>
                 ) : (
@@ -100,24 +103,25 @@ export default function CustomCoursePreview() {
                     src={data?.data?.intro_video_url}
                     controls
                     autoPlay
-                    className="w-full h-full"
+                    className='h-full w-full'
                   />
                 )}
               </div>
             </div>
 
             {/* Tabs */}
-            <div className="bg-card rounded-2xl shadow-lg overflow-hidden border border-border">
-              <div className="border-b border-border">
-                <nav className="flex">
-                  {['overview', 'objectives', 'prerequisites', 'details'].map((tab) => (
+            <div className='bg-card border-border overflow-hidden rounded-2xl border shadow-lg'>
+              <div className='border-border border-b'>
+                <nav className='flex'>
+                  {['overview', 'objectives', 'prerequisites', 'details'].map(tab => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`flex-1 py-4 px-6 text-sm font-medium transition-colors ${activeTab === tab
-                        ? 'border-b-2 border-primary text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                      className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                        activeTab === tab
+                          ? 'border-primary text-primary border-b-2'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
                     >
                       {tab.charAt(0).toUpperCase() + tab.slice(1)}
                     </button>
@@ -125,68 +129,72 @@ export default function CustomCoursePreview() {
                 </nav>
               </div>
 
-              <div className="p-6">
+              <div className='p-6'>
                 {activeTab === 'overview' && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold text-foreground">Course Description</h2>
+                  <div className='space-y-4'>
+                    <h2 className='text-foreground text-2xl font-bold'>Course Description</h2>
                     <div
-                      className="prose prose-blue max-w-none text-foreground"
+                      className='prose prose-blue text-foreground max-w-none'
                       dangerouslySetInnerHTML={{ __html: data?.data?.description }}
                     />
                   </div>
                 )}
 
                 {activeTab === 'objectives' && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold text-foreground">Learning Objectives</h2>
+                  <div className='space-y-4'>
+                    <h2 className='text-foreground text-2xl font-bold'>Learning Objectives</h2>
                     <div
-                      className="prose prose-blue max-w-none text-foreground"
+                      className='prose prose-blue text-foreground max-w-none'
                       dangerouslySetInnerHTML={{ __html: data?.data?.objectives }}
                     />
                   </div>
                 )}
 
                 {activeTab === 'prerequisites' && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold text-foreground">Prerequisites</h2>
+                  <div className='space-y-4'>
+                    <h2 className='text-foreground text-2xl font-bold'>Prerequisites</h2>
                     <div
-                      className="prose prose-blue max-w-none text-foreground"
+                      className='prose prose-blue text-foreground max-w-none'
                       dangerouslySetInnerHTML={{ __html: data?.data?.prerequisites }}
                     />
                   </div>
                 )}
 
                 {activeTab === 'details' && (
-                  <div className="space-y-6">
-                    <h2 className="text-2xl font-bold text-foreground">Course Details</h2>
+                  <div className='space-y-6'>
+                    <h2 className='text-foreground text-2xl font-bold'>Course Details</h2>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Difficulty Level</p>
-                        <p className="text-lg font-semibold text-muted-foreground">
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div className='rounded-lg p-4'>
+                        <p className='text-muted-foreground text-sm'>Difficulty Level</p>
+                        <p className='text-muted-foreground text-lg font-semibold'>
                           {difficultyMap[data?.data?.difficulty_uuid as string]}
                         </p>
                       </div>
-                      <div className=" p-4 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Price</p>
-                        <p className="text-lg font-semibold text-muted-foreground">
+                      <div className='rounded-lg p-4'>
+                        <p className='text-muted-foreground text-sm'>Price</p>
+                        <p className='text-muted-foreground text-lg font-semibold'>
                           {data?.data?.is_free ? 'Free' : `${data?.data?.minimum_training_fee}`}
                         </p>
                       </div>
-                      <div className=" p-4 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Class Size</p>
-                        <p className="text-lg font-semibold text-muted-foreground">Max {data?.data?.class_limit} students</p>
+                      <div className='rounded-lg p-4'>
+                        <p className='text-muted-foreground text-sm'>Class Size</p>
+                        <p className='text-muted-foreground text-lg font-semibold'>
+                          Max {data?.data?.class_limit} students
+                        </p>
                       </div>
-                      <div className=" p-4 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Age Range</p>
-                        <p className="text-lg font-semibold text-muted-foreground">
+                      <div className='rounded-lg p-4'>
+                        <p className='text-muted-foreground text-sm'>Age Range</p>
+                        <p className='text-muted-foreground text-lg font-semibold'>
                           {data?.data?.age_lower_limit}-{data?.data?.age_upper_limit} years
                         </p>
                       </div>
                     </div>
 
-                    <div className="border-t border-border pt-6">
-                      <h3 className="text-lg font-semibold text-foreground mb-4">Learning Features</h3>
+                    <div className='border-border border-t pt-6'>
+                      <h3 className='text-foreground mb-4 text-lg font-semibold'>
+                        Learning Features
+                      </h3>
                       {/* <div className="space-y-3">
                         <div className="flex items-center gap-3">
                           {data?.data?.learning_rules?.completion_rules_enabled ? (
@@ -229,38 +237,38 @@ export default function CustomCoursePreview() {
           </div>
 
           {/* Right Column - Sidebar */}
-          <div className="space-y-6">
+          <div className='space-y-6'>
             {/* Enrollment Card */}
-            <div className="bg-card rounded-2xl shadow-lg p-6 sticky top-6 border border-border">
-              <div className="space-y-4">
-                <div className="text-center">
+            <div className='bg-card border-border sticky top-6 rounded-2xl border p-6 shadow-lg'>
+              <div className='space-y-4'>
+                <div className='text-center'>
                   {data?.data?.is_free ? (
-                    <p className="text-4xl font-bold text-green-600">FREE</p>
+                    <p className='text-4xl font-bold text-green-600'>FREE</p>
                   ) : (
                     <div>
-                      <p className="text-4xl font-bold text-foreground">
+                      <p className='text-foreground text-4xl font-bold'>
                         {data?.data?.minimum_training_fee}
                       </p>
-                      <p className="text-sm text-muted-foreground">one-time payment</p>
+                      <p className='text-muted-foreground text-sm'>one-time payment</p>
                     </div>
                   )}
                 </div>
 
-                <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-4 px-6 rounded-xl transition-colors shadow-md hover:shadow-lg">
+                <button className='bg-primary hover:bg-primary/90 text-primary-foreground w-full rounded-xl px-6 py-4 font-semibold shadow-md transition-colors hover:shadow-lg'>
                   Enroll Now
                 </button>
 
-                <div className="pt-4 border-t border-border space-y-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-3">
-                    <BookOpen className="w-5 h-5 text-primary" />
+                <div className='border-border text-muted-foreground space-y-3 border-t pt-4 text-sm'>
+                  <div className='flex items-center gap-3'>
+                    <BookOpen className='text-primary h-5 w-5' />
                     <span>Full lifetime access</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Users className="w-5 h-5 text-primary" />
+                  <div className='flex items-center gap-3'>
+                    <Users className='text-primary h-5 w-5' />
                     <span>{data?.data?.class_limit} spots remaining</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Award className="w-5 h-5 text-primary" />
+                  <div className='flex items-center gap-3'>
+                    <Award className='text-primary h-5 w-5' />
                     {/* {data?.data?.compliance.certificate_enabled ? (
                       <span>Certificate included</span>
                     ) : (
@@ -273,18 +281,18 @@ export default function CustomCoursePreview() {
 
             {/* Revenue Share Info (if applicable) */}
             {data?.data?.creator_share_percentage && (
-              <div className="rounded-2xl shadow-lg p-6 border border-border">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Revenue Share</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Creator Share</span>
-                    <span className="font-semibold text-primary">
+              <div className='border-border rounded-2xl border p-6 shadow-lg'>
+                <h3 className='text-foreground mb-4 text-lg font-semibold'>Revenue Share</h3>
+                <div className='space-y-3'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-muted-foreground'>Creator Share</span>
+                    <span className='text-primary font-semibold'>
                       {data?.data?.creator_share_percentage}%
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Instructor Share</span>
-                    <span className="font-semibold text-primary">
+                  <div className='flex items-center justify-between'>
+                    <span className='text-muted-foreground'>Instructor Share</span>
+                    <span className='text-primary font-semibold'>
                       {data?.data?.instructor_share_percentage}%
                     </span>
                   </div>
@@ -293,9 +301,9 @@ export default function CustomCoursePreview() {
             )}
 
             {/* Compliance Badges */}
-            <div className="bg-card rounded-2xl shadow-lg p-6 border border-border">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Compliance</h3>
-              <div className="space-y-3">
+            <div className='bg-card border-border rounded-2xl border p-6 shadow-lg'>
+              <h3 className='text-foreground mb-4 text-lg font-semibold'>Compliance</h3>
+              <div className='space-y-3'>
                 {/* {data?.data?.compliance.copyright_confirmed && (
                   <div className="flex items-center gap-2 text-sm text-green-700">
                     <CheckCircle className="w-5 h-5" />

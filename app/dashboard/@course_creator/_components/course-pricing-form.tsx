@@ -29,7 +29,7 @@ import {
   createCourseMutation,
   getAllCategoriesOptions,
   getAllCategoriesQueryKey,
-  getCourseByUuidQueryKey
+  getCourseByUuidQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -39,10 +39,7 @@ import { toast } from 'sonner';
 import z from 'zod';
 import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
 import { FormSection } from './course-creation-form';
-import {
-  type CourseCreationFormValues,
-  CURRENCIES
-} from './course-creation-types';
+import { type CourseCreationFormValues, CURRENCIES } from './course-creation-types';
 
 export type CourseFormProps = {
   showSubmitButton?: boolean;
@@ -239,7 +236,6 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
           },
         };
 
-
         updateCourseMutation(
           { body: editBody as any, uuid: editingCourseId },
           {
@@ -248,7 +244,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
               const errorObj = data?.error;
 
               if (respObj) {
-                toast.success(data?.data?.message || "Course updated successfully");
+                toast.success(data?.data?.message || 'Course updated successfully');
                 // if (typeof successResponse === "function") {
                 //   // @ts-expect-error
                 //   successResponse(data?.data)
@@ -284,8 +280,8 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
     };
 
     const onError = (error: any) => {
-      toast.error(error)
-    }
+      toast.error(error);
+    };
 
     useImperativeHandle(ref, () => ({
       submit: () => form.handleSubmit(onSubmit)(),

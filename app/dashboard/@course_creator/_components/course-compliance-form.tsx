@@ -14,7 +14,7 @@ import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import {
   getCourseByUuidQueryKey,
-  updateCourseMutation
+  updateCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -41,15 +41,17 @@ export type CourseFormRef = {
 };
 
 export const complianceSchema = z.object({
-  compliance: z.object({
-    copyright_confirmed: z.boolean().default(false),
-    accessibility_captions: z.boolean().default(false),
-    certificate_enabled: z.boolean().default(false),
-  }).default({
-    copyright_confirmed: false,
-    accessibility_captions: false,
-    certificate_enabled: false,
-  }),
+  compliance: z
+    .object({
+      copyright_confirmed: z.boolean().default(false),
+      accessibility_captions: z.boolean().default(false),
+      certificate_enabled: z.boolean().default(false),
+    })
+    .default({
+      copyright_confirmed: false,
+      accessibility_captions: false,
+      certificate_enabled: false,
+    }),
 });
 
 type ComplianceFormValues = z.infer<typeof complianceSchema>;
@@ -86,7 +88,7 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
           course_creator_uuid: authorUuid,
           status: 'draft',
           ...initialValues,
-          compliance: data?.compliance
+          compliance: data?.compliance,
         };
 
         updateCourse.mutate(
@@ -97,7 +99,7 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
               const errorObj = data?.error;
 
               if (respObj) {
-                toast.success(data?.message || "Course updated successfully");
+                toast.success(data?.message || 'Course updated successfully');
 
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
@@ -131,25 +133,24 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
     };
 
     const onError = (errors: any) => {
-      toast.error(errors)
+      toast.error(errors);
     };
 
     return (
       <Form {...form}>
-        {showSuccessUI && <div className="flex flex-col items-center justify-center rounded-3xl border border-border bg-background px-6 py-16 text-center space-y-6">
-          <CheckCircle className="h-14 w-14 text-green-500" />
+        {showSuccessUI && (
+          <div className='border-border bg-background flex flex-col items-center justify-center space-y-6 rounded-3xl border px-6 py-16 text-center'>
+            <CheckCircle className='h-14 w-14 text-green-500' />
 
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold">
-              Your course is ready 🎉
-            </h2>
-            <p className="text-muted-foreground max-w-md">
-              You’ve completed all required steps. You can now preview your course
-              and publish it when you’re ready.
-            </p>
+            <div className='space-y-2'>
+              <h2 className='text-2xl font-semibold'>Your course is ready 🎉</h2>
+              <p className='text-muted-foreground max-w-md'>
+                You’ve completed all required steps. You can now preview your course and publish it
+                when you’re ready.
+              </p>
+            </div>
           </div>
-        </div>}
-
+        )}
 
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
           <div className='border-border space-y-6 rounded-3xl border-1 px-6 py-10'>

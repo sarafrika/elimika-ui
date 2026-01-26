@@ -272,36 +272,36 @@ function BookingsPage() {
   }, [studentQueries]);
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className='space-y-6 pb-10'>
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)}>
         {/* Tabs */}
-        <TabsList className="w-full justify-start overflow-x-auto">
-          <TabsTrigger value="all" className="shrink-0">
+        <TabsList className='w-full justify-start overflow-x-auto'>
+          <TabsTrigger value='all' className='shrink-0'>
             All ({bookings?.length})
           </TabsTrigger>
-          <TabsTrigger value="upcoming" className="shrink-0">
+          <TabsTrigger value='upcoming' className='shrink-0'>
             Upcoming ({upcomingBookings.length})
           </TabsTrigger>
-          <TabsTrigger value="past" className="shrink-0">
+          <TabsTrigger value='past' className='shrink-0'>
             Past ({pastBookings.length})
           </TabsTrigger>
         </TabsList>
 
         {/* ================= ALL BOOKINGS ================= */}
-        <TabsContent value="all" className="pt-4">
-          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-3">
+        <TabsContent value='all' className='pt-4'>
+          <div className='flex flex-col gap-4 lg:grid lg:grid-cols-3'>
             {/* LEFT: Booking List */}
-            <Card className="p-3 lg:col-span-1 lg:max-w-[400px]">
-              <div className="space-y-4">
+            <Card className='p-3 lg:col-span-1 lg:max-w-[400px]'>
+              <div className='space-y-4'>
                 {/* Search + Filter */}
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <div className="relative w-full">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <div className='flex flex-col gap-2 sm:flex-row'>
+                  <div className='relative w-full'>
+                    <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                     <Input
-                      placeholder="Search by student id, course id or purpose…"
+                      placeholder='Search by student id, course id or purpose…'
                       value={query}
                       onChange={e => setQuery(e.target.value)}
-                      className="pl-9"
+                      className='pl-9'
                     />
                   </div>
 
@@ -312,45 +312,45 @@ function BookingsPage() {
                       setPage(1);
                     }}
                   >
-                    <SelectTrigger className="w-full sm:w-[140px] flex items-center gap-1">
-                      <FilterIcon className="h-4 w-4 text-muted-foreground" />
-                      <SelectValue placeholder="Filter status" />
+                    <SelectTrigger className='flex w-full items-center gap-1 sm:w-[140px]'>
+                      <FilterIcon className='text-muted-foreground h-4 w-4' />
+                      <SelectValue placeholder='Filter status' />
                     </SelectTrigger>
 
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="payment_required">Payment Required</SelectItem>
-                      <SelectItem value="payment_failed">Payment Failed</SelectItem>
-                      <SelectItem value="expired">Expired</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value='all'>All</SelectItem>
+                      <SelectItem value='pending'>Pending</SelectItem>
+                      <SelectItem value='confirmed'>Confirmed</SelectItem>
+                      <SelectItem value='payment_required'>Payment Required</SelectItem>
+                      <SelectItem value='payment_failed'>Payment Failed</SelectItem>
+                      <SelectItem value='expired'>Expired</SelectItem>
+                      <SelectItem value='cancelled'>Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="text-xs text-muted-foreground">
+                <div className='text-muted-foreground text-xs'>
                   Showing {filtered.length} of {totalElements}
                 </div>
 
                 <Separator />
 
                 {/* Booking List */}
-                <div className="space-y-1 lg:max-h-[56vh] lg:overflow-y-auto pr-1">
+                <div className='space-y-1 pr-1 lg:max-h-[56vh] lg:overflow-y-auto'>
                   {isLoading && (
-                    <div className="py-8 text-center text-sm text-muted-foreground">
+                    <div className='text-muted-foreground py-8 text-center text-sm'>
                       Loading bookings…
                     </div>
                   )}
 
                   {isError && (
-                    <div className="py-8 text-center text-sm text-destructive">
+                    <div className='text-destructive py-8 text-center text-sm'>
                       Failed to load bookings
                     </div>
                   )}
 
                   {!isLoading && filtered.length === 0 && (
-                    <div className="py-8 text-center text-sm text-muted-foreground">
+                    <div className='text-muted-foreground py-8 text-center text-sm'>
                       No bookings found
                     </div>
                   )}
@@ -364,38 +364,38 @@ function BookingsPage() {
                       <button
                         key={key}
                         onClick={() => setSelected(b)}
-                        className={`w-full rounded-md border p-4 sm:p-3 text-left transition
-                      ${isActive
+                        className={`w-full rounded-md border p-4 text-left transition sm:p-3 ${
+                          isActive
                             ? 'border-primary bg-primary/5'
-                            : 'border-transparent hover:border-border hover:bg-muted/40'
-                          }`}
+                            : 'hover:border-border hover:bg-muted/40 border-transparent'
+                        }`}
                       >
-                        <div className="text-sm font-medium text-foreground">
+                        <div className='text-foreground text-sm font-medium'>
                           {`${String(b?.uuid ?? 'Unknown').slice(0, 16)}...`}
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm font-medium">
+                        <div className='flex items-center justify-between'>
+                          <div className='text-sm font-medium'>
                             {student?.full_name ?? b.student_uuid.slice(0, 8)}
                           </div>
 
                           <Badge
-                            variant="secondary"
-                            className={`text-xs capitalize text-white ${getStatusColor(b?.status)}`}
+                            variant='secondary'
+                            className={`text-xs text-white capitalize ${getStatusColor(b?.status)}`}
                           >
                             {b?.status?.replace('_', ' ') ?? 'pending'}
                           </Badge>
                         </div>
 
-                        <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                        <div className='text-muted-foreground mt-1 line-clamp-2 text-xs'>
                           {b?.purpose ?? 'No purpose provided'}
                         </div>
 
-                        <div className="mt-1 text-xs text-muted-foreground">
+                        <div className='text-muted-foreground mt-1 text-xs'>
                           {new Date(b.start_time).toLocaleDateString()}
                         </div>
 
-                        <div className="mt-1 text-sm font-bold text-muted-foreground">
+                        <div className='text-muted-foreground mt-1 text-sm font-bold'>
                           {b?.currency} {b?.price_amount}
                         </div>
                       </button>
@@ -404,15 +404,20 @@ function BookingsPage() {
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground">
+                <div className='mt-3 flex items-center justify-between'>
+                  <div className='text-muted-foreground text-xs'>
                     Page {page} of {totalPages}
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={handlePrev} disabled={page <= 1}>
+                  <div className='flex gap-2'>
+                    <Button size='sm' variant='outline' onClick={handlePrev} disabled={page <= 1}>
                       Prev
                     </Button>
-                    <Button size="sm" variant="outline" onClick={handleNext} disabled={page >= totalPages}>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      onClick={handleNext}
+                      disabled={page >= totalPages}
+                    >
                       Next
                     </Button>
                   </div>
@@ -421,35 +426,34 @@ function BookingsPage() {
             </Card>
 
             {/* RIGHT: Booking Details */}
-            <Card className="min-h-[240px] p-4 sm:p-5 lg:col-span-2">
+            <Card className='min-h-[240px] p-4 sm:p-5 lg:col-span-2'>
               {!selected ? (
-                <div className="flex h-full flex-col items-center justify-center space-y-2 text-center">
-                  <h3 className="text-lg font-medium text-foreground">Select a booking</h3>
-                  <p className="max-w-sm text-sm text-muted-foreground">
+                <div className='flex h-full flex-col items-center justify-center space-y-2 text-center'>
+                  <h3 className='text-foreground text-lg font-medium'>Select a booking</h3>
+                  <p className='text-muted-foreground max-w-sm text-sm'>
                     Choose a booking from the list to view details and take action.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-5">
+                <div className='space-y-5'>
                   {/* Header */}
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                     <div>
-                      <h2 className="text-lg font-semibold text-foreground">
+                      <h2 className='text-foreground text-lg font-semibold'>
                         {studentQueryData?.data?.full_name ??
                           selected?.student_uuid?.slice(0, 8) ??
                           'Unknown student'}
                       </h2>
-                      <p className="text-sm text-muted-foreground">No contact info</p>
+                      <p className='text-muted-foreground text-sm'>No contact info</p>
 
-                      <div className="mt-2 text-sm text-muted-foreground">
-                        Course:{' '}
-                        {courseQuery.data?.data?.name ?? selected?.course_uuid?.slice(0, 8)}
+                      <div className='text-muted-foreground mt-2 text-sm'>
+                        Course: {courseQuery.data?.data?.name ?? selected?.course_uuid?.slice(0, 8)}
                       </div>
                     </div>
 
-                    <div className="text-sm text-muted-foreground sm:text-right">
+                    <div className='text-muted-foreground text-sm sm:text-right'>
                       <div>Booked on</div>
-                      <div className="font-medium text-foreground">
+                      <div className='text-foreground font-medium'>
                         {new Date(
                           selected?.created_date ?? selected?.created_at ?? Date.now()
                         ).toLocaleString()}
@@ -460,18 +464,14 @@ function BookingsPage() {
                   <Separator />
 
                   {/* Details */}
-                  <div className="space-y-4 rounded-lg bg-background p-4">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <h4 className="text-lg font-semibold text-foreground">
-                        Booking Details
-                      </h4>
+                  <div className='bg-background space-y-4 rounded-lg p-4'>
+                    <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                      <h4 className='text-foreground text-lg font-semibold'>Booking Details</h4>
                       <Badge
                         variant={
-                          selected?.status === 'payment_required'
-                            ? 'destructive'
-                            : 'secondary'
+                          selected?.status === 'payment_required' ? 'destructive' : 'secondary'
                         }
-                        className="capitalize"
+                        className='capitalize'
                       >
                         {selected?.status?.replace('_', ' ') ?? 'pending'}
                       </Badge>
@@ -479,44 +479,38 @@ function BookingsPage() {
 
                     <Separator />
 
-                    <div className="text-sm text-muted-foreground">
-                      <span className="font-medium text-foreground">Purpose:</span>{' '}
+                    <div className='text-muted-foreground text-sm'>
+                      <span className='text-foreground font-medium'>Purpose:</span>{' '}
                       {selected?.purpose ?? 'No additional details provided'}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-muted-foreground">
+                    <div className='text-muted-foreground grid grid-cols-1 gap-4 text-sm sm:grid-cols-2'>
                       <div>
-                        <span className="font-medium text-foreground">Start:</span>{' '}
+                        <span className='text-foreground font-medium'>Start:</span>{' '}
                         {selected?.start_time
                           ? new Date(selected.start_time).toLocaleString()
                           : '—'}
                       </div>
                       <div>
-                        <span className="font-medium text-foreground">End:</span>{' '}
-                        {selected?.end_time
-                          ? new Date(selected.end_time).toLocaleString()
-                          : '—'}
+                        <span className='text-foreground font-medium'>End:</span>{' '}
+                        {selected?.end_time ? new Date(selected.end_time).toLocaleString() : '—'}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-muted-foreground">
+                    <div className='text-muted-foreground grid grid-cols-1 gap-4 text-sm sm:grid-cols-2'>
                       <div>
-                        <span className="font-medium text-foreground">Price:</span>{' '}
+                        <span className='text-foreground font-medium'>Price:</span>{' '}
                         {selected?.currency ?? 'KES'} {selected?.price_amount ?? '—'}
                       </div>
                       <div>
-                        <span className="font-medium text-foreground">
-                          Payment Engine:
-                        </span>{' '}
+                        <span className='text-foreground font-medium'>Payment Engine:</span>{' '}
                         {selected?.payment_engine ?? '—'}
                       </div>
                     </div>
 
                     {selected?.hold_expires_at && (
-                      <div className="text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">
-                          Hold Expires:
-                        </span>{' '}
+                      <div className='text-muted-foreground text-sm'>
+                        <span className='text-foreground font-medium'>Hold Expires:</span>{' '}
                         {new Date(selected.hold_expires_at).toLocaleString()}
                       </div>
                     )}
@@ -525,9 +519,9 @@ function BookingsPage() {
                   <Separator />
 
                   {/* Actions */}
-                  <div className="flex flex-col sm:flex-row gap-2 self-end">
+                  <div className='flex flex-col gap-2 self-end sm:flex-row'>
                     <Button
-                      className="w-full sm:w-auto"
+                      className='w-full sm:w-auto'
                       onClick={() => {
                         setSelected(selected);
                         setOpenAcceptModal(true);
@@ -536,8 +530,8 @@ function BookingsPage() {
                       Accept
                     </Button>
                     <Button
-                      variant="destructive"
-                      className="w-full sm:w-auto"
+                      variant='destructive'
+                      className='w-full sm:w-auto'
                       onClick={() => {
                         setSelected(selected);
                         setOpenDeclineModal(true);
@@ -553,18 +547,16 @@ function BookingsPage() {
         </TabsContent>
 
         {/* ================= UPCOMING ================= */}
-        <TabsContent value="upcoming" className="pt-4">
-          <div className="grid grid-cols-1 gap-4">
-            <Card className="p-4">
-              <h3 className="text-lg font-medium text-foreground">
-                Upcoming bookings
-              </h3>
+        <TabsContent value='upcoming' className='pt-4'>
+          <div className='grid grid-cols-1 gap-4'>
+            <Card className='p-4'>
+              <h3 className='text-foreground text-lg font-medium'>Upcoming bookings</h3>
 
-              <div className="flex flex-col gap-4 p-2 sm:p-3">
+              <div className='flex flex-col gap-4 p-2 sm:p-3'>
                 {upcomingBookings?.length === 0 ? (
-                  <Card className="p-12 text-center">
-                    <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">No upcoming bookings</p>
+                  <Card className='p-12 text-center'>
+                    <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                    <p className='text-muted-foreground'>No upcoming bookings</p>
                   </Card>
                 ) : (
                   upcomingBookings.map(renderBookingCard)
@@ -575,18 +567,16 @@ function BookingsPage() {
         </TabsContent>
 
         {/* ================= PAST ================= */}
-        <TabsContent value="past" className="pt-4">
-          <div className="grid grid-cols-1 gap-4">
-            <Card className="p-4">
-              <h3 className="text-lg font-medium text-foreground">
-                Past bookings
-              </h3>
+        <TabsContent value='past' className='pt-4'>
+          <div className='grid grid-cols-1 gap-4'>
+            <Card className='p-4'>
+              <h3 className='text-foreground text-lg font-medium'>Past bookings</h3>
 
-              <div className="flex flex-col gap-4 p-2 sm:p-3">
+              <div className='flex flex-col gap-4 p-2 sm:p-3'>
                 {pastBookings?.length === 0 ? (
-                  <Card className="p-12 text-center">
-                    <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">No past bookings</p>
+                  <Card className='p-12 text-center'>
+                    <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                    <p className='text-muted-foreground'>No past bookings</p>
                   </Card>
                 ) : (
                   pastBookings.map(renderBookingCard)
@@ -610,28 +600,27 @@ function BookingsPage() {
       <ConfirmModal
         open={openAcceptModal}
         setOpen={setOpenAcceptModal}
-        title="Confirm Booking"
-        description="Are you sure you want to accept booking for this class or program?"
+        title='Confirm Booking'
+        description='Are you sure you want to accept booking for this class or program?'
         onConfirm={handleAcceptBooking}
         isLoading={acceptBooking.isPending}
-        confirmText="Yes, Confirm"
-        cancelText="No, Cancel"
-        variant="destructive"
+        confirmText='Yes, Confirm'
+        cancelText='No, Cancel'
+        variant='destructive'
       />
 
       <ConfirmModal
         open={openDeclineModal}
         setOpen={setOpenDeclineModal}
-        title="Decline Booking"
-        description="Are you sure you want to decline this booking request?"
+        title='Decline Booking'
+        description='Are you sure you want to decline this booking request?'
         onConfirm={handleDeclineBooking}
         isLoading={declineBooking.isPending}
-        confirmText="Yes, Decline"
-        cancelText="No, Keep Booking"
-        variant="destructive"
+        confirmText='Yes, Decline'
+        cancelText='No, Keep Booking'
+        variant='destructive'
       />
     </div>
-
   );
 }
 

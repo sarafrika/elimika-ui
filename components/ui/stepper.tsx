@@ -100,7 +100,9 @@ export function StepperRoot({ children }: { children: ReactNode }) {
 
 export function StepperList({ children }: { children: ReactNode }) {
   return (
-    <TabsList className='rounded-sm w-1/4 max-w-[250px] flex h-auto flex-col items-start gap-4'>{children}</TabsList>
+    <TabsList className='flex h-auto w-1/4 max-w-[250px] flex-col items-start gap-4 rounded-sm'>
+      {children}
+    </TabsList>
   );
 }
 

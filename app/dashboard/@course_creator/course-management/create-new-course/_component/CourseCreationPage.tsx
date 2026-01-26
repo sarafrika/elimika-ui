@@ -8,13 +8,17 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCourseCreator } from '../../../../../../context/course-creator-context';
 import { queryClient } from '../../../../../../lib/query-client';
-import { publishCourseMutation, publishCourseQueryKey, searchCoursesQueryKey } from '../../../../../../services/client/@tanstack/react-query.gen';
+import {
+  publishCourseMutation,
+  publishCourseQueryKey,
+  searchCoursesQueryKey,
+} from '../../../../../../services/client/@tanstack/react-query.gen';
 import CourseBuilderPage from './CourseBuilderPage';
 import CoursePreviewPage from './CoursePreviewPage';
 
 const CourseCreationPage = () => {
   const router = useRouter();
-  const creator = useCourseCreator()
+  const creator = useCourseCreator();
   const searchParams = useSearchParams();
   const courseId = searchParams.get('id');
 
@@ -45,12 +49,12 @@ const CourseCreationPage = () => {
             });
             router.push('/dashboard/course-management/all');
           },
-          onError: (error) => {
-            toast.error(error?.message)
-          }
+          onError: error => {
+            toast.error(error?.message);
+          },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   return (
@@ -81,7 +85,11 @@ const CourseCreationPage = () => {
             Preview
           </Button>
 
-          <Button variant={'ghost'} onClick={handlePublishCourse} className='border-muted-foreground/50 border px-12'>
+          <Button
+            variant={'ghost'}
+            onClick={handlePublishCourse}
+            className='border-muted-foreground/50 border px-12'
+          >
             <BookCheck /> Publish
           </Button>
         </div>

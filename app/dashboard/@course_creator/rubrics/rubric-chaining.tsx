@@ -1,10 +1,15 @@
-import { getRubricCriteria, getRubricMatrix, getRubricScoring, getScoringLevelsByRubric } from '@/services/client';
+import {
+  getRubricCriteria,
+  getRubricMatrix,
+  getRubricScoring,
+  getScoringLevelsByRubric,
+} from '@/services/client';
 import {
   getRubricCriteriaQueryKey,
   getRubricMatrixQueryKey,
   getRubricScoringQueryKey,
   getScoringLevelsByRubricQueryKey,
-  searchAssessmentRubricsOptions
+  searchAssessmentRubricsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 
@@ -17,7 +22,7 @@ export type RubricScoringLevel = {
   score_range: string;
   points: string;
   is_passing_level: boolean;
-  is_passing?: boolean,
+  is_passing?: boolean;
   performance_expectation?: string;
   feedback_category?: string;
   created_by: string;
@@ -60,7 +65,6 @@ export type CriteriaScoring = {
   updated_by: string | null;
   updated_date: string; // ISO 8601 date-time
 };
-
 
 export type Criterion = {
   component_name: string;
@@ -380,4 +384,3 @@ export const useRubricsWithCriteriaAndScoring = (courseCreatorUuid?: string) => 
     isFetched,
   };
 };
-

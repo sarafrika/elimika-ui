@@ -12,12 +12,12 @@ import { toast } from 'sonner';
 
 // Import your API functions
 import {
-    getClassDefinitionOptions,
-    getClassScheduleOptions,
-    getCourseByUuidOptions,
-    getEnrollmentsForClassOptions,
-    getInstructorByUuidOptions,
-    submitInstructorReviewMutation,
+  getClassDefinitionOptions,
+  getClassScheduleOptions,
+  getCourseByUuidOptions,
+  getEnrollmentsForClassOptions,
+  getInstructorByUuidOptions,
+  submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
 // Import hooks
@@ -39,376 +39,367 @@ import { WeeklyScheduleList } from './WeeklyScheduleList';
 
 // Import components
 
-
 export default function ClassDetailsPage() {
-    const params = useParams();
-    const classId = params?.id as string;
-    const student = useStudent();
-    const { difficultyMap } = useDifficultyLevels();
-    const { replaceBreadcrumbs } = useBreadcrumb();
+  const params = useParams();
+  const classId = params?.id as string;
+  const student = useStudent();
+  const { difficultyMap } = useDifficultyLevels();
+  const { replaceBreadcrumbs } = useBreadcrumb();
 
-    // State Management
-    const [showCalendar, setShowCalendar] = useState(false);
-    const [selectedSchedule, setSelectedSchedule] = useState(null);
-    const [showCourseProgram, setShowCourseProgram] = useState(true);
-    const [expandedModules, setExpandedModules] = useState<string[]>([]);
-    const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
-    const [selectedLesson, setSelectedLesson] = useState(null);
+  // State Management
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [showCourseProgram, setShowCourseProgram] = useState(true);
+  const [expandedModules, setExpandedModules] = useState<string[]>([]);
+  const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState(null);
 
-    // Feedback/Rating states
-    const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
-    const [rating, setRating] = useState(0);
-    const [clarityRating, setClarityRating] = useState(0);
-    const [engagementRating, setEngagementRating] = useState(0);
-    const [punctualityRating, setPunctualityRating] = useState(0);
-    const [feedbackComment, setFeedbackComment] = useState('');
-    const [headline, setHeadline] = useState('');
+  // Feedback/Rating states
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [clarityRating, setClarityRating] = useState(0);
+  const [engagementRating, setEngagementRating] = useState(0);
+  const [punctualityRating, setPunctualityRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [headline, setHeadline] = useState('');
 
-    // Media player states
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isReading, setIsReading] = useState(false);
+  // Media player states
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isReading, setIsReading] = useState(false);
 
-    // API Queries
-    const { data: classData, isLoading: classLoading } = useQuery({
-        ...getClassDefinitionOptions({ path: { uuid: classId } }),
-        enabled: !!classId,
-    });
+  // API Queries
+  const { data: classData, isLoading: classLoading } = useQuery({
+    ...getClassDefinitionOptions({ path: { uuid: classId } }),
+    enabled: !!classId,
+  });
 
-    const classDefinition = classData?.data?.class_definition;
+  const classDefinition = classData?.data?.class_definition;
 
-    const { data: instructor, isLoading: instructorLoading } = useQuery({
-        ...getInstructorByUuidOptions({
-            path: { uuid: classDefinition?.default_instructor_uuid as string },
-        }),
-        enabled: !!classDefinition?.default_instructor_uuid,
-    });
+  const { data: instructor, isLoading: instructorLoading } = useQuery({
+    ...getInstructorByUuidOptions({
+      path: { uuid: classDefinition?.default_instructor_uuid as string },
+    }),
+    enabled: !!classDefinition?.default_instructor_uuid,
+  });
 
-    const { data: course, isLoading: courseLoading } = useQuery({
-        ...getCourseByUuidOptions({
-            path: { uuid: classDefinition?.course_uuid as string },
-        }),
-        enabled: !!classDefinition?.course_uuid,
-    });
+  const { data: course, isLoading: courseLoading } = useQuery({
+    ...getCourseByUuidOptions({
+      path: { uuid: classDefinition?.course_uuid as string },
+    }),
+    enabled: !!classDefinition?.course_uuid,
+  });
 
-    const { data: classEnrollments } = useQuery({
-        ...getEnrollmentsForClassOptions({
-            path: { uuid: classDefinition?.uuid as string },
-        }),
-        enabled: !!classDefinition?.uuid,
-    });
+  const { data: classEnrollments } = useQuery({
+    ...getEnrollmentsForClassOptions({
+      path: { uuid: classDefinition?.uuid as string },
+    }),
+    enabled: !!classDefinition?.uuid,
+  });
 
-    const { data: classSchedules } = useQuery({
-        ...getClassScheduleOptions({
-            path: { uuid: classDefinition?.uuid as string },
-            query: { pageable: {} },
-        }),
-        enabled: !!classDefinition?.uuid,
-    });
+  const { data: classSchedules } = useQuery({
+    ...getClassScheduleOptions({
+      path: { uuid: classDefinition?.uuid as string },
+      query: { pageable: {} },
+    }),
+    enabled: !!classDefinition?.uuid,
+  });
 
-    const studentEnrollment = classEnrollments?.data?.find(
-        (enrollment: any) => enrollment?.student_uuid === student?.uuid
-    );
+  const studentEnrollment = classEnrollments?.data?.find(
+    (enrollment: any) => enrollment?.student_uuid === student?.uuid
+  );
 
-    const {
-        isLoading: isAllLessonsDataLoading,
-        lessons: lessonsWithContent,
-        contentTypeMap,
-    } = useCourseLessonsWithContent({ courseUuid: course?.data?.uuid as string });
+  const {
+    isLoading: isAllLessonsDataLoading,
+    lessons: lessonsWithContent,
+    contentTypeMap,
+  } = useCourseLessonsWithContent({ courseUuid: course?.data?.uuid as string });
 
-    // Mutations
-    const reviewInstructor = useMutation(submitInstructorReviewMutation());
+  // Mutations
+  const reviewInstructor = useMutation(submitInstructorReviewMutation());
 
-    // Computed Values
-    const nextClass = useMemo(() => {
-        const now = new Date();
-        const schedules = classSchedules?.data?.content || [];
-        const upcoming = schedules
-            .filter((s: any) => isAfter(new Date(s.start_time), now))
-            .sort(
-                (a: any, b: any) =>
-                    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-            );
-        return upcoming[0] || null;
-    }, [classSchedules]);
+  // Computed Values
+  const nextClass = useMemo(() => {
+    const now = new Date();
+    const schedules = classSchedules?.data?.content || [];
+    const upcoming = schedules
+      .filter((s: any) => isAfter(new Date(s.start_time), now))
+      .sort(
+        (a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+      );
+    return upcoming[0] || null;
+  }, [classSchedules]);
 
-    const progress = useMemo(() => {
-        const totalLessons =
-            lessonsWithContent?.reduce((total, item) => {
-                if (item.content && Array.isArray(item.content.data)) {
-                    return total + item.content.data.length;
-                }
-                return total;
-            }, 0) ?? 0;
-
-        const completedLessons = 0; // TODO: Get from actual completion data
-        const percentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
-
-        return { totalLessons, completedLessons, percentage };
-    }, [lessonsWithContent]);
-
-    // Effects
-    useEffect(() => {
-        if (classDefinition) {
-            replaceBreadcrumbs([
-                { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-                { id: 'schedule', title: 'Schedule', url: '/dashboard/schedule' },
-                {
-                    id: 'training-page',
-                    title: classDefinition.title,
-                    url: `/dashboard/schedule/classes/${classDefinition.uuid}`,
-                    isLast: true,
-                },
-            ]);
+  const progress = useMemo(() => {
+    const totalLessons =
+      lessonsWithContent?.reduce((total, item) => {
+        if (item.content && Array.isArray(item.content.data)) {
+          return total + item.content.data.length;
         }
-    }, [classDefinition, replaceBreadcrumbs]);
+        return total;
+      }, 0) ?? 0;
 
-    useEffect(() => {
-        if (lessonsWithContent?.length > 0 && !selectedLesson) {
-            const firstLesson = lessonsWithContent[0];
-            setExpandedModules([firstLesson?.lesson?.uuid]);
-            setSelectedLesson(firstLesson?.content?.data[0]);
-        }
-    }, [lessonsWithContent, selectedLesson]);
+    const completedLessons = 0; // TODO: Get from actual completion data
+    const percentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
-    // Handlers
-    const handleSubmitFeedback = () => {
-        if (!classDefinition || !studentEnrollment) {
-            toast.error('Class or student enrollment not found');
-            return;
-        }
+    return { totalLessons, completedLessons, percentage };
+  }, [lessonsWithContent]);
 
-        reviewInstructor.mutate(
-            {
-                body: {
-                    enrollment_uuid: studentEnrollment.uuid,
-                    instructor_uuid: instructor?.data?.uuid,
-                    student_uuid: student?.uuid,
-                    comments: feedbackComment,
-                    headline: headline,
-                    is_anonymous: false,
-                    rating: rating,
-                    clarity_rating: clarityRating,
-                    engagement_rating: engagementRating,
-                    punctuality_rating: punctualityRating,
-                },
-                path: { instructorUuid: instructor?.data?.uuid },
-            },
-            {
-                onSuccess: (data) => {
-                    toast.success(data?.message);
-                    setShowFeedbackDialog(false);
-                    setFeedbackComment('');
-                    setHeadline('');
-                    setRating(0);
-                    setClarityRating(0);
-                    setEngagementRating(0);
-                    setPunctualityRating(0);
-                },
-                onError: (data) => {
-                    toast.error(data?.message);
-                },
-            }
-        );
-    };
+  // Effects
+  useEffect(() => {
+    if (classDefinition) {
+      replaceBreadcrumbs([
+        { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+        { id: 'schedule', title: 'Schedule', url: '/dashboard/schedule' },
+        {
+          id: 'training-page',
+          title: classDefinition.title,
+          url: `/dashboard/schedule/classes/${classDefinition.uuid}`,
+          isLast: true,
+        },
+      ]);
+    }
+  }, [classDefinition, replaceBreadcrumbs]);
 
-    const handleLessonSelect = (lesson: any) => {
-        setSelectedLesson(lesson);
-        setIsPlaying(false);
-        setIsReading(false);
-    };
+  useEffect(() => {
+    if (lessonsWithContent?.length > 0 && !selectedLesson) {
+      const firstLesson = lessonsWithContent[0];
+      setExpandedModules([firstLesson?.lesson?.uuid]);
+      setSelectedLesson(firstLesson?.content?.data[0]);
+    }
+  }, [lessonsWithContent, selectedLesson]);
 
-    const handleStartLesson = () => {
-        if (!selectedLesson) return;
-
-        const contentType = contentTypeMap[selectedLesson.content_type_uuid];
-
-        if (contentType === 'video') {
-            setIsPlaying(true);
-        } else if (contentType === 'pdf' || contentType === 'text') {
-            setIsReading(true);
-        }
-    };
-
-    const handleMarkComplete = () => {
-        toast.message('This feature is under development');
-    };
-
-    const handleToggleModule = (uuid: string) => {
-        setExpandedModuleId((prev) => (prev === uuid ? null : uuid));
-    };
-
-
-    // Loading State
-    const loading = classLoading || instructorLoading || courseLoading || isAllLessonsDataLoading;
-
-    if (loading) {
-        return <CustomLoadingState subHeading="Fetching class information..." />;
+  // Handlers
+  const handleSubmitFeedback = () => {
+    if (!classDefinition || !studentEnrollment) {
+      toast.error('Class or student enrollment not found');
+      return;
     }
 
-    const contentTypeName = selectedLesson
-        ? contentTypeMap[selectedLesson.content_type_uuid]
-        : null;
-
-    return (
-        <div className="min-h-screen bg-background">
-            {/* Header */}
-            <ClassPageHeader
-                thumbnailUrl={course?.data?.thumbnail_url}
-                title={classDefinition?.title || ''}
-                description={classDefinition?.description || ''}
-                duration={classDefinition?.duration_formatted || ''}
-                difficulty={
-                    difficultyMap && course?.data?.difficulty_uuid
-                        ? difficultyMap[course.data.difficulty_uuid]
-                        : 'N/A'
-                }
-                instructorName={instructor?.data?.full_name || ''}
-                onRateInstructor={() => setShowFeedbackDialog(true)}
-            />
-
-            {/* Progress Bar */}
-            <div className="border-b">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4">
-                    <Progress value={progress.percentage} className="mb-2 h-2" />
-                    <p className="text-sm font-medium">
-                        {Math.round(progress.percentage)}% completed
-                    </p>
-                </div>
-            </div>
-
-            {/* Next Class Section */}
-            <NextClassCard
-                nextClass={nextClass}
-                onJoinClass={(schedule) => {
-                    // TODO: Implement join class logic
-                    toast.success(`Joining ${schedule.title}...`);
-                }}
-            />
-
-            {/* Main Content */}
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowCalendar(true)}
-                        className="gap-2 w-full sm:w-auto"
-                    >
-                        <Calendar className="h-4 w-4" />
-                        View Schedule Calendar
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowCourseProgram(!showCourseProgram)}
-                        className="gap-2 w-full sm:w-auto"
-                    >
-                        <BookOpen className="h-4 w-4" />
-                        {showCourseProgram ? 'Hide' : 'Show'} Course Program
-                    </Button>
-                </div>
-
-                {/* Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                    {/* Course Program */}
-                    {showCourseProgram && (
-                        <div className="lg:col-span-2">
-                            <CourseProgramSection
-                                isVisible={showCourseProgram}
-                                onToggleVisibility={() => setShowCourseProgram(false)}
-                                lessons={lessonsWithContent || []}
-                                expandedModuleId={expandedModuleId}
-                                onToggleModule={handleToggleModule}
-                                selectedLesson={selectedLesson}
-                                onLessonSelect={handleLessonSelect}
-                                contentTypeMap={contentTypeMap}
-                            />
-                        </div>
-                    )}
-
-                    {/* Lesson Details Sidebar */}
-                    <div className={showCourseProgram ? '' : 'lg:col-span-3'}>
-                        <LessonDetailsSidebar
-                            lesson={selectedLesson}
-                            onStartLesson={handleStartLesson}
-                            onMarkComplete={handleMarkComplete}
-                            totalLessons={progress.totalLessons}
-                            completedLessons={progress.completedLessons}
-                            overallProgress={Math.round(progress.percentage)}
-                            timeSpent="0"
-                            contentTypeMap={contentTypeMap}
-                        />
-                    </div>
-                </div>
-
-                {/* Weekly Schedule */}
-                <WeeklyScheduleList
-                    schedules={classSchedules?.data?.content || []}
-                    onScheduleClick={setSelectedSchedule}
-                />
-            </div>
-
-            {/* Dialogs and Modals */}
-            <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
-                <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-                    <DialogHeader>
-                        <DialogTitle className="text-base sm:text-lg">
-                            Class Schedule Calendar
-                        </DialogTitle>
-                    </DialogHeader>
-                    <ClassScheduleCalendar
-                        schedules={classSchedules?.data?.content || []}
-                        onScheduleClick={(schedule) => {
-                            setSelectedSchedule(schedule);
-                            setShowCalendar(false);
-                        }}
-                    />
-                </DialogContent>
-            </Dialog>
-
-            <ScheduleDetailsDialog
-                schedule={selectedSchedule}
-                isOpen={!!selectedSchedule}
-                onClose={() => setSelectedSchedule(null)}
-                onJoinClass={(schedule) => {
-                    toast.success(`Joining ${schedule.title}...`);
-                }}
-            />
-
-            <FeedbackDialog
-                open={showFeedbackDialog}
-                onOpenChange={setShowFeedbackDialog}
-                headline={headline}
-                onHeadlineChange={setHeadline}
-                feedback={feedbackComment}
-                onFeedbackChange={setFeedbackComment}
-                rating={rating}
-                onRatingChange={setRating}
-                clarityRating={clarityRating}
-                onClarityRatingChange={setClarityRating}
-                engagementRating={engagementRating}
-                onEngagementRatingChange={setEngagementRating}
-                punctualityRating={punctualityRating}
-                onPunctualityRatingChange={setPunctualityRating}
-                isSubmitting={reviewInstructor.isPending}
-                onSubmit={handleSubmitFeedback}
-            />
-
-            <VideoPlayer
-                isOpen={isPlaying && contentTypeName === 'video'}
-                onClose={() => setIsPlaying(false)}
-                videoUrl={selectedLesson?.content_text || ''}
-                title={selectedLesson?.title}
-            />
-
-            <ReadingMode
-                isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
-                onClose={() => setIsReading(false)}
-                title={selectedLesson?.title || ''}
-                description={selectedLesson?.description}
-                content={selectedLesson?.content_text || ''}
-                contentType={contentTypeName as 'text' | 'pdf'}
-            />
-        </div>
+    reviewInstructor.mutate(
+      {
+        body: {
+          enrollment_uuid: studentEnrollment.uuid,
+          instructor_uuid: instructor?.data?.uuid,
+          student_uuid: student?.uuid,
+          comments: feedbackComment,
+          headline: headline,
+          is_anonymous: false,
+          rating: rating,
+          clarity_rating: clarityRating,
+          engagement_rating: engagementRating,
+          punctuality_rating: punctualityRating,
+        },
+        path: { instructorUuid: instructor?.data?.uuid },
+      },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          setShowFeedbackDialog(false);
+          setFeedbackComment('');
+          setHeadline('');
+          setRating(0);
+          setClarityRating(0);
+          setEngagementRating(0);
+          setPunctualityRating(0);
+        },
+        onError: data => {
+          toast.error(data?.message);
+        },
+      }
     );
+  };
+
+  const handleLessonSelect = (lesson: any) => {
+    setSelectedLesson(lesson);
+    setIsPlaying(false);
+    setIsReading(false);
+  };
+
+  const handleStartLesson = () => {
+    if (!selectedLesson) return;
+
+    const contentType = contentTypeMap[selectedLesson.content_type_uuid];
+
+    if (contentType === 'video') {
+      setIsPlaying(true);
+    } else if (contentType === 'pdf' || contentType === 'text') {
+      setIsReading(true);
+    }
+  };
+
+  const handleMarkComplete = () => {
+    toast.message('This feature is under development');
+  };
+
+  const handleToggleModule = (uuid: string) => {
+    setExpandedModuleId(prev => (prev === uuid ? null : uuid));
+  };
+
+  // Loading State
+  const loading = classLoading || instructorLoading || courseLoading || isAllLessonsDataLoading;
+
+  if (loading) {
+    return <CustomLoadingState subHeading='Fetching class information...' />;
+  }
+
+  const contentTypeName = selectedLesson ? contentTypeMap[selectedLesson.content_type_uuid] : null;
+
+  return (
+    <div className='bg-background min-h-screen'>
+      {/* Header */}
+      <ClassPageHeader
+        thumbnailUrl={course?.data?.thumbnail_url}
+        title={classDefinition?.title || ''}
+        description={classDefinition?.description || ''}
+        duration={classDefinition?.duration_formatted || ''}
+        difficulty={
+          difficultyMap && course?.data?.difficulty_uuid
+            ? difficultyMap[course.data.difficulty_uuid]
+            : 'N/A'
+        }
+        instructorName={instructor?.data?.full_name || ''}
+        onRateInstructor={() => setShowFeedbackDialog(true)}
+      />
+
+      {/* Progress Bar */}
+      <div className='border-b'>
+        <div className='mx-auto max-w-7xl px-4 py-4 sm:px-6'>
+          <Progress value={progress.percentage} className='mb-2 h-2' />
+          <p className='text-sm font-medium'>{Math.round(progress.percentage)}% completed</p>
+        </div>
+      </div>
+
+      {/* Next Class Section */}
+      <NextClassCard
+        nextClass={nextClass}
+        onJoinClass={schedule => {
+          // TODO: Implement join class logic
+          toast.success(`Joining ${schedule.title}...`);
+        }}
+      />
+
+      {/* Main Content */}
+      <div className='mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8'>
+        {/* Action Buttons */}
+        <div className='mb-6 flex flex-col gap-3 sm:flex-row'>
+          <Button
+            variant='outline'
+            onClick={() => setShowCalendar(true)}
+            className='w-full gap-2 sm:w-auto'
+          >
+            <Calendar className='h-4 w-4' />
+            View Schedule Calendar
+          </Button>
+
+          <Button
+            variant='outline'
+            onClick={() => setShowCourseProgram(!showCourseProgram)}
+            className='w-full gap-2 sm:w-auto'
+          >
+            <BookOpen className='h-4 w-4' />
+            {showCourseProgram ? 'Hide' : 'Show'} Course Program
+          </Button>
+        </div>
+
+        {/* Content Grid */}
+        <div className='mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3'>
+          {/* Course Program */}
+          {showCourseProgram && (
+            <div className='lg:col-span-2'>
+              <CourseProgramSection
+                isVisible={showCourseProgram}
+                onToggleVisibility={() => setShowCourseProgram(false)}
+                lessons={lessonsWithContent || []}
+                expandedModuleId={expandedModuleId}
+                onToggleModule={handleToggleModule}
+                selectedLesson={selectedLesson}
+                onLessonSelect={handleLessonSelect}
+                contentTypeMap={contentTypeMap}
+              />
+            </div>
+          )}
+
+          {/* Lesson Details Sidebar */}
+          <div className={showCourseProgram ? '' : 'lg:col-span-3'}>
+            <LessonDetailsSidebar
+              lesson={selectedLesson}
+              onStartLesson={handleStartLesson}
+              onMarkComplete={handleMarkComplete}
+              totalLessons={progress.totalLessons}
+              completedLessons={progress.completedLessons}
+              overallProgress={Math.round(progress.percentage)}
+              timeSpent='0'
+              contentTypeMap={contentTypeMap}
+            />
+          </div>
+        </div>
+
+        {/* Weekly Schedule */}
+        <WeeklyScheduleList
+          schedules={classSchedules?.data?.content || []}
+          onScheduleClick={setSelectedSchedule}
+        />
+      </div>
+
+      {/* Dialogs and Modals */}
+      <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+        <DialogContent className='max-h-[90vh] max-w-[95vw] overflow-y-auto p-4 sm:max-w-4xl sm:p-6'>
+          <DialogHeader>
+            <DialogTitle className='text-base sm:text-lg'>Class Schedule Calendar</DialogTitle>
+          </DialogHeader>
+          <ClassScheduleCalendar
+            schedules={classSchedules?.data?.content || []}
+            onScheduleClick={schedule => {
+              setSelectedSchedule(schedule);
+              setShowCalendar(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <ScheduleDetailsDialog
+        schedule={selectedSchedule}
+        isOpen={!!selectedSchedule}
+        onClose={() => setSelectedSchedule(null)}
+        onJoinClass={schedule => {
+          toast.success(`Joining ${schedule.title}...`);
+        }}
+      />
+
+      <FeedbackDialog
+        open={showFeedbackDialog}
+        onOpenChange={setShowFeedbackDialog}
+        headline={headline}
+        onHeadlineChange={setHeadline}
+        feedback={feedbackComment}
+        onFeedbackChange={setFeedbackComment}
+        rating={rating}
+        onRatingChange={setRating}
+        clarityRating={clarityRating}
+        onClarityRatingChange={setClarityRating}
+        engagementRating={engagementRating}
+        onEngagementRatingChange={setEngagementRating}
+        punctualityRating={punctualityRating}
+        onPunctualityRatingChange={setPunctualityRating}
+        isSubmitting={reviewInstructor.isPending}
+        onSubmit={handleSubmitFeedback}
+      />
+
+      <VideoPlayer
+        isOpen={isPlaying && contentTypeName === 'video'}
+        onClose={() => setIsPlaying(false)}
+        videoUrl={selectedLesson?.content_text || ''}
+        title={selectedLesson?.title}
+      />
+
+      <ReadingMode
+        isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
+        onClose={() => setIsReading(false)}
+        title={selectedLesson?.title || ''}
+        description={selectedLesson?.description}
+        content={selectedLesson?.content_text || ''}
+        contentType={contentTypeName as 'text' | 'pdf'}
+      />
+    </div>
+  );
 }
