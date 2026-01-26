@@ -148,13 +148,8 @@ export default {
       icon: BadgeCheck,
     },
     {
-      title: 'My Classes',
-      url: '/dashboard/my-classes',
-      icon: BookOpen,
-    },
-    {
-      title: 'My Schedule',
-      url: '/dashboard/my-schedule',
+      title: 'Schedule',
+      url: '/dashboard/schedule',
       icon: Calendar,
     },
     {

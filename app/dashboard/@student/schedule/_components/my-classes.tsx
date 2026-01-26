@@ -17,7 +17,7 @@ import { isAfter, isBefore } from 'date-fns';
 import { BookOpen, Filter, GraduationCap, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { CustomLoadingState } from '../../@course_creator/_components/loading-state';
+import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
 import EnrolledClassCard from './enrolled-class-card';
 
 export default function MyClassesPage() {
@@ -32,9 +32,9 @@ export default function MyClassesPage() {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
       {
-        id: 'my-classes',
-        title: 'My Classes',
-        url: '/dashboard/my-classes',
+        id: 'schedule',
+        title: 'Schedule',
+        url: '/dashboard/schedule',
       },
     ]);
   }, [replaceBreadcrumbs]);
@@ -241,7 +241,7 @@ export default function MyClassesPage() {
               classDefinition={item.classDetails}
               enrollment={item.enrollments}
               course={item.course}
-              href={`/dashboard/my-classes/${item.uuid}`}
+              href={`/dashboard/schedule/classes/${item.uuid}`}
             />
           ))}
         </div>
