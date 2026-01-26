@@ -31,6 +31,13 @@ import {
   listTransactionsOptions,
 } from '../../../../services/client/@tanstack/react-query.gen';
 
+// Status badge color map with semantic tokens
+const STATUS_BADGE_MAP = {
+  completed: 'bg-success/10 dark:bg-success/15 text-success dark:text-success-foreground border-success/20 dark:border-success/30',
+  pending: 'bg-warning/10 dark:bg-warning/15 text-warning dark:text-warning-foreground border-warning/20 dark:border-warning/30',
+  failed: 'bg-destructive/10 dark:bg-destructive/15 text-destructive dark:text-destructive-foreground border-destructive/20 dark:border-destructive/30',
+};
+
 const RevenuePage = () => {
   const courseCreator = useCourseCreator();
   const userUuid = courseCreator?.profile?.user_uuid;
@@ -259,28 +266,28 @@ const RevenuePage = () => {
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
       {/* Header */}
-      <section className='mb-6'>
-        <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+      <section className="mb-6">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className='text-foreground text-2xl font-bold'>Revenue</h1>
-            <p className='text-muted-foreground text-sm'>
+            <h1 className="text-2xl font-bold text-foreground">Revenue</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Track and analyze your earnings, view payment history, and manage financial insights
               across courses and sessions.
             </p>
           </div>
 
-          <div className='flex gap-3'>
+          <div className="flex gap-3">
             <select
               value={timeRange}
-              onChange={e => setTimeRange(e.target.value)}
-              className='border-input bg-background text-foreground focus:ring-primary rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none'
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value='7days'>Last 7 days</option>
-              <option value='30days'>Last 30 days</option>
-              <option value='90days'>Last 90 days</option>
-              <option value='year'>This year</option>
+              <option value="7days">Last 7 days</option>
+              <option value="30days">Last 30 days</option>
+              <option value="90days">Last 90 days</option>
+              <option value="year">This year</option>
             </select>
-            <Button className='flex items-center gap-2'>
+            <Button className="flex items-center gap-2">
               <Download size={16} />
               Export
             </Button>
@@ -288,36 +295,37 @@ const RevenuePage = () => {
         </div>
       </section>
 
-      <div className='flex flex-col gap-2 rounded-md border-l-4 border-yellow-500 bg-yellow-50 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:bg-yellow-950/20 dark:text-yellow-200'>
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-          <p className='font-medium'>🚧 This page is under construction.</p>
+      {/* Construction Banner */}
+      <div className="mb-6 flex flex-col gap-2 rounded-md border-l-4 border-warning bg-warning/10 p-4 text-warning dark:bg-warning/5 dark:text-warning-foreground sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <p className="font-medium">🚧 This page is under construction.</p>
         </div>
       </div>
 
-      <section className='mx-auto max-w-7xl space-y-6'>
+      <section className="mx-auto max-w-7xl space-y-6">
         {/* Wallet Card */}
-        <div className='bg-card border-border max-w-[300px] rounded-xl border p-6 shadow-sm sm:max-w-2/5'>
-          <div className='flex items-start justify-between'>
+        <div className="max-w-[300px] rounded-xl border border-border bg-card p-6 shadow-sm sm:max-w-2/5">
+          <div className="flex items-start justify-between">
             <div>
-              <p className='text-muted-foreground text-sm font-medium'>Available Balance</p>
-              <h2 className='text-foreground mt-2 text-4xl font-bold'>
+              <p className="text-sm font-medium text-muted-foreground">Available Balance</p>
+              <h2 className="mt-2 text-4xl font-bold text-foreground">
                 KES {analyticsData.netRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </h2>
-              <p className='text-muted-foreground mt-2 text-sm'>Ready to withdraw</p>
+              <p className="mt-2 text-sm text-muted-foreground">Ready to withdraw</p>
             </div>
-            <div className='bg-primary/10 rounded-lg p-3'>
-              <Landmark className='text-primary' size={24} />
+            <div className="rounded-lg bg-primary/10 p-3">
+              <Landmark className="text-primary" size={24} />
             </div>
           </div>
-          <Button className='mt-6 w-full'>Withdraw Funds</Button>
+          <Button className="mt-6 w-full">Withdraw Funds</Button>
         </div>
 
         {/* View Stats Button */}
-        <div className='flex justify-end'>
+        <div className="flex justify-end">
           <Button
             variant={showStats ? 'default' : 'outline'}
             onClick={() => setShowStats(!showStats)}
-            className='flex items-center gap-2'
+            className="flex items-center gap-2"
           >
             {showStats ? (
               <>
@@ -335,66 +343,67 @@ const RevenuePage = () => {
 
         {/* Analytics Grid - Conditionally Shown */}
         {showStats && (
-          <div className='animate-in fade-in-50 grid grid-cols-1 gap-4 duration-300 sm:grid-cols-2 lg:grid-cols-4'>
-            <div className='bg-card border-border rounded-lg border p-5'>
-              <div className='flex items-center justify-between'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <TrendingUp className='text-primary' size={20} />
+          <div className="animate-in fade-in-50 grid grid-cols-1 gap-4 duration-300 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-border bg-card p-5">
+              <div className="flex items-center justify-between">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <TrendingUp className="text-primary" size={20} />
                 </div>
-                <span className='flex items-center text-sm font-medium text-green-600 dark:text-green-400'>
-                  <ArrowUpRight size={16} />+{analyticsData.successRate.toFixed(1)}%
+                <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
+                  <ArrowUpRight size={16} />
+                  +{analyticsData.successRate.toFixed(1)}%
                 </span>
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Total Revenue</p>
-              <p className='text-foreground mt-1 text-2xl font-bold'>
+              <p className="mt-3 text-sm text-muted-foreground">Total Revenue</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">
                 KES {analyticsData.totalRevenue.toLocaleString()}
               </p>
             </div>
 
-            <div className='bg-card border-border rounded-lg border p-5'>
-              <div className='flex items-center justify-between'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <ShoppingCart className='text-primary' size={20} />
+            <div className="rounded-lg border border-border bg-card p-5">
+              <div className="flex items-center justify-between">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <ShoppingCart className="text-primary" size={20} />
                 </div>
-                <span className='flex items-center text-sm font-medium text-green-600 dark:text-green-400'>
+                <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
                   <ArrowUpRight size={16} />
                   {analyticsData.totalTransactions}
                 </span>
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Total Transactions</p>
-              <p className='text-foreground mt-1 text-2xl font-bold'>
+              <p className="mt-3 text-sm text-muted-foreground">Total Transactions</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">
                 {analyticsData.totalTransactions}
               </p>
             </div>
 
-            <div className='bg-card border-border rounded-lg border p-5'>
-              <div className='flex items-center justify-between'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <Users className='text-primary' size={20} />
+            <div className="rounded-lg border border-border bg-card p-5">
+              <div className="flex items-center justify-between">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <Users className="text-primary" size={20} />
                 </div>
-                <span className='flex items-center text-sm font-medium text-green-600 dark:text-green-400'>
+                <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
                   <ArrowUpRight size={16} />
                   {analyticsData.completedTransactions}
                 </span>
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Completed</p>
-              <p className='text-foreground mt-1 text-2xl font-bold'>
+              <p className="mt-3 text-sm text-muted-foreground">Completed</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">
                 {analyticsData.completedTransactions}
               </p>
             </div>
 
-            <div className='bg-card border-border rounded-lg border p-5'>
-              <div className='flex items-center justify-between'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <DollarSign className='text-primary' size={20} />
+            <div className="rounded-lg border border-border bg-card p-5">
+              <div className="flex items-center justify-between">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <DollarSign className="text-primary" size={20} />
                 </div>
-                <span className='flex items-center text-sm font-medium text-green-600 dark:text-green-400'>
+                <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
                   <ArrowUpRight size={16} />
                   +5.2%
                 </span>
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Avg Transaction</p>
-              <p className='text-foreground mt-1 text-2xl font-bold'>
+              <p className="mt-3 text-sm text-muted-foreground">Avg Transaction</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">
                 KES{' '}
                 {analyticsData.averageTransactionValue.toLocaleString('en-US', {
                   maximumFractionDigits: 0,
@@ -404,47 +413,46 @@ const RevenuePage = () => {
           </div>
         )}
 
-        <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Recent Transactions */}
-          <div className='bg-card border-border rounded-xl border shadow-sm lg:col-span-2'>
-            <div className='flex flex-col gap-3 p-4'>
-              <div className='flex flex-col gap-3 sm:flex-row'>
+          <div className="rounded-xl border border-border bg-card shadow-sm lg:col-span-2">
+            <div className="flex flex-col gap-3 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 {/* Search */}
-                <div className='relative flex-1'>
+                <div className="relative flex-1">
                   <Search
-                    className='text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2'
+                    className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
                     size={16}
                   />
                   <Input
-                    placeholder='Search transactions...'
+                    placeholder="Search transactions..."
                     value={searchQuery}
-                    onChange={e => handleSearch(e.target.value)}
-                    className='pl-9'
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="pl-9"
                   />
                 </div>
 
                 {/* Page Size */}
                 <Select value={size.toString()} onValueChange={handlePageSizeChange}>
-                  <SelectTrigger className='w-full sm:w-32'>
+                  <SelectTrigger className="w-full sm:w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='5'>5 items</SelectItem>
-                    <SelectItem value='10'>10 items</SelectItem>
-                    <SelectItem value='20'>20 items</SelectItem>
-                    <SelectItem value='50'>50 items</SelectItem>
+                    <SelectItem value="5">5 items</SelectItem>
+                    <SelectItem value="10">10 items</SelectItem>
+                    <SelectItem value="20">20 items</SelectItem>
+                    <SelectItem value="50">50 items</SelectItem>
                   </SelectContent>
                 </Select>
 
                 {/* Status Filter */}
                 <Select value={statusFilter} onValueChange={handleStatusFilter}>
-                  <SelectTrigger className='w-full sm:w-48'>
-                    <SelectValue placeholder='Status' />
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {STATUS_OPTIONS.map(status => (
+                    {STATUS_OPTIONS.map((status) => (
                       <SelectItem key={status.value} value={status.value}>
-                        {/* {status.label} ({status.count}) */}
                         {status.label}
                       </SelectItem>
                     ))}
@@ -453,91 +461,87 @@ const RevenuePage = () => {
               </div>
             </div>
 
-            <div className='overflow-x-auto'>
-              <table className='w-full'>
-                <thead className='bg-muted/50 border-border border-b'>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b border-border bg-muted/50">
                   <tr>
                     <th
-                      className='text-muted-foreground hover:text-foreground cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider uppercase transition-colors'
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
                       onClick={() => handleSort('description')}
                     >
-                      <div className='flex items-center gap-2'>
+                      <div className="flex items-center gap-2">
                         Transaction
                         <ChevronDown size={14} />
                       </div>
                     </th>
-                    <th className='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       Counter Party
                     </th>
                     <th
-                      className='text-muted-foreground hover:text-foreground cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider uppercase transition-colors'
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
                       onClick={() => handleSort('created_date')}
                     >
-                      <div className='flex items-center gap-2'>
+                      <div className="flex items-center gap-2">
                         Date
                         <ChevronDown size={14} />
                       </div>
                     </th>
                     <th
-                      className='text-muted-foreground hover:text-foreground cursor-pointer px-6 py-3 text-right text-xs font-medium tracking-wider uppercase transition-colors'
+                      className="cursor-pointer px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
                       onClick={() => handleSort('amount')}
                     >
-                      <div className='flex items-center justify-end gap-2'>
+                      <div className="flex items-center justify-end gap-2">
                         Amount
                         <ChevronDown size={14} />
                       </div>
                     </th>
-                    <th className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
+                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       Status
                     </th>
                   </tr>
                 </thead>
-                <tbody className='divide-border divide-y'>
+                <tbody className="divide-y divide-border">
                   {paginatedTransactions.length > 0 ? (
                     paginatedTransactions.map((txn: WalletTransaction) => {
                       const status = getStatusFromType(txn.transaction_type);
 
                       return (
-                        <tr key={txn.uuid} className='hover:bg-muted/30 transition-colors'>
-                          <td className='px-6 py-4'>
-                            <div className='flex flex-col'>
-                              <span className='text-foreground text-sm font-medium'>
+                        <tr key={txn.uuid} className="transition-colors hover:bg-muted/30">
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-foreground">
                                 {txn.description}
                               </span>
-                              <span className='text-muted-foreground text-xs'>{txn.reference}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {txn.reference}
+                              </span>
                             </div>
                           </td>
 
-                          <td className='text-muted-foreground px-6 py-4 text-sm'>
+                          <td className="px-6 py-4 text-sm text-muted-foreground">
                             {txn.counterparty_user_uuid
                               ? txn.counterparty_user_uuid.substring(0, 8) + '...'
                               : '—'}
                           </td>
 
-                          <td className='px-6 py-4'>
-                            <div className='flex flex-col'>
-                              <span className='text-foreground text-sm'>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm text-foreground">
                                 {formatDate(txn.created_date)}
                               </span>
-                              <span className='text-muted-foreground text-xs'>
+                              <span className="text-xs text-muted-foreground">
                                 {formatTime(txn.created_date)}
                               </span>
                             </div>
                           </td>
 
-                          <td className='text-foreground px-6 py-4 text-right text-sm font-medium'>
+                          <td className="px-6 py-4 text-right text-sm font-medium text-foreground">
                             {txn.currency_code} {txn.amount.toLocaleString()}
                           </td>
 
-                          <td className='px-6 py-4 text-right'>
+                          <td className="px-6 py-4 text-right">
                             <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                status === 'completed'
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400'
-                                  : status === 'pending'
-                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400'
-                                    : 'text-destructive dark:text-destructive/50 bg-red-100 dark:bg-red-950/30'
-                              }`}
+                              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE_MAP[status]}`}
                             >
                               {status.charAt(0).toUpperCase() + status.slice(1)}
                             </span>
@@ -547,8 +551,8 @@ const RevenuePage = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan={5} className='px-6 py-8 text-center'>
-                        <p className='text-muted-foreground text-sm'>No transactions found</p>
+                      <td colSpan={5} className="px-6 py-8 text-center">
+                        <p className="text-sm text-muted-foreground">No transactions found</p>
                       </td>
                     </tr>
                   )}
@@ -557,23 +561,23 @@ const RevenuePage = () => {
             </div>
 
             {/* Pagination */}
-            <div className='border-border flex items-center justify-between border-t p-6'>
-              <div className='text-muted-foreground text-sm'>
+            <div className="flex items-center justify-between border-t border-border p-6">
+              <div className="text-sm text-muted-foreground">
                 Page {page + 1} of {Math.max(1, totalPages)} • {paginatedTransactions.length} of{' '}
                 {filteredTransactions.length} results
               </div>
-              <div className='flex gap-2'>
+              <div className="flex gap-2">
                 <Button
-                  variant='outline'
-                  size='sm'
+                  variant="outline"
+                  size="sm"
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page === 0}
                 >
                   Previous
                 </Button>
                 <Button
-                  variant='outline'
-                  size='sm'
+                  variant="outline"
+                  size="sm"
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page + 1 >= totalPages}
                 >
@@ -584,29 +588,29 @@ const RevenuePage = () => {
           </div>
 
           {/* Revenue by Course */}
-          <div className='bg-card border-border rounded-xl border shadow-sm'>
-            <div className='border-border border-b p-6'>
-              <h3 className='text-foreground text-lg font-semibold'>Revenue by Course</h3>
-              <p className='text-muted-foreground mt-1 text-sm'>Top performing courses</p>
+          <div className="rounded-xl border border-border bg-card shadow-sm">
+            <div className="border-b border-border p-6">
+              <h3 className="text-lg font-semibold text-foreground">Revenue by Course</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Top performing courses</p>
             </div>
-            <div className='space-y-5 p-6'>
+            <div className="space-y-5 p-6">
               {revenueBySource.map((item, index) => (
                 <div key={index}>
-                  <div className='mb-2 flex items-center justify-between'>
-                    <span className='text-foreground truncate pr-2 text-sm font-medium'>
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="truncate pr-2 text-sm font-medium text-foreground">
                       {item.source}
                     </span>
-                    <span className='text-foreground text-sm font-semibold'>
+                    <span className="text-sm font-semibold text-foreground">
                       KES {item.revenue.toLocaleString()}
                     </span>
                   </div>
-                  <div className='bg-muted h-2 w-full rounded-full'>
+                  <div className="h-2 w-full rounded-full bg-muted">
                     <div
-                      className='bg-primary h-2 rounded-full transition-all duration-300'
+                      className="h-2 rounded-full bg-primary transition-all duration-300"
                       style={{ width: `${item.percentage}%` }}
                     />
                   </div>
-                  <div className='text-muted-foreground mt-1 text-xs'>
+                  <div className="mt-1 text-xs text-muted-foreground">
                     {item.percentage}% of total
                   </div>
                 </div>
@@ -626,7 +630,7 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-const getStatusFromType = (type: string) => {
+const getStatusFromType = (type: string): 'completed' | 'pending' | 'failed' => {
   switch (type) {
     case 'DEPOSIT':
     case 'PAYMENT':
