@@ -99,7 +99,6 @@ export function ReadingMode({
         setIsFullscreen(false);
       }
     } catch (err) {
-      console.error('Fullscreen error:', err);
     }
   };
 
