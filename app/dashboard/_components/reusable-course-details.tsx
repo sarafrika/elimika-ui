@@ -26,7 +26,7 @@ import {
   BookOpen,
   CheckCircle,
   Clock,
-  Download,
+  EyeIcon,
   FileQuestion,
   FileText,
   ImageIcon,
@@ -35,17 +35,33 @@ import {
   Star,
   Users,
   Video,
-  Volume2,
+  Volume2
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { type JSX, useState } from 'react';
+import { cn } from '../../../lib/utils';
+import { Assignment } from '../../../services/client';
+import { AssignmentViewer } from '../@course_creator/_components/assignment-viewer';
 import { CustomLoadingState } from '../@course_creator/_components/loading-state';
+import { QuizViewer } from '../@course_creator/_components/quiz-viewer';
+import { useRubricDetails } from '../@course_creator/rubrics/rubric-chaining';
+import { AudioPlayer } from '../@student/schedule/classes/[id]/AudioPlayer';
+import { ReadingMode } from '../@student/schedule/classes/[id]/ReadingMode';
+import { VideoPlayer } from '../@student/schedule/classes/[id]/VideoPlayer';
 
 type CourseDetailsProps = {
   courseId?: string;
   handleEnroll?: () => void;
   userRole?: string;
 };
+
+interface ContentItem {
+  uuid: string;
+  title: string;
+  content_type_uuid: string;
+  content_text?: string;
+  description?: string;
+}
 
 export default function ReusableCourseDetailsPage({
   courseId: propCourseId,
@@ -58,6 +74,30 @@ export default function ReusableCourseDetailsPage({
 
   const [activeTab, setActiveTab] = useState('overview');
   const { replaceBreadcrumbs } = useBreadcrumb();
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isReading, setIsReading] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isIntroVideoPlaying, setIsIntroVideoPlaying] = useState(false);
+
+  const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
+  const [contentTypeName, setContentTypeName] = useState<string>('');
+
+  // ...existing queries and useEffect...
+
+  // ADD THIS FUNCTION
+  const handleViewContent = (content: ContentItem, contentType: string) => {
+    setSelectedLesson(content);
+    setContentTypeName(contentType);
+
+    if (contentType === 'video') {
+      setIsPlaying(true);
+    } else if (contentType === 'pdf' || contentType === 'text') {
+      setIsReading(true);
+    } else if (contentType === 'audio') {
+      setIsAudioPlaying(true);
+    }
+  };
 
   const { data, isLoading, isFetching } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
@@ -97,6 +137,13 @@ export default function ReusableCourseDetailsPage({
 
   const { data: courseRubrics, isLoading: rubric, errors } = useCourseRubrics(courseId as string);
 
+  const [openRubricId, setOpenRubricId] = useState<string | null>(null);
+
+  const toggleRubric = (id: string) => {
+    setOpenRubricId(prev => (prev === id ? null : id));
+  };
+
+
   const {
     data: cAssignments,
     isLoading: assignmentLoading,
@@ -109,6 +156,18 @@ export default function ReusableCourseDetailsPage({
   const filteredAssignments =
     assignments?.filter((assignment: any) => lessonUuids.includes(assignment.lesson_uuid)) || [];
 
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+
+  const handleViewAssignment = (assignment: Assignment) => {
+    setSelectedAssignment(assignment);
+    setIsViewerOpen(true);
+  };
+
+  // const handleCloseViewer = () => {
+  //   setIsViewerOpen(false);
+  //   setTimeout(() => setSelectedAssignment(null), 300);
+  // };
+
   const {
     data: cQuizzes,
     isLoading: quizzesLoading,
@@ -120,6 +179,20 @@ export default function ReusableCourseDetailsPage({
   const quizzes = cQuizzes?.data?.content;
   const filteredQuizzes =
     quizzes?.filter((quiz: any) => lessonUuids.includes(quiz.lesson_uuid)) || [];
+
+  const [selectedQuiz, setSelectedQuiz] = useState<any | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+
+  const handleViewQuiz = (quiz: any) => {
+    setSelectedQuiz(quiz);
+    setIsViewerOpen(true);
+  };
+
+  const handleCloseViewer = () => {
+    setIsViewerOpen(false);
+    // Optional: Reset selected quiz after modal closes
+    setTimeout(() => setSelectedQuiz(null), 300);
+  };
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -262,19 +335,37 @@ export default function ReusableCourseDetailsPage({
             <Card>
               <CardContent className='p-6'>
                 {/* Course Image/Video */}
-                <div className='bg-muted mb-4 flex h-48 w-full items-center justify-center rounded-lg'>
+                <div className="bg-muted mb-4 flex h-48 w-full items-center justify-center rounded-lg">
                   {courseData?.intro_video_url ? (
-                    <div className='relative h-full w-full'>
-                      <div className='absolute inset-0 flex items-center justify-center'>
-                        <Button size='lg' className='rounded-full'>
-                          <Play className='h-6 w-6' />
+                    <div className="relative h-full w-full">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Button
+                          size="lg"
+                          className="rounded-full"
+                          onClick={() => {
+                            setSelectedLesson({
+                              uuid: "",
+                              title: courseData?.name || "Course Introduction",
+                              content_type_uuid: "video",
+                              content_text: courseData?.intro_video_url,
+                              description: "Course introduction video",
+                            });
+                            setContentTypeName("video");
+                            setIsPlaying(true);
+                          }}
+                        >
+                          <Play className="h-6 w-6" />
                         </Button>
                       </div>
                     </div>
                   ) : (
-                    <BookOpen className='text-primary/40 h-16 w-16' />
+                    <div className="flex flex-col items-center gap-2 text-center text-muted-foreground">
+                      <BookOpen className="h-12 w-12 text-primary/40" />
+                      <p className="text-sm">Intro video display not available</p>
+                    </div>
                   )}
                 </div>
+
 
                 {/* Pricing */}
                 <div className='mb-4 text-center'>
@@ -411,11 +502,10 @@ export default function ReusableCourseDetailsPage({
                 <CardHeader className='flex flex-row items-center space-y-0'>
                   <div className='flex flex-1 items-center gap-3'>
                     <div
-                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${
-                        skill?.lesson?.active
-                          ? 'bg-green-100 text-green-600'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
+                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${skill?.lesson?.active
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-muted text-muted-foreground'
+                        }`}
                     >
                       {skill?.lesson?.active ? (
                         <CheckCircle className='h-4 w-4' />
@@ -450,18 +540,28 @@ export default function ReusableCourseDetailsPage({
 
                           <div className='flex-1'>
                             <p className='text-sm font-medium'>{resource?.title}</p>
-                            {/* {resource.duration && (
-                                                            <p className="text-xs text-muted-foreground">{resource.duration}</p>
-                                                        )} */}
+
                             <p className='text-muted-foreground text-xs'>Duration: </p>
                           </div>
-                          <Button size='sm' variant='outline'>
-                            {contentTypeName === 'video' ? (
-                              <Play className='h-4 w-4' />
+                          {/* UPDATED BUTTON */}
+                          <Button
+                            onClick={() => handleViewContent(resource, contentTypeName)}
+                            size="sm"
+                            variant="outline"
+                          >
+                            {contentTypeName === "video" ? (
+                              <Play className="h-4 w-4" />
+                            ) : contentTypeName === "audio" ? (
+                              <Volume2 className="h-4 w-4" />
+                            ) : contentTypeName === "image" ? (
+                              <ImageIcon className="h-4 w-4" />
+                            ) : contentTypeName === "pdf" || contentTypeName === "text" ? (
+                              <FileText className="h-4 w-4" />
                             ) : (
-                              <Download className='h-4 w-4' />
+                              <EyeIcon className="h-4 w-4" />
                             )}
                           </Button>
+
                         </div>
                       );
                     })}
@@ -471,32 +571,45 @@ export default function ReusableCourseDetailsPage({
             ))}
           </TabsContent>
 
-          <TabsContent value='quizzes' className='space-y-4'>
+          <TabsContent value="quizzes" className="space-y-4">
             {filteredQuizzes?.length === 0 && (
-              <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                <FileQuestion className='text-muted-foreground mb-4 h-10 w-10' />
-                <h3 className='text-lg font-semibold'>No Quiz Found</h3>
-                <p className='mt-1 text-sm'>There are no quizzes under this course.</p>
+              <div className="text-muted-foreground flex flex-col items-center justify-center py-12 text-center">
+                <FileQuestion className="text-muted-foreground mb-4 h-10 w-10" />
+                <h3 className="text-lg font-semibold">No Quiz Found</h3>
+                <p className="mt-1 text-sm">There are no quizzes under this course.</p>
               </div>
             )}
 
             {filteredQuizzes?.map((quiz: any) => (
               <Card key={quiz.uuid}>
-                <CardContent className='p-6'>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4>{quiz.title}</h4>
-                      <div className='mt-2 gap-1 text-sm'>
-                        <p>Instructions:</p>
-                        <p>{quiz.instructions}</p>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="text-lg font-semibold">{quiz.title}</h4>
+                      <div className="mt-2 space-y-1">
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Instructions:
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {quiz.instructions || 'No instructions provided'}
+                        </p>
                       </div>
-                      <div className='text-muted-foreground mt-1 flex items-center gap-4 text-sm'>
-                        {/* <span>{quiz.questions} questions</span> */}
-                        <span>{quiz.time_limit_display}</span>
-                        <span>Attempts allowed: {quiz.attempts_allowed}</span>
+                      <div className="text-muted-foreground mt-3 flex items-center gap-4 text-sm">
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium">Duration:</span> {quiz.time_limit_display}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium">Attempts:</span> {quiz.attempts_allowed}
+                        </span>
                       </div>
                     </div>
-                    <Button className='cursor-not-allowed'>View Quiz</Button>
+                    <Button
+                      onClick={() => handleViewQuiz(quiz)}
+                      variant="default"
+                      className="ml-4"
+                    >
+                      View Quiz
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -545,46 +658,204 @@ export default function ReusableCourseDetailsPage({
                         })}
                       </p>
                     </div>
-                    <Button className='cursor-not-allowed'>View Assignment</Button>
-                  </div>
+
+                    <Button
+                      onClick={() => handleViewAssignment(assignment)}
+                      variant="default"
+                      className="shrink-0"
+                    >
+                      View Details
+                    </Button>                  </div>
                 </CardContent>
               </Card>
             ))}
           </TabsContent>
 
-          <TabsContent value='assessments' className='space-y-4'>
+          <TabsContent value="assessments" className="space-y-4">
             {courseRubrics?.length === 0 && (
-              <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                <FileQuestion className='text-muted-foreground mb-4 h-10 w-10' />
-                <h3 className='text-lg font-semibold'>No Assessment Found</h3>
-                <p className='mt-1 text-sm'>There are no assessments under this course.</p>
+              <div className="text-muted-foreground flex flex-col items-center justify-center py-12 text-center">
+                <FileQuestion className="mb-4 h-10 w-10" />
+                <h3 className="text-lg font-semibold">No Assessment Rubric Found</h3>
+                <p className="mt-1 text-sm">There are no assessment rubrics linked to this course.</p>
               </div>
             )}
 
-            {courseRubrics?.map((assessment: any) => (
-              <Card key={assessment?.uuid}>
-                <CardContent className='p-6'>
-                  <div className='flex items-start justify-between'>
-                    <div className='flex items-start gap-3'>
-                      <Award className='text-primary mt-1 h-6 w-6' />
-                      <div>
-                        <h4>{assessment?.rubric?.title}</h4>
-                        <Badge variant='outline' className='mb-2'>
-                          {assessment?.rubric?.rubric_type}
-                        </Badge>
-                        <p className='text-muted-foreground text-sm'>
-                          {assessment?.rubric.description}
-                        </p>
+            {courseRubrics?.map((assessment: any) => {
+              const isOpen = openRubricId === assessment.uuid;
+
+              return (
+                <Card key={assessment.uuid} className="overflow-hidden">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <Award className="text-primary mt-1 h-6 w-6" />
+                        <div>
+                          <h4 className="font-semibold">{assessment?.rubric?.title}</h4>
+                          <Badge variant="outline" className="mb-2">
+                            {assessment?.rubric?.rubric_type}
+                          </Badge>
+                          <p className="text-muted-foreground text-sm">
+                            {assessment?.rubric?.description}
+                          </p>
+                        </div>
                       </div>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => toggleRubric(assessment.uuid)}
+                      >
+                        {isOpen ? 'Hide Details' : 'View Details'}
+                      </Button>
                     </div>
-                    <Button>View Details</Button>
+                  </CardContent>
+
+                  {/* Slide-down content */}
+                  <div
+                    className={cn(
+                      'transition-all duration-300 ease-in-out',
+                      isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+                    )}
+                  >
+                    {isOpen && (
+                      <RubricDetailsTable rubric={assessment.rubric} />
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </TabsContent>
+
         </Tabs>
+
+
+        <VideoPlayer
+          isOpen={isPlaying && contentTypeName === 'video'}
+          onClose={() => setIsPlaying(false)}
+          videoUrl={selectedLesson?.content_text || ''}
+          title={selectedLesson?.title}
+        />
+
+        <ReadingMode
+          isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
+          onClose={() => setIsReading(false)}
+          title={selectedLesson?.title || ''}
+          description={selectedLesson?.description}
+          content={selectedLesson?.content_text || ''}
+          contentType={contentTypeName as 'text' | 'pdf'}
+        />
+
+        <AudioPlayer
+          isOpen={isAudioPlaying && contentTypeName === 'audio'}
+          onClose={() => setIsAudioPlaying(false)}
+          audioUrl={selectedLesson?.content_text || ''}
+          title={selectedLesson?.title}
+          description={selectedLesson?.description}
+        />
+
+        {selectedQuiz && (
+          <QuizViewer
+            quiz={selectedQuiz}
+            open={isViewerOpen}
+            onOpenChange={handleCloseViewer}
+          />
+        )}
+
+        {selectedAssignment && (
+          <AssignmentViewer
+            assignment={selectedAssignment}
+            open={isViewerOpen}
+            onOpenChange={handleCloseViewer}
+          // TODO: Add when API is ready
+          // getAssignmentQuestionsOptions={getAssignmentQuestionsOptions}
+          />
+        )}
       </div>
     </div>
   );
 }
+
+function RubricDetailsTable({ rubric }: { rubric: any }) {
+  const { criteria, matrix, isLoading } = useRubricDetails(rubric?.uuid);
+  const levels = criteria[0]?.scoring ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="border-t bg-muted/30 px-6 py-10 text-sm text-muted-foreground">
+        Loading rubric details…
+      </div>
+    );
+  }
+
+  if (!criteria || criteria.length === 0) {
+    return (
+      <div className="border-t bg-muted/30 px-6 py-10 text-sm text-muted-foreground">
+        No rubric criteria available.
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t bg-muted/30 px-6 pb-6 pt-4">
+      {/* Header info */}
+      <div className="mb-6 grid gap-2 sm:grid-cols-2">
+        <div>
+          <p className="text-sm text-muted-foreground">Min Passing Score</p>
+          <p className="font-medium">{rubric.min_passing_score} of {rubric.total_weight}</p>
+
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">Category</p>
+          <p className="font-medium">{rubric.rubric_category || '—'}</p>
+        </div>
+
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto rounded-md border border-border">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-muted">
+              <th className="border border-border px-4 py-2 text-left">
+                Criteria
+              </th>
+
+              {levels.map((level: any) => (
+                <th
+                  key={level.level_uuid}
+                  className="border border-border px-4 py-2 text-center"
+                >
+                  <div className="font-medium">
+                    {level.description}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {level.score_range} pts
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {criteria.map((criterion: any) => (
+              <tr key={criterion.uuid}>
+                <td className="border border-border px-4 py-3 font-medium align-top">
+                  {criterion.component_name}
+                </td>
+
+                {criterion.scoring.map((score: any) => (
+                  <td
+                    key={score.level_uuid}
+                    className="border border-border px-3 py-3 align-top text-muted-foreground"
+                  >
+                    {score.description || '—'}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
