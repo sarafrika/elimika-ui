@@ -55,6 +55,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { AudioPlayer } from '../../../../@student/schedule/classes/[id]/AudioPlayer';
+import { ReadingMode } from '../../../../@student/schedule/classes/[id]/ReadingMode';
+import { VideoPlayer } from '../../../../@student/schedule/classes/[id]/VideoPlayer';
 import { MonthlyAvailabilityGrid } from '../../../availability/components/monthly-availability-grid';
 import {
   AvailabilityData,
@@ -64,11 +67,27 @@ import {
 
 const _localizer = momentLocalizer(moment);
 
+interface ContentItem {
+  uuid: string;
+  title: string;
+  content_type_uuid: string;
+  content_text?: string;
+  description?: string;
+}
+
 export default function ClassPreviewPage() {
   const router = useRouter();
   const params = useParams();
   const classId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
+
+  // State for video player and reading mode
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isReading, setIsReading] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+
+  const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
+  const [contentTypeName, setContentTypeName] = useState<string>('');
 
   useEffect(() => {
     if (!classId) return;
@@ -93,7 +112,7 @@ export default function ClassPreviewPage() {
     ...getClassDefinitionOptions({ path: { uuid: classId as string } }),
     enabled: !!classId,
   });
-  const classData = data?.data;
+  const classData = data?.data?.class_definition;
 
   const {
     data: courseDetail,
@@ -126,7 +145,7 @@ export default function ClassPreviewPage() {
   } = useCourseLessonsWithContent({ courseUuid: classData?.course_uuid as string });
 
   const registrationLink = course?.uuid
-    ? `https://elimika.sarafrika.com/dashboard/browse-courses/enroll/${course.uuid}`
+    ? `https://elimika.sarafrika.com/dashboard/browse-courses/available-classes/${course?.uuid}/enroll?id=${classId}`
     : '';
   const [copied, setCopied] = useState(false);
 
@@ -146,7 +165,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const shareToSocial = (platform: string) => {
@@ -219,38 +238,53 @@ export default function ClassPreviewPage() {
 
   const { roster } = useClassRoster(classId);
 
+  // Handle viewing content
+  const handleViewContent = (content: ContentItem, contentType: string) => {
+    setSelectedLesson(content);
+    setContentTypeName(contentType);
+
+    if (contentType === 'video') {
+      setIsPlaying(true);
+    } else if (contentType === 'pdf' || contentType === 'text') {
+      setIsReading(true);
+    } else if (contentType === 'audio') {
+      setIsAudioPlaying(true);
+    }
+  };
+
+
   if (isLoading || isAllLessonsDataLoading || classIsLoading) {
     return (
-      <div className='flex flex-col gap-6 space-y-2'>
-        <Skeleton className='h-[150px] w-full' />
+      <div className="flex flex-col gap-6 space-y-2">
+        <Skeleton className="h-[150px] w-full" />
 
-        <div className='flex flex-row items-center justify-between gap-4'>
-          <Skeleton className='h-[250px] w-2/3' />
-          <Skeleton className='h-[250px] w-1/3' />
+        <div className="flex flex-row items-center justify-between gap-4">
+          <Skeleton className="h-[250px] w-2/3" />
+          <Skeleton className="h-[250px] w-1/3" />
         </div>
 
-        <Skeleton className='h-[100px] w-full' />
+        <Skeleton className="h-[100px] w-full" />
       </div>
     );
   }
 
   return (
-    <div className='mb-20 space-y-6'>
+    <div className="mb-20 space-y-6">
       {/* Header */}
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-4'>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
           <div>
             {classData?.is_active ? (
               <>
-                <h1 className='text-success text-2xl font-semibold'>Active Class</h1>
-                <p className='text-muted-foreground'>
+                <h1 className="text-2xl font-semibold text-success">Active Class</h1>
+                <p className="text-muted-foreground">
                   Your class is live and accepting new students.
                 </p>
               </>
             ) : (
               <>
-                <h1 className='text-foreground text-2xl font-semibold'>Inactive Class</h1>
-                <p className='text-muted-foreground'>
+                <h1 className="text-2xl font-semibold text-foreground">Inactive Class</h1>
+                <p className="text-muted-foreground">
                   This class is currently not active. Activate it to allow student enrollment.
                 </p>
               </>
@@ -260,10 +294,10 @@ export default function ClassPreviewPage() {
 
         <Button
           onClick={() => router.push(`/dashboard/trainings/create-new?id=${classData?.uuid}`)}
-          variant='outline'
-          className='gap-2'
+          variant="outline"
+          className="gap-2"
         >
-          <Edit className='h-4 w-4' />
+          <Edit className="h-4 w-4" />
           Edit Class
         </Button>
       </div>
@@ -271,43 +305,43 @@ export default function ClassPreviewPage() {
       {/* Status Banner */}
       <div>
         {classData?.is_active ? (
-          <Card className='border-success/30 bg-success/10'>
-            <CardContent className='p-4'>
-              <div className='flex items-center gap-3'>
-                <CheckCircle className='text-success h-6 w-6' />
+          <Card className="border-success/30 bg-success/10">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-6 w-6 text-success" />
                 <div>
-                  <h3 className='text-success font-semibold'>Class Published Successfully!</h3>
-                  <p className='text-success text-sm'>
-                    Your class is now live and students can enroll. Share the registration link to
-                    start getting enrollments.
+                  <h3 className="font-semibold text-success">Class Published Successfully!</h3>
+                  <p className="text-sm text-success">
+                    Your class is now live and students can enroll. Share the registration link
+                    to start getting enrollments.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         ) : (
-          <Card className='border-warning/40 bg-warning/10'>
-            <CardContent className='p-4'>
-              <div className='flex items-center gap-3'>
+          <Card className="border-warning/40 bg-warning/10">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
                 <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  className='text-warning h-6 w-6'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 text-warning"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
                   <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     strokeWidth={2}
-                    d='M12 9v2m0 4h.01M21 12A9 9 0 1112 3a9 9 0 019 9z'
+                    d="M12 9v2m0 4h.01M21 12A9 9 0 1112 3a9 9 0 019 9z"
                   />
                 </svg>
                 <div>
-                  <h3 className='text-warning font-semibold'>Class is Currently Inactive</h3>
-                  <p className='text-warning text-sm'>
-                    Students cannot enroll in this class until it’s activated. You can activate it
-                    from your dashboard.
+                  <h3 className="font-semibold text-warning">Class is Currently Inactive</h3>
+                  <p className="text-sm text-warning">
+                    Students cannot enroll in this class until it's activated. You can activate
+                    it from your dashboard.
                   </p>
                 </div>
               </div>
@@ -317,144 +351,155 @@ export default function ClassPreviewPage() {
       </div>
 
       {/* Class Preview Card */}
-      <Card className='border-2'>
+      <Card className="border-2">
         <CardHeader>
-          <div className='flex items-start justify-between'>
-            <div className='flex-1'>
-              <CardTitle className='text-xl'>{classData?.title}</CardTitle>
-              {classData?.description && (
-                <div className='text-muted-foreground mt-1'>
-                  <RichTextRenderer maxChars={100} htmlString={classData?.description as string} />
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <CardTitle className="text-2xl mb-2">
+                  {classData?.title}
+                </CardTitle>
+                <div className="flex flex-wrap gap-2">
+                  {course?.category_names?.map((category: string, idx: number) => (
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      {category}
+                    </Badge>
+                  ))}
                 </div>
-              )}
-              <Badge className='border-success/30 bg-success/10 text-success mt-2'>
-                Published/Draft
-              </Badge>
+              </div>
+              {/* {classData.coverImage && (
+          <Image
+            src={""}
+            alt="Class cover"
+            className="w-32 h-20 object-cover rounded-lg"
+            width={32}
+            height={20}
+          />
+        )} */}
             </div>
-            {/* {classData.coverImage && (
-                            <Image
-                                src={""}
-                                alt="Class cover"
-                                className="w-32 h-20 object-cover rounded-lg"
-                                width={32}
-                                height={20}
-                            />
-                        )} */}
+
+            {classData?.description && (
+              <div className="text-muted-foreground">
+                <RichTextRenderer
+                  maxChars={100}
+                  htmlString={classData?.description as string}
+                />
+              </div>
+            )}
           </div>
         </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-2 lg:grid-cols-4'>
-            <div className='flex items-center gap-2'>
-              <CalendarDays className='text-muted-foreground h-4 w-4' />
-              <div>
-                {/* <div className='font-medium'>{classData?.default_start_time as string}</div> */}
-                <div className='text-muted-foreground'>Start Date</div>
+
+        <CardContent className="space-y-6">
+          {/* Primary Info Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span className="text-xs">Instructor</span>
               </div>
+              <div className="font-medium">{instructor?.full_name}</div>
             </div>
-            <div className='flex items-center gap-2'>
-              <Users className='text-muted-foreground h-4 w-4' />
-              <div>
-                <div className='font-medium'>{instructor?.full_name}</div>
-                <div className='text-muted-foreground'>Instructor</div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span className="text-xs">Duration</span>
               </div>
+              <div className="font-medium">{classData?.duration_formatted}</div>
             </div>
-            <div className='flex items-center gap-2'>
-              <Clock className='text-muted-foreground h-4 w-4' />
-              <div>
-                <div className='font-medium'>{classData?.duration_formatted}</div>
-                <div className='text-muted-foreground'>Total Hours</div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <BookOpen className="h-4 w-4" />
+                <span className="text-xs">Lessons</span>
               </div>
+              <div className="font-medium">{lessonsWithContent?.length}</div>
             </div>
-            <div className='flex items-center gap-2'>
-              <BookOpen className='text-muted-foreground h-4 w-4' />
-              <div>
-                <div className='font-medium'>{lessonsWithContent?.length}</div>
-                <div className='text-muted-foreground'>Lessons</div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <FileText className="h-4 w-4" />
+                <span className="text-xs">Assignments/Quizzes</span>
               </div>
-            </div>
-            <div className='flex items-center gap-2'>
-              <FileText className='text-muted-foreground h-4 w-4' />
-              <div>
-                <div className='font-medium'>{totalAssignments}</div>
-                <div className='text-muted-foreground'>Assignments/Quizes</div>
-              </div>
+              <div className="font-medium">{totalAssignments}</div>
             </div>
           </div>
 
-          <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
+          {/* Secondary Info */}
+          <div className="flex flex-wrap items-center gap-6 pt-4 border-t">
+            <div className="flex items-center gap-2 text-sm">
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Start Date</span>
+              {/* <span className="font-medium">{classData?.default_start_time as string}</span> */}
+            </div>
+
             {classData?.location_type && (
-              <div className='flex items-center gap-2'>
-                <MapPin className='text-muted-foreground h-4 w-4' />
-                <span>{classData?.location_type}</span>
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{classData?.location_type}</span>
               </div>
             )}
-            <div className='flex items-center gap-2'>
-              <DollarSign className='text-muted-foreground h-4 w-4' />
-              <span className='font-medium'>{`${totalFee.toFixed(2)}`}</span>
+
+            <div className="flex items-center gap-2 text-sm">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">${totalFee.toFixed(2)}</span>
             </div>
-            <div className='flex items-center gap-2'>
-              <Users className='text-muted-foreground h-4 w-4' />
-              <span>
+
+            <div className="flex items-center gap-2 text-sm">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">
                 {roster?.length} / {classData?.max_participants} students
               </span>
             </div>
           </div>
 
-          <div className='flex flex-wrap gap-2'>
-            {course?.category_names?.map((category: string, idx: number) => (
-              <Badge key={idx} variant='outline' className='text-xs'>
-                {category}
-              </Badge>
-            ))}
-
-            {/* {classData.targetAudience.map((audience, index) => (
-                            <Badge key={index} variant="outline">{audience}</Badge>
-                        ))} */}
-          </div>
+          {/* {classData.targetAudience.map((audience, index) => (
+      <Badge key={index} variant="outline">{audience}</Badge>
+    ))} */}
         </CardContent>
       </Card>
 
       {/* Class Management Tabs */}
-      <Tabs defaultValue='details' className='space-y-4'>
-        <TabsList className='grid w-full grid-cols-4'>
-          <TabsTrigger value='details'>Class Details</TabsTrigger>
-          <TabsTrigger value='schedule'>Schedule</TabsTrigger>
-          <TabsTrigger value='skills'>Skills</TabsTrigger>
-          <TabsTrigger value='students'>Students</TabsTrigger>
+      <Tabs defaultValue="details" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="details">Class Details</TabsTrigger>
+          <TabsTrigger value="schedule">Schedule</TabsTrigger>
+          <TabsTrigger value="skills">Skills</TabsTrigger>
+          <TabsTrigger value="students">Students</TabsTrigger>
         </TabsList>
 
-        <TabsContent value='details' className='space-y-4'>
+        <TabsContent value="details" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Class Information</CardTitle>
             </CardHeader>
-            <CardContent className='space-y-4'>
-              <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                <div className='space-y-3'>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="space-y-3">
                   <div>
-                    <span className='text-muted-foreground text-sm'>Course:</span>
-                    <div className='font-medium'>{course?.name}</div>
+                    <span className="text-sm text-muted-foreground">Course:</span>
+                    <div className="font-medium">{course?.name}</div>
                   </div>
 
                   <div>
-                    <span className='text-muted-foreground text-sm'>Target Audience:</span>
+                    <span className="text-sm text-muted-foreground">Target Audience:</span>
                     {/* <div className="font-medium">{classData.targetAudience.join(', ')}</div> */}
                   </div>
                 </div>
-                <div className='space-y-3'>
+                <div className="space-y-3">
                   <div>
-                    <span className='text-muted-foreground text-sm'>Academic Period:</span>
-                    <div className='font-medium'>
+                    <span className="text-sm text-muted-foreground">Academic Period:</span>
+                    <div className="font-medium">
                       {/* {classData?.default_start_time as string} -{' '}
-                      {classData?.default_end_time as string} */}
+                                            {classData?.default_end_time as string} */}
                     </div>
                   </div>
                   <div>
-                    <span className='text-muted-foreground text-sm'>Class Type:</span>
-                    <div className='font-medium capitalize'>{classData?.location_type}</div>
+                    <span className="text-sm text-muted-foreground">Class Type:</span>
+                    <div className="font-medium capitalize">{classData?.location_type}</div>
                   </div>
                   <div>
-                    <span className='text-muted-foreground text-sm'>Visibility:</span>
+                    <span className="text-sm text-muted-foreground">Visibility:</span>
                     {/* <div className="flex items-center gap-2 font-medium">
                                             {classData.visibility.publicity === 'public' ? (
                                                 <Globe className="w-4 h-4 text-success" />
@@ -467,71 +512,77 @@ export default function ClassPreviewPage() {
                 </div>
               </div>
               <div>
-                <span className='text-muted-foreground text-sm'>Description:</span>
-                <div className='mt-1'>
-                  <RichTextRenderer maxChars={100} htmlString={classData?.description as string} />
+                <span className="text-sm text-muted-foreground">Description:</span>
+                <div className="mt-1">
+                  <RichTextRenderer
+                    maxChars={100}
+                    htmlString={classData?.description as string}
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value='schedule' className='space-y-4'>
+        <TabsContent value="schedule" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Weekly Schedule</CardTitle>
             </CardHeader>
-            <CardContent className='space-y-6'>
+            <CardContent className="space-y-6">
               {/* Display Formatted Dates */}
-              <div className='text-muted-foreground text-sm'>
-                <span className='font-medium'>Academic Period: </span>
+              <div className="text-sm text-muted-foreground">
+                <span className="font-medium">Academic Period: </span>
                 {/* {formattedStart} – {formattedEnd} */}
               </div>
 
               {/* Date Inputs */}
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                <div className='flex flex-col'>
-                  <Label className='mb-1 text-sm font-medium'>Start Date</Label>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="flex flex-col">
+                  <Label className="mb-1 text-sm font-medium">Start Date</Label>
                   <Input
-                    type='date'
+                    type="date"
                     value={startDate}
-                    onChange={e => setStartDate(e.target.value)}
-                    className='mt-1'
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="mt-1"
                   />
                 </div>
 
-                <div className='flex flex-col'>
-                  <Label className='mb-1 text-sm font-medium'>End Date</Label>
+                <div className="flex flex-col">
+                  <Label className="mb-1 text-sm font-medium">End Date</Label>
                   <Input
-                    type='date'
+                    type="date"
                     value={endDate}
-                    onChange={e => setEndDate(e.target.value)}
-                    className='mt-1'
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="mt-1"
                   />
                 </div>
               </div>
 
               {/* Timetable Section */}
               {timetableIsLoading ? (
-                <div className='space-y-4 p-4'>
+                <div className="space-y-4 p-4">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className='bg-muted h-16 w-full animate-pulse rounded-lg' />
+                    <div
+                      key={i}
+                      className="h-16 w-full animate-pulse rounded-lg bg-muted"
+                    />
                   ))}
                 </div>
               ) : (
-                <div className='space-y-4'>
-                  <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span>
                       You have {timetable?.data?.length ?? 0} class instance
-                      {timetable?.data?.length === 1 ? '' : 's'} under this class for the academic
-                      period.
+                      {timetable?.data?.length === 1 ? '' : 's'} under this class for the
+                      academic period.
                     </span>
                   </div>
 
-                  <div className='border-border border-t pt-4'>
+                  <div className="border-t border-border pt-4">
                     <MonthlyAvailabilityGrid
                       availabilityData={availabilityData}
-                      onAvailabilityUpdate={() => {}}
+                      onAvailabilityUpdate={() => { }}
                       isEditing={false}
                       classes={[]}
                     />
@@ -542,22 +593,22 @@ export default function ClassPreviewPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value='skills' className='space-y-4'>
+        <TabsContent value="skills" className="space-y-4">
           <Card>
-            <CardContent className='space-y-3 p-4'>
+            <CardContent className="space-y-3 p-4">
               {isAllLessonsDataLoading && <Spinner />}
 
               {lessonsWithContent?.length === 0 && (
-                <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg p-6 text-center text-sm'>
-                  <FileQuestion className='text-muted-foreground mb-3 h-8 w-8' />
-                  <h4 className='font-medium'>No Class Resources</h4>
+                <div className="flex flex-col items-center justify-center rounded-lg bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+                  <FileQuestion className="mb-3 h-8 w-8 text-muted-foreground" />
+                  <h4 className="font-medium">No Class Resources</h4>
                   <p>This class doesn&apos;t have any resources/content yet.</p>
                 </div>
               )}
 
               {lessonsWithContent?.map((skill, skillIndex) => (
                 <div key={skillIndex}>
-                  <div className='mb-2 font-semibold'>
+                  <div className="mb-2 font-semibold">
                     {/* Show lesson index + title */}
                     Lesson {skillIndex + 1}: {skill.lesson?.title}
                   </div>
@@ -569,21 +620,28 @@ export default function ClassPreviewPage() {
                     return (
                       <div
                         key={c.uuid}
-                        className='hover:bg-card flex items-center justify-between rounded-lg p-3'
+                        className="flex items-center justify-between rounded-lg p-3 hover:bg-card"
                       >
-                        <div className='flex items-center gap-3'>
+                        <div className="flex items-center gap-3">
                           {getResourceIcon(contentTypeName)}
                           <div>
                             {/* Show content index + title */}
-                            <div className='font-medium'>
+                            <div className="font-medium">
                               {cIndex + 1}. {c.title}
                             </div>
-                            <div className='text-muted-foreground text-sm'>{contentTypeName}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {contentTypeName}
+                            </div>
                           </div>
                         </div>
 
-                        <Button variant='outline' size='sm' className='gap-2'>
-                          <Eye className='h-3 w-3' />
+                        <Button
+                          onClick={() => handleViewContent(c, contentTypeName)}
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                        >
+                          <Eye className="h-3 w-3" />
                           View
                         </Button>
                       </div>
@@ -595,7 +653,7 @@ export default function ClassPreviewPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value='students' className='space-y-4'>
+        <TabsContent value="students" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Enrolled Students</CardTitle>
@@ -603,15 +661,17 @@ export default function ClassPreviewPage() {
 
             <CardContent>
               {!roster || roster.length === 0 ? (
-                <div className='py-8 text-center'>
-                  <Users className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-                  <h3 className='text-foreground mb-2 font-medium'>No students enrolled yet</h3>
-                  <p className='text-muted-foreground text-sm'>
+                <div className="py-8 text-center">
+                  <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <h3 className="mb-2 font-medium text-foreground">
+                    No students enrolled yet
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
                     Share your registration link to start getting enrollments
                   </p>
                 </div>
               ) : (
-                <div className='rounded-md border'>
+                <div className="rounded-md border border-border">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -632,7 +692,7 @@ export default function ClassPreviewPage() {
                         return (
                           <TableRow key={index}>
                             {/* NAME */}
-                            <TableCell className='font-medium'>
+                            <TableCell className="font-medium">
                               {user?.full_name || 'Unknown Student'}
                             </TableCell>
 
@@ -643,11 +703,13 @@ export default function ClassPreviewPage() {
                             <TableCell>{student?.primaryGuardianContact || '--'}</TableCell>
 
                             {/* SECONDARY GUARDIAN */}
-                            <TableCell>{student?.secondaryGuardianContact || '--'}</TableCell>
+                            <TableCell>
+                              {student?.secondaryGuardianContact || '--'}
+                            </TableCell>
 
                             {/* STATUS */}
                             <TableCell>
-                              <Badge variant='success'>
+                              <Badge variant="success">
                                 {entry.enrollment?.status || 'UNKNOWN'}
                               </Badge>
                             </TableCell>
@@ -666,85 +728,111 @@ export default function ClassPreviewPage() {
       {/* Registration Link and Sharing */}
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Link className='h-5 w-5' />
+          <CardTitle className="flex items-center gap-2">
+            <Link className="h-5 w-5" />
             Registration Link
           </CardTitle>
         </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='flex gap-2'>
-            <Input value={registrationLink} readOnly className='font-mono text-sm' />
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Input value={registrationLink} readOnly className="font-mono text-sm" />
             <Button
               onClick={() => copyToClipboard(registrationLink)}
-              variant='outline'
-              className='gap-2'
+              variant="outline"
+              className="gap-2"
             >
-              <Copy className='h-4 w-4' />
+              <Copy className="h-4 w-4" />
               {copied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
 
-          <div className='space-y-3'>
-            <h4 className='font-medium'>Share Your Class</h4>
-            <div className='flex flex-wrap gap-2'>
+          <div className="space-y-3">
+            <h4 className="font-medium">Share Your Class</h4>
+            <div className="flex flex-wrap gap-2">
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={() => copyToClipboard(registrationLink)}
-                className='gap-2'
+                className="gap-2"
               >
-                <Copy className='h-4 w-4' />
+                <Copy className="h-4 w-4" />
                 Copy Link
               </Button>
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={() => shareToSocial('facebook')}
-                className='gap-2'
+                className="gap-2"
               >
-                <Facebook className='h-4 w-4' />
+                <Facebook className="h-4 w-4" />
                 Facebook
               </Button>
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={() => shareToSocial('twitter')}
-                className='gap-2'
+                className="gap-2"
               >
-                <Twitter className='h-4 w-4' />
+                <Twitter className="h-4 w-4" />
                 Twitter
               </Button>
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={() => shareToSocial('linkedin')}
-                className='gap-2'
+                className="gap-2"
               >
-                <Linkedin className='h-4 w-4' />
+                <Linkedin className="h-4 w-4" />
                 LinkedIn
               </Button>
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={() => shareToSocial('whatsapp')}
-                className='gap-2'
+                className="gap-2"
               >
-                <MessageCircle className='h-4 w-4' />
+                <MessageCircle className="h-4 w-4" />
                 WhatsApp
               </Button>
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={() => shareToSocial('email')}
-                className='gap-2'
+                className="gap-2"
               >
-                <Mail className='h-4 w-4' />
+                <Mail className="h-4 w-4" />
                 Email
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Video Player Modal */}
+      <VideoPlayer
+        isOpen={isPlaying && contentTypeName === 'video'}
+        onClose={() => setIsPlaying(false)}
+        videoUrl={selectedLesson?.content_text || ''}
+        title={selectedLesson?.title}
+      />
+
+      {/* Reading Mode Modal */}
+      <ReadingMode
+        isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
+        onClose={() => setIsReading(false)}
+        title={selectedLesson?.title || ''}
+        description={selectedLesson?.description}
+        content={selectedLesson?.content_text || ''}
+        contentType={contentTypeName as 'text' | 'pdf'}
+      />
+
+      <AudioPlayer
+        isOpen={isAudioPlaying && contentTypeName === 'audio'}
+        onClose={() => setIsAudioPlaying(false)}
+        audioUrl={selectedLesson?.content_text || ''}
+        title={selectedLesson?.title}
+        description={selectedLesson?.description}
+      />
     </div>
   );
 }

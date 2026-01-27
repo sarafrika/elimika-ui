@@ -6,6 +6,7 @@ import {
 } from '@/services/client';
 import {
   getRubricCriteriaQueryKey,
+  getRubricMatrixOptions,
   getRubricMatrixQueryKey,
   getRubricScoringQueryKey,
   getScoringLevelsByRubricQueryKey,
@@ -384,3 +385,89 @@ export const useRubricsWithCriteriaAndScoring = (courseCreatorUuid?: string) => 
     isFetched,
   };
 };
+
+
+export const useRubricDetails = (rubricUuid?: string) => {
+  const {
+    data: matrixData,
+    isLoading: isMatrixLoading,
+    isError: isMatrixError,
+    isFetched: isMatrixFetched,
+  } = useQuery({
+    ...getRubricMatrixOptions({
+      path: { rubricUuid: rubricUuid as string },
+    }),
+    enabled: !!rubricUuid,
+  });
+
+  const {
+    data: criteriaResponse,
+    isLoading: isCriteriaLoading,
+    isError: isCriteriaError,
+    isFetched: isCriteriaFetched,
+  } = useQuery({
+    queryKey: getRubricCriteriaQueryKey({
+      path: { rubricUuid: rubricUuid as string },
+      query: { pageable: {} },
+    }),
+    queryFn: () =>
+      getRubricCriteria({
+        path: { rubricUuid: rubricUuid as string },
+        query: { pageable: {} },
+      }),
+    enabled: !!rubricUuid,
+  });
+
+  const criteriaList = criteriaResponse?.data?.data?.content ?? [];
+
+  const scoringQueries = useQueries({
+    queries: criteriaList.map((criteria: any) => ({
+      queryKey: getRubricScoringQueryKey({
+        path: { rubricUuid: rubricUuid as string, criteriaUuid: criteria.uuid },
+        query: { pageable: {} },
+      }),
+      queryFn: () =>
+        getRubricScoring({
+          path: { rubricUuid: rubricUuid as string, criteriaUuid: criteria.uuid },
+          query: { pageable: {} },
+        }),
+      enabled: !!rubricUuid && !!criteria.uuid,
+    })),
+  });
+
+
+  const enrichedCriteria = criteriaList.map((criteria: any, index: number) => {
+    const scoringList =
+      scoringQueries[index]?.data?.data?.data?.content ?? [];
+
+    return {
+      ...criteria,
+      scoring: scoringList,
+    };
+  });
+
+  const isLoading =
+    isMatrixLoading ||
+    isCriteriaLoading ||
+    scoringQueries.some(q => q.isLoading);
+
+  const isFetched =
+    isMatrixFetched ||
+    isCriteriaFetched ||
+    scoringQueries.some(q => q.isFetched);
+
+  const isError =
+    isMatrixError ||
+    isCriteriaError ||
+    scoringQueries.some(q => q.isError);
+
+  return {
+    rubricUuid,
+    matrix: matrixData ?? null,
+    criteria: enrichedCriteria,
+    isLoading,
+    isFetched,
+    isError,
+  };
+};
+

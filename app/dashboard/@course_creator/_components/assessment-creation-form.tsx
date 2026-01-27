@@ -230,11 +230,6 @@ const AssessmentCreationForm = ({
     [deleteQuiz, qc, selectedLessonId]
   );
 
-  /*
-    //////////////////////
-     PICK IT UP FROM HERE
-    //////////////////////
-    */
   const addQuizQuestion = useMutation(addQuizQuestionMutation());
   const addQuestionOption = useMutation(addQuestionOptionMutation());
 
@@ -270,9 +265,9 @@ const AssessmentCreationForm = ({
         pairs:
           q.question_type === 'matching'
             ? options.map((pair: any) => ({
-                left: pair.left_text,
-                right: pair.right_text,
-              }))
+              left: pair.left_text,
+              right: pair.right_text,
+            }))
             : undefined,
         answer: q.question_type === 'essay' || q.question_type === 'short_answer' ? '' : undefined,
       };
@@ -782,11 +777,10 @@ const AssessmentCreationForm = ({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
-              activeTab === tab
+            className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
                 ? 'border-primary text-primary font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
+              }`}
           >
             {tab}
           </button>
@@ -874,9 +868,9 @@ const AssessmentCreationForm = ({
               >
                 <Disc className='mr-2 h-4 w-4' />
                 {addQuizQuestion.isPending ||
-                addQuestionOption.isPending ||
-                updateQuizQuestion.isPending ||
-                updateQuestionOption.isPending
+                  addQuestionOption.isPending ||
+                  updateQuizQuestion.isPending ||
+                  updateQuestionOption.isPending
                   ? 'Saving...'
                   : 'Save Questions'}
               </Button>
@@ -897,16 +891,16 @@ const AssessmentCreationForm = ({
               onSelectAssignment={handleSelectAssignment}
               addQuestion={addQuestion}
               updateQuestionText={updateQuestionText}
-              updateQuestionPoint={() => {}}
+              updateQuestionPoint={() => { }}
               updateOptionText={updateOptionText}
               setCorrectOption={setCorrectOption}
-              deleteQuestion={() => {}}
-              deleteOption={() => {}}
+              deleteQuestion={() => { }}
+              deleteOption={() => { }}
               createAssignmentForLesson={createAssignmentForLesson}
               updateAssignmentForLesson={updateAssignmentForLesson}
               deleteAssignmentForLesson={deleteAssignmentForLesson}
-              addAssignmentQuestion={() => {}}
-              addQuestionOption={() => {}}
+              addAssignmentQuestion={() => { }}
+              addQuestionOption={() => { }}
               isPending={
                 createAssignmentMut.isPending ||
                 updateAssignmentMut.isPending ||
