@@ -16,13 +16,12 @@ import {
   getAllQuizzesOptions,
   getCourseByUuidOptions,
   getCourseLessonOptions,
-  getCourseLessonQueryKey,
   getCourseLessonsOptions,
   getCourseLessonsQueryKey,
   getLessonContentOptions,
   getLessonContentQueryKey,
   publishCourseMutation,
-  publishCourseQueryKey,
+  publishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -31,6 +30,7 @@ import {
   BookOpen,
   CheckCircle,
   ClipboardList,
+  File,
   GraduationCap,
   Palette,
   SlidersHorizontal,
@@ -40,20 +40,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
-import { AssignmentDialog } from '../../../_components/assignment-management-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseComplianceForm } from '../../../_components/course-compliance-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
 import CourseLearningRulesForm from '../../../_components/course-learningrule-form';
 import { CoursePricingForm } from '../../../_components/course-pricing-form';
 import type { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
+import { ContentCreationForm } from '../../../_components/lesson-content-creation-form';
 import { LessonCreationForm } from '../../../_components/lesson-creation-form';
 import {
   type ContentFormValues,
-  EditLessonDialog,
-  LessonContentDialog,
-  LessonDialog,
-  type LessonFormValues,
+  type LessonFormValues
 } from '../../../_components/lesson-management-form';
 import {
   CourseCreatorEmptyState,
@@ -180,15 +177,15 @@ export default function CourseBuilderPage() {
       // @ts-expect-error
       training_requirements: Array.isArray(c.training_requirements)
         ? c.training_requirements.map(req => ({
-            uuid: req.uuid,
-            requirement_type: req.requirement_type,
-            name: req.name,
-            description: req.description ?? '',
-            quantity: req.quantity ?? undefined,
-            unit: req.unit ?? '',
-            provided_by: req.provided_by ?? 'course_creator',
-            is_mandatory: !!req.is_mandatory,
-          }))
+          uuid: req.uuid,
+          requirement_type: req.requirement_type,
+          name: req.name,
+          description: req.description ?? '',
+          quantity: req.quantity ?? undefined,
+          unit: req.unit ?? '',
+          provided_by: req.provided_by ?? 'course_creator',
+          is_mandatory: !!req.is_mandatory,
+        }))
         : [],
     });
   }, [courseId, course]);
@@ -267,33 +264,33 @@ export default function CourseBuilderPage() {
   const _content =
     lesson && lessonContent
       ? lessonContent.map((item: any) => {
-          const matchedType = Array.isArray(contentTypeList?.data)
-            ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
-            : undefined;
+        const matchedType = Array.isArray(contentTypeList?.data)
+          ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
+          : undefined;
 
-          const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
+        const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
 
-          return {
-            contentType: typeName.toUpperCase() as
-              | 'AUDIO'
-              | 'VIDEO'
-              | 'TEXT'
-              | 'LINK'
-              | 'PDF'
-              | 'YOUTUBE',
-            title: item?.title || '',
-            uuid: item?.uuid || '',
-            value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
-            duration:
-              typeof item?.estimated_duration === 'string'
-                ? parseInt(item.estimated_duration, 10) || 0
-                : 0,
-            durationHours: item?.duration_hours || 0,
-            durationMinutes: item?.duration_minutes || 0,
-            contentTypeUuid: item?.content_type || '',
-            contentCategory: matchedType?.upload_category ?? '',
-          };
-        })
+        return {
+          contentType: typeName.toUpperCase() as
+            | 'AUDIO'
+            | 'VIDEO'
+            | 'TEXT'
+            | 'LINK'
+            | 'PDF'
+            | 'YOUTUBE',
+          title: item?.title || '',
+          uuid: item?.uuid || '',
+          value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
+          duration:
+            typeof item?.estimated_duration === 'string'
+              ? parseInt(item.estimated_duration, 10) || 0
+              : 0,
+          durationHours: item?.duration_hours || 0,
+          durationMinutes: item?.duration_minutes || 0,
+          contentTypeUuid: item?.content_type || '',
+          contentCategory: matchedType?.upload_category ?? '',
+        };
+      })
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
@@ -355,7 +352,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   // DELETE LESSON MUTATION
@@ -380,7 +377,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const deleteLessonContent = useMutation(deleteLessonContentMutation());
@@ -407,7 +404,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   if (creatorLoading) {
@@ -456,12 +453,14 @@ export default function CourseBuilderPage() {
         <StepperRoot>
           <StepperList>
             <StepperTrigger step={0} title='Course Set Up' icon={BookOpen} />
-            <StepperTrigger step={1} title='Lessons & Content' icon={GraduationCap} />
-            <StepperTrigger step={2} title='Assessment' icon={SlidersHorizontal} />
-            <StepperTrigger step={3} title='Rules' icon={ClipboardList} />
-            <StepperTrigger step={4} title='Branding' icon={Palette} />
-            <StepperTrigger step={5} title='Pricing' icon={BadgeDollarSign} />
-            <StepperTrigger step={6} title='Compliance' icon={BadgeCheck} />
+            <StepperTrigger step={1} title='Course Lessons' icon={GraduationCap} />
+            <StepperTrigger step={2} title='Lesson Contents' icon={File} />
+            <StepperTrigger step={3} title='Assessment' icon={SlidersHorizontal} />
+            <StepperTrigger step={4} title='Rules' icon={ClipboardList} />
+            <StepperTrigger step={5} title='Branding' icon={Palette} />
+            <StepperTrigger step={6} title='Pricing' icon={BadgeDollarSign} />
+            <StepperTrigger step={7} title='Compliance' icon={BadgeCheck} />
+
             {/* <StepperTrigger step={7} title='Review' icon={Eye} /> */}
             {/* <StepperTrigger step={8} title='Quizzes' icon={FileQuestion} />
             <StepperTrigger step={9} title='Assignment' icon={ClipboardList} /> */}
@@ -491,10 +490,10 @@ export default function CourseBuilderPage() {
 
             <StepperContent
               step={1}
-              title='Course Lessons & Content'
+              title='Course Lessonss'
               description='Add skills and learning materials for your course'
               showNavigation
-              nextButtonText='Continue to Assessment'
+              nextButtonText='Continue to Lesson Contents'
               previousButtonText='Back to Course Set Up'
             >
               <div className='space-y-4 p-0'>
@@ -503,110 +502,33 @@ export default function CourseBuilderPage() {
                   lessons={courseLessons?.data}
                   lessonContentsMap={lessonContentMap}
                 />
-
-                {/* <LessonList
-                  isLoading={lessonsIsLoading}
-                  courseTitle={course?.data?.name as string}
-                  courseId={resolveId}
-                  lessonId={selectedLesson?.uuid as string}
-                  courseCategory={course?.data?.category_names}
-                  // lessons
-                  lessons={courseLessons?.data}
-                  lessonItems={lessonContentData?.data}
-                  onAddLesson={openAddLessonModal}
-                  onEditLesson={openEditLessonModal}
-                  onDeleteLesson={handleDeleteLesson}
-                  onReorderLessons={() => { }}
-                  // lesson content
-                  lessonContentsMap={lessonContentMap}
-                  onAddLessonContent={openAddContentModal}
-                  onEditLessonContent={openEditContentModal}
-                  onDeleteLessonContent={handleDeleteContent}
-                /> */}
-
-                <LessonDialog
-                  isOpen={addLessonModalOpen}
-                  onOpenChange={setAddLessonModalOpen}
-                  courseId={createdCourseId ? createdCourseId : (courseId as string)}
-                  lessonId={selectedLesson?.uuid as string}
-                  onCancel={() => setAddLessonModalOpen(false)}
-                />
-
-                {editLessonModalOpen && selectedLesson && lesson && lessonContentData?.data && (
-                  <EditLessonDialog
-                    isOpen={editLessonModalOpen}
-                    onOpenChange={setEditLessonModalOpen}
-                    courseId={courseId as string}
-                    lessonId={selectedLesson?.uuid}
-                    initialValues={lessonInitialValues}
-                    onCancel={() => {}}
-                    onSuccess={data => {
-                      setCreatedCourseId(data?.uuid);
-
-                      queryClient.invalidateQueries({
-                        queryKey: getCourseLessonsQueryKey({
-                          path: { courseUuid: courseId as string },
-                          query: { pageable: { page: 0, size: 100 } },
-                        }),
-                      });
-
-                      queryClient.invalidateQueries({
-                        queryKey: getCourseLessonQueryKey({
-                          path: {
-                            courseUuid: courseId as string,
-                            lessonUuid: selectedLesson?.uuid as string,
-                          },
-                        }),
-                      });
-
-                      queryClient.invalidateQueries({
-                        queryKey: getLessonContentQueryKey({
-                          path: {
-                            courseUuid: courseId as string,
-                            lessonUuid: selectedLesson?.uuid as string,
-                          },
-                        }),
-                      });
-                    }}
-                  />
-                )}
-
-                <LessonContentDialog
-                  courseId={resolveId}
-                  lessonId={selectedLesson?.uuid || (selectedContent?.lesson_uuid as string)}
-                  contentId={selectedContent?.uuid as string}
-                  isOpen={addContentModalOpen}
-                  onOpenChange={setAddContentModalOpen}
-                  onCancel={() => {
-                    setSelectedContent(null);
-                    setAddContentModalOpen(false);
-                  }}
-                  initialValues={contentInitialValues}
-                />
-
-                <AssignmentDialog
-                  isOpen={addAssignmentModal}
-                  setOpen={setAddAssignmentModal}
-                  courseId={resolveId as string}
-                  onSuccess={() => {
-                    setSelectedLesson(null);
-                    setAddAssignmentModal(false);
-                  }}
-                  onCancel={() => {
-                    setSelectedLesson(null);
-                    setAddAssignmentModal(false);
-                  }}
-                />
               </div>
             </StepperContent>
 
             <StepperContent
               step={2}
+              title='Course Lessons Content'
+              description='Add skills and learning materials for your course'
+              showNavigation
+              nextButtonText='Continue to Assessment'
+              previousButtonText='Back to Lessons'
+            >
+              <div className='space-y-4 p-0'>
+                <ContentCreationForm
+                  course={course}
+                  lessons={courseLessons?.data}
+                  lessonContentsMap={lessonContentMap}
+                />
+              </div>
+            </StepperContent>
+
+            <StepperContent
+              step={3}
               title='Course Assessment'
               description='Create assessment rubrics to evaluate student performance'
               showNavigation
               nextButtonText='Continue to Rules'
-              previousButtonText='Back to Lessons'
+              previousButtonText='Back to Lesson Content'
             >
               <AssessmentCreationForm
                 course={course}
@@ -618,12 +540,12 @@ export default function CourseBuilderPage() {
             </StepperContent>
 
             <StepperContent
-              step={3}
+              step={4}
               title='Course Learning Rules'
               description='Define the rules learners must follow to progress and complete the course.'
               showNavigation
               nextButtonText='Continue to Branding'
-              previousButtonText='Back to Rules'
+              previousButtonText='Back to Assessment'
             >
               <CourseLearningRulesForm
                 ref={formRef}
@@ -638,7 +560,7 @@ export default function CourseBuilderPage() {
             </StepperContent>
 
             <StepperContent
-              step={4}
+              step={5}
               title='Branding'
               description='Add visual elements to make your course more appealing'
               showNavigation
@@ -658,7 +580,7 @@ export default function CourseBuilderPage() {
             </StepperContent>
 
             <StepperContent
-              step={5}
+              step={6}
               title='Pricing'
               description='Set the price, discounts, and access options for your course.'
               showNavigation
@@ -678,7 +600,7 @@ export default function CourseBuilderPage() {
             </StepperContent>
 
             <StepperContent
-              step={6}
+              step={7}
               title='Course Compliance & Q?A'
               description='Confirm that all required compliance and quality checks have been completed.'
               // showNavigation
@@ -697,8 +619,10 @@ export default function CourseBuilderPage() {
               />
             </StepperContent>
 
+
+
             <StepperContent
-              step={7}
+              step={8}
               title='Review Course'
               description='Review your course before publishing'
               showNavigation
