@@ -159,6 +159,7 @@ export default function ReusableCourseDetailsPage({
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
 
   const handleViewAssignment = (assignment: Assignment) => {
+    setSelectedQuiz(null)
     setSelectedAssignment(assignment);
     setIsViewerOpen(true);
   };
@@ -184,13 +185,13 @@ export default function ReusableCourseDetailsPage({
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const handleViewQuiz = (quiz: any) => {
+    setSelectedAssignment(null)
     setSelectedQuiz(quiz);
     setIsViewerOpen(true);
   };
 
   const handleCloseViewer = () => {
     setIsViewerOpen(false);
-    // Optional: Reset selected quiz after modal closes
     setTimeout(() => setSelectedQuiz(null), 300);
   };
 
@@ -582,17 +583,16 @@ export default function ReusableCourseDetailsPage({
 
             {filteredQuizzes?.map((quiz: any) => (
               <Card key={quiz.uuid}>
-                <CardContent className="p-6">
+                <CardContent className="px-6">
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h4 className="text-lg font-semibold">{quiz.title}</h4>
-                      <div className="mt-2 space-y-1">
+                    <div>
+                      <CardTitle className='text-base'>{quiz?.title}</CardTitle>
+                      <div className='text-muted-foreground text-sm'>
                         <p className="text-sm font-medium text-muted-foreground">
                           Instructions:
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          {quiz.instructions || 'No instructions provided'}
-                        </p>
+                        <HTMLTextPreview htmlContent={quiz.instructions || 'No instructions provided'}
+                        />
                       </div>
                       <div className="text-muted-foreground mt-3 flex items-center gap-4 text-sm">
                         <span className="flex items-center gap-1">
@@ -603,6 +603,7 @@ export default function ReusableCourseDetailsPage({
                         </span>
                       </div>
                     </div>
+
                     <Button
                       onClick={() => handleViewQuiz(quiz)}
                       variant="default"
@@ -627,36 +628,18 @@ export default function ReusableCourseDetailsPage({
 
             {filteredAssignments?.map((assignment: any) => (
               <Card key={assignment.uuid}>
-                <CardContent className='p-6'>
+                <CardContent className='px-6'>
                   <div className='flex items-start justify-between'>
-                    <div className='flex-1'>
-                      <h4>{assignment.title}</h4>
-                      <div className='text-muted-foreground mt-1 mb-2 text-sm'>
-                        <RichTextRenderer
-                          htmlString={assignment.description as string}
+                    <div>
+                      <CardTitle className='text-base'>{assignment?.title}</CardTitle>
+                      <div className='text-muted-foreground text-sm'>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Instructions:
+                        </p>
+                        <RichTextRenderer htmlString={assignment.instructions || 'No instructions provided'}
                           maxChars={100}
                         />
                       </div>
-                      <div className='text-muted-foreground mt-1 mb-2 flex flex-col text-sm'>
-                        <p>Instruction:</p>
-                        <RichTextRenderer
-                          htmlString={assignment.instructions as string}
-                          maxChars={100}
-                        />
-                      </div>
-                      <p className='text-sm'>
-                        Due:{' '}
-                        {new Date(assignment?.due_date as any).toLocaleString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true,
-                          timeZoneName: 'short',
-                        })}
-                      </p>
                     </div>
 
                     <Button
@@ -665,7 +648,8 @@ export default function ReusableCourseDetailsPage({
                       className="shrink-0"
                     >
                       View Details
-                    </Button>                  </div>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -685,7 +669,7 @@ export default function ReusableCourseDetailsPage({
 
               return (
                 <Card key={assessment.uuid} className="overflow-hidden">
-                  <CardContent className="p-6">
+                  <CardContent className="px-6">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3">
                         <Award className="text-primary mt-1 h-6 w-6" />
@@ -800,7 +784,7 @@ function RubricDetailsTable({ rubric }: { rubric: any }) {
       <div className="mb-6 grid gap-2 sm:grid-cols-2">
         <div>
           <p className="text-sm text-muted-foreground">Min Passing Score</p>
-          <p className="font-medium">{rubric.min_passing_score} of {rubric.total_weight}</p>
+          <p className="font-medium">{rubric.min_passing_score} of {rubric.total_weight} Points</p>
 
         </div>
         <div>
@@ -822,7 +806,7 @@ function RubricDetailsTable({ rubric }: { rubric: any }) {
               {levels.map((level: any) => (
                 <th
                   key={level.level_uuid}
-                  className="border border-border px-4 py-2 text-center"
+                  className="border border-border px-4 py-2 text-start"
                 >
                   <div className="font-medium">
                     {level.description}
