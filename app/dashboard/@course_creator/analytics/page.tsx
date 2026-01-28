@@ -49,9 +49,8 @@ export default function CourseCreatorAnalyticsPage() {
       <div className='flex flex-col gap-2 rounded-md border-l-4 border-yellow-500 bg-yellow-50 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:bg-yellow-950/20 dark:text-yellow-200'>
         <div className='flex flex-col gap-2'>
           <p className='font-medium'>
-            🚧 This page is under construction. Mock data is currently being used.
+            🚧 This page is under construction. Requires API to fetch course reviews..
           </p>
-          <p className='font-medium'>Requires API to fetch course reviews.</p>
         </div>
       </div>
 
@@ -268,8 +267,8 @@ function CourseReviewSummary({
   const averageRating =
     reviewCount > 0
       ? Math.round(
-          (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
-        ) / 10
+        (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
+      ) / 10
       : null;
 
   return (
