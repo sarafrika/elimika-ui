@@ -275,9 +275,9 @@ export type Student = {
    * **[OPTIONAL]** Short biography or notes about the student. Used in student profiles.
    */
   bio?: string;
-  allGuardianContacts?: Array<string>;
-  primaryGuardianContact?: string;
   secondaryGuardianContact?: string;
+  primaryGuardianContact?: string;
+  allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
    */
@@ -3356,13 +3356,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
    */
   readonly assignment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -3974,6 +3974,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -3985,10 +3989,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -4819,7 +4819,7 @@ export type AssignmentSubmission = {
  * Admin domain assignment request containing domain type, reason, and effective date
  */
 export type AdminDomainAssignmentRequest = {
-  domain_name: SchemaEnum5;
+  domain_name: SchemaEnum6;
   assignment_type: AssignmentTypeEnum;
   /**
    * Reason for assigning admin privileges
@@ -5256,6 +5256,148 @@ export type ApiResponseMapStringLong = {
   };
 };
 
+export type ApiResponseRevenueDashboardDto = {
+  success?: boolean;
+  data?: RevenueDashboardDto;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type RevenueAmountDto = {
+  currency_code?: string;
+  amount?: number;
+};
+
+export type RevenueDashboardDto = {
+  domain?: string;
+  start_date?: Date;
+  end_date?: Date;
+  gross_totals?: Array<RevenueAmountDto>;
+  estimated_earnings?: Array<RevenueAmountDto>;
+  order_count?: bigint;
+  line_item_count?: bigint;
+  units_sold?: bigint;
+  average_order_value?: Array<RevenueAmountDto>;
+  scope_breakdown?: Array<RevenueScopeBreakdownDto>;
+  daily_series?: Array<RevenueTimeSeriesPointDto>;
+};
+
+export type RevenueScopeBreakdownDto = {
+  scope?: string;
+  gross_totals?: Array<RevenueAmountDto>;
+  estimated_earnings?: Array<RevenueAmountDto>;
+  line_item_count?: bigint;
+  units_sold?: bigint;
+};
+
+export type RevenueTimeSeriesPointDto = {
+  date?: Date;
+  gross_totals?: Array<RevenueAmountDto>;
+  estimated_earnings?: Array<RevenueAmountDto>;
+  order_count?: bigint;
+  units_sold?: bigint;
+};
+
+export type ApiResponseRevenueAnalyticsOverviewDto = {
+  success?: boolean;
+  data?: RevenueAnalyticsOverviewDto;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type RevenueAnalyticsOverviewDto = {
+  start_date?: Date;
+  end_date?: Date;
+  domains?: Array<RevenueDomainAnalyticsDto>;
+};
+
+export type RevenueDomainAnalyticsDto = {
+  domain?: string;
+  dashboard?: RevenueDashboardDto;
+};
+
+export type ApiResponsePagedDtoRevenueSaleLineItemDto = {
+  success?: boolean;
+  data?: PagedDtoRevenueSaleLineItemDto;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoRevenueSaleLineItemDto = {
+  content?: Array<RevenueSaleLineItemDto>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type RevenueSaleLineItemDto = {
+  order_id?: string;
+  order_number?: string;
+  order_created_at?: Date;
+  payment_status?: string;
+  order_currency_code?: string;
+  order_subtotal_amount?: number;
+  order_total_amount?: number;
+  platform_fee_amount?: number;
+  platform_fee_currency?: string;
+  platform_fee_rule_uuid?: string;
+  buyer_user_uuid?: string;
+  customer_email?: string;
+  line_item_id?: string;
+  variant_id?: string;
+  title?: string;
+  quantity?: number;
+  unit_price?: number;
+  subtotal?: number;
+  total?: number;
+  scope?: string;
+  course_uuid?: string;
+  class_definition_uuid?: string;
+  student_uuid?: string;
+};
+
+export type ApiResponseListRevenueAmountDto = {
+  success?: boolean;
+  data?: Array<RevenueAmountDto>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type ApiResponsePagedDtoRevenuePaymentDto = {
+  success?: boolean;
+  data?: PagedDtoRevenuePaymentDto;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoRevenuePaymentDto = {
+  content?: Array<RevenuePaymentDto>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type RevenuePaymentDto = {
+  payment_uuid?: string;
+  order_uuid?: string;
+  order_total_amount?: number;
+  order_currency_code?: string;
+  provider?: string;
+  status?: string;
+  amount?: number;
+  currency_code?: string;
+  external_reference?: string;
+  processed_at?: Date;
+};
+
 export type ApiResponsePagedDtoQuiz = {
   success?: boolean;
   data?: PagedDtoQuiz;
@@ -5524,10 +5666,6 @@ export type ProgramEnrollment = {
    */
   readonly enrollment_category?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the program.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
   readonly enrollment_duration?: string;
@@ -5535,6 +5673,10 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the program.
+   */
+  readonly progress_display?: string;
 };
 
 export type ApiResponseListCourse = {
@@ -5936,6 +6078,21 @@ export type StudentSchedule = {
   readonly is_upcoming?: boolean;
 };
 
+export type ApiResponsePagedDtoEnrollment = {
+  success?: boolean;
+  data?: PagedDtoEnrollment;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoEnrollment = {
+  content?: Array<Enrollment>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
 export type ApiResponseLong = {
   success?: boolean;
   data?: bigint;
@@ -6135,10 +6292,6 @@ export type CourseEnrollment = {
    */
   readonly enrollment_category?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the course.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
   readonly enrollment_duration?: string;
@@ -6146,6 +6299,10 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the course.
+   */
+  readonly progress_display?: string;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -6958,11 +7115,22 @@ export const SchemaEnum4 = {
 export type SchemaEnum4 = (typeof SchemaEnum4)[keyof typeof SchemaEnum4];
 
 export const SchemaEnum5 = {
+  STUDENT: 'student',
+  INSTRUCTOR: 'instructor',
+  ADMIN: 'admin',
+  PARENT: 'parent',
+  ORGANISATION_USER: 'organisation_user',
+  COURSE_CREATOR: 'course_creator',
+} as const;
+
+export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
+
+export const SchemaEnum6 = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
+export type SchemaEnum6 = (typeof SchemaEnum6)[keyof typeof SchemaEnum6];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -18241,6 +18409,218 @@ export type GetCourseCreatorRubricsResponses = {
 export type GetCourseCreatorRubricsResponse =
   GetCourseCreatorRubricsResponses[keyof GetCourseCreatorRubricsResponses];
 
+export type GetRevenueDashboardData = {
+  body?: never;
+  path?: never;
+  query: {
+    domain: SchemaEnum5;
+    start_date?: Date;
+    end_date?: Date;
+  };
+  url: '/api/v1/revenue/dashboard';
+};
+
+export type GetRevenueDashboardErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetRevenueDashboardError = GetRevenueDashboardErrors[keyof GetRevenueDashboardErrors];
+
+export type GetRevenueDashboardResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseRevenueDashboardDto;
+};
+
+export type GetRevenueDashboardResponse =
+  GetRevenueDashboardResponses[keyof GetRevenueDashboardResponses];
+
+export type GetAnalyticsOverviewData = {
+  body?: never;
+  path?: never;
+  query?: {
+    start_date?: Date;
+    end_date?: Date;
+  };
+  url: '/api/v1/revenue/analytics';
+};
+
+export type GetAnalyticsOverviewErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetAnalyticsOverviewError =
+  GetAnalyticsOverviewErrors[keyof GetAnalyticsOverviewErrors];
+
+export type GetAnalyticsOverviewResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseRevenueAnalyticsOverviewDto;
+};
+
+export type GetAnalyticsOverviewResponse =
+  GetAnalyticsOverviewResponses[keyof GetAnalyticsOverviewResponses];
+
+export type ListSalesData = {
+  body?: never;
+  path?: never;
+  query: {
+    domain: SchemaEnum5;
+    start_date?: Date;
+    end_date?: Date;
+    payment_status?: string;
+    scope?: string;
+    course_uuid?: string;
+    class_definition_uuid?: string;
+    student_uuid?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/revenue/analytics/sales';
+};
+
+export type ListSalesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListSalesError = ListSalesErrors[keyof ListSalesErrors];
+
+export type ListSalesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoRevenueSaleLineItemDto;
+};
+
+export type ListSalesResponse = ListSalesResponses[keyof ListSalesResponses];
+
+export type GetPlatformFeeSummaryData = {
+  body?: never;
+  path?: never;
+  query?: {
+    start_date?: Date;
+    end_date?: Date;
+  };
+  url: '/api/v1/revenue/analytics/platform-fees/summary';
+};
+
+export type GetPlatformFeeSummaryErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetPlatformFeeSummaryError =
+  GetPlatformFeeSummaryErrors[keyof GetPlatformFeeSummaryErrors];
+
+export type GetPlatformFeeSummaryResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListRevenueAmountDto;
+};
+
+export type GetPlatformFeeSummaryResponse =
+  GetPlatformFeeSummaryResponses[keyof GetPlatformFeeSummaryResponses];
+
+export type ListPaymentsData = {
+  body?: never;
+  path?: never;
+  query: {
+    domain: SchemaEnum5;
+    start_date?: Date;
+    end_date?: Date;
+    status?: string;
+    order_id?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/revenue/analytics/payments';
+};
+
+export type ListPaymentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListPaymentsError = ListPaymentsErrors[keyof ListPaymentsErrors];
+
+export type ListPaymentsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoRevenuePaymentDto;
+};
+
+export type ListPaymentsResponse = ListPaymentsResponses[keyof ListPaymentsResponses];
+
+export type GetRevenueDashboard1Data = {
+  body?: never;
+  path?: never;
+  query: {
+    domain: SchemaEnum5;
+    start_date?: Date;
+    end_date?: Date;
+  };
+  url: '/api/v1/revenue/analytics/domain';
+};
+
+export type GetRevenueDashboard1Errors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetRevenueDashboard1Error =
+  GetRevenueDashboard1Errors[keyof GetRevenueDashboard1Errors];
+
+export type GetRevenueDashboard1Responses = {
+  /**
+   * OK
+   */
+  200: ApiResponseRevenueDashboardDto;
+};
+
+export type GetRevenueDashboard1Response =
+  GetRevenueDashboard1Responses[keyof GetRevenueDashboard1Responses];
+
 export type GetQuizTotalPointsData = {
   body?: never;
   path: {
@@ -19713,6 +20093,41 @@ export type GetStudentScheduleResponses = {
 
 export type GetStudentScheduleResponse =
   GetStudentScheduleResponses[keyof GetStudentScheduleResponses];
+
+export type SearchEnrollmentsData = {
+  body?: never;
+  path?: never;
+  query: {
+    searchParams: {
+      [key: string]: string;
+    };
+    pageable: Pageable;
+  };
+  url: '/api/v1/enrollment/search';
+};
+
+export type SearchEnrollmentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SearchEnrollmentsError = SearchEnrollmentsErrors[keyof SearchEnrollmentsErrors];
+
+export type SearchEnrollmentsResponses = {
+  /**
+   * Enrollment search completed successfully
+   */
+  200: ApiResponsePagedDtoEnrollment;
+};
+
+export type SearchEnrollmentsResponse =
+  SearchEnrollmentsResponses[keyof SearchEnrollmentsResponses];
 
 export type GetEnrollmentsForInstanceData = {
   body?: never;
@@ -22460,6 +22875,44 @@ export type RemoveCategoryFromCourseResponses = {
 export type RemoveCategoryFromCourseResponse =
   RemoveCategoryFromCourseResponses[keyof RemoveCategoryFromCourseResponses];
 
+export type RemoveItemData = {
+  body?: never;
+  path: {
+    /**
+     * Identifier of the cart to update
+     */
+    cartId: string;
+    /**
+     * Identifier of the cart item to remove
+     */
+    itemId: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/carts/{cartId}/items/{itemId}';
+};
+
+export type RemoveItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RemoveItemError = RemoveItemErrors[keyof RemoveItemErrors];
+
+export type RemoveItemResponses = {
+  /**
+   * Item removed
+   */
+  200: CartResponse;
+};
+
+export type RemoveItemResponse = RemoveItemResponses[keyof RemoveItemResponses];
+
 export type RemoveAdminDomainData = {
   body?: never;
   path: {
@@ -22470,7 +22923,7 @@ export type RemoveAdminDomainData = {
     /**
      * Domain name to remove
      */
-    domain: SchemaEnum5;
+    domain: SchemaEnum6;
   };
   query?: {
     /**

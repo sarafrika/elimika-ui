@@ -367,6 +367,11 @@ export default function ReusableCourseDetailsPage({
                   )}
                 </div>
 
+                {/* {courseData?.intro_video_url && (
+                  <div className='w-full'>
+                    <video src={courseData?.intro_video_url} controls className='w-full rounded-md' />
+                  </div>
+                )} */}
 
                 {/* Pricing */}
                 <div className='mb-4 text-center'>

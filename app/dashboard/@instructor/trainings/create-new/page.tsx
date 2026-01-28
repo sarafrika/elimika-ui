@@ -176,6 +176,7 @@ const ClassBuilderPage = () => {
 
   const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isDataInitialized, setIsDataInitialized] = useState(false);
 
   const resolveId = classId || savedClassUuid;
   const { data: combinedClass, isLoading } = useClassDetails(resolveId as string);
@@ -244,7 +245,8 @@ const ClassBuilderPage = () => {
 
   // Sync fetched data to state
   useEffect(() => {
-    if (classData && !isLoading) {
+    // Only initialize data if we're editing (have a resolveId) and data is loaded
+    if (resolveId && classData && !isLoading && !isDataInitialized) {
       setClassDetails({
         uuid: classData?.uuid || '',
         course_uuid: classData?.course_uuid as string,
@@ -284,8 +286,12 @@ const ClassBuilderPage = () => {
           },
         }));
       }
+
+      setIsDataInitialized(true);
+    } else if (!resolveId && !isDataInitialized) {
+      setIsDataInitialized(true);
     }
-  }, [classData, isLoading, courseDetail]);
+  }, [classData, isLoading, courseDetail, resolveId, isDataInitialized, instructor?.full_name]);
 
   // Calculate occurrence count
   const occurrenceCount = calculateOccurrences(
@@ -437,6 +443,8 @@ const ClassBuilderPage = () => {
     }
   };
 
+  const shouldShowSkeleton = isLoading || (resolveId && !isDataInitialized);
+
   return (
     <div className='bg-background min-h-screen px-4 py-8'>
       <div className='mx-auto max-w-5xl'>
@@ -449,7 +457,7 @@ const ClassBuilderPage = () => {
           </p>
         </div>
 
-        {isLoading ? (
+        {shouldShowSkeleton ? (
           <ClassFormSkeleton />
         ) : (
           <>
