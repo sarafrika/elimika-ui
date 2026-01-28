@@ -18,6 +18,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useCartStore } from '../../../store/cart-store';
 import AddToCartModal from '../@student/_components/addToCart-modal';
 
 interface EnrollCourseCardProps {
@@ -39,6 +40,8 @@ export default function EnrollCourseCard({
 }: EnrollCourseCardProps) {
   const student = useStudent();
   const qc = useQueryClient();
+  const { cartId: savedCartId, setCartId } = useCartStore();
+
   const { difficultyMap } = useDifficultyLevels();
   const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'Unknown';
 
@@ -46,7 +49,6 @@ export default function EnrollCourseCard({
   const enrolled = roster?.length;
   const enrolledPercentage = (enrolled / cls?.max_participants) * 100;
 
-  const savedCartId = localStorage.getItem('cart_id');
   const [showCartModal, setShowCartModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<any>(null);
 
@@ -81,13 +83,13 @@ export default function EnrollCourseCard({
         {
           onSuccess: (data: any) => {
             const cartId = data?.data?.id || null;
+            if (cartId) { setCartId(cartId); }
 
-            if (cartId) {
-              localStorage.setItem('cart_id', cartId);
-            }
+            qc.invalidateQueries({
+              queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
+            });
 
             toast.success('Class added to cart!');
-            setShowCartModal(false);
           },
           onError: (error: any) => {
             toast.error(error.message);
@@ -100,14 +102,14 @@ export default function EnrollCourseCard({
 
     addItemToCart.mutate(
       {
-        path: { cartId: savedCartId as string },
+        path: { cartId: savedCartId },
         body: {
           variant_id: catalogue.variant_code,
           quantity: 1,
         },
       },
       {
-        onSuccess: data => {
+        onSuccess: () => {
           qc.invalidateQueries({
             queryKey: getCartQueryKey({ path: { cartId: savedCartId } }),
           });
@@ -117,6 +119,7 @@ export default function EnrollCourseCard({
       }
     );
   };
+
 
   return (
     <div className='group cursor-pointer'>
@@ -237,11 +240,10 @@ export default function EnrollCourseCard({
                 <div className='space-y-2'>
                   <div className='flex items-end gap-1'>
                     <span
-                      className={`text-2xl font-bold ${
-                        enrolledPercentage >= 80
-                          ? 'text-amber-600 dark:text-amber-500'
-                          : 'text-primary'
-                      }`}
+                      className={`text-2xl font-bold ${enrolledPercentage >= 80
+                        ? 'text-amber-600 dark:text-amber-500'
+                        : 'text-primary'
+                        }`}
                     >
                       {enrolledPercentage?.toFixed(0)}
                     </span>
@@ -249,9 +251,8 @@ export default function EnrollCourseCard({
                   </div>
                   <div className='bg-muted h-1.5 overflow-hidden rounded-full'>
                     <div
-                      className={`h-full transition-all duration-500 ${
-                        enrolledPercentage >= 80 ? 'bg-amber-600 dark:bg-amber-500' : 'bg-primary'
-                      }`}
+                      className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-amber-600 dark:bg-amber-500' : 'bg-primary'
+                        }`}
                       style={{ width: `${enrolledPercentage}%` }}
                     />
                   </div>
@@ -292,11 +293,10 @@ export default function EnrollCourseCard({
                 handleEnroll(cls);
               }}
               disabled={disableEnroll}
-              className={`w-full rounded-xl font-semibold shadow-lg transition-all duration-300 ${
-                disableEnroll
-                  ? 'bg-success text-success-foreground hover:bg-success/90'
-                  : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02] hover:shadow-xl'
-              }`}
+              className={`w-full rounded-xl font-semibold shadow-lg transition-all duration-300 ${disableEnroll
+                ? 'bg-success text-success-foreground hover:bg-success/90'
+                : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02] hover:shadow-xl'
+                }`}
             >
               {disableEnroll ? (
                 <div className='flex items-center gap-2'>

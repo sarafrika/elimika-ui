@@ -2,19 +2,26 @@
 
 import LoginButton from '@/components/LoginButton';
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ShoppingCart } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { ShoppingCart } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { getCartOptions } from '../services/client/@tanstack/react-query.gen';
+import { useCartStore } from '../store/cart-store';
 
 export function PublicTopNav() {
   const pathname = usePathname();
 
-  // Mock cart count - in a real app, this would come from cart state/context
-  const cartItemCount = 0;
+  const { cartId: savedCartId } = useCartStore();
+  const { data: cartData } = useQuery(getCartOptions({ path: { cartId: savedCartId as string } }));
+  // @ts-ignore
+  const cart = cartData?.data;
+  const cartItemCount = cart?.items?.length
+
 
   const navLinks = [
     { label: 'Catalogue', href: '/courses' },
