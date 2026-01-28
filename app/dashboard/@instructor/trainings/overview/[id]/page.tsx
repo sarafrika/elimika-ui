@@ -190,7 +190,6 @@ export default function ClassPreviewPage() {
         setTimeout(() => setCopied(false), 2000);
       }
     } catch (err) {
-      console.error("Copy failed", err);
     }
   };
 

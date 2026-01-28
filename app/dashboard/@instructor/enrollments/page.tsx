@@ -147,15 +147,6 @@ const EnrollmentsPage = () => {
         </div>
       </section>
 
-      {/* Construction Banner */}
-      <Card className='mb-6 border-l-4 border-yellow-500 bg-yellow-50 p-3 sm:p-4 dark:bg-yellow-950/20'>
-        <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3'>
-          <p className='font-medium text-yellow-800 dark:text-yellow-200'>🚧 Under Construction</p>
-          <p className='text-sm text-yellow-700 dark:text-yellow-300'>
-            Student data is being fetched and displayed dynamically.
-          </p>
-        </div>
-      </Card>
 
       {/* Two-column layout */}
       <div className='flex flex-col gap-6 lg:flex-row'>
@@ -203,11 +194,10 @@ const EnrollmentsPage = () => {
               <button
                 key={course.uuid}
                 onClick={() => setSelectedCourseId(course.uuid)}
-                className={`flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left text-sm transition-all ${
-                  isSelected
-                    ? 'border-primary bg-primary/10 shadow-sm'
-                    : 'border-border bg-background hover:bg-muted'
-                }`}
+                className={`flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left text-sm transition-all ${isSelected
+                  ? 'border-primary bg-primary/10 shadow-sm'
+                  : 'border-border bg-background hover:bg-muted'
+                  }`}
               >
                 <span className='text-foreground truncate font-medium'>{course.name}</span>
                 <Badge variant='secondary' className='shrink-0'>
