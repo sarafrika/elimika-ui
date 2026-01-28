@@ -1,5 +1,4 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -7,17 +6,17 @@ import {
     DialogContent,
     DialogDescription,
     DialogHeader,
-    DialogTitle,
+    DialogTitle
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
     AlertCircle,
-    Calendar,
-    Clock,
     FileText,
     Target
 } from 'lucide-react';
+import RichTextRenderer from '../../../../components/editors/richTextRenders';
+import { Badge } from '../../../../components/ui/badge';
 
 interface Assignment {
     uuid: string;
@@ -60,14 +59,7 @@ export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentV
                     <DialogTitle className="text-2xl">{assignment.title}</DialogTitle>
                     <DialogDescription className="space-y-2">
                         <div className="mt-2 flex flex-wrap gap-3">
-                            {assignment.points !== undefined && (
-                                <Badge variant="secondary" className="gap-1">
-                                    <Target className="h-3 w-3" />
-                                    {assignment.points} Points
-                                </Badge>
-                            )}
-
-                            {assignment.due_date_display && (
+                            {/*                             {assignment.due_date_display && (
                                 <Badge variant="secondary" className="gap-1">
                                     <Calendar className="h-3 w-3" />
                                     Due: {assignment.due_date_display}
@@ -79,20 +71,19 @@ export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentV
                                     <Clock className="h-3 w-3" />
                                     {assignment.time_limit_display}
                                 </Badge>
-                            )}
+                            )} */}
 
-                            {assignment.max_attempts && (
-                                <Badge variant="secondary" className="gap-1">
-                                    Attempts: {assignment.max_attempts}
-                                </Badge>
-                            )}
 
-                            {assignment.submission_type && (
-                                <Badge variant="outline" className="gap-1">
-                                    <FileText className="h-3 w-3" />
-                                    {assignment.submission_type}
-                                </Badge>
-                            )}
+                            <div className='flex flex-row items-center gap-2' >
+                                Accepted Submissions:
+                                {assignment.submission_types?.map((type) => (
+                                    <Badge key={type} variant="outline" className="gap-1">
+                                        <FileText className="h-3 w-3" />
+                                        {type}
+                                    </Badge>
+                                ))}
+                            </div>
+
                         </div>
                     </DialogDescription>
                 </DialogHeader>
@@ -105,18 +96,21 @@ export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentV
                                 <AlertCircle className="h-4 w-4" />
                                 <AlertDescription>
                                     <div className="mb-1 font-semibold">Instructions:</div>
-                                    <div className="text-sm whitespace-pre-wrap">{assignment.instructions}</div>
+                                    <div className="text-sm whitespace-pre-wrap">
+                                        <RichTextRenderer htmlString={assignment.instructions || 'No instructions provided'}
+                                        />
+                                    </div>
                                 </AlertDescription>
                             </Alert>
                         )}
 
                         {/* Assignment Details */}
-                        <Card className="border-2">
-                            <CardHeader>
-                                <CardTitle className="text-base">Assignment Details</CardTitle>
+                        <Card className="border-2 p-0">
+                            <CardHeader className='px-6' >
+                                <CardTitle className="text-base pt-6">Assignment Details</CardTitle>
                             </CardHeader>
-                            <div className="space-y-3 px-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="px-6 ">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pb-6">
                                     {assignment.max_points !== undefined && (
                                         <div className="flex items-center gap-3">
                                             <div className="rounded-full bg-primary/10 p-2">
@@ -141,7 +135,7 @@ export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentV
                                         </div>
                                     )} */}
 
-                                    {assignment.due_date_display && (
+                                    {/* {assignment.due_date_display && (
                                         <div className="flex items-center gap-3">
                                             <div className="rounded-full bg-secondary/10 p-2">
                                                 <Calendar className="h-4 w-4 text-secondary" />
@@ -151,9 +145,9 @@ export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentV
                                                 <p className="font-semibold">{assignment.due_date_display}</p>
                                             </div>
                                         </div>
-                                    )}
+                                    )} */}
 
-                                    {assignment.time_limit_display && (
+                                    {/* {assignment.time_limit_display && (
                                         <div className="flex items-center gap-3">
                                             <div className="rounded-full bg-accent/10 p-2">
                                                 <Clock className="h-4 w-4 text-accent" />
@@ -163,7 +157,7 @@ export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentV
                                                 <p className="font-semibold">{assignment.time_limit_display}</p>
                                             </div>
                                         </div>
-                                    )}
+                                    )} */}
 
                                     {(assignment.submission_summary || assignment.submission_types?.length > 0) && (
                                         <div className="flex items-center gap-3">

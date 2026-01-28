@@ -937,6 +937,24 @@ import type {
   GetCourseCreatorRubricsData,
   GetCourseCreatorRubricsResponses,
   GetCourseCreatorRubricsErrors,
+  GetRevenueDashboardData,
+  GetRevenueDashboardResponses,
+  GetRevenueDashboardErrors,
+  GetAnalyticsOverviewData,
+  GetAnalyticsOverviewResponses,
+  GetAnalyticsOverviewErrors,
+  ListSalesData,
+  ListSalesResponses,
+  ListSalesErrors,
+  GetPlatformFeeSummaryData,
+  GetPlatformFeeSummaryResponses,
+  GetPlatformFeeSummaryErrors,
+  ListPaymentsData,
+  ListPaymentsResponses,
+  ListPaymentsErrors,
+  GetRevenueDashboard1Data,
+  GetRevenueDashboard1Responses,
+  GetRevenueDashboard1Errors,
   GetQuizTotalPointsData,
   GetQuizTotalPointsResponses,
   GetQuizTotalPointsErrors,
@@ -1057,6 +1075,9 @@ import type {
   GetStudentScheduleData,
   GetStudentScheduleResponses,
   GetStudentScheduleErrors,
+  SearchEnrollmentsData,
+  SearchEnrollmentsResponses,
+  SearchEnrollmentsErrors,
   GetEnrollmentsForInstanceData,
   GetEnrollmentsForInstanceResponses,
   GetEnrollmentsForInstanceErrors,
@@ -1294,6 +1315,9 @@ import type {
   RemoveCategoryFromCourseData,
   RemoveCategoryFromCourseResponses,
   RemoveCategoryFromCourseErrors,
+  RemoveItemData,
+  RemoveItemResponses,
+  RemoveItemErrors,
   RemoveAdminDomainData,
   RemoveAdminDomainResponses,
   RemoveAdminDomainErrors,
@@ -1539,6 +1563,11 @@ import {
   getPopularRubricsResponseTransformer,
   getGeneralRubricsResponseTransformer,
   getCourseCreatorRubricsResponseTransformer,
+  getRevenueDashboardResponseTransformer,
+  getAnalyticsOverviewResponseTransformer,
+  listSalesResponseTransformer,
+  listPaymentsResponseTransformer,
+  getRevenueDashboard1ResponseTransformer,
   getQuizAttemptsResponseTransformer,
   searchQuizzesResponseTransformer,
   searchQuestionsResponseTransformer,
@@ -1573,6 +1602,7 @@ import {
   getStudentDashboardResponseTransformer,
   getEnrollmentResponseTransformer,
   getStudentScheduleResponseTransformer,
+  searchEnrollmentsResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
   listCurrenciesResponseTransformer,
@@ -1630,6 +1660,7 @@ import {
   getPendingOrganisationsResponseTransformer,
   getDashboardStatisticsResponseTransformer,
   getDashboardActivityResponseTransformer,
+  removeItemResponseTransformer,
   removeAdminDomainResponseTransformer,
 } from './transformers.gen';
 
@@ -10881,6 +10912,163 @@ export const getCourseCreatorRubrics = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * [Deprecated] Get revenue dashboard analytics
+ */
+export const getRevenueDashboard = <ThrowOnError extends boolean = false>(
+  options: Options<GetRevenueDashboardData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetRevenueDashboardResponses,
+    GetRevenueDashboardErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getRevenueDashboardResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/revenue/dashboard',
+    ...options,
+  });
+};
+
+/**
+ * Get revenue analytics for all domains of the current user
+ */
+export const getAnalyticsOverview = <ThrowOnError extends boolean = false>(
+  options?: Options<GetAnalyticsOverviewData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetAnalyticsOverviewResponses,
+    GetAnalyticsOverviewErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAnalyticsOverviewResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/revenue/analytics',
+    ...options,
+  });
+};
+
+/**
+ * List sales line items for revenue analytics
+ */
+export const listSales = <ThrowOnError extends boolean = false>(
+  options: Options<ListSalesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<ListSalesResponses, ListSalesErrors, ThrowOnError>({
+    responseTransformer: listSalesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/revenue/analytics/sales',
+    ...options,
+  });
+};
+
+/**
+ * Summarize platform fees withheld
+ */
+export const getPlatformFeeSummary = <ThrowOnError extends boolean = false>(
+  options?: Options<GetPlatformFeeSummaryData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetPlatformFeeSummaryResponses,
+    GetPlatformFeeSummaryErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/revenue/analytics/platform-fees/summary',
+    ...options,
+  });
+};
+
+/**
+ * List payment transactions for revenue analytics
+ */
+export const listPayments = <ThrowOnError extends boolean = false>(
+  options: Options<ListPaymentsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListPaymentsResponses,
+    ListPaymentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listPaymentsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/revenue/analytics/payments',
+    ...options,
+  });
+};
+
+/**
+ * Get revenue analytics for a specific domain
+ */
+export const getRevenueDashboard1 = <ThrowOnError extends boolean = false>(
+  options: Options<GetRevenueDashboard1Data, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetRevenueDashboard1Responses,
+    GetRevenueDashboard1Errors,
+    ThrowOnError
+  >({
+    responseTransformer: getRevenueDashboard1ResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/revenue/analytics/domain',
+    ...options,
+  });
+};
+
+/**
  * Get quiz total points
  * Returns the maximum possible points for a quiz.
  */
@@ -12187,6 +12375,34 @@ export const getStudentSchedule = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/student/{studentUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Search enrollments
+ * Search enrollments using query parameters such as student_uuid and class_definition_uuid.
+ */
+export const searchEnrollments = <ThrowOnError extends boolean = false>(
+  options: Options<SearchEnrollmentsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchEnrollmentsResponses,
+    SearchEnrollmentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchEnrollmentsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/search',
     ...options,
   });
 };
@@ -14502,6 +14718,34 @@ export const removeCategoryFromCourse = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/categories/{categoryUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Remove an item from a cart
+ * Removes a line item from an existing cart
+ */
+export const removeItem = <ThrowOnError extends boolean = false>(
+  options: Options<RemoveItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    RemoveItemResponses,
+    RemoveItemErrors,
+    ThrowOnError
+  >({
+    responseTransformer: removeItemResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/carts/{cartId}/items/{itemId}',
     ...options,
   });
 };

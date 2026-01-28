@@ -312,6 +312,12 @@ import {
   getPopularRubrics,
   getGeneralRubrics,
   getCourseCreatorRubrics,
+  getRevenueDashboard,
+  getAnalyticsOverview,
+  listSales,
+  getPlatformFeeSummary,
+  listPayments,
+  getRevenueDashboard1,
   getQuizTotalPoints,
   getQuestionDistribution,
   getQuizAttempts,
@@ -352,6 +358,7 @@ import {
   cancelEnrollment,
   getEnrollment,
   getStudentSchedule,
+  searchEnrollments,
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
@@ -431,6 +438,7 @@ import {
   dissociateRubric,
   dissociateRubricByContext,
   removeCategoryFromCourse,
+  removeItem,
   removeAdminDomain,
 } from '../sdk.gen';
 import {
@@ -1253,6 +1261,16 @@ import type {
   GetCourseCreatorRubricsData,
   GetCourseCreatorRubricsError,
   GetCourseCreatorRubricsResponse,
+  GetRevenueDashboardData,
+  GetAnalyticsOverviewData,
+  ListSalesData,
+  ListSalesError,
+  ListSalesResponse,
+  GetPlatformFeeSummaryData,
+  ListPaymentsData,
+  ListPaymentsError,
+  ListPaymentsResponse,
+  GetRevenueDashboard1Data,
   GetQuizTotalPointsData,
   GetQuestionDistributionData,
   GetQuizAttemptsData,
@@ -1347,6 +1365,9 @@ import type {
   GetStudentScheduleData,
   GetStudentScheduleError,
   GetStudentScheduleResponse,
+  SearchEnrollmentsData,
+  SearchEnrollmentsError,
+  SearchEnrollmentsResponse,
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
@@ -1500,6 +1521,9 @@ import type {
   RemoveCategoryFromCourseData,
   RemoveCategoryFromCourseError,
   RemoveCategoryFromCourseResponse,
+  RemoveItemData,
+  RemoveItemError,
+  RemoveItemResponse,
   RemoveAdminDomainData,
   RemoveAdminDomainError,
   RemoveAdminDomainResponse,
@@ -14743,6 +14767,220 @@ export const getCourseCreatorRubricsInfiniteOptions = (
   );
 };
 
+export const getRevenueDashboardQueryKey = (options: Options<GetRevenueDashboardData>) =>
+  createQueryKey('getRevenueDashboard', options);
+
+/**
+ * [Deprecated] Get revenue dashboard analytics
+ */
+export const getRevenueDashboardOptions = (options: Options<GetRevenueDashboardData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRevenueDashboard({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRevenueDashboardQueryKey(options),
+  });
+};
+
+export const getAnalyticsOverviewQueryKey = (options?: Options<GetAnalyticsOverviewData>) =>
+  createQueryKey('getAnalyticsOverview', options);
+
+/**
+ * Get revenue analytics for all domains of the current user
+ */
+export const getAnalyticsOverviewOptions = (options?: Options<GetAnalyticsOverviewData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAnalyticsOverview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAnalyticsOverviewQueryKey(options),
+  });
+};
+
+export const listSalesQueryKey = (options: Options<ListSalesData>) =>
+  createQueryKey('listSales', options);
+
+/**
+ * List sales line items for revenue analytics
+ */
+export const listSalesOptions = (options: Options<ListSalesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listSales({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listSalesQueryKey(options),
+  });
+};
+
+export const listSalesInfiniteQueryKey = (
+  options: Options<ListSalesData>
+): QueryKey<Options<ListSalesData>> => createQueryKey('listSales', options, true);
+
+/**
+ * List sales line items for revenue analytics
+ */
+export const listSalesInfiniteOptions = (options: Options<ListSalesData>) => {
+  return infiniteQueryOptions<
+    ListSalesResponse,
+    ListSalesError,
+    InfiniteData<ListSalesResponse>,
+    QueryKey<Options<ListSalesData>>,
+    number | Pick<QueryKey<Options<ListSalesData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListSalesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listSales({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listSalesInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getPlatformFeeSummaryQueryKey = (options?: Options<GetPlatformFeeSummaryData>) =>
+  createQueryKey('getPlatformFeeSummary', options);
+
+/**
+ * Summarize platform fees withheld
+ */
+export const getPlatformFeeSummaryOptions = (options?: Options<GetPlatformFeeSummaryData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPlatformFeeSummary({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPlatformFeeSummaryQueryKey(options),
+  });
+};
+
+export const listPaymentsQueryKey = (options: Options<ListPaymentsData>) =>
+  createQueryKey('listPayments', options);
+
+/**
+ * List payment transactions for revenue analytics
+ */
+export const listPaymentsOptions = (options: Options<ListPaymentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listPayments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listPaymentsQueryKey(options),
+  });
+};
+
+export const listPaymentsInfiniteQueryKey = (
+  options: Options<ListPaymentsData>
+): QueryKey<Options<ListPaymentsData>> => createQueryKey('listPayments', options, true);
+
+/**
+ * List payment transactions for revenue analytics
+ */
+export const listPaymentsInfiniteOptions = (options: Options<ListPaymentsData>) => {
+  return infiniteQueryOptions<
+    ListPaymentsResponse,
+    ListPaymentsError,
+    InfiniteData<ListPaymentsResponse>,
+    QueryKey<Options<ListPaymentsData>>,
+    number | Pick<QueryKey<Options<ListPaymentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListPaymentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listPayments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listPaymentsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getRevenueDashboard1QueryKey = (options: Options<GetRevenueDashboard1Data>) =>
+  createQueryKey('getRevenueDashboard1', options);
+
+/**
+ * Get revenue analytics for a specific domain
+ */
+export const getRevenueDashboard1Options = (options: Options<GetRevenueDashboard1Data>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRevenueDashboard1({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRevenueDashboard1QueryKey(options),
+  });
+};
+
 export const getQuizTotalPointsQueryKey = (options: Options<GetQuizTotalPointsData>) =>
   createQueryKey('getQuizTotalPoints', options);
 
@@ -17256,6 +17494,74 @@ export const getStudentScheduleInfiniteOptions = (options: Options<GetStudentSch
         return data;
       },
       queryKey: getStudentScheduleInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const searchEnrollmentsQueryKey = (options: Options<SearchEnrollmentsData>) =>
+  createQueryKey('searchEnrollments', options);
+
+/**
+ * Search enrollments
+ * Search enrollments using query parameters such as student_uuid and class_definition_uuid.
+ */
+export const searchEnrollmentsOptions = (options: Options<SearchEnrollmentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchEnrollments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchEnrollmentsQueryKey(options),
+  });
+};
+
+export const searchEnrollmentsInfiniteQueryKey = (
+  options: Options<SearchEnrollmentsData>
+): QueryKey<Options<SearchEnrollmentsData>> => createQueryKey('searchEnrollments', options, true);
+
+/**
+ * Search enrollments
+ * Search enrollments using query parameters such as student_uuid and class_definition_uuid.
+ */
+export const searchEnrollmentsInfiniteOptions = (options: Options<SearchEnrollmentsData>) => {
+  return infiniteQueryOptions<
+    SearchEnrollmentsResponse,
+    SearchEnrollmentsError,
+    InfiniteData<SearchEnrollmentsResponse>,
+    QueryKey<Options<SearchEnrollmentsData>>,
+    | number
+    | Pick<QueryKey<Options<SearchEnrollmentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchEnrollmentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchEnrollments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchEnrollmentsInfiniteQueryKey(options),
     }
   );
 };
@@ -20830,6 +21136,30 @@ export const removeCategoryFromCourseMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await removeCategoryFromCourse({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove an item from a cart
+ * Removes a line item from an existing cart
+ */
+export const removeItemMutation = (
+  options?: Partial<Options<RemoveItemData>>
+): UseMutationOptions<RemoveItemResponse, RemoveItemError, Options<RemoveItemData>> => {
+  const mutationOptions: UseMutationOptions<
+    RemoveItemResponse,
+    RemoveItemError,
+    Options<RemoveItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await removeItem({
         ...options,
         ...localOptions,
         throwOnError: true,

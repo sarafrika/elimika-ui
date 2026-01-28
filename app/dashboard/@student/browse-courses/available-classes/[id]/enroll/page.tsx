@@ -19,6 +19,8 @@ import { AlertCircle, Armchair, ArrowLeft, Calendar, DollarSign, MapPin, User } 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import RichTextRenderer from '../../../../../../../components/editors/richTextRenders';
+import { useScheduleStats } from '../../../../../../../hooks/use-schedule-stats';
 import { ClassScheduleCalendar } from '../../../../../../class-invite/page';
 import { CustomLoadingState } from '../../../../../@course_creator/_components/loading-state';
 
@@ -52,50 +54,7 @@ const EnrollClassPage = () => {
   const totalHours = totalMinutes / 60;
   const totalHoursRounded = `${Math.round(totalHours)}`;
 
-  const scheduleStats = useMemo(() => {
-    if (!schedule.length) {
-      return {
-        sessions: 0,
-        totalMinutes: 0,
-        totalHours: '0h',
-        mostCommonDuration: 'N/A',
-      };
-    }
-
-    // 1. Sessions
-    const sessions = schedule.length;
-
-    // 2. Total duration
-    const totalMinutes = schedule.reduce((sum: any, s: any) => {
-      const minutes = Number(s?.duration_minutes);
-      return sum + (Number.isFinite(minutes) ? minutes : 0);
-    }, 0);
-
-    const totalHours = `${(totalMinutes / 60).toFixed(1)}`;
-
-    // 3. Most common duration
-    const durationMap: Record<number, number> = {};
-
-    schedule.forEach((s: any) => {
-      const minutes = Number(s?.duration_minutes);
-      if (Number.isFinite(minutes)) {
-        durationMap[minutes] = (durationMap[minutes] || 0) + 1;
-      }
-    });
-
-    const mostCommonMinutes = Number(
-      Object.entries(durationMap).sort((a, b) => b[1] - a[1])[0]?.[0]
-    );
-
-    const mostCommonDuration = mostCommonMinutes ? `${mostCommonMinutes / 60}` : 'N/A';
-
-    return {
-      sessions,
-      totalMinutes,
-      totalHours,
-      mostCommonDuration,
-    };
-  }, [enrollingClass]);
+  const scheduleStats = useScheduleStats(schedule);
 
   // Format dates
   const { formattedStart, formattedEnd } = useMemo(() => {
@@ -325,7 +284,7 @@ const EnrollClassPage = () => {
           <div className='space-y-2'>
             <h2 className='text-2xl font-semibold'>{enrollingClass?.course?.name || 'N/A'}</h2>
             {enrollingClass?.course?.description && (
-              <p className='text-muted-foreground text-sm'>{enrollingClass.course.description}</p>
+              <RichTextRenderer htmlString={enrollingClass.course.description} />
             )}
           </div>
 
@@ -388,7 +347,7 @@ const EnrollClassPage = () => {
                 <div className='space-y-1'>
                   <p className='text-sm font-medium'>Session Duration</p>
                   <p className='text-muted-foreground text-sm'>
-                    {scheduleStats.mostCommonDuration} hr(s)
+                    {scheduleStats.mostCommonDuration} - {schedule.length} class instances
                   </p>
                 </div>
               </div>

@@ -411,9 +411,9 @@ export const zStudent = z
         '**[OPTIONAL]** Short biography or notes about the student. Used in student profiles.'
       )
       .optional(),
-    allGuardianContacts: z.array(z.string()).optional(),
-    primaryGuardianContact: z.string().optional(),
     secondaryGuardianContact: z.string().optional(),
+    primaryGuardianContact: z.string().optional(),
+    allGuardianContacts: z.array(z.string()).optional(),
     full_name: z
       .string()
       .describe(
@@ -4918,16 +4918,16 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
-      .readonly()
-      .optional(),
     assignment_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.'
       )
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
     assignment_scope: z
@@ -5569,6 +5569,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -5582,11 +5587,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -6407,7 +6407,7 @@ export const zApiResponseAssignmentSubmission = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
-export const zSchemaEnum5 = z.enum(['admin', 'organisation_user']);
+export const zSchemaEnum6 = z.enum(['admin', 'organisation_user']);
 
 /**
  * Type of assignment - global or organization-specific
@@ -6421,7 +6421,7 @@ export const zAssignmentTypeEnum = z
  */
 export const zAdminDomainAssignmentRequest = z
   .object({
-    domain_name: zSchemaEnum5,
+    domain_name: zSchemaEnum6,
     assignment_type: zAssignmentTypeEnum,
     reason: z.string().min(0).max(500).describe('Reason for assigning admin privileges').optional(),
     effective_date: z
@@ -6811,6 +6811,138 @@ export const zApiResponseMapStringLong = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+export const zRevenueAmountDto = z.object({
+  currency_code: z.string().optional(),
+  amount: z.number().optional(),
+});
+
+export const zRevenueScopeBreakdownDto = z.object({
+  scope: z.string().optional(),
+  gross_totals: z.array(zRevenueAmountDto).optional(),
+  estimated_earnings: z.array(zRevenueAmountDto).optional(),
+  line_item_count: z.coerce.bigint().optional(),
+  units_sold: z.coerce.bigint().optional(),
+});
+
+export const zRevenueTimeSeriesPointDto = z.object({
+  date: z.string().date().optional(),
+  gross_totals: z.array(zRevenueAmountDto).optional(),
+  estimated_earnings: z.array(zRevenueAmountDto).optional(),
+  order_count: z.coerce.bigint().optional(),
+  units_sold: z.coerce.bigint().optional(),
+});
+
+export const zRevenueDashboardDto = z.object({
+  domain: z.string().optional(),
+  start_date: z.string().date().optional(),
+  end_date: z.string().date().optional(),
+  gross_totals: z.array(zRevenueAmountDto).optional(),
+  estimated_earnings: z.array(zRevenueAmountDto).optional(),
+  order_count: z.coerce.bigint().optional(),
+  line_item_count: z.coerce.bigint().optional(),
+  units_sold: z.coerce.bigint().optional(),
+  average_order_value: z.array(zRevenueAmountDto).optional(),
+  scope_breakdown: z.array(zRevenueScopeBreakdownDto).optional(),
+  daily_series: z.array(zRevenueTimeSeriesPointDto).optional(),
+});
+
+export const zApiResponseRevenueDashboardDto = z.object({
+  success: z.boolean().optional(),
+  data: zRevenueDashboardDto.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zRevenueDomainAnalyticsDto = z.object({
+  domain: z.string().optional(),
+  dashboard: zRevenueDashboardDto.optional(),
+});
+
+export const zRevenueAnalyticsOverviewDto = z.object({
+  start_date: z.string().date().optional(),
+  end_date: z.string().date().optional(),
+  domains: z.array(zRevenueDomainAnalyticsDto).optional(),
+});
+
+export const zApiResponseRevenueAnalyticsOverviewDto = z.object({
+  success: z.boolean().optional(),
+  data: zRevenueAnalyticsOverviewDto.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zRevenueSaleLineItemDto = z.object({
+  order_id: z.string().optional(),
+  order_number: z.string().optional(),
+  order_created_at: z.string().datetime().optional(),
+  payment_status: z.string().optional(),
+  order_currency_code: z.string().optional(),
+  order_subtotal_amount: z.number().optional(),
+  order_total_amount: z.number().optional(),
+  platform_fee_amount: z.number().optional(),
+  platform_fee_currency: z.string().optional(),
+  platform_fee_rule_uuid: z.string().uuid().optional(),
+  buyer_user_uuid: z.string().uuid().optional(),
+  customer_email: z.string().optional(),
+  line_item_id: z.string().optional(),
+  variant_id: z.string().optional(),
+  title: z.string().optional(),
+  quantity: z.number().int().optional(),
+  unit_price: z.number().optional(),
+  subtotal: z.number().optional(),
+  total: z.number().optional(),
+  scope: z.string().optional(),
+  course_uuid: z.string().uuid().optional(),
+  class_definition_uuid: z.string().uuid().optional(),
+  student_uuid: z.string().uuid().optional(),
+});
+
+export const zPagedDtoRevenueSaleLineItemDto = z.object({
+  content: z.array(zRevenueSaleLineItemDto).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoRevenueSaleLineItemDto = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoRevenueSaleLineItemDto.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseListRevenueAmountDto = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zRevenueAmountDto).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zRevenuePaymentDto = z.object({
+  payment_uuid: z.string().uuid().optional(),
+  order_uuid: z.string().uuid().optional(),
+  order_total_amount: z.number().optional(),
+  order_currency_code: z.string().optional(),
+  provider: z.string().optional(),
+  status: z.string().optional(),
+  amount: z.number().optional(),
+  currency_code: z.string().optional(),
+  external_reference: z.string().optional(),
+  processed_at: z.string().datetime().optional(),
+});
+
+export const zPagedDtoRevenuePaymentDto = z.object({
+  content: z.array(zRevenuePaymentDto).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoRevenuePaymentDto = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoRevenuePaymentDto.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 export const zPagedDtoQuiz = z.object({
   content: z.array(zQuiz).optional(),
   metadata: zPageMetadata.optional(),
@@ -7131,11 +7263,6 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
-      .readonly()
-      .optional(),
     enrollment_duration: z
       .string()
       .describe(
@@ -7148,6 +7275,11 @@ export const zProgramEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
       .readonly()
       .optional(),
   })
@@ -7571,6 +7703,19 @@ export const zApiResponseListStudentSchedule = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+export const zPagedDtoEnrollment = z.object({
+  content: z.array(zEnrollment).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoEnrollment = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoEnrollment.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 export const zApiResponseLong = z.object({
   success: z.boolean().optional(),
   data: z.coerce.bigint().optional(),
@@ -7769,11 +7914,6 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
-      .readonly()
-      .optional(),
     enrollment_duration: z
       .string()
       .describe(
@@ -7786,6 +7926,11 @@ export const zCourseEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
       .readonly()
       .optional(),
   })
@@ -8532,6 +8677,15 @@ export const zDocumentUrl = z.unknown().describe('A valid URL pointing to a docu
 export const zSocialMediaUrl = z.unknown().describe('A valid social media profile URL');
 
 export const zSchemaEnum3 = z.enum(['approve', 'reject', 'revoke']);
+
+export const zSchemaEnum5 = z.enum([
+  'student',
+  'instructor',
+  'admin',
+  'parent',
+  'organisation_user',
+  'course_creator',
+]);
 
 export const zDeleteUserData = z.object({
   body: z.never().optional(),
@@ -12776,6 +12930,107 @@ export const zGetCourseCreatorRubricsData = z.object({
  */
 export const zGetCourseCreatorRubricsResponse = zApiResponsePagedDtoAssessmentRubric;
 
+export const zGetRevenueDashboardData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    domain: zSchemaEnum5,
+    start_date: z.string().date().optional(),
+    end_date: z.string().date().optional(),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetRevenueDashboardResponse = zApiResponseRevenueDashboardDto;
+
+export const zGetAnalyticsOverviewData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      start_date: z.string().date().optional(),
+      end_date: z.string().date().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetAnalyticsOverviewResponse = zApiResponseRevenueAnalyticsOverviewDto;
+
+export const zListSalesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    domain: zSchemaEnum5,
+    start_date: z.string().date().optional(),
+    end_date: z.string().date().optional(),
+    payment_status: z.string().optional(),
+    scope: z.string().optional(),
+    course_uuid: z.string().uuid().optional(),
+    class_definition_uuid: z.string().uuid().optional(),
+    student_uuid: z.string().uuid().optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zListSalesResponse = zApiResponsePagedDtoRevenueSaleLineItemDto;
+
+export const zGetPlatformFeeSummaryData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      start_date: z.string().date().optional(),
+      end_date: z.string().date().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetPlatformFeeSummaryResponse = zApiResponseListRevenueAmountDto;
+
+export const zListPaymentsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    domain: zSchemaEnum5,
+    start_date: z.string().date().optional(),
+    end_date: z.string().date().optional(),
+    status: z.string().optional(),
+    order_id: z.string().optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zListPaymentsResponse = zApiResponsePagedDtoRevenuePaymentDto;
+
+export const zGetRevenueDashboard1Data = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    domain: zSchemaEnum5,
+    start_date: z.string().date().optional(),
+    end_date: z.string().date().optional(),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetRevenueDashboard1Response = zApiResponseRevenueDashboardDto;
+
 export const zGetQuizTotalPointsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -13378,6 +13633,20 @@ export const zGetStudentScheduleData = z.object({
  * Student schedule retrieved successfully
  */
 export const zGetStudentScheduleResponse = zApiResponseListStudentSchedule;
+
+export const zSearchEnrollmentsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    searchParams: z.record(z.string()),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Enrollment search completed successfully
+ */
+export const zSearchEnrollmentsResponse = zApiResponsePagedDtoEnrollment;
 
 export const zGetEnrollmentsForInstanceData = z.object({
   body: z.never().optional(),
@@ -14451,11 +14720,25 @@ export const zRemoveCategoryFromCourseData = z.object({
  */
 export const zRemoveCategoryFromCourseResponse = zApiResponseString;
 
+export const zRemoveItemData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    cartId: z.string().describe('Identifier of the cart to update'),
+    itemId: z.string().describe('Identifier of the cart item to remove'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Item removed
+ */
+export const zRemoveItemResponse = zCartResponse;
+
 export const zRemoveAdminDomainData = z.object({
   body: z.never().optional(),
   path: z.object({
     uuid: z.string().uuid().describe('UUID of the user to remove admin domain from'),
-    domain: zSchemaEnum5,
+    domain: zSchemaEnum6,
   }),
   query: z
     .object({
