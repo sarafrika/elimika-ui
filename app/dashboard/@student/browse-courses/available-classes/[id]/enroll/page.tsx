@@ -19,6 +19,8 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import RichTextRenderer from '../../../../../../../components/editors/richTextRenders';
+import { useUserProfile } from '../../../../../../../context/profile-context';
+import { useUserDomain } from '../../../../../../../context/user-domain-context';
 import { useScheduleStats } from '../../../../../../../hooks/use-schedule-stats';
 import { useCartStore } from '../../../../../../../store/cart-store';
 import { ClassScheduleCalendar } from '../../../../../../class-invite/page';
@@ -29,6 +31,8 @@ const EnrollClassPage = () => {
   const params = useParams();
   const router = useRouter();
   const qc = useQueryClient();
+  const domain = useUserDomain()
+  const user = useUserProfile()
 
   const courseId = params?.id as string;
   const classId = searchParams.get('id');

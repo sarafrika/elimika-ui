@@ -27,6 +27,7 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import { useInstructor } from '../../../../context/instructor-context';
 import {
+  getRevenueDashboardOptions,
   getWalletOptions,
   listTransactionsOptions,
 } from '../../../../services/client/@tanstack/react-query.gen';
@@ -130,6 +131,12 @@ const RevenuePage = () => {
     () => listTransactions?.data?.content || [],
     [listTransactions?.data?.content]
   );
+
+  const { data: revenueData } = useQuery({
+    ...getRevenueDashboardOptions({ query: { domain: "instructor" } }),
+    enabled: !!instructor?.uuid
+  })
+  const revenueAnalytics = revenueData?.data
 
   // Calculate analytics from actual transactions
   const analyticsData = useMemo(() => {
@@ -358,7 +365,8 @@ const RevenuePage = () => {
               </div>
               <p className="mt-3 text-sm text-muted-foreground">Total Revenue</p>
               <p className="mt-1 text-2xl font-bold text-foreground">
-                KES {analyticsData.totalRevenue.toLocaleString()}
+                {revenueAnalytics?.estimated_earnings?.map(i => i.currency_code)}
+                {revenueAnalytics?.estimated_earnings?.map(i => i.amount)}
               </p>
             </div>
 
@@ -385,7 +393,7 @@ const RevenuePage = () => {
                 </div>
                 <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
                   <ArrowUpRight size={16} />
-                  {analyticsData.completedTransactions}
+                  {revenueAnalytics?.units_sold}
                 </span>
               </div>
               <p className="mt-3 text-sm text-muted-foreground">Completed</p>
@@ -401,15 +409,13 @@ const RevenuePage = () => {
                 </div>
                 <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
                   <ArrowUpRight size={16} />
-                  +5.2%
+                  +0
                 </span>
               </div>
               <p className="mt-3 text-sm text-muted-foreground">Avg Transaction</p>
               <p className="mt-1 text-2xl font-bold text-foreground">
-                KES{' '}
-                {analyticsData.averageTransactionValue.toLocaleString('en-US', {
-                  maximumFractionDigits: 0,
-                })}
+                {revenueAnalytics?.average_order_value?.map(i => i.currency_code)}
+                {revenueAnalytics?.average_order_value?.map(i => i.amount)}
               </p>
             </div>
           </div>

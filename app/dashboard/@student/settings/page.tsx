@@ -21,10 +21,14 @@ import {
   Award,
   Check,
   Copy,
+  CreditCard,
+  DollarSign,
   Download,
   Eye,
   EyeOff,
+  FileText,
   Lock,
+  Plus,
   Receipt,
   Settings2,
   Shield,
@@ -33,7 +37,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import StudentPaymentPage from './_components/StudentPaymentPage';
+import { Badge } from '../../../../components/ui/badge';
 import CertificatesPage from './_components/certificate-page';
 
 interface PaymentMethod {
@@ -265,7 +269,136 @@ const SettingsPage = () => {
 
         {/* Billing & Payments Tab */}
         <TabsContent value='billing' className='space-y-6'>
-          <StudentPaymentPage />
+          {/* Current Plan */}
+          <Card className='p-6'>
+            <h2 className='mb-4 text-lg font-semibold'>Current Plan</h2>
+            <div className='flex items-center justify-between'>
+              <div>
+                <div className='mb-1 flex items-center gap-2'>
+                  <h3 className='text-xl font-bold'>Pro Plan</h3>
+                  <Badge variant='default'>Active</Badge>
+                </div>
+                <p className='text-muted-foreground text-sm'>
+                  $299.99/month • Renews on February 15, 2025
+                </p>
+              </div>
+              <Button variant='outline'>Change Plan</Button>
+            </div>
+          </Card>
+
+          {/* Payment Methods */}
+          <Card className='p-6'>
+            <div className='mb-4 flex items-center justify-between'>
+              <h2 className='text-lg font-semibold'>Payment Methods</h2>
+              <Button size='sm'>
+                <Plus className='mr-2 h-4 w-4' />
+                Add Payment Method
+              </Button>
+            </div>
+            <div className='space-y-3'>
+              {paymentMethods.map(method => (
+                <div
+                  key={method.id}
+                  className='flex items-center justify-between rounded-lg border p-4'
+                >
+                  <div className='flex items-center gap-4'>
+                    <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full'>
+                      {method.type === 'card' && <CreditCard className='text-primary h-5 w-5' />}
+                      {method.type === 'paypal' && <DollarSign className='text-primary h-5 w-5' />}
+                    </div>
+                    <div>
+                      <div className='flex items-center gap-2'>
+                        <p className='font-medium'>
+                          {method.type === 'card'
+                            ? `${method.brand} •••• ${method.last4}`
+                            : method.email}
+                        </p>
+                        {method.isDefault && (
+                          <Badge variant='secondary' className='text-xs'>
+                            Default
+                          </Badge>
+                        )}
+                      </div>
+                      {method.type === 'card' && (
+                        <p className='text-muted-foreground text-sm'>
+                          Expires {method.expiryMonth}/{method.expiryYear}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className='flex gap-2'>
+                    {!method.isDefault && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => handleSetDefaultPayment(method.id)}
+                      >
+                        Set as Default
+                      </Button>
+                    )}
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => handleRemovePayment(method.id)}
+                    >
+                      <Trash2 className='h-4 w-4' />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Billing History */}
+          <Card className='p-6'>
+            <div className='mb-4 flex items-center justify-between'>
+              <h2 className='text-lg font-semibold'>Billing History</h2>
+              <Button variant='outline' size='sm'>
+                <Download className='mr-2 h-4 w-4' />
+                Download All
+              </Button>
+            </div>
+            <div className='space-y-3'>
+              {billingHistory.map(bill => (
+                <div
+                  key={bill.id}
+                  className='flex items-center justify-between rounded-lg border p-4'
+                >
+                  <div className='flex items-center gap-4'>
+                    <div className='flex h-10 w-10 items-center justify-center rounded-full bg-green-100'>
+                      <FileText className='h-5 w-5 text-green-600' />
+                    </div>
+                    <div>
+                      <p className='font-medium'>{bill.description}</p>
+                      <p className='text-muted-foreground text-sm'>
+                        {bill.date.toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className='flex items-center gap-4'>
+                    <div className='text-right'>
+                      <p className='font-semibold'>${bill.amount.toFixed(2)}</p>
+                      <Badge
+                        variant={
+                          bill.status === 'paid'
+                            ? 'secondary'
+                            : bill.status === 'pending'
+                              ? 'outline'
+                              : 'destructive'
+                        }
+                        className='text-xs'
+                      >
+                        {bill.status}
+                      </Badge>
+                    </div>
+                    <Button variant='ghost' size='sm'>
+                      <Download className='h-4 w-4' />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </TabsContent>
 
         {/* Privacy Tab */}
