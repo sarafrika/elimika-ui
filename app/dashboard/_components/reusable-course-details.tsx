@@ -25,14 +25,12 @@ import {
   Award,
   BookOpen,
   CheckCircle,
-  Clock,
   EyeIcon,
   FileQuestion,
   FileText,
   ImageIcon,
   Link2,
   Play,
-  Star,
   Users,
   Video,
   Volume2
@@ -278,36 +276,27 @@ export default function ReusableCourseDetailsPage({
         <div className='mb-8 grid grid-cols-1 gap-8 lg:grid-cols-3'>
           <div className='lg:col-span-2'>
             <div className='mb-3 flex items-center gap-2'>
-              {courseData?.category_names?.map((category, index) => (
-                <Badge key={index} variant='outline' className='text-xs'>
-                  {category}
-                </Badge>
-              ))}
-            </div>
-
-            <div className='mb-3 flex items-center gap-2'>
               <Badge className='bg-green-100 text-green-800'>
                 {getDifficultyNameFromUUID(courseData?.difficulty_uuid as string)}
               </Badge>
             </div>
 
-            <h1 className='mb-2 text-lg font-bold'>{courseData?.name}</h1>
-            <p className='text-muted-foreground mb-4 text-[15px] italic'>
-              {courseData?.is_free || 'N/A - Subtitle/tagline'}
-            </p>
-
-            <div className='mb-4 flex items-center gap-6'>
-              <div className='flex items-center gap-1'>
-                <Star className='h-4 w-4 fill-yellow-400 text-yellow-400' />
-                <span>{'N/A'}</span>
+            <div>
+              <h1 className='mb-2 text-lg font-bold'>{courseData?.name}</h1>
+              <div className='mb-3 flex items-center gap-2'>
+                {courseData?.category_names?.map((category, index) => (
+                  <Badge key={index} variant='outline' className='text-xs'>
+                    {category}
+                  </Badge>
+                ))}
               </div>
+            </div>
+            <RichTextRenderer htmlString={courseData?.description!} />
+
+            <div className='mb-4 flex items-center gap-6 mt-4'>
               <div className='flex items-center gap-1'>
                 <Users className='h-4 w-4' />
                 <span>{courseData?.class_limit} class limit</span>
-              </div>
-              <div className='flex items-center gap-1'>
-                <Clock className='h-4 w-4' />
-                <span>{courseData?.total_duration_display}</span>
               </div>
             </div>
 

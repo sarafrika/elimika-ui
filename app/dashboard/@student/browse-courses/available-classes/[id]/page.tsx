@@ -1,21 +1,16 @@
 'use client';
 
-import ConfirmModal from '@/components/custom-modals/confirm-modal';
 import { Card } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import {
-  completeCartMutation,
   enrollStudentMutation,
-  getCartOptions,
   getStudentScheduleQueryKey,
-  listCatalogItemsOptions,
-  selectPaymentSessionMutation,
+  listCatalogItemsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addYears, format } from 'date-fns';
-import { ShoppingCart } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -129,6 +124,7 @@ const EnrollmentPage = () => {
   }, [enrollingClass]);
 
   const enrollStudent = useMutation(enrollStudentMutation());
+
   const handleEnrollStudent = () => {
     if (!student?.uuid) return toast.error('Student not found');
     if (!enrollingClass?.uuid) return toast.error('Class not found');
@@ -163,45 +159,8 @@ const EnrollmentPage = () => {
       }
     );
   };
-
-  const savedCartId = localStorage.getItem('cart_id');
-  const [openCartModal, setOpenCartModal] = useState(false);
-
-  const { data: cartData } = useQuery(getCartOptions({ path: { cartId: savedCartId as string } }));
   // @ts-ignore
-  const cart = cartData?.data;
 
-  const cartPaymentSession = useMutation(selectPaymentSessionMutation());
-  const handlePaymentSession = (cart: any) => {
-    cartPaymentSession.mutate(
-      {
-        path: { cartId: cart.id },
-        body: { provider_id: 'manual' },
-      },
-      {
-        onSuccess: data => {
-          toast.success('Redirecting to payment…'), setOpenCartModal(false);
-        },
-      }
-    );
-  };
-
-  const completeCart = useMutation(completeCartMutation());
-  const handleCompleteCart = () => [
-    completeCart.mutate(
-      {
-        path: { cartId: savedCartId as string },
-      },
-      {
-        onSuccess: (data: any) => {
-          toast.success('Success');
-        },
-        onError: (error: any) => {
-          toast.error(error?.message);
-        },
-      }
-    ),
-  ];
 
   return (
     <div className='space-y-4 pb-10'>
@@ -212,17 +171,6 @@ const EnrollmentPage = () => {
             Discover courses designed to help you grow and succeed.
           </p>
         </div>
-
-        <div className='relative cursor-pointer' onClick={() => setOpenCartModal(true)}>
-          <ShoppingCart />
-          <span className='bg-destructive absolute -top-2.5 -right-2.5 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-white'>
-            {cart?.items.length}
-          </span>
-        </div>
-
-        {/* <div className='cursor-pointer' onClick={handleCompleteCart} >
-          <span>Complete Cart</span>
-        </div> */}
       </div>
 
       {/* Date filter controls */}
@@ -335,88 +283,6 @@ const EnrollmentPage = () => {
         </>
       )}
 
-      {/* <ConfirmModal
-        open={openEnrollModal}
-        setOpen={setOpenEnrollModal}
-        title='Confirm Enrollment'
-        description={
-          <div className='text-muted-foreground space-y-3 text-sm'>
-            <p>
-              You are about to <strong>enroll</strong> in the following class/program:
-            </p>
-
-            <div className='bg-muted/60 rounded-md border p-3'>
-              <p>
-                <strong>Course Name:</strong> {enrollingClass?.course?.name || 'N/A'}
-              </p>
-              <p>
-                <strong>Instructor:</strong> {enrollingClass?.instructor?.full_name || 'N/A'}
-              </p>
-              <p>
-                <strong>Start Date:</strong> {formattedStart}
-              </p>
-              <p>
-                <strong>End Date:</strong> {formattedEnd}
-              </p>
-              {enrollingClass?.location_type && (
-                <p>
-                  <strong>Location:</strong> {enrollingClass.location_type}
-                </p>
-              )}
-            </div>
-
-            <p>
-              By enrolling, you’ll gain access to course materials, session updates, and any
-              assessments or assignments tied to this program.
-            </p>
-
-            <p>
-              <strong>Training Fee: </strong>KES {enrollingClass?.training_fee || 'N/A'}
-            </p>
-
-            <p className='font-medium text-yellow-600'>
-              Note: Once enrolled, you may need to contact your instructor or admin to withdraw.
-            </p>
-          </div>
-        }
-        onConfirm={handleEnrollStudent}
-        isLoading={enrollStudent.isPending}
-        confirmText='Yes, Enroll Me'
-        cancelText='No, Cancel'
-        variant='primary'
-      /> */}
-
-      <ConfirmModal
-        open={openCartModal}
-        setOpen={setOpenCartModal}
-        title='Your Cart'
-        description={
-          <div className='text-foreground space-y-4 text-sm'>
-            {cart?.items?.length === 0 && (
-              <p className='text-muted-foreground text-center'>Your cart is empty.</p>
-            )}
-
-            {cart?.items?.map((item: any) => (
-              <div key={item.id} className='bg-muted/50 space-y-1 rounded-md border p-3'>
-                <p className='font-medium'>{item.title}</p>
-                <p className='text-muted-foreground text-xs'>Quantity: {item.quantity}</p>
-                <p className='text-xs'>Unit Price: ${item.unit_price}</p>
-                <p className='text-xs font-semibold'>Subtotal: ${item.total}</p>
-              </div>
-            ))}
-
-            <div className='border-t pt-3'>
-              <p className='text-base font-semibold'>Cart Total: ${cart?.total}</p>
-            </div>
-          </div>
-        }
-        confirmText='Proceed to Payment'
-        cancelText='Close'
-        variant='primary'
-        onConfirm={() => {
-          handlePaymentSession(cart);
-        }}
-      />
     </div>
   );
 };

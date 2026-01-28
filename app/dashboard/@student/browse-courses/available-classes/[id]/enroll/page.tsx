@@ -10,8 +10,7 @@ import {
   createCartMutation,
   enrollStudentMutation,
   getCartQueryKey,
-  getStudentScheduleQueryKey,
-  selectPaymentSessionMutation,
+  getStudentScheduleQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -21,6 +20,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import RichTextRenderer from '../../../../../../../components/editors/richTextRenders';
 import { useScheduleStats } from '../../../../../../../hooks/use-schedule-stats';
+import { useCartStore } from '../../../../../../../store/cart-store';
 import { ClassScheduleCalendar } from '../../../../../../class-invite/page';
 import { CustomLoadingState } from '../../../../../@course_creator/_components/loading-state';
 
@@ -99,6 +99,74 @@ const EnrollClassPage = () => {
     }
   }, [replaceBreadcrumbs]);
 
+  const { cartId: savedCartId, setCartId } = useCartStore();
+  const createCart = useMutation(createCartMutation());
+  const addItemToCart = useMutation(addItemMutation());
+
+  const handleCreateCartAndPay = (cls: any) => {
+    if (!cls) return;
+    const catalogue = cls.catalogue;
+
+    if (catalogue === null) {
+      toast.error('No catalogue found for this class');
+      return;
+    }
+
+    if (!savedCartId) {
+      createCart.mutate(
+        {
+          body: {
+            currency_code: 'KES',
+            region_code: 'KE',
+            items: [
+              {
+                variant_id: catalogue.variant_code,
+                quantity: 1,
+              },
+            ],
+          },
+        },
+        {
+          onSuccess: (data: any) => {
+            const cartId = data?.data?.id || null;
+            if (cartId) { setCartId(cartId) }
+
+            qc.invalidateQueries({
+              queryKey: getCartQueryKey({ path: { cartId: cartId as string } })
+            })
+
+            toast.success('Class added to cart!');
+            router.push('/cart')
+
+          },
+          onError: (error: any) => { toast.error(error.message); },
+        }
+      );
+
+      return;
+    }
+
+    addItemToCart.mutate(
+      {
+        path: { cartId: savedCartId as string },
+        body: {
+          variant_id: catalogue.variant_code,
+          quantity: 1,
+        },
+      },
+      {
+        onSuccess: data => {
+          qc.invalidateQueries({
+            queryKey: getCartQueryKey({ path: { cartId: savedCartId as string } })
+          })
+
+          router.push('/cart')
+          toast.success('Class added to cart!');
+        },
+      }
+    );
+  };
+
   // Enrollment mutation
   const enrollStudent = useMutation(enrollStudentMutation());
   const handleEnrollStudent = () => {
@@ -130,108 +198,12 @@ const EnrollClassPage = () => {
           router.push(`/dashboard/browse-courses/available-classes/${courseId}`);
         },
         onError: err => {
-          // @ts-expect-error
-          toast.error(err?.error || 'Failed to enroll');
-          setEnrollmentError(true);
-          setTimeout(() => {
-            setEnrollmentError(false);
-          }, 60_000); // 1 minute
+          handleCreateCartAndPay(enrollingClass)
         },
       }
     );
   };
 
-  // pay for class
-  const savedCartId = localStorage.getItem('cart_id');
-  const createCart = useMutation(createCartMutation());
-  const addItemToCart = useMutation(addItemMutation());
-  const cartPaymentSession = useMutation(selectPaymentSessionMutation());
-  const payIsPending =
-    createCart.isPending || addItemToCart.isPending || cartPaymentSession.isPending;
-
-  const handleCreateCartAndPay = (cls: any) => {
-    if (!cls) return;
-    const catalogue = cls.catalogue;
-
-    if (catalogue === null) {
-      toast.error('No catalogue found for this class');
-      return;
-    }
-
-    if (!savedCartId) {
-      createCart.mutate(
-        {
-          body: {
-            currency_code: 'KES',
-            region_code: 'KE',
-            items: [
-              {
-                variant_id: catalogue.variant_code,
-                quantity: 1,
-              },
-            ],
-          },
-        },
-        {
-          onSuccess: (data: any) => {
-            const cartId = data?.data?.id || null;
-
-            if (cartId) {
-              localStorage.setItem('cart_id', cartId);
-            }
-            toast.success('Class added to cart!');
-
-            cartPaymentSession.mutate(
-              {
-                path: { cartId: cartId },
-                body: { provider_id: 'manual' },
-              },
-              {
-                onSuccess: data => {
-                  toast.success('Redirecting to payment…');
-                },
-              }
-            );
-          },
-          onError: (error: any) => {
-            toast.error(error.message);
-          },
-        }
-      );
-
-      return;
-    }
-
-    addItemToCart.mutate(
-      {
-        path: { cartId: savedCartId as string },
-        body: {
-          variant_id: catalogue.variant_code,
-          quantity: 1,
-        },
-      },
-      {
-        onSuccess: data => {
-          qc.invalidateQueries({
-            queryKey: getCartQueryKey({ path: { cartId: savedCartId } }),
-          });
-          toast.success('Class added to cart!');
-
-          cartPaymentSession.mutate(
-            {
-              path: { cartId: savedCartId },
-              body: { provider_id: 'manual' },
-            },
-            {
-              onSuccess: data => {
-                toast.success('Redirecting to payment…');
-              },
-            }
-          );
-        },
-      }
-    );
-  };
 
   const handleCancel = () => {
     router.push(`/dashboard/browse-courses/available-classes/${courseId}`);
@@ -434,18 +406,7 @@ const EnrollClassPage = () => {
             {enrollStudent.isPending ? 'Enrolling...' : 'Yes, Enroll Me'}
           </Button>
 
-          <div className='flex items-end justify-end'>
-            {enrollmentError && (
-              <Button
-                onClick={() => handleCreateCartAndPay(enrollingClass)}
-                disabled={payIsPending}
-                variant={'outline'}
-                className='w-full min-w-[120px] animate-pulse shadow-lg shadow-green-500/40 transition-shadow hover:shadow-green-500/60 sm:w-auto'
-              >
-                {payIsPending ? 'Processing...' : 'Pay for class'}
-              </Button>
-            )}
-          </div>
+
         </div>
       </div>
     </div>

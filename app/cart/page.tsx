@@ -1,30 +1,26 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
+import { PublicTopNav } from '@/components/PublicTopNav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PublicTopNav } from '@/components/PublicTopNav';
-import { useCartStore } from '@/store/cart-store';
+import type { CartItemResponse } from '@/services/client';
 import {
   getCartOptions,
-  updateCartMutation,
-  addItemMutation,
+  getCartQueryKey,
+  removeItemMutation
 } from '@/services/client/@tanstack/react-query.gen';
-import type { CartItemResponse } from '@/services/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCartStore } from '@/store/cart-store';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ShoppingCart,
-  Trash2,
-  Plus,
-  Minus,
-  ArrowRight,
   ArrowLeft,
+  ArrowRight,
+  CreditCard,
   Package,
   ShieldCheck,
-  CreditCard,
-  Loader2,
+  ShoppingCart,
+  Trash2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
@@ -48,6 +44,7 @@ const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CUR
 export default function CartPage() {
   const { cartId } = useCartStore();
   const queryClient = useQueryClient();
+  const removeItemMut = useMutation(removeItemMutation())
 
   // Fetch cart data
   const cartQuery = useQuery({
@@ -161,7 +158,20 @@ export default function CartPage() {
                 <CardContent className='space-y-4'>
                   {cartItems.map((item, index) => (
                     <div key={item.id}>
-                      <CartItem item={item} />
+                      <CartItem item={item}
+                        handleRemoveItem={(id) => {
+                          removeItemMut.mutate({
+                            path: { cartId: cartId as string, itemId: id }
+                          }, {
+                            onSuccess: (data) => {
+                              queryClient.invalidateQueries({
+                                queryKey: getCartQueryKey({ path: { cartId: cartId as string } })
+                              })
+                              toast.success("Cart Item removed successfully")
+                            }
+                          })
+                        }
+                        } />
                       {index < cartItems.length - 1 && <Separator className='bg-border mt-4' />}
                     </div>
                   ))}
@@ -258,7 +268,7 @@ export default function CartPage() {
   );
 }
 
-function CartItem({ item }: { item: CartItemResponse }) {
+function CartItem({ item, handleRemoveItem }: { item: CartItemResponse, handleRemoveItem: (id: string) => void }) {
   const title = item.title ?? item.variant_title ?? 'Course';
   const quantity = item.quantity ?? 1;
   const unitPrice = useMemo(() => {
@@ -308,17 +318,17 @@ function CartItem({ item }: { item: CartItemResponse }) {
           <div className='flex items-center gap-4'>
             <span className='text-foreground text-lg font-bold'>{formatMoney(itemTotal)}</span>
             <Button
+              onClick={() => handleRemoveItem(item?.id as string)}
               variant='ghost'
               size='icon'
               className='text-destructive hover:bg-destructive/10 hover:text-destructive h-8 w-8'
-              disabled
             >
               <Trash2 className='h-4 w-4' />
             </Button>
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 
