@@ -40,9 +40,15 @@ import { Button } from './ui/button';
 export default function DashboardTopBar({ showToggle = true }: { showToggle?: boolean }) {
   const isMobile = useIsMobile();
   const domain = useUserDomain()
-
   const { cartId: savedCartId } = useCartStore();
-  const { data: cartData } = useQuery(getCartOptions({ path: { cartId: savedCartId as string } }));
+  const { data: cartData } = useQuery({
+    ...getCartOptions({
+      path: { cartId: savedCartId ?? '' },
+    }),
+    enabled: !!savedCartId,
+    retry: 1,
+  });
+
   // @ts-ignore
   const cart = cartData?.data;
   const cartItemCount = cart?.items?.length
