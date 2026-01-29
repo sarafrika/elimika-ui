@@ -71,20 +71,6 @@ const EnrollmentsPage = () => {
         </div>
       </section>
 
-      {/* Construction Banner */}
-      <Card className='mb-6 border-l-4 border-yellow-500 bg-yellow-50 p-4 dark:bg-yellow-950/20'>
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
-          <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-            <p className='font-medium text-yellow-800 dark:text-yellow-200'>
-              🚧 Under Construction
-            </p>
-            <p className='text-sm text-yellow-700 dark:text-yellow-300'>
-              Student data is being fetched and displayed dynamically.
-            </p>
-          </div>
-        </div>
-      </Card>
-
       {/* Two-column layout */}
       <div className='flex flex-col gap-6 lg:flex-row'>
         {/* Left: Course List */}
@@ -99,11 +85,10 @@ const EnrollmentsPage = () => {
               <button
                 key={course.uuid}
                 onClick={() => setSelectedCourseId(course.uuid)}
-                className={`flex w-full items-center justify-between rounded-xl border p-4 text-left text-sm transition-all duration-150 ${
-                  isSelected
+                className={`flex w-full items-center justify-between rounded-xl border p-4 text-left text-sm transition-all duration-150 ${isSelected
                     ? 'border-primary bg-primary/10 shadow-md'
                     : 'border-border bg-background hover:bg-muted'
-                }`}
+                  }`}
               >
                 <span className='text-foreground font-medium'>{course.name}</span>
                 <Badge variant='secondary'>{enrollmentCount}</Badge>

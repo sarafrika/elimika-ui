@@ -52,6 +52,8 @@ const RevenuePage = () => {
   const [sortBy, setSortBy] = useState('created_date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  const courses = courseCreator?.courses
+
   const { data: walletData } = useQuery({
     ...getWalletOptions({ path: { userUuid: userUuid as string } }),
     enabled: !!userUuid,
@@ -294,13 +296,6 @@ const RevenuePage = () => {
           </div>
         </div>
       </section>
-
-      {/* Construction Banner */}
-      <div className="mb-6 flex flex-col gap-2 rounded-md border-l-4 border-warning bg-warning/10 p-4 text-warning dark:bg-warning/5 dark:text-warning-foreground sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <p className="font-medium">🚧 This page is under construction.</p>
-        </div>
-      </div>
 
       <section className="mx-auto max-w-7xl space-y-6">
         {/* Wallet Card */}
@@ -594,24 +589,28 @@ const RevenuePage = () => {
               <p className="mt-1 text-sm text-muted-foreground">Top performing courses</p>
             </div>
             <div className="space-y-5 p-6">
-              {revenueBySource.map((item, index) => (
+              {courses.slice(0, 5).map((item, index) => (
                 <div key={index}>
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="truncate pr-2 text-sm font-medium text-foreground">
-                      {item.source}
+                    <span className="truncate pr-2 text-sm font-medium text-foreground max-w-[60%]">
+                      {item.name}
                     </span>
                     <span className="text-sm font-semibold text-foreground">
-                      KES {item.revenue.toLocaleString()}
+                      {/* KES {item.revenue.toLocaleString()} */}
+                      KES {0}
                     </span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-muted">
                     <div
                       className="h-2 rounded-full bg-primary transition-all duration-300"
-                      style={{ width: `${item.percentage}%` }}
+                      // style={{ width: `${item.percentage}%` }}
+                      style={{ width: `0%` }}
+
                     />
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    {item.percentage}% of total
+                    {/* {item.percentage}% of total */}
+                    {0}% of total
                   </div>
                 </div>
               ))}

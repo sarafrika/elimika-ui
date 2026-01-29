@@ -23,7 +23,7 @@ import {
 import { ClassDetails } from './page';
 
 const CLASS_TYPE_OPTIONS = [
-  { label: 'Group', value: 'GROUP' },
+  { label: 'Group', value: 'PUBLIC' },
   { label: 'Private', value: 'PRIVATE' },
 ];
 
@@ -168,7 +168,7 @@ export const ClassDetailsSection = ({
     const rateCardKey = `${data.class_type}_${data.location_type}_rate`;
     const rate =
       selectedCourse.application.rate_card[
-        rateCardKey as keyof typeof selectedCourse.application.rate_card
+      rateCardKey as keyof typeof selectedCourse.application.rate_card
       ];
 
     if (rate !== undefined) {

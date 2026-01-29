@@ -611,17 +611,17 @@ export const StudentSchema = {
       maxLength: 2000,
       minLength: 0,
     },
+    secondaryGuardianContact: {
+      type: 'string',
+    },
+    primaryGuardianContact: {
+      type: 'string',
+    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
-    },
-    primaryGuardianContact: {
-      type: 'string',
-    },
-    secondaryGuardianContact: {
-      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -7005,17 +7005,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: 100,
-      readOnly: true,
-    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: 100,
       readOnly: true,
     },
     assignment_scope: {
@@ -8085,6 +8085,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -8101,12 +8107,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -9446,7 +9446,7 @@ export const AdminDomainAssignmentRequestSchema = {
   description: 'Admin domain assignment request containing domain type, reason, and effective date',
   properties: {
     domain_name: {
-      $ref: '#/components/schemas/SchemaEnum5',
+      $ref: '#/components/schemas/SchemaEnum6',
     },
     assignment_type: {
       $ref: '#/components/schemas/AssignmentTypeEnum',
@@ -10377,6 +10377,418 @@ export const ApiResponseMapStringLongSchema = {
   },
 } as const;
 
+export const ApiResponseRevenueDashboardDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/RevenueDashboardDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const RevenueAmountDTOSchema = {
+  type: 'object',
+  properties: {
+    currency_code: {
+      type: 'string',
+    },
+    amount: {
+      type: 'number',
+    },
+  },
+} as const;
+
+export const RevenueDashboardDTOSchema = {
+  type: 'object',
+  properties: {
+    domain: {
+      type: 'string',
+    },
+    start_date: {
+      type: 'string',
+      format: 'date',
+    },
+    end_date: {
+      type: 'string',
+      format: 'date',
+    },
+    gross_totals: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueAmountDTO',
+      },
+    },
+    estimated_earnings: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueAmountDTO',
+      },
+    },
+    order_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    line_item_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    units_sold: {
+      type: 'integer',
+      format: 'int64',
+    },
+    average_order_value: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueAmountDTO',
+      },
+    },
+    scope_breakdown: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueScopeBreakdownDTO',
+      },
+    },
+    daily_series: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueTimeSeriesPointDTO',
+      },
+    },
+  },
+} as const;
+
+export const RevenueScopeBreakdownDTOSchema = {
+  type: 'object',
+  properties: {
+    scope: {
+      type: 'string',
+    },
+    gross_totals: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueAmountDTO',
+      },
+    },
+    estimated_earnings: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueAmountDTO',
+      },
+    },
+    line_item_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    units_sold: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
+export const RevenueTimeSeriesPointDTOSchema = {
+  type: 'object',
+  properties: {
+    date: {
+      type: 'string',
+      format: 'date',
+    },
+    gross_totals: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueAmountDTO',
+      },
+    },
+    estimated_earnings: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueAmountDTO',
+      },
+    },
+    order_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    units_sold: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
+export const ApiResponseRevenueAnalyticsOverviewDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/RevenueAnalyticsOverviewDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const RevenueAnalyticsOverviewDTOSchema = {
+  type: 'object',
+  properties: {
+    start_date: {
+      type: 'string',
+      format: 'date',
+    },
+    end_date: {
+      type: 'string',
+      format: 'date',
+    },
+    domains: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueDomainAnalyticsDTO',
+      },
+    },
+  },
+} as const;
+
+export const RevenueDomainAnalyticsDTOSchema = {
+  type: 'object',
+  properties: {
+    domain: {
+      type: 'string',
+    },
+    dashboard: {
+      $ref: '#/components/schemas/RevenueDashboardDTO',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTORevenueSaleLineItemDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTORevenueSaleLineItemDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTORevenueSaleLineItemDTOSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueSaleLineItemDTO',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const RevenueSaleLineItemDTOSchema = {
+  type: 'object',
+  properties: {
+    order_id: {
+      type: 'string',
+    },
+    order_number: {
+      type: 'string',
+    },
+    order_created_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    payment_status: {
+      type: 'string',
+    },
+    order_currency_code: {
+      type: 'string',
+    },
+    order_subtotal_amount: {
+      type: 'number',
+    },
+    order_total_amount: {
+      type: 'number',
+    },
+    platform_fee_amount: {
+      type: 'number',
+    },
+    platform_fee_currency: {
+      type: 'string',
+    },
+    platform_fee_rule_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    buyer_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    customer_email: {
+      type: 'string',
+    },
+    line_item_id: {
+      type: 'string',
+    },
+    variant_id: {
+      type: 'string',
+    },
+    title: {
+      type: 'string',
+    },
+    quantity: {
+      type: 'integer',
+      format: 'int32',
+    },
+    unit_price: {
+      type: 'number',
+    },
+    subtotal: {
+      type: 'number',
+    },
+    total: {
+      type: 'number',
+    },
+    scope: {
+      type: 'string',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+  },
+} as const;
+
+export const ApiResponseListRevenueAmountDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenueAmountDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTORevenuePaymentDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTORevenuePaymentDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTORevenuePaymentDTOSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RevenuePaymentDTO',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const RevenuePaymentDTOSchema = {
+  type: 'object',
+  properties: {
+    payment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    order_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    order_total_amount: {
+      type: 'number',
+    },
+    order_currency_code: {
+      type: 'string',
+    },
+    provider: {
+      type: 'string',
+    },
+    status: {
+      type: 'string',
+    },
+    amount: {
+      type: 'number',
+    },
+    currency_code: {
+      type: 'string',
+    },
+    external_reference: {
+      type: 'string',
+    },
+    processed_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOQuizSchema = {
   type: 'object',
   properties: {
@@ -10952,12 +11364,6 @@ export const ProgramEnrollmentSchema = {
       example: 'Completed Program Enrollment',
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_duration: {
       type: 'string',
       description:
@@ -10970,6 +11376,12 @@ export const ProgramEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed program with final grade of 87.25',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
+      example: '100.00% Complete',
       readOnly: true,
     },
   },
@@ -11858,6 +12270,42 @@ export const StudentScheduleSchema = {
   },
 } as const;
 
+export const ApiResponsePagedDTOEnrollmentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOEnrollment',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOEnrollmentSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Enrollment',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const ApiResponseLongSchema = {
   type: 'object',
   properties: {
@@ -12304,12 +12752,6 @@ export const CourseEnrollmentSchema = {
       example: 'Completed Enrollment',
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_duration: {
       type: 'string',
       description:
@@ -12322,6 +12764,12 @@ export const CourseEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed with final grade of 85.50',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
+      example: '100.00% Complete',
       readOnly: true,
     },
   },
@@ -13956,6 +14404,11 @@ export const SchemaEnum4Schema = {
 } as const;
 
 export const SchemaEnum5Schema = {
+  type: 'string',
+  enum: ['student', 'instructor', 'admin', 'parent', 'organisation_user', 'course_creator'],
+} as const;
+
+export const SchemaEnum6Schema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;

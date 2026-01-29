@@ -240,6 +240,11 @@ import type {
   GetPopularRubricsResponse,
   GetGeneralRubricsResponse,
   GetCourseCreatorRubricsResponse,
+  GetRevenueDashboardResponse,
+  GetAnalyticsOverviewResponse,
+  ListSalesResponse,
+  ListPaymentsResponse,
+  GetRevenueDashboard1Response,
   GetQuizAttemptsResponse,
   SearchQuizzesResponse,
   SearchQuestionsResponse,
@@ -274,6 +279,7 @@ import type {
   GetStudentDashboardResponse,
   GetEnrollmentResponse,
   GetStudentScheduleResponse,
+  SearchEnrollmentsResponse,
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
   ListCurrenciesResponse,
@@ -331,6 +337,7 @@ import type {
   GetPendingOrganisationsResponse,
   GetDashboardStatisticsResponse,
   GetDashboardActivityResponse,
+  RemoveItemResponse,
   RemoveAdminDomainResponse,
 } from './types.gen';
 
@@ -3997,6 +4004,177 @@ export const getCourseCreatorRubricsResponseTransformer = async (
   return data;
 };
 
+const revenueScopeBreakdownDtoSchemaResponseTransformer = (data: any) => {
+  if (data.line_item_count) {
+    data.line_item_count = BigInt(data.line_item_count.toString());
+  }
+  if (data.units_sold) {
+    data.units_sold = BigInt(data.units_sold.toString());
+  }
+  return data;
+};
+
+const revenueTimeSeriesPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.date) {
+    data.date = new Date(data.date);
+  }
+  if (data.order_count) {
+    data.order_count = BigInt(data.order_count.toString());
+  }
+  if (data.units_sold) {
+    data.units_sold = BigInt(data.units_sold.toString());
+  }
+  return data;
+};
+
+const revenueDashboardDtoSchemaResponseTransformer = (data: any) => {
+  if (data.start_date) {
+    data.start_date = new Date(data.start_date);
+  }
+  if (data.end_date) {
+    data.end_date = new Date(data.end_date);
+  }
+  if (data.order_count) {
+    data.order_count = BigInt(data.order_count.toString());
+  }
+  if (data.line_item_count) {
+    data.line_item_count = BigInt(data.line_item_count.toString());
+  }
+  if (data.units_sold) {
+    data.units_sold = BigInt(data.units_sold.toString());
+  }
+  if (data.scope_breakdown) {
+    data.scope_breakdown = data.scope_breakdown.map((item: any) => {
+      return revenueScopeBreakdownDtoSchemaResponseTransformer(item);
+    });
+  }
+  if (data.daily_series) {
+    data.daily_series = data.daily_series.map((item: any) => {
+      return revenueTimeSeriesPointDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseRevenueDashboardDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = revenueDashboardDtoSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getRevenueDashboardResponseTransformer = async (
+  data: any
+): Promise<GetRevenueDashboardResponse> => {
+  data = apiResponseRevenueDashboardDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const revenueDomainAnalyticsDtoSchemaResponseTransformer = (data: any) => {
+  if (data.dashboard) {
+    data.dashboard = revenueDashboardDtoSchemaResponseTransformer(data.dashboard);
+  }
+  return data;
+};
+
+const revenueAnalyticsOverviewDtoSchemaResponseTransformer = (data: any) => {
+  if (data.start_date) {
+    data.start_date = new Date(data.start_date);
+  }
+  if (data.end_date) {
+    data.end_date = new Date(data.end_date);
+  }
+  if (data.domains) {
+    data.domains = data.domains.map((item: any) => {
+      return revenueDomainAnalyticsDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseRevenueAnalyticsOverviewDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = revenueAnalyticsOverviewDtoSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getAnalyticsOverviewResponseTransformer = async (
+  data: any
+): Promise<GetAnalyticsOverviewResponse> => {
+  data = apiResponseRevenueAnalyticsOverviewDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const revenueSaleLineItemDtoSchemaResponseTransformer = (data: any) => {
+  if (data.order_created_at) {
+    data.order_created_at = new Date(data.order_created_at);
+  }
+  return data;
+};
+
+const pagedDtoRevenueSaleLineItemDtoSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return revenueSaleLineItemDtoSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoRevenueSaleLineItemDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoRevenueSaleLineItemDtoSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listSalesResponseTransformer = async (data: any): Promise<ListSalesResponse> => {
+  data = apiResponsePagedDtoRevenueSaleLineItemDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const revenuePaymentDtoSchemaResponseTransformer = (data: any) => {
+  if (data.processed_at) {
+    data.processed_at = new Date(data.processed_at);
+  }
+  return data;
+};
+
+const pagedDtoRevenuePaymentDtoSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return revenuePaymentDtoSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoRevenuePaymentDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoRevenuePaymentDtoSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listPaymentsResponseTransformer = async (data: any): Promise<ListPaymentsResponse> => {
+  data = apiResponsePagedDtoRevenuePaymentDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getRevenueDashboard1ResponseTransformer = async (
+  data: any
+): Promise<GetRevenueDashboard1Response> => {
+  data = apiResponseRevenueDashboardDtoSchemaResponseTransformer(data);
+  return data;
+};
+
 const quizAttemptSchemaResponseTransformer = (data: any) => {
   if (data.started_at) {
     data.started_at = new Date(data.started_at);
@@ -4476,6 +4654,32 @@ export const getStudentScheduleResponseTransformer = async (
   data: any
 ): Promise<GetStudentScheduleResponse> => {
   data = apiResponseListStudentScheduleSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoEnrollmentSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return enrollmentSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoEnrollmentSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoEnrollmentSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const searchEnrollmentsResponseTransformer = async (
+  data: any
+): Promise<SearchEnrollmentsResponse> => {
+  data = apiResponsePagedDtoEnrollmentSchemaResponseTransformer(data);
   return data;
 };
 
@@ -5376,6 +5580,11 @@ export const getDashboardActivityResponseTransformer = async (
   data: any
 ): Promise<GetDashboardActivityResponse> => {
   data = apiResponsePagedDtoAdminActivityEventSchemaResponseTransformer(data);
+  return data;
+};
+
+export const removeItemResponseTransformer = async (data: any): Promise<RemoveItemResponse> => {
+  data = cartResponseSchemaResponseTransformer(data);
   return data;
 };
 

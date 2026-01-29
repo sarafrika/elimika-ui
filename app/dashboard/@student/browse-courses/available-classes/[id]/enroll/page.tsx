@@ -10,8 +10,7 @@ import {
   createCartMutation,
   enrollStudentMutation,
   getCartQueryKey,
-  getStudentScheduleQueryKey,
-  selectPaymentSessionMutation,
+  getStudentScheduleQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -19,6 +18,11 @@ import { AlertCircle, Armchair, ArrowLeft, Calendar, DollarSign, MapPin, User } 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import RichTextRenderer from '../../../../../../../components/editors/richTextRenders';
+import { useUserProfile } from '../../../../../../../context/profile-context';
+import { useUserDomain } from '../../../../../../../context/user-domain-context';
+import { useScheduleStats } from '../../../../../../../hooks/use-schedule-stats';
+import { useCartStore } from '../../../../../../../store/cart-store';
 import { ClassScheduleCalendar } from '../../../../../../class-invite/page';
 import { CustomLoadingState } from '../../../../../@course_creator/_components/loading-state';
 
@@ -27,6 +31,8 @@ const EnrollClassPage = () => {
   const params = useParams();
   const router = useRouter();
   const qc = useQueryClient();
+  const domain = useUserDomain()
+  const user = useUserProfile()
 
   const courseId = params?.id as string;
   const classId = searchParams.get('id');
@@ -52,50 +58,7 @@ const EnrollClassPage = () => {
   const totalHours = totalMinutes / 60;
   const totalHoursRounded = `${Math.round(totalHours)}`;
 
-  const scheduleStats = useMemo(() => {
-    if (!schedule.length) {
-      return {
-        sessions: 0,
-        totalMinutes: 0,
-        totalHours: '0h',
-        mostCommonDuration: 'N/A',
-      };
-    }
-
-    // 1. Sessions
-    const sessions = schedule.length;
-
-    // 2. Total duration
-    const totalMinutes = schedule.reduce((sum: any, s: any) => {
-      const minutes = Number(s?.duration_minutes);
-      return sum + (Number.isFinite(minutes) ? minutes : 0);
-    }, 0);
-
-    const totalHours = `${(totalMinutes / 60).toFixed(1)}`;
-
-    // 3. Most common duration
-    const durationMap: Record<number, number> = {};
-
-    schedule.forEach((s: any) => {
-      const minutes = Number(s?.duration_minutes);
-      if (Number.isFinite(minutes)) {
-        durationMap[minutes] = (durationMap[minutes] || 0) + 1;
-      }
-    });
-
-    const mostCommonMinutes = Number(
-      Object.entries(durationMap).sort((a, b) => b[1] - a[1])[0]?.[0]
-    );
-
-    const mostCommonDuration = mostCommonMinutes ? `${mostCommonMinutes / 60}` : 'N/A';
-
-    return {
-      sessions,
-      totalMinutes,
-      totalHours,
-      mostCommonDuration,
-    };
-  }, [enrollingClass]);
+  const scheduleStats = useScheduleStats(schedule);
 
   // Format dates
   const { formattedStart, formattedEnd } = useMemo(() => {
@@ -140,6 +103,74 @@ const EnrollClassPage = () => {
     }
   }, [replaceBreadcrumbs]);
 
+  const { cartId: savedCartId, setCartId } = useCartStore();
+  const createCart = useMutation(createCartMutation());
+  const addItemToCart = useMutation(addItemMutation());
+
+  const handleCreateCartAndPay = (cls: any) => {
+    if (!cls) return;
+    const catalogue = cls.catalogue;
+
+    if (catalogue === null) {
+      toast.error('No catalogue found for this class');
+      return;
+    }
+
+    if (!savedCartId) {
+      createCart.mutate(
+        {
+          body: {
+            currency_code: 'KES',
+            region_code: 'KE',
+            items: [
+              {
+                variant_id: catalogue.variant_code,
+                quantity: 1,
+              },
+            ],
+          },
+        },
+        {
+          onSuccess: (data: any) => {
+            const cartId = data?.data?.id || null;
+            if (cartId) { setCartId(cartId) }
+
+            qc.invalidateQueries({
+              queryKey: getCartQueryKey({ path: { cartId: cartId as string } })
+            })
+
+            toast.success('Class added to cart!');
+            router.push('/cart')
+
+          },
+          onError: (error: any) => { toast.error(error.message); },
+        }
+      );
+
+      return;
+    }
+
+    addItemToCart.mutate(
+      {
+        path: { cartId: savedCartId as string },
+        body: {
+          variant_id: catalogue.variant_code,
+          quantity: 1,
+        },
+      },
+      {
+        onSuccess: data => {
+          qc.invalidateQueries({
+            queryKey: getCartQueryKey({ path: { cartId: savedCartId as string } })
+          })
+
+          router.push('/cart')
+          toast.success('Class added to cart!');
+        },
+      }
+    );
+  };
+
   // Enrollment mutation
   const enrollStudent = useMutation(enrollStudentMutation());
   const handleEnrollStudent = () => {
@@ -171,108 +202,12 @@ const EnrollClassPage = () => {
           router.push(`/dashboard/browse-courses/available-classes/${courseId}`);
         },
         onError: err => {
-          // @ts-expect-error
-          toast.error(err?.error || 'Failed to enroll');
-          setEnrollmentError(true);
-          setTimeout(() => {
-            setEnrollmentError(false);
-          }, 60_000); // 1 minute
+          handleCreateCartAndPay(enrollingClass)
         },
       }
     );
   };
 
-  // pay for class
-  const savedCartId = localStorage.getItem('cart_id');
-  const createCart = useMutation(createCartMutation());
-  const addItemToCart = useMutation(addItemMutation());
-  const cartPaymentSession = useMutation(selectPaymentSessionMutation());
-  const payIsPending =
-    createCart.isPending || addItemToCart.isPending || cartPaymentSession.isPending;
-
-  const handleCreateCartAndPay = (cls: any) => {
-    if (!cls) return;
-    const catalogue = cls.catalogue;
-
-    if (catalogue === null) {
-      toast.error('No catalogue found for this class');
-      return;
-    }
-
-    if (!savedCartId) {
-      createCart.mutate(
-        {
-          body: {
-            currency_code: 'KES',
-            region_code: 'KE',
-            items: [
-              {
-                variant_id: catalogue.variant_code,
-                quantity: 1,
-              },
-            ],
-          },
-        },
-        {
-          onSuccess: (data: any) => {
-            const cartId = data?.data?.id || null;
-
-            if (cartId) {
-              localStorage.setItem('cart_id', cartId);
-            }
-            toast.success('Class added to cart!');
-
-            cartPaymentSession.mutate(
-              {
-                path: { cartId: cartId },
-                body: { provider_id: 'manual' },
-              },
-              {
-                onSuccess: data => {
-                  toast.success('Redirecting to payment…');
-                },
-              }
-            );
-          },
-          onError: (error: any) => {
-            toast.error(error.message);
-          },
-        }
-      );
-
-      return;
-    }
-
-    addItemToCart.mutate(
-      {
-        path: { cartId: savedCartId as string },
-        body: {
-          variant_id: catalogue.variant_code,
-          quantity: 1,
-        },
-      },
-      {
-        onSuccess: data => {
-          qc.invalidateQueries({
-            queryKey: getCartQueryKey({ path: { cartId: savedCartId } }),
-          });
-          toast.success('Class added to cart!');
-
-          cartPaymentSession.mutate(
-            {
-              path: { cartId: savedCartId },
-              body: { provider_id: 'manual' },
-            },
-            {
-              onSuccess: data => {
-                toast.success('Redirecting to payment…');
-              },
-            }
-          );
-        },
-      }
-    );
-  };
 
   const handleCancel = () => {
     router.push(`/dashboard/browse-courses/available-classes/${courseId}`);
@@ -325,7 +260,7 @@ const EnrollClassPage = () => {
           <div className='space-y-2'>
             <h2 className='text-2xl font-semibold'>{enrollingClass?.course?.name || 'N/A'}</h2>
             {enrollingClass?.course?.description && (
-              <p className='text-muted-foreground text-sm'>{enrollingClass.course.description}</p>
+              <RichTextRenderer htmlString={enrollingClass.course.description} />
             )}
           </div>
 
@@ -388,7 +323,7 @@ const EnrollClassPage = () => {
                 <div className='space-y-1'>
                   <p className='text-sm font-medium'>Session Duration</p>
                   <p className='text-muted-foreground text-sm'>
-                    {scheduleStats.mostCommonDuration} hr(s)
+                    {scheduleStats.mostCommonDuration} - {schedule.length} class instances
                   </p>
                 </div>
               </div>
@@ -475,18 +410,7 @@ const EnrollClassPage = () => {
             {enrollStudent.isPending ? 'Enrolling...' : 'Yes, Enroll Me'}
           </Button>
 
-          <div className='flex items-end justify-end'>
-            {enrollmentError && (
-              <Button
-                onClick={() => handleCreateCartAndPay(enrollingClass)}
-                disabled={payIsPending}
-                variant={'outline'}
-                className='w-full min-w-[120px] animate-pulse shadow-lg shadow-green-500/40 transition-shadow hover:shadow-green-500/60 sm:w-auto'
-              >
-                {payIsPending ? 'Processing...' : 'Pay for class'}
-              </Button>
-            )}
-          </div>
+
         </div>
       </div>
     </div>

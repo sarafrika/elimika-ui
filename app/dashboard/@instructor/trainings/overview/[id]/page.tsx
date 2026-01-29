@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import {
@@ -23,10 +22,7 @@ import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent
 import { useInstructorInfo } from '@/hooks/use-instructor-info';
 import { getResourceIcon } from '@/lib/resources-icon';
 import {
-  getClassDefinitionOptions,
-  getCourseAssessmentsOptions,
-  getCourseByUuidOptions,
-  getInstructorScheduleOptions,
+  getCourseAssessmentsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -36,7 +32,6 @@ import {
   CheckCircle,
   Clock,
   Copy,
-  DollarSign,
   Edit,
   Eye,
   Facebook,
@@ -48,24 +43,17 @@ import {
   MapPin,
   MessageCircle,
   Twitter,
-  Users,
+  Users
 } from 'lucide-react';
-import moment from 'moment';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { momentLocalizer } from 'react-big-calendar';
+import { useEffect, useMemo, useState } from 'react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { useClassDetails } from '../../../../../../hooks/use-class-details';
+import { useScheduleStats } from '../../../../../../hooks/use-schedule-stats';
 import { AudioPlayer } from '../../../../@student/schedule/classes/[id]/AudioPlayer';
 import { ReadingMode } from '../../../../@student/schedule/classes/[id]/ReadingMode';
+import { ClassScheduleCalendar } from '../../../../@student/schedule/classes/[id]/SudentClassSchedule';
 import { VideoPlayer } from '../../../../@student/schedule/classes/[id]/VideoPlayer';
-import { MonthlyAvailabilityGrid } from '../../../availability/components/monthly-availability-grid';
-import {
-  AvailabilityData,
-  ClassScheduleItem,
-  convertToCalendarEvents,
-} from '../../../availability/components/types';
-
-const _localizer = momentLocalizer(moment);
 
 interface ContentItem {
   uuid: string;
@@ -74,6 +62,18 @@ interface ContentItem {
   content_text?: string;
   description?: string;
 }
+
+type SharePlatform =
+  | "facebook"
+  | "twitter"
+  | "linkedin"
+  | "whatsapp"
+  | "email";
+
+type ShareOptions = {
+  title?: string;
+  links: string[];
+};
 
 export default function ClassPreviewPage() {
   const router = useRouter();
@@ -108,21 +108,37 @@ export default function ClassPreviewPage() {
     ]);
   }, [replaceBreadcrumbs, classId]);
 
-  const { data, isLoading: classIsLoading } = useQuery({
-    ...getClassDefinitionOptions({ path: { uuid: classId as string } }),
-    enabled: !!classId,
-  });
-  const classData = data?.data?.class_definition;
 
-  const {
-    data: courseDetail,
-    isLoading,
-    isFetched,
-  } = useQuery({
-    ...getCourseByUuidOptions({ path: { uuid: classData?.course_uuid as string } }),
-    enabled: !!classData?.course_uuid,
-  });
-  const course = courseDetail?.data;
+  const { data: combinedClass, isLoading: classIsLoading } = useClassDetails(classId as string);
+  const classData = combinedClass?.class;
+  const course = combinedClass?.course;
+  const schedules = combinedClass?.schedule;
+  const scheduleStats = useScheduleStats(schedules as any);
+  const totalAmount = classData?.training_fee! * scheduleStats?.totalHours as number
+  const amountPayable = totalAmount
+
+  // Format dates
+  const { formattedStart, formattedEnd } = useMemo(() => {
+    if (!classData) {
+      return { formattedStart: '', formattedEnd: '' };
+    }
+
+    try {
+      const start = classData?.default_start_time
+        ? new Date(classData.default_start_time)
+        : null;
+      const end = classData?.default_end_time
+        ? new Date(classData.default_end_time)
+        : null;
+
+      return {
+        formattedStart: start ? format(start, 'MMM dd, yyyy • hh:mm a') : 'N/A',
+        formattedEnd: end ? format(end, 'MMM dd, yyyy • hh:mm a') : 'N/A',
+      };
+    } catch (e) {
+      return { formattedStart: 'N/A', formattedEnd: 'N/A' };
+    }
+  }, [classData]);
 
   const { data: cAssesssment } = useQuery({
     ...getCourseAssessmentsOptions({
@@ -144,9 +160,13 @@ export default function ClassPreviewPage() {
     contentTypeMap,
   } = useCourseLessonsWithContent({ courseUuid: classData?.course_uuid as string });
 
-  const registrationLink = course?.uuid
-    ? `https://elimika.sarafrika.com/dashboard/browse-courses/available-classes/${course?.uuid}/enroll?id=${classId}`
+  const registrationLink = typeof window !== 'undefined'
+    ? `${window.location.origin}/dashboard/browse-courses/available-classes/${course?.uuid}/enroll?id=${classId}`
     : '';
+
+  const inviteLink =
+    typeof window !== 'undefined' ? `${window.location.origin}/class-invite?id=${classId}` : '';
+
   const [copied, setCopied] = useState(false);
 
   // const totalLessons = classData.schedule.skills.reduce((acc, skill) => acc + skill.lessons.length, 0);
@@ -157,84 +177,44 @@ export default function ClassPreviewPage() {
   // }, 0) / 60;
 
   // const totalFee = classData?.visibility.isFree ? 0 : classData.visibility.price * totalLessons;
-  const totalFee = 499.99;
   const totalAssignments = cAssesssment?.data?.content?.length || 0;
 
-  const copyToClipboard = async (text: string) => {
+  const copyLink = async (
+    text: string,
+    setCopied?: React.Dispatch<React.SetStateAction<boolean>>
+  ) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (_err) { }
+      if (setCopied) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+    }
   };
 
-  const shareToSocial = (platform: string) => {
-    const url = encodeURIComponent(registrationLink);
-    const text = encodeURIComponent(`Check out this class: ${classData?.title}`);
+  const shareToSocial = (
+    platform: SharePlatform,
+    { title, links }: ShareOptions
+  ) => {
+    const joinedLinks = links.join("\n");
+    const encodedLinks = encodeURIComponent(joinedLinks);
+    const encodedText = encodeURIComponent(
+      title ? `Check out this class: ${title}` : "Check this out"
+    );
 
-    const urls = {
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
-      twitter: `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
-      whatsapp: `https://wa.me/?text=${text}%20${url}`,
-      email: `mailto:?subject=${encodeURIComponent(classData?.title as string)}&body=${text}%20${url}`,
+    const urls: Record<SharePlatform, string> = {
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedLinks}`,
+      twitter: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedLinks}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedLinks}`,
+      whatsapp: `https://wa.me/?text=${encodedText}%0A${encodedLinks}`,
+      email: `mailto:?subject=${encodeURIComponent(
+        title ?? "Shared Links"
+      )}&body=${encodedText}%0A${encodedLinks}`,
     };
 
-    if (urls[platform as keyof typeof urls]) {
-      window.open(urls[platform as keyof typeof urls], '_blank', 'width=600,height=400');
-    }
+    window.open(urls[platform], "_blank", "width=600,height=400");
   };
-
-  const formatDate = (raw?: string): string => {
-    if (!raw) return '';
-    const date = new Date(raw);
-    return !isNaN(date.getTime()) ? format(date, 'yyyy-MM-dd') : '';
-  };
-
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-
-  useEffect(() => {
-    if (classData) {
-      setStartDate(formatDate(classData?.default_start_time as any));
-      setEndDate(formatDate(classData?.default_end_time as any));
-    }
-  }, [classData]);
-
-  const { data: timetable, isLoading: timetableIsLoading } = useQuery({
-    ...getInstructorScheduleOptions({
-      path: { instructorUuid: classData?.default_instructor_uuid as string },
-      query: {
-        start: startDate as any,
-        end: endDate as any,
-      },
-    }),
-    enabled: !!classData?.default_instructor_uuid && !!startDate && !!endDate,
-  });
-
-  const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
-    events: [],
-    settings: {
-      timezone: 'UTC',
-      autoAcceptBookings: false,
-      bufferTime: 15,
-      workingHours: {
-        start: '08:00',
-        end: '18:00',
-      },
-    },
-  });
-
-  useEffect(() => {
-    const eventsFromSchedule = timetable?.data
-      ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])
-      : [];
-
-    setAvailabilityData((prev: any) => ({
-      ...prev,
-      events: eventsFromSchedule,
-    }));
-  }, [timetable?.data]);
 
   const { roster } = useClassRoster(classId);
 
@@ -253,7 +233,7 @@ export default function ClassPreviewPage() {
   };
 
 
-  if (isLoading || isAllLessonsDataLoading || classIsLoading) {
+  if (isAllLessonsDataLoading || classIsLoading) {
     return (
       <div className="flex flex-col gap-6 space-y-2">
         <Skeleton className="h-[150px] w-full" />
@@ -403,9 +383,9 @@ export default function ClassPreviewPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span className="text-xs">Duration</span>
+                <span className="text-xs">Duration  ({classData?.duration_formatted}/class)</span>
               </div>
-              <div className="font-medium">{classData?.duration_formatted}</div>
+              <div className="font-medium">{scheduleStats?.totalHours}</div>
             </div>
 
             <div className="space-y-1">
@@ -430,7 +410,7 @@ export default function ClassPreviewPage() {
             <div className="flex items-center gap-2 text-sm">
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Start Date</span>
-              {/* <span className="font-medium">{classData?.default_start_time as string}</span> */}
+              <span className="font-medium">{formattedStart}</span>
             </div>
 
             {classData?.location_type && (
@@ -441,8 +421,7 @@ export default function ClassPreviewPage() {
             )}
 
             <div className="flex items-center gap-2 text-sm">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">${totalFee.toFixed(2)}</span>
+              <span className="font-medium">KES {amountPayable.toFixed(2)}</span>
             </div>
 
             <div className="flex items-center gap-2 text-sm">
@@ -525,72 +504,9 @@ export default function ClassPreviewPage() {
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Weekly Schedule</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Display Formatted Dates */}
-              <div className="text-sm text-muted-foreground">
-                <span className="font-medium">Academic Period: </span>
-                {/* {formattedStart} – {formattedEnd} */}
-              </div>
-
-              {/* Date Inputs */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="flex flex-col">
-                  <Label className="mb-1 text-sm font-medium">Start Date</Label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div className="flex flex-col">
-                  <Label className="mb-1 text-sm font-medium">End Date</Label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              {/* Timetable Section */}
-              {timetableIsLoading ? (
-                <div className="space-y-4 p-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-16 w-full animate-pulse rounded-lg bg-muted"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>
-                      You have {timetable?.data?.length ?? 0} class instance
-                      {timetable?.data?.length === 1 ? '' : 's'} under this class for the
-                      academic period.
-                    </span>
-                  </div>
-
-                  <div className="border-t border-border pt-4">
-                    <MonthlyAvailabilityGrid
-                      availabilityData={availabilityData}
-                      onAvailabilityUpdate={() => { }}
-                      isEditing={false}
-                      classes={[]}
-                    />
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CardContent>
+            <ClassScheduleCalendar schedules={schedules as any} />
+          </CardContent>
         </TabsContent>
 
         <TabsContent value="skills" className="space-y-4">
@@ -727,17 +643,15 @@ export default function ClassPreviewPage() {
 
       {/* Registration Link and Sharing */}
       <Card>
-        <CardHeader>
+        <CardHeader className='gap-4' >
           <CardTitle className="flex items-center gap-2">
             <Link className="h-5 w-5" />
             Registration Link
           </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input value={registrationLink} readOnly className="font-mono text-sm" />
             <Button
-              onClick={() => copyToClipboard(registrationLink)}
+              onClick={() => copyLink(registrationLink, setCopied)}
               variant="outline"
               className="gap-2"
             >
@@ -745,23 +659,40 @@ export default function ClassPreviewPage() {
               {copied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
+        </CardHeader>
 
+        <CardHeader className='gap-4' >
+          <CardTitle className="flex items-center gap-2">
+            <Link className="h-5 w-5" />
+            Class Invite Link
+          </CardTitle>
+          <div className="flex gap-2">
+            <Input value={inviteLink} readOnly className="font-mono text-sm" />
+            <Button
+              onClick={() => copyLink(inviteLink, setCopied)}
+              variant="outline"
+              className="gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              {copied ? 'Copied!' : 'Copy'}
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4 px-6">
           <div className="space-y-3">
             <h4 className="font-medium">Share Your Class</h4>
             <div className="flex flex-wrap gap-2">
+
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => copyToClipboard(registrationLink)}
-                className="gap-2"
-              >
-                <Copy className="h-4 w-4" />
-                Copy Link
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => shareToSocial('facebook')}
+                onClick={() =>
+                  shareToSocial("facebook", {
+                    title: classData?.title,
+                    links: [registrationLink, inviteLink],
+                  })
+                }
                 className="gap-2"
               >
                 <Facebook className="h-4 w-4" />
@@ -770,7 +701,12 @@ export default function ClassPreviewPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => shareToSocial('twitter')}
+                onClick={() =>
+                  shareToSocial("twitter", {
+                    title: classData?.title,
+                    links: [registrationLink, inviteLink],
+                  })
+                }
                 className="gap-2"
               >
                 <Twitter className="h-4 w-4" />
@@ -779,7 +715,12 @@ export default function ClassPreviewPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => shareToSocial('linkedin')}
+                onClick={() =>
+                  shareToSocial("linkedin", {
+                    title: classData?.title,
+                    links: [registrationLink, inviteLink],
+                  })
+                }
                 className="gap-2"
               >
                 <Linkedin className="h-4 w-4" />
@@ -788,7 +729,12 @@ export default function ClassPreviewPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => shareToSocial('whatsapp')}
+                onClick={() =>
+                  shareToSocial("whatsapp", {
+                    title: classData?.title,
+                    links: [registrationLink, inviteLink],
+                  })
+                }
                 className="gap-2"
               >
                 <MessageCircle className="h-4 w-4" />
@@ -797,7 +743,12 @@ export default function ClassPreviewPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => shareToSocial('email')}
+                onClick={() =>
+                  shareToSocial("email", {
+                    title: classData?.title,
+                    links: [registrationLink, inviteLink],
+                  })
+                }
                 className="gap-2"
               >
                 <Mail className="h-4 w-4" />

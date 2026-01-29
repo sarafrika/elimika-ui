@@ -1,6 +1,7 @@
 'use client';
 
 import { elimikaDesignSystem } from '@/lib/design-system';
+import { Users } from 'lucide-react';
 import { useState } from 'react';
 import BookingsPage from '../bookings/page';
 
@@ -26,13 +27,6 @@ const WaitingListPage = () => {
           </div>
         </div>
       </section>
-
-      {/* Alert Banner */}
-      <div className='mb-6 flex flex-col gap-2 rounded-md border-l-4 border-yellow-400 bg-yellow-50 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-          <p className='font-medium'>🚧 This page is under construction.</p>
-        </div>
-      </div>
 
       {/* Tabs */}
       <section className='mb-8'>
@@ -65,14 +59,24 @@ const WaitingListPage = () => {
 
       {/* Tab Content */}
       <section className='animate-fadeIn'>
-        {activeTab === 'waiting-list' && (
-          <div className='bg-card border-border rounded-lg border p-4 shadow-sm sm:p-6'>
-            <h2 className='text-foreground mb-2 text-xl font-semibold sm:mb-4'>
-              Waiting List of Students
+        {activeTab === "waiting-list" && (
+          <div className="bg-card border-border rounded-lg border p-4 shadow-sm sm:p-6">
+            <h2 className="text-foreground mb-4 text-xl font-semibold">
+              Waiting List
             </h2>
-            <p className='text-muted-foreground text-sm sm:text-base'>
-              Student waiting list content will appear here.
-            </p>
+
+            <div className="flex flex-col items-center justify-center rounded-md p-8 text-center">
+              <Users className="text-muted-foreground mb-3 h-8 w-8" />
+
+              <p className="text-foreground text-sm font-medium sm:text-base">
+                No students in the waiting list
+              </p>
+
+              <p className="text-muted-foreground mt-1 max-w-sm text-xs sm:text-sm">
+                Students who request to join your class but haven’t been enrolled yet
+                will appear here.
+              </p>
+            </div>
           </div>
         )}
 

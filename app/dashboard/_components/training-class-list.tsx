@@ -241,14 +241,11 @@ export function TrainingClassList({
                   <div className='relative h-48 overflow-hidden'>
                     <div className='bg-primary/10 absolute inset-0 z-10' />
                     <Image
-                      src={
-                        (cls?.course?.thumbnail_url as string) ||
-                        'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=600&fit=crop'
-                      }
-                      alt={cls?.title}
-                      className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
-                      width={200}
-                      height={50}
+                      src={cls?.course?.banner_url}
+                      alt={cls?.title || 'banner'}
+                      className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
+                      width={400}
+                      height={208}
                     />
 
                     {/* Overlays */}
@@ -390,9 +387,8 @@ export function TrainingClassList({
                       </div>
                       <div className='bg-primary/10 h-2 overflow-hidden rounded-full'>
                         <div
-                          className={`h-full transition-all duration-500 ${
-                            enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
-                          }`}
+                          className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                            }`}
                           style={{ width: `${enrolledPercentage}%` }}
                         />
                       </div>

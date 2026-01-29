@@ -9,8 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useMutation } from '@tanstack/react-query';
 import { Loader, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { useStudent } from '../../../../../context/student-context';
+import { uploadCertificatePdfMutation } from '../../../../../services/client/@tanstack/react-query.gen';
 
 interface CertificateUploadModalProps {
   open: boolean;
@@ -29,11 +33,14 @@ export function CertificateUploadModal({
   onDragActive,
   dragActive,
 }: CertificateUploadModalProps) {
+  const student = useStudent()
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(selectedFile);
+
+  const uploadCertMut = useMutation(uploadCertificatePdfMutation())
 
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -88,15 +95,17 @@ export function CertificateUploadModal({
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/certificates/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Upload failed');
-      }
+      uploadCertMut.mutate({
+        path: { uuid: student?.uuid as string },
+        body: { file: file as any }
+      }, {
+        onSuccess: (data) => {
+          toast.success(data?.message)
+        },
+        onError: (error) => {
+          toast.error(error?.message)
+        }
+      })
 
       onUploadComplete();
       setFile(null);
@@ -142,9 +151,8 @@ export function CertificateUploadModal({
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
-                dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-              }`}
+              className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                }`}
             >
               <Upload className='text-muted-foreground mx-auto mb-3 h-8 w-8' />
               <p className='text-foreground mb-2 text-sm font-medium'>

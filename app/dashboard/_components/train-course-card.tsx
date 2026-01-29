@@ -256,12 +256,12 @@ export function TrainCourseCard({
           {/* Review note */}
           <span
             className={`text-center text-xs italic transition-colors duration-200 ${applicationStatus === 'pending'
-                ? 'text-warning'
-                : applicationStatus === 'approved'
-                  ? 'text-success'
-                  : applicationStatus === 'revoked'
-                    ? 'text-destructive'
-                    : 'text-muted-foreground'
+              ? 'text-warning'
+              : applicationStatus === 'approved'
+                ? 'text-success'
+                : applicationStatus === 'revoked'
+                  ? 'text-destructive'
+                  : 'text-muted-foreground'
               } `}
           >
             {applicationReviewNote || 'No review note provided'}

@@ -14,8 +14,13 @@ export const ClassInformationSection = ({
   data: ClassDetails;
   onChange: (updates: Partial<ClassDetails>) => void;
 }) => {
+
   const inviteUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/class-invite?id=${data?.uuid}` : '';
+
+  const registrationurl =
+    typeof window !== 'undefined' ? `${window.location.origin}/dashboard/browse-courses/available-classes/${data?.course_uuid}/enroll?id=${data?.uuid}` : '';
+
 
   return (
     <Card className='overflow-hidden border shadow-sm'>
@@ -66,11 +71,21 @@ export const ClassInformationSection = ({
 
           <TableRow className='hover:bg-transparent'>
             <TableCell className='bg-muted/30 py-4 font-semibold'>
-              Class Invite/Registration Link
+              Class Invite Link
             </TableCell>
             <TableCell className='bg-card flex items-center gap-2 py-4'>
               <Input value={inviteUrl} readOnly className='flex-1' />
               <CopyInviteButton url={inviteUrl} />
+            </TableCell>
+          </TableRow>
+
+          <TableRow className='hover:bg-transparent'>
+            <TableCell className='bg-muted/30 py-4 font-semibold'>
+              Class Registration Link
+            </TableCell>
+            <TableCell className='bg-card flex items-center gap-2 py-4'>
+              <Input value={registrationurl} readOnly className='flex-1' />
+              <CopyInviteButton url={registrationurl} />
             </TableCell>
           </TableRow>
         </TableBody>

@@ -12,7 +12,7 @@ interface CourseDetailsProps {
 
 export default function CourseDetails({ course, className = '' }: CourseDetailsProps) {
   // @ts-ignore
-  const rates = course?.application?.rate_card;
+  const rates = course?.application?.rate_card || {};
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -48,13 +48,13 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
             <div className='flex items-start justify-between'>
               <div className='space-y-2'>
                 <CardTitle className='text-2xl font-bold'>
-                  {course.name || 'Course name not provided'}
+                  {course?.name || 'Course name not provided'}
                 </CardTitle>
 
                 <div className='text-muted-foreground text-sm'>
                   <RichTextRenderer
                     maxChars={300}
-                    htmlString={course.description || 'No description provided'}
+                    htmlString={course?.description || 'No description provided'}
                   />
                 </div>
 
@@ -84,7 +84,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 <h3 className='text-lg font-semibold'>Private Online</h3>
                 <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
                 <p className='mt-2 text-xl font-bold'>
-                  {rates.currency} {rates.private_online_rate}
+                  {rates?.currency} {rates?.private_online_rate}
                 </p>
               </div>
 
@@ -93,7 +93,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 <h3 className='text-lg font-semibold'>Private In-person</h3>
                 <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
                 <p className='mt-2 text-xl font-bold'>
-                  {rates.currency} {rates.private_inperson_rate}
+                  {rates?.currency} {rates?.private_inperson_rate}
                 </p>
               </div>
 
@@ -102,7 +102,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 <h3 className='text-lg font-semibold'>Group Online</h3>
                 <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
                 <p className='mt-2 text-xl font-bold'>
-                  {rates.currency} {rates.group_online_rate}
+                  {rates?.currency} {rates?.group_online_rate}
                 </p>
               </div>
 
@@ -111,7 +111,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 <h3 className='text-lg font-semibold'>Group In-person</h3>
                 <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
                 <p className='mt-2 text-xl font-bold'>
-                  {rates.currency} {rates.group_inperson_rate}
+                  {rates?.currency} {rates?.group_inperson_rate}
                 </p>
               </div>
             </div>

@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
-import { getInstructorDocumentsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getInstructorDocumentsOptions, getInstructorDocumentsQueryKey, uploadInstructorDocumentMutation } from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorDocument } from '@/services/client/types.gen';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Download, FileWarning, RefreshCw, ShieldCheck, UploadCloud } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { Input } from '../../../../../components/ui/input';
+import { cn } from '../../../../../lib/utils';
 
 const formatDate = (value?: Date | string) => {
   if (!value) return '—';
@@ -88,6 +91,16 @@ const renderDocuments = (
 export default function CertificatesPage() {
   const instructor = useInstructor();
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const qc = useQueryClient()
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false)
+
+  const isPdfFile = (file: File) =>
+    file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+  const uploadInstructorDocument = useMutation(uploadInstructorDocumentMutation())
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -131,6 +144,115 @@ export default function CertificatesPage() {
         <Button variant='outline' size='sm' className='gap-2' onClick={() => refetch()}>
           <RefreshCw className='h-4 w-4' />
           Refresh
+        </Button>
+      </div>
+
+      <div
+        className={cn(
+          'space-y-4 rounded-lg border-2 flex flex-col items-center border-dashed p-8 transition-all',
+          isDragging
+            ? 'border-primary bg-primary/5'
+            : 'border-border bg-background'
+        )}
+        onDragOver={e => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={e => {
+          e.preventDefault();
+          setIsDragging(false);
+
+          const file = e.dataTransfer.files?.[0];
+          if (!file) return;
+
+          if (!isPdfFile(file)) {
+            toast.error('Only PDF files are supported');
+            return;
+          }
+
+          setMediaFile(file);
+        }}
+
+      >
+        <Input
+          ref={fileInputRef}
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={e => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            if (!isPdfFile(file)) {
+              toast.error('Only PDF files are supported');
+              e.target.value = '';
+              return;
+            }
+
+            setMediaFile(file);
+          }}
+        />
+
+
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className='cursor-pointer rounded-md text-center'
+        >
+          <p className="text-foreground mb-1 font-medium">
+            {mediaFile
+              ? mediaFile.name
+              : 'Drag & drop or click to upload a PDF'}
+          </p>
+
+          <p className="text-muted-foreground text-sm">
+            PDF files only (application/pdf)
+          </p>
+
+        </div>
+
+        <Button
+          type='button'
+          disabled={!mediaFile || uploadInstructorDocument.isPending}
+          onClick={() => {
+            if (!mediaFile) return;
+            uploadInstructorDocument.mutate(
+              {
+                body: { file: mediaFile },
+                path: {
+                  instructorUuid: instructor?.uuid as string,
+                },
+                query: {
+                  title: '',
+                  description: '',
+                  document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
+                  education_uuid: '',
+                  experience_uuid: '',
+                  expiry_date: '',
+                  membership_uuid: '',
+                },
+              },
+              {
+                onSuccess: () => {
+                  toast.success('Document uploaded');
+                  setMediaFile(null);
+                  qc.invalidateQueries({
+                    queryKey: getInstructorDocumentsQueryKey({
+                      path: {
+                        instructorUuid: instructor?.uuid as string,
+                      },
+                    }),
+                  });
+                },
+                onError: (error) => {
+                  toast.error(error?.message)
+                }
+              }
+            );
+          }}
+          className='w-full max-w-[150px]'
+        >
+          {uploadInstructorDocument.isPending ? 'Uploading...' : 'Upload Document'}
         </Button>
       </div>
 

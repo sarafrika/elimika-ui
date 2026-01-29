@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
   Calendar,
@@ -35,9 +35,11 @@ import {
   XCircle,
 } from 'lucide-react';
 import type React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { useStudent } from '../../../../context/student-context';
-import { getUserByUuidOptions } from '../../../../services/client/@tanstack/react-query.gen';
+import { cn } from '../../../../lib/utils';
+import { getInstructorDocumentsQueryKey, getUserByUuidOptions, uploadInstructorDocumentMutation } from '../../../../services/client/@tanstack/react-query.gen';
 import { sampleWallet, SkillsFundWalletCard } from '../../_components/skill-fund-wallet';
 
 const skillsFundApplications: any[] = [
@@ -184,6 +186,18 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
   });
   const student = data?.data;
 
+  const qc = useQueryClient()
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false)
+
+  const isPdfFile = (file: File) =>
+    file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+  const uploadInstructorDocument = useMutation(uploadInstructorDocumentMutation())
+
+
   const studentApplications = skillsFundApplications;
   const classes = [
     { id: 'class-1', classTitle: 'Full Stack Development Bootcamp' },
@@ -292,7 +306,7 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
 
   return (
     <div className='space-y-6'>
-      <SkillsFundWalletCard wallet={sampleWallet} user={student} />
+      <SkillsFundWalletCard wallet={sampleWallet} user={student} role='' />
 
       {/* Quick Stats */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
@@ -607,10 +621,114 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
 
             <div>
               <Label>Supporting Documents (Optional)</Label>
-              <div className='border-border mt-2 rounded-lg border-2 border-dashed p-6 text-center'>
-                <Upload className='text-muted-foreground mx-auto mb-2 h-8 w-8' />
-                <p className='text-muted-foreground text-sm'>Click to upload or drag and drop</p>
-                <p className='text-muted-foreground mt-1 text-xs'>PDF, DOC, or images (max 5MB)</p>
+
+              <div
+                className={cn(
+                  'space-y-4 rounded-lg mt-2 border-2 flex flex-col items-center border-dashed p-8 transition-all',
+                  isDragging
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-background'
+                )}
+                onDragOver={e => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={e => {
+                  e.preventDefault();
+                  setIsDragging(false);
+
+                  const file = e.dataTransfer.files?.[0];
+                  if (!file) return;
+
+                  if (!isPdfFile(file)) {
+                    toast.error('Only PDF files are supported');
+                    return;
+                  }
+
+                  setMediaFile(file);
+                }}
+
+              >
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    if (!isPdfFile(file)) {
+                      toast.error('Only PDF files are supported');
+                      e.target.value = '';
+                      return;
+                    }
+
+                    setMediaFile(file);
+                  }}
+                />
+
+
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className='cursor-pointer rounded-md text-center'
+                >
+                  <Upload className='text-muted-foreground mx-auto mb-2 h-8 w-8' />
+
+                  <p className="text-foreground text-[13px] mb-1 font-medium">
+                    {mediaFile
+                      ? mediaFile.name
+                      : 'Click to upload or drag and drop'}
+                  </p>
+
+                  <p className='text-muted-foreground mt-1 text-xs'>PDF (max 5MB)</p>
+
+                </div>
+
+                <Button
+                  type='button'
+                  disabled={!mediaFile || uploadInstructorDocument.isPending}
+                  onClick={() => {
+                    if (!mediaFile) return;
+                    uploadInstructorDocument.mutate(
+                      {
+                        body: { file: mediaFile },
+                        path: {
+                          instructorUuid: student?.uuid as string,
+                        },
+                        query: {
+                          title: '',
+                          description: '',
+                          document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
+                          education_uuid: '',
+                          experience_uuid: '',
+                          expiry_date: '',
+                          membership_uuid: '',
+                        },
+                      },
+                      {
+                        onSuccess: () => {
+                          toast.success('Document uploaded');
+                          setMediaFile(null);
+                          qc.invalidateQueries({
+                            queryKey: getInstructorDocumentsQueryKey({
+                              path: {
+                                instructorUuid: student?.uuid as string,
+                              },
+                            }),
+                          });
+                        },
+                        onError: (error) => {
+                          toast.error(error?.message)
+                        }
+                      }
+                    );
+                  }}
+                  className='w-full max-w-[150px]'
+                >
+                  {uploadInstructorDocument.isPending ? 'Uploading...' : 'Upload Document'}
+                </Button>
               </div>
             </div>
           </div>
