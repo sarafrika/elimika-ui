@@ -79,10 +79,10 @@ export function CourseCard({
           {course?.banner_url ? (
             <Image
               src={course?.banner_url}
-              alt={course?.name}
-              className='h-full w-full object-cover'
-              width={24}
-              height={24}
+              alt={course?.name || 'banner'}
+              className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
+              width={400}
+              height={208}
             />
           ) : (
             <BookOpen className='text-primary/40 h-16 w-16' />
@@ -199,7 +199,7 @@ export function CourseCard({
                     // router.push(`/dashboard/browse-courses/enroll/${course.uuid}`);
                   }}
                 >
-                  Search Classes
+                  Enroll
                 </Button>
               </>
             ) : (

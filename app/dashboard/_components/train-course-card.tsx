@@ -109,10 +109,10 @@ export function TrainCourseCard({
           {course?.banner_url ? (
             <Image
               src={course?.banner_url}
-              alt={course?.name}
-              className='h-full w-full object-cover'
-              width={24}
-              height={24}
+              alt={course?.name || 'banner'}
+              className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
+              width={400}
+              height={208}
             />
           ) : (
             <BookOpen className='text-primary/40 h-16 w-16' />
@@ -255,15 +255,14 @@ export function TrainCourseCard({
           </div>
           {/* Review note */}
           <span
-            className={`text-center text-xs italic transition-colors duration-200 ${
-              applicationStatus === 'pending'
+            className={`text-center text-xs italic transition-colors duration-200 ${applicationStatus === 'pending'
                 ? 'text-warning'
                 : applicationStatus === 'approved'
                   ? 'text-success'
                   : applicationStatus === 'revoked'
                     ? 'text-destructive'
                     : 'text-muted-foreground'
-            } `}
+              } `}
           >
             {applicationReviewNote || 'No review note provided'}
           </span>

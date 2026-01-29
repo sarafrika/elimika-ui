@@ -5,97 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getAllCategoriesOptions, getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { CourseCard } from '../../_components/course-card';
 
-const CATEGORIES = [
-  { id: 'all', name: 'All Categories', icon: '📚', subcategories: [] },
-  {
-    id: 'technology',
-    name: 'Technology',
-    icon: '💻',
-    subcategories: [
-      'Web Development',
-      'Data Science',
-      'AI & Machine Learning',
-      'Mobile Development',
-    ],
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    icon: '💼',
-    subcategories: ['Marketing', 'Finance', 'Management', 'Entrepreneurship'],
-  },
-  {
-    id: 'design',
-    name: 'Design',
-    icon: '🎨',
-    subcategories: ['UI/UX Design', 'Graphic Design', 'Web Design', 'Motion Graphics'],
-  },
-  {
-    id: 'health',
-    name: 'Health & Fitness',
-    icon: '💪',
-    subcategories: ['Nutrition', 'Yoga', 'Fitness Training', 'Mental Health'],
-  },
-  {
-    id: 'arts',
-    name: 'Arts & Crafts',
-    icon: '🎭',
-    subcategories: ['Painting', 'Photography', 'Music', 'Writing'],
-  },
-  {
-    id: 'languages',
-    name: 'Languages',
-    icon: '🌍',
-    subcategories: ['English', 'Spanish', 'French', 'Mandarin'],
-  },
-  {
-    id: 'science',
-    name: 'Science',
-    icon: '🔬',
-    subcategories: ['Physics', 'Chemistry', 'Biology', 'Astronomy'],
-  },
-  {
-    id: 'personal-development',
-    name: 'Personal Development',
-    icon: '🌱',
-    subcategories: ['Productivity', 'Mindfulness', 'Leadership', 'Career Growth'],
-  },
-  {
-    id: 'finance',
-    name: 'Finance',
-    icon: '💰',
-    subcategories: ['Investing', 'Personal Finance', 'Cryptocurrency', 'Real Estate'],
-  },
-  {
-    id: 'gaming',
-    name: 'Gaming',
-    icon: '🎮',
-    subcategories: ['Game Design', 'Esports', 'Streaming', 'Game Reviews'],
-  },
-  {
-    id: 'education',
-    name: 'Education',
-    icon: '🏫',
-    subcategories: ['Teaching', 'E-learning', 'Language Learning', 'Educational Technology'],
-  },
-  {
-    id: 'travel',
-    name: 'Travel',
-    icon: '✈️',
-    subcategories: ['Adventure', 'Budget Travel', 'Luxury Travel', 'Travel Tips'],
-  },
-];
 
 export default function MyCoursesPage() {
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -108,7 +28,17 @@ export default function MyCoursesPage() {
   const courses = data?.data?.content || [];
   const paginationMetadata = data?.data?.metadata;
 
-  const currentCategory = CATEGORIES.find(cat => cat.id === selectedCategory);
+  const { data: apiCat } = useQuery(getAllCategoriesOptions({
+    query: { pageable: {} }
+  }))
+  const apiCategories = apiCat?.data?.content || [];
+
+  const CATEGORIES = [
+    { name: 'All', displayName: 'All Categories' },
+    ...apiCategories,
+  ];
+
+  const currentCategory = CATEGORIES.find(cat => cat.name === selectedCategory);
 
   const filteredCourses = courses?.filter((course: any) => {
     const matchesSearch =
@@ -118,13 +48,13 @@ export default function MyCoursesPage() {
     // course?.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesCategory =
-      selectedCategory === 'all' ||
-      course?.category?.toLowerCase() === currentCategory?.name.toLowerCase();
+      selectedCategory === 'All' ||
+      course?.category_names?.some(
+        (cat: string) => cat.toLowerCase() === currentCategory?.name.toLowerCase()
+      );
 
-    const matchesSubcategory =
-      selectedSubcategory === '' || course?.subcategory === selectedSubcategory;
 
-    return matchesSearch && matchesCategory && matchesSubcategory;
+    return matchesSearch && matchesCategory;
   });
 
   if (isLoading) {
@@ -175,39 +105,14 @@ export default function MyCoursesPage() {
               <TabsList className='scrollbar-hidden mb-4 flex space-x-2 overflow-x-auto px-1'>
                 {CATEGORIES.map(category => (
                   <TabsTrigger
-                    key={category.id}
-                    value={category.id}
-                    className='flex flex-shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 hover:bg-gray-100 hover:text-black data-[state=active]:bg-white data-[state=active]:text-black dark:hover:bg-gray-700 dark:hover:text-white dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:text-white'
+                    key={category.name}
+                    value={category.name}
+                    className='flex flex-shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 hover:text-black data-[state=active]:bg-white data-[state=active]:text-black dark:hover:bg-gray-700 dark:hover:text-white  dark:data-[state=active]:text-white'
                   >
-                    {category.icon && <span className='text-sm'>{category.icon}</span>}
                     {category.name}
                   </TabsTrigger>
                 ))}
               </TabsList>
-
-              {/* Subcategories */}
-              {selectedCategory !== 'all' &&
-                (currentCategory?.subcategories?.length as any) > 0 && (
-                  <div className='mb-6 flex flex-wrap gap-2'>
-                    <Button
-                      variant={selectedSubcategory === '' ? 'default' : 'outline'}
-                      size='sm'
-                      onClick={() => setSelectedSubcategory('')}
-                    >
-                      All {currentCategory?.name}
-                    </Button>
-                    {currentCategory?.subcategories.map(sub => (
-                      <Button
-                        key={sub}
-                        variant={selectedSubcategory === sub ? 'default' : 'outline'}
-                        size='sm'
-                        onClick={() => setSelectedSubcategory(sub)}
-                      >
-                        {sub}
-                      </Button>
-                    ))}
-                  </div>
-                )}
             </Tabs>
           </div>
         </div>
@@ -217,7 +122,6 @@ export default function MyCoursesPage() {
           <div className='flex items-center justify-between'>
             <h2>
               {selectedCategory === 'all' ? 'All Courses' : currentCategory?.name}
-              {selectedSubcategory && ` - ${selectedSubcategory}`}
             </h2>
             <p className='text-muted-foreground text-sm'>
               {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
