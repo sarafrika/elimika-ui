@@ -15,6 +15,7 @@ import {
   ClipboardList,
   DollarSign,
   FileCheck,
+  FileStack,
   FileText,
   GraduationCap,
   Handshake,
@@ -233,45 +234,13 @@ export default {
       title: 'Schedule',
       url: '/dashboard/trainings',
       icon: ClipboardList,
-      // items: [
-      //   {
-      //     title: 'Overview',
-      //     url: '/dashboard/trainings/overview',
-      //     icon: LayoutDashboard,
-      //   },
-      //   {
-      //     title: 'Timetable',
-      //     url: '/dashboard/trainings/timetable',
-      //     icon: Calendar,
-      //   },
-      //   {
-      //     title: 'Students',
-      //     url: '/dashboard/trainings/students',
-      //     icon: Users,
-      //   },
-      // ],
+
     },
     {
       title: 'Assessment',
       url: '/dashboard/assessment',
       icon: Layers,
-      // items: [
-      //   {
-      //     title: 'Assignments',
-      //     url: '/dashboard/assessment/assignments',
-      //     icon: FileText,
-      //   },
-      //   {
-      //     title: 'Quiz',
-      //     url: '/dashboard/assessment/quiz',
-      //     icon: ListChecks,
-      //   },
-      //   {
-      //     title: 'Exams',
-      //     url: '/dashboard/assessment/exams',
-      //     icon: FileCheck,
-      //   },
-      // ],
+
     },
     {
       title: 'Enrollments',
@@ -287,23 +256,7 @@ export default {
       title: 'Opportunities',
       url: '/dashboard/opportunities',
       icon: Handshake,
-      // items: [
-      //   {
-      //     title: 'Jobs',
-      //     url: '/dashboard/opportunities/jobs',
-      //     icon: Briefcase,
-      //   },
-      //   {
-      //     title: 'Apprenticeships',
-      //     url: '/dashboard/opportunities/apprenticeships',
-      //     icon: Wrench,
-      //   },
-      //   {
-      //     title: 'Attachment',
-      //     url: '/dashboard/opportunities/attachment',
-      //     icon: UserPlus,
-      //   },
-      // ],
+
     },
     {
       title: 'Skills Fund',
@@ -502,6 +455,11 @@ export default {
       title: 'Catalogue',
       url: '/dashboard/catalogue',
       icon: ShoppingBag,
+    },
+    {
+      title: 'Programs',
+      url: '/dashboard/programs',
+      icon: FileStack,
     },
     {
       title: 'Training Applications',
