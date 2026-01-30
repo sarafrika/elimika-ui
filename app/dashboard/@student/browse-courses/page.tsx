@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getAllCategoriesOptions, getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getAllCategoriesOptions, getAllTrainingProgramsOptions, getPublishedCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -16,21 +16,37 @@ import { CourseCard } from '../../_components/course-card';
 export default function MyCoursesPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   const size = 20;
   const [page, setPage] = useState(0);
 
-  const { data, isLoading } = useQuery(
-    getAllCoursesOptions({ query: { pageable: { page, size } } })
-  );
+  const { data, isLoading } = useQuery({
+    ...getPublishedCoursesOptions({ query: { pageable: { page, size } } }),
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+
+  const { data: programsData } = useQuery({
+    ...getAllTrainingProgramsOptions({ query: { pageable: {} } }),
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  })
+
   const courses = data?.data?.content || [];
+  const programs = programsData?.data?.content || [];
+
   const paginationMetadata = data?.data?.metadata;
 
-  const { data: apiCat } = useQuery(getAllCategoriesOptions({
-    query: { pageable: {} }
-  }))
+  const { data: apiCat } = useQuery({
+    ...getAllCategoriesOptions({ query: { pageable: {} } }),
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  })
+
   const apiCategories = apiCat?.data?.content || [];
 
   const CATEGORIES = [
@@ -99,7 +115,6 @@ export default function MyCoursesPage() {
               value={selectedCategory}
               onValueChange={val => {
                 setSelectedCategory(val);
-                if (val === 'all') setSelectedSubcategory('');
               }}
             >
               <TabsList className='scrollbar-hidden mb-4 flex space-x-2 overflow-x-auto px-1'>
@@ -157,7 +172,6 @@ export default function MyCoursesPage() {
               onClick={() => {
                 setSearchQuery('');
                 setSelectedCategory('all');
-                setSelectedSubcategory('');
               }}
             >
               Clear filters

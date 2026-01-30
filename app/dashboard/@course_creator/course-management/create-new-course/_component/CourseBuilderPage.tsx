@@ -9,15 +9,9 @@ import { StepperContent, StepperList, StepperRoot, StepperTrigger } from '@/comp
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseCreator } from '@/context/course-creator-context';
 import {
-  deleteCourseLessonMutation,
-  deleteLessonContentMutation,
-  getAllAssignmentsOptions,
   getAllContentTypesOptions,
-  getAllQuizzesOptions,
   getCourseByUuidOptions,
-  getCourseLessonOptions,
   getCourseLessonsOptions,
-  getCourseLessonsQueryKey,
   getLessonContentOptions,
   getLessonContentQueryKey,
   publishCourseMutation,
@@ -45,13 +39,9 @@ import { CourseComplianceForm } from '../../../_components/course-compliance-for
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
 import CourseLearningRulesForm from '../../../_components/course-learningrule-form';
 import { CoursePricingForm } from '../../../_components/course-pricing-form';
-import type { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
+import type { ICourse } from '../../../_components/instructor-type';
 import { ContentCreationForm } from '../../../_components/lesson-content-creation-form';
 import { LessonCreationForm } from '../../../_components/lesson-creation-form';
-import {
-  type ContentFormValues,
-  type LessonFormValues
-} from '../../../_components/lesson-management-form';
 import {
   CourseCreatorEmptyState,
   CourseCreatorLoadingState,
@@ -85,44 +75,6 @@ export default function CourseBuilderPage() {
 
   const formRef = useRef<CourseFormRef>(null);
   const queryClient = useQueryClient();
-
-  const [addLessonModalOpen, setAddLessonModalOpen] = useState(false);
-  const openAddLessonModal = () => setAddLessonModalOpen(true);
-
-  const [selectedLesson, setSelectedLesson] = useState<TLesson | null>(null);
-  const [editLessonModalOpen, setEditLessonModalOpen] = useState(false);
-  const openEditLessonModal = (lesson: TLesson) => {
-    setSelectedLesson(lesson);
-    setEditLessonModalOpen(true);
-  };
-
-  const [selectedContent, setSelectedContent] = useState<TLessonContentItem | null>(null);
-  const [addContentModalOpen, setAddContentModalOpen] = useState(false);
-  const openAddContentModal = (lesson: any) => {
-    setSelectedLesson(lesson);
-    setAddContentModalOpen(true);
-  };
-
-  const openEditContentModal = (content: TLessonContentItem) => {
-    setAddContentModalOpen(true);
-    setSelectedContent(content);
-  };
-
-  const [_selectedQuiz, setSelectedQuiz] = useState<any>();
-  const [addQuizModal, setAddQuizModal] = useState(false);
-  const _openAddQuizModal = (quiz: any) => {
-    setSelectedQuiz(quiz);
-    setAddQuizModal(true);
-  };
-
-  const [addAssignmentModal, setAddAssignmentModal] = useState(false);
-  const _openAddAssignmentModal = (lesson: any) => {
-    setSelectedLesson(lesson);
-    setAddAssignmentModal(true);
-  };
-
-  const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
-  const _openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
 
   const sectionContainerClasses =
     'w-full space-y-8 rounded-[32px] border border-border bg-card p-6 shadow-xl transition lg:p-10 dark:border-border/80 dark:bg-gradient-to-br dark:from-primary/10 dark:via-background/60 dark:to-background';
@@ -201,16 +153,6 @@ export default function CourseBuilderPage() {
   const lessons = courseLessons?.data?.content;
   const lessonUuids = lessons?.map((lesson: any) => lesson.uuid) || [];
 
-  // GET COURSE LESSON BY ID
-  const { data: lessonData } = useQuery({
-    ...getCourseLessonOptions({
-      path: { courseUuid: resolveId, lessonUuid: selectedLesson?.uuid as string },
-    }),
-    enabled: !!resolveId && !!selectedLesson?.uuid,
-  });
-  // @ts-expect-error
-  const lesson = lessonData?.data;
-
   const lessonContentQueries = useQueries({
     queries: (courseLessons?.data?.content || []).map(lesson => {
       const options = getLessonContentOptions({
@@ -238,100 +180,6 @@ export default function CourseBuilderPage() {
     lessonContentMap.set(lesson.uuid, contents);
   });
 
-  // GET COURSE LESSON CONTENT
-  const { data: lessonContentData } = useQuery({
-    ...getLessonContentOptions({
-      path: { courseUuid: resolveId, lessonUuid: selectedLesson?.uuid as string },
-    }),
-    enabled: !!resolveId && !!selectedLesson?.uuid,
-  });
-
-  // const contentData = lessonContentData?.data?.[0];
-  const lessonContent = lessonContentData?.data?.map((item: any) => ({
-    content_type: item.content_type_uuid,
-    title: item.title,
-    value: item.content_text || item.file_url || '',
-    duration_hours: lesson?.duration_hours ?? 0,
-    duration_minutes: lesson?.duration_minutes ?? 0,
-    content_category: item.content_category,
-    uuid: item.uuid,
-  }));
-
-  // const getContentTypeName = (uuid: string) => {
-  //   return contentTypeList.find((type) => type.uuid === uuid)?.name || ""
-  // }
-
-  const _content =
-    lesson && lessonContent
-      ? lessonContent.map((item: any) => {
-        const matchedType = Array.isArray(contentTypeList?.data)
-          ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
-          : undefined;
-
-        const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
-
-        return {
-          contentType: typeName.toUpperCase() as
-            | 'AUDIO'
-            | 'VIDEO'
-            | 'TEXT'
-            | 'LINK'
-            | 'PDF'
-            | 'YOUTUBE',
-          title: item?.title || '',
-          uuid: item?.uuid || '',
-          value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
-          duration:
-            typeof item?.estimated_duration === 'string'
-              ? parseInt(item.estimated_duration, 10) || 0
-              : 0,
-          durationHours: item?.duration_hours || 0,
-          durationMinutes: item?.duration_minutes || 0,
-          contentTypeUuid: item?.content_type || '',
-          contentCategory: matchedType?.upload_category ?? '',
-        };
-      })
-      : [];
-
-  const lessonInitialValues: Partial<LessonFormValues> = {
-    uuid: lesson?.uuid as string,
-    title: lesson?.title,
-    description: lesson?.description,
-    objectives: lesson?.learning_objectives,
-    number: lesson?.lesson_number,
-    // resources: [],
-  };
-
-  const contentInitialValues: Partial<ContentFormValues> = {
-    uuid: selectedContent?.uuid,
-    display_order: selectedContent?.display_order,
-    title: selectedContent?.title,
-    content_category: selectedContent?.content_category,
-    content_type_uuid: selectedContent?.content_type_uuid,
-    value: selectedContent?.content_text as any,
-    description: selectedContent?.description,
-    // content_type: selectedContent?.content_type || "",
-    // duration_hours: selectedContent?.duration_hours,
-    // duration_minutes: selectedContent?.duration_minutes,
-    // estimated_duration: "",
-  };
-
-  // GET COURSE QUIZZES
-  const { data: quizData, isLoading: quizDataIsLoading } = useQuery(
-    getAllQuizzesOptions({ query: { pageable: {} } })
-  );
-  const quizzes = quizData?.data?.content; // Array of quizzes
-  const filteredQuizzes =
-    quizzes?.filter((quiz: any) => lessonUuids.includes(quiz.lesson_uuid)) || [];
-
-  // GET COURSE ASSIGNMENTS
-  const { data: assignmentData, isLoading: assignmentIsLoading } = useQuery(
-    getAllAssignmentsOptions({ query: { pageable: {} } })
-  );
-  const assignments = assignmentData?.data?.content;
-  const filteredAssignments =
-    assignments?.filter((assignment: any) => lessonUuids.includes(assignment.lesson_uuid)) || [];
-
   // PUBLISH COURSE MUTATION
   const PublishCourse = useMutation(publishCourseMutation());
   const handlePublishCourse = async () => {
@@ -349,58 +197,6 @@ export default function CourseBuilderPage() {
               queryKey: publishCourseQueryKey({ path: { uuid: course?.data?.uuid as string } }),
             });
             router.push('/dashboard/courses');
-          },
-        }
-      );
-    } catch (_err) { }
-  };
-
-  // DELETE LESSON MUTATION
-  const DeleteLesson = useMutation(deleteCourseLessonMutation());
-  const handleDeleteLesson = async (lessonId: string) => {
-    if (!course?.data?.uuid) return;
-
-    try {
-      await DeleteLesson.mutateAsync(
-        {
-          path: { courseUuid: course?.data?.uuid as string, lessonUuid: lessonId },
-        },
-        {
-          onSuccess: () => {
-            toast.success('Lesson deleted successfully');
-            queryClient.invalidateQueries({
-              queryKey: getCourseLessonsQueryKey({
-                path: { courseUuid: course?.data?.uuid as string },
-                query: { pageable: { page: 0, size: 100 } },
-              }),
-            });
-          },
-        }
-      );
-    } catch (_err) { }
-  };
-
-  const deleteLessonContent = useMutation(deleteLessonContentMutation());
-  const handleDeleteContent = async (resolvedId: any, lessonId: any, contentId: any) => {
-    if (!course?.data?.uuid) return;
-
-    try {
-      await deleteLessonContent.mutateAsync(
-        {
-          path: {
-            courseUuid: course?.data?.uuid as string,
-            lessonUuid: lessonId,
-            contentUuid: contentId as string,
-          },
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({
-              queryKey: getLessonContentQueryKey({
-                path: { courseUuid: resolvedId, lessonUuid: lessonId },
-              }),
-            });
-            toast.success('Lesson content deleted successfully');
           },
         }
       );
