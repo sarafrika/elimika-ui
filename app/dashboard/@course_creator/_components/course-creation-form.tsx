@@ -165,6 +165,22 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       name: 'training_requirements',
     });
 
+    const trainingRequirements = form.watch('training_requirements');
+
+    const hasIncompleteTrainingRequirements =
+      Array.isArray(trainingRequirements) &&
+      trainingRequirements.some(req => {
+        if (!req) return true;
+
+        return (
+          !req.name?.trim() ||
+          !req.requirement_type ||
+          !req.provided_by ||
+          !req.quantity ||
+          !req.unit
+        );
+      });
+
     const queryClient = useQueryClient();
     const instructor = useInstructor();
     const courseCreatorContext = useOptionalCourseCreator();
@@ -971,11 +987,26 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             </div>
           </FormSection>
 
+          {hasIncompleteTrainingRequirements && (
+            <p className='text-end text-destructive text-sm'>
+              Please complete or remove all training requirements before saving.
+            </p>
+          )}
+
           {showSubmitButton && (
             <div className='xxs:flex-col flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>
-              <Button type='submit' className='min-w-32'>
+              <Button
+                type='submit'
+                className='min-w-32'
+                disabled={
+                  createCourseIsPending ||
+                  updateCourseIsPending ||
+                  hasIncompleteTrainingRequirements
+                }
+              >
                 {createCourseIsPending || updateCourseIsPending ? <Spinner /> : 'Save Course'}
               </Button>
+
               <Button
                 disabled={!editingCourseId}
                 onClick={() => setActiveStep(1)}

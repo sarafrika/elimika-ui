@@ -73,200 +73,8 @@ interface Notification {
   link?: string;
 }
 
-const SAMPLE_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    type: 'request',
-    title: 'New Instructor Application',
-    message:
-      'Sarah Johnson has applied to teach "Advanced React Development". Review their credentials and experience.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-    status: 'unread',
-    priority: 'high',
-    sender: {
-      name: 'Sarah Johnson',
-      avatar: 'https://i.pravatar.cc/150?img=1',
-      role: 'Instructor Applicant',
-    },
-    metadata: {
-      courseId: 'course-123',
-      courseName: 'Advanced React Development',
-      requestId: 'req-001',
-    },
-    actions: [
-      { label: 'Approve', type: 'approve', variant: 'default' },
-      { label: 'Reject', type: 'reject', variant: 'destructive' },
-      { label: 'View Profile', type: 'view', variant: 'outline' },
-    ],
-    link: '/dashboard/applications/req-001',
-  },
-  {
-    id: '2',
-    type: 'message',
-    title: 'New Message from Student',
-    message:
-      'Hi! I have a question about the assignment for Week 3. Could you clarify the requirements?',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-    status: 'unread',
-    priority: 'medium',
-    sender: {
-      name: 'Michael Chen',
-      avatar: 'https://i.pravatar.cc/150?img=12',
-      role: 'Student',
-    },
-    metadata: {
-      courseId: 'course-456',
-      courseName: 'Introduction to Python',
-      studentId: 'student-789',
-    },
-    actions: [
-      { label: 'Reply', type: 'reply', variant: 'default' },
-      { label: 'Mark as Read', type: 'dismiss', variant: 'outline' },
-    ],
-    link: '/dashboard/messages/2',
-  },
-  {
-    id: '3',
-    type: 'enrollment',
-    title: 'New Student Enrollment',
-    message: 'Emma Williams has enrolled in "Web Design Fundamentals". Class starts next Monday.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    status: 'unread',
-    priority: 'medium',
-    sender: {
-      name: 'Emma Williams',
-      avatar: 'https://i.pravatar.cc/150?img=5',
-      role: 'Student',
-    },
-    metadata: {
-      courseId: 'course-789',
-      courseName: 'Web Design Fundamentals',
-      studentId: 'student-456',
-      studentName: 'Emma Williams',
-    },
-    actions: [{ label: 'View Class', type: 'view', variant: 'default' }],
-    link: '/dashboard/classes/class-789',
-  },
-  {
-    id: '4',
-    type: 'payment',
-    title: 'Payment Received',
-    message: 'You received $150.00 for "Data Science Bootcamp" - Session 5.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-    status: 'read',
-    priority: 'low',
-    metadata: {
-      amount: 150.0,
-      courseName: 'Data Science Bootcamp',
-      classId: 'class-555',
-    },
-    actions: [{ label: 'View Details', type: 'view', variant: 'outline' }],
-    link: '/dashboard/payments/payment-004',
-  },
-  {
-    id: '5',
-    type: 'class_update',
-    title: 'Class Rescheduled',
-    message:
-      'Your "JavaScript Essentials" class on Thursday has been moved to Friday 3:00 PM due to student request.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
-    status: 'read',
-    priority: 'high',
-    metadata: {
-      classId: 'class-321',
-      className: 'JavaScript Essentials',
-      dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2), // 2 days from now
-    },
-    actions: [{ label: 'View Schedule', type: 'view', variant: 'default' }],
-    link: '/dashboard/schedule',
-  },
-  {
-    id: '6',
-    type: 'review',
-    title: 'New Student Review',
-    message: 'You received a 5-star review from David Martinez for "Mobile App Development".',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    status: 'read',
-    priority: 'low',
-    sender: {
-      name: 'David Martinez',
-      avatar: 'https://i.pravatar.cc/150?img=8',
-      role: 'Student',
-    },
-    metadata: {
-      courseId: 'course-999',
-      courseName: 'Mobile App Development',
-    },
-    actions: [{ label: 'View Review', type: 'view', variant: 'outline' }],
-    link: '/dashboard/reviews/6',
-  },
-  {
-    id: '7',
-    type: 'reminder',
-    title: 'Upcoming Class Reminder',
-    message: 'You have a class "React Hooks Deep Dive" starting in 1 hour. 12 students enrolled.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
-    status: 'read',
-    priority: 'urgent',
-    metadata: {
-      classId: 'class-111',
-      className: 'React Hooks Deep Dive',
-      dueDate: new Date(Date.now() + 1000 * 60 * 60), // 1 hour from now
-    },
-    actions: [{ label: 'Join Class', type: 'view', variant: 'default' }],
-    link: '/dashboard/classes/class-111/join',
-  },
-  {
-    id: '8',
-    type: 'achievement',
-    title: 'Milestone Achieved! 🎉',
-    message:
-      "Congratulations! You've successfully taught 50 classes and received an average rating of 4.8 stars.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-    status: 'read',
-    priority: 'low',
-    actions: [{ label: 'View Stats', type: 'view', variant: 'outline' }],
-    link: '/dashboard/achievements',
-  },
-  {
-    id: '9',
-    type: 'system',
-    title: 'Platform Update',
-    message:
-      'New features available: Live polling during classes and automated attendance tracking. Check them out!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 days ago
-    status: 'read',
-    priority: 'low',
-    actions: [{ label: 'Learn More', type: 'view', variant: 'outline' }],
-    link: '/dashboard/updates',
-  },
-  {
-    id: '10',
-    type: 'request',
-    title: 'Course Material Access Request',
-    message:
-      'Alumni student requesting access to "Advanced TypeScript" course materials for review purposes.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 7 days ago
-    status: 'unread',
-    priority: 'medium',
-    sender: {
-      name: 'Jessica Lee',
-      avatar: 'https://i.pravatar.cc/150?img=9',
-      role: 'Alumni',
-    },
-    metadata: {
-      courseId: 'course-777',
-      courseName: 'Advanced TypeScript',
-      studentId: 'student-888',
-      requestId: 'req-010',
-    },
-    actions: [
-      { label: 'Grant Access', type: 'approve', variant: 'default' },
-      { label: 'Deny', type: 'reject', variant: 'destructive' },
-    ],
-    link: '/dashboard/requests/req-010',
-  },
-];
+const SAMPLE_NOTIFICATIONS: Notification[] = []
+
 
 const getNotificationIcon = (type: NotificationType) => {
   const iconMap: Record<NotificationType, any> = {
@@ -375,15 +183,6 @@ const NotificationsPage = () => {
         </div>
       </section>
 
-      <div className='flex flex-col gap-2 rounded-md border-l-4 border-yellow-500 bg-yellow-100 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-          <p className='font-medium'>🚧 This page is under construction.</p>
-          <p className='text-sm text-yellow-900'>
-            Mock data is currently being displayed on this page.
-          </p>
-        </div>
-      </div>
-
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)} className='mb-6'>
         <TabsList>
@@ -439,11 +238,10 @@ const NotificationsPage = () => {
                 return (
                   <Card
                     key={notification.id}
-                    className={`p-4 transition-colors ${
-                      notification.status === 'unread'
-                        ? 'bg-primary/5 border-l-primary border-l-4'
-                        : ''
-                    }`}
+                    className={`p-4 transition-colors ${notification.status === 'unread'
+                      ? 'bg-primary/5 border-l-primary border-l-4'
+                      : ''
+                      }`}
                   >
                     <div className='flex gap-4'>
                       {/* Icon */}
@@ -552,3 +350,200 @@ const NotificationsPage = () => {
 };
 
 export default NotificationsPage;
+
+
+// const SAMPLE_NOTIFICATIONS: Notification[] = [
+//   {
+//     id: '1',
+//     type: 'request',
+//     title: 'New Instructor Application',
+//     message:
+//       'Sarah Johnson has applied to teach "Advanced React Development". Review their credentials and experience.',
+//     timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
+//     status: 'unread',
+//     priority: 'high',
+//     sender: {
+//       name: 'Sarah Johnson',
+//       avatar: 'https://i.pravatar.cc/150?img=1',
+//       role: 'Instructor Applicant',
+//     },
+//     metadata: {
+//       courseId: 'course-123',
+//       courseName: 'Advanced React Development',
+//       requestId: 'req-001',
+//     },
+//     actions: [
+//       { label: 'Approve', type: 'approve', variant: 'default' },
+//       { label: 'Reject', type: 'reject', variant: 'destructive' },
+//       { label: 'View Profile', type: 'view', variant: 'outline' },
+//     ],
+//     link: '/dashboard/applications/req-001',
+//   },
+//   {
+//     id: '2',
+//     type: 'message',
+//     title: 'New Message from Student',
+//     message:
+//       'Hi! I have a question about the assignment for Week 3. Could you clarify the requirements?',
+//     timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+//     status: 'unread',
+//     priority: 'medium',
+//     sender: {
+//       name: 'Michael Chen',
+//       avatar: 'https://i.pravatar.cc/150?img=12',
+//       role: 'Student',
+//     },
+//     metadata: {
+//       courseId: 'course-456',
+//       courseName: 'Introduction to Python',
+//       studentId: 'student-789',
+//     },
+//     actions: [
+//       { label: 'Reply', type: 'reply', variant: 'default' },
+//       { label: 'Mark as Read', type: 'dismiss', variant: 'outline' },
+//     ],
+//     link: '/dashboard/messages/2',
+//   },
+//   {
+//     id: '3',
+//     type: 'enrollment',
+//     title: 'New Student Enrollment',
+//     message: 'Emma Williams has enrolled in "Web Design Fundamentals". Class starts next Monday.',
+//     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+//     status: 'unread',
+//     priority: 'medium',
+//     sender: {
+//       name: 'Emma Williams',
+//       avatar: 'https://i.pravatar.cc/150?img=5',
+//       role: 'Student',
+//     },
+//     metadata: {
+//       courseId: 'course-789',
+//       courseName: 'Web Design Fundamentals',
+//       studentId: 'student-456',
+//       studentName: 'Emma Williams',
+//     },
+//     actions: [{ label: 'View Class', type: 'view', variant: 'default' }],
+//     link: '/dashboard/classes/class-789',
+//   },
+//   {
+//     id: '4',
+//     type: 'payment',
+//     title: 'Payment Received',
+//     message: 'You received $150.00 for "Data Science Bootcamp" - Session 5.',
+//     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
+//     status: 'read',
+//     priority: 'low',
+//     metadata: {
+//       amount: 150.0,
+//       courseName: 'Data Science Bootcamp',
+//       classId: 'class-555',
+//     },
+//     actions: [{ label: 'View Details', type: 'view', variant: 'outline' }],
+//     link: '/dashboard/payments/payment-004',
+//   },
+//   {
+//     id: '5',
+//     type: 'class_update',
+//     title: 'Class Rescheduled',
+//     message:
+//       'Your "JavaScript Essentials" class on Thursday has been moved to Friday 3:00 PM due to student request.',
+//     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
+//     status: 'read',
+//     priority: 'high',
+//     metadata: {
+//       classId: 'class-321',
+//       className: 'JavaScript Essentials',
+//       dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2), // 2 days from now
+//     },
+//     actions: [{ label: 'View Schedule', type: 'view', variant: 'default' }],
+//     link: '/dashboard/schedule',
+//   },
+//   {
+//     id: '6',
+//     type: 'review',
+//     title: 'New Student Review',
+//     message: 'You received a 5-star review from David Martinez for "Mobile App Development".',
+//     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+//     status: 'read',
+//     priority: 'low',
+//     sender: {
+//       name: 'David Martinez',
+//       avatar: 'https://i.pravatar.cc/150?img=8',
+//       role: 'Student',
+//     },
+//     metadata: {
+//       courseId: 'course-999',
+//       courseName: 'Mobile App Development',
+//     },
+//     actions: [{ label: 'View Review', type: 'view', variant: 'outline' }],
+//     link: '/dashboard/reviews/6',
+//   },
+//   {
+//     id: '7',
+//     type: 'reminder',
+//     title: 'Upcoming Class Reminder',
+//     message: 'You have a class "React Hooks Deep Dive" starting in 1 hour. 12 students enrolled.',
+//     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
+//     status: 'read',
+//     priority: 'urgent',
+//     metadata: {
+//       classId: 'class-111',
+//       className: 'React Hooks Deep Dive',
+//       dueDate: new Date(Date.now() + 1000 * 60 * 60), // 1 hour from now
+//     },
+//     actions: [{ label: 'Join Class', type: 'view', variant: 'default' }],
+//     link: '/dashboard/classes/class-111/join',
+//   },
+//   {
+//     id: '8',
+//     type: 'achievement',
+//     title: 'Milestone Achieved! 🎉',
+//     message:
+//       "Congratulations! You've successfully taught 50 classes and received an average rating of 4.8 stars.",
+//     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
+//     status: 'read',
+//     priority: 'low',
+//     actions: [{ label: 'View Stats', type: 'view', variant: 'outline' }],
+//     link: '/dashboard/achievements',
+//   },
+//   {
+//     id: '9',
+//     type: 'system',
+//     title: 'Platform Update',
+//     message:
+//       'New features available: Live polling during classes and automated attendance tracking. Check them out!',
+//     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 days ago
+//     status: 'read',
+//     priority: 'low',
+//     actions: [{ label: 'Learn More', type: 'view', variant: 'outline' }],
+//     link: '/dashboard/updates',
+//   },
+//   {
+//     id: '10',
+//     type: 'request',
+//     title: 'Course Material Access Request',
+//     message:
+//       'Alumni student requesting access to "Advanced TypeScript" course materials for review purposes.',
+//     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 7 days ago
+//     status: 'unread',
+//     priority: 'medium',
+//     sender: {
+//       name: 'Jessica Lee',
+//       avatar: 'https://i.pravatar.cc/150?img=9',
+//       role: 'Alumni',
+//     },
+//     metadata: {
+//       courseId: 'course-777',
+//       courseName: 'Advanced TypeScript',
+//       studentId: 'student-888',
+//       requestId: 'req-010',
+//     },
+//     actions: [
+//       { label: 'Grant Access', type: 'approve', variant: 'default' },
+//       { label: 'Deny', type: 'reject', variant: 'destructive' },
+//     ],
+//     link: '/dashboard/requests/req-010',
+//   },
+// ];
+

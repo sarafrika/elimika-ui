@@ -11,8 +11,8 @@ export default function CoursesLayout({ children }: CoursesLayoutProps) {
     <div className='space-y-8 px-1.5 py-6 pb-16 sm:px-4 md:p-10'>
       <div className='flex w-full items-center justify-between lg:max-w-[75%]'>
         <div>
-          <h2 className='text-2xl font-bold tracking-tight'>Browse Courses</h2>
-          <p className='text-muted-foreground mt-1'>Discover courses across various categories.</p>
+          <h2 className='text-2xl font-bold tracking-tight'>Browse Courses and Programs</h2>
+          <p className='text-muted-foreground mt-1'>Discover courses and programs across various categories.</p>
         </div>
       </div>
       <Separator />

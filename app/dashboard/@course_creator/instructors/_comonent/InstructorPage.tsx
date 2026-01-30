@@ -46,7 +46,7 @@ import {
   User,
   Users,
   X,
-  XCircle,
+  XCircle
 } from 'lucide-react';
 import { format } from 'path';
 import { useMemo, useState } from 'react';
@@ -356,11 +356,10 @@ const InstructorsApplicationPage = () => {
                     <button
                       key={instructorItem.uuid}
                       onClick={() => setSelectedInstructorUuid(instructorItem.uuid)}
-                      className={`flex w-full items-start gap-4 rounded-xl border p-4 text-left shadow-sm transition-all duration-150 ${
-                        selectedInstructorUuid === instructorItem.uuid
-                          ? 'bg-primary/10 border-primary shadow-md'
-                          : 'bg-background hover:bg-muted border-border'
-                      }`}
+                      className={`flex w-full items-start gap-4 rounded-xl border p-4 text-left shadow-sm transition-all duration-150 ${selectedInstructorUuid === instructorItem.uuid
+                        ? 'bg-primary/10 border-primary shadow-md'
+                        : 'bg-background hover:bg-muted border-border'
+                        }`}
                     >
                       <Avatar className='h-12 w-12 flex-shrink-0'>
                         <AvatarImage src={instructorData?.profile_picture_url} />
@@ -395,22 +394,20 @@ const InstructorsApplicationPage = () => {
               <div className='border-muted-foreground/10 mb-6 flex gap-6 border-b'>
                 <button
                   onClick={() => setTabs('profile')}
-                  className={`px-2 pb-2 text-[15px] font-medium transition-colors ${
-                    tabs === 'profile'
-                      ? 'border-primary text-primary border-b-2 font-extrabold'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                  className={`px-2 pb-2 text-[15px] font-medium transition-colors ${tabs === 'profile'
+                    ? 'border-primary text-primary border-b-2 font-extrabold'
+                    : 'text-muted-foreground hover:text-foreground'
+                    }`}
                 >
                   Instructor Profile
                 </button>
 
                 <button
                   onClick={() => setTabs('application')}
-                  className={`px-2 pb-2 text-[15px] font-medium transition-colors ${
-                    tabs === 'application'
-                      ? 'border-primary text-primary border-b-2 font-extrabold'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                  className={`px-2 pb-2 text-[15px] font-medium transition-colors ${tabs === 'application'
+                    ? 'border-primary text-primary border-b-2 font-extrabold'
+                    : 'text-muted-foreground hover:text-foreground'
+                    }`}
                 >
                   Instructor Application to Train
                 </button>
@@ -475,7 +472,10 @@ const InstructorsApplicationPage = () => {
                         <Separator className='my-4' />
                         <div>
                           <h3 className='mb-2 font-semibold'>About</h3>
-                          <p className='text-muted-foreground text-sm'>{instructor.bio}</p>
+                          <p
+                            className='text-muted-foreground text-sm'
+                            dangerouslySetInnerHTML={{ __html: instructor.bio }}
+                          />
                         </div>
                       </>
                     )}
@@ -488,7 +488,10 @@ const InstructorsApplicationPage = () => {
                         <Award className='text-primary h-5 w-5' />
                         <h3 className='text-lg font-semibold'>Skills</h3>
                       </div>
-                      <div className='flex flex-col flex-wrap gap-2'>
+                      {skills?.length === 0 ? <EmptyStateCard
+                        message="No skill found"
+
+                      /> : <div className='flex flex-col flex-wrap gap-2'>
                         {skills.map((skill: any) => {
                           return (
                             <div className='flex flex-row items-center gap-2'>
@@ -499,7 +502,8 @@ const InstructorsApplicationPage = () => {
                             </div>
                           );
                         })}
-                      </div>
+                      </div>}
+
                     </Card>
                   }
 
@@ -510,7 +514,9 @@ const InstructorsApplicationPage = () => {
                         <GraduationCap className='text-primary h-5 w-5' />
                         <h3 className='text-lg font-semibold'>Education</h3>
                       </div>
-                      <div className='space-y-4'>
+                      {education?.length === 0 ? <EmptyStateCard
+                        message="No education found"
+                      /> : <div className='space-y-4'>
                         {education.map((edu: any) => (
                           <div key={edu.uuid} className='flex items-center justify-between gap-4'>
                             <div className='flex gap-4'>
@@ -539,7 +545,7 @@ const InstructorsApplicationPage = () => {
                             </div>
                           </div>
                         ))}
-                      </div>
+                      </div>}
                     </Card>
                   }
 
@@ -550,7 +556,11 @@ const InstructorsApplicationPage = () => {
                         <FileText className='text-primary h-5 w-5' />
                         <h3 className='text-lg font-semibold'>Documents</h3>
                       </div>
-                      <div className='space-y-2'>
+
+                      {documents?.length === 0 ? <EmptyStateCard
+                        message="No document found"
+
+                      /> : <div className='space-y-2'>
                         {documents.map((doc: any) => (
                           <div
                             key={doc.uuid}
@@ -569,7 +579,10 @@ const InstructorsApplicationPage = () => {
                             </div>
                           </div>
                         ))}
-                      </div>
+                      </div>}
+
+
+
                     </Card>
                   }
 
@@ -580,7 +593,8 @@ const InstructorsApplicationPage = () => {
                         <Star className='text-primary h-5 w-5' />
                         <h3 className='text-lg font-semibold'>Reviews</h3>
                       </div>
-                      <div className='space-y-4'>
+
+                      {reviews.length === 0 ? <EmptyStateCard message='No review found' /> : <div className='space-y-4'>
                         {reviews?.map((review: any) => (
                           <div key={review.uuid} className='border-b pb-4 last:border-0 last:pb-0'>
                             <div className='mb-2 flex items-center justify-between gap-2'>
@@ -595,18 +609,19 @@ const InstructorsApplicationPage = () => {
                                 {[...Array(5)].map((_, i) => (
                                   <Star
                                     key={i}
-                                    className={`h-4 w-4 ${
-                                      i < (review.rating || 0)
-                                        ? 'fill-yellow-400 text-yellow-400'
-                                        : 'text-gray-300'
-                                    }`}
+                                    className={`h-4 w-4 ${i < (review.rating || 0)
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-gray-300'
+                                      }`}
                                   />
                                 ))}
                               </div>
                             </div>
                           </div>
                         ))}
-                      </div>
+                      </div>}
+
+
                     </Card>
                   }
                 </div>
@@ -1097,5 +1112,19 @@ function ReviewDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface EmptyStateCardProps {
+  title?: string;
+  message: string;
+  icon?: React.ReactNode;
+}
+
+function EmptyStateCard({ title, message, icon }: EmptyStateCardProps) {
+  return (
+    <div>
+      <p className='text-muted-foreground text-sm'>{message}</p>
+    </div>
   );
 }
