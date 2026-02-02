@@ -332,6 +332,11 @@ export default {
       icon: BookAIcon,
     },
     {
+      title: 'Programs',
+      url: '/dashboard/programs',
+      icon: FileStack,
+    },
+    {
       title: 'My Skills',
       url: '/dashboard/my-skills',
       icon: BadgeCheck,
@@ -455,11 +460,6 @@ export default {
       title: 'Catalogue',
       url: '/dashboard/catalogue',
       icon: ShoppingBag,
-    },
-    {
-      title: 'Programs',
-      url: '/dashboard/programs',
-      icon: FileStack,
     },
     {
       title: 'Training Applications',

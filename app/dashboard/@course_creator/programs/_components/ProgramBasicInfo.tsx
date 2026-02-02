@@ -3,18 +3,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 
 import {
-    getAllCategoriesOptions,
-    getAllInstructorsOptions,
+    getAllCategoriesOptions
 } from '@/services/client/@tanstack/react-query.gen';
+import { Button } from '../../../../../components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 
 
 type Category = {
@@ -69,14 +63,7 @@ const ProgramBasicInfo = ({
         })
     );
 
-    const { data: instructorsData } = useQuery(
-        getAllInstructorsOptions({
-            query: { pageable: { page: 0, size: 100 } },
-        })
-    );
-
     const categories = categoriesData?.data?.content ?? [];
-    const instructors = instructorsData?.data?.content ?? [];
 
     const handleChange = <K extends keyof ProgramFormData>(
         field: K,
@@ -105,10 +92,6 @@ const ProgramBasicInfo = ({
     const getCategoryName = (uuid: string) =>
         categories.find((c) => c.uuid === uuid)?.name ?? uuid;
 
-    const getInstructorName = (uuid: string) => {
-        const inst = instructors.find((i) => i.uuid === uuid);
-        return inst ? `${inst.full_name}` : uuid;
-    };
 
     const validate = () => {
         const nextErrors: FormErrors = {};
@@ -247,7 +230,7 @@ const ProgramBasicInfo = ({
 
                         <div>
                             <label className='mb-2 block text-sm font-medium text-foreground'>
-                                Price ($) *
+                                Price *
                             </label>
                             <input
                                 type='number'
@@ -267,34 +250,6 @@ const ProgramBasicInfo = ({
 
                     {/* Instructor & Categories */}
                     <div className='grid gap-4 md:grid-cols-2'>
-                        <div>
-                            <label className='mb-2 block text-sm font-medium text-foreground'>
-                                Instructor *
-                            </label>
-                            <Select
-                                value={formData.instructor_uuid ?? ''}
-                                onValueChange={(v) =>
-                                    handleChange('instructor_uuid', v)
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder='Select instructor' />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {instructors.map((i) => (
-                                        <SelectItem key={i.uuid} value={i.uuid}>
-                                            {i.full_name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {formData.instructor_uuid && (
-                                <p className='mt-1 text-xs text-muted-foreground'>
-                                    Selected:{' '}
-                                    {getInstructorName(formData.instructor_uuid)}
-                                </p>
-                            )}
-                        </div>
 
                         <div>
                             <label className='mb-2 block text-sm font-medium text-foreground'>
@@ -345,15 +300,16 @@ const ProgramBasicInfo = ({
 
             {/* Actions */}
             <div className='flex justify-end gap-3'>
-                <button
+                <Button
                     type='button'
+                    variant={"ghost"}
                     onClick={onCancel}
                     disabled={isLoading}
                     className='rounded-lg border border-border px-6 py-2 text-foreground'
                 >
                     Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                     type='submit'
                     disabled={isLoading}
                     className='rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90'
@@ -363,7 +319,7 @@ const ProgramBasicInfo = ({
                         : isEditing
                             ? 'Update & Continue'
                             : 'Create & Continue'}
-                </button>
+                </Button>
             </div>
         </form>
     );

@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Check, Plus, PlusCircle, Trash2 } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import { Checkbox } from '../../../../components/ui/checkbox';
@@ -24,8 +24,7 @@ import {
 } from '../../../../components/ui/tooltip';
 import { cn } from '../../../../lib/utils';
 import {
-  getAllAssessmentRubricsOptions,
-  searchQuizzesOptions,
+  searchQuizzesOptions
 } from '../../../../services/client/@tanstack/react-query.gen';
 import { Question, QuestionType } from './assessment-creation-form';
 
@@ -141,23 +140,20 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
-                  opt.isCorrect
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
-                }`}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:border-primary/50'
+                  }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                  }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                    }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${
-                    opt.isCorrect ? 'text-primary' : 'text-foreground'
-                  }`}
+                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
+                    }`}
                 >
                   {opt.text}
                 </span>
@@ -315,8 +311,6 @@ export const QuizCreationForm = ({
   deleteQuizForLesson,
   isPending,
 }: QuizCreationFormProps) => {
-  const { data: rubrics } = useQuery(getAllAssessmentRubricsOptions({ query: { pageable: {} } }));
-
   const { data: quizzes } = useQuery({
     ...searchQuizzesOptions({
       query: { searchParams: { lesson_uuid_eq: selectedLessonId }, pageable: {} },
@@ -326,7 +320,19 @@ export const QuizCreationForm = ({
 
   const quizUuid = quizId;
 
-  // Memoize quizData to prevent recreation
+
+  const [localQuizData, setLocalQuizData] = useState({
+    title: '',
+    instructions: '',
+    time_limit_minutes: 0,
+    attempts_allowed: 1,
+    passing_score: 0,
+    active: false,
+    status: 'PUBLISHED',
+    rubric_uuid: '',
+  });
+
+  // Memoize initial quiz data
   const initialQuizData = useMemo(
     () => ({
       title: '',
@@ -342,27 +348,54 @@ export const QuizCreationForm = ({
     []
   );
 
-  // Find selected quiz data
+
   const selectedQuizData = useMemo(() => {
     const selected = quizzes?.data?.content?.find((q: any) => q.uuid === quizUuid);
-    return selected
-      ? {
-          title: selected.title || '',
-          instructions: selected.instructions || '',
-          time_limit_minutes: selected.time_limit_minutes || 0,
-          attempts_allowed: selected.attempts_allowed || 1,
-          passing_score: selected.passing_score || 0,
-          active: selected.active || false,
-          status: selected.status || 'PUBLISHED',
-          rubric_uuid: selected.rubric_uuid || '',
-          lesson_uuid: selectedLessonId as string,
-        }
-      : initialQuizData;
-  }, [quizUuid, quizzes?.data?.content, selectedLessonId, initialQuizData]);
+
+    if (selected && quizUuid) {
+      return {
+        title: selected.title || '',
+        instructions: selected.instructions || '',
+        time_limit_minutes: selected.time_limit_minutes || 0,
+        attempts_allowed: selected.attempts_allowed || 1,
+        passing_score: selected.passing_score || 0,
+        active: selected.active || false,
+        status: selected.status || 'PUBLISHED',
+        rubric_uuid: selected.rubric_uuid || '',
+        lesson_uuid: selectedLessonId as string,
+      };
+    }
+
+    // For new quiz (quizUuid is '' or null), use local state
+    return {
+      ...localQuizData,
+      lesson_uuid: selectedLessonId as string,
+    };
+  }, [quizUuid, quizzes?.data?.content, selectedLessonId, localQuizData]);
+
 
   const handleQuizInputChange = useCallback((field: string, value: any) => {
-    // Parent component should handle this
+    setLocalQuizData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
   }, []);
+
+
+  useEffect(() => {
+    if (!quizUuid || quizUuid === '') {
+      setLocalQuizData({
+        title: '',
+        instructions: '',
+        time_limit_minutes: 0,
+        attempts_allowed: 1,
+        passing_score: 0,
+        active: false,
+        status: 'PUBLISHED',
+        rubric_uuid: '',
+      });
+    }
+  }, [quizUuid]);
 
   const handleQuizSelect = useCallback(
     (selectedUuid: string | null) => {
@@ -378,7 +411,7 @@ export const QuizCreationForm = ({
     }
 
     try {
-      if (quizUuid) {
+      if (quizUuid && quizUuid !== '') {
         await updateQuizForLesson(quizUuid, selectedQuizData);
         toast.success('Quiz updated successfully!');
       } else {
@@ -471,7 +504,7 @@ export const QuizCreationForm = ({
               QUIZ: {selectedLesson?.title || 'Select a lesson'}
             </h3>
 
-            <Button size='sm' className='shrink-0' onClick={() => handleQuizSelect(null)}>
+            <Button size='sm' className='shrink-0' onClick={() => handleQuizSelect('')}>
               <PlusCircle size={16} className='mr-1' />
               Create Quiz
             </Button>
@@ -515,103 +548,94 @@ export const QuizCreationForm = ({
             </div>
           </div>
 
-          {quizUuid === null && (
-            <div className='flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed py-6 text-center'>
-              <p className='text-foreground text-sm font-medium'>No quiz selected yet</p>
-              <p className='text-muted-foreground text-xs'>
-                Select an existing quiz or create a new one to continue.
-              </p>
+
+          <div className='flex flex-col gap-6'>
+            <Separator />
+            <div className='-my-4 flex items-center justify-between'>
+              <h2 className='text-foreground text-lg font-bold tracking-tight'>
+                {quizUuid && quizUuid !== '' ? 'Edit Quiz' : 'Create New Quiz'}
+              </h2>
+
+              <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
+                {quizUuid && quizUuid !== '' ? 'Editing' : 'New'}
+              </span>
             </div>
-          )}
+            <Separator />
 
-          {quizUuid !== null && (
-            <div className='flex flex-col gap-6'>
-              <Separator />
-              <div className='-my-4 flex items-center justify-between'>
-                <h2 className='text-foreground text-lg font-bold tracking-tight'>
-                  {quizUuid === '' ? 'Create New Quiz' : 'Edit Quiz'}
-                </h2>
+            <div className='flex flex-col gap-2'>
+              <Label>Quiz Title</Label>
+              <Input
+                placeholder='Enter quiz title'
+                value={selectedQuizData.title}
+                onChange={e => handleQuizInputChange('title', e.target.value)}
+              />
+            </div>
 
-                <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
-                  {quizUuid === '' ? 'New' : 'Editing'}
-                </span>
-              </div>
-              <Separator />
+            <div className='flex flex-col gap-2'>
+              <Label>Instructions (optional)</Label>
+              <Textarea
+                placeholder='Enter quiz instructions'
+                rows={3}
+                value={selectedQuizData.instructions}
+                onChange={e => handleQuizInputChange('instructions', e.target.value)}
+              />
+            </div>
 
+            <div className='grid grid-cols-3 gap-4'>
               <div className='flex flex-col gap-2'>
-                <Label>Quiz Title</Label>
+                <Label>Time Limit (minutes)</Label>
                 <Input
-                  placeholder='Enter quiz title'
-                  value={selectedQuizData.title}
-                  onChange={e => handleQuizInputChange('title', e.target.value)}
+                  type='number'
+                  value={selectedQuizData.time_limit_minutes}
+                  onChange={e =>
+                    handleQuizInputChange('time_limit_minutes', Number(e.target.value))
+                  }
                 />
               </div>
 
               <div className='flex flex-col gap-2'>
-                <Label>Instructions (optional)</Label>
-                <Textarea
-                  placeholder='Enter quiz instructions'
-                  rows={3}
-                  value={selectedQuizData.instructions}
-                  onChange={e => handleQuizInputChange('instructions', e.target.value)}
+                <Label>Attempts Allowed</Label>
+                <Input
+                  type='number'
+                  value={selectedQuizData.attempts_allowed}
+                  onChange={e =>
+                    handleQuizInputChange('attempts_allowed', Number(e.target.value))
+                  }
                 />
               </div>
 
-              <div className='grid grid-cols-3 gap-4'>
-                <div className='flex flex-col gap-2'>
-                  <Label>Time Limit (minutes)</Label>
-                  <Input
-                    type='number'
-                    value={selectedQuizData.time_limit_minutes}
-                    onChange={e =>
-                      handleQuizInputChange('time_limit_minutes', Number(e.target.value))
-                    }
-                  />
-                </div>
-
-                <div className='flex flex-col gap-2'>
-                  <Label>Attempts Allowed</Label>
-                  <Input
-                    type='number'
-                    value={selectedQuizData.attempts_allowed}
-                    onChange={e =>
-                      handleQuizInputChange('attempts_allowed', Number(e.target.value))
-                    }
-                  />
-                </div>
-
-                <div className='flex flex-col gap-2'>
-                  <Label>Passing Score (%)</Label>
-                  <Input
-                    type='number'
-                    value={selectedQuizData.passing_score}
-                    onChange={e => handleQuizInputChange('passing_score', Number(e.target.value))}
-                  />
-                </div>
-              </div>
-
-              <Label className='flex cursor-pointer items-center gap-3'>
-                <Checkbox
-                  checked={selectedQuizData.active}
-                  onCheckedChange={checked => handleQuizInputChange('active', Boolean(checked))}
+              <div className='flex flex-col gap-2'>
+                <Label>Passing Score (%)</Label>
+                <Input
+                  type='number'
+                  value={selectedQuizData.passing_score}
+                  onChange={e => handleQuizInputChange('passing_score', Number(e.target.value))}
                 />
-                <span>Active</span>
-              </Label>
-
-              <div className='flex flex-row items-end justify-end gap-6 pt-2'>
-                {quizUuid && (
-                  <Button size='sm' variant='destructive' onClick={handleDeleteQuiz}>
-                    <Trash2 />
-                  </Button>
-                )}
-                <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
-                  {isPending ? 'Saving...' : <>{quizUuid ? 'Update Quiz' : 'Save Quiz'}</>}
-                </Button>
               </div>
             </div>
-          )}
 
-          {quizUuid && (
+            <Label className='flex cursor-pointer items-center gap-3'>
+              <Checkbox
+                checked={selectedQuizData.active}
+                onCheckedChange={checked => handleQuizInputChange('active', Boolean(checked))}
+              />
+              <span>Active</span>
+            </Label>
+
+            <div className='flex flex-row items-end justify-end gap-6 pt-2'>
+              {quizUuid && quizUuid !== '' && (
+                <Button size='sm' variant='destructive' onClick={handleDeleteQuiz}>
+                  <Trash2 />
+                </Button>
+              )}
+              <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
+                {isPending ? 'Saving...' : <>{quizUuid && quizUuid !== '' ? 'Update Quiz' : 'Save Quiz'}</>}
+              </Button>
+            </div>
+          </div>
+
+
+          {quizUuid && quizUuid !== '' && (
             <div className='mt-8 border-t pt-6'>
               <div className='mb-6 flex items-center justify-between'>
                 <h4 className='text-foreground text-lg font-semibold'>Questions</h4>

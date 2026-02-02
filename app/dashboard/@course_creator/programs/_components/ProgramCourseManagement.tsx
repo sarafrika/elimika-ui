@@ -6,6 +6,15 @@ import {
 import { useState } from 'react';
 
 import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { PlusCircle } from 'lucide-react';
+import { Button } from '../../../../../components/ui/button';
+import {
     addProgramCourseMutation,
     addProgramRequirementMutation,
     deleteProgramRequirementMutation,
@@ -16,6 +25,7 @@ import {
     getProgramRequirementsQueryKey,
     removeProgramCourseMutation,
 } from '../../../../../services/client/@tanstack/react-query.gen';
+
 
 const ProgramCourseManagement = ({
     programUuid,
@@ -195,12 +205,12 @@ const ProgramCourseManagement = ({
                             Add courses to your training program
                         </p>
                     </div>
-                    <button
+                    <Button
                         onClick={() => setShowCourseModal(true)}
                         className='rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90'
                     >
-                        + Add Course
-                    </button>
+                        <PlusCircle /> Add Course
+                    </Button>
                 </div>
 
                 <div className='space-y-3'>
@@ -262,12 +272,12 @@ const ProgramCourseManagement = ({
                             Set prerequisites and requirements
                         </p>
                     </div>
-                    <button
+                    <Button
                         onClick={() => setShowRequirementModal(true)}
                         className='rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90'
                     >
-                        + Add Requirement
-                    </button>
+                        <PlusCircle /> Add Requirement
+                    </Button>
                 </div>
 
                 <div className='space-y-3'>
@@ -322,20 +332,22 @@ const ProgramCourseManagement = ({
 
             {/* Footer Actions */}
             <div className='flex justify-between border-t border-border pt-6'>
-                <button
+                <Button
                     onClick={onBack}
+                    variant={"ghost"}
                     className='rounded-lg border border-border px-6 py-2 font-medium text-foreground hover:bg-muted'
                 >
                     ← Back
-                </button>
+                </Button>
                 <div className='flex gap-3'>
-                    <button
+                    <Button
                         onClick={onSaveDraft}
+                        variant={'ghost'}
                         className='rounded-lg border border-border px-6 py-2 font-medium text-foreground hover:bg-muted'
                     >
                         Save as Draft
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={onPublish}
                         disabled={
                             isPublishing ||
@@ -346,146 +358,154 @@ const ProgramCourseManagement = ({
                         {isPublishing
                             ? 'Publishing...'
                             : 'Publish Program'}
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {/* Add Course Modal */}
-            {showCourseModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay">
-                    <div className="w-full max-w-2xl rounded-lg bg-surface p-6 shadow-xl">
-                        <h3 className="mb-4 text-lg font-semibold text-on-surface">Add Course to Program</h3>
+            <Dialog open={showCourseModal} onOpenChange={setShowCourseModal}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Add Course to Program</DialogTitle>
+                    </DialogHeader>
 
-                        <div className="mb-6 max-h-96 space-y-2 overflow-y-auto">
-                            {availableCourses.length === 0 ? (
-                                <p className="text-center text-on-surface/60">No available courses to add</p>
-                            ) : (
-                                availableCourses.map((course) => (
-                                    <div
-                                        key={course.uuid}
-                                        onClick={() => setSelectedCourse(course)}
-                                        className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${selectedCourse?.uuid === course.uuid
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-muted hover:border-muted/80'
-                                            }`}
-                                    >
-                                        <div className="font-medium text-on-surface">{course.name}</div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => {
-                                    setShowCourseModal(false);
-                                    setSelectedCourse(null);
-                                }}
-                                className="rounded-lg border border-muted px-4 py-2 font-medium text-on-surface hover:bg-surface/50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleAddCourse}
-                                className="rounded-lg bg-primary px-4 py-2 font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
-                                disabled={!selectedCourse || addCourseMut.isPending}
-                            >
-                                {addCourseMut.isPending ? 'Adding...' : 'Add Course'}
-                            </button>
-                        </div>
+                    <div className="mb-6 max-h-96 space-y-2 overflow-y-auto">
+                        {availableCourses.length === 0 ? (
+                            <p className="text-center text-muted-foreground">
+                                No available courses to add
+                            </p>
+                        ) : (
+                            availableCourses.map((course) => (
+                                <div
+                                    key={course.uuid}
+                                    onClick={() => setSelectedCourse(course)}
+                                    className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${selectedCourse?.uuid === course.uuid
+                                        ? "border-primary bg-primary/10"
+                                        : "border-muted hover:border-muted/80"
+                                        }`}
+                                >
+                                    <div className="font-medium">{course.name}</div>
+                                </div>
+                            ))
+                        )}
                     </div>
-                </div>
-            )}
+
+                    <DialogFooter className="gap-3">
+                        <Button
+                            variant="ghost"
+                            onClick={() => {
+                                setShowCourseModal(false)
+                                setSelectedCourse(null)
+                            }}
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button
+                            onClick={handleAddCourse}
+                            disabled={!selectedCourse || addCourseMut.isPending}
+                        >
+                            {addCourseMut.isPending ? "Adding..." : "Add Course"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
 
             {/* Add Requirement Modal */}
-            {showRequirementModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay">
-                    <div className="w-full max-w-lg rounded-lg bg-surface p-6 shadow-xl">
-                        <h3 className="mb-4 text-lg font-semibold text-on-surface">Add Requirement</h3>
+            <Dialog open={showRequirementModal} onOpenChange={setShowRequirementModal}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Add Requirement</DialogTitle>
+                    </DialogHeader>
 
-                        <div className="mb-6 space-y-4">
-                            <div>
-                                <label className="mb-2 block text-sm font-medium text-on-surface/80">
-                                    Requirement Type
-                                </label>
-                                <select
-                                    value={newRequirement.requirement_type}
-                                    onChange={(e) =>
-                                        setNewRequirement((prev) => ({
-                                            ...prev,
-                                            requirement_type: e.target.value,
-                                        }))
-                                    }
-                                    className="w-full rounded-lg border border-muted px-4 py-2 focus:border-primary focus:outline-none"
-                                >
-                                    <option value="STUDENT">Student Requirement</option>
-                                    <option value="TECHNICAL">Technical Requirement</option>
-                                    <option value="ADMINISTRATIVE">Administrative Requirement</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="mb-2 block text-sm font-medium text-on-surface/80">
-                                    Requirement Description
-                                </label>
-                                <textarea
-                                    value={newRequirement.requirement_text}
-                                    onChange={(e) =>
-                                        setNewRequirement((prev) => ({
-                                            ...prev,
-                                            requirement_text: e.target.value,
-                                        }))
-                                    }
-                                    rows={4}
-                                    className="w-full rounded-lg border border-muted px-4 py-2 focus:border-primary focus:outline-none"
-                                    placeholder="Describe the requirement..."
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="is_mandatory"
-                                    checked={newRequirement.is_mandatory}
-                                    onChange={(e) =>
-                                        setNewRequirement((prev) => ({
-                                            ...prev,
-                                            is_mandatory: e.target.checked,
-                                        }))
-                                    }
-                                    className="h-4 w-4 rounded border-muted text-primary focus:ring-primary"
-                                />
-                                <label htmlFor="is_mandatory" className="text-sm font-medium text-on-surface/80">
-                                    This is a mandatory requirement
-                                </label>
-                            </div>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="mb-2 block text-sm font-medium">
+                                Requirement Type
+                            </label>
+                            <select
+                                value={newRequirement.requirement_type}
+                                onChange={(e) =>
+                                    setNewRequirement((prev) => ({
+                                        ...prev,
+                                        requirement_type: e.target.value,
+                                    }))
+                                }
+                                className="w-full rounded-lg border px-4 py-2 focus:border-primary focus:outline-none"
+                            >
+                                <option value="STUDENT">Student Requirement</option>
+                                <option value="TECHNICAL">Technical Requirement</option>
+                                <option value="ADMINISTRATIVE">Administrative Requirement</option>
+                            </select>
                         </div>
 
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => {
-                                    setShowRequirementModal(false);
-                                    setNewRequirement({
-                                        requirement_type: 'STUDENT',
-                                        requirement_text: '',
-                                        is_mandatory: true,
-                                    });
-                                }}
-                                className="rounded-lg border border-muted px-4 py-2 font-medium text-on-surface hover:bg-surface/50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleAddRequirement}
-                                className="rounded-lg bg-success px-4 py-2 font-medium text-on-success hover:bg-success-hover disabled:opacity-50"
-                                disabled={!newRequirement.requirement_text.trim() || addRequirementMut.isPending}
-                            >
-                                {addRequirementMut.isPending ? 'Adding...' : 'Add Requirement'}
-                            </button>
+                        <div>
+                            <label className="mb-2 block text-sm font-medium">
+                                Requirement Description
+                            </label>
+                            <textarea
+                                value={newRequirement.requirement_text}
+                                onChange={(e) =>
+                                    setNewRequirement((prev) => ({
+                                        ...prev,
+                                        requirement_text: e.target.value,
+                                    }))
+                                }
+                                rows={4}
+                                className="w-full rounded-lg border px-4 py-2 focus:border-primary focus:outline-none"
+                                placeholder="Describe the requirement..."
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="is_mandatory"
+                                checked={newRequirement.is_mandatory}
+                                onChange={(e) =>
+                                    setNewRequirement((prev) => ({
+                                        ...prev,
+                                        is_mandatory: e.target.checked,
+                                    }))
+                                }
+                                className="h-4 w-4 rounded border-muted text-primary focus:ring-primary"
+                            />
+                            <label htmlFor="is_mandatory" className="text-sm font-medium">
+                                This is a mandatory requirement
+                            </label>
                         </div>
                     </div>
-                </div>
-            )}
+
+                    <DialogFooter className="gap-3">
+                        <Button
+                            variant="ghost"
+                            onClick={() => {
+                                setShowRequirementModal(false)
+                                setNewRequirement({
+                                    requirement_type: "STUDENT",
+                                    requirement_text: "",
+                                    is_mandatory: true,
+                                })
+                            }}
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button
+                            variant="success"
+                            onClick={handleAddRequirement}
+                            disabled={
+                                !newRequirement.requirement_text.trim() ||
+                                addRequirementMut.isPending
+                            }
+                        >
+                            {addRequirementMut.isPending ? "Adding..." : "Add Requirement"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
 
         </div>
     );

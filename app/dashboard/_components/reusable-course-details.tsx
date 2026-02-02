@@ -54,9 +54,6 @@ export default function ReusableCourseDetailsPage({
 
   const { replaceBreadcrumbs } = useBreadcrumb();
 
-
-
-
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
 
@@ -356,6 +353,12 @@ export default function ReusableCourseDetailsPage({
                     </p>
                   )}
                 </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <p>Reviews here</p>
               </div>
             </CardContent>
           </Card>

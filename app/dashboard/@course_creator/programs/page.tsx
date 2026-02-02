@@ -1,6 +1,8 @@
 'use client';
 
+import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '../../../../components/ui/button';
 import CreateProgramWizard from './_components/CreateProgramWizard';
 import ProgramsList from './_components/ProgramList';
 import ProgramPreview from './_components/ProgramPreview';
@@ -54,12 +56,12 @@ const ProgramsPage = () => {
                 </div>
 
                 {view === 'list' && (
-                    <button
+                    <Button
                         onClick={handleCreateNew}
                         className='rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90'
                     >
-                        + Create Program
-                    </button>
+                        <PlusCircle /> Create Program
+                    </Button>
                 )}
             </div>
 

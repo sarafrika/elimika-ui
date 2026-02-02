@@ -760,7 +760,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                       }
                                     );
                                   }}
-                                  className='w-full'
+                                  className='w-full bg-primary'
                                 >
                                   {uploadLessonMedia.isPending ? 'Uploading...' : 'Upload Media'}
                                 </Button>
