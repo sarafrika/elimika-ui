@@ -2,10 +2,9 @@
 
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
-import type { Course } from '@/services/client';
+import type { ProgramCourse } from '@/services/client';
 import {
   getAllDifficultyLevelsOptions,
   getCourseCreatorByUuidOptions,
@@ -17,16 +16,14 @@ import {
   Clock,
   Heart,
   Pencil,
-  Play,
   Share,
   Star,
   Users,
-  XCircle,
+  XCircle
 } from 'lucide-react';
-import Image from 'next/image';
 
-interface TrainCourseCardProps {
-  course: Course & { application?: any };
+interface TrainProgramCardProps {
+  program: ProgramCourse & { application?: any };
   applicationStatus?: string | null;
   applicationReviewNote?: string | null;
   handleClick: () => void;
@@ -34,14 +31,14 @@ interface TrainCourseCardProps {
   handleReapplyToTrain: () => void;
 }
 
-export function TrainCourseCard({
-  course,
+export function TrainProgramCard({
+  program,
   applicationStatus,
   applicationReviewNote,
   handleClick,
   handleQuickApply,
   handleReapplyToTrain,
-}: TrainCourseCardProps) {
+}: TrainProgramCardProps) {
   const getInitials = (name: string) => {
     return name
       ?.split(' ')
@@ -51,7 +48,7 @@ export function TrainCourseCard({
   };
 
   const { data: creator } = useQuery(
-    getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } })
+    getCourseCreatorByUuidOptions({ path: { uuid: program?.course_creator_uuid as string } })
   );
   // @ts-expect-error
   const courseCreator = creator?.data;
@@ -106,7 +103,7 @@ export function TrainCourseCard({
       <div className='relative'>
         {/* Course Image */}
         <div className='bg-muted relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg'>
-          {course?.banner_url ? (
+          {/* {course?.banner_url ? (
             <Image
               src={course?.banner_url}
               alt={course?.name || 'banner'}
@@ -115,16 +112,16 @@ export function TrainCourseCard({
               height={208}
             />
           ) : (
-            <BookOpen className='text-primary/40 h-16 w-16' />
-          )}
+          )} */}
+          <BookOpen className='text-primary/40 h-16 w-16' />
 
           {/* Video indicator */}
-          {course?.intro_video_url && (
+          {/* {course?.intro_video_url && (
             <div className='absolute top-3 left-3 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs text-white'>
               <Play className='h-3 w-3' />
               Video
             </div>
-          )}
+          )} */}
 
           {/* Actions */}
           <div className='absolute top-3 right-3 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
@@ -151,36 +148,36 @@ export function TrainCourseCard({
           </div>
 
           {/* Difficulty Badge */}
-          <div className='absolute bottom-3 left-3'>
-            <Badge className={getDifficultyColor(course?.difficulty_uuid as string)}>
+          {/* <div className='absolute bottom-3 left-3'>
+            <Badge className={getDifficultyColor(program?.difficulty_uuid as string)}>
               {getDifficultyNameFromUUID(course?.difficulty_uuid as string)}
             </Badge>
-          </div>
+          </div> */}
         </div>
 
         <CardContent className='p-4' onClick={handleClick}>
           {/* Category */}
-          <div className='mb-2 flex items-center gap-2'>
+          {/* <div className='mb-2 flex items-center gap-2'>
             {course?.category_names?.map((category, index) => (
               <Badge key={index} variant='outline' className='text-xs'>
                 {category}
               </Badge>
             ))}
-          </div>
+          </div> */}
 
           {/* Title and Subtitle */}
           <h3 className='group-hover:text-primary mb-1 line-clamp-2 min-h-12 font-bold transition-colors'>
-            {course?.name}
+            {program?.title}
           </h3>
 
           <div className='text-muted-foreground mb-3 line-clamp-2 min-h-10 text-sm'>
-            <RichTextRenderer htmlString={course?.description as string} />
+            <RichTextRenderer htmlString={program?.description as string} />
           </div>
 
           {/* Instructor */}
           <div className='mb-3 flex items-center gap-2'>
             <Avatar className='min-h-9 min-w-9'>
-              <AvatarImage src={course?.course_creator_uuid} />
+              <AvatarImage src={program?.course_creator_uuid} />
               <AvatarFallback className='text-xs'>
                 {getInitials(courseCreator?.full_name) || 'XY'}
               </AvatarFallback>
@@ -199,22 +196,22 @@ export function TrainCourseCard({
             </div>
             <div className='flex items-center gap-1'>
               <Users className='h-4 w-4' />
-              <span>{course?.class_limit}</span>
+              <span>{program?.class_limit}</span>
             </div>
 
           </div>
 
           {/* Price and Actions */}
-          {course?.is_free ? (
+          {program?.is_free ? (
             <div>
               <span className='text-primary font-bold'>{'Free course'}</span>
             </div>
           ) : (
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-2'>
-                {course?.price && (
-                  <span className='text-muted-foreground text-sm line-through'>
-                    KES {course?.price}
+                {program?.price && (
+                  <span className='text-muted-foreground text-sm'>
+                    KES {program?.price}
                   </span>
                 )}
               </div>

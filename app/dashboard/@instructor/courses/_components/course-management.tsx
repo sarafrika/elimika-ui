@@ -17,9 +17,13 @@ import { useUserDomain } from '@/context/user-domain-context';
 import type { ApplicantTypeEnum } from '@/services/client';
 import {
   getAllCoursesOptions,
+  getAllTrainingProgramsOptions,
+  searchProgramTrainingApplicationsOptions,
+  searchProgramTrainingApplicationsQueryKey,
   searchTrainingApplicationsOptions,
   searchTrainingApplicationsQueryKey,
-  submitTrainingApplicationMutation,
+  submitProgramTrainingApplicationMutation,
+  submitTrainingApplicationMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, Filter, Search, SortAsc, SortDesc } from 'lucide-react';
@@ -27,6 +31,7 @@ import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { TrainCourseCard } from '../../../_components/train-course-card';
+import { TrainProgramCard } from '../../../_components/train-program-card';
 
 export default function CourseMangementPage() {
   const qc = useQueryClient();
@@ -37,16 +42,71 @@ export default function CourseMangementPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>('all');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [searchQuery, setSearchQuery] = useState('');
+
   const [applyModal, setApplyModal] = useState(false);
   const [applyingCourseId, setApplyingCourseId] = useState<string | null>(null);
   const [applyingCourse, setApplyingCourse] = useState<any | null>(null);
+
+  const [applyingProgramId, setApplyingProgramId] = useState<string | null>(null);
+  const [applyingProgram, setApplyingProgram] = useState<any | null>(null);
 
   const size = 20;
   const [page, setPage] = useState(0);
 
   const {
+    data: allPrograms,
+  } = useQuery(getAllTrainingProgramsOptions({ query: { pageable: { page, size, sort: [] } } }));
+
+  const { data: appliedPrograms } = useQuery({
+    ...searchProgramTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+    }),
+    enabled: !!instructor?.uuid,
+  });
+
+  const combinedPrograms = React.useMemo(() => {
+    if (!allPrograms?.data?.content || !appliedPrograms?.data?.content) return [];
+    const appliedMap = new Map(
+      appliedPrograms?.data?.content.map((app: any) => [app.program_uuid, app])
+    );
+
+    return allPrograms.data.content.map((program: any) => ({
+      ...program,
+      application: appliedMap.get(program.uuid) || null,
+    }));
+  }, [allPrograms, appliedPrograms]);
+
+  const filteredPrograms = useMemo(() => {
+    if (!Array.isArray(combinedPrograms)) return [];
+
+    const filtered = combinedPrograms.filter(program => {
+      // const isActiveAndPublished = program.active === true && program.published === false;
+      const isActiveAndPublished = program.active === true;
+
+      const matchesSearch =
+        !searchQuery ||
+        program?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        program?.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesStatus =
+        !statusFilter || statusFilter === 'all' || program.application?.status === statusFilter;
+
+      return isActiveAndPublished && matchesSearch && matchesStatus;
+    });
+
+    if (sortOrder) {
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.application?.reviewed_at || 0).getTime();
+        const dateB = new Date(b.application?.reviewed_at || 0).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      });
+    }
+
+    return filtered;
+  }, [combinedPrograms, searchQuery, statusFilter, sortOrder]);
+
+  const {
     data: allCourses,
-    isLoading,
     isSuccess,
     isFetched,
     isFetching,
@@ -100,6 +160,8 @@ export default function CourseMangementPage() {
   }, [combinedCourses, searchQuery, statusFilter, sortOrder]);
 
   const applyToTrain = useMutation(submitTrainingApplicationMutation());
+  const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation())
+
   const handleApplyToTrain = (data: {
     notes: string;
     private_online_rate: number;
@@ -130,6 +192,53 @@ export default function CourseMangementPage() {
         onSuccess: data => {
           qc.invalidateQueries({
             queryKey: searchTrainingApplicationsQueryKey({
+              query: {
+                pageable: {},
+                searchParams: { applicant_uuid_eq: instructor?.uuid as string },
+              },
+            }),
+          });
+          toast.success(data?.message);
+          setApplyModal(false);
+        },
+        onError: data => {
+          toast.error(data?.message);
+          setApplyModal(false);
+        },
+      }
+    );
+  };
+
+  const handleApplyToTrainProgram = (data: {
+    notes: string;
+    private_online_rate: number;
+    private_inperson_rate: number;
+    group_online_rate: number;
+    group_inperson_rate: number;
+    rate_currency: string;
+  }) => {
+    if (!applyingProgramId) return;
+
+    applyToTrainProgramMut.mutate(
+      {
+        body: {
+          applicant_type: userDomain?.activeDomain as ApplicantTypeEnum,
+          applicant_uuid: instructor?.uuid as string,
+          rate_card: {
+            currency: data?.rate_currency,
+            private_online_rate: data?.private_online_rate,
+            private_inperson_rate: data?.private_inperson_rate,
+            group_online_rate: data?.group_online_rate,
+            group_inperson_rate: data?.group_inperson_rate,
+          },
+          application_notes: data?.notes,
+        },
+        path: { programUuid: applyingProgramId },
+      },
+      {
+        onSuccess: data => {
+          qc.invalidateQueries({
+            queryKey: searchProgramTrainingApplicationsQueryKey({
               query: {
                 pageable: {},
                 searchParams: { applicant_uuid_eq: instructor?.uuid as string },
@@ -229,6 +338,28 @@ export default function CourseMangementPage() {
           ))}
         </div>
 
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 mt-6'>
+          {filteredPrograms?.map(program => (
+            <TrainProgramCard
+              key={program.uuid}
+              program={program as any}
+              applicationStatus={program.application?.status || null}
+              applicationReviewNote={program.application?.review_notes || null}
+              handleClick={() => router.push(`/dashboard/courses/${program.uuid}`)}
+              handleQuickApply={() => {
+                setApplyModal(true);
+                setApplyingProgramId(program?.uuid as string);
+                setApplyingProgram(program as any);
+              }}
+              handleReapplyToTrain={() => {
+                setApplyModal(true);
+                setApplyingProgramId(program?.uuid as string);
+                setApplyingProgram(program as any);
+              }}
+            />
+          ))}
+        </div>
+
         {isFetching && !isFetched && !isSuccess && (
           <div className='flex flex-col gap-6 space-y-2'>
             <Skeleton className='h-[150px] w-full' />
@@ -277,18 +408,34 @@ export default function CourseMangementPage() {
           />
         )}
 
-        <NotesModal
-          open={applyModal}
-          setOpen={setApplyModal}
-          title='Apply to Train a Course'
-          description='Submit your application to become a course trainer.'
-          onSave={handleApplyToTrain}
-          saveText='Submit application'
-          cancelText='Cancel'
-          placeholder='Enter your application notes here...'
-          isLoading={applyToTrain.isPending}
-          minimum_rate={applyingCourse?.minimum_training_fee}
-        />
+        {applyingCourseId &&
+          <NotesModal
+            open={applyModal}
+            setOpen={setApplyModal}
+            title='Apply to Train a Course'
+            description='Submit your application to become a course trainer.'
+            onSave={handleApplyToTrain}
+            saveText='Submit application'
+            cancelText='Cancel'
+            placeholder='Enter your application notes here...'
+            isLoading={applyToTrain.isPending}
+            minimum_rate={applyingCourse?.minimum_training_fee}
+          />}
+
+        {applyingProgramId &&
+          <NotesModal
+            open={applyModal}
+            setOpen={setApplyModal}
+            title='Apply to Train a Program'
+            description='Submit your application to become a program trainer.'
+            onSave={handleApplyToTrainProgram}
+            saveText='Submit application'
+            cancelText='Cancel'
+            placeholder='Enter your application notes here...'
+            isLoading={applyToTrainProgramMut.isPending}
+            minimum_rate={applyingProgram?.price}
+          />}
+
       </div>
     </div>
   );

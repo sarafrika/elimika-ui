@@ -40,21 +40,7 @@ const ProgramsPage = () => {
     return (
         <div className='min-h-screen bg-background p-6'>
             {/* Header */}
-            <div className='mb-6 flex items-start justify-between'>
-                <div className='flex items-start gap-4'>
-                    <div className='flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-muted text-2xl'>
-                        📚
-                    </div>
-                    <div>
-                        <h1 className='text-2xl font-bold text-foreground'>
-                            Training Programs
-                        </h1>
-                        <p className='text-muted-foreground'>
-                            Create, manage, and monitor comprehensive training programs
-                        </p>
-                    </div>
-                </div>
-
+            <div className='flex items-end justify-end'>
                 {view === 'list' && (
                     <Button
                         onClick={handleCreateNew}
@@ -79,6 +65,7 @@ const ProgramsPage = () => {
                         editingProgram={editingProgram}
                         onComplete={handleBackToList}
                         onCancel={handleBackToList}
+                        setEditingProgram={setEditingProgram}
                     />
                 )}
 

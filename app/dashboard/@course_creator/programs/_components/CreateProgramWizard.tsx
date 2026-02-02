@@ -10,6 +10,8 @@ import {
     updateTrainingProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
+import { X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '../../../../../components/ui/button';
 import { useCourseCreator } from '../../../../../context/course-creator-context';
 import ProgramBasicInfo from './ProgramBasicInfo';
@@ -21,11 +23,13 @@ const CreateProgramWizard = ({
     onCancel,
 }: any) => {
     const qc = useQueryClient();
-    const creator = useCourseCreator()
+    const creator = useCourseCreator();
     const [step, setStep] = useState(1);
     const [programUuid, setProgramUuid] = useState<string | null>(
         editingProgram?.uuid || null
     );
+
+    const [latestProgramData, setLatestProgramData] = useState(editingProgram || null);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -39,7 +43,7 @@ const CreateProgramWizard = ({
         category_uuid: '',
         total_duration_hours: 0,
         total_duration_minutes: 0,
-        status: 'DRAFT',
+        status: 'draft',
         active: false,
     });
 
@@ -58,85 +62,158 @@ const CreateProgramWizard = ({
             category_uuid: editingProgram.category_uuid ?? '',
             total_duration_hours: editingProgram.total_duration_hours ?? 0,
             total_duration_minutes: editingProgram.total_duration_minutes ?? 0,
-            status: editingProgram.status ?? 'DRAFT',
+            status: editingProgram.status ?? 'draft',
             active: editingProgram.active ?? false,
         });
-    }, [editingProgram]);
 
-    const createProgramMut = useMutation({
-        ...createTrainingProgramMutation(),
-        onSuccess: (data) => {
-            const uuid = data?.data?.uuid || data?.uuid;
+        setLatestProgramData(editingProgram);
+        setProgramUuid(editingProgram.uuid);
+    }, [editingProgram, creator?.profile?.uuid]);
 
-            if (uuid) {
-                setProgramUuid(uuid);
-                qc.invalidateQueries({
-                    queryKey: getAllTrainingProgramsQueryKey({
-                        query: { pageable: {} },
-                    }),
-                });
-                setStep(2);
-            } else {
-            }
-
-            qc.invalidateQueries({
-                queryKey: getAllTrainingProgramsQueryKey({
-                    query: { pageable: {} },
-                }),
-            });
-        },
-        onError: (error) => {
-        },
-    });
-
-    const updateProgramMut = useMutation({
-        ...updateTrainingProgramMutation(),
-        onSuccess: () => {
-            qc.invalidateQueries({
-                queryKey: getAllTrainingProgramsQueryKey({
-                    query: { pageable: {} },
-                }),
-            });
-        },
-    });
-
-    const publishProgramMut = useMutation({
-        ...publishProgramMutation(),
-        onSuccess: () => {
-            qc.invalidateQueries({
-                queryKey: getAllTrainingProgramsQueryKey({
-                    query: { pageable: {} },
-                }),
-            });
-            onComplete();
-        },
-    });
+    const createProgramMut = useMutation(createTrainingProgramMutation());
+    const updateProgramMut = useMutation(updateTrainingProgramMutation());
+    const publishProgramMut = useMutation(publishProgramMutation());
 
     const handleStep1Submit = (data: any) => {
         setFormData(data);
 
-        if (editingProgram) {
-            updateProgramMut.mutate({
-                body: data,
-                path: { uuid: programUuid as string },
-            });
-            setStep(2);
+        if (editingProgram || programUuid) {
+            // UPDATE existing program
+            updateProgramMut.mutate(
+                {
+                    body: data,
+                    path: { uuid: programUuid as string },
+                },
+                {
+                    onSuccess: (response) => {
+                        qc.invalidateQueries({
+                            queryKey: getAllTrainingProgramsQueryKey({
+                                query: { pageable: {} },
+                            }),
+                        });
+
+                        toast.success(response?.message || 'Program updated successfully');
+
+                        setLatestProgramData({
+                            ...latestProgramData,
+                            ...data,
+                            uuid: programUuid,
+                        });
+
+                        setStep(2);
+                    },
+                    onError: (error: any) => {
+                        toast.error(error?.message || 'Failed to update program');
+                    },
+                }
+            );
         } else {
-            createProgramMut.mutate({ body: data });
+            createProgramMut.mutate(
+                { body: data },
+                {
+                    onSuccess: (response) => {
+                        toast.success('Program created successfully');
+
+                        const newProgramUuid = response?.data?.uuid || response?.uuid;
+
+                        if (!newProgramUuid) {
+                            toast.error('Program created but UUID not returned');
+                            return;
+                        }
+
+                        setProgramUuid(newProgramUuid);
+
+                        setLatestProgramData({
+                            ...data,
+                            uuid: newProgramUuid,
+                        });
+
+                        qc.invalidateQueries({
+                            queryKey: getAllTrainingProgramsQueryKey({
+                                query: { pageable: {} },
+                            }),
+                        });
+
+                        setStep(2);
+                    },
+                    onError: (error: any) => {
+                        toast.error(error?.message || 'Failed to create program');
+                    },
+                }
+            );
         }
     };
 
     const handlePublish = () => {
-        if (!programUuid) return;
-        publishProgramMut.mutate({ path: { uuid: programUuid } });
+        if (!programUuid) {
+            toast.error('No program UUID found');
+            return;
+        }
+
+        updateProgramMut.mutate(
+            {
+                body: {
+                    ...latestProgramData,
+                    status: 'published',
+                },
+                path: { uuid: programUuid },
+            },
+            {
+                onSuccess: (data) => {
+                    qc.invalidateQueries({
+                        queryKey: getAllTrainingProgramsQueryKey({
+                            query: { pageable: {} },
+                        }),
+                    });
+                    toast.success(data?.message || 'Program published successfully');
+                    onComplete?.();
+                },
+                onError: (error: any) => {
+                    toast.error(error?.message || 'Failed to publish program');
+                },
+            }
+        );
     };
 
     const handleSaveDraft = () => {
-        onComplete();
+        if (!programUuid) {
+            toast.error('No program to save');
+            return;
+        }
+
+        updateProgramMut.mutate(
+            {
+                body: {
+                    ...latestProgramData,
+                    status: 'DRAFT',
+                },
+                path: { uuid: programUuid },
+            },
+            {
+                onSuccess: (data) => {
+                    qc.invalidateQueries({
+                        queryKey: getAllTrainingProgramsQueryKey({
+                            query: { pageable: {} },
+                        }),
+                    });
+                    toast.success(data?.message || 'Draft saved successfully');
+                    onComplete?.();
+                },
+                onError: (error: any) => {
+                    toast.error(error?.message || 'Failed to save draft');
+                },
+            }
+        );
     };
 
     return (
         <div className='p-6'>
+            <div className='mb-6 flex items-end justify-end'>
+                <Button type='button' variant={'ghost'} onClick={onCancel}>
+                    <X />
+                </Button>
+            </div>
+
             <div className='mb-8'>
                 <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-4'>
@@ -149,9 +226,7 @@ const CreateProgramWizard = ({
                             {step > 1 ? '✓' : '1'}
                         </div>
                         <div>
-                            <div className='font-medium text-foreground'>
-                                Basic Information
-                            </div>
+                            <div className='font-medium text-foreground'>Basic Information</div>
                             <div className='text-sm text-muted-foreground'>
                                 Program details and settings
                             </div>
@@ -177,9 +252,7 @@ const CreateProgramWizard = ({
                             2
                         </div>
                         <div>
-                            <div className='font-medium text-foreground'>
-                                Courses & Requirements
-                            </div>
+                            <div className='font-medium text-foreground'>Courses & Requirements</div>
                             <div className='text-sm text-muted-foreground'>
                                 Add courses and set requirements
                             </div>
@@ -191,42 +264,41 @@ const CreateProgramWizard = ({
             <div>
                 {step === 1 && (
                     <ProgramBasicInfo
-                        initialData={editingProgram || formData}
+                        initialData={latestProgramData || formData}
                         onSubmit={handleStep1Submit}
                         onCancel={onCancel}
-                        isLoading={
-                            createProgramMut.isPending ||
-                            updateProgramMut.isPending
-                        }
-                        isEditing={!!editingProgram}
+                        isLoading={createProgramMut.isPending || updateProgramMut.isPending}
+                        isEditing={!!(editingProgram || programUuid)}
                     />
                 )}
 
-                {step === 2 && (
-                    programUuid ? (
+                {step === 2 &&
+                    (programUuid ? (
                         <ProgramCourseManagement
                             programUuid={programUuid}
                             onPublish={handlePublish}
                             onSaveDraft={handleSaveDraft}
                             onBack={() => setStep(1)}
-                            isPublishing={publishProgramMut.isPending}
-                            editingProgram={editingProgram}
+                            isPublishing={updateProgramMut.isPending}
+                            editingProgram={latestProgramData}
                         />
                     ) : (
-                        <div className="rounded-lg border border-border bg-card p-8 text-center">
-                            <div className="text-muted-foreground">
-                                <p className="mb-2 text-lg font-semibold">Program UUID not found</p>
-                                <p className="text-sm">Please go back and try again, or contact support if the issue persists.</p>
+                        <div className='rounded-lg border border-border bg-card p-8 text-center'>
+                            <div className='text-muted-foreground'>
+                                <p className='mb-2 text-lg font-semibold'>Program UUID not found</p>
+                                <p className='text-sm'>
+                                    Please go back and try again, or contact support if the issue
+                                    persists.
+                                </p>
                                 <Button
                                     onClick={() => setStep(1)}
-                                    className="mt-4 rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+                                    className='mt-4 rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90'
                                 >
                                     Go Back
                                 </Button>
                             </div>
                         </div>
-                    )
-                )}
+                    ))}
             </div>
         </div>
     );
