@@ -332,47 +332,13 @@ export const QuizCreationForm = ({
     rubric_uuid: '',
   });
 
-  // Memoize initial quiz data
-  const initialQuizData = useMemo(
-    () => ({
-      title: '',
-      instructions: '',
-      time_limit_minutes: 0,
-      attempts_allowed: 1,
-      passing_score: 0,
-      active: false,
-      status: 'PUBLISHED',
-      rubric_uuid: '',
-      lesson_uuid: '',
-    }),
-    []
-  );
-
-
   const selectedQuizData = useMemo(() => {
-    const selected = quizzes?.data?.content?.find((q: any) => q.uuid === quizUuid);
-
-    if (selected && quizUuid) {
-      return {
-        title: selected.title || '',
-        instructions: selected.instructions || '',
-        time_limit_minutes: selected.time_limit_minutes || 0,
-        attempts_allowed: selected.attempts_allowed || 1,
-        passing_score: selected.passing_score || 0,
-        active: selected.active || false,
-        status: selected.status || 'PUBLISHED',
-        rubric_uuid: selected.rubric_uuid || '',
-        lesson_uuid: selectedLessonId as string,
-      };
-    }
-
-    // For new quiz (quizUuid is '' or null), use local state
+    // Always use localQuizData for editing
     return {
       ...localQuizData,
       lesson_uuid: selectedLessonId as string,
     };
-  }, [quizUuid, quizzes?.data?.content, selectedLessonId, localQuizData]);
-
+  }, [selectedLessonId, localQuizData]);
 
   const handleQuizInputChange = useCallback((field: string, value: any) => {
     setLocalQuizData(prev => ({
@@ -384,6 +350,7 @@ export const QuizCreationForm = ({
 
   useEffect(() => {
     if (!quizUuid || quizUuid === '') {
+      // Reset for new quiz
       setLocalQuizData({
         title: '',
         instructions: '',
@@ -394,8 +361,23 @@ export const QuizCreationForm = ({
         status: 'PUBLISHED',
         rubric_uuid: '',
       });
+    } else {
+      // Load existing quiz data into local state
+      const selected = quizzes?.data?.content?.find((q: any) => q.uuid === quizUuid);
+      if (selected) {
+        setLocalQuizData({
+          title: selected.title || '',
+          instructions: selected.instructions || '',
+          time_limit_minutes: selected.time_limit_minutes || 0,
+          attempts_allowed: selected.attempts_allowed || 1,
+          passing_score: selected.passing_score || 0,
+          active: selected.active || false,
+          status: selected.status || 'PUBLISHED',
+          rubric_uuid: selected.rubric_uuid || '',
+        });
+      }
     }
-  }, [quizUuid]);
+  }, [quizUuid, quizzes?.data?.content]);
 
   const handleQuizSelect = useCallback(
     (selectedUuid: string | null) => {
