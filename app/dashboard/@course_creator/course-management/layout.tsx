@@ -9,17 +9,6 @@ interface CourseManagementLayoutProps {
   children: React.ReactNode;
 }
 
-const sidebarNavItems = [
-  {
-    title: 'Drafts',
-    href: '/dashboard/course-management/drafts',
-  },
-  {
-    title: 'Published',
-    href: '/dashboard/course-management/published',
-  },
-];
-
 const navItems = [
   { label: 'All', href: '/dashboard/course-management/all' },
   { label: 'Drafts', href: '/dashboard/course-management/drafts' },

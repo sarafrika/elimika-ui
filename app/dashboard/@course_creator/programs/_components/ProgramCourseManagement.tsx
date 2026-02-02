@@ -14,6 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import { PlusCircle } from 'lucide-react';
 import { Button } from '../../../../../components/ui/button';
+import { Input } from '../../../../../components/ui/input';
+import { Label } from '../../../../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
+import { Textarea } from '../../../../../components/ui/textarea';
 import {
     addProgramCourseMutation,
     addProgramRequirementMutation,
@@ -232,7 +236,7 @@ const ProgramCourseManagement = ({
                                 className='flex items-center justify-between rounded-lg border border-border bg-muted p-4'
                             >
                                 <div className='flex items-center gap-4'>
-                                    <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 font-semibold text-primary'>
+                                    <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-primary/5 font-semibold text-primary'>
                                         {index + 1}
                                     </div>
                                     <div>
@@ -246,7 +250,7 @@ const ProgramCourseManagement = ({
                                         )}
                                     </div>
                                 </div>
-                                <button
+                                <Button
                                     onClick={() =>
                                         handleRemoveCourse(course.uuid)
                                     }
@@ -254,7 +258,7 @@ const ProgramCourseManagement = ({
                                     className='rounded bg-destructive/10 px-3 py-1 text-sm font-medium text-destructive hover:bg-destructive/20'
                                 >
                                     Remove
-                                </button>
+                                </Button>
                             </div>
                         ))
                     )}
@@ -302,7 +306,7 @@ const ProgramCourseManagement = ({
                                     className='flex items-center justify-between rounded-lg border border-border bg-muted p-4'
                                 >
                                     <div className='flex items-center gap-4'>
-                                        <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 font-semibold text-primary'>
+                                        <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-primary/5 font-semibold text-primary'>
                                             {index + 1}
                                         </div>
                                         <div>
@@ -314,7 +318,7 @@ const ProgramCourseManagement = ({
                                             </div>
                                         </div>
                                     </div>
-                                    <button
+                                    <Button
                                         onClick={() =>
                                             handleRemoveRequirement(req.uuid)
                                         }
@@ -322,7 +326,7 @@ const ProgramCourseManagement = ({
                                         className='rounded bg-destructive/10 px-3 py-1 text-sm font-medium text-destructive hover:bg-destructive/20'
                                     >
                                         Remove
-                                    </button>
+                                    </Button>
                                 </div>
                             )
                         )
@@ -421,30 +425,38 @@ const ProgramCourseManagement = ({
 
                     <div className="space-y-4">
                         <div>
-                            <label className="mb-2 block text-sm font-medium">
+                            <Label className="mb-2 block text-sm font-medium">
                                 Requirement Type
-                            </label>
-                            <select
+                            </Label>
+                            <Select
                                 value={newRequirement.requirement_type}
-                                onChange={(e) =>
+                                onValueChange={(value) =>
                                     setNewRequirement((prev) => ({
                                         ...prev,
-                                        requirement_type: e.target.value,
+                                        requirement_type: value,
                                     }))
                                 }
-                                className="w-full rounded-lg border px-4 py-2 focus:border-primary focus:outline-none"
                             >
-                                <option value="STUDENT">Student Requirement</option>
-                                <option value="TECHNICAL">Technical Requirement</option>
-                                <option value="ADMINISTRATIVE">Administrative Requirement</option>
-                            </select>
+                                <SelectTrigger className="w-full rounded-lg">
+                                    <SelectValue placeholder="Select requirement type" />
+                                </SelectTrigger>
+
+                                <SelectContent>
+                                    <SelectItem value="STUDENT">Student Requirement</SelectItem>
+                                    <SelectItem value="TECHNICAL">Technical Requirement</SelectItem>
+                                    <SelectItem value="ADMINISTRATIVE">
+                                        Administrative Requirement
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-medium">
+                            <Label className="mb-2 block text-sm font-medium">
                                 Requirement Description
-                            </label>
-                            <textarea
+                            </Label>
+                            <Textarea
                                 value={newRequirement.requirement_text}
                                 onChange={(e) =>
                                     setNewRequirement((prev) => ({
@@ -459,7 +471,7 @@ const ProgramCourseManagement = ({
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <input
+                            <Input
                                 type="checkbox"
                                 id="is_mandatory"
                                 checked={newRequirement.is_mandatory}
@@ -471,9 +483,9 @@ const ProgramCourseManagement = ({
                                 }
                                 className="h-4 w-4 rounded border-muted text-primary focus:ring-primary"
                             />
-                            <label htmlFor="is_mandatory" className="text-sm font-medium">
+                            <Label htmlFor="is_mandatory" className="text-sm font-medium">
                                 This is a mandatory requirement
-                            </label>
+                            </Label>
                         </div>
                     </div>
 

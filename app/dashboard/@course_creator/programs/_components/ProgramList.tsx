@@ -5,23 +5,91 @@ import {
     useQuery,
     useQueryClient,
 } from '@tanstack/react-query';
-import { useState } from 'react';
+import { format } from 'date-fns';
+import { Filter, PlusCircle, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
+import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '../../../../../components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '../../../../../components/ui/dialog';
+import { Input } from '../../../../../components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../../../../../components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '../../../../../components/ui/table';
 import {
     deleteTrainingProgramMutation,
     getAllTrainingProgramsOptions,
     getAllTrainingProgramsQueryKey,
 } from '../../../../../services/client/@tanstack/react-query.gen';
 
-const ProgramsList = ({ onEdit, onPreview }: any) => {
+type ProgramStatusFilter = 'all' | 'published' | 'draft' | 'archived';
+
+const STATUS_OPTIONS: { label: string; value: ProgramStatusFilter }[] = [
+    { label: 'All statuses', value: 'all' },
+    { label: 'Published', value: 'published' },
+    { label: 'Draft', value: 'draft' },
+    { label: 'Archived', value: 'archived' },
+];
+
+const STATUS_BADGE: Record<
+    string,
+    { label: string; variant: 'secondary' | 'default' | 'outline' | 'destructive' }
+> = {
+    PUBLISHED: { label: 'Published', variant: 'default' },
+    DRAFT: { label: 'Draft', variant: 'secondary' },
+    ARCHIVED: { label: 'Archived', variant: 'outline' },
+};
+
+interface Program {
+    uuid: string;
+    title: string;
+    description?: string;
+    status: string;
+    class_limit: number;
+    price: number;
+    program_type?: string;
+    created_date?: string;
+    updated_date?: string;
+}
+
+interface ProgramsListProps {
+    onEdit: (program: Program) => void;
+    onPreview: (uuid: string) => void;
+    onCreate?: () => void;
+}
+
+const ProgramsList = ({ onEdit, onPreview, onCreate }: ProgramsListProps) => {
     const qc = useQueryClient();
 
-    const [deleteConfirm, setDeleteConfirm] =
-        useState<string | null>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] =
-        useState('ALL');
+    const [statusFilter, setStatusFilter] = useState<ProgramStatusFilter>('all');
 
     const { data: programsData, isLoading } = useQuery(
         getAllTrainingProgramsOptions({
@@ -33,10 +101,9 @@ const ProgramsList = ({ onEdit, onPreview }: any) => {
         ...deleteTrainingProgramMutation(),
         onSuccess: () => {
             qc.invalidateQueries({
-                queryKey:
-                    getAllTrainingProgramsQueryKey({
-                        query: { pageable: {} },
-                    }),
+                queryKey: getAllTrainingProgramsQueryKey({
+                    query: { pageable: {} },
+                }),
             });
             setDeleteConfirm(null);
         },
@@ -44,204 +111,250 @@ const ProgramsList = ({ onEdit, onPreview }: any) => {
 
     const programs = programsData?.data?.content || [];
 
-    const filteredPrograms = programs.filter(
-        (program) => {
+    const filteredPrograms = useMemo(() => {
+        return programs.filter((program) => {
             const matchesSearch =
-                program.title
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase()) ||
-                program.description
-                    ?.toLowerCase()
-                    .includes(searchTerm.toLowerCase());
+                program.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                program.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-            const matchesStatus =
-                statusFilter === 'ALL' ||
-                program.status === statusFilter;
+            const matchesStatus = statusFilter === 'all' || program.status === statusFilter;
 
             return matchesSearch && matchesStatus;
-        }
-    );
+        });
+    }, [programs, searchTerm, statusFilter]);
 
     const handleDelete = (uuid: string) => {
         deleteProgramMut.mutate({ path: { uuid } });
     };
 
-    const getStatusClasses = (status: string) => {
-        switch (status) {
-            case 'PUBLISHED':
-                return 'bg-primary/10 text-primary';
-            case 'DRAFT':
-                return 'bg-muted text-foreground';
-            case 'ARCHIVED':
-                return 'bg-secondary text-secondary-foreground';
-            default:
-                return 'bg-muted text-muted-foreground';
-        }
-    };
-
     if (isLoading) {
         return (
             <div className='flex h-64 items-center justify-center'>
-                <div className='text-muted-foreground'>
-                    Loading programs...
-                </div>
+                <div className='text-muted-foreground'>Loading programs...</div>
             </div>
         );
     }
 
     return (
-        <div className='p-6'>
-            {/* Filters */}
-            <div className='mb-6 flex flex-wrap gap-4'>
-                <div className='min-w-[300px] flex-1'>
-                    <input
-                        type='text'
-                        placeholder='Search programs by title or description...'
-                        value={searchTerm}
-                        onChange={(e) =>
-                            setSearchTerm(e.target.value)
-                        }
-                        className='w-full rounded-lg border border-border px-4 py-2 focus:border-primary focus:outline-none'
-                    />
-                </div>
-
-                <select
-                    value={statusFilter}
-                    onChange={(e) =>
-                        setStatusFilter(e.target.value)
-                    }
-                    className='rounded-lg border border-border px-4 py-2 focus:border-primary focus:outline-none'
-                >
-                    <option value='ALL'>All Status</option>
-                    <option value='published'>Published</option>
-                    <option value='draft'>Draft</option>
-                    {/* <option value='archived'>Archived</option> */}
-                </select>
-            </div>
-
-            {/* Programs */}
-            {filteredPrograms.length === 0 ? (
-                <div className='flex flex-col items-center justify-center py-12 text-center'>
-                    <div className='mb-4 text-6xl'>📚</div>
-                    <h3 className='mb-2 text-lg font-semibold text-foreground'>
-                        No programs found
-                    </h3>
-                    <p className='text-muted-foreground'>
-                        {searchTerm || statusFilter !== 'ALL'
-                            ? 'Try adjusting your filters'
-                            : 'Create your first training program to get started'}
+        <div className='mx-auto w-full max-w-7xl space-y-6 px-4 pt-4 pb-10'>
+            {/* Header */}
+            <header className='flex flex-col items-start justify-between gap-4 md:flex-row md:items-center'>
+                <div>
+                    <p className='text-muted-foreground mt-2 max-w-2xl text-sm'>
+                        Monitor each training program&apos;s status, capacity, pricing, and type at a glance.
                     </p>
                 </div>
-            ) : (
-                <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-                    {filteredPrograms.map((program) => (
-                        <div
-                            key={program.uuid}
-                            className='rounded-lg border border-border bg-card p-5 transition-shadow hover:shadow-md'
-                        >
-                            {/* Header */}
-                            <div className='mb-3 flex items-start justify-between'>
-                                <div className='flex-1'>
-                                    <h3 className='mb-1 line-clamp-2 font-semibold text-foreground'>
-                                        {program.title}
-                                    </h3>
-                                    <span
-                                        className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${getStatusClasses(
-                                            program.status
-                                        )}`}
-                                    >
-                                        {program.status}
-                                    </span>
-                                </div>
-                            </div>
 
-                            {/* Details */}
-                            <div className='mb-4 space-y-2 text-sm text-muted-foreground'>
-                                <p className='line-clamp-2'>
-                                    {program.description}
-                                </p>
-                                <div className='flex items-center gap-4'>
-                                    <span>
-                                        👥 {program.class_limit} spots
-                                    </span>
-                                    <span>💰 ${program.price}</span>
-                                </div>
-                                {program.program_type && (
-                                    <div className='text-xs text-muted-foreground'>
-                                        {program.program_type}
-                                    </div>
-                                )}
-                            </div>
+                {onCreate && (
+                    <Button onClick={onCreate}>
+                        <PlusCircle className='mr-2 h-4 w-4' />
+                        Create program
+                    </Button>
+                )}
+            </header>
 
-                            {/* Actions */}
-                            <div className='flex gap-2 border-t border-border pt-4'>
-                                <button
-                                    onClick={() =>
-                                        onPreview(program.uuid)
-                                    }
-                                    className='flex-1 rounded bg-muted px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/80'
-                                >
-                                    View Details
-                                </button>
-                                <button
-                                    onClick={() => onEdit(program)}
-                                    className='rounded bg-primary/10 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/20'
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() =>
-                                        setDeleteConfirm(program.uuid)
-                                    }
-                                    className='rounded bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20'
-                                >
-                                    🗑️
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+            {/* Main Card */}
+            <Card>
+                <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
+                    <div>
+                        <CardTitle className='text-base font-semibold'>Training programs</CardTitle>
+                        <CardDescription>
+                            {programs.length} program{programs.length === 1 ? '' : 's'} available.
+                        </CardDescription>
+                    </div>
 
-            {/* Delete Modal */}
-            {deleteConfirm && (
-                <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'>
-                    <div className='w-full max-w-md rounded-lg bg-card p-6 shadow-xl'>
-                        <h3 className='mb-2 text-lg font-semibold text-foreground'>
-                            Delete Program?
-                        </h3>
-                        <p className='mb-6 text-muted-foreground'>
-                            This action cannot be undone. All
-                            program data will be permanently
-                            removed.
-                        </p>
+                    <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+                        {/* Search Input */}
+                        <Input
+                            type='text'
+                            placeholder='Search programs...'
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className='w-full sm:w-[250px]'
+                        />
 
-                        <div className='flex justify-end gap-3'>
-                            <Button
-                                onClick={() => setDeleteConfirm(null)}
-                                disabled={deleteProgramMut.isPending}
-                                variant={"ghost"}
-                                className='rounded-lg border border-border px-4 py-2 font-medium text-foreground hover:bg-muted'
+                        {/* Status Filter */}
+                        <div className='flex items-center gap-2'>
+                            <Filter className='text-muted-foreground hidden h-4 w-4 sm:block' />
+                            <Select
+                                value={statusFilter}
+                                onValueChange={(value) => setStatusFilter(value as ProgramStatusFilter)}
                             >
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={() =>
-                                    handleDelete(deleteConfirm)
-                                }
-                                disabled={deleteProgramMut.isPending}
-                                className='rounded-lg bg-destructive px-4 py-2 font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50'
-                            >
-                                {deleteProgramMut.isPending
-                                    ? 'Deleting...'
-                                    : 'Delete Program'}
-                            </Button>
+                                <SelectTrigger className='w-full sm:w-[180px]'>
+                                    <SelectValue placeholder='Filter by status' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {STATUS_OPTIONS.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
-                </div>
-            )}
+                </CardHeader>
+
+                <CardContent className='p-0'>
+                    {filteredPrograms.length === 0 ? (
+                        <div className='flex flex-col items-center justify-center space-y-4 py-16 text-center'>
+                            <p className='text-lg font-medium'>
+                                {searchTerm || statusFilter !== 'all'
+                                    ? 'No programs match this filter.'
+                                    : 'No programs found.'}
+                            </p>
+                            <p className='text-muted-foreground text-sm'>
+                                {searchTerm || statusFilter !== 'all'
+                                    ? 'Try adjusting your search or filter criteria.'
+                                    : 'Create your first training program to get started.'}
+                            </p>
+                            {onCreate && (
+                                <Button variant='outline' onClick={onCreate}>
+                                    <PlusCircle className='mr-2 h-4 w-4' />
+                                    Create program
+                                </Button>
+                            )}
+                        </div>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className='w-[35%]'>Program</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Capacity</TableHead>
+                                    <TableHead>Price</TableHead>
+                                    <TableHead>Last updated</TableHead>
+                                    <TableHead className='text-right'>Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredPrograms.map((program) => (
+                                    <ProgramRow
+                                        key={program.uuid}
+                                        program={program}
+                                        onEdit={onEdit}
+                                        onPreview={onPreview}
+                                        onDelete={setDeleteConfirm}
+                                    />
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Program?</DialogTitle>
+                        <DialogDescription>
+                            This action cannot be undone. All program data will be permanently removed.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant='ghost'
+                            onClick={() => setDeleteConfirm(null)}
+                            disabled={deleteProgramMut.isPending}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant='destructive'
+                            onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
+                            disabled={deleteProgramMut.isPending}
+                        >
+                            {deleteProgramMut.isPending ? 'Deleting...' : 'Delete Program'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
+
+interface ProgramRowProps {
+    program: Program;
+    onEdit: (program: Program) => void;
+    onPreview: (uuid: string) => void;
+    onDelete: (uuid: string) => void;
+}
+
+function ProgramRow({ program, onEdit, onPreview, onDelete }: ProgramRowProps) {
+    const statusMeta = STATUS_BADGE[program.status] ?? {
+        label: program.status,
+        variant: 'secondary' as const,
+    };
+
+    return (
+        <TableRow className='cursor-pointer hover:bg-muted/50'>
+            <TableCell onClick={() => onPreview(program.uuid)}>
+                <div className='flex flex-col gap-1'>
+                    <span className='font-semibold leading-tight'>{program.title}</span>
+                    <div className='text-muted-foreground text-xs'>
+                        {program.description ? truncate(program.description, 80) : 'No description added yet.'}
+                    </div>
+                </div>
+            </TableCell>
+            <TableCell onClick={() => onPreview(program.uuid)}>
+                <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+            </TableCell>
+            <TableCell onClick={() => onPreview(program.uuid)}>
+                <span className='text-sm'>{program.program_type || '—'}</span>
+            </TableCell>
+            <TableCell onClick={() => onPreview(program.uuid)}>
+                <span className='font-medium'>{program.class_limit} spots</span>
+            </TableCell>
+            <TableCell onClick={() => onPreview(program.uuid)}>
+                <span className='font-medium'>{formatCurrency(program.price)}</span>
+            </TableCell>
+            <TableCell onClick={() => onPreview(program.uuid)}>
+                <span className='text-muted-foreground text-sm'>
+                    {program.updated_date ? format(new Date(program.updated_date), 'dd MMM yyyy') : '—'}
+                </span>
+            </TableCell>
+            <TableCell className='text-right'>
+                <div className='flex items-center justify-end gap-2'>
+                    <Button
+                        size='sm'
+                        variant='ghost'
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(program);
+                        }}
+                    >
+                        Edit
+                    </Button>
+                    <Button
+                        size='sm'
+                        variant='ghost'
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(program.uuid);
+                        }}
+                        className='text-destructive hover:text-destructive'
+                    >
+                        <Trash2 className='h-4 w-4' />
+                    </Button>
+                </div>
+            </TableCell>
+        </TableRow>
+    );
+}
+
+function truncate(value: string, length: number): string {
+    if (value.length <= length) return value;
+    return `${value.slice(0, length)}…`;
+}
+
+function formatCurrency(value: number): string {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'KES',
+        maximumFractionDigits: 0,
+    }).format(value);
+}
 
 export default ProgramsList;
