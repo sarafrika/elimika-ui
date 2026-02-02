@@ -1,16 +1,10 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { PlusCircle, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { FileSpreadsheet, FileText, Image, PlusCircle, Trash2, Video } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../../../../components/ui/dropdown-menu';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import {
@@ -24,39 +18,29 @@ import { Separator } from '../../../../components/ui/separator';
 import Spinner from '../../../../components/ui/spinner';
 import { Switch } from '../../../../components/ui/switch';
 import { Textarea } from '../../../../components/ui/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../components/ui/tooltip';
 import { cn } from '../../../../lib/utils';
 import {
+  deleteAssignmentAttachmentMutation,
   getAllAssessmentRubricsOptions,
+  getAssignmentAttachmentsOptions,
+  getAssignmentAttachmentsQueryKey,
   searchAssignmentsOptions,
+  uploadAssignmentAttachmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
-import { Question, QuestionType } from './assessment-creation-form';
 
 export type AssignmentCreationFormProps = {
   lessons: any;
-  assignmentId: any;
-  questions: Question[];
+  assignmentId?: string | null;
   selectedLessonId: string;
   selectedLesson: any;
   setSelectedLessonId: (id: string) => void;
   setSelectedLesson: (lesson: any) => void;
-
   onSelectAssignment?: (assignmentUuid: string | null) => void;
-
-  addQuestion: (type: QuestionType) => void;
-  updateQuestionText: (qIndex: number, value: string) => void;
-  updateOptionText: (qIndex: number, oIndex: number, value: string) => void;
-  updateQuestionPoint: (qIndex: number, points: number) => void;
-  setCorrectOption: (qIndex: number, oIndex: number) => void;
-  deleteQuestion: (qIndex: number) => void;
-  deleteOption: (qIndex: number, oIndex: number) => void;
 
   // API callbacks
   createAssignmentForLesson: (lessonId: string, payload: any) => Promise<string>;
   updateAssignmentForLesson: (assignmentUuid: string, payload: any) => Promise<void>;
   deleteAssignmentForLesson: (assignmentUuid: string) => Promise<void>;
-  addAssignmentQuestion: (payload: any) => Promise<any>;
-  addQuestionOption: (payload: any) => Promise<any>;
 
   isPending: boolean;
 };
@@ -66,30 +50,19 @@ const SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
 export const AssignmentCreationForm = ({
   lessons,
   assignmentId,
-  questions,
   selectedLessonId,
   selectedLesson,
   setSelectedLessonId,
   setSelectedLesson,
-
   onSelectAssignment,
-
-  addQuestion,
-  updateQuestionText,
-  updateQuestionPoint,
-  updateOptionText,
-  setCorrectOption,
-  deleteQuestion,
-  deleteOption,
   createAssignmentForLesson,
   updateAssignmentForLesson,
   deleteAssignmentForLesson,
-  addAssignmentQuestion,
-  addQuestionOption,
-
   isPending,
 }: AssignmentCreationFormProps) => {
-  const { data: rubrics, isLoading: rubricsIsLoading } = useQuery(
+  const qc = useQueryClient();
+
+  const { data: rubrics } = useQuery(
     getAllAssessmentRubricsOptions({ query: { pageable: {} } })
   );
 
@@ -115,9 +88,21 @@ export const AssignmentCreationForm = ({
     active: false,
     due_date: '',
     assignment_category: '',
-    submission_types: [''],
+    submission_types: [] as string[],
     lesson_uuid: '',
   });
+
+  const { data: attachments } = useQuery({
+    ...getAssignmentAttachmentsOptions({ path: { assignmentUuid: assignmentUuid as string } }),
+    enabled: !!assignmentUuid
+  })
+  console.log(attachments?.data, "atts")
+
+  // File upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const uploadAssignmentMut = useMutation(uploadAssignmentAttachmentMutation());
 
   const handleAssignmentInputChange = (field: string, value: any) => {
     setAssignmentData(prev => ({ ...prev, [field]: value }));
@@ -155,7 +140,7 @@ export const AssignmentCreationForm = ({
         active: false,
         due_date: '',
         assignment_category: '',
-        submission_types: [''],
+        submission_types: [],
         lesson_uuid: '',
       });
     }
@@ -176,11 +161,12 @@ export const AssignmentCreationForm = ({
           selectedLessonId,
           assignmentData
         );
+        setSelectedAssignmentUuid(createdAssignmentUuid);
         onSelectAssignment?.(createdAssignmentUuid);
-        toast.success('Assignment created successfully!.');
+        toast.success('Assignment created successfully!');
       }
     } catch (err) {
-      toast.error(`Failed to ${assignmentId ? 'update' : 'create'} assignment.`);
+      toast.error(`Failed to ${assignmentUuid ? 'update' : 'create'} assignment.`);
     }
   };
 
@@ -195,6 +181,7 @@ export const AssignmentCreationForm = ({
 
     try {
       await deleteAssignmentForLesson(assignmentUuid);
+      setSelectedAssignmentUuid(null);
       onSelectAssignment?.(null);
       setAssignmentData({
         title: '',
@@ -227,6 +214,61 @@ export const AssignmentCreationForm = ({
       };
     });
   };
+
+  const handleAttachmentUpload = () => {
+    if (!mediaFile || !assignmentUuid) {
+      toast.error('Please select a file and ensure assignment is created');
+      return;
+    }
+
+    uploadAssignmentMut.mutate(
+      {
+        body: { file: mediaFile },
+        path: { assignmentUuid },
+      },
+      {
+        onSuccess: () => {
+          toast.success('Attachment uploaded successfully');
+          setMediaFile(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+
+          qc.invalidateQueries({
+            queryKey: getAssignmentAttachmentsQueryKey({
+              path: { assignmentUuid },
+            }),
+          });
+        },
+        onError: (err: any) => {
+          toast.error(err?.message || 'Attachment upload failed');
+        },
+      }
+    );
+  };
+
+  const deleteAttachmentMut = useMutation(deleteAssignmentAttachmentMutation())
+  const handleDeleteAttachment = async (attachmentUuid: string) => {
+    if (!confirm('Are you sure you want to delete this attachment?')) return
+
+    try {
+      deleteAttachmentMut.mutate({ path: { assignmentUuid: assignmentUuid as string, attachmentUuid: attachmentUuid } }, {
+        onSuccess: () => {
+          toast.success("Deleted successfully")
+          qc.invalidateQueries({
+            queryKey: getAssignmentAttachmentsQueryKey({
+              path: { assignmentUuid: assignmentUuid as string },
+            }),
+          });
+        },
+        onError: (error) => {
+          toast.error(error?.message)
+        }
+      })
+    } catch (error) {
+    }
+  }
+
 
   return (
     <div className='grid grid-cols-4 gap-6'>
@@ -401,7 +443,7 @@ export const AssignmentCreationForm = ({
                 />
               </div>
 
-              <div className='grid grid-cols-3 gap-4'>
+              <div className='grid grid-cols-2 gap-4'>
                 <div className='flex flex-col gap-2'>
                   <Label className='text-foreground text-sm font-medium'>Max Points</Label>
                   <Input
@@ -411,17 +453,6 @@ export const AssignmentCreationForm = ({
                     onChange={e =>
                       handleAssignmentInputChange('max_points', Number(e.target.value))
                     }
-                  />
-                </div>
-
-                <div className='flex flex-col gap-2'>
-                  <Label className='text-foreground text-sm font-medium'>Due Date (optional)</Label>
-                  <Input
-                    type='date'
-                    disabled={true}
-                    className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
-                    value={assignmentData.due_date}
-                    onChange={e => handleAssignmentInputChange('due_date', e.target.value)}
                   />
                 </div>
 
@@ -524,6 +555,149 @@ export const AssignmentCreationForm = ({
                 <Label className='text-foreground text-sm font-medium'>Active</Label>
               </div>
 
+              <Separator />
+
+              {/* Assignment Attachments Section */}
+              <div className='flex flex-col gap-4'>
+                <div className='flex flex-col gap-1'>
+                  <h4 className='text-foreground text-base font-semibold'>
+                    Assignment Attachments
+                  </h4>
+                  <p className='text-muted-foreground text-xs'>
+                    Upload documents, images, audio, or video files for this assignment
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {attachments?.data?.map(file => (
+                    <div
+                      key={file.uuid}
+                      className="flex items-start justify-between rounded-lg border border-border bg-white p-4 hover:border-primary transition"
+                    >
+                      {/* Left: File info */}
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">
+                          {getFileIcon(file.mime_type)}
+                        </span>
+
+                        <div>
+                          <p className="font-medium text-muted-foreground">
+                            {file.original_filename}
+                          </p>
+
+                          <p className="text-xs text-muted-foreground truncate max-w-xs">
+                            {file.file_url}
+                          </p>
+
+                          <p className="text-xs text-muted-foreground">
+                            {formatFileSize(Number(file.file_size_bytes))} •{' '}
+                            {new Date(file.created_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-2">
+                        {/* View */}
+                        {/* <a
+                          href={file.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-md border border-primary/20 px-2.5 py-1.5 text-sm font-medium text-primary hover:bg-primary/50"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View
+                        </a> */}
+
+                        {/* Delete */}
+                        <button
+                          onClick={() => handleDeleteAttachment(file.uuid)}
+                          className="inline-flex items-center gap-1 rounded-md border border-destructive/20 px-2.5 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/5"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+
+                <div
+                  className={cn(
+                    'space-y-4 rounded-lg border-2 border-dashed p-6 transition-colors',
+                    isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
+                  )}
+                  onDragOver={e => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={e => {
+                    e.preventDefault();
+                    setIsDragging(false);
+
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) {
+                      setMediaFile(file);
+                    }
+                  }}
+                >
+                  {/* Hidden file input */}
+                  <Input
+                    ref={fileInputRef}
+                    type='file'
+                    accept='image/*,application/pdf,video/*,audio/*,.doc,.docx,.txt'
+                    className='hidden'
+                    onChange={e => setMediaFile(e.target.files?.[0] || null)}
+                  />
+
+                  {/* Clickable drop area */}
+                  <div
+                    role='button'
+                    tabIndex={0}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
+                    className='bg-muted/40 hover:bg-muted flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border px-6 py-8 text-center transition-colors'
+                  >
+                    <p className='text-foreground text-sm font-medium'>
+                      Drag & drop a file here, or click to browse
+                    </p>
+
+                    {mediaFile ? (
+                      <p className='text-primary max-w-full truncate text-[13px]'>
+                        {mediaFile.name}
+                      </p>
+                    ) : (
+                      <p className='text-muted-foreground text-[13px]'>
+                        Documents, Images, Audio, or Video files
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    type='button'
+                    variant='secondary'
+                    disabled={!mediaFile || uploadAssignmentMut.isPending}
+                    onClick={handleAttachmentUpload}
+                    className='w-full'
+                  >
+                    {uploadAssignmentMut.isPending ? (
+                      <>
+                        <Spinner className='mr-2 h-4 w-4' />
+                        Uploading...
+                      </>
+                    ) : (
+                      'Upload Assignment Attachment'
+                    )}
+                  </Button>
+
+                  <p className='text-muted-foreground text-xs'>
+                    Supported formats: PDF, Images (JPG, PNG), Audio (MP3, WAV), Video (MP4), Documents
+                  </p>
+                </div>
+              </div>
+
               <div className='flex items-end justify-end gap-4 pt-2'>
                 <div className='flex justify-end self-end'>
                   {assignmentUuid && (
@@ -532,160 +706,16 @@ export const AssignmentCreationForm = ({
                     </Button>
                   )}
                 </div>
-                <Button size={'sm'} onClick={handleSaveAssignment}>
+                <Button size={'sm'} onClick={handleSaveAssignment} disabled={isPending}>
                   {isPending ? (
-                    'Saving...'
+                    <>
+                      <Spinner className='mr-2 h-4 w-4' />
+                      Saving...
+                    </>
                   ) : (
                     <>{assignmentUuid ? 'Update Assignment' : 'Save Assignment'}</>
                   )}
                 </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Only show questions UI if assignmentUuid exists */}
-          {assignmentUuid && (
-            <div className='mt-8 hidden border-t pt-6'>
-              <div className='mb-6 flex items-center justify-between'>
-                <h4 className='text-foreground text-lg font-semibold'>Questions</h4>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button>+ Add Question</Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <DropdownMenuItem onClick={() => addQuestion('MULTIPLE_CHOICE')}>
-                      + MCQ
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addQuestion('TRUE_FALSE')}>
-                      + True / False
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addQuestion('ESSAY')}>
-                      + Essay
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addQuestion('SHORT_ANSWER')}>
-                      + Short Answer
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addQuestion('MATCHING')}>
-                      + Matching
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div className='overflow-hidden rounded-lg border'>
-                <table className='w-full'>
-                  <thead>
-                    <tr className='bg-muted border-b'>
-                      <th className='text-foreground w-1/4 px-4 py-3 text-left text-sm font-semibold'>
-                        Question
-                      </th>
-                      <th className='text-foreground px-4 py-3 text-left text-sm font-semibold'>
-                        Answer/Options
-                      </th>
-                      <th className='text-foreground w-24 px-4 py-3 text-left text-sm font-semibold'>
-                        Points
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className='divide-y'>
-                    {questions.map((q: any, qIndex) => (
-                      <tr key={qIndex} className='group hover:bg-muted/50 transition-colors'>
-                        <td className='px-4 py-4'>
-                          <div className='group relative'>
-                            <textarea
-                              value={q.text}
-                              rows={6}
-                              onChange={e => updateQuestionText(qIndex, e.target.value)}
-                              placeholder='Enter question text here'
-                              className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full resize-none rounded-lg border px-3 py-2 pr-10 transition-all outline-none focus:ring-2'
-                            />
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant='ghost'
-                                  size='icon'
-                                  onClick={() => deleteQuestion(qIndex)}
-                                  className='absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100'
-                                >
-                                  <Trash2 className='text-destructive h-4 w-4' />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Delete question</TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </td>
-                        <td className='px-4 py-4'>
-                          {(q.type === 'MULTIPLE_CHOICE' || q.type === 'TRUE_FALSE') &&
-                            q.options?.map((opt: any, oIndex: any) => (
-                              <div key={oIndex} className='group mb-3 flex items-center gap-3'>
-                                <input
-                                  type='radio'
-                                  checked={opt.isCorrect}
-                                  onChange={() => setCorrectOption(qIndex, oIndex)}
-                                  className='h-4 w-4'
-                                />
-                                <input
-                                  value={opt.text}
-                                  onChange={e => updateOptionText(qIndex, oIndex, e.target.value)}
-                                  className='border-input bg-background focus:border-primary focus:ring-primary/20 flex-1 rounded-lg border px-3 py-2 transition-all outline-none focus:ring-2'
-                                  placeholder='Enter option text'
-                                />
-                                <Button
-                                  variant='ghost'
-                                  size='icon'
-                                  onClick={() => deleteOption(qIndex, oIndex)}
-                                  className='opacity-0 transition-opacity group-hover:opacity-100'
-                                >
-                                  <X className='text-destructive h-4 w-4' />
-                                </Button>
-                              </div>
-                            ))}
-
-                          {q.type === 'ESSAY' && (
-                            <textarea
-                              className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full resize-none rounded-lg border px-3 py-2 transition-all outline-none focus:ring-2'
-                              placeholder='Expected answer or grading criteria'
-                              rows={4}
-                            />
-                          )}
-
-                          {q.type === 'SHORT_ANSWER' && (
-                            <input
-                              className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3 py-2 transition-all outline-none focus:ring-2'
-                              placeholder='Expected answer'
-                            />
-                          )}
-
-                          {q.type === 'MATCHING' &&
-                            q.pairs?.map((pair: any, pIndex: any) => (
-                              <div key={pIndex} className='mb-3 grid grid-cols-2 gap-3'>
-                                <input
-                                  className='border-input bg-background focus:border-primary focus:ring-primary/20 rounded-lg border px-3 py-2 transition-all outline-none focus:ring-2'
-                                  value={pair.left}
-                                  placeholder='Left side'
-                                />
-                                <input
-                                  className='border-input bg-background focus:border-primary focus:ring-primary/20 rounded-lg border px-3 py-2 transition-all outline-none focus:ring-2'
-                                  value={pair.right}
-                                  placeholder='Right side'
-                                />
-                              </div>
-                            ))}
-                        </td>
-
-                        <td className='px-4 py-4'>
-                          <input
-                            type='number'
-                            min={0}
-                            value={q.points ?? 1}
-                            onChange={e => updateQuestionPoint(qIndex, Number(e.target.value))}
-                            className='border-input bg-background focus:border-primary focus:ring-primary/20 w-16 rounded-lg border px-2 py-1.5 text-sm transition-all outline-none focus:ring-2'
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             </div>
           )}
@@ -694,3 +724,19 @@ export const AssignmentCreationForm = ({
     </div>
   );
 };
+
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
+}
+
+export function getFileIcon(mime: string) {
+  if (mime.includes('pdf')) return <FileSpreadsheet />
+  if (mime.includes('image')) return <Image />
+  if (mime.includes('word')) return <FileText />
+  if (mime.includes('video')) return <Video />
+  return '📎'
+}

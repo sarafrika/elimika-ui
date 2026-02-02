@@ -43,6 +43,7 @@ import {
   getCourseCreatorCertificationsOptions,
   getCourseCreatorCertificationsQueryKey,
   updateCourseCreatorCertificationMutation,
+  uploadCourseCreatorDocumentMutation,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
 import { zCourseCreatorCertification } from '../../../../../../services/client/zod.gen';
 
@@ -131,6 +132,11 @@ export default function CertificatesSettings() {
     control: form.control,
     name: 'certifications',
   });
+
+  const uploadDocumentMut = useMutation(uploadCourseCreatorDocumentMutation())
+  const handleUplod = () => {
+    uploadDocumentMut.mutate({ path: { courseCreatorUuid: "" }, query: { document_type_uuid: "", education_uuid: '' } })
+  }
 
   const addCertMutation = useMutation(addCourseCreatorCertificationMutation());
   const updateCertMutation = useMutation(updateCourseCreatorCertificationMutation());

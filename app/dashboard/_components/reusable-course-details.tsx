@@ -14,25 +14,32 @@ import {
   getAllQuizzesOptions,
   getCourseByUuidOptions,
   getCourseCreatorByUuidOptions,
-  getCourseLessonsOptions
+  getCourseLessonsOptions,
+  getCourseReviewsOptions,
+  submitCourseReviewMutation
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
   Clock,
   FileText,
   Play,
+  PlusCircle,
   Users,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { CustomLoadingState } from '../@course_creator/_components/loading-state';
+import { ReviewCard } from '../@instructor/reviews/review-card';
 import { VideoPlayer } from '../@student/schedule/classes/[id]/VideoPlayer';
+import { FeedbackDialog } from './review-instructor-modal';
 
 type CourseDetailsProps = {
   courseId?: string;
   handleEnroll?: () => void;
   userRole?: string;
+  student_uuid?: string
 };
 
 interface ContentItem {
@@ -47,12 +54,42 @@ export default function ReusableCourseDetailsPage({
   courseId: propCourseId,
   handleEnroll,
   userRole,
+  student_uuid
 }: CourseDetailsProps) {
   const router = useRouter();
   const params = useParams();
   const courseId = propCourseId || (params?.id as string);
 
   const { replaceBreadcrumbs } = useBreadcrumb();
+
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [headline, setHeadline] = useState('');
+
+  const reviewCourseMut = useMutation(submitCourseReviewMutation())
+  const handleSubmitFeedback = () => {
+    reviewCourseMut.mutate({
+      body: {
+        course_uuid: courseId as string,
+        rating: rating,
+        student_uuid: student_uuid as string,
+        comments: feedbackComment,
+        headline: headline,
+        is_anonymous: false,
+
+      }, path: { courseUuid: courseId as string }
+    }, {
+      onSuccess: (data) => {
+        toast.success(data?.message)
+        setShowFeedbackDialog(false)
+      },
+      onError: (error) => {
+        toast.error(error?.message)
+        setShowFeedbackDialog(false)
+      }
+    })
+  }
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
@@ -62,6 +99,13 @@ export default function ReusableCourseDetailsPage({
     enabled: !!courseId,
   });
   const courseData = data?.data;
+
+  const { data: reviews } = useQuery({
+    ...getCourseReviewsOptions({ path: { courseUuid: courseId as string } }),
+    enabled: !!courseId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  })
 
   useEffect(() => {
     if (courseData) {
@@ -339,7 +383,7 @@ export default function ReusableCourseDetailsPage({
               <div>
                 <h3 className='mb-3 text-lg font-semibold'>What You'll Learn</h3>
                 <div className='flex flex-col items-start justify-center gap-2'>
-                  {lessonsWithContent?.slice(0, 6).map((lesson: any, index: number) => (
+                  {lessonsWithContent?.slice(0, 5).map((lesson: any, index: number) => (
                     <div key={lesson?.lesson?.uuid} className='flex items-start gap-2'>
                       <div className='h-5 w-5 shrink-0 rounded-full bg-green-100 flex items-center justify-center'>
                         <span className='text-xs text-green-700'>{index + 1}</span>
@@ -347,9 +391,9 @@ export default function ReusableCourseDetailsPage({
                       <p className='text-sm'>{lesson?.lesson?.title}</p>
                     </div>
                   ))}
-                  {lessonsWithContent?.length > 6 && (
+                  {lessonsWithContent?.length > 5 && (
                     <p className='text-sm text-muted-foreground col-span-2'>
-                      ...and {lessonsWithContent.length - 6} more lessons
+                      ...and {Number(lessonsWithContent.length) - 5} more lesson(s)
                     </p>
                   )}
                 </div>
@@ -358,7 +402,29 @@ export default function ReusableCourseDetailsPage({
               <Separator />
 
               <div>
-                <p>Reviews here</p>
+                <div className='flex flex-row items-center justify-between' >
+                  <h3 className='mb-3 text-lg font-semibold'>Course Reviews</h3>
+
+                  {userRole !== 'instructor' && (
+                    <Button
+                      onClick={() => setShowFeedbackDialog(true)}
+                    >
+                      <PlusCircle />
+                      Add review
+                    </Button>)}
+                </div>
+
+                <div className="space-y-4">
+                  {reviews?.data?.length ? (
+                    reviews.data.map(review => (
+                      <ReviewCard key={review.uuid} review={review} />
+                    ))
+                  ) : (
+                    <div className="rounded-md border border-dashed mt-4 p-6 text-center text-sm text-muted-foreground">
+                      No reviews yet.
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -370,6 +436,20 @@ export default function ReusableCourseDetailsPage({
           onClose={() => setIsPlaying(false)}
           videoUrl={selectedLesson?.content_text || ''}
           title={selectedLesson?.title}
+        />
+
+        <FeedbackDialog
+          type='others'
+          open={showFeedbackDialog}
+          onOpenChange={setShowFeedbackDialog}
+          headline={headline}
+          onHeadlineChange={setHeadline}
+          feedback={feedbackComment}
+          onFeedbackChange={setFeedbackComment}
+          rating={rating}
+          onRatingChange={setRating}
+          isSubmitting={reviewCourseMut.isPending}
+          onSubmit={handleSubmitFeedback}
         />
       </div>
     </div>

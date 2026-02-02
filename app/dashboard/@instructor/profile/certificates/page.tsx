@@ -223,8 +223,8 @@ export default function CertificatesPage() {
                   instructorUuid: instructor?.uuid as string,
                 },
                 query: {
-                  title: '',
-                  description: '',
+                  title: 'Title',
+                  description: 'Desscription',
                   document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
                   education_uuid: '',
                   experience_uuid: '',
