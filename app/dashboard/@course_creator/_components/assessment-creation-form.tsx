@@ -1100,24 +1100,14 @@ const AssessmentCreationForm = ({
             <AssignmentCreationForm
               lessons={lessons}
               assignmentId={assignmentId}
-              questions={questions}
               selectedLessonId={selectedLessonId}
               selectedLesson={selectedLesson}
               setSelectedLessonId={setSelectedLessonId}
               setSelectedLesson={setSelectedLesson}
               onSelectAssignment={handleSelectAssignment}
-              addQuestion={addQuestion}
-              updateQuestionText={updateQuestionText}
-              updateQuestionPoint={() => { }}
-              updateOptionText={updateOptionText}
-              setCorrectOption={setCorrectOption}
-              deleteQuestion={() => { }}
-              deleteOption={() => { }}
               createAssignmentForLesson={createAssignmentForLesson}
               updateAssignmentForLesson={updateAssignmentForLesson}
               deleteAssignmentForLesson={deleteAssignmentForLesson}
-              addAssignmentQuestion={() => { }}
-              addQuestionOption={() => { }}
               isPending={
                 createAssignmentMut.isPending ||
                 updateAssignmentMut.isPending ||
