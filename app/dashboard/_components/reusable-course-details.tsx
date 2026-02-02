@@ -16,9 +16,10 @@ import {
   getCourseCreatorByUuidOptions,
   getCourseLessonsOptions,
   getCourseReviewsOptions,
+  getCourseReviewsQueryKey,
   submitCourseReviewMutation
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
   Clock,
@@ -57,6 +58,7 @@ export default function ReusableCourseDetailsPage({
   student_uuid
 }: CourseDetailsProps) {
   const router = useRouter();
+  const qc = useQueryClient()
   const params = useParams();
   const courseId = propCourseId || (params?.id as string);
 
@@ -83,6 +85,7 @@ export default function ReusableCourseDetailsPage({
       onSuccess: (data) => {
         toast.success(data?.message)
         setShowFeedbackDialog(false)
+        qc.invalidateQueries({ queryKey: getCourseReviewsQueryKey({ path: { courseUuid: courseId as string } }) })
       },
       onError: (error) => {
         toast.error(error?.message)
@@ -414,13 +417,13 @@ export default function ReusableCourseDetailsPage({
                     </Button>)}
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 mt-4">
                   {reviews?.data?.length ? (
-                    reviews.data.map(review => (
-                      <ReviewCard key={review.uuid} review={review} />
+                    reviews?.data?.slice(0, 5)?.map(review => (
+                      <ReviewCard key={review.uuid} review={review} type='others' />
                     ))
                   ) : (
-                    <div className="rounded-md border border-dashed mt-4 p-6 text-center text-sm text-muted-foreground">
+                    <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
                       No reviews yet.
                     </div>
                   )}

@@ -27,6 +27,7 @@ import {
 } from '../../../../services/client/@tanstack/react-query.gen';
 import { AssignmentCreationForm } from './assignment-creation-form';
 import { QuizCreationForm } from './quiz-creation-form';
+import { RubricAssociationForm } from './rubric-association-form';
 
 const sampleQuestions = [
   'What is the capital of France?',
@@ -49,7 +50,7 @@ const sampleOptions = [
 
 const randomItem = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
-const tabs = ['Quiz', 'Assignment', 'Project', 'Discussions', 'Attendance'];
+const tabs = ['Rubrics', 'Quiz', 'Assignment', 'Project', 'Discussions', 'Attendance'];
 
 type AssessmentCreationFormProps = {
   course: any;
@@ -88,7 +89,7 @@ const AssessmentCreationForm = ({
   lessons,
 }: AssessmentCreationFormProps) => {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState('Quiz');
+  const [activeTab, setActiveTab] = useState('Rubrics');
 
   const [selectedLesson, setSelectedLesson] = useState<any | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState<any>(lessons?.content[0]?.id);
@@ -1000,6 +1001,17 @@ const AssessmentCreationForm = ({
       </div>
 
       <div>
+        {activeTab === 'Rubrics' && (
+          <div>
+            <RubricAssociationForm courseUuid={course?.data?.uuid as string} associatedBy={course?.data?.course_creator_uuid as string} />
+
+            <div className='text-muted-foreground flex min-h-[300px] flex-col items-center justify-center gap-6 px-3 py-2 text-center text-sm'>
+              <p>No rubrics assigned yet</p>
+            </div>
+          </div>
+        )}
+
+
         {activeTab === 'Quiz' && (
           <div>
             <QuizCreationForm
@@ -1098,6 +1110,7 @@ const AssessmentCreationForm = ({
         {activeTab === 'Assignment' && (
           <div>
             <AssignmentCreationForm
+              courseId={course?.data?.uuid as string}
               lessons={lessons}
               assignmentId={assignmentId}
               selectedLessonId={selectedLessonId}

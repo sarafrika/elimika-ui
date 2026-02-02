@@ -13,6 +13,7 @@ import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
   getCourseLessonsOptions,
+  getCourseReviewsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -32,6 +33,7 @@ import {
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { ReviewCard } from '../../../../@instructor/reviews/review-card';
 
 export default function CoursePreviewComponent({ authorName }: { authorName?: string }) {
   const params = useParams();
@@ -85,6 +87,14 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
     }),
     enabled: !!courseId,
   });
+
+  const { data: reviewsData } = useQuery({
+    ...getCourseReviewsOptions({ path: { courseUuid: courseId as string } }),
+    enabled: !!courseId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  })
+  const reviews = reviewsData?.data || []
 
   const { data: courseRubrics, isLoading: rubric, errors } = useCourseRubrics(courseId as string);
 
@@ -342,36 +352,16 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         </CardHeader>
 
         <CardContent className='p-0'>
-          {/* {reviews?.length ? (
-            <div className='border-border/60 space-y-3 border-t p-4'>
-              {reviews.slice(0, 3).map((review: any) => (
-                <div
-                  key={review.uuid}
-                  className='border-border/60 bg-muted/40 rounded-lg border p-3 text-sm'
-                >
-                  <div className='flex items-center justify-between'>
-                    <p className='font-medium'>{review.student_uuid}</p>
-
-                    <span className='text-muted-foreground text-xs'>
-                      {format(new Date(review.created_date), 'dd MMM yyyy')}
-                    </span>
-                  </div>
-
-                  <p className='mt-2 text-sm leading-relaxed'>{review.comments}</p>
-
-                  {!review.is_anonymous && (
-                    <p className='text-muted-foreground mt-1 text-xs'>{review.created_by}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className='border-border/60 text-muted-foreground border-t p-6 text-center text-sm'>
-              No reviews yet for this course.
-            </div>
-          )} */}
-          <div className='border-border/60 text-muted-foreground border-t p-6 text-center text-sm'>
-            No reviews yet for this course.
+          <div className="space-y-4 p-6">
+            {reviews?.length ? (
+              reviews?.slice(0, 5)?.map(review => (
+                <ReviewCard key={review.uuid} review={review} type='others' />
+              ))
+            ) : (
+              <div className='border-border/60 text-muted-foreground border-t text-center text-sm'>
+                No reviews yet for this course.
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -425,4 +415,3 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: a
   );
 }
 
-const reviews = [{}];

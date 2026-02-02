@@ -27,7 +27,12 @@ function Rating({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function ReviewCard({ review }: { review: any }) {
+interface ReviewCardProps {
+  review: any;
+  type?: 'instructor' | 'others'; // new type prop
+}
+
+export function ReviewCard({ review, type = 'instructor' }: ReviewCardProps) {
   const { data: student, isLoading } = useQuery({
     ...getStudentByIdOptions({
       path: { uuid: review.student_uuid },
@@ -35,16 +40,14 @@ export function ReviewCard({ review }: { review: any }) {
     enabled: !review.is_anonymous,
   });
 
-  // @ts-ignore
   const fullName = student?.data?.full_name;
 
   return (
     <Card>
-      <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+      <CardHeader className='flex flex-row items-center justify-between space-y-0'>
         <div className='flex items-center gap-3'>
           <Avatar>
             {!review.is_anonymous && (
-              /// @ts-ignore
               <AvatarImage src={student?.data?.avatar_url} />
             )}
             <AvatarFallback>
@@ -54,17 +57,18 @@ export function ReviewCard({ review }: { review: any }) {
 
           <div>
             <p className='leading-none font-medium'>
-              {review.is_anonymous ? (
-                'Anonymous Student'
-              ) : isLoading ? (
-                <Skeleton className='h-4 w-24' />
-              ) : (
-                fullName
-              )}
+              {review.is_anonymous
+                ? 'Anonymous Student'
+                : isLoading
+                  ? <Skeleton className='h-4 w-24' />
+                  : fullName
+              }
             </p>
           </div>
         </div>
-        <p className='text-muted-foreground text-xs'>{moment(review.created_date).fromNow()}</p>
+        <p className='text-muted-foreground text-xs'>
+          {moment(review.created_date).fromNow()}
+        </p>
       </CardHeader>
 
       <CardContent className='space-y-2'>
@@ -77,11 +81,13 @@ export function ReviewCard({ review }: { review: any }) {
 
         <p className='text-muted-foreground text-sm'>{review.comments}</p>
 
-        <div className='text-muted-foreground grid grid-cols-1 gap-3 pt-2 text-xs sm:grid-cols-3'>
-          <Rating label='Clarity' value={review.clarity_rating} />
-          <Rating label='Engagement' value={review.engagement_rating} />
-          <Rating label='Punctuality' value={review.punctuality_rating} />
-        </div>
+        {type === 'instructor' && (
+          <div className='text-muted-foreground grid grid-cols-1 gap-3 pt-2 text-xs sm:grid-cols-3'>
+            <Rating label='Clarity' value={review.clarity_rating} />
+            <Rating label='Engagement' value={review.engagement_rating} />
+            <Rating label='Punctuality' value={review.punctuality_rating} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

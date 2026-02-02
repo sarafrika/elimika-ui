@@ -21,14 +21,15 @@ import { Textarea } from '../../../../components/ui/textarea';
 import { cn } from '../../../../lib/utils';
 import {
   deleteAssignmentAttachmentMutation,
-  getAllAssessmentRubricsOptions,
   getAssignmentAttachmentsOptions,
   getAssignmentAttachmentsQueryKey,
+  getCourseRubricsOptions,
   searchAssignmentsOptions,
-  uploadAssignmentAttachmentMutation,
+  uploadAssignmentAttachmentMutation
 } from '../../../../services/client/@tanstack/react-query.gen';
 
 export type AssignmentCreationFormProps = {
+  courseId: string;
   lessons: any;
   assignmentId?: string | null;
   selectedLessonId: string;
@@ -48,6 +49,7 @@ export type AssignmentCreationFormProps = {
 const SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
 
 export const AssignmentCreationForm = ({
+  courseId,
   lessons,
   assignmentId,
   selectedLessonId,
@@ -63,8 +65,10 @@ export const AssignmentCreationForm = ({
   const qc = useQueryClient();
 
   const { data: rubrics } = useQuery(
-    getAllAssessmentRubricsOptions({ query: { pageable: {} } })
-  );
+    {
+      ...getCourseRubricsOptions({ path: { courseUuid: courseId as string }, query: { pageable: {} } }),
+      enabled: !!courseId
+    });
 
   const { data: assignments } = useQuery({
     ...searchAssignmentsOptions({
@@ -96,7 +100,6 @@ export const AssignmentCreationForm = ({
     ...getAssignmentAttachmentsOptions({ path: { assignmentUuid: assignmentUuid as string } }),
     enabled: !!assignmentUuid
   })
-  console.log(attachments?.data, "atts")
 
   // File upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -483,9 +486,10 @@ export const AssignmentCreationForm = ({
 
                   <SelectContent>
                     {rubrics?.data?.content?.length ? (
-                      rubrics.data.content.map((rubric: any) => (
-                        <SelectItem key={rubric.uuid} value={rubric.uuid}>
-                          {rubric.title}
+                      rubrics.data?.content?.map((rubric: any) => (
+                        <SelectItem key={rubric.rubric_uuid} value={rubric.rubric_uuid}>
+                          {/* {rubric.title} */}
+                          {rubric.rubric_uuid}
                         </SelectItem>
                       ))
                     ) : (
