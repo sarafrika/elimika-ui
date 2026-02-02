@@ -98,6 +98,10 @@ import type {
   GetAllTrainingProgramsResponse,
   CreateTrainingProgramResponse,
   PublishProgramResponse,
+  ListProgramTrainingApplicationsResponse,
+  SubmitProgramTrainingApplicationResponse,
+  GetProgramTrainingApplicationResponse,
+  DecideOnProgramTrainingApplicationResponse,
   GetProgramRequirementsResponse,
   AddProgramRequirementResponse,
   GetProgramCoursesResponse,
@@ -141,6 +145,8 @@ import type {
   DecideOnTrainingApplicationResponse,
   GetCourseRubricsResponse,
   AssociateRubricResponse,
+  GetCourseReviewsResponse,
+  SubmitCourseReviewResponse,
   GetCourseRequirementsResponse,
   AddCourseRequirementResponse,
   GetCourseLessonsResponse,
@@ -207,6 +213,8 @@ import type {
   SubmitAssignmentResponse,
   ReturnSubmissionResponse,
   GradeSubmissionResponse,
+  UploadSubmissionAttachmentResponse,
+  UploadAssignmentAttachmentResponse,
   AssignAdminDomainResponse,
   GetAdminUsersResponse,
   CreateAdminUserResponse,
@@ -253,12 +261,13 @@ import type {
   GetRequiredCoursesResponse,
   GetOptionalCoursesResponse,
   GetProgramCertificatesResponse,
+  SearchProgramTrainingApplicationsResponse,
   SearchTrainingProgramsResponse,
   SearchProgramRequirementsResponse,
   GetPublishedProgramsResponse,
-  GetProgramsByInstructorResponse,
   GetFreeProgramsResponse,
   SearchProgramEnrollmentsResponse,
+  GetProgramsByCourseCreatorResponse,
   SearchProgramCoursesResponse,
   GetProgramsByCategoryResponse,
   GetActiveProgramsResponse,
@@ -327,7 +336,9 @@ import type {
   GetCourseCertificatesResponse,
   GetBookingResponse,
   GetAssignmentSubmissionsResponse,
+  GetSubmissionAttachmentsResponse,
   GetHighPerformanceSubmissionsResponse,
+  GetAssignmentAttachmentsResponse,
   SearchSubmissionsResponse,
   SearchAssignmentsResponse,
   GetPendingGradingResponse,
@@ -2164,6 +2175,73 @@ export const publishProgramResponseTransformer = async (
   return data;
 };
 
+const programTrainingApplicationSchemaResponseTransformer = (data: any) => {
+  if (data.reviewed_at) {
+    data.reviewed_at = new Date(data.reviewed_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const pagedDtoProgramTrainingApplicationSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return programTrainingApplicationSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoProgramTrainingApplicationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoProgramTrainingApplicationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listProgramTrainingApplicationsResponseTransformer = async (
+  data: any
+): Promise<ListProgramTrainingApplicationsResponse> => {
+  data = apiResponsePagedDtoProgramTrainingApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseProgramTrainingApplicationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = programTrainingApplicationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const submitProgramTrainingApplicationResponseTransformer = async (
+  data: any
+): Promise<SubmitProgramTrainingApplicationResponse> => {
+  data = apiResponseProgramTrainingApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getProgramTrainingApplicationResponseTransformer = async (
+  data: any
+): Promise<GetProgramTrainingApplicationResponse> => {
+  data = apiResponseProgramTrainingApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const decideOnProgramTrainingApplicationResponseTransformer = async (
+  data: any
+): Promise<DecideOnProgramTrainingApplicationResponse> => {
+  data = apiResponseProgramTrainingApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoProgramRequirementSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -2753,6 +2831,46 @@ export const associateRubricResponseTransformer = async (
   data: any
 ): Promise<AssociateRubricResponse> => {
   data = apiResponseCourseRubricAssociationSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseReviewSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseListCourseReviewSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return courseReviewSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getCourseReviewsResponseTransformer = async (
+  data: any
+): Promise<GetCourseReviewsResponse> => {
+  data = apiResponseListCourseReviewSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseCourseReviewSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseReviewSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const submitCourseReviewResponseTransformer = async (
+  data: any
+): Promise<SubmitCourseReviewResponse> => {
+  data = apiResponseCourseReviewSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3688,6 +3806,60 @@ export const gradeSubmissionResponseTransformer = async (
   return data;
 };
 
+const assignmentSubmissionAttachmentSchemaResponseTransformer = (data: any) => {
+  if (data.file_size_bytes) {
+    data.file_size_bytes = BigInt(data.file_size_bytes.toString());
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseAssignmentSubmissionAttachmentSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = assignmentSubmissionAttachmentSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const uploadSubmissionAttachmentResponseTransformer = async (
+  data: any
+): Promise<UploadSubmissionAttachmentResponse> => {
+  data = apiResponseAssignmentSubmissionAttachmentSchemaResponseTransformer(data);
+  return data;
+};
+
+const assignmentAttachmentSchemaResponseTransformer = (data: any) => {
+  if (data.file_size_bytes) {
+    data.file_size_bytes = BigInt(data.file_size_bytes.toString());
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseAssignmentAttachmentSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = assignmentAttachmentSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const uploadAssignmentAttachmentResponseTransformer = async (
+  data: any
+): Promise<UploadAssignmentAttachmentResponse> => {
+  data = apiResponseAssignmentAttachmentSchemaResponseTransformer(data);
+  return data;
+};
+
 export const assignAdminDomainResponseTransformer = async (
   data: any
 ): Promise<AssignAdminDomainResponse> => {
@@ -4320,6 +4492,13 @@ export const getProgramCertificatesResponseTransformer = async (
   return data;
 };
 
+export const searchProgramTrainingApplicationsResponseTransformer = async (
+  data: any
+): Promise<SearchProgramTrainingApplicationsResponse> => {
+  data = apiResponsePagedDtoProgramTrainingApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
 export const searchTrainingProgramsResponseTransformer = async (
   data: any
 ): Promise<SearchTrainingProgramsResponse> => {
@@ -4341,13 +4520,6 @@ export const getPublishedProgramsResponseTransformer = async (
   return data;
 };
 
-export const getProgramsByInstructorResponseTransformer = async (
-  data: any
-): Promise<GetProgramsByInstructorResponse> => {
-  data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
-  return data;
-};
-
 export const getFreeProgramsResponseTransformer = async (
   data: any
 ): Promise<GetFreeProgramsResponse> => {
@@ -4359,6 +4531,13 @@ export const searchProgramEnrollmentsResponseTransformer = async (
   data: any
 ): Promise<SearchProgramEnrollmentsResponse> => {
   data = apiResponsePagedDtoProgramEnrollmentSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getProgramsByCourseCreatorResponseTransformer = async (
+  data: any
+): Promise<GetProgramsByCourseCreatorResponse> => {
+  data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
   return data;
 };
 
@@ -5195,10 +5374,42 @@ export const getAssignmentSubmissionsResponseTransformer = async (
   return data;
 };
 
+const apiResponseListAssignmentSubmissionAttachmentSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return assignmentSubmissionAttachmentSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getSubmissionAttachmentsResponseTransformer = async (
+  data: any
+): Promise<GetSubmissionAttachmentsResponse> => {
+  data = apiResponseListAssignmentSubmissionAttachmentSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getHighPerformanceSubmissionsResponseTransformer = async (
   data: any
 ): Promise<GetHighPerformanceSubmissionsResponse> => {
   data = apiResponseListAssignmentSubmissionSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseListAssignmentAttachmentSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return assignmentAttachmentSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getAssignmentAttachmentsResponseTransformer = async (
+  data: any
+): Promise<GetAssignmentAttachmentsResponse> => {
+  data = apiResponseListAssignmentAttachmentSchemaResponseTransformer(data);
   return data;
 };
 

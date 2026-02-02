@@ -263,7 +263,8 @@ function QuickActionsCard() {
         <ActionTile
           title='Share assets'
           description='Upload brand kits and curriculum collateral.'
-          href='/dashboard/libraries'
+          href='#'
+        // href='/dashboard/libraries'
         />
         <ActionTile
           title='Create syllabus'
@@ -308,17 +309,15 @@ function ActionTile({
   href: string;
 }) {
   return (
-    <div className='border-border/70 bg-muted/20 flex h-full flex-col justify-between rounded-2xl border p-3 text-sm'>
+    <Link prefetch href={href} className='border-border/70 bg-muted/20 flex h-full flex-col justify-between rounded-2xl border p-3 text-sm'>
       <div className='space-y-1'>
         <p className='text-foreground font-semibold'>{title}</p>
         <p className='text-muted-foreground text-xs'>{description}</p>
       </div>
       <Button asChild variant='ghost' size='sm' className='mt-3 justify-start px-0 text-sm'>
-        <Link prefetch href={href}>
-          Open
-        </Link>
+        Open
       </Button>
-    </div>
+    </Link>
   );
 }
 

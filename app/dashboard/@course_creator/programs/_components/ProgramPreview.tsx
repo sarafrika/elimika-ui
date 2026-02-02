@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Button } from '../../../../../components/ui/button';
 import {
     getProgramCoursesOptions,
     getProgramEnrollmentsOptions,
@@ -100,12 +101,12 @@ const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) =>
                         </p>
                     </div>
 
-                    <button
+                    <Button
                         onClick={() => onEdit(program?.data)}
                         className='rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90'
                     >
                         Edit Program
-                    </button>
+                    </Button>
                 </div>
             </div>
 

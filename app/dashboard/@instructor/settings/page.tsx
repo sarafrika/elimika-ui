@@ -31,17 +31,15 @@ import {
   Eye,
   EyeOff,
   FileText,
-  Link2,
-  Lock,
   Plus,
   Settings2,
   Shield,
-  Smartphone,
   Trash2,
-  X,
+  X
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useUserProfile } from '../../../../context/profile-context';
 
 interface PaymentMethod {
   id: string;
@@ -168,6 +166,8 @@ const SAMPLE_BILLING_HISTORY: BillingHistory[] = [
 ];
 
 const SettingsPage = () => {
+  const user = useUserProfile()
+
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(SAMPLE_PAYMENT_METHODS);
   const [connectedApps, setConnectedApps] = useState<ConnectedApp[]>(SAMPLE_CONNECTED_APPS);
   const [billingHistory] = useState<BillingHistory[]>(SAMPLE_BILLING_HISTORY);
@@ -183,10 +183,12 @@ const SettingsPage = () => {
   // Advanced settings
   const [showAccountId, setShowAccountId] = useState(false);
   const [copiedAccountId, setCopiedAccountId] = useState(false);
-  const accountId = 'ACC-2024-0123456789';
+
+  const [openDelete, setOpenDelete] = useState(false)
+
 
   const handleCopyAccountId = () => {
-    navigator.clipboard.writeText(accountId);
+    navigator.clipboard.writeText(user?.uuid as string);
     setCopiedAccountId(true);
     toast.success('Account ID copied to clipboard');
     setTimeout(() => setCopiedAccountId(false), 2000);
@@ -236,16 +238,117 @@ const SettingsPage = () => {
         </div>
       </section>
 
-      <div className='flex flex-col gap-2 rounded-md border-l-4 border-yellow-500 bg-yellow-100 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-          <p className='font-medium'>🚧 This page is under construction.</p>
-          <p className='text-sm text-yellow-900'>Mock data is being used for this template</p>
-        </div>
+      <div className='space-y-6' >
+        {/* Account Information */}
+        <Card className='p-6'>
+          <h2 className='mb-4 text-lg font-semibold'>Account Information</h2>
+          <div className='space-y-4'>
+            <div>
+              <Label>Account ID</Label>
+              <div className='mt-2 flex gap-2'>
+                <Input
+                  value={showAccountId ? user?.uuid : '•••••••••••••••••••'}
+                  readOnly
+                  className='font-mono'
+                />
+                <Button
+                  variant='outline'
+                  size='icon'
+                  onClick={() => setShowAccountId(!showAccountId)}
+                >
+                  {showAccountId ? <EyeOff className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
+                </Button>
+                <Button variant='outline' size='icon' onClick={handleCopyAccountId}>
+                  {copiedAccountId ? (
+                    <Check className='h-4 w-4 text-green-600' />
+                  ) : (
+                    <Copy className='h-4 w-4' />
+                  )}
+                </Button>
+              </div>
+              <p className='text-muted-foreground mt-1 text-xs'>
+                Use this ID for support inquiries
+              </p>
+            </div>
+
+            <div>
+              <Label>Account Created</Label>
+              <Input value={user?.created_date} readOnly className='mt-2' />
+            </div>
+          </div>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className='border-destructive p-6'>
+          <div className='mb-4 flex items-start gap-3'>
+            <AlertTriangle className='text-destructive mt-0.5 h-6 w-6' />
+            <div>
+              <h2 className='text-destructive text-lg font-semibold'>Danger Zone</h2>
+              <p className='text-muted-foreground text-sm'>
+                These actions are irreversible. Please proceed with caution.
+              </p>
+            </div>
+          </div>
+
+          <div className='space-y-4'>
+            <Separator />
+
+            <div className='flex items-center justify-between'>
+              <div>
+                <Label className='text-destructive'>Delete Account</Label>
+                <p className='text-muted-foreground text-sm'>
+                  Permanently delete your account and all data
+                </p>
+              </div>
+
+              <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
+                <AlertDialogTrigger asChild>
+                  <Button variant='destructive'>
+                    <Trash2 className='mr-2 h-4 w-4' />
+                    Delete Account
+                  </Button>
+                </AlertDialogTrigger>
+
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete your account and
+                      remove all your data from our servers including:
+                      <ul className='mt-2 list-inside list-disc space-y-1'>
+                        <li>All classes and course materials</li>
+                        <li>Student enrollments and records</li>
+                        <li>Payment history and billing information</li>
+                        <li>Messages and notifications</li>
+                        <li>Connected apps and integrations</li>
+                      </ul>
+                    </AlertDialogDescription>
+                    <div className='flex flex-row gap-2 self-end' >
+                      <Button variant="outline" onClick={() => setOpenDelete(false)}>
+                        Cancel
+                      </Button>
+
+                      <Button
+                        variant="destructive"
+                        onClick={async () => {
+                          await handleDeleteAccount()
+                          setOpenDelete(false)
+                        }}
+                      >
+                        Yes, Delete
+                      </Button>
+                    </div>
+                  </AlertDialogHeader>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue='billing' className='space-y-6'>
-        <TabsList className='grid w-full grid-cols-4'>
+      <Tabs defaultValue='billing' className='space-y-6 hidden'>
+        <TabsList className='grid w-full grid-cols-3'>
           <TabsTrigger value='billing'>
             <CreditCard className='mr-2 h-4 w-4' />
             Billing
@@ -254,10 +357,10 @@ const SettingsPage = () => {
             <Shield className='mr-2 h-4 w-4' />
             Privacy
           </TabsTrigger>
-          <TabsTrigger value='apps'>
+          {/* <TabsTrigger value='apps'>
             <Link2 className='mr-2 h-4 w-4' />
             Connected Apps
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value='advanced'>
             <Settings2 className='mr-2 h-4 w-4' />
             Advanced
@@ -347,7 +450,7 @@ const SettingsPage = () => {
           </Card>
 
           {/* Billing History */}
-          <Card className='p-6'>
+          <Card className='p-6 hidden'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-lg font-semibold'>Billing History</h2>
               <Button variant='outline' size='sm'>
@@ -503,7 +606,7 @@ const SettingsPage = () => {
         </TabsContent>
 
         {/* Connected Apps Tab */}
-        <TabsContent value='apps' className='space-y-6'>
+        <TabsContent value='apps' className='space-y-6 hidden'>
           <Card className='p-6'>
             <div className='mb-4 flex items-center justify-between'>
               <div>
@@ -518,7 +621,14 @@ const SettingsPage = () => {
               </Button>
             </div>
 
-            <div className='space-y-4'>
+            <div className='flex flex-1 flex-col justify-center items-center text-center text-muted-foreground my-40'>
+              <p className='text-sm'>
+                This feature will be available soon. Stay tuned!
+              </p>
+            </div>
+
+
+            <div className='space-y-4 hidden'>
               {connectedApps.map(app => (
                 <div key={app.id} className='rounded-lg border p-4'>
                   <div className='mb-3 flex items-start justify-between'>
@@ -606,7 +716,7 @@ const SettingsPage = () => {
                 <Label>Account ID</Label>
                 <div className='mt-2 flex gap-2'>
                   <Input
-                    value={showAccountId ? accountId : '••••••••••••••••'}
+                    value={showAccountId ? user?.uuid : '•••••••••••••••••••••••••'}
                     readOnly
                     className='font-mono'
                   />
@@ -632,44 +742,13 @@ const SettingsPage = () => {
 
               <div>
                 <Label>Account Created</Label>
-                <Input value='January 15, 2024' readOnly className='mt-2' />
+                <Input value={user?.created_date} readOnly className='mt-2' />
               </div>
 
-              <div>
+              {/* <div>
                 <Label>Last Login</Label>
                 <Input value='January 20, 2025 at 2:30 PM' readOnly className='mt-2' />
-              </div>
-            </div>
-          </Card>
-
-          {/* Security */}
-          <Card className='p-6'>
-            <h2 className='mb-4 text-lg font-semibold'>Security</h2>
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <Label>Change Password</Label>
-                  <p className='text-muted-foreground text-sm'>Last changed 30 days ago</p>
-                </div>
-                <Button variant='outline'>
-                  <Lock className='mr-2 h-4 w-4' />
-                  Update Password
-                </Button>
-              </div>
-              <Separator />
-              <div className='flex items-center justify-between'>
-                <div>
-                  <Label>Active Sessions</Label>
-                  <p className='text-muted-foreground text-sm'>
-                    Manage devices and browser sessions
-                  </p>
-                </div>
-                <Button variant='outline'>
-                  <Smartphone className='mr-2 h-4 w-4' />
-                  View Sessions
-                </Button>
-              </div>
-              <Separator />
+              </div> */}
             </div>
           </Card>
 
@@ -687,31 +766,15 @@ const SettingsPage = () => {
 
             <div className='space-y-4'>
               <Separator />
-
-              <div className='flex items-center justify-between'>
+              {/* <div className='flex items-center justify-between'>
                 <div>
                   <Label>Deactivate Account</Label>
                   <p className='text-muted-foreground text-sm'>Temporarily disable your account</p>
                 </div>
                 <Button variant='outline'>Deactivate</Button>
-              </div>
+              </div> */}
 
-              <Separator />
-
-              <div className='flex items-center justify-between'>
-                <div>
-                  <Label>Export All Data</Label>
-                  <p className='text-muted-foreground text-sm'>
-                    Download a complete copy of your data
-                  </p>
-                </div>
-                <Button variant='outline' onClick={handleExportData}>
-                  <Download className='mr-2 h-4 w-4' />
-                  Export
-                </Button>
-              </div>
-
-              <Separator />
+              {/* <Separator /> */}
 
               <div className='flex items-center justify-between'>
                 <div>
@@ -742,6 +805,9 @@ const SettingsPage = () => {
                         </ul>
                       </AlertDialogDescription>
                     </AlertDialogHeader>
+                    <div>
+                      <Button>Yes, Delete</Button>
+                    </div>
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
@@ -749,6 +815,8 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+
     </div>
   );
 };

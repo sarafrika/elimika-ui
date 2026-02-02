@@ -625,13 +625,13 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           {/* Target Audience*/}
-          <FormSection
+          {/* <FormSection
             title='Target Audience'
             description='Set the set the target audience your course'
-          >
+                    >
             <div></div>
             <FormMessage />
-          </FormSection>
+          </FormSection> */}
 
           {/* Class Limit */}
           <FormSection

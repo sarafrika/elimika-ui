@@ -146,6 +146,10 @@ import {
   getAllTrainingPrograms,
   createTrainingProgram,
   publishProgram,
+  listProgramTrainingApplications,
+  submitProgramTrainingApplication,
+  getProgramTrainingApplication,
+  decideOnProgramTrainingApplication,
   getProgramRequirements,
   addProgramRequirement,
   getProgramCourses,
@@ -191,6 +195,8 @@ import {
   decideOnTrainingApplication,
   getCourseRubrics,
   associateRubric,
+  getCourseReviews,
+  submitCourseReview,
   getCourseRequirements,
   addCourseRequirement,
   getCourseLessons,
@@ -261,6 +267,8 @@ import {
   submitAssignment,
   returnSubmission,
   gradeSubmission,
+  uploadSubmissionAttachment,
+  uploadAssignmentAttachment,
   assignAdminDomain,
   getAdminUsers,
   createAdminUser,
@@ -329,12 +337,13 @@ import {
   getOptionalCourses,
   getProgramCompletionRate,
   getProgramCertificates,
+  searchProgramTrainingApplications,
   searchTrainingPrograms,
   searchProgramRequirements,
   getPublishedPrograms,
-  getProgramsByInstructor,
   getFreePrograms,
   searchProgramEnrollments,
+  getProgramsByCourseCreator,
   searchProgramCourses,
   getProgramsByCategory,
   getActivePrograms,
@@ -416,11 +425,14 @@ import {
   getCourseCertificates,
   getBooking,
   getAssignmentSubmissions,
+  getSubmissionAttachments,
   getHighPerformanceSubmissions,
   getAverageScore,
+  getAssignmentAttachments,
   getSubmissionAnalytics,
   searchSubmissions,
   searchAssignments,
+  getAssignmentMedia,
   getPendingGrading,
   isUserSystemAdmin,
   isUserAdmin,
@@ -439,6 +451,8 @@ import {
   dissociateRubricByContext,
   removeCategoryFromCourse,
   removeItem,
+  deleteSubmissionAttachment,
+  deleteAssignmentAttachment,
   removeAdminDomain,
 } from '../sdk.gen';
 import {
@@ -815,6 +829,16 @@ import type {
   PublishProgramData,
   PublishProgramError,
   PublishProgramResponse,
+  ListProgramTrainingApplicationsData,
+  ListProgramTrainingApplicationsError,
+  ListProgramTrainingApplicationsResponse,
+  SubmitProgramTrainingApplicationData,
+  SubmitProgramTrainingApplicationError,
+  SubmitProgramTrainingApplicationResponse,
+  GetProgramTrainingApplicationData,
+  DecideOnProgramTrainingApplicationData,
+  DecideOnProgramTrainingApplicationError,
+  DecideOnProgramTrainingApplicationResponse,
   GetProgramRequirementsData,
   GetProgramRequirementsError,
   GetProgramRequirementsResponse,
@@ -940,6 +964,10 @@ import type {
   AssociateRubricData,
   AssociateRubricError,
   AssociateRubricResponse,
+  GetCourseReviewsData,
+  SubmitCourseReviewData,
+  SubmitCourseReviewError,
+  SubmitCourseReviewResponse,
   GetCourseRequirementsData,
   GetCourseRequirementsError,
   GetCourseRequirementsResponse,
@@ -1138,6 +1166,12 @@ import type {
   GradeSubmissionData,
   GradeSubmissionError,
   GradeSubmissionResponse,
+  UploadSubmissionAttachmentData,
+  UploadSubmissionAttachmentError,
+  UploadSubmissionAttachmentResponse,
+  UploadAssignmentAttachmentData,
+  UploadAssignmentAttachmentError,
+  UploadAssignmentAttachmentResponse,
   AssignAdminDomainData,
   AssignAdminDomainError,
   AssignAdminDomainResponse,
@@ -1294,6 +1328,9 @@ import type {
   GetProgramCertificatesData,
   GetProgramCertificatesError,
   GetProgramCertificatesResponse,
+  SearchProgramTrainingApplicationsData,
+  SearchProgramTrainingApplicationsError,
+  SearchProgramTrainingApplicationsResponse,
   SearchTrainingProgramsData,
   SearchTrainingProgramsError,
   SearchTrainingProgramsResponse,
@@ -1303,15 +1340,15 @@ import type {
   GetPublishedProgramsData,
   GetPublishedProgramsError,
   GetPublishedProgramsResponse,
-  GetProgramsByInstructorData,
-  GetProgramsByInstructorError,
-  GetProgramsByInstructorResponse,
   GetFreeProgramsData,
   GetFreeProgramsError,
   GetFreeProgramsResponse,
   SearchProgramEnrollmentsData,
   SearchProgramEnrollmentsError,
   SearchProgramEnrollmentsResponse,
+  GetProgramsByCourseCreatorData,
+  GetProgramsByCourseCreatorError,
+  GetProgramsByCourseCreatorResponse,
   SearchProgramCoursesData,
   SearchProgramCoursesError,
   SearchProgramCoursesResponse,
@@ -1475,8 +1512,10 @@ import type {
   GetCourseCertificatesData,
   GetBookingData,
   GetAssignmentSubmissionsData,
+  GetSubmissionAttachmentsData,
   GetHighPerformanceSubmissionsData,
   GetAverageScoreData,
+  GetAssignmentAttachmentsData,
   GetSubmissionAnalyticsData,
   SearchSubmissionsData,
   SearchSubmissionsError,
@@ -1484,6 +1523,7 @@ import type {
   SearchAssignmentsData,
   SearchAssignmentsError,
   SearchAssignmentsResponse,
+  GetAssignmentMediaData,
   GetPendingGradingData,
   IsUserSystemAdminData,
   IsUserAdminData,
@@ -1524,6 +1564,10 @@ import type {
   RemoveItemData,
   RemoveItemError,
   RemoveItemResponse,
+  DeleteSubmissionAttachmentData,
+  DeleteSubmissionAttachmentError,
+  DeleteAssignmentAttachmentData,
+  DeleteAssignmentAttachmentError,
   RemoveAdminDomainData,
   RemoveAdminDomainError,
   RemoveAdminDomainResponse,
@@ -6317,6 +6361,232 @@ export const publishProgramMutation = (
   return mutationOptions;
 };
 
+export const listProgramTrainingApplicationsQueryKey = (
+  options: Options<ListProgramTrainingApplicationsData>
+) => createQueryKey('listProgramTrainingApplications', options);
+
+/**
+ * List program training applications
+ * Retrieves applications for a program. Optionally filter by status using `status=pending|approved|rejected|revoked`.
+ *
+ */
+export const listProgramTrainingApplicationsOptions = (
+  options: Options<ListProgramTrainingApplicationsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listProgramTrainingApplications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listProgramTrainingApplicationsQueryKey(options),
+  });
+};
+
+export const listProgramTrainingApplicationsInfiniteQueryKey = (
+  options: Options<ListProgramTrainingApplicationsData>
+): QueryKey<Options<ListProgramTrainingApplicationsData>> =>
+  createQueryKey('listProgramTrainingApplications', options, true);
+
+/**
+ * List program training applications
+ * Retrieves applications for a program. Optionally filter by status using `status=pending|approved|rejected|revoked`.
+ *
+ */
+export const listProgramTrainingApplicationsInfiniteOptions = (
+  options: Options<ListProgramTrainingApplicationsData>
+) => {
+  return infiniteQueryOptions<
+    ListProgramTrainingApplicationsResponse,
+    ListProgramTrainingApplicationsError,
+    InfiniteData<ListProgramTrainingApplicationsResponse>,
+    QueryKey<Options<ListProgramTrainingApplicationsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListProgramTrainingApplicationsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListProgramTrainingApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listProgramTrainingApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listProgramTrainingApplicationsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const submitProgramTrainingApplicationQueryKey = (
+  options: Options<SubmitProgramTrainingApplicationData>
+) => createQueryKey('submitProgramTrainingApplication', options);
+
+/**
+ * Submit program training application
+ * Allows an instructor or organisation to apply for permission to deliver the specified training program.
+ *
+ * **Application Workflow:**
+ * - Applicants submit once per program. Rejected applications can be resubmitted, which reopens the request.
+ * - Duplicate pending or approved submissions are rejected with clear error messages. Revoked applicants must resubmit to regain access.
+ * - Program creators review applications using the approval endpoints below.
+ *
+ */
+export const submitProgramTrainingApplicationOptions = (
+  options: Options<SubmitProgramTrainingApplicationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitProgramTrainingApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitProgramTrainingApplicationQueryKey(options),
+  });
+};
+
+/**
+ * Submit program training application
+ * Allows an instructor or organisation to apply for permission to deliver the specified training program.
+ *
+ * **Application Workflow:**
+ * - Applicants submit once per program. Rejected applications can be resubmitted, which reopens the request.
+ * - Duplicate pending or approved submissions are rejected with clear error messages. Revoked applicants must resubmit to regain access.
+ * - Program creators review applications using the approval endpoints below.
+ *
+ */
+export const submitProgramTrainingApplicationMutation = (
+  options?: Partial<Options<SubmitProgramTrainingApplicationData>>
+): UseMutationOptions<
+  SubmitProgramTrainingApplicationResponse,
+  SubmitProgramTrainingApplicationError,
+  Options<SubmitProgramTrainingApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitProgramTrainingApplicationResponse,
+    SubmitProgramTrainingApplicationError,
+    Options<SubmitProgramTrainingApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitProgramTrainingApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getProgramTrainingApplicationQueryKey = (
+  options: Options<GetProgramTrainingApplicationData>
+) => createQueryKey('getProgramTrainingApplication', options);
+
+/**
+ * Get program training application
+ * Retrieves a specific training application for a program.
+ */
+export const getProgramTrainingApplicationOptions = (
+  options: Options<GetProgramTrainingApplicationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgramTrainingApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgramTrainingApplicationQueryKey(options),
+  });
+};
+
+export const decideOnProgramTrainingApplicationQueryKey = (
+  options: Options<DecideOnProgramTrainingApplicationData>
+) => createQueryKey('decideOnProgramTrainingApplication', options);
+
+/**
+ * Decide on program training application
+ * Applies a decision to an instructor or organisation application to deliver the training program.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnProgramTrainingApplicationOptions = (
+  options: Options<DecideOnProgramTrainingApplicationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await decideOnProgramTrainingApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: decideOnProgramTrainingApplicationQueryKey(options),
+  });
+};
+
+/**
+ * Decide on program training application
+ * Applies a decision to an instructor or organisation application to deliver the training program.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnProgramTrainingApplicationMutation = (
+  options?: Partial<Options<DecideOnProgramTrainingApplicationData>>
+): UseMutationOptions<
+  DecideOnProgramTrainingApplicationResponse,
+  DecideOnProgramTrainingApplicationError,
+  Options<DecideOnProgramTrainingApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DecideOnProgramTrainingApplicationResponse,
+    DecideOnProgramTrainingApplicationError,
+    Options<DecideOnProgramTrainingApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await decideOnProgramTrainingApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getProgramRequirementsQueryKey = (options: Options<GetProgramRequirementsData>) =>
   createQueryKey('getProgramRequirements', options);
 
@@ -8844,6 +9114,82 @@ export const associateRubricMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await associateRubric({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getCourseReviewsQueryKey = (options: Options<GetCourseReviewsData>) =>
+  createQueryKey('getCourseReviews', options);
+
+/**
+ * Get reviews for a course
+ * Returns all reviews left for the specified course.
+ */
+export const getCourseReviewsOptions = (options: Options<GetCourseReviewsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseReviews({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseReviewsQueryKey(options),
+  });
+};
+
+export const submitCourseReviewQueryKey = (options: Options<SubmitCourseReviewData>) =>
+  createQueryKey('submitCourseReview', options);
+
+/**
+ * Submit or update a course review
+ * Allows enrolled students to leave a review for a course. Each student can leave
+ * one review per course and may update it anytime.
+ *
+ */
+export const submitCourseReviewOptions = (options: Options<SubmitCourseReviewData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitCourseReview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitCourseReviewQueryKey(options),
+  });
+};
+
+/**
+ * Submit or update a course review
+ * Allows enrolled students to leave a review for a course. Each student can leave
+ * one review per course and may update it anytime.
+ *
+ */
+export const submitCourseReviewMutation = (
+  options?: Partial<Options<SubmitCourseReviewData>>
+): UseMutationOptions<
+  SubmitCourseReviewResponse,
+  SubmitCourseReviewError,
+  Options<SubmitCourseReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitCourseReviewResponse,
+    SubmitCourseReviewError,
+    Options<SubmitCourseReviewData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitCourseReview({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -12528,6 +12874,122 @@ export const gradeSubmissionMutation = (
   return mutationOptions;
 };
 
+export const uploadSubmissionAttachmentQueryKey = (
+  options: Options<UploadSubmissionAttachmentData>
+) => createQueryKey('uploadSubmissionAttachment', options);
+
+/**
+ * Upload assignment submission attachment
+ * Uploads a file attachment for a specific assignment submission.
+ */
+export const uploadSubmissionAttachmentOptions = (
+  options: Options<UploadSubmissionAttachmentData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadSubmissionAttachment({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadSubmissionAttachmentQueryKey(options),
+  });
+};
+
+/**
+ * Upload assignment submission attachment
+ * Uploads a file attachment for a specific assignment submission.
+ */
+export const uploadSubmissionAttachmentMutation = (
+  options?: Partial<Options<UploadSubmissionAttachmentData>>
+): UseMutationOptions<
+  UploadSubmissionAttachmentResponse,
+  UploadSubmissionAttachmentError,
+  Options<UploadSubmissionAttachmentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadSubmissionAttachmentResponse,
+    UploadSubmissionAttachmentError,
+    Options<UploadSubmissionAttachmentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadSubmissionAttachment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const uploadAssignmentAttachmentQueryKey = (
+  options: Options<UploadAssignmentAttachmentData>
+) => createQueryKey('uploadAssignmentAttachment', options);
+
+/**
+ * Upload assignment attachment
+ * Uploads an attachment for an assignment (documents, images, audio, or video).
+ *
+ * **Use cases:**
+ * - Providing assignment briefs as PDFs or slides
+ * - Attaching sample datasets, images, or reference media
+ *
+ */
+export const uploadAssignmentAttachmentOptions = (
+  options: Options<UploadAssignmentAttachmentData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadAssignmentAttachment({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadAssignmentAttachmentQueryKey(options),
+  });
+};
+
+/**
+ * Upload assignment attachment
+ * Uploads an attachment for an assignment (documents, images, audio, or video).
+ *
+ * **Use cases:**
+ * - Providing assignment briefs as PDFs or slides
+ * - Attaching sample datasets, images, or reference media
+ *
+ */
+export const uploadAssignmentAttachmentMutation = (
+  options?: Partial<Options<UploadAssignmentAttachmentData>>
+): UseMutationOptions<
+  UploadAssignmentAttachmentResponse,
+  UploadAssignmentAttachmentError,
+  Options<UploadAssignmentAttachmentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadAssignmentAttachmentResponse,
+    UploadAssignmentAttachmentError,
+    Options<UploadAssignmentAttachmentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadAssignmentAttachment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const assignAdminDomainQueryKey = (options: Options<AssignAdminDomainData>) =>
   createQueryKey('assignAdminDomain', options);
 
@@ -15553,6 +16015,89 @@ export const getProgramCertificatesInfiniteOptions = (
   );
 };
 
+export const searchProgramTrainingApplicationsQueryKey = (
+  options: Options<SearchProgramTrainingApplicationsData>
+) => createQueryKey('searchProgramTrainingApplications', options);
+
+/**
+ * Search program training applications
+ * Advanced search for training applications using flexible operators on any DTO field.
+ * Supports filters such as `status`, `applicantType`, `programUuid`, `applicantUuid`,
+ * `createdDate_between`, and more.
+ *
+ */
+export const searchProgramTrainingApplicationsOptions = (
+  options: Options<SearchProgramTrainingApplicationsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchProgramTrainingApplications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchProgramTrainingApplicationsQueryKey(options),
+  });
+};
+
+export const searchProgramTrainingApplicationsInfiniteQueryKey = (
+  options: Options<SearchProgramTrainingApplicationsData>
+): QueryKey<Options<SearchProgramTrainingApplicationsData>> =>
+  createQueryKey('searchProgramTrainingApplications', options, true);
+
+/**
+ * Search program training applications
+ * Advanced search for training applications using flexible operators on any DTO field.
+ * Supports filters such as `status`, `applicantType`, `programUuid`, `applicantUuid`,
+ * `createdDate_between`, and more.
+ *
+ */
+export const searchProgramTrainingApplicationsInfiniteOptions = (
+  options: Options<SearchProgramTrainingApplicationsData>
+) => {
+  return infiniteQueryOptions<
+    SearchProgramTrainingApplicationsResponse,
+    SearchProgramTrainingApplicationsError,
+    InfiniteData<SearchProgramTrainingApplicationsResponse>,
+    QueryKey<Options<SearchProgramTrainingApplicationsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SearchProgramTrainingApplicationsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchProgramTrainingApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchProgramTrainingApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchProgramTrainingApplicationsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const searchTrainingProgramsQueryKey = (options: Options<SearchTrainingProgramsData>) =>
   createQueryKey('searchTrainingPrograms', options);
 
@@ -15567,7 +16112,7 @@ export const searchTrainingProgramsQueryKey = (options: Options<SearchTrainingPr
  * - `status_in=PUBLISHED,ACTIVE` - Published or active programs
  * - `price_lte=500.00` - Programs priced at $500 or less
  * - `price=null` - Free programs
- * - `instructorUuid=uuid` - Programs by specific instructor
+ * - `courseCreatorUuid=uuid` - Programs by specific course creator
  * - `categoryUuid=uuid` - Programs in specific category
  * - `totalDurationHours_gte=40` - Programs 40+ hours long
  * - `totalDurationHours_between=20,100` - Programs between 20-100 hours
@@ -15576,7 +16121,7 @@ export const searchTrainingProgramsQueryKey = (options: Options<SearchTrainingPr
  * **Advanced Program Queries:**
  * - `status=PUBLISHED&active=true&price_lte=100` - Published, active programs under $100
  * - `title_like=certification&totalDurationHours_gte=50` - Certification programs 50+ hours
- * - `instructorUuid=uuid&status=PUBLISHED` - Published programs by specific instructor
+ * - `courseCreatorUuid=uuid&status=PUBLISHED` - Published programs by specific course creator
  *
  * For complete operator documentation, see the instructor search endpoint.
  *
@@ -15612,7 +16157,7 @@ export const searchTrainingProgramsInfiniteQueryKey = (
  * - `status_in=PUBLISHED,ACTIVE` - Published or active programs
  * - `price_lte=500.00` - Programs priced at $500 or less
  * - `price=null` - Free programs
- * - `instructorUuid=uuid` - Programs by specific instructor
+ * - `courseCreatorUuid=uuid` - Programs by specific course creator
  * - `categoryUuid=uuid` - Programs in specific category
  * - `totalDurationHours_gte=40` - Programs 40+ hours long
  * - `totalDurationHours_between=20,100` - Programs between 20-100 hours
@@ -15621,7 +16166,7 @@ export const searchTrainingProgramsInfiniteQueryKey = (
  * **Advanced Program Queries:**
  * - `status=PUBLISHED&active=true&price_lte=100` - Published, active programs under $100
  * - `title_like=certification&totalDurationHours_gte=50` - Certification programs 50+ hours
- * - `instructorUuid=uuid&status=PUBLISHED` - Published programs by specific instructor
+ * - `courseCreatorUuid=uuid&status=PUBLISHED` - Published programs by specific course creator
  *
  * For complete operator documentation, see the instructor search endpoint.
  *
@@ -15826,77 +16371,6 @@ export const getPublishedProgramsInfiniteOptions = (options: Options<GetPublishe
   );
 };
 
-export const getProgramsByInstructorQueryKey = (options: Options<GetProgramsByInstructorData>) =>
-  createQueryKey('getProgramsByInstructor', options);
-
-/**
- * Get programs by instructor
- * Retrieves all programs created by a specific instructor.
- */
-export const getProgramsByInstructorOptions = (options: Options<GetProgramsByInstructorData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getProgramsByInstructor({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getProgramsByInstructorQueryKey(options),
-  });
-};
-
-export const getProgramsByInstructorInfiniteQueryKey = (
-  options: Options<GetProgramsByInstructorData>
-): QueryKey<Options<GetProgramsByInstructorData>> =>
-  createQueryKey('getProgramsByInstructor', options, true);
-
-/**
- * Get programs by instructor
- * Retrieves all programs created by a specific instructor.
- */
-export const getProgramsByInstructorInfiniteOptions = (
-  options: Options<GetProgramsByInstructorData>
-) => {
-  return infiniteQueryOptions<
-    GetProgramsByInstructorResponse,
-    GetProgramsByInstructorError,
-    InfiniteData<GetProgramsByInstructorResponse>,
-    QueryKey<Options<GetProgramsByInstructorData>>,
-    | number
-    | Pick<QueryKey<Options<GetProgramsByInstructorData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<GetProgramsByInstructorData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  'pageable.page': pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await getProgramsByInstructor({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: getProgramsByInstructorInfiniteQueryKey(options),
-    }
-  );
-};
-
 export const getFreeProgramsQueryKey = (options: Options<GetFreeProgramsData>) =>
   createQueryKey('getFreePrograms', options);
 
@@ -16052,6 +16526,83 @@ export const searchProgramEnrollmentsInfiniteOptions = (
         return data;
       },
       queryKey: searchProgramEnrollmentsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getProgramsByCourseCreatorQueryKey = (
+  options: Options<GetProgramsByCourseCreatorData>
+) => createQueryKey('getProgramsByCourseCreator', options);
+
+/**
+ * Get programs by course creator
+ * Retrieves all programs created by a specific course creator.
+ */
+export const getProgramsByCourseCreatorOptions = (
+  options: Options<GetProgramsByCourseCreatorData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgramsByCourseCreator({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgramsByCourseCreatorQueryKey(options),
+  });
+};
+
+export const getProgramsByCourseCreatorInfiniteQueryKey = (
+  options: Options<GetProgramsByCourseCreatorData>
+): QueryKey<Options<GetProgramsByCourseCreatorData>> =>
+  createQueryKey('getProgramsByCourseCreator', options, true);
+
+/**
+ * Get programs by course creator
+ * Retrieves all programs created by a specific course creator.
+ */
+export const getProgramsByCourseCreatorInfiniteOptions = (
+  options: Options<GetProgramsByCourseCreatorData>
+) => {
+  return infiniteQueryOptions<
+    GetProgramsByCourseCreatorResponse,
+    GetProgramsByCourseCreatorError,
+    InfiniteData<GetProgramsByCourseCreatorResponse>,
+    QueryKey<Options<GetProgramsByCourseCreatorData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetProgramsByCourseCreatorData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetProgramsByCourseCreatorData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getProgramsByCourseCreator({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getProgramsByCourseCreatorInfiniteQueryKey(options),
     }
   );
 };
@@ -20256,6 +20807,28 @@ export const getAssignmentSubmissionsOptions = (options: Options<GetAssignmentSu
   });
 };
 
+export const getSubmissionAttachmentsQueryKey = (options: Options<GetSubmissionAttachmentsData>) =>
+  createQueryKey('getSubmissionAttachments', options);
+
+/**
+ * Get submission attachments
+ * Retrieves all attachments for a specific assignment submission.
+ */
+export const getSubmissionAttachmentsOptions = (options: Options<GetSubmissionAttachmentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSubmissionAttachments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSubmissionAttachmentsQueryKey(options),
+  });
+};
+
 export const getHighPerformanceSubmissionsQueryKey = (
   options: Options<GetHighPerformanceSubmissionsData>
 ) => createQueryKey('getHighPerformanceSubmissions', options);
@@ -20300,6 +20873,28 @@ export const getAverageScoreOptions = (options: Options<GetAverageScoreData>) =>
       return data;
     },
     queryKey: getAverageScoreQueryKey(options),
+  });
+};
+
+export const getAssignmentAttachmentsQueryKey = (options: Options<GetAssignmentAttachmentsData>) =>
+  createQueryKey('getAssignmentAttachments', options);
+
+/**
+ * Get assignment attachments
+ * Retrieves all attachments linked to a specific assignment.
+ */
+export const getAssignmentAttachmentsOptions = (options: Options<GetAssignmentAttachmentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAssignmentAttachments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAssignmentAttachmentsQueryKey(options),
   });
 };
 
@@ -20495,6 +21090,28 @@ export const searchAssignmentsInfiniteOptions = (options: Options<SearchAssignme
       queryKey: searchAssignmentsInfiniteQueryKey(options),
     }
   );
+};
+
+export const getAssignmentMediaQueryKey = (options: Options<GetAssignmentMediaData>) =>
+  createQueryKey('getAssignmentMedia', options);
+
+/**
+ * Get assignment media by file name
+ * Retrieves assignment media files by their stored filename.
+ */
+export const getAssignmentMediaOptions = (options: Options<GetAssignmentMediaData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAssignmentMedia({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAssignmentMediaQueryKey(options),
+  });
 };
 
 export const getPendingGradingQueryKey = (options: Options<GetPendingGradingData>) =>
@@ -21160,6 +21777,62 @@ export const removeItemMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await removeItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete submission attachment
+ * Removes a specific submission attachment.
+ */
+export const deleteSubmissionAttachmentMutation = (
+  options?: Partial<Options<DeleteSubmissionAttachmentData>>
+): UseMutationOptions<
+  unknown,
+  DeleteSubmissionAttachmentError,
+  Options<DeleteSubmissionAttachmentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteSubmissionAttachmentError,
+    Options<DeleteSubmissionAttachmentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteSubmissionAttachment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete assignment attachment
+ * Removes a specific assignment attachment.
+ */
+export const deleteAssignmentAttachmentMutation = (
+  options?: Partial<Options<DeleteAssignmentAttachmentData>>
+): UseMutationOptions<
+  unknown,
+  DeleteAssignmentAttachmentError,
+  Options<DeleteAssignmentAttachmentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteAssignmentAttachmentError,
+    Options<DeleteAssignmentAttachmentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteAssignmentAttachment({
         ...options,
         ...localOptions,
         throwOnError: true,

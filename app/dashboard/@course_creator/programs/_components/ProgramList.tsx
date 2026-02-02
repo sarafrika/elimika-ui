@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { Button } from '../../../../../components/ui/button';
 import {
     deleteTrainingProgramMutation,
     getAllTrainingProgramsOptions,
@@ -216,14 +217,15 @@ const ProgramsList = ({ onEdit, onPreview }: any) => {
                         </p>
 
                         <div className='flex justify-end gap-3'>
-                            <button
+                            <Button
                                 onClick={() => setDeleteConfirm(null)}
                                 disabled={deleteProgramMut.isPending}
+                                variant={"ghost"}
                                 className='rounded-lg border border-border px-4 py-2 font-medium text-foreground hover:bg-muted'
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={() =>
                                     handleDelete(deleteConfirm)
                                 }
@@ -233,7 +235,7 @@ const ProgramsList = ({ onEdit, onPreview }: any) => {
                                 {deleteProgramMut.isPending
                                     ? 'Deleting...'
                                     : 'Delete Program'}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

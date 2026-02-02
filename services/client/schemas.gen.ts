@@ -611,10 +611,10 @@ export const StudentSchema = {
       maxLength: 2000,
       minLength: 0,
     },
-    secondaryGuardianContact: {
+    primaryGuardianContact: {
       type: 'string',
     },
-    primaryGuardianContact: {
+    secondaryGuardianContact: {
       type: 'string',
     },
     allGuardianContacts: {
@@ -1758,16 +1758,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: 2,
-      readOnly: true,
-    },
     question_number: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
       example: 'Question 1',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: 2,
       readOnly: true,
     },
   },
@@ -1942,7 +1942,7 @@ export const TrainingProgramSchema = {
   example: {
     uuid: 't1r2a3i4-5n6i-7n8g-9p10-abcdefghijkl',
     title: 'Complete Java Development Masterclass',
-    instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r8u-9u10-abcdefghijkl',
     category_uuid: 'c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl',
     description:
       'Comprehensive training program covering Java from basics to advanced enterprise development',
@@ -1979,12 +1979,12 @@ export const TrainingProgramSchema = {
       maxLength: 255,
       minLength: 0,
     },
-    instructor_uuid: {
+    course_creator_uuid: {
       type: 'string',
       format: 'uuid',
       description:
-        '**[REQUIRED]** Reference to the instructor UUID who created and manages this program.',
-      example: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+        '**[REQUIRED]** Reference to the course creator UUID who created and manages this program.',
+      example: 'c1r2e3a4-5t6o-7r8u-9u10-abcdefghijkl',
     },
     category_uuid: {
       type: 'string',
@@ -2107,7 +2107,7 @@ export const TrainingProgramSchema = {
     },
   },
   required: [
-    'instructor_uuid',
+    'course_creator_uuid',
     'published',
     'status',
     'title',
@@ -2670,13 +2670,6 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_profile_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
-      example: true,
-      readOnly: true,
-    },
     has_location_coordinates: {
       type: 'boolean',
       description:
@@ -2689,6 +2682,13 @@ export const InstructorSchema = {
       description:
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
       example: '-1.292100, 36.821900',
+      readOnly: true,
+    },
+    is_profile_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
+      example: true,
       readOnly: true,
     },
   },
@@ -2932,13 +2932,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
@@ -2991,6 +2984,13 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -3146,13 +3146,6 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     duration_in_months: {
       type: 'integer',
       format: 'int32',
@@ -3202,6 +3195,13 @@ export const InstructorExperienceSchema = {
       example: 5.46,
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
   },
   required: ['instructor_uuid', 'organization_name', 'position'],
 } as const;
@@ -3232,6 +3232,7 @@ export const InstructorEducationSchema = {
     uuid: 'edu12345-6789-abcd-ef01-234567890abc',
     instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
     qualification: 'Master of Science in Computer Science',
+    field_of_study: 'Computer Science',
     school_name: 'University of Nairobi',
     year_completed: 2020,
     certificate_number: 'MSC/CS/2020/0456',
@@ -3266,6 +3267,14 @@ export const InstructorEducationSchema = {
       description:
         '**[REQUIRED]** Name or title of the academic qualification, degree, diploma, or certificate obtained.',
       example: 'Master of Science in Computer Science',
+      maxLength: 255,
+      minLength: 0,
+    },
+    field_of_study: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Academic field of study or specialization for the qualification.',
+      example: 'Computer Science',
       maxLength: 255,
       minLength: 0,
     },
@@ -3331,10 +3340,20 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    is_complete: {
+    years_since_completion: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
+      example: 4,
+      readOnly: true,
+    },
+    education_level: {
+      $ref: '#/components/schemas/EducationLevelEnum',
+    },
+    has_certificate_number: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
       example: true,
       readOnly: true,
     },
@@ -3351,20 +3370,10 @@ export const InstructorEducationSchema = {
       example: 2020,
       readOnly: true,
     },
-    years_since_completion: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
-      example: 4,
-      readOnly: true,
-    },
-    education_level: {
-      $ref: '#/components/schemas/EducationLevelEnum',
-    },
-    has_certificate_number: {
+    is_complete: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
       example: true,
       readOnly: true,
     },
@@ -3610,13 +3619,6 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_size_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted file size.',
@@ -3645,6 +3647,13 @@ export const InstructorDocumentSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum',
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
     },
   },
   required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
@@ -5208,6 +5217,7 @@ export const CourseCreatorEducationSchema = {
     uuid: 'edu12345-6789-abcd-ef01-234567890abc',
     course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
     qualification: 'Master of Education',
+    field_of_study: 'Curriculum Studies',
     school_name: 'Strathmore University',
     year_completed: 2021,
     certificate_number: 'MEd-2021-0099',
@@ -5223,6 +5233,11 @@ export const CourseCreatorEducationSchema = {
       format: 'uuid',
     },
     qualification: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    field_of_study: {
       type: 'string',
       maxLength: 255,
       minLength: 0,
@@ -6679,16 +6694,16 @@ export const CertificateSchema = {
       example: 'system',
       readOnly: true,
     },
-    certificate_type: {
-      type: 'string',
-      description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
-      example: 'Course Completion',
-      readOnly: true,
-    },
     is_downloadable: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
       example: true,
+      readOnly: true,
+    },
+    certificate_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
+      example: 'Course Completion',
       readOnly: true,
     },
     grade_letter: {
@@ -6874,7 +6889,7 @@ export const AssignmentSchema = {
     due_date: '2024-04-15T23:59:59',
     max_points: 100,
     rubric_uuid: 'r1u2b3r4-5i6c-7a8s-9s10-abcdefghijkl',
-    submission_types: ['PDF', 'AUDIO', 'TEXT'],
+    submission_types: ['DOCUMENT', 'AUDIO', 'TEXT'],
     status: 'PUBLISHED',
     active: true,
     created_date: '2024-04-01T12:00:00',
@@ -6954,12 +6969,7 @@ export const AssignmentSchema = {
       example: 'r1u2b3r4-5i6c-7a8s-9s10-abcdefghijkl',
     },
     submission_types: {
-      type: 'array',
-      description: '**[OPTIONAL]** Array of accepted submission types for this assignment.',
-      example: ['PDF', 'AUDIO', 'TEXT'],
-      items: {
-        type: 'string',
-      },
+      $ref: '#/components/schemas/SubmissionTypesEnum',
     },
     is_published: {
       type: 'boolean',
@@ -7701,6 +7711,220 @@ export const ApiResponseStringSchema = {
   },
 } as const;
 
+export const CourseTrainingRateCardSchema = {
+  type: 'object',
+  properties: {
+    currency: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** ISO currency applied to every rate entry in the card. Defaults to the platform currency when omitted.',
+      example: 'KES',
+      maxLength: 3,
+      pattern: '^[A-Za-z]{3}$',
+    },
+    private_online_rate: {
+      type: 'number',
+      description: '1:1 private session rate when delivered online, per learner per hour.',
+      example: 3500,
+      minimum: 0,
+    },
+    private_inperson_rate: {
+      type: 'number',
+      description: '1:1 private session rate when delivered in person, per learner per hour.',
+      example: 3600,
+      minimum: 0,
+    },
+    group_online_rate: {
+      type: 'number',
+      description: 'Group session rate when delivered online, per learner per hour.',
+      example: 2800,
+      minimum: 0,
+    },
+    group_inperson_rate: {
+      type: 'number',
+      description: 'Group session rate when delivered in person, per learner per hour.',
+      example: 3000,
+      minimum: 0,
+    },
+  },
+  required: [
+    'group_inperson_rate',
+    'group_online_rate',
+    'private_inperson_rate',
+    'private_online_rate',
+  ],
+} as const;
+
+export const ProgramTrainingApplicationRequestSchema = {
+  type: 'object',
+  description: 'Payload for instructors or organisations applying to deliver a training program',
+  example: {
+    applicant_type: 'instructor',
+    applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    rate_card: {
+      currency: 'KES',
+      private_online_rate: 3500,
+      private_inperson_rate: 3600,
+      group_online_rate: 2800,
+      group_inperson_rate: 3000,
+    },
+    application_notes: 'We already deliver this curriculum for other cohorts.',
+  },
+  properties: {
+    applicant_type: {
+      $ref: '#/components/schemas/ApplicantTypeEnum',
+    },
+    applicant_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the instructor or organisation applying.',
+    },
+    rate_card: {
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description:
+        '**[REQUIRED]** Instructor rate card across session format and delivery modality combinations.',
+    },
+    application_notes: {
+      type: 'string',
+      description: 'Optional notes to help the program creator evaluate the request.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+  },
+  required: ['applicant_type', 'applicant_uuid', 'rate_card'],
+} as const;
+
+export const ApiResponseProgramTrainingApplicationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProgramTrainingApplication',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ProgramTrainingApplicationSchema = {
+  type: 'object',
+  description: 'Represents an instructor or organisation request to deliver a training program',
+  example: {
+    uuid: 'b9c6e44f-37d4-4cf9-aa1c-3cfc1ffdd520',
+    program_uuid: 'p1r2o3g4-5r6a-7m8u-9u10-abcdefghijkl',
+    applicant_type: 'instructor',
+    applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    status: 'pending',
+    rate_card: {
+      currency: 'KES',
+      private_online_rate: 3500,
+      private_inperson_rate: 3600,
+      group_online_rate: 2800,
+      group_inperson_rate: 3000,
+    },
+    application_notes: 'We already deliver this program for other cohorts.',
+    review_notes: null,
+    reviewed_by: null,
+    reviewed_at: null,
+    created_date: '2025-10-24T13:16:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: null,
+    updated_by: null,
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for this application.',
+      readOnly: true,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum4',
+    },
+    application_notes: {
+      type: 'string',
+      description: 'Submission notes provided by the applicant.',
+    },
+    review_notes: {
+      type: 'string',
+      description: 'Decision notes provided by the program creator.',
+    },
+    reviewed_by: {
+      type: 'string',
+      description: 'Reviewer identifier captured when the request is approved or rejected.',
+    },
+    reviewed_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Timestamp of the review decision.',
+    },
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The training program this application targets.',
+      readOnly: true,
+    },
+    applicant_type: {
+      $ref: '#/components/schemas/ApplicantTypeEnum',
+    },
+    applicant_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** UUID of the applicant (Instructor or Organisation).',
+      readOnly: true,
+    },
+    rate_card: {
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description: '**[READ-ONLY]** Approved rate card for this application.',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When the application was submitted.',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Audit user who submitted the application.',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When the application was last updated.',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Audit user who last modified the application.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ProgramTrainingApplicationDecisionRequestSchema = {
+  type: 'object',
+  description: 'Payload for approving or rejecting a training program application',
+  example: {
+    review_notes: 'Approved for the 2025 Q1 intake.',
+  },
+  properties: {
+    review_notes: {
+      type: 'string',
+      description: 'Optional notes captured alongside the decision.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+  },
+} as const;
+
 export const ApiResponseVoidSchema = {
   type: 'object',
   properties: {
@@ -7908,7 +8132,7 @@ export const GuardianStudentLinkSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum4',
+      $ref: '#/components/schemas/StatusEnum5',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -8042,7 +8266,7 @@ export const EnrollmentSchema = {
       example: 'st123456-7890-abcd-ef01-234567890abc',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum6',
     },
     attendance_marked_at: {
       type: 'string',
@@ -8170,50 +8394,6 @@ export const CourseTrainingApplicationRequestSchema = {
   required: ['applicant_type', 'applicant_uuid', 'rate_card'],
 } as const;
 
-export const CourseTrainingRateCardSchema = {
-  type: 'object',
-  properties: {
-    currency: {
-      type: 'string',
-      description:
-        '**[OPTIONAL]** ISO currency applied to every rate entry in the card. Defaults to the platform currency when omitted.',
-      example: 'KES',
-      maxLength: 3,
-      pattern: '^[A-Za-z]{3}$',
-    },
-    private_online_rate: {
-      type: 'number',
-      description: '1:1 private session rate when delivered online, per learner per hour.',
-      example: 3500,
-      minimum: 0,
-    },
-    private_inperson_rate: {
-      type: 'number',
-      description: '1:1 private session rate when delivered in person, per learner per hour.',
-      example: 3600,
-      minimum: 0,
-    },
-    group_online_rate: {
-      type: 'number',
-      description: 'Group session rate when delivered online, per learner per hour.',
-      example: 2800,
-      minimum: 0,
-    },
-    group_inperson_rate: {
-      type: 'number',
-      description: 'Group session rate when delivered in person, per learner per hour.',
-      example: 3000,
-      minimum: 0,
-    },
-  },
-  required: [
-    'group_inperson_rate',
-    'group_online_rate',
-    'private_inperson_rate',
-    'private_online_rate',
-  ],
-} as const;
-
 export const ApiResponseCourseTrainingApplicationSchema = {
   type: 'object',
   properties: {
@@ -8265,7 +8445,7 @@ export const CourseTrainingApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum6',
+      $ref: '#/components/schemas/StatusEnum7',
     },
     application_notes: {
       type: 'string',
@@ -8341,6 +8521,117 @@ export const CourseTrainingApplicationDecisionRequestSchema = {
       description: 'Optional notes captured alongside the decision.',
       maxLength: 2000,
       minLength: 0,
+    },
+  },
+} as const;
+
+export const CourseReviewSchema = {
+  type: 'object',
+  description: 'Student review and rating for a course.',
+  example: {
+    uuid: 'rev-1234-5678-90ab-cdef12345678',
+    course_uuid: 'course-1234-5678-90ab-cdef12345678',
+    student_uuid: 'stud-1234-5678-90ab-cdef12345678',
+    rating: 5,
+    headline: 'Great course!',
+    comments: 'Clear content and practical examples.',
+    is_anonymous: false,
+    created_date: '2026-01-30T09:00:00',
+    created_by: 'student@example.com',
+    updated_date: '2026-01-30T09:00:00',
+    updated_by: 'student@example.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the review.',
+      example: 'rev-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Course being reviewed.',
+      example: 'course-1234-5678-90ab-cdef12345678',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Student leaving the review.',
+      example: 'stud-1234-5678-90ab-cdef12345678',
+    },
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Overall rating for the course (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Great course!',
+      maxLength: 255,
+      minLength: 0,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'Clear content and practical examples.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the review was created.',
+      example: '2026-01-30T09:00:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Created by identifier (typically the student email or system).',
+      example: 'student@example.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the review was last updated.',
+      example: '2026-01-30T09:00:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Updated by identifier.',
+      example: 'student@example.com',
+      readOnly: true,
+    },
+  },
+  required: ['course_uuid', 'rating', 'student_uuid'],
+} as const;
+
+export const ApiResponseCourseReviewSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseReview',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
     },
   },
 } as const;
@@ -9086,7 +9377,7 @@ export const BookingResponseSchema = {
       description: 'End time for the session',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum7',
+      $ref: '#/components/schemas/StatusEnum8',
     },
     price_amount: {
       type: 'number',
@@ -9334,7 +9625,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-10T14:30:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     score: {
       type: 'number',
@@ -9418,12 +9709,6 @@ export const AssignmentSubmissionSchema = {
       example: 'Mixed Media Submission',
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
-      readOnly: true,
-    },
     submission_status_display: {
       type: 'string',
       description:
@@ -9437,8 +9722,232 @@ export const AssignmentSubmissionSchema = {
       example: 2,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
   },
   required: ['assignment_uuid', 'enrollment_uuid', 'status'],
+} as const;
+
+export const ApiResponseAssignmentSubmissionAttachmentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AssignmentSubmissionAttachment',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const AssignmentSubmissionAttachmentSchema = {
+  type: 'object',
+  description: 'Attachment stored with a student assignment submission',
+  example: {
+    uuid: 'asa12345-7890-abcd-ef01-234567890abc',
+    submission_uuid: 's1u2b3m4-5i6s-7s8i-9o10-abcdefghijkl',
+    original_filename: 'audio_example.mp3',
+    stored_filename: 'assignments/submissions/s1u2b3m4/uuid.mp3',
+    file_url: 'https://storage.sarafrika.com/assignments/submissions/s1u2b3m4/uuid.mp3',
+    file_size_bytes: 5242880,
+    mime_type: 'audio/mpeg',
+    created_date: '2024-11-15T10:00:00',
+    created_by: 'student@sarafrika.com',
+    updated_date: '2024-11-15T10:00:00',
+    updated_by: 'student@sarafrika.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the submission attachment.',
+      example: 'asa12345-7890-abcd-ef01-234567890abc',
+      readOnly: true,
+    },
+    submission_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Submission UUID that owns this attachment.',
+      example: 's1u2b3m4-5i6s-7s8i-9o10-abcdefghijkl',
+    },
+    original_filename: {
+      type: 'string',
+      description: '**[READ-ONLY]** Original filename as uploaded.',
+      example: 'audio_example.mp3',
+      readOnly: true,
+    },
+    stored_filename: {
+      type: 'string',
+      description: '**[READ-ONLY]** Stored filename/path in the storage system.',
+      example: 'assignments/submissions/s1u2b3m4/uuid.mp3',
+      readOnly: true,
+    },
+    file_url: {
+      type: 'string',
+      description: '**[READ-ONLY]** Publicly accessible URL for the attachment.',
+      example: 'https://storage.sarafrika.com/assignments/submissions/s1u2b3m4/uuid.mp3',
+      readOnly: true,
+    },
+    file_size_bytes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** File size in bytes.',
+      example: 5242880,
+      readOnly: true,
+    },
+    mime_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** MIME type of the stored file.',
+      example: 'audio/mpeg',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the attachment was created.',
+      example: '2024-11-15T10:00:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User who created the attachment.',
+      example: 'student@sarafrika.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the attachment was last updated.',
+      example: '2024-11-15T10:00:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User who last updated the attachment.',
+      example: 'student@sarafrika.com',
+      readOnly: true,
+    },
+  },
+  required: ['submission_uuid'],
+} as const;
+
+export const ApiResponseAssignmentAttachmentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AssignmentAttachment',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const AssignmentAttachmentSchema = {
+  type: 'object',
+  description: 'Attachment stored with an assignment for instructor-provided resources',
+  example: {
+    uuid: 'aa123456-7890-abcd-ef01-234567890abc',
+    assignment_uuid: 'a1s2s3g4-5n6m-7e8n-9t10-abcdefghijkl',
+    original_filename: 'assignment_brief.pdf',
+    stored_filename: 'assignments/a1s2s3g4/attachments/uuid.pdf',
+    file_url: 'https://storage.sarafrika.com/assignments/a1s2s3g4/attachments/uuid.pdf',
+    file_size_bytes: 2048576,
+    mime_type: 'application/pdf',
+    created_date: '2024-11-15T09:30:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-11-15T09:30:00',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the attachment.',
+      example: 'aa123456-7890-abcd-ef01-234567890abc',
+      readOnly: true,
+    },
+    assignment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Assignment UUID that owns this attachment.',
+      example: 'a1s2s3g4-5n6m-7e8n-9t10-abcdefghijkl',
+    },
+    original_filename: {
+      type: 'string',
+      description: '**[READ-ONLY]** Original filename as uploaded.',
+      example: 'assignment_brief.pdf',
+      readOnly: true,
+    },
+    stored_filename: {
+      type: 'string',
+      description: '**[READ-ONLY]** Stored filename/path in the storage system.',
+      example: 'assignments/a1s2s3g4/attachments/uuid.pdf',
+      readOnly: true,
+    },
+    file_url: {
+      type: 'string',
+      description: '**[READ-ONLY]** Publicly accessible URL for the attachment.',
+      example: 'https://storage.sarafrika.com/assignments/a1s2s3g4/attachments/uuid.pdf',
+      readOnly: true,
+    },
+    file_size_bytes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** File size in bytes.',
+      example: 2048576,
+      readOnly: true,
+    },
+    mime_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** MIME type of the stored file.',
+      example: 'application/pdf',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the attachment was created.',
+      example: '2024-11-15T09:30:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User who created the attachment.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the attachment was last updated.',
+      example: '2024-11-15T09:30:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User who last updated the attachment.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+  },
+  required: ['assignment_uuid'],
 } as const;
 
 export const AdminDomainAssignmentRequestSchema = {
@@ -11037,7 +11546,7 @@ export const QuizAttemptSchema = {
       example: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum9',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     created_date: {
       type: 'string',
@@ -11076,18 +11585,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
-      readOnly: true,
-    },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: 1,
-      readOnly: true,
-    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -11098,6 +11595,18 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: 1,
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
       readOnly: true,
     },
   },
@@ -11165,6 +11674,42 @@ export const PagedDTOTrainingProgramSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/TrainingProgram',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOProgramTrainingApplicationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOProgramTrainingApplication',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOProgramTrainingApplicationSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ProgramTrainingApplication',
       },
     },
     metadata: {
@@ -11306,7 +11851,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     progress_percentage: {
       type: 'number',
@@ -11364,6 +11909,12 @@ export const ProgramEnrollmentSchema = {
       example: 'Completed Program Enrollment',
       readOnly: true,
     },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
+      example: '100.00% Complete',
+      readOnly: true,
+    },
     enrollment_duration: {
       type: 'string',
       description:
@@ -11376,12 +11927,6 @@ export const ProgramEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed program with final grade of 87.25',
-      readOnly: true,
-    },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
-      example: '100.00% Complete',
       readOnly: true,
     },
   },
@@ -11868,7 +12413,7 @@ export const InstructorCalendarEntrySchema = {
         'Flag indicating availability; false represents blocked time or scheduled instances occupying the slot',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     title: {
       type: 'string',
@@ -11979,7 +12524,7 @@ export const GuardianStudentDashboardDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum4',
+      $ref: '#/components/schemas/StatusEnum5',
     },
     courseProgress: {
       type: 'array',
@@ -12092,7 +12637,7 @@ export const GuardianStudentSummaryDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum4',
+      $ref: '#/components/schemas/StatusEnum5',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -12526,6 +13071,27 @@ export const PagedDTOCourseRubricAssociationSchema = {
   },
 } as const;
 
+export const ApiResponseListCourseReviewSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseReview',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOCourseRequirementSchema = {
   type: 'object',
   properties: {
@@ -12694,7 +13260,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     progress_percentage: {
       type: 'number',
@@ -12752,6 +13318,12 @@ export const CourseEnrollmentSchema = {
       example: 'Completed Enrollment',
       readOnly: true,
     },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
+      example: '100.00% Complete',
+      readOnly: true,
+    },
     enrollment_duration: {
       type: 'string',
       description:
@@ -12764,12 +13336,6 @@ export const CourseEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed with final grade of 85.50',
-      readOnly: true,
-    },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
-      example: '100.00% Complete',
       readOnly: true,
     },
   },
@@ -13674,6 +14240,48 @@ export const ApiResponseListAssignmentSubmissionSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/AssignmentSubmission',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseListAssignmentSubmissionAttachmentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AssignmentSubmissionAttachment',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseListAssignmentAttachmentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AssignmentAttachment',
       },
     },
     message: {
@@ -14609,11 +15217,34 @@ export const TemplateTypeEnumSchema = {
   example: 'COURSE_COMPLETION',
 } as const;
 
+export const SubmissionTypesEnumSchema = {
+  type: 'array',
+  description: '**[OPTIONAL]** Array of accepted submission types for this assignment.',
+  enum: ['TEXT', 'DOCUMENT', 'IMAGE', 'AUDIO', 'VIDEO', 'URL'],
+  example: ['DOCUMENT', 'AUDIO', 'TEXT'],
+  items: {
+    type: 'string',
+  },
+} as const;
+
 export const StatusEnum3Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current status of the scheduled instance.',
   enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'],
   example: 'SCHEDULED',
+} as const;
+
+export const ApplicantTypeEnumSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Applicant type initiating the request.',
+  enum: ['instructor', 'organisation'],
+} as const;
+
+export const StatusEnum4Schema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the application.',
+  enum: ['pending', 'approved', 'rejected', 'revoked'],
+  readOnly: true,
 } as const;
 
 export const RelationshipTypeEnumSchema = {
@@ -14626,25 +15257,19 @@ export const ShareScopeEnumSchema = {
   enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
 } as const;
 
-export const StatusEnum4Schema = {
+export const StatusEnum5Schema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
 
-export const StatusEnum5Schema = {
+export const StatusEnum6Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
   example: 'ENROLLED',
 } as const;
 
-export const ApplicantTypeEnumSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Applicant type initiating the request.',
-  enum: ['instructor', 'organisation'],
-} as const;
-
-export const StatusEnum6Schema = {
+export const StatusEnum7Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
   enum: ['pending', 'approved', 'rejected'],
@@ -14666,7 +15291,7 @@ export const ReleaseStrategyEnumSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum7Schema = {
+export const StatusEnum8Schema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: [
@@ -14688,7 +15313,7 @@ export const PaymentStatusEnumSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum8Schema = {
+export const StatusEnum9Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -14717,14 +15342,14 @@ export const TransactionTypeEnumSchema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum9Schema = {
+export const StatusEnum10Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the quiz attempt.',
   enum: ['IN_PROGRESS', 'SUBMITTED', 'GRADED'],
   example: 'GRADED',
 } as const;
 
-export const StatusEnum10Schema = {
+export const StatusEnum11Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -14745,7 +15370,7 @@ export const AvailabilityTypeEnumSchema = {
   example: 'WEEKLY',
 } as const;
 
-export const StatusEnum11Schema = {
+export const StatusEnum12Schema = {
   type: 'string',
   description: 'Scheduled instance status when applicable',
   enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'],

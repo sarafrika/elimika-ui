@@ -439,6 +439,18 @@ import type {
   PublishProgramData,
   PublishProgramResponses,
   PublishProgramErrors,
+  ListProgramTrainingApplicationsData,
+  ListProgramTrainingApplicationsResponses,
+  ListProgramTrainingApplicationsErrors,
+  SubmitProgramTrainingApplicationData,
+  SubmitProgramTrainingApplicationResponses,
+  SubmitProgramTrainingApplicationErrors,
+  GetProgramTrainingApplicationData,
+  GetProgramTrainingApplicationResponses,
+  GetProgramTrainingApplicationErrors,
+  DecideOnProgramTrainingApplicationData,
+  DecideOnProgramTrainingApplicationResponses,
+  DecideOnProgramTrainingApplicationErrors,
   GetProgramRequirementsData,
   GetProgramRequirementsResponses,
   GetProgramRequirementsErrors,
@@ -574,6 +586,12 @@ import type {
   AssociateRubricData,
   AssociateRubricResponses,
   AssociateRubricErrors,
+  GetCourseReviewsData,
+  GetCourseReviewsResponses,
+  GetCourseReviewsErrors,
+  SubmitCourseReviewData,
+  SubmitCourseReviewResponses,
+  SubmitCourseReviewErrors,
   GetCourseRequirementsData,
   GetCourseRequirementsResponses,
   GetCourseRequirementsErrors,
@@ -784,6 +802,12 @@ import type {
   GradeSubmissionData,
   GradeSubmissionResponses,
   GradeSubmissionErrors,
+  UploadSubmissionAttachmentData,
+  UploadSubmissionAttachmentResponses,
+  UploadSubmissionAttachmentErrors,
+  UploadAssignmentAttachmentData,
+  UploadAssignmentAttachmentResponses,
+  UploadAssignmentAttachmentErrors,
   AssignAdminDomainData,
   AssignAdminDomainResponses,
   AssignAdminDomainErrors,
@@ -988,6 +1012,9 @@ import type {
   GetProgramCertificatesData,
   GetProgramCertificatesResponses,
   GetProgramCertificatesErrors,
+  SearchProgramTrainingApplicationsData,
+  SearchProgramTrainingApplicationsResponses,
+  SearchProgramTrainingApplicationsErrors,
   SearchTrainingProgramsData,
   SearchTrainingProgramsResponses,
   SearchTrainingProgramsErrors,
@@ -997,15 +1024,15 @@ import type {
   GetPublishedProgramsData,
   GetPublishedProgramsResponses,
   GetPublishedProgramsErrors,
-  GetProgramsByInstructorData,
-  GetProgramsByInstructorResponses,
-  GetProgramsByInstructorErrors,
   GetFreeProgramsData,
   GetFreeProgramsResponses,
   GetFreeProgramsErrors,
   SearchProgramEnrollmentsData,
   SearchProgramEnrollmentsResponses,
   SearchProgramEnrollmentsErrors,
+  GetProgramsByCourseCreatorData,
+  GetProgramsByCourseCreatorResponses,
+  GetProgramsByCourseCreatorErrors,
   SearchProgramCoursesData,
   SearchProgramCoursesResponses,
   SearchProgramCoursesErrors,
@@ -1249,12 +1276,18 @@ import type {
   GetAssignmentSubmissionsData,
   GetAssignmentSubmissionsResponses,
   GetAssignmentSubmissionsErrors,
+  GetSubmissionAttachmentsData,
+  GetSubmissionAttachmentsResponses,
+  GetSubmissionAttachmentsErrors,
   GetHighPerformanceSubmissionsData,
   GetHighPerformanceSubmissionsResponses,
   GetHighPerformanceSubmissionsErrors,
   GetAverageScoreData,
   GetAverageScoreResponses,
   GetAverageScoreErrors,
+  GetAssignmentAttachmentsData,
+  GetAssignmentAttachmentsResponses,
+  GetAssignmentAttachmentsErrors,
   GetSubmissionAnalyticsData,
   GetSubmissionAnalyticsResponses,
   GetSubmissionAnalyticsErrors,
@@ -1264,6 +1297,9 @@ import type {
   SearchAssignmentsData,
   SearchAssignmentsResponses,
   SearchAssignmentsErrors,
+  GetAssignmentMediaData,
+  GetAssignmentMediaResponses,
+  GetAssignmentMediaErrors,
   GetPendingGradingData,
   GetPendingGradingResponses,
   GetPendingGradingErrors,
@@ -1318,6 +1354,12 @@ import type {
   RemoveItemData,
   RemoveItemResponses,
   RemoveItemErrors,
+  DeleteSubmissionAttachmentData,
+  DeleteSubmissionAttachmentResponses,
+  DeleteSubmissionAttachmentErrors,
+  DeleteAssignmentAttachmentData,
+  DeleteAssignmentAttachmentResponses,
+  DeleteAssignmentAttachmentErrors,
   RemoveAdminDomainData,
   RemoveAdminDomainResponses,
   RemoveAdminDomainErrors,
@@ -1421,6 +1463,10 @@ import {
   getAllTrainingProgramsResponseTransformer,
   createTrainingProgramResponseTransformer,
   publishProgramResponseTransformer,
+  listProgramTrainingApplicationsResponseTransformer,
+  submitProgramTrainingApplicationResponseTransformer,
+  getProgramTrainingApplicationResponseTransformer,
+  decideOnProgramTrainingApplicationResponseTransformer,
   getProgramRequirementsResponseTransformer,
   addProgramRequirementResponseTransformer,
   getProgramCoursesResponseTransformer,
@@ -1464,6 +1510,8 @@ import {
   decideOnTrainingApplicationResponseTransformer,
   getCourseRubricsResponseTransformer,
   associateRubricResponseTransformer,
+  getCourseReviewsResponseTransformer,
+  submitCourseReviewResponseTransformer,
   getCourseRequirementsResponseTransformer,
   addCourseRequirementResponseTransformer,
   getCourseLessonsResponseTransformer,
@@ -1530,6 +1578,8 @@ import {
   submitAssignmentResponseTransformer,
   returnSubmissionResponseTransformer,
   gradeSubmissionResponseTransformer,
+  uploadSubmissionAttachmentResponseTransformer,
+  uploadAssignmentAttachmentResponseTransformer,
   assignAdminDomainResponseTransformer,
   getAdminUsersResponseTransformer,
   createAdminUserResponseTransformer,
@@ -1576,12 +1626,13 @@ import {
   getRequiredCoursesResponseTransformer,
   getOptionalCoursesResponseTransformer,
   getProgramCertificatesResponseTransformer,
+  searchProgramTrainingApplicationsResponseTransformer,
   searchTrainingProgramsResponseTransformer,
   searchProgramRequirementsResponseTransformer,
   getPublishedProgramsResponseTransformer,
-  getProgramsByInstructorResponseTransformer,
   getFreeProgramsResponseTransformer,
   searchProgramEnrollmentsResponseTransformer,
+  getProgramsByCourseCreatorResponseTransformer,
   searchProgramCoursesResponseTransformer,
   getProgramsByCategoryResponseTransformer,
   getActiveProgramsResponseTransformer,
@@ -1650,7 +1701,9 @@ import {
   getCourseCertificatesResponseTransformer,
   getBookingResponseTransformer,
   getAssignmentSubmissionsResponseTransformer,
+  getSubmissionAttachmentsResponseTransformer,
   getHighPerformanceSubmissionsResponseTransformer,
+  getAssignmentAttachmentsResponseTransformer,
   searchSubmissionsResponseTransformer,
   searchAssignmentsResponseTransformer,
   getPendingGradingResponseTransformer,
@@ -5934,6 +5987,135 @@ export const publishProgram = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List program training applications
+ * Retrieves applications for a program. Optionally filter by status using `status=pending|approved|rejected|revoked`.
+ *
+ */
+export const listProgramTrainingApplications = <ThrowOnError extends boolean = false>(
+  options: Options<ListProgramTrainingApplicationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListProgramTrainingApplicationsResponses,
+    ListProgramTrainingApplicationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listProgramTrainingApplicationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications',
+    ...options,
+  });
+};
+
+/**
+ * Submit program training application
+ * Allows an instructor or organisation to apply for permission to deliver the specified training program.
+ *
+ * **Application Workflow:**
+ * - Applicants submit once per program. Rejected applications can be resubmitted, which reopens the request.
+ * - Duplicate pending or approved submissions are rejected with clear error messages. Revoked applicants must resubmit to regain access.
+ * - Program creators review applications using the approval endpoints below.
+ *
+ */
+export const submitProgramTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitProgramTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitProgramTrainingApplicationResponses,
+    SubmitProgramTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitProgramTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get program training application
+ * Retrieves a specific training application for a program.
+ */
+export const getProgramTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetProgramTrainingApplicationResponses,
+    GetProgramTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getProgramTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Decide on program training application
+ * Applies a decision to an instructor or organisation application to deliver the training program.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnProgramTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<DecideOnProgramTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DecideOnProgramTrainingApplicationResponses,
+    DecideOnProgramTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: decideOnProgramTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get program requirements
  * Retrieves all requirements for a specific program.
  */
@@ -7396,6 +7578,68 @@ export const associateRubric = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/rubrics',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get reviews for a course
+ * Returns all reviews left for the specified course.
+ */
+export const getCourseReviews = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseReviewsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseReviewsResponses,
+    GetCourseReviewsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseReviewsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/reviews',
+    ...options,
+  });
+};
+
+/**
+ * Submit or update a course review
+ * Allows enrolled students to leave a review for a course. Each student can leave
+ * one review per course and may update it anytime.
+ *
+ */
+export const submitCourseReview = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitCourseReviewData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitCourseReviewResponses,
+    SubmitCourseReviewErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitCourseReviewResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/reviews',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -9513,6 +9757,77 @@ export const gradeSubmission = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Upload assignment submission attachment
+ * Uploads a file attachment for a specific assignment submission.
+ */
+export const uploadSubmissionAttachment = <ThrowOnError extends boolean = false>(
+  options: Options<UploadSubmissionAttachmentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadSubmissionAttachmentResponses,
+    UploadSubmissionAttachmentErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadSubmissionAttachmentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/assignments/{assignmentUuid}/submissions/{submissionUuid}/attachments/upload',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Upload assignment attachment
+ * Uploads an attachment for an assignment (documents, images, audio, or video).
+ *
+ * **Use cases:**
+ * - Providing assignment briefs as PDFs or slides
+ * - Attaching sample datasets, images, or reference media
+ *
+ */
+export const uploadAssignmentAttachment = <ThrowOnError extends boolean = false>(
+  options: Options<UploadAssignmentAttachmentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadAssignmentAttachmentResponses,
+    UploadAssignmentAttachmentErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadAssignmentAttachmentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/assignments/{assignmentUuid}/attachments/upload',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Assign admin domain to user
  * Assigns admin domain privileges to a user. This grants the user administrative access either globally (system admin) or within specific organizational contexts. Only existing system administrators can perform this operation.
  */
@@ -11400,6 +11715,37 @@ export const getProgramCertificates = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Search program training applications
+ * Advanced search for training applications using flexible operators on any DTO field.
+ * Supports filters such as `status`, `applicantType`, `programUuid`, `applicantUuid`,
+ * `createdDate_between`, and more.
+ *
+ */
+export const searchProgramTrainingApplications = <ThrowOnError extends boolean = false>(
+  options: Options<SearchProgramTrainingApplicationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchProgramTrainingApplicationsResponses,
+    SearchProgramTrainingApplicationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchProgramTrainingApplicationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/training-applications/search',
+    ...options,
+  });
+};
+
+/**
  * Search training programs
  * Advanced program search with flexible criteria and operators.
  *
@@ -11410,7 +11756,7 @@ export const getProgramCertificates = <ThrowOnError extends boolean = false>(
  * - `status_in=PUBLISHED,ACTIVE` - Published or active programs
  * - `price_lte=500.00` - Programs priced at $500 or less
  * - `price=null` - Free programs
- * - `instructorUuid=uuid` - Programs by specific instructor
+ * - `courseCreatorUuid=uuid` - Programs by specific course creator
  * - `categoryUuid=uuid` - Programs in specific category
  * - `totalDurationHours_gte=40` - Programs 40+ hours long
  * - `totalDurationHours_between=20,100` - Programs between 20-100 hours
@@ -11419,7 +11765,7 @@ export const getProgramCertificates = <ThrowOnError extends boolean = false>(
  * **Advanced Program Queries:**
  * - `status=PUBLISHED&active=true&price_lte=100` - Published, active programs under $100
  * - `title_like=certification&totalDurationHours_gte=50` - Certification programs 50+ hours
- * - `instructorUuid=uuid&status=PUBLISHED` - Published programs by specific instructor
+ * - `courseCreatorUuid=uuid&status=PUBLISHED` - Published programs by specific course creator
  *
  * For complete operator documentation, see the instructor search endpoint.
  *
@@ -11512,34 +11858,6 @@ export const getPublishedPrograms = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get programs by instructor
- * Retrieves all programs created by a specific instructor.
- */
-export const getProgramsByInstructor = <ThrowOnError extends boolean = false>(
-  options: Options<GetProgramsByInstructorData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetProgramsByInstructorResponses,
-    GetProgramsByInstructorErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getProgramsByInstructorResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/programs/instructor/{instructorUuid}',
-    ...options,
-  });
-};
-
-/**
  * Get free programs
  * Retrieves all programs available at no cost.
  */
@@ -11600,6 +11918,34 @@ export const searchProgramEnrollments = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/programs/enrollments/search',
+    ...options,
+  });
+};
+
+/**
+ * Get programs by course creator
+ * Retrieves all programs created by a specific course creator.
+ */
+export const getProgramsByCourseCreator = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramsByCourseCreatorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetProgramsByCourseCreatorResponses,
+    GetProgramsByCourseCreatorErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getProgramsByCourseCreatorResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/creator/{courseCreatorUuid}',
     ...options,
   });
 };
@@ -14102,6 +14448,34 @@ export const getAssignmentSubmissions = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get submission attachments
+ * Retrieves all attachments for a specific assignment submission.
+ */
+export const getSubmissionAttachments = <ThrowOnError extends boolean = false>(
+  options: Options<GetSubmissionAttachmentsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetSubmissionAttachmentsResponses,
+    GetSubmissionAttachmentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getSubmissionAttachmentsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/assignments/{assignmentUuid}/submissions/{submissionUuid}/attachments',
+    ...options,
+  });
+};
+
+/**
  * Get high performance submissions
  * Returns submissions with scores above 85%.
  */
@@ -14152,6 +14526,34 @@ export const getAverageScore = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/assignments/{assignmentUuid}/average-score',
+    ...options,
+  });
+};
+
+/**
+ * Get assignment attachments
+ * Retrieves all attachments linked to a specific assignment.
+ */
+export const getAssignmentAttachments = <ThrowOnError extends boolean = false>(
+  options: Options<GetAssignmentAttachmentsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAssignmentAttachmentsResponses,
+    GetAssignmentAttachmentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAssignmentAttachmentsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/assignments/{assignmentUuid}/attachments',
     ...options,
   });
 };
@@ -14253,6 +14655,33 @@ export const searchAssignments = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/assignments/search',
+    ...options,
+  });
+};
+
+/**
+ * Get assignment media by file name
+ * Retrieves assignment media files by their stored filename.
+ */
+export const getAssignmentMedia = <ThrowOnError extends boolean = false>(
+  options: Options<GetAssignmentMediaData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAssignmentMediaResponses,
+    GetAssignmentMediaErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/assignments/media/{fileName}',
     ...options,
   });
 };
@@ -14746,6 +15175,60 @@ export const removeItem = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/commerce/carts/{cartId}/items/{itemId}',
+    ...options,
+  });
+};
+
+/**
+ * Delete submission attachment
+ * Removes a specific submission attachment.
+ */
+export const deleteSubmissionAttachment = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteSubmissionAttachmentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteSubmissionAttachmentResponses,
+    DeleteSubmissionAttachmentErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/assignments/{assignmentUuid}/submissions/{submissionUuid}/attachments/{attachmentUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Delete assignment attachment
+ * Removes a specific assignment attachment.
+ */
+export const deleteAssignmentAttachment = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteAssignmentAttachmentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteAssignmentAttachmentResponses,
+    DeleteAssignmentAttachmentErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/assignments/{assignmentUuid}/attachments/{attachmentUuid}',
     ...options,
   });
 };

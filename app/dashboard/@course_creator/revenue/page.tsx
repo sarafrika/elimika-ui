@@ -1,7 +1,15 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -9,10 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { elimikaDesignSystem } from '@/lib/design-system';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
-  ArrowUpRight,
   ChevronDown,
   DollarSign,
   Download,
@@ -20,15 +28,17 @@ import {
   EyeOff,
   Landmark,
   Search,
+  Send,
   ShoppingCart,
   TrendingUp,
-  Users,
+  Users
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import {
   getWalletOptions,
   listTransactionsOptions,
+  transferMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 
 // Status badge color map with semantic tokens
@@ -51,6 +61,48 @@ const RevenuePage = () => {
   const [size, setSize] = useState(10);
   const [sortBy, setSortBy] = useState('created_date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [targetUserUuid, setTargetUserUuid] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferCurrency, setTransferCurrency] = useState('KES');
+  const [transferReference, setTransferReference] = useState('');
+  const [transferDescription, setTransferDescription] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+
+  const transferFundsMut = useMutation({
+    ...transferMutation(),
+    onSuccess: () => {
+      // Reset form
+      setTargetUserUuid('');
+      setTransferAmount('');
+      setTransferCurrency('KES');
+      setTransferReference('');
+      setTransferDescription('');
+      setUserSearchQuery('');
+      setIsTransferModalOpen(false);
+
+      // Refresh transactions
+      // invalidate queries
+    },
+  });
+
+  const handleTransferFunds = () => {
+    if (!targetUserUuid || !transferAmount || !transferCurrency) {
+      return;
+    }
+
+    transferFundsMut.mutate({
+      body: {
+        target_user_uuid: targetUserUuid,
+        amount: parseFloat(transferAmount),
+        currency_code: transferCurrency,
+        reference: transferReference || `TRANSFER-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+        description: transferDescription || 'Fund transfer',
+      },
+      path: { userUuid: targetUserUuid },
+    });
+  };
 
   const courses = courseCreator?.courses
 
@@ -312,7 +364,23 @@ const RevenuePage = () => {
               <Landmark className="text-primary" size={24} />
             </div>
           </div>
-          <Button className="mt-6 w-full">Withdraw Funds</Button>
+
+          <div className="mt-6 flex gap-3">
+            <Button
+              className="flex-1 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled
+            >
+              Withdraw Funds
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 flex items-center gap-2"
+              onClick={() => setIsTransferModalOpen(true)}
+            >
+              <Send size={16} />
+              Transfer
+            </Button>
+          </div>
         </div>
 
         {/* View Stats Button */}
@@ -344,10 +412,10 @@ const RevenuePage = () => {
                 <div className="rounded-lg bg-primary/10 p-2">
                   <TrendingUp className="text-primary" size={20} />
                 </div>
-                <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
+                {/* <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
                   <ArrowUpRight size={16} />
                   +{analyticsData.successRate.toFixed(1)}%
-                </span>
+                </span> */}
               </div>
               <p className="mt-3 text-sm text-muted-foreground">Total Revenue</p>
               <p className="mt-1 text-2xl font-bold text-foreground">
@@ -360,10 +428,10 @@ const RevenuePage = () => {
                 <div className="rounded-lg bg-primary/10 p-2">
                   <ShoppingCart className="text-primary" size={20} />
                 </div>
-                <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
+                {/* <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
                   <ArrowUpRight size={16} />
                   {analyticsData.totalTransactions}
-                </span>
+                </span> */}
               </div>
               <p className="mt-3 text-sm text-muted-foreground">Total Transactions</p>
               <p className="mt-1 text-2xl font-bold text-foreground">
@@ -376,10 +444,10 @@ const RevenuePage = () => {
                 <div className="rounded-lg bg-primary/10 p-2">
                   <Users className="text-primary" size={20} />
                 </div>
-                <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
+                {/* <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
                   <ArrowUpRight size={16} />
                   {analyticsData.completedTransactions}
-                </span>
+                </span> */}
               </div>
               <p className="mt-3 text-sm text-muted-foreground">Completed</p>
               <p className="mt-1 text-2xl font-bold text-foreground">
@@ -392,10 +460,10 @@ const RevenuePage = () => {
                 <div className="rounded-lg bg-primary/10 p-2">
                   <DollarSign className="text-primary" size={20} />
                 </div>
-                <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
+                {/* <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
                   <ArrowUpRight size={16} />
                   +5.2%
-                </span>
+                </span> */}
               </div>
               <p className="mt-3 text-sm text-muted-foreground">Avg Transaction</p>
               <p className="mt-1 text-2xl font-bold text-foreground">
@@ -618,6 +686,186 @@ const RevenuePage = () => {
           </div>
         </div>
       </section>
+
+
+      {/* Transfer Funds Modal */}
+      <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Transfer Funds</DialogTitle>
+            <DialogDescription>
+              Transfer funds from your wallet to another user's wallet. All fields marked with * are required.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-4">
+            {/* User Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="target-user">
+                Recipient User UUID <span className="text-destructive">*</span>
+              </Label>
+              <div className="space-y-2">
+                <Input
+                  id="user-search"
+                  placeholder="Search for user..."
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  disabled={transferFundsMut.isPending}
+                />
+                <Input
+                  id="target-user"
+                  placeholder="Enter or select user UUID"
+                  value={targetUserUuid}
+                  onChange={(e) => setTargetUserUuid(e.target.value)}
+                  disabled={transferFundsMut.isPending}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The selected user will receive the funds in their wallet
+              </p>
+            </div>
+
+            {/* Amount and Currency */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="transfer-amount">
+                  Amount <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="transfer-amount"
+                  type="number"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  value={transferAmount}
+                  onChange={(e) => setTransferAmount(e.target.value)}
+                  disabled={transferFundsMut.isPending}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="transfer-currency">
+                  Currency <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={transferCurrency}
+                  onValueChange={setTransferCurrency}
+                  disabled={transferFundsMut.isPending}
+                >
+                  <SelectTrigger id="transfer-currency">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="KES">KES - Kenyan Shilling</SelectItem>
+                    <SelectItem value="USD">USD - US Dollar</SelectItem>
+                    <SelectItem value="EUR">EUR - Euro</SelectItem>
+                    <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Reference */}
+            <div className="space-y-2">
+              <Label htmlFor="transfer-reference">Reference (Optional)</Label>
+              <Input
+                id="transfer-reference"
+                placeholder="e.g., TRANSFER-2026-0001"
+                value={transferReference}
+                onChange={(e) => setTransferReference(e.target.value)}
+                disabled={transferFundsMut.isPending}
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave blank to auto-generate a reference number
+              </p>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="transfer-description">Description (Optional)</Label>
+              <Textarea
+                id="transfer-description"
+                placeholder="e.g., Reward payout, Course payment, etc."
+                rows={3}
+                value={transferDescription}
+                onChange={(e) => setTransferDescription(e.target.value)}
+                disabled={transferFundsMut.isPending}
+                className="resize-none"
+              />
+            </div>
+
+            {/* Error Display */}
+            {transferFundsMut.isError && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                Failed to transfer funds. Please check the details and try again.
+              </div>
+            )}
+
+            {/* Success Display */}
+            {transferFundsMut.isSuccess && (
+              <div className="rounded-md bg-primary/10 p-3 text-sm text-primary">
+                Transfer completed successfully!
+              </div>
+            )}
+
+            {/* Available Balance Info */}
+            <div className="rounded-lg border border-border bg-muted/50 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Available Balance</span>
+                <span className="text-lg font-bold text-foreground">
+                  KES {analyticsData.netRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              {transferAmount && parseFloat(transferAmount) > analyticsData.netRevenue && (
+                <p className="mt-2 text-xs text-destructive">
+                  Insufficient balance. You cannot transfer more than your available balance.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsTransferModalOpen(false);
+                setTargetUserUuid('');
+                setTransferAmount('');
+                setTransferCurrency('KES');
+                setTransferReference('');
+                setTransferDescription('');
+                setUserSearchQuery('');
+              }}
+              disabled={transferFundsMut.isPending}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleTransferFunds}
+              disabled={
+                !targetUserUuid ||
+                !transferAmount ||
+                !transferCurrency ||
+                transferFundsMut.isPending ||
+                parseFloat(transferAmount) <= 0 ||
+                parseFloat(transferAmount) > analyticsData.netRevenue
+              }
+              className="w-full sm:w-auto"
+            >
+              {transferFundsMut.isPending ? (
+                <>Processing...</>
+              ) : (
+                <>
+                  <Send size={16} className="mr-2" />
+                  Transfer Funds
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -667,3 +915,4 @@ const DESCRIPTIONS: Record<TransactionType, string[]> = {
   TRANSFER: ['Transfer to instructor', 'Transfer to another user'],
   PAYMENT: ['Payment for React Course', 'Payment for UI/UX Course'],
 };
+

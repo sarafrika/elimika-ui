@@ -10,6 +10,8 @@ import {
     updateTrainingProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
+import { Button } from '../../../../../components/ui/button';
+import { useCourseCreator } from '../../../../../context/course-creator-context';
 import ProgramBasicInfo from './ProgramBasicInfo';
 import ProgramCourseManagement from './ProgramCourseManagement';
 
@@ -19,6 +21,7 @@ const CreateProgramWizard = ({
     onCancel,
 }: any) => {
     const qc = useQueryClient();
+    const creator = useCourseCreator()
     const [step, setStep] = useState(1);
     const [programUuid, setProgramUuid] = useState<string | null>(
         editingProgram?.uuid || null
@@ -32,7 +35,7 @@ const CreateProgramWizard = ({
         class_limit: 50,
         price: 0,
         program_type: '',
-        instructor_uuid: '',
+        course_creator_uuid: creator?.profile?.uuid,
         category_uuid: '',
         total_duration_hours: 0,
         total_duration_minutes: 0,
@@ -51,7 +54,7 @@ const CreateProgramWizard = ({
             class_limit: editingProgram.class_limit ?? 50,
             price: editingProgram.price ?? 0,
             program_type: editingProgram.program_type ?? '',
-            instructor_uuid: editingProgram.instructor_uuid ?? '',
+            course_creator_uuid: editingProgram.course_creator_uuid ?? creator?.profile?.uuid,
             category_uuid: editingProgram.category_uuid ?? '',
             total_duration_hours: editingProgram.total_duration_hours ?? 0,
             total_duration_minutes: editingProgram.total_duration_minutes ?? 0,
@@ -63,13 +66,26 @@ const CreateProgramWizard = ({
     const createProgramMut = useMutation({
         ...createTrainingProgramMutation(),
         onSuccess: (data) => {
-            setProgramUuid(data.uuid);
+            const uuid = data?.data?.uuid || data?.uuid;
+
+            if (uuid) {
+                setProgramUuid(uuid);
+                qc.invalidateQueries({
+                    queryKey: getAllTrainingProgramsQueryKey({
+                        query: { pageable: {} },
+                    }),
+                });
+                setStep(2);
+            } else {
+            }
+
             qc.invalidateQueries({
                 queryKey: getAllTrainingProgramsQueryKey({
                     query: { pageable: {} },
                 }),
             });
-            setStep(2);
+        },
+        onError: (error) => {
         },
     });
 
@@ -186,15 +202,30 @@ const CreateProgramWizard = ({
                     />
                 )}
 
-                {step === 2 && programUuid && (
-                    <ProgramCourseManagement
-                        programUuid={programUuid}
-                        onPublish={handlePublish}
-                        onSaveDraft={handleSaveDraft}
-                        onBack={() => setStep(1)}
-                        isPublishing={publishProgramMut.isPending}
-                        editingProgram={editingProgram}
-                    />
+                {step === 2 && (
+                    programUuid ? (
+                        <ProgramCourseManagement
+                            programUuid={programUuid}
+                            onPublish={handlePublish}
+                            onSaveDraft={handleSaveDraft}
+                            onBack={() => setStep(1)}
+                            isPublishing={publishProgramMut.isPending}
+                            editingProgram={editingProgram}
+                        />
+                    ) : (
+                        <div className="rounded-lg border border-border bg-card p-8 text-center">
+                            <div className="text-muted-foreground">
+                                <p className="mb-2 text-lg font-semibold">Program UUID not found</p>
+                                <p className="text-sm">Please go back and try again, or contact support if the issue persists.</p>
+                                <Button
+                                    onClick={() => setStep(1)}
+                                    className="mt-4 rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+                                >
+                                    Go Back
+                                </Button>
+                            </div>
+                        </div>
+                    )
                 )}
             </div>
         </div>

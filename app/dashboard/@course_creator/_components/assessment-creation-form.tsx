@@ -233,12 +233,64 @@ const AssessmentCreationForm = ({
   const addQuizQuestion = useMutation(addQuizQuestionMutation());
   const addQuestionOption = useMutation(addQuestionOptionMutation());
 
-  // Populate quizData when backend data loads
-  // Load questions and options into quizData
+  const [originalQuizData, setOriginalQuizData] = useState<QuizState>({});
+
+  const [modifiedQuestions, setModifiedQuestions] = useState<Set<number>>(new Set());
+  const [modifiedOptions, setModifiedOptions] = useState<Map<number, Set<number>>>(new Map());
+
+  const deepEqual = (obj1: any, obj2: any): boolean => {
+    if (obj1 === obj2) return true;
+
+    if (typeof obj1 !== 'object' || typeof obj2 !== 'object' || obj1 == null || obj2 == null) {
+      return false;
+    }
+
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+
+    if (keys1.length !== keys2.length) return false;
+
+    for (const key of keys1) {
+      if (!keys2.includes(key)) return false;
+      if (!deepEqual(obj1[key], obj2[key])) return false;
+    }
+
+    return true;
+  };
+
+  const hasQuestionChanged = useCallback((qIndex: number): boolean => {
+    const currentQuestion = quizData[selectedLessonId]?.[qIndex];
+    const originalQuestion = originalQuizData[selectedLessonId]?.[qIndex];
+
+    if (!currentQuestion || !originalQuestion) return true; // New question
+
+    const currentProps = {
+      text: currentQuestion.text,
+      type: currentQuestion.type,
+      points: currentQuestion.points,
+    };
+
+    const originalProps = {
+      text: originalQuestion.text,
+      type: originalQuestion.type,
+      points: originalQuestion.points,
+    };
+
+    return !deepEqual(currentProps, originalProps);
+  }, [quizData, originalQuizData, selectedLessonId]);
+
+  const hasOptionChanged = useCallback((qIndex: number, oIndex: number): boolean => {
+    const currentOption = quizData[selectedLessonId]?.[qIndex]?.options?.[oIndex];
+    const originalOption = originalQuizData[selectedLessonId]?.[qIndex]?.options?.[oIndex];
+
+    if (!currentOption || !originalOption) return true; // New option
+
+    return !deepEqual(currentOption, originalOption);
+  }, [quizData, originalQuizData, selectedLessonId]);
+
   useEffect(() => {
     if (!activeQuizUuid || !quizquestions?.data) return;
 
-    // Prevent re-running if we already loaded this quiz
     if (loadedQuizUuid === activeQuizUuid) return;
 
     const allOptionsLoaded = questionOptionsQueries.every(q => !q.isLoading);
@@ -277,6 +329,15 @@ const AssessmentCreationForm = ({
       ...prev,
       [selectedLessonId]: questionsWithOptions,
     }));
+
+    setOriginalQuizData(prev => ({
+      ...prev,
+      [selectedLessonId]: JSON.parse(JSON.stringify(questionsWithOptions)),
+    }));
+
+    setModifiedQuestions(new Set());
+    setModifiedOptions(new Map());
+
     setLoadedQuizUuid(activeQuizUuid);
   }, [
     activeQuizUuid,
@@ -285,6 +346,99 @@ const AssessmentCreationForm = ({
     questionOptionsQueries,
     selectedLessonId,
   ]);
+
+  const updateQuestionText = useCallback(
+    (qIndex: number, value: string) => {
+      setQuizData(prev => {
+        const questions = prev[selectedLessonId];
+        if (!questions) return prev;
+
+        const updated = [...questions];
+        updated[qIndex] = { ...updated[qIndex], text: value };
+
+        return {
+          ...prev,
+          [selectedLessonId]: updated,
+        };
+      });
+
+      setModifiedQuestions(prev => new Set(prev).add(qIndex));
+    },
+    [selectedLessonId]
+  );
+
+  const updateQuestionPoints = useCallback(
+    (qIndex: number, points: number) => {
+      setQuizData(prev => {
+        const questions = prev[selectedLessonId];
+        if (!questions) return prev;
+
+        const updated = [...questions];
+        updated[qIndex] = { ...updated[qIndex], points };
+
+        return {
+          ...prev,
+          [selectedLessonId]: updated,
+        };
+      });
+
+      setModifiedQuestions(prev => new Set(prev).add(qIndex));
+    },
+    [selectedLessonId]
+  );
+
+  const updateOptionText = useCallback(
+    (qIndex: number, oIndex: number, value: string) => {
+      setQuizData(prev => {
+        const questions = prev[selectedLessonId];
+        if (!questions) return prev;
+
+        const updated = [...questions];
+        const options = [...(updated[qIndex].options ?? [])];
+        options[oIndex] = { ...options[oIndex], text: value };
+        updated[qIndex] = { ...updated[qIndex], options };
+
+        return { ...prev, [selectedLessonId]: updated };
+      });
+
+      setModifiedOptions(prev => {
+        const newMap = new Map(prev);
+        const optionSet = newMap.get(qIndex) || new Set();
+        optionSet.add(oIndex);
+        newMap.set(qIndex, optionSet);
+        return newMap;
+      });
+    },
+    [selectedLessonId]
+  );
+
+  const toggleCorrectOption = useCallback(
+    (qIndex: number, oIndex: number) => {
+      setQuizData(prev => {
+        const questions = prev[selectedLessonId];
+        if (!questions) return prev;
+
+        const updated = [...questions];
+        const options = [...(updated[qIndex].options || [])];
+        options[oIndex] = {
+          ...options[oIndex],
+          isCorrect: !options[oIndex].isCorrect,
+        };
+        updated[qIndex] = { ...updated[qIndex], options };
+
+        return { ...prev, [selectedLessonId]: updated };
+      });
+
+      setModifiedOptions(prev => {
+        const newMap = new Map(prev);
+        const optionSet = newMap.get(qIndex) || new Set();
+        optionSet.add(oIndex);
+        newMap.set(qIndex, optionSet);
+        return newMap;
+      });
+    },
+    [selectedLessonId]
+  );
 
   const handleSaveQuizQuestions = useCallback(async () => {
     if (!selectedLessonId || !activeQuizUuid) {
@@ -298,63 +452,161 @@ const AssessmentCreationForm = ({
       return;
     }
 
+    let savedCount = 0;
+    let skippedCount = 0;
+    let failedCount = 0;
+
     try {
       for (let qIndex = 0; qIndex < questions.length; qIndex++) {
         const question = questions[qIndex];
         let questionUuid = question?.uuid;
 
-        try {
-          // --- 1️ Create or update question ---
-          if (!questionUuid) {
-            const res: any = await addQuizQuestion.mutateAsync({
-              path: { quizUuid: activeQuizUuid },
-              body: buildQuestionPayload(question, qIndex, activeQuizUuid, 'test@example.com'),
-            });
-            questionUuid = res?.data?.question_uuid || res?.question_uuid;
-            question.uuid = questionUuid;
-          } else {
-            await updateQuizQuestion.mutateAsync({
-              path: { quizUuid: activeQuizUuid, questionUuid },
-              body: buildQuestionPayload(question, qIndex, activeQuizUuid, 'test@example.com'),
-            });
-          }
+        const isNewQuestion = !questionUuid || questionUuid === '';
+        const questionChanged = isNewQuestion || hasQuestionChanged(qIndex) || modifiedQuestions.has(qIndex);
 
-          // --- 2️ Create or update options ---
+        if (!questionChanged) {
+
           if (
             (question.type === 'MULTIPLE_CHOICE' || question.type === 'TRUE_FALSE') &&
             question.options?.length
           ) {
+            const modifiedOptionsForQuestion = modifiedOptions.get(qIndex);
+            let hasChangedOptions = false;
+
             for (let oIndex = 0; oIndex < question.options.length; oIndex++) {
               const option = question.options[oIndex];
-              if (!option.text?.trim()) continue; // skip empty options
+              const isNewOption = !option.uuid || option.uuid === '';
+              const optionChanged = isNewOption ||
+                hasOptionChanged(qIndex, oIndex) ||
+                modifiedOptionsForQuestion?.has(oIndex);
 
-              if (!option.uuid) {
-                const newOpt: any = await addQuestionOption.mutateAsync({
-                  path: { quizUuid: activeQuizUuid, questionUuid },
-                  body: buildOptionPayload(option, oIndex, questionUuid, 'test@example.com'),
-                });
-                option.uuid = newOpt?.data?.uuid || newOpt?.uuid;
-              } else {
-                await updateQuestionOption.mutateAsync({
-                  path: { quizUuid: activeQuizUuid, questionUuid, optionUuid: option.uuid },
-                  body: buildOptionPayload(option, oIndex, questionUuid, 'test@example.com'),
-                });
+              if (optionChanged) {
+                hasChangedOptions = true;
+                break;
               }
-
-              // Query key for each options
-              // qc.invalidateQueries({
-              //     queryKey: getQuestionOptionsQueryKey({ path: { quizUuid: activeQuizUuid, questionUuid: questionUuid as string }, query: { pageable: {} } }),
-              // });
             }
+
+            if (!hasChangedOptions) {
+              skippedCount++;
+              continue;
+            }
+          } else {
+            skippedCount++;
+            continue;
+          }
+        }
+
+        try {
+
+          if (isNewQuestion) {
+            // CREATE NEW QUESTION
+            const res: any = await addQuizQuestion.mutateAsync({
+              path: { quizUuid: activeQuizUuid },
+              body: buildQuestionPayload(question, qIndex, activeQuizUuid, 'test@example.com'),
+            });
+
+            questionUuid =
+              res?.data?.uuid ||
+              res?.uuid ||
+              res?.data?.question_uuid ||
+              res?.question_uuid;
+
+            if (!questionUuid) {
+              throw new Error('Failed to get question UUID from API response');
+            }
+            question.uuid = questionUuid;
+
+            setQuizData(prev => {
+              const updated = [...(prev[selectedLessonId] || [])];
+              updated[qIndex] = { ...updated[qIndex], uuid: questionUuid };
+              return { ...prev, [selectedLessonId]: updated };
+            });
+          } else if (questionChanged) {
+            // UPDATE EXISTING QUESTION (only if it changed)
+            await updateQuizQuestion.mutateAsync({
+              path: { quizUuid: activeQuizUuid, questionUuid: questionUuid },
+              body: buildQuestionPayload(question, qIndex, activeQuizUuid, 'test@example.com'),
+            });
+
           }
 
-          qc.invalidateQueries({
-            queryKey: getQuestionOptionsQueryKey({
-              path: { quizUuid: activeQuizUuid, questionUuid: questionUuid as string },
-              query: { pageable: {} },
-            }),
-          });
+
+          if (
+            (question.type === 'MULTIPLE_CHOICE' || question.type === 'TRUE_FALSE') &&
+            question.options?.length
+          ) {
+            const modifiedOptionsForQuestion = modifiedOptions.get(qIndex);
+
+            for (let oIndex = 0; oIndex < question.options.length; oIndex++) {
+              const option = question.options[oIndex];
+
+              if (!option.text?.trim()) {
+                continue;
+              }
+
+              const isNewOption = !option.uuid || option.uuid === '';
+              const optionChanged = isNewOption ||
+                hasOptionChanged(qIndex, oIndex) ||
+                modifiedOptionsForQuestion?.has(oIndex);
+
+              if (!optionChanged) {
+                continue;
+              }
+
+
+              try {
+                if (isNewOption) {
+                  // CREATE NEW OPTION
+                  const newOpt: any = await addQuestionOption.mutateAsync({
+                    path: { quizUuid: activeQuizUuid, questionUuid: questionUuid },
+                    body: buildOptionPayload(option, oIndex, questionUuid, 'test@example.com'),
+                  });
+
+                  const optionUuid =
+                    newOpt?.data?.uuid ||
+                    newOpt?.uuid ||
+                    newOpt?.data?.option_uuid ||
+                    newOpt?.option_uuid;
+
+                  if (optionUuid) {
+                    option.uuid = optionUuid;
+
+                    setQuizData(prev => {
+                      const updated = [...(prev[selectedLessonId] || [])];
+                      const opts = [...(updated[qIndex].options || [])];
+                      opts[oIndex] = { ...opts[oIndex], uuid: optionUuid };
+                      updated[qIndex] = { ...updated[qIndex], options: opts };
+                      return { ...prev, [selectedLessonId]: updated };
+                    });
+                  }
+                } else {
+                  // UPDATE EXISTING OPTION
+                  await updateQuestionOption.mutateAsync({
+                    path: {
+                      quizUuid: activeQuizUuid,
+                      questionUuid: questionUuid,
+                      optionUuid: option.uuid
+                    },
+                    body: buildOptionPayload(option, oIndex, questionUuid, 'test@example.com'),
+                  });
+
+                }
+              } catch (optionErr) {
+              }
+            }
+
+            qc.invalidateQueries({
+              queryKey: getQuestionOptionsQueryKey({
+                path: { quizUuid: activeQuizUuid, questionUuid: questionUuid },
+                query: { pageable: {} },
+              }),
+            });
+          }
+
+          savedCount++;
+
         } catch (qErr) {
+          failedCount++;
           toast.error(`Failed to save question ${qIndex + 1}`);
         }
       }
@@ -363,21 +615,46 @@ const AssessmentCreationForm = ({
         queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid } }),
       });
 
-      toast.success('All questions and options saved successfully!');
+      setOriginalQuizData(prev => ({
+        ...prev,
+        [selectedLessonId]: JSON.parse(JSON.stringify(quizData[selectedLessonId])),
+      }));
+
+      setModifiedQuestions(new Set());
+      setModifiedOptions(new Map());
+
+      if (failedCount === 0) {
+        if (skippedCount > 0) {
+          toast.success(`Saved ${savedCount} changed items! (${skippedCount} unchanged items skipped)`);
+        } else {
+          toast.success(`All ${savedCount} questions and options saved successfully!`);
+        }
+      } else if (savedCount > 0) {
+        toast.warning(`Saved ${savedCount} questions, skipped ${skippedCount}, but ${failedCount} failed.`);
+      } else {
+        toast.error('Failed to save all questions. Please try again.');
+      }
+
     } catch (err) {
-      toast.error('Failed to save quiz questions');
+      toast.error(`Failed to save quiz questions: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }, [
     selectedLessonId,
     activeQuizUuid,
     quizData,
+    originalQuizData,
+    modifiedQuestions,
+    modifiedOptions,
     addQuizQuestion,
     updateQuizQuestion,
     addQuestionOption,
     updateQuestionOption,
     buildQuestionPayload,
     buildOptionPayload,
+    hasQuestionChanged,
+    hasOptionChanged,
     qc,
+    setQuizData,
   ]);
 
   const addQuestion = useCallback(
@@ -439,42 +716,6 @@ const AssessmentCreationForm = ({
     [selectedLessonId]
   );
 
-  const updateQuestionText = useCallback(
-    (qIndex: number, value: string) => {
-      setQuizData(prev => {
-        const questions = prev[selectedLessonId];
-        if (!questions) return prev;
-
-        const updated = [...questions];
-        updated[qIndex] = { ...updated[qIndex], text: value };
-
-        return {
-          ...prev,
-          [selectedLessonId]: updated,
-        };
-      });
-    },
-    [selectedLessonId]
-  );
-
-  const updateQuestionPoints = useCallback(
-    (qIndex: number, points: number) => {
-      setQuizData(prev => {
-        const questions = prev[selectedLessonId];
-        if (!questions) return prev;
-
-        const updated = [...questions];
-        updated[qIndex] = { ...updated[qIndex], points };
-
-        return {
-          ...prev,
-          [selectedLessonId]: updated,
-        };
-      });
-    },
-    [selectedLessonId]
-  );
-
   const handleDeleteQuestion = useCallback(
     async (qIndex: number) => {
       const question = questions[qIndex];
@@ -494,6 +735,12 @@ const AssessmentCreationForm = ({
             queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid as string } }),
           });
 
+          setQuizData(prev => {
+            const updated = [...(prev[selectedLessonId] ?? [])];
+            updated.splice(qIndex, 1);
+            return { ...prev, [selectedLessonId]: updated };
+          });
+
           toast.success('Question deleted!');
         } catch (err) {
           toast.error('Failed to delete question');
@@ -507,23 +754,6 @@ const AssessmentCreationForm = ({
       }
     },
     [questions, activeQuizUuid, selectedLessonId, deleteQuizQuestion, qc]
-  );
-
-  const updateOptionText = useCallback(
-    (qIndex: number, oIndex: number, value: string) => {
-      setQuizData(prev => {
-        const questions = prev[selectedLessonId];
-        if (!questions) return prev;
-
-        const updated = [...questions];
-        const options = [...(updated[qIndex].options ?? [])];
-        options[oIndex] = { ...options[oIndex], text: value };
-        updated[qIndex] = { ...updated[qIndex], options };
-
-        return { ...prev, [selectedLessonId]: updated };
-      });
-    },
-    [selectedLessonId]
   );
 
   const handleDeleteOption = useCallback(
@@ -582,26 +812,6 @@ const AssessmentCreationForm = ({
           ...opt,
           isCorrect: idx === oIndex,
         }));
-        updated[qIndex] = { ...updated[qIndex], options };
-
-        return { ...prev, [selectedLessonId]: updated };
-      });
-    },
-    [selectedLessonId]
-  );
-
-  const toggleCorrectOption = useCallback(
-    (qIndex: number, oIndex: number) => {
-      setQuizData(prev => {
-        const questions = prev[selectedLessonId];
-        if (!questions) return prev;
-
-        const updated = [...questions];
-        const options = [...(updated[qIndex].options || [])];
-        options[oIndex] = {
-          ...options[oIndex],
-          isCorrect: !options[oIndex].isCorrect,
-        };
         updated[qIndex] = { ...updated[qIndex], options };
 
         return { ...prev, [selectedLessonId]: updated };
@@ -682,7 +892,9 @@ const AssessmentCreationForm = ({
     [selectedLessonId]
   );
 
-  // Assignment CRUD operations
+  // ========================================================================
+  //   Assignment CRUD operations
+  // ========================================================================
   const createAssignmentForLesson = useCallback(
     async (lessonId: string, payload: any) => {
       return new Promise<string>((resolve, reject) => {
@@ -778,8 +990,8 @@ const AssessmentCreationForm = ({
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
-                ? 'border-primary text-primary font-semibold'
-                : 'text-muted-foreground hover:text-foreground'
+              ? 'border-primary text-primary font-semibold'
+              : 'text-muted-foreground hover:text-foreground'
               }`}
           >
             {tab}
@@ -811,45 +1023,50 @@ const AssessmentCreationForm = ({
               addPair={addPair}
               deleteQuestion={handleDeleteQuestion}
               deleteOption={handleDeleteOption}
+              // createQuizForLesson={async (lessonId, payload) => {
+              //   // const res: any = await createQuiz.mutateAsync({
+              //   //     body: {
+              //   //         ...payload,
+              //   //         lesson_uuid: lessonId,
+              //   //     },
+              //   // });
+              //   // qc.invalidateQueries({
+              //   //     queryKey: searchQuizzesQueryKey({
+              //   //         query: { pageable: {}, searchParams: { lesson_uuid_eq: selectedLessonId as string } },
+              //   //     }),
+              //   // });
+              //   // return res?.data?.quiz_uuid || res?.quiz_uuid;
+              // }}
               createQuizForLesson={async (lessonId, payload) => {
-                // const res: any = await createQuiz.mutateAsync({
-                //     body: {
-                //         ...payload,
-                //         lesson_uuid: lessonId,
-                //     },
-                // });
-                // qc.invalidateQueries({
-                //     queryKey: searchQuizzesQueryKey({
-                //         query: { pageable: {}, searchParams: { lesson_uuid_eq: selectedLessonId as string } },
-                //     }),
-                // });
-                // return res?.data?.quiz_uuid || res?.quiz_uuid;
+                return new Promise<string>((resolve, reject) => {
+                  createQuiz.mutate(
+                    {
+                      body: {
+                        ...payload,
+                        lesson_uuid: lessonId,
+                      } as any,
+                    },
+                    {
+                      onSuccess: (data: any) => {
+                        const quizUuid = data?.data?.uuid || data?.uuid;
+                        qc.invalidateQueries({
+                          queryKey: searchQuizzesQueryKey({
+                            query: { pageable: {}, searchParams: { lesson_uuid_eq: selectedLessonId as string } },
+                          }),
+                        });
+                        resolve(quizUuid);
+                      },
+                      onError: (error) => {
+                        reject(error);
+                      },
+                    }
+                  );
+                });
               }}
               updateQuizForLesson={handleUpdateQuiz}
               deleteQuizForLesson={handleDeleteQuiz}
-              addQuizQuestion={async payload => {
-                // const res: any = await addQuizQuestion.mutateAsync({
-                //     path: { quizUuid: payload.quiz_uuid },
-                //     body: payload,
-                // });
-                // qc.invalidateQueries({
-                //     queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid! } }),
-                // });
-                // return res;
-              }}
-              addQuestionOption={async payload => {
-                // const res: any = await addQuestionOption.mutateAsync({
-                //     path: {
-                //         quizUuid: payload.quiz_uuid,
-                //         questionUuid: payload.question_uuid,
-                //     },
-                //     body: payload,
-                // });
-                // qc.invalidateQueries({
-                //     queryKey: ['questionOptions', payload.quiz_uuid, payload.question_uuid],
-                // });
-                // return res;
-              }}
+              addQuizQuestion={async payload => { }}
+              addQuestionOption={async payload => { }}
               isPending={createQuiz.isPending || updateQuiz.isPending}
             />
 
