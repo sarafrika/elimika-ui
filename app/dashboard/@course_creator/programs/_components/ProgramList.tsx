@@ -97,17 +97,7 @@ const ProgramsList = ({ onEdit, onPreview, onCreate }: ProgramsListProps) => {
         })
     );
 
-    const deleteProgramMut = useMutation({
-        ...deleteTrainingProgramMutation(),
-        onSuccess: () => {
-            qc.invalidateQueries({
-                queryKey: getAllTrainingProgramsQueryKey({
-                    query: { pageable: {} },
-                }),
-            });
-            setDeleteConfirm(null);
-        },
-    });
+    const deleteProgramMut = useMutation(deleteTrainingProgramMutation());
 
     const programs = programsData?.data?.content || [];
 
@@ -124,7 +114,18 @@ const ProgramsList = ({ onEdit, onPreview, onCreate }: ProgramsListProps) => {
     }, [programs, searchTerm, statusFilter]);
 
     const handleDelete = (uuid: string) => {
-        deleteProgramMut.mutate({ path: { uuid } });
+        deleteProgramMut.mutate({ path: { uuid } },
+            {
+                onSuccess: () => {
+                    qc.invalidateQueries({
+                        queryKey: getAllTrainingProgramsQueryKey({
+                            query: { pageable: {} },
+                        }),
+                    });
+                    setDeleteConfirm(null);
+                },
+            }
+        );
     };
 
     if (isLoading) {
