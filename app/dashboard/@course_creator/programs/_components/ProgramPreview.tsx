@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { Users } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../../../../../components/ui/button';
 import {
@@ -14,10 +15,11 @@ const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) =>
         'overview'
     );
 
-    const { data: program, isLoading: programLoading } = useQuery({
+    const { data, isLoading: programLoading } = useQuery({
         ...getTrainingProgramByUuidOptions({ path: { uuid: programUuid } }),
         enabled: !!programUuid,
     });
+    const program = data?.data
 
     const { data: programCourses, isLoading: coursesLoading } = useQuery({
         ...getProgramCoursesOptions({ path: { programUuid } }),
@@ -79,30 +81,30 @@ const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) =>
                     <div className='flex-1'>
                         <div className='mb-2 flex items-center gap-3'>
                             <h1 className='text-2xl font-bold text-foreground'>
-                                {program.data.title}
+                                {program?.title}
                             </h1>
                             <span
                                 className={`rounded-full px-3 py-1 text-sm font-medium ${getStatusClasses(
-                                    program.data.status
+                                    program?.status
                                 )}`}
                             >
-                                {program.data.status}
+                                {program?.status}
                             </span>
                         </div>
 
-                        {program.data.program_type && (
+                        {program?.program_type && (
                             <p className='mb-2 text-sm text-muted-foreground'>
-                                {program.data.program_type}
+                                {program?.program_type}
                             </p>
                         )}
 
                         <p className='text-muted-foreground'>
-                            {program.data.description}
+                            {program?.description}
                         </p>
                     </div>
 
                     <Button
-                        onClick={() => onEdit(program?.data)}
+                        onClick={() => onEdit(program)}
                         className='rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90'
                     >
                         Edit Program
@@ -117,9 +119,9 @@ const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) =>
                     { label: 'Enrolled Students', value: enrollments.length },
                     {
                         label: 'Available Spots',
-                        value: program.data.class_limit - enrollments.length,
+                        value: program?.class_limit - enrollments.length,
                     },
-                    { label: 'Price', value: `$${program.data.price}` },
+                    { label: 'Price', value: `KES ${program?.price}` },
                 ].map((stat) => (
                     <div
                         key={stat.label}
@@ -159,8 +161,8 @@ const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) =>
             {activeTab === 'overview' && (
                 <div className='space-y-6'>
                     {[
-                        { title: 'Learning Objectives', value: program.data.objectives },
-                        { title: 'Prerequisites', value: program.data.prerequisites },
+                        { title: 'Learning Objectives', value: program?.objectives },
+                        { title: 'Prerequisites', value: program?.prerequisites },
                     ].map((section) => (
                         <div
                             key={section.title}
@@ -212,9 +214,11 @@ const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) =>
                                                         Required
                                                     </span>
                                                 )}
-                                                <span className='text-muted-foreground'>
-                                                    Order: {course.sequence_order}
-                                                </span>
+
+                                                <span
+                                                    className="text-muted-foreground line-clamp-3"
+                                                    dangerouslySetInnerHTML={{ __html: course.description }}
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -234,7 +238,9 @@ const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) =>
                         </div>
                     ) : enrollments.length === 0 ? (
                         <div className='rounded-lg border-2 border-dashed border-border py-12 text-center'>
-                            <div className='mb-2 text-4xl'>👥</div>
+                            <div className='flex self-center items-center justify-center mb-2 text-4xl'>
+                                <Users />
+                            </div>
                             <p className='text-muted-foreground'>
                                 No students enrolled yet
                             </p>
@@ -255,7 +261,7 @@ const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) =>
                                     </tr>
                                 </thead>
                                 <tbody className='divide-y divide-border'>
-                                    {enrollments.map((e) => (
+                                    {enrollments.map((e: any) => (
                                         <tr key={e.uuid}>
                                             <td className='px-6 py-4 text-sm text-foreground'>
                                                 {e.student_name || e.student_uuid}

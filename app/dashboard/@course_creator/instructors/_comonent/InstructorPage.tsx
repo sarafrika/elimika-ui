@@ -10,9 +10,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { extractPage } from '@/lib/api-helpers';
 import { elimikaDesignSystem } from '@/lib/design-system';
-import { CourseTrainingApplication, getInstructorByUuid } from '@/services/client';
+import { CourseTrainingApplication, getInstructorByUuid, ProgramTrainingApplication } from '@/services/client';
 import {
+  decideOnProgramTrainingApplicationMutation,
   decideOnTrainingApplicationMutation,
+  getCourseByUuidOptions,
   getInstructorByUuidOptions,
   getInstructorByUuidQueryKey,
   getInstructorDocumentsOptions,
@@ -20,6 +22,9 @@ import {
   getInstructorReviewsOptions,
   getInstructorSkillsOptions,
   getOrganisationByUuidOptions,
+  getTrainingProgramByUuidOptions,
+  searchProgramTrainingApplicationsOptions,
+  searchProgramTrainingApplicationsQueryKey,
   searchTrainingApplicationsOptions,
   searchTrainingApplicationsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -83,29 +88,40 @@ const InstructorsApplicationPage = () => {
   const applicationsQuery = useQuery({
     ...searchTrainingApplicationsOptions({
       query: {
-        searchParams: {
-          course_creator_uuid: courseCreator?.uuid as string,
-        },
+        searchParams: { course_creator_uuid: courseCreator?.uuid as string, },
         pageable: { page, size: pageSize },
       },
     }),
   });
-
   const applicationsPage = extractPage<CourseTrainingApplication>(applicationsQuery.data);
   const allApplications = applicationsPage.items;
 
-  const instructorUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          allApplications
-            .filter(app => app.applicant_type === 'instructor')
-            .map(app => app.applicant_uuid)
-            .filter(Boolean)
-        )
-      ),
-    [allApplications]
-  );
+  const programApplicationsQuery = useQuery({
+    ...searchProgramTrainingApplicationsOptions({
+      query: {
+        searchParams: {},
+        pageable: { page, size: pageSize }
+      }
+    })
+  })
+  const programApplicationsPage = extractPage<ProgramTrainingApplication>(programApplicationsQuery.data);
+  const allProgramApplications = programApplicationsPage.items;
+
+  const instructorUuids = useMemo(() => {
+    const combined = [
+      ...(allApplications ?? []),
+      ...(allProgramApplications ?? []),
+    ];
+
+    return Array.from(
+      new Set(
+        combined
+          .filter(app => app.applicant_type === 'instructor')
+          .map(app => app.applicant_uuid)
+          .filter(Boolean)
+      )
+    );
+  }, [allApplications, allProgramApplications]);
 
   // Fetch all instructor details in parallel
   const instructorQueries = useQueries({
@@ -192,28 +208,22 @@ const InstructorsApplicationPage = () => {
     return map;
   }, [instructorQueries]);
 
-  // Apply filters
+  // COURSE APPLICATIONS
+  // Apply filters 
   const filteredApplications = useMemo(() => {
     let items = allApplications;
 
-    // Filter by selected instructor first
     if (selectedInstructorUuid) {
       items = items.filter(app => app.applicant_uuid === selectedInstructorUuid);
     }
-
-    // Status filter
     if (statusFilter) {
       items = items.filter(app => app.status?.toLowerCase() === statusFilter.toLowerCase());
     }
-
-    // Applicant type filter
     if (applicantTypeFilter) {
       items = items.filter(
         app => app.applicant_type?.toLowerCase() === applicantTypeFilter.toLowerCase()
       );
     }
-
-    // Search filter
     if (searchValue) {
       const term = searchValue.toLowerCase();
 
@@ -247,9 +257,55 @@ const InstructorsApplicationPage = () => {
     };
   }, [filteredApplications]);
 
-  // Mutation
-  const decideMutation = useMutation(decideOnTrainingApplicationMutation());
+  // PROGRAM APPLICATIONS
+  // Apply filters 
+  const filteredProgramApplications = useMemo(() => {
+    let items = allProgramApplications;
+    if (selectedInstructorUuid) {
+      items = items.filter(app => app.applicant_uuid === selectedInstructorUuid);
+    }
+    if (statusFilter) {
+      items = items.filter(app => app.status?.toLowerCase() === statusFilter.toLowerCase());
+    }
+    if (applicantTypeFilter) {
+      items = items.filter(
+        app => app.applicant_type?.toLowerCase() === applicantTypeFilter.toLowerCase()
+      );
+    }
+    if (searchValue) {
+      const term = searchValue.toLowerCase();
 
+      items = items.filter(app => {
+        const name = applicantNameMap.get(app.applicant_uuid ?? '')?.toLowerCase() ?? '';
+
+        return (
+          name.includes(term) ||
+          app.program_uuid?.toLowerCase().includes(term) ||
+          app.application_notes?.toLowerCase().includes(term)
+        );
+      });
+    }
+
+    return items;
+  }, [allProgramApplications, selectedInstructorUuid, statusFilter, applicantTypeFilter, searchValue]);
+
+  const programTotalPages = Math.max(Math.ceil(filteredProgramApplications.length / pageSize), 1);
+
+  // Stats
+  const programStats = useMemo(() => {
+    return {
+      total: filteredProgramApplications.length,
+      pending: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'pending').length,
+      approved: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'approved').length,
+      revoked: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'revoked').length,
+      rejected: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'rejected').length,
+      instructors: filteredProgramApplications.filter(
+        a => a.applicant_type?.toLowerCase() === 'instructor'
+      ).length,
+    };
+  }, [filteredProgramApplications]);
+
+  // Mutation
   const handleReview = (
     application: CourseTrainingApplication,
     action: 'approve' | 'reject' | 'revoke'
@@ -259,6 +315,7 @@ const InstructorsApplicationPage = () => {
     setReviewDialogOpen(true);
   };
 
+  const decideMutation = useMutation(decideOnTrainingApplicationMutation());
   const handleSubmitReview = (reviewNotes: string) => {
     if (!selectedApplication?.uuid || !selectedApplication?.course_uuid) {
       toast.error('Missing application details');
@@ -293,6 +350,60 @@ const InstructorsApplicationPage = () => {
         onError: (error: any) => {
           toast.error(error?.message || `Failed to ${reviewAction} application`);
         },
+      }
+    );
+  };
+
+  const decideProgramMutation = useMutation(decideOnProgramTrainingApplicationMutation());
+  const handleSubmitProgramReview = (reviewNotes: string) => {
+    if (!selectedApplication?.uuid || !selectedApplication?.program_uuid) {
+      toast.error('Missing application details');
+      return;
+    }
+
+    decideProgramMutation.mutate(
+      {
+        path: {
+          programUuid: selectedApplication.program_uuid,
+          applicationUuid: selectedApplication.uuid,
+        },
+        query: { action: reviewAction },
+        body: { review_notes: reviewNotes },
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Application ${reviewAction}d successfully`);
+          qc.invalidateQueries({
+            queryKey: searchProgramTrainingApplicationsQueryKey({
+              query: {
+                searchParams: {
+                  // course_creator_uuid: courseCreator?.uuid as string,
+                },
+                pageable: { page, size: pageSize },
+              },
+            }),
+          });
+          setReviewDialogOpen(false);
+          setSelectedApplication(null);
+        },
+        onError: (error: any) => {
+          const errorDuration = 8000;
+
+          toast.error(
+            error?.message || `Failed to ${reviewAction} application`,
+            { duration: errorDuration }
+          );
+
+          // if (error?.message?.includes('Missing approvals')) {
+          //   setTimeout(() => {
+          //     toast.message(
+          //       'Ensure that you have been approved to train all courses under this program.',
+          //       { duration: 12000 }
+          //     );
+          //   }, errorDuration);
+          // }
+        },
+
       }
     );
   };
@@ -403,13 +514,23 @@ const InstructorsApplicationPage = () => {
                 </button>
 
                 <button
-                  onClick={() => setTabs('application')}
-                  className={`px-2 pb-2 text-[15px] font-medium transition-colors ${tabs === 'application'
+                  onClick={() => setTabs('course-application')}
+                  className={`px-2 pb-2 text-[15px] font-medium transition-colors ${tabs === 'course-application'
                     ? 'border-primary text-primary border-b-2 font-extrabold'
                     : 'text-muted-foreground hover:text-foreground'
                     }`}
                 >
-                  Instructor Application to Train
+                  Course Training Application ({stats.pending})
+                </button>
+
+                <button
+                  onClick={() => setTabs('program-application')}
+                  className={`px-2 pb-2 text-[15px] font-medium transition-colors ${tabs === 'program-application'
+                    ? 'border-primary text-primary border-b-2 font-extrabold'
+                    : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                  Program Training Application ({programStats.pending})
                 </button>
               </div>
 
@@ -494,7 +615,7 @@ const InstructorsApplicationPage = () => {
                       /> : <div className='flex flex-col flex-wrap gap-2'>
                         {skills.map((skill: any) => {
                           return (
-                            <div className='flex flex-row items-center gap-2'>
+                            <div key={skill.uuid} className='flex flex-row items-center gap-2'>
                               <p>{skill.skill_name}</p>
                               <Badge key={skill.uuid} variant={'secondary'}>
                                 ({skill.proficiency_level})
@@ -620,14 +741,12 @@ const InstructorsApplicationPage = () => {
                           </div>
                         ))}
                       </div>}
-
-
                     </Card>
                   }
                 </div>
               )}
 
-              {tabs === 'application' && (
+              {tabs === 'course-application' && (
                 <div className='space-y-6'>
                   <div className='grid gap-3 sm:grid-cols-4'>
                     <div className='border-border bg-card rounded-lg border p-3'>
@@ -788,6 +907,7 @@ const InstructorsApplicationPage = () => {
                         <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
                           {filteredApplications.map(application => (
                             <ApplicationCard
+                              type='course'
                               key={application.uuid}
                               application={application}
                               onApprove={() => handleReview(application, 'approve')}
@@ -833,6 +953,217 @@ const InstructorsApplicationPage = () => {
                     action={reviewAction}
                     onSubmit={handleSubmitReview}
                     isLoading={decideMutation.isPending}
+                  />
+                </div>
+              )}
+
+              {tabs === 'program-application' && (
+                <div className='space-y-6'>
+                  <div className='grid gap-3 sm:grid-cols-4'>
+                    <div className='border-border bg-card rounded-lg border p-3'>
+                      <div className='flex items-center gap-3'>
+                        <div className='bg-muted rounded-lg p-2'>
+                          <FileText className='text-primary h-4 w-4' />
+                        </div>
+                        <div>
+                          <p className='text-muted-foreground text-xs'>Total Applications</p>
+                          <p className='text-foreground text-lg font-bold'>{programStats.total}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className='border-border bg-card rounded-lg border p-3'>
+                      <div className='flex items-center gap-3'>
+                        <div className='bg-muted rounded-lg p-2'>
+                          <Clock className='text-primary h-4 w-4' />
+                        </div>
+                        <div>
+                          <p className='text-muted-foreground text-xs'>Pending Review</p>
+                          <p className='text-foreground text-lg font-bold'>{programStats.pending}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className='border-border bg-card rounded-lg border p-3'>
+                      <div className='flex items-center gap-3'>
+                        <div className='bg-muted rounded-lg p-2'>
+                          <CheckCircle2 className='text-primary h-4 w-4' />
+                        </div>
+                        <div>
+                          <p className='text-muted-foreground text-xs'>Approved</p>
+                          <p className='text-foreground text-lg font-bold'>{programStats.approved}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className='border-border bg-card flex flex-row items-center justify-between rounded-lg border p-3'>
+                      {/* Revoked */}
+                      <div className='flex items-center gap-3'>
+                        <div className='bg-destructive/10 rounded-lg p-2'>
+                          <XCircle className='text-destructive h-4 w-4' />
+                        </div>
+                        <div>
+                          <p className='text-muted-foreground text-xs'>Revoked</p>
+                          <p className='text-foreground text-lg font-bold'>{programStats.revoked}</p>
+                        </div>
+                      </div>
+
+                      <div>{' | '}</div>
+
+                      {/* Rejected */}
+                      <div className='flex items-center gap-3'>
+                        <div className='bg-warning/10 rounded-lg p-2'>
+                          <AlertCircle className='text-warning/60 h-4 w-4' />
+                        </div>
+                        <div>
+                          <p className='text-muted-foreground text-xs'>Rejected</p>
+                          <p className='text-foreground text-lg font-bold'>{stats.rejected}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Filters and Search */}
+                  <section className='mb-6'>
+                    <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                      <div className='flex items-center gap-3'>
+                        <Filter className='text-muted-foreground h-4 w-4' />
+                        <select
+                          className='border-border bg-background rounded-md border px-3 py-2 text-sm'
+                          value={statusFilter}
+                          onChange={event => {
+                            setStatusFilter(event.target.value);
+                            setPage(0);
+                          }}
+                        >
+                          {statusOptions.map(option => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          className='border-border bg-background rounded-md border px-3 py-2 text-sm'
+                          value={applicantTypeFilter}
+                          onChange={event => {
+                            setApplicantTypeFilter(event.target.value);
+                            setPage(0);
+                          }}
+                        >
+                          {applicantTypeOptions.map(option => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        {(statusFilter || applicantTypeFilter) && (
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => {
+                              setStatusFilter('');
+                              setApplicantTypeFilter('');
+                            }}
+                          >
+                            <X className='h-4 w-4' />
+                          </Button>
+                        )}
+                      </div>
+                      <div className='relative'>
+                        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+                        <Input
+                          placeholder='Search by applicant name...'
+                          value={searchValue}
+                          onChange={event => setSearchValue(event.target.value)}
+                          className='w-full pl-10 sm:w-80'
+                        />
+                        {searchValue && (
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => setSearchValue('')}
+                            className='absolute top-1/2 right-1 h-7 -translate-y-1/2'
+                          >
+                            <X className='h-4 w-4' />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Applications Grid */}
+                  <section className={elimikaDesignSystem.spacing.content}>
+                    {programApplicationsQuery.isLoading ? (
+                      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+                        {[...Array(6)].map((_, i) => (
+                          <Skeleton key={i} className='h-64 w-full' />
+                        ))}
+                      </div>
+                    ) : filteredProgramApplications.length === 0 ? (
+                      <div className={elimikaDesignSystem.components.emptyState.container}>
+                        <FileText className={elimikaDesignSystem.components.emptyState.icon} />
+                        <h3 className={elimikaDesignSystem.components.emptyState.title}>
+                          {searchValue || statusFilter || applicantTypeFilter
+                            ? 'No applications found'
+                            : 'No training applications yet'}
+                        </h3>
+                        <p className={elimikaDesignSystem.components.emptyState.description}>
+                          {searchValue || statusFilter || applicantTypeFilter
+                            ? 'Try adjusting your search or filter criteria'
+                            : 'Applications will appear here when instructors or organizations apply to train your courses'}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+                          {filteredProgramApplications.map((application: any) => (
+                            <ApplicationCard
+                              type='program'
+                              key={application.uuid}
+                              application={application}
+                              onApprove={() => handleReview(application, 'approve')}
+                              onReject={() => handleReview(application, 'reject')}
+                              onRevoke={() => handleReview(application, 'revoke')}
+                            />
+                          ))}
+                        </div>
+
+                        {/* Pagination */}
+                        {programTotalPages > 1 && (
+                          <div className='mt-6 flex items-center justify-center gap-2'>
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() => setPage(p => Math.max(0, p - 1))}
+                              disabled={page === 0}
+                            >
+                              Previous
+                            </Button>
+                            <span className='text-muted-foreground text-sm'>
+                              Page {page + 1} of {totalPages}
+                            </span>
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                              disabled={page >= totalPages - 1}
+                            >
+                              Next
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </section>
+
+                  {/* Review Dialog */}
+                  <ReviewDialog
+                    open={reviewDialogOpen}
+                    onOpenChange={setReviewDialogOpen}
+                    application={selectedApplication}
+                    action={reviewAction}
+                    onSubmit={handleSubmitProgramReview}
+                    isLoading={decideProgramMutation.isPending}
                   />
                 </div>
               )}
@@ -893,11 +1224,13 @@ function ApplicationCard({
   onApprove,
   onReject,
   onRevoke,
+  type = 'course'
 }: {
-  application: CourseTrainingApplication;
+  application: any;
   onApprove: () => void;
   onReject: () => void;
   onRevoke: () => void;
+  type: string
 }) {
   const isPending = application.status?.toLowerCase() === 'pending';
   const isApproved = application.status?.toLowerCase() === 'approved';
@@ -915,15 +1248,37 @@ function ApplicationCard({
     enabled: applicationType === 'organisation' && !!applicantUuid,
   });
 
+  const isCourse = type === 'course';
+
+  const { data: courseData } = useQuery({
+    ...getCourseByUuidOptions({
+      path: { uuid: application?.course_uuid },
+    }),
+    enabled: isCourse && !!application?.course_uuid,
+  });
+
+  const { data: programData } = useQuery({
+    ...getTrainingProgramByUuidOptions({
+      path: { uuid: application?.program_uuid },
+    }),
+    enabled: !isCourse && !!application?.program_uuid,
+  });
+
+  const name = isCourse
+    ? courseData?.data?.name
+    : programData?.data?.title;
+
   return (
     <div className={elimikaDesignSystem.components.listCard.base}>
-      <div className='mb-4 flex items-start justify-between'>
+      <div className='mb-1 flex items-start justify-between'>
         <div className='flex min-w-0 flex-1 items-center gap-3'></div>
         <Badge variant={getStatusBadgeVariant(application.status)} className='ml-2 flex-shrink-0'>
           <span className='mr-1'>{getStatusIcon(application.status)}</span>
           {application.status}
         </Badge>
       </div>
+
+      <p className='text-[13px] truncate'>{name}</p>
 
       <Separator className='my-3' />
 
@@ -1016,7 +1371,7 @@ function ReviewDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  application: CourseTrainingApplication | null;
+  application: any | null;
   action: 'approve' | 'reject' | 'revoke';
   onSubmit: (reviewNotes: string) => void;
   isLoading: boolean;

@@ -1,8 +1,6 @@
 'use client';
 
-import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '../../../../components/ui/button';
 import CreateProgramWizard from './_components/CreateProgramWizard';
 import ProgramsList from './_components/ProgramList';
 import ProgramPreview from './_components/ProgramPreview';
@@ -40,7 +38,7 @@ const ProgramsPage = () => {
     return (
         <div className='min-h-screen bg-background p-6'>
             {/* Header */}
-            <div className='flex items-end justify-end'>
+            {/* <div className='flex items-end justify-end'>
                 {view === 'list' && (
                     <Button
                         onClick={handleCreateNew}
@@ -49,7 +47,7 @@ const ProgramsPage = () => {
                         <PlusCircle /> Create Program
                     </Button>
                 )}
-            </div>
+            </div> */}
 
             {/* Content Area */}
             <div className=''>
@@ -57,6 +55,7 @@ const ProgramsPage = () => {
                     <ProgramsList
                         onEdit={handleEdit}
                         onPreview={handlePreview}
+                        onCreate={handleCreateNew}
                     />
                 )}
 
