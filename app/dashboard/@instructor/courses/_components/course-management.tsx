@@ -345,7 +345,7 @@ export default function CourseMangementPage() {
               program={program as any}
               applicationStatus={program.application?.status || null}
               applicationReviewNote={program.application?.review_notes || null}
-              handleClick={() => router.push(`/dashboard/courses/${program.uuid}`)}
+              handleClick={() => router.push(`/dashboard/programs/${program.uuid}`)}
               handleQuickApply={() => {
                 setApplyModal(true);
                 setApplyingProgramId(program?.uuid as string);

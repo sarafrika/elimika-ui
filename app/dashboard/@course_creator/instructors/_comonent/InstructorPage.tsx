@@ -394,14 +394,14 @@ const InstructorsApplicationPage = () => {
             { duration: errorDuration }
           );
 
-          if (error?.message?.includes('Missing approvals')) {
-            setTimeout(() => {
-              toast.message(
-                'Ensure that you have been approved to train all courses under this program.',
-                { duration: 12000 }
-              );
-            }, errorDuration);
-          }
+          // if (error?.message?.includes('Missing approvals')) {
+          //   setTimeout(() => {
+          //     toast.message(
+          //       'Ensure that you have been approved to train all courses under this program.',
+          //       { duration: 12000 }
+          //     );
+          //   }, errorDuration);
+          // }
         },
 
       }
@@ -741,8 +741,6 @@ const InstructorsApplicationPage = () => {
                           </div>
                         ))}
                       </div>}
-
-
                     </Card>
                   }
                 </div>
