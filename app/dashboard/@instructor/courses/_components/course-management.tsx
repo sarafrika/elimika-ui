@@ -2,6 +2,7 @@
 
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { CustomPagination } from '@/components/pagination';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserDomain } from '@/context/user-domain-context';
 import type { ApplicantTypeEnum } from '@/services/client';
@@ -26,7 +28,7 @@ import {
   submitTrainingApplicationMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Filter, Search, SortAsc, SortDesc } from 'lucide-react';
+import { BookOpen, Filter, GraduationCap, Layers, Search, SortAsc, SortDesc } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -39,23 +41,35 @@ export default function CourseMangementPage() {
   const instructor = useInstructor();
   const userDomain = useUserDomain();
 
+  // Active tab state
+  const [activeTab, setActiveTab] = useState<'courses' | 'programs'>('courses');
+
+  // Shared filter states
   const [statusFilter, setStatusFilter] = useState<string | null>('all');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Application modal states
   const [applyModal, setApplyModal] = useState(false);
   const [applyingCourseId, setApplyingCourseId] = useState<string | null>(null);
   const [applyingCourse, setApplyingCourse] = useState<any | null>(null);
-
   const [applyingProgramId, setApplyingProgramId] = useState<string | null>(null);
   const [applyingProgram, setApplyingProgram] = useState<any | null>(null);
 
+  // Separate pagination for courses and programs
   const size = 20;
-  const [page, setPage] = useState(0);
+  const [coursePage, setCoursePage] = useState(0);
+  const [programPage, setProgramPage] = useState(0);
 
+  // ============= PROGRAMS DATA =============
   const {
     data: allPrograms,
-  } = useQuery(getAllTrainingProgramsOptions({ query: { pageable: { page, size, sort: [] } } }));
+    isFetching: isProgramsFetching,
+    isFetched: isProgramsFetched,
+    isSuccess: isProgramsSuccess,
+  } = useQuery(getAllTrainingProgramsOptions({
+    query: { pageable: { page: programPage, size, sort: [] } }
+  }));
 
   const { data: appliedPrograms } = useQuery({
     ...searchProgramTrainingApplicationsOptions({
@@ -80,7 +94,6 @@ export default function CourseMangementPage() {
     if (!Array.isArray(combinedPrograms)) return [];
 
     const filtered = combinedPrograms.filter(program => {
-      // const isActiveAndPublished = program.active === true && program.published === false;
       const isActiveAndPublished = program.active === true;
 
       const matchesSearch =
@@ -105,12 +118,15 @@ export default function CourseMangementPage() {
     return filtered;
   }, [combinedPrograms, searchQuery, statusFilter, sortOrder]);
 
+  // ============= COURSES DATA =============
   const {
     data: allCourses,
-    isSuccess,
-    isFetched,
-    isFetching,
-  } = useQuery(getAllCoursesOptions({ query: { pageable: { page, size, sort: [] } } }));
+    isSuccess: isCoursesSuccess,
+    isFetched: isCoursesFetched,
+    isFetching: isCoursesFetching,
+  } = useQuery(getAllCoursesOptions({
+    query: { pageable: { page: coursePage, size, sort: [] } }
+  }));
 
   const { data: appliedCourses } = useQuery({
     ...searchTrainingApplicationsOptions({
@@ -159,8 +175,9 @@ export default function CourseMangementPage() {
     return filtered;
   }, [combinedCourses, searchQuery, statusFilter, sortOrder]);
 
+  // ============= MUTATIONS =============
   const applyToTrain = useMutation(submitTrainingApplicationMutation());
-  const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation())
+  const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation());
 
   const handleApplyToTrain = (data: {
     notes: string;
@@ -200,6 +217,8 @@ export default function CourseMangementPage() {
           });
           toast.success(data?.message);
           setApplyModal(false);
+          setApplyingCourseId(null);
+          setApplyingCourse(null);
         },
         onError: data => {
           toast.error(data?.message);
@@ -247,6 +266,8 @@ export default function CourseMangementPage() {
           });
           toast.success(data?.message);
           setApplyModal(false);
+          setApplyingProgramId(null);
+          setApplyingProgram(null);
         },
         onError: data => {
           toast.error(data?.message);
@@ -256,159 +277,259 @@ export default function CourseMangementPage() {
     );
   };
 
-  const paginationMetadata = allCourses?.data?.metadata;
+  // Reset filters when switching tabs
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as 'courses' | 'programs');
+    setSearchQuery('');
+    setStatusFilter('all');
+  };
+
+  const coursePaginationMetadata = allCourses?.data?.metadata;
+  const programPaginationMetadata = allPrograms?.data?.metadata;
 
   return (
     <div className='h-auto'>
       <div className='container mx-auto'>
-        {/* Search and Filters */}
-        <div className='mb-8'>
-          <div className='mb-6 flex gap-4'>
-            <div className='relative flex-1'>
-              <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-              <Input
-                placeholder='Search courses...'
-                className='pl-10'
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
+          <TabsList className='mb-2 grid w-full max-w-md grid-cols-2'>
+            <TabsTrigger value='courses' className='flex items-center gap-2'>
+              <BookOpen className='h-4 w-4' />
+              Courses
+              {filteredCourses.length > 0 && (
+                <Badge variant='secondary' className='ml-1'>
+                  {filteredCourses.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value='programs' className='flex items-center gap-2'>
+              <Layers className='h-4 w-4' />
+              Programs
+              {filteredPrograms.length > 0 && (
+                <Badge variant='secondary' className='ml-1'>
+                  {filteredPrograms.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Search and Filters - Shared across tabs */}
+          <div className='mb-3'>
+            <div className='mb-6 flex gap-4'>
+              <div className='relative flex-1'>
+                <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
+                <Input
+                  placeholder={`Search ${activeTab}...`}
+                  className='pl-10'
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className='flex flex-wrap gap-2'>
+                <Select value={statusFilter || ''} onValueChange={setStatusFilter}>
+                  <SelectTrigger className='flex-1 min-w-[150px]'>
+                    <Filter className='mr-2 h-4 w-4' />
+                    <SelectValue placeholder='Filter by status' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Statuses</SelectItem>
+                    <SelectItem value='approved'>Approved</SelectItem>
+                    <SelectItem value='pending'>Pending</SelectItem>
+                    <SelectItem value='rejected'>Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className='flex-shrink-0'
+                >
+                  {sortOrder === 'asc' ? (
+                    <SortAsc className='h-4 w-4' />
+                  ) : (
+                    <SortDesc className='h-4 w-4' />
+                  )}
+                  <span className='ml-1 hidden sm:inline'>Date</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Courses Tab Content */}
+          <TabsContent value='courses' className='mt-0'>
+            {/* Results count */}
+            <div className='mb-6'>
+              <div className='flex items-center justify-between'>
+                <p className='text-muted-foreground text-sm'>
+                  Browse available courses to train
+                </p>
+                <p className='text-muted-foreground text-sm'>
+                  {filteredCourses.length} course{filteredCourses.length === 1 ? '' : 's'} found
+                </p>
+              </div>
             </div>
 
-            <div className='flex flex-wrap gap-2'>
-              <Select value={statusFilter || ''} onValueChange={setStatusFilter}>
-                <SelectTrigger className='flex-1'>
-                  <Filter className='mr-2 h-4 w-4' />
-                  <SelectValue placeholder='Filter by status' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>All Statuses</SelectItem>
-                  <SelectItem value='approved'>Approved</SelectItem>
-                  <SelectItem value='pending'>Pending</SelectItem>
-                  <SelectItem value='rejected'>Rejected</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Loading State */}
+            {isCoursesFetching && !isCoursesFetched && !isCoursesSuccess && (
+              <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className='h-[450px] w-full' />
+                ))}
+              </div>
+            )}
 
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className='flex-shrink-0'
-              >
-                {sortOrder === 'asc' ? (
-                  <SortAsc className='h-4 w-4' />
-                ) : (
-                  <SortDesc className='h-4 w-4' />
+            {/* Empty State */}
+            {!isCoursesFetching && isCoursesFetched && isCoursesSuccess && filteredCourses.length === 0 && (
+              <div className='py-16 text-center'>
+                <BookOpen className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
+                <h3 className='mb-2 text-lg font-semibold'>No courses found</h3>
+                <p className='text-muted-foreground mb-4'>
+                  {searchQuery || statusFilter !== 'all'
+                    ? 'Try adjusting your filters to see more results.'
+                    : 'No training courses are currently available.'}
+                </p>
+                {(searchQuery || statusFilter !== 'all') && (
+                  <Button
+                    variant='outline'
+                    onClick={() => {
+                      setSearchQuery('');
+                      setStatusFilter('all');
+                    }}
+                  >
+                    Clear filters
+                  </Button>
                 )}
-                <span className='ml-1 hidden sm:inline'>Date</span>
-              </Button>
-            </div>
-          </div>
-        </div>
+              </div>
+            )}
 
-        {/* Results */}
-        <div className='mb-6'>
-          <div className='flex items-center justify-between'>
-            <p className='text-muted-foreground text-sm'>List of courses you can train</p>
-            <p className='text-muted-foreground text-sm'>
-              {filteredCourses.length} course{filteredCourses.length === 1 ? '' : 's'} found
-            </p>
-          </div>
-        </div>
+            {/* Course Grid */}
+            {filteredCourses.length > 0 && (
+              <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
+                {filteredCourses.map(course => (
+                  <TrainCourseCard
+                    key={course.uuid}
+                    course={course as any}
+                    applicationStatus={course.application?.status || null}
+                    applicationReviewNote={course.application?.review_notes || null}
+                    handleClick={() => router.push(`/dashboard/courses/${course.uuid}`)}
+                    handleQuickApply={() => {
+                      setApplyModal(true);
+                      setApplyingCourseId(course?.uuid as string);
+                      setApplyingCourse(course as any);
+                    }}
+                    handleReapplyToTrain={() => {
+                      setApplyModal(true);
+                      setApplyingCourseId(course?.uuid as string);
+                      setApplyingCourse(course as any);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
 
-        {/* Course Grid */}
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
-          {filteredCourses.map(course => (
-            <TrainCourseCard
-              key={course.uuid}
-              course={course as any}
-              applicationStatus={course.application?.status || null}
-              applicationReviewNote={course.application?.review_notes || null}
-              handleClick={() => router.push(`/dashboard/courses/${course.uuid}`)}
-              handleQuickApply={() => {
-                setApplyModal(true);
-                setApplyingCourseId(course?.uuid as string);
-                setApplyingCourse(course as any);
-              }}
-              handleReapplyToTrain={() => {
-                setApplyModal(true);
-                setApplyingCourseId(course?.uuid as string);
-                setApplyingCourse(course as any);
-              }}
-            />
-          ))}
-        </div>
+            {/* Pagination */}
+            {coursePaginationMetadata?.totalPages && coursePaginationMetadata.totalPages > 1 && (
+              <div className='mt-8'>
+                <CustomPagination
+                  totalPages={coursePaginationMetadata.totalPages as number}
+                  onPageChange={page => {
+                    setCoursePage(page - 1);
+                  }}
+                />
+              </div>
+            )}
+          </TabsContent>
 
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 mt-6'>
-          {filteredPrograms?.map(program => (
-            <TrainProgramCard
-              key={program.uuid}
-              program={program as any}
-              applicationStatus={program.application?.status || null}
-              applicationReviewNote={program.application?.review_notes || null}
-              handleClick={() => router.push(`/dashboard/programs/${program.uuid}`)}
-              handleQuickApply={() => {
-                setApplyModal(true);
-                setApplyingProgramId(program?.uuid as string);
-                setApplyingProgram(program as any);
-              }}
-              handleReapplyToTrain={() => {
-                setApplyModal(true);
-                setApplyingProgramId(program?.uuid as string);
-                setApplyingProgram(program as any);
-              }}
-            />
-          ))}
-        </div>
-
-        {isFetching && !isFetched && !isSuccess && (
-          <div className='flex flex-col gap-6 space-y-2'>
-            <Skeleton className='h-[150px] w-full' />
-
-            <div className='flex flex-row items-center justify-between gap-4'>
-              <Skeleton className='h-[250px] w-2/3' />
-              <Skeleton className='h-[250px] w-1/3' />
+          {/* Programs Tab Content */}
+          <TabsContent value='programs' className='mt-0'>
+            {/* Results count */}
+            <div className='mb-6'>
+              <div className='flex items-center justify-between'>
+                <p className='text-muted-foreground text-sm'>
+                  Browse available programs to train
+                </p>
+                <p className='text-muted-foreground text-sm'>
+                  {filteredPrograms.length} program{filteredPrograms.length === 1 ? '' : 's'} found
+                </p>
+              </div>
             </div>
 
-            <Skeleton className='h-[100px] w-full' />
-          </div>
-        )}
+            {/* Loading State */}
+            {isProgramsFetching && !isProgramsFetched && !isProgramsSuccess && (
+              <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className='h-[450px] w-full' />
+                ))}
+              </div>
+            )}
 
-        {!isFetching && isFetched && isSuccess && filteredCourses.length === 0 && (
-          <div className='py-16 text-center'>
-            <BookOpen className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
-            <h3 className='mb-2'>No assigned courses yet</h3>
-            <p className='text-muted-foreground mb-4'>
-              You do not have any courses assigned. Reach out to a course creator to request access.
-            </p>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setSearchQuery('');
-              }}
-            >
-              Clear filters
-            </Button>
-          </div>
-        )}
+            {/* Empty State */}
+            {!isProgramsFetching && isProgramsFetched && isProgramsSuccess && filteredPrograms.length === 0 && (
+              <div className='py-16 text-center'>
+                <GraduationCap className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
+                <h3 className='mb-2 text-lg font-semibold'>No programs found</h3>
+                <p className='text-muted-foreground mb-4'>
+                  {searchQuery || statusFilter !== 'all'
+                    ? 'Try adjusting your filters to see more results.'
+                    : 'No training programs are currently available.'}
+                </p>
+                {(searchQuery || statusFilter !== 'all') && (
+                  <Button
+                    variant='outline'
+                    onClick={() => {
+                      setSearchQuery('');
+                      setStatusFilter('all');
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </div>
+            )}
 
-        {/* Load More */}
-        {filteredCourses.length > 0 && (
-          <div className='my-12 text-center'>
-            <Button variant='outline'>Load More Courses</Button>
-          </div>
-        )}
+            {/* Program Grid */}
+            {filteredPrograms.length > 0 && (
+              <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
+                {filteredPrograms.map(program => (
+                  <TrainProgramCard
+                    key={program.uuid}
+                    program={program as any}
+                    applicationStatus={program.application?.status || null}
+                    applicationReviewNote={program.application?.review_notes || null}
+                    handleClick={() => router.push(`/dashboard/programs/${program.uuid}`)}
+                    handleQuickApply={() => {
+                      setApplyModal(true);
+                      setApplyingProgramId(program?.uuid as string);
+                      setApplyingProgram(program as any);
+                    }}
+                    handleReapplyToTrain={() => {
+                      setApplyModal(true);
+                      setApplyingProgramId(program?.uuid as string);
+                      setApplyingProgram(program as any);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
 
-        {/* @ts-ignore */}
-        {paginationMetadata?.totalPages >= 1 && (
-          <CustomPagination
-            totalPages={paginationMetadata?.totalPages as number}
-            onPageChange={page => {
-              setPage(page - 1);
-            }}
-          />
-        )}
+            {/* Pagination */}
+            {programPaginationMetadata?.totalPages && programPaginationMetadata.totalPages > 1 && (
+              <div className='mt-8'>
+                <CustomPagination
+                  totalPages={programPaginationMetadata.totalPages as number}
+                  onPageChange={page => {
+                    setProgramPage(page - 1);
+                  }}
+                />
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
-        {applyingCourseId &&
+        {/* Application Modals */}
+        {applyingCourseId && (
           <NotesModal
             open={applyModal}
             setOpen={setApplyModal}
@@ -420,9 +541,10 @@ export default function CourseMangementPage() {
             placeholder='Enter your application notes here...'
             isLoading={applyToTrain.isPending}
             minimum_rate={applyingCourse?.minimum_training_fee}
-          />}
+          />
+        )}
 
-        {applyingProgramId &&
+        {applyingProgramId && (
           <NotesModal
             open={applyModal}
             setOpen={setApplyModal}
@@ -434,8 +556,8 @@ export default function CourseMangementPage() {
             placeholder='Enter your application notes here...'
             isLoading={applyToTrainProgramMut.isPending}
             minimum_rate={applyingProgram?.price}
-          />}
-
+          />
+        )}
       </div>
     </div>
   );

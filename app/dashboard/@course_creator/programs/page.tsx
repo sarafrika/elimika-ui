@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useCourseCreator } from '../../../../context/course-creator-context';
 import CreateProgramWizard from './_components/CreateProgramWizard';
 import ProgramsList from './_components/ProgramList';
 import ProgramPreview from './_components/ProgramPreview';
@@ -9,6 +10,7 @@ type ViewMode = 'list' | 'create' | 'preview';
 
 const ProgramsPage = () => {
     const [view, setView] = useState<ViewMode>('list');
+    const creator = useCourseCreator()
     const [selectedProgramUuid, setSelectedProgramUuid] = useState<string | null>(
         null
     );
@@ -56,6 +58,7 @@ const ProgramsPage = () => {
                         onEdit={handleEdit}
                         onPreview={handlePreview}
                         onCreate={handleCreateNew}
+                        creator={creator}
                     />
                 )}
 
@@ -65,6 +68,7 @@ const ProgramsPage = () => {
                         onComplete={handleBackToList}
                         onCancel={handleBackToList}
                         setEditingProgram={setEditingProgram}
+                        creator={creator}
                     />
                 )}
 

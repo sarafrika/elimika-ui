@@ -16,7 +16,7 @@ export default function ProgramManagementLayout({ children }: ProgramManagementL
                         Training Programs
                     </h2>
                     <p className='text-muted-foreground text-[14px]'>
-                        Create, manage, and monitor comprehensive training programs
+                        Bundle courses together to create certificate, diploma or degree training programs
                     </p>
                 </div>
             </div>

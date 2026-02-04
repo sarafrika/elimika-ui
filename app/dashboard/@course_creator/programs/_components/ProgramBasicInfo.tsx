@@ -22,6 +22,7 @@ type ProgramFormData = {
     price: number;
     instructor_uuid?: string;
     categories: string[];
+    category_uuid: string
 };
 
 type FormErrors = Partial<Record<keyof ProgramFormData, string>>;
@@ -58,7 +59,7 @@ const ProgramBasicInfo = ({
     const categories = categoriesData?.data?.content ?? [];
 
     useEffect(() => {
-        setFormData(initialData);
+        setFormData({ ...initialData, category_uuid: selectedCategories[0] });
         setSelectedCategories(initialData.categories ?? []);
     }, [initialData]);
 
@@ -185,19 +186,6 @@ const ProgramBasicInfo = ({
                         {errors.title && (
                             <p className='mt-1 text-sm text-destructive'>{errors.title}</p>
                         )}
-                    </div>
-
-                    {/* Program Type */}
-                    <div>
-                        <Label className='mb-2 block text-sm font-medium text-foreground'>
-                            Program Type
-                        </Label>
-                        <Input
-                            type='text'
-                            value={formData.program_type ?? ''}
-                            onChange={(e) => handleChange('program_type', e.target.value)}
-                            className='w-full rounded-lg border border-border px-4 py-2 focus:border-primary focus:outline-none'
-                        />
                     </div>
 
                     {/* Description */}

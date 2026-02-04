@@ -27,7 +27,6 @@ import {
 } from '../../../../services/client/@tanstack/react-query.gen';
 import { AssignmentCreationForm } from './assignment-creation-form';
 import { QuizCreationForm } from './quiz-creation-form';
-import { RubricAssociationForm } from './rubric-association-form';
 
 const sampleQuestions = [
   'What is the capital of France?',
@@ -50,7 +49,7 @@ const sampleOptions = [
 
 const randomItem = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
-const tabs = ['Rubrics', 'Quiz', 'Assignment', 'Project', 'Discussions', 'Attendance'];
+const tabs = ['Quiz', 'Assignment', 'Project', 'Discussions',];
 
 type AssessmentCreationFormProps = {
   course: any;
@@ -89,7 +88,7 @@ const AssessmentCreationForm = ({
   lessons,
 }: AssessmentCreationFormProps) => {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState('Rubrics');
+  const [activeTab, setActiveTab] = useState('Quiz');
 
   const [selectedLesson, setSelectedLesson] = useState<any | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState<any>(lessons?.content[0]?.id);
@@ -893,9 +892,7 @@ const AssessmentCreationForm = ({
     [selectedLessonId]
   );
 
-  // ========================================================================
-  //   Assignment CRUD operations
-  // ========================================================================
+
   const createAssignmentForLesson = useCallback(
     async (lessonId: string, payload: any) => {
       return new Promise<string>((resolve, reject) => {
@@ -1001,16 +998,6 @@ const AssessmentCreationForm = ({
       </div>
 
       <div>
-        {activeTab === 'Rubrics' && (
-          <div>
-            <RubricAssociationForm courseUuid={course?.data?.uuid as string} associatedBy={course?.data?.course_creator_uuid as string} />
-
-            <div className='text-muted-foreground flex min-h-[300px] flex-col items-center justify-center gap-6 px-3 py-2 text-center text-sm'>
-              <p>No rubrics assigned yet</p>
-            </div>
-          </div>
-        )}
-
 
         {activeTab === 'Quiz' && (
           <div>
@@ -1141,12 +1128,6 @@ const AssessmentCreationForm = ({
         {activeTab === 'Discussions' && (
           <div className='text-muted-foreground flex min-h-[300px] flex-col items-center justify-center gap-6 px-3 py-2 text-center text-sm'>
             <p>No discussions yet</p>
-          </div>
-        )}
-
-        {activeTab === 'Attendance' && (
-          <div className='text-muted-foreground flex min-h-[300px] flex-col items-center justify-center gap-6 px-3 py-2 text-center text-sm'>
-            <p>No attendance recorded yet</p>
           </div>
         )}
       </div>

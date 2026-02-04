@@ -29,7 +29,7 @@ import {
   unpublishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { EyeIcon, FilePenIcon, MoreVertical, TrashIcon } from 'lucide-react';
+import { EyeIcon, FilePenIcon, MoreVertical, PlusCircle, TrashIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -127,14 +127,67 @@ export default function PublishedCoursesComponent({
             {publishedCourses?.length > 1 ? 's' : ''}.
           </p>
         </div>
+        <Button asChild>
+          <Link prefetch href='/dashboard/course-management/create-new-course'>
+            <PlusCircle className='mr-2 h-4 w-4' />
+            Create course
+          </Link>
+        </Button>
       </div>
 
       {!isFetched && (
-        <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
-          <div className='bg-muted h-20 w-full animate-pulse rounded'></div>
-          <div className='bg-muted h-16 w-full animate-pulse rounded'></div>
-          <div className='bg-muted h-12 w-full animate-pulse rounded'></div>
-        </div>
+        <Card>
+          <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='space-y-2'>
+              <div className='bg-muted h-5 w-32 animate-pulse rounded'></div>
+              <div className='bg-muted h-4 w-48 animate-pulse rounded'></div>
+            </div>
+          </CardHeader>
+          <CardContent className='p-0'>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead></TableHead>
+                  <TableHead>Course Name</TableHead>
+                  <TableHead>Categories</TableHead>
+                  <TableHead>Class Limit</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                  <TableHead className='mx-auto text-center'>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[1, 2, 3].map((i) => (
+                  <TableRow key={i}>
+                    <TableCell className='py-1'>
+                      <div className='bg-muted h-12 w-12 animate-pulse rounded-md'></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className='space-y-2'>
+                        <div className='bg-muted h-4 w-48 animate-pulse rounded'></div>
+                        <div className='bg-muted h-3 w-32 animate-pulse rounded'></div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className='flex gap-1'>
+                        <div className='bg-muted h-5 w-16 animate-pulse rounded-full'></div>
+                        <div className='bg-muted h-5 w-20 animate-pulse rounded-full'></div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className='bg-muted h-4 w-20 animate-pulse rounded'></div>
+                    </TableCell>
+                    <TableCell>
+                      <div className='bg-muted h-4 w-24 animate-pulse rounded'></div>
+                    </TableCell>
+                    <TableCell className='text-center'>
+                      <div className='bg-muted mx-auto h-8 w-8 animate-pulse rounded'></div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {isFetched && publishedCourses?.length === 0 && (

@@ -153,7 +153,7 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
         )}
 
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
-          <div className='border-border space-y-6 rounded-3xl border-1 px-6 py-10'>
+          <div className='border-border space-y-6 rounded-3xl py-10'>
             <FormField
               control={form.control}
               name='compliance.copyright_confirmed'
