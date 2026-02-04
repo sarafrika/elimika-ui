@@ -9,6 +9,7 @@ import type { Course } from '@/services/client';
 import {
   getAllDifficultyLevelsOptions,
   getCourseCreatorByUuidOptions,
+  getCourseReviewsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -55,6 +56,19 @@ export function TrainCourseCard({
   );
   // @ts-expect-error
   const courseCreator = creator?.data;
+
+  const { data: courseReviews } = useQuery({
+    ...getCourseReviewsOptions({ path: { courseUuid: course?.uuid as string } }),
+    enabled: !!course?.uuid
+  })
+  const ratings = courseReviews?.data
+    ?.map(r => r.rating)
+    .filter((r): r is number => typeof r === "number") ?? [];
+
+  const averageRating =
+    ratings.length
+      ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+      : 0;
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -194,12 +208,11 @@ export function TrainCourseCard({
           <div className='text-muted-foreground mb-4 flex items-center gap-4 text-sm'>
             <div className='flex items-center gap-1'>
               <Star className='fill-warning text-warning h-4 w-4' />
-              {/* <span>{course?.rating}</span> */}
-              <span>{1.2}</span>
+              <span>{averageRating}</span>
             </div>
             <div className='flex items-center gap-1'>
               <Users className='h-4 w-4' />
-              <span>{course?.class_limit}</span>
+              <span>{course?.class_limit} max participants</span>
             </div>
 
           </div>

@@ -231,14 +231,14 @@ const MySkillsPage = () => {
           </div>
 
           <div className='flex flex-row items-center gap-4' >
-            <Button
+            {/* <Button
               size='default'
               className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2'
               onClick={() => setIsAddSkillModalOpen(true)}
             >
               <PlusCircle className='h-5 w-5' />
               Add New Skill
-            </Button>
+            </Button> */}
 
             <Button
               size='default'
@@ -247,7 +247,9 @@ const MySkillsPage = () => {
                 setShowStudentProfileNotice(true);
               }}
             >
-              Browse Courses
+              {/* Browse Courses */}
+              <PlusCircle className='h-5 w-5' />
+              Add New Skill
             </Button>
           </div>
         </div>
@@ -347,9 +349,20 @@ const MySkillsPage = () => {
                   </p>
                   <Button
                     onClick={() => setIsAddSkillModalOpen(true)}
-
-                    className='flex items-center gap-2'>
+                    className='hidden items-center gap-2'>
                     <PlusCircle className='h-4 w-4' />
+                    Add Your First Skill
+                  </Button>
+
+                  <Button
+                    size='default'
+                    className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2'
+                    onClick={() => {
+                      setShowStudentProfileNotice(true);
+                    }}
+                  >
+                    {/* Browse Courses */}
+                    <PlusCircle className='h-5 w-5' />
                     Add Your First Skill
                   </Button>
                 </div>
@@ -389,7 +402,7 @@ const MySkillsPage = () => {
 
       {/* Quick Stats */}
       <section className='mb-6'>
-        <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
+        <div className='grid grid-cols-2 gap-4 sm:grid-cols-3'>
           <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
             <div className='mb-1 flex items-center gap-2'>
               <BookOpen className='text-muted-foreground h-4 w-4' />
@@ -411,13 +424,13 @@ const MySkillsPage = () => {
             </div>
             <p className='text-2xl font-bold text-muted-foreground'>{stats.inProgress}</p>
           </div>
-          <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
+          {/* <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
             <div className='mb-1 flex items-center gap-2'>
               <XCircle className='text-destructive h-4 w-4' />
               <p className='text-muted-foreground text-xs'>Failed</p>
             </div>
             <p className='text-destructive text-2xl font-bold'>{stats.failed}</p>
-          </div>
+          </div> */}
         </div>
       </section>
 
@@ -542,15 +555,15 @@ const MySkillsPage = () => {
                   No courses enrolled yet
                 </h3>
                 <p className='text-muted-foreground mb-4'>
-                  Start your learning journey by enrolling in a course
+                  Start your learning journey. enroll in a course and obtain new skills.
                 </p>
-                <button
+                {/* <button
                   onClick={() => {
                     setShowStudentProfileNotice(true);
                   }}
                   className='bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2 font-medium transition-colors'>
                   Browse Courses
-                </button>
+                </button> */}
               </div>
             )}
           </>

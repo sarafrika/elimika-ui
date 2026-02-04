@@ -17,7 +17,6 @@ import {
   Heart,
   Pencil,
   Share,
-  Star,
   Users,
   XCircle
 } from 'lucide-react';
@@ -190,13 +189,8 @@ export function TrainProgramCard({
           {/* Stats */}
           <div className='text-muted-foreground mb-4 flex items-center gap-4 text-sm'>
             <div className='flex items-center gap-1'>
-              <Star className='fill-warning text-warning h-4 w-4' />
-              {/* <span>{course?.rating}</span> */}
-              <span>{1.2}</span>
-            </div>
-            <div className='flex items-center gap-1'>
               <Users className='h-4 w-4' />
-              <span>{program?.class_limit}</span>
+              <span>{program?.class_limit} max participants</span>
             </div>
 
           </div>

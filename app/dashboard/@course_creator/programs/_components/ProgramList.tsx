@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { Filter, PlusCircle, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { toast } from 'sonner';
 import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
 import {
@@ -44,8 +45,8 @@ import {
 } from '../../../../../components/ui/table';
 import {
     deleteTrainingProgramMutation,
-    getAllTrainingProgramsOptions,
-    getAllTrainingProgramsQueryKey,
+    searchTrainingProgramsOptions,
+    searchTrainingProgramsQueryKey
 } from '../../../../../services/client/@tanstack/react-query.gen';
 
 type ProgramStatusFilter = 'all' | 'published' | 'draft' | 'archived';
@@ -82,9 +83,10 @@ interface ProgramsListProps {
     onEdit: (program: Program) => void;
     onPreview: (uuid: string) => void;
     onCreate?: () => void;
+    creator: any
 }
 
-const ProgramsList = ({ onEdit, onPreview, onCreate }: ProgramsListProps) => {
+const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProps) => {
     const qc = useQueryClient();
 
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -92,15 +94,14 @@ const ProgramsList = ({ onEdit, onPreview, onCreate }: ProgramsListProps) => {
     const [statusFilter, setStatusFilter] = useState<ProgramStatusFilter>('all');
 
     const { data: programsData, isLoading } = useQuery(
-        getAllTrainingProgramsOptions({
-            query: { pageable: {} },
+        searchTrainingProgramsOptions({
+            query: {
+                pageable: {}, searchParams: { course_creator_uuid_eq: creator?.profile?.uuid }
+            },
         })
     );
 
-    const deleteProgramMut = useMutation(deleteTrainingProgramMutation());
-
     const programs = programsData?.data?.content || [];
-
     const filteredPrograms = useMemo(() => {
         return programs.filter((program) => {
             const matchesSearch =
@@ -113,16 +114,18 @@ const ProgramsList = ({ onEdit, onPreview, onCreate }: ProgramsListProps) => {
         });
     }, [programs, searchTerm, statusFilter]);
 
+    const deleteProgramMut = useMutation(deleteTrainingProgramMutation());
     const handleDelete = (uuid: string) => {
         deleteProgramMut.mutate({ path: { uuid } },
             {
                 onSuccess: () => {
                     qc.invalidateQueries({
-                        queryKey: getAllTrainingProgramsQueryKey({
-                            query: { pageable: {} },
+                        queryKey: searchTrainingProgramsQueryKey({
+                            query: { pageable: {}, searchParams: { course_creator_uuid_eq: creator?.profile?.uuid } },
                         }),
                     });
                     setDeleteConfirm(null);
+                    toast.success("Program Deleted Successfully")
                 },
             }
         );

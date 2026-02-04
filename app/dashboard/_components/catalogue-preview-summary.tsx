@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
-import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
 import { CheckCircle2, ExternalLink, ShieldAlert, ShoppingBag } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ export function CataloguePreviewSummary({
 }: {
   breadcrumbBase?: { title: string; href: string };
 }) {
+
   const params = useParams();
   const routeId = params?.id as string | undefined;
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -49,26 +50,36 @@ export function CataloguePreviewSummary({
     enabled: Boolean(resolvedClassId),
   });
 
-  const catalogueItem = catalogueQuery.data?.data;
+  const catalogueItem = catalogueQuery.data?.data[0];
   const course = extractEntity(courseQuery.data);
   const classDefinition = extractEntity(classQuery.data);
 
-  if (routeId) {
-    replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      { id: 'catalogue', title: breadcrumbBase.title, url: breadcrumbBase.href },
-      {
-        id: 'preview',
-        title: 'Summary',
-        url: `/dashboard/course-management/preview/${routeId}`,
-        isLast: true,
-      },
-    ]);
-  }
+  const breadcrumbs = useMemo(
+    () =>
+      routeId
+        ? [
+          { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+          { id: 'catalogue', title: breadcrumbBase.title, url: breadcrumbBase.href },
+          {
+            id: 'preview',
+            title: 'Summary',
+            url: `/dashboard/course-management/preview/${routeId}`,
+            isLast: true,
+          },
+        ]
+        : null,
+    [routeId, breadcrumbBase.href, breadcrumbBase.title]
+  );
+
+  useEffect(() => {
+    if (breadcrumbs) {
+      replaceBreadcrumbs(breadcrumbs);
+    }
+  }, [breadcrumbs, replaceBreadcrumbs]);
 
   if (catalogueQuery.isLoading || courseQuery.isLoading) {
     return (
-      <div className='mx-auto max-w-5xl space-y-6 p-6'>
+      <div className='w-full mx-auto max-w-6xl space-y-6 p-6'>
         <Card>
           <CardHeader>
             <Skeleton className='h-6 w-48' />
@@ -85,7 +96,7 @@ export function CataloguePreviewSummary({
 
   if (!catalogueItem) {
     return (
-      <div className='mx-auto max-w-5xl space-y-6 p-6'>
+      <div className='w-full mx-auto max-w-6xl space-y-6 p-6'>
         <Card className='border-destructive/30 bg-destructive/5'>
           <CardHeader>
             <CardTitle className='text-destructive flex items-center gap-2'>
@@ -117,7 +128,7 @@ export function CataloguePreviewSummary({
   }, [catalogueItem.class_definition_uuid, catalogueItem.course_uuid]);
 
   return (
-    <div className='mx-auto max-w-5xl space-y-6 p-6'>
+    <div className='w-full mx-auto max-w-6xl space-y-6 p-6'>
       <Card>
         <CardHeader className='space-y-2'>
           <div className='flex flex-wrap items-center gap-2'>
@@ -149,6 +160,7 @@ export function CataloguePreviewSummary({
             )}
           </CardDescription>
         </CardHeader>
+
         <CardContent className='space-y-6'>
           <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-3'>
             <Detail label='Product code' value={catalogueItem.product_code ?? '—'} />

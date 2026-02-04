@@ -5,15 +5,14 @@ import { useEffect, useState } from 'react';
 
 import {
     createTrainingProgramMutation,
-    getAllTrainingProgramsQueryKey,
     publishProgramMutation,
-    updateTrainingProgramMutation,
+    searchTrainingProgramsQueryKey,
+    updateTrainingProgramMutation
 } from '@/services/client/@tanstack/react-query.gen';
 
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../../../../../components/ui/button';
-import { useCourseCreator } from '../../../../../context/course-creator-context';
 import ProgramBasicInfo from './ProgramBasicInfo';
 import ProgramCourseManagement from './ProgramCourseManagement';
 
@@ -21,9 +20,9 @@ const CreateProgramWizard = ({
     editingProgram,
     onComplete,
     onCancel,
+    creator
 }: any) => {
     const qc = useQueryClient();
-    const creator = useCourseCreator();
     const [step, setStep] = useState(1);
     const [programUuid, setProgramUuid] = useState<string | null>(
         editingProgram?.uuid || null
@@ -38,7 +37,7 @@ const CreateProgramWizard = ({
         prerequisites: '',
         class_limit: 50,
         price: 0,
-        program_type: '',
+        program_type: 'program',
         course_creator_uuid: creator?.profile?.uuid,
         category_uuid: '',
         total_duration_hours: 0,
@@ -57,7 +56,7 @@ const CreateProgramWizard = ({
             prerequisites: editingProgram.prerequisites ?? '',
             class_limit: editingProgram.class_limit ?? 50,
             price: editingProgram.price ?? 0,
-            program_type: editingProgram.program_type ?? '',
+            program_type: editingProgram.program_type ?? 'program',
             course_creator_uuid: editingProgram.course_creator_uuid ?? creator?.profile?.uuid,
             category_uuid: editingProgram.category_uuid ?? '',
             total_duration_hours: editingProgram.total_duration_hours ?? 0,
@@ -87,8 +86,8 @@ const CreateProgramWizard = ({
                 {
                     onSuccess: (response) => {
                         qc.invalidateQueries({
-                            queryKey: getAllTrainingProgramsQueryKey({
-                                query: { pageable: {} },
+                            queryKey: searchTrainingProgramsQueryKey({
+                                query: { pageable: {}, searchParams: { course_creator_uuid_eq: creator?.profile?.uuid } },
                             }),
                         });
 
@@ -129,8 +128,8 @@ const CreateProgramWizard = ({
                         });
 
                         qc.invalidateQueries({
-                            queryKey: getAllTrainingProgramsQueryKey({
-                                query: { pageable: {} },
+                            queryKey: searchTrainingProgramsQueryKey({
+                                query: { pageable: {}, searchParams: { course_creator_uuid_eq: creator?.profile?.uuid } },
                             }),
                         });
 
@@ -161,8 +160,8 @@ const CreateProgramWizard = ({
             {
                 onSuccess: (data) => {
                     qc.invalidateQueries({
-                        queryKey: getAllTrainingProgramsQueryKey({
-                            query: { pageable: {} },
+                        queryKey: searchTrainingProgramsQueryKey({
+                            query: { pageable: {}, searchParams: { course_creator_uuid_eq: creator?.profile?.uuid } },
                         }),
                     });
                     toast.success(data?.message || 'Program published successfully');
@@ -192,8 +191,8 @@ const CreateProgramWizard = ({
             {
                 onSuccess: (data) => {
                     qc.invalidateQueries({
-                        queryKey: getAllTrainingProgramsQueryKey({
-                            query: { pageable: {} },
+                        queryKey: searchTrainingProgramsQueryKey({
+                            query: { pageable: {}, searchParams: { course_creator_uuid_eq: creator?.profile?.uuid } },
                         }),
                     });
                     toast.success(data?.message || 'Draft saved successfully');
