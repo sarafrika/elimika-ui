@@ -3,10 +3,13 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, CheckCircle, Clock, PlusCircle, Star, TrendingUp, XCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '../../../../components/ui/button';
 import { useInstructor } from '../../../../context/instructor-context';
+import { useUserDomain } from '../../../../context/user-domain-context';
 import { useMultipleClassDetails } from '../../../../hooks/use-class-multiple-details';
+import { useUserDomains } from '../../../../hooks/use-user-query';
 import {
   getInstructorSkillsOptions,
   getStudentScheduleOptions,
@@ -20,17 +23,10 @@ const elimikaDesignSystem = {
 };
 
 const proficiencyScoreMap: Record<string, number> = {
-  BEGINNER: 25,
-  INTERMEDIATE: 50,
-  ADVANCED: 75,
-  EXPERT: 100,
-};
-
-const proficiencyLabelMap: Record<string, string> = {
-  BEGINNER: 'Beginner',
-  INTERMEDIATE: 'Intermediate',
-  ADVANCED: 'Advanced',
-  EXPERT: 'Expert',
+  beginner: 25,
+  intermediate: 50,
+  advanced: 75,
+  expert: 100,
 };
 
 const skillColorMap = [
@@ -42,8 +38,15 @@ const skillColorMap = [
 ];
 
 const MySkillsPage = () => {
+  const router = useRouter()
   const instructor = useInstructor();
   const uuid = instructor?.uuid as string;
+  const { domains } = useUserDomains();
+  const userDomain = useUserDomain();
+  const hasStudentProfile = Array.isArray(domains) && domains.includes('student');
+
+  const [showStudentProfileNotice, setShowStudentProfileNotice] = useState(false);
+
 
   const { data: studentSearch } = useQuery({
     ...searchStudentsOptions({
@@ -65,69 +68,19 @@ const MySkillsPage = () => {
   });
   const [useMockData, setUseMockData] = useState(false);
   const apiSkills = data?.data?.content ?? [];
-  const mockSkills = [
-    {
-      uuid: 'skill234-1111-22aa-bbbb-1234567890ab',
-      course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-      skill_name: 'Curriculum Development',
-      proficiency_level: 'ADVANCED',
-      created_date: '2024-06-10T10:12:45',
-      created_by: 'creator@example.com',
-      updated_date: '2024-06-18T08:40:10',
-      updated_by: 'creator@example.com',
-    },
-    {
-      uuid: 'skill345-2222-33bb-cccc-2345678901bc',
-      course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-      skill_name: 'Learning Experience Design (LXD)',
-      proficiency_level: 'EXPERT',
-      created_date: '2024-05-22T16:05:30',
-      created_by: 'creator@example.com',
-      updated_date: '2024-06-01T11:20:00',
-      updated_by: 'creator@example.com',
-    },
-    {
-      uuid: 'skill456-3333-44cc-dddd-3456789012cd',
-      course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-      skill_name: 'Assessment Design',
-      proficiency_level: 'ADVANCED',
-      created_date: '2024-04-18T09:45:12',
-      created_by: 'creator@example.com',
-      updated_date: '2024-05-02T14:10:55',
-      updated_by: 'creator@example.com',
-    },
-    {
-      uuid: 'skill567-4444-55dd-eeee-4567890123de',
-      course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-      skill_name: 'eLearning Development',
-      proficiency_level: 'EXPERT',
-      created_date: '2024-03-12T13:00:00',
-      created_by: 'creator@example.com',
-      updated_date: '2024-06-05T17:25:40',
-      updated_by: 'creator@example.com',
-    },
-    {
-      uuid: 'skill678-5555-66ee-ffff-5678901234ef',
-      course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-      skill_name: 'Storyboarding',
-      proficiency_level: 'INTERMEDIATE',
-      created_date: '2024-02-28T08:35:18',
-      created_by: 'creator@example.com',
-      updated_date: '2024-03-15T10:00:00',
-      updated_by: 'creator@example.com',
-    },
-  ];
-  const skills = useMockData ? mockSkills : apiSkills;
+  // const skills = useMockData ? mockSkills : apiSkills;
+  const skills = apiSkills;
+
 
   // overall progress = average proficiency score
   const overallProgress =
     skills.length > 0
       ? Math.round(
-          skills.reduce(
-            (acc: number, skill: any) => acc + (proficiencyScoreMap[skill.proficiency_level] || 0),
-            0
-          ) / skills.length
-        )
+        skills.reduce(
+          (acc: number, skill: any) => acc + (proficiencyScoreMap[skill.proficiency_level] || 0),
+          0
+        ) / skills.length
+      )
       : 0;
 
   // top 3 skills by proficiency
@@ -155,60 +108,9 @@ const MySkillsPage = () => {
 
   const [useMockEnrollment, setUseMockEnrollment] = useState(false);
   const studentEnrollmentsApi = studentEnrollmentData?.data;
-  const mockStudentEnrollments = [
-    {
-      enrollment_uuid: 'en123456-7890-abcd-ef01-234567890abc',
-      scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
-      class_definition_uuid: '49958252-fb3e-4a48-a693-972111cb1390',
-      instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-      title: 'Introduction to Java Programming',
-      start_time: '2024-09-15T09:00:00',
-      end_time: '2024-09-15T10:30:00',
-      timezone: 'UTC',
-      location_type: 'IN_PERSON',
-      location_name: 'Nairobi HQ – Room 101',
-      location_latitude: -1.292066,
-      location_longitude: 36.821945,
-      scheduling_status: 'SCHEDULED',
-      enrollment_status: 'ENROLLED',
-      attendance_marked_at: null,
-    },
-    {
-      enrollment_uuid: 'en123456-7890-abcd-ef01-234567890abc',
-      scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
-      class_definition_uuid: '30fb8f5e-8ce7-4871-923c-de6316a2d9b8',
-      instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-      title: 'Introduction to Java Programming',
-      start_time: '2024-09-15T09:00:00',
-      end_time: '2024-09-15T10:30:00',
-      timezone: 'UTC',
-      location_type: 'IN_PERSON',
-      location_name: 'Nairobi HQ – Room 101',
-      location_latitude: -1.292066,
-      location_longitude: 36.821945,
-      scheduling_status: 'SCHEDULED',
-      enrollment_status: 'ENROLLED',
-      attendance_marked_at: null,
-    },
-    {
-      enrollment_uuid: 'en123456-7890-abcd-ef01-234567890abc',
-      scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
-      class_definition_uuid: 'e1fa19fc-1bd3-4cdb-9c35-564ac56dd071',
-      instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-      title: 'Introduction to Java Programming',
-      start_time: '2024-09-15T09:00:00',
-      end_time: '2024-09-15T10:30:00',
-      timezone: 'UTC',
-      location_type: 'IN_PERSON',
-      location_name: 'Nairobi HQ – Room 101',
-      location_latitude: -1.292066,
-      location_longitude: 36.821945,
-      scheduling_status: 'SCHEDULED',
-      enrollment_status: 'ENROLLED',
-      attendance_marked_at: null,
-    },
-  ];
-  const studentEnrollments = useMockEnrollment ? mockStudentEnrollments : studentEnrollmentsApi;
+  // const studentEnrollments = useMockEnrollment ? mockStudentEnrollments : studentEnrollmentsApi;
+  const studentEnrollments = studentEnrollmentsApi;
+
 
   const uniqueClassDefinitionUuids = [
     ...new Set(studentEnrollments?.map(e => e.class_definition_uuid)),
@@ -276,21 +178,58 @@ const MySkillsPage = () => {
             </p>
           </div>
           <Button
-            size={'default'}
-            className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2 font-medium shadow-sm transition-colors'
+            size='default'
+            className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2'
+            onClick={() => {
+              setShowStudentProfileNotice(true);
+            }}
           >
+            {/* Browse Courses */}
             <PlusCircle className='h-5 w-5' />
             Add New Skill
           </Button>
         </div>
       </section>
 
-      <div className='my-6 flex flex-col gap-2 rounded-md border-l-4 border-yellow-500 bg-yellow-100 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-          <p className='font-medium'>🚧 This page is under construction.</p>
-          <p className='text-sm text-yellow-900'>Mock data is being used for this template</p>
+
+      {showStudentProfileNotice && <div className='my-6 flex flex-col gap-3 rounded-md border-l-4 border-destructive bg-destructive/10 p-4 text-destructive shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
+        <div className='flex flex-col gap-1'>
+          <p className='font-medium'>⚠️ Student profile required</p>
+          <p className='text-sm text-destructive/90'>
+            To add skills to your skill set, you need a student profile.
+            If you already have one, simply switch profile. Otherwise, create a student profile to continue.
+          </p>
         </div>
-      </div>
+
+        <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            size='sm'
+            className='border-destructive text-destructive hover:bg-destructive/10'
+            onClick={async () => {
+              if (userDomain.activeDomain === 'student') return;
+
+              userDomain.setActiveDomain('student');
+
+              // allow context to update
+              await new Promise(resolve => setTimeout(resolve, 300));
+
+              router.push('/dashboard/overview');
+              router.refresh();
+            }}
+          >
+            Switch profile
+          </Button>
+
+          {!hasStudentProfile && <Button
+            size='sm'
+            className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            onClick={() => router.push('/dashboard/add-profile')}
+          >
+            Create profile
+          </Button>}
+        </div>
+      </div>}
 
       {/* Hero Section - Skills Snapshot */}
       <section className='mb-8'>
@@ -301,14 +240,14 @@ const MySkillsPage = () => {
               <h2 className='text-foreground text-xl font-bold'>My Skills Snapshot</h2>
             </div>
 
-            <Button
+            {/* <Button
               variant='outline'
               size='sm'
               onClick={() => setUseMockData(prev => !prev)}
               className='text-xs'
             >
               {useMockData ? 'Use API Data' : 'Use Demo Data'}
-            </Button>
+            </Button> */}
           </div>
 
           {skillsIsLoading ? (
@@ -384,7 +323,7 @@ const MySkillsPage = () => {
 
       {/* Quick Stats */}
       <section className='mb-6'>
-        <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
+        <div className='grid grid-cols-2 gap-4 sm:grid-cols-3'>
           <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
             <div className='mb-1 flex items-center gap-2'>
               <BookOpen className='text-muted-foreground h-4 w-4' />
@@ -406,13 +345,7 @@ const MySkillsPage = () => {
             </div>
             <p className='text-2xl font-bold text-yellow-600'>{stats.inProgress}</p>
           </div>
-          <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
-            <div className='mb-1 flex items-center gap-2'>
-              <XCircle className='text-destructive h-4 w-4' />
-              <p className='text-muted-foreground text-xs'>Failed</p>
-            </div>
-            <p className='text-destructive text-2xl font-bold'>{stats.failed}</p>
-          </div>
+
         </div>
       </section>
 
@@ -424,14 +357,14 @@ const MySkillsPage = () => {
             Enrolled Courses
           </h2>
 
-          <Button
+          {/* <Button
             variant='outline'
             size='sm'
             onClick={() => setUseMockEnrollment(prev => !prev)}
             className='text-xs'
           >
             {useMockEnrollment ? 'Use API Data' : 'Use Demo Data'}
-          </Button>
+          </Button> */}
         </div>
 
         {enrollmentIsLoading ? (
@@ -507,13 +440,12 @@ const MySkillsPage = () => {
                           </div>
                           <div className='bg-background border-input h-2 w-full overflow-hidden rounded-full border'>
                             <div
-                              className={`h-2 rounded-full transition-all duration-500 ${
-                                en?.course?.status === 'complete' || en?.course?.status === 'passed'
-                                  ? 'bg-success'
-                                  : en?.course?.status === 'failed'
-                                    ? 'bg-destructive'
-                                    : 'bg-yellow-500'
-                              }`}
+                              className={`h-2 rounded-full transition-all duration-500 ${en?.course?.status === 'complete' || en?.course?.status === 'passed'
+                                ? 'bg-success'
+                                : en?.course?.status === 'failed'
+                                  ? 'bg-destructive'
+                                  : 'bg-yellow-500'
+                                }`}
                               style={{ width: `${en?.course?.progress || 0}%` }}
                             />
                           </div>
@@ -538,11 +470,15 @@ const MySkillsPage = () => {
                   No courses enrolled yet
                 </h3>
                 <p className='text-muted-foreground mb-4'>
-                  Start your learning journey by enrolling in a course
+                  Start your learning journey. enroll in a course and obtain new skills.
                 </p>
-                <button className='bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2 font-medium transition-colors'>
+                {/* <button
+                  onClick={() => {
+                    setShowStudentProfileNotice(true);
+                  }}
+                  className='bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2 font-medium transition-colors'>
                   Browse Courses
-                </button>
+                </button> */}
               </div>
             )}
           </>
@@ -635,3 +571,110 @@ export function EnrollmentSkeleton() {
     </div>
   );
 }
+
+
+const mockSkills = [
+  {
+    uuid: 'skill234-1111-22aa-bbbb-1234567890ab',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    skill_name: 'Curriculum Development',
+    proficiency_level: 'ADVANCED',
+    created_date: '2024-06-10T10:12:45',
+    created_by: 'creator@example.com',
+    updated_date: '2024-06-18T08:40:10',
+    updated_by: 'creator@example.com',
+  },
+  {
+    uuid: 'skill345-2222-33bb-cccc-2345678901bc',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    skill_name: 'Learning Experience Design (LXD)',
+    proficiency_level: 'EXPERT',
+    created_date: '2024-05-22T16:05:30',
+    created_by: 'creator@example.com',
+    updated_date: '2024-06-01T11:20:00',
+    updated_by: 'creator@example.com',
+  },
+  {
+    uuid: 'skill456-3333-44cc-dddd-3456789012cd',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    skill_name: 'Assessment Design',
+    proficiency_level: 'ADVANCED',
+    created_date: '2024-04-18T09:45:12',
+    created_by: 'creator@example.com',
+    updated_date: '2024-05-02T14:10:55',
+    updated_by: 'creator@example.com',
+  },
+  {
+    uuid: 'skill567-4444-55dd-eeee-4567890123de',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    skill_name: 'eLearning Development',
+    proficiency_level: 'EXPERT',
+    created_date: '2024-03-12T13:00:00',
+    created_by: 'creator@example.com',
+    updated_date: '2024-06-05T17:25:40',
+    updated_by: 'creator@example.com',
+  },
+  {
+    uuid: 'skill678-5555-66ee-ffff-5678901234ef',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    skill_name: 'Storyboarding',
+    proficiency_level: 'INTERMEDIATE',
+    created_date: '2024-02-28T08:35:18',
+    created_by: 'creator@example.com',
+    updated_date: '2024-03-15T10:00:00',
+    updated_by: 'creator@example.com',
+  },
+];
+const mockStudentEnrollments = [
+  {
+    enrollment_uuid: 'en123456-7890-abcd-ef01-234567890abc',
+    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
+    class_definition_uuid: '49958252-fb3e-4a48-a693-972111cb1390',
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    title: 'Introduction to Java Programming',
+    start_time: '2024-09-15T09:00:00',
+    end_time: '2024-09-15T10:30:00',
+    timezone: 'UTC',
+    location_type: 'IN_PERSON',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
+    scheduling_status: 'SCHEDULED',
+    enrollment_status: 'ENROLLED',
+    attendance_marked_at: null,
+  },
+  {
+    enrollment_uuid: 'en123456-7890-abcd-ef01-234567890abc',
+    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
+    class_definition_uuid: '30fb8f5e-8ce7-4871-923c-de6316a2d9b8',
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    title: 'Introduction to Java Programming',
+    start_time: '2024-09-15T09:00:00',
+    end_time: '2024-09-15T10:30:00',
+    timezone: 'UTC',
+    location_type: 'IN_PERSON',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
+    scheduling_status: 'SCHEDULED',
+    enrollment_status: 'ENROLLED',
+    attendance_marked_at: null,
+  },
+  {
+    enrollment_uuid: 'en123456-7890-abcd-ef01-234567890abc',
+    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
+    class_definition_uuid: 'e1fa19fc-1bd3-4cdb-9c35-564ac56dd071',
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    title: 'Introduction to Java Programming',
+    start_time: '2024-09-15T09:00:00',
+    end_time: '2024-09-15T10:30:00',
+    timezone: 'UTC',
+    location_type: 'IN_PERSON',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
+    scheduling_status: 'SCHEDULED',
+    enrollment_status: 'ENROLLED',
+    attendance_marked_at: null,
+  },
+];

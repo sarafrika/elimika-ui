@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { elimikaDesignSystem } from '@/lib/design-system';
-import { useQuery } from '@tanstack/react-query';
-import { CheckCircle2, Clock } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { CheckCircle2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '../../../../components/ui/badge';
 import {
   Select,
@@ -19,119 +19,90 @@ import {
 } from '../../../../components/ui/select';
 import { useInstructor } from '../../../../context/instructor-context';
 import {
-  getAllCoursesOptions,
-  getCourseEnrollmentsOptions,
-  getStudentByIdOptions,
-  searchTrainingApplicationsOptions,
+  getClassDefinitionsForInstructorOptions,
+  getEnrollmentsForClassOptions,
+  getStudentByIdOptions
 } from '../../../../services/client/@tanstack/react-query.gen';
 
 const EnrollmentsPage = () => {
+  const router = useRouter()
   const instructor = useInstructor();
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
 
-  // GET INSTRUCTOR COURSES
-  // const { data } = useQuery({
-  //     ...getCoursesByInstructorOptions({ path: { instructorUuid: instructor?.uuid as string }, query: { pageable: {} } }),
-  //     enabled: !!instructor?.uuid
-  // })
-
-  const [statusFilter, setStatusFilter] = useState<string | null>('all');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [applyModal, setApplyModal] = useState(false);
-  const [applyingCourseId, setApplyingCourseId] = useState<string | null>(null);
-  const [applyingCourse, setApplyingCourse] = useState<any | null>(null);
-
-  const size = 20;
-  const [page, setPage] = useState(0);
-
-  const { data: allCourses } = useQuery(
-    getAllCoursesOptions({ query: { pageable: { page, size, sort: [] } } })
-  );
-
-  const { data: appliedCourses } = useQuery({
-    ...searchTrainingApplicationsOptions({
-      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+  const { data: classesData } = useQuery({
+    ...getClassDefinitionsForInstructorOptions({
+      path: { instructorUuid: instructor?.uuid as string },
+      query: { activeOnly: true }
     }),
-    enabled: !!instructor?.uuid,
+    enabled: !!instructor?.uuid
   });
 
-  const combinedCourses = React.useMemo(() => {
-    if (!allCourses?.data?.content || !appliedCourses?.data?.content) return [];
-    const appliedMap = new Map(
-      appliedCourses.data.content.map((app: any) => [app.course_uuid, app])
-    );
+  const instructorClasses =
+    classesData?.data?.map((item: any) => item.class_definition) || [];
 
-    return allCourses.data.content.map((course: any) => ({
-      ...course,
-      application: appliedMap.get(course.uuid) || null,
-    }));
-  }, [allCourses, appliedCourses]);
-
-  const filteredCourses = useMemo(() => {
-    if (!Array.isArray(combinedCourses)) return [];
-
-    const filtered = combinedCourses.filter(course => {
-      const isActiveAndPublished = course.active === true && course.is_published === true;
-
-      const matchesSearch =
-        !searchQuery ||
-        course?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        course?.description?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesStatus =
-        !statusFilter || statusFilter === 'all' || course.application?.status === statusFilter;
-
-      return isActiveAndPublished && matchesSearch && matchesStatus;
-    });
-
-    if (sortOrder) {
-      filtered.sort((a, b) => {
-        const dateA = new Date(a.application?.reviewed_at || 0).getTime();
-        const dateB = new Date(b.application?.reviewed_at || 0).getTime();
-        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-      });
+  useEffect(() => {
+    if (!selectedClassId && instructorClasses.length > 0) {
+      setSelectedClassId(instructorClasses[0].uuid);
     }
+  }, [instructorClasses, selectedClassId]);
 
-    return filtered;
-  }, [combinedCourses, searchQuery, statusFilter, sortOrder]);
 
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-
-  // Fetch enrollments for selected course
-  const { data: enrollmentsResponse, isLoading: isLoadingEnrollments } = useQuery({
-    ...getCourseEnrollmentsOptions({
-      path: { courseUuid: selectedCourseId as string },
-      query: { pageable: {} },
-    }),
-    enabled: !!selectedCourseId,
+  const enrollmentQueries = useQueries({
+    queries: instructorClasses.map((classItem: any) => ({
+      ...getEnrollmentsForClassOptions({
+        path: { uuid: classItem.uuid },
+      }),
+      enabled: !!classItem.uuid,
+    })),
   });
 
-  const enrollmentsForSelectedCourse = enrollmentsResponse?.data?.content || [];
+  const enrollmentCountsByClass = useMemo(() => {
+    const counts: Record<string, number> = {};
+    instructorClasses.forEach((classItem: any, index: number) => {
+      const enrollments = enrollmentQueries[index]?.data?.data || [];
+      // Count unique students
+      counts[classItem.uuid] = new Set(enrollments.map((e: any) => e.student_uuid)).size;
+    });
+    return counts;
+  }, [instructorClasses, enrollmentQueries]);
 
-  // Fetch student data for each enrollment
-  const studentQueries = enrollmentsForSelectedCourse.map(enrollment =>
-    useQuery({
-      ...getStudentByIdOptions({ path: { uuid: enrollment.student_uuid } }),
-      enabled: !!enrollment.student_uuid,
-    })
+  // Get enrollments for selected class
+  const selectedClassIndex = instructorClasses.findIndex(
+    (c: any) => c.uuid === selectedClassId
+  );
+  const enrollmentsForSelectedClass =
+    selectedClassIndex >= 0 ? enrollmentQueries[selectedClassIndex]?.data?.data || [] : [];
+  const isLoadingEnrollments =
+    selectedClassIndex >= 0 ? enrollmentQueries[selectedClassIndex]?.isLoading : false;
+
+  const uniqueStudentUuids: string[] = Array.from(
+    new Set(
+      enrollmentsForSelectedClass
+        .map((e: any) => e.student_uuid)
+        .filter(Boolean)
+    )
   );
 
-  // Map student data with enrollment data
-  const enrichedEnrollments = enrollmentsForSelectedCourse.map((enrollment, index) => {
-    const studentData = studentQueries[index]?.data?.data;
-    return {
-      ...enrollment,
-      studentName:
-        studentData?.first_name && studentData?.last_name
-          ? `${studentData.first_name} ${studentData.last_name}`
-          : studentData?.email || 'Unknown Student',
-      studentAvatar: studentData?.profile_image_url,
-    };
+  const studentQueries = useQueries({
+    queries: uniqueStudentUuids.map((studentUuid: string) => ({
+      ...getStudentByIdOptions({
+        path: { uuid: studentUuid },
+      }),
+      enabled: !!studentUuid,
+    })),
   });
 
-  const handleViewProfile = (studentName: string) => {
-    toast.message(`Viewing profile of ${studentName}`);
+  const studentsData = studentQueries
+    .map(q => q.data)
+    .filter(Boolean);
+
+  const students =
+    studentsData?.map((item: any) => item.data) || [];
+
+  const handleViewProfile = (studentUuid: string) => {
+    router.push(`/dashboard/enrollments/${selectedClassId}?id=${studentUuid}`)
   };
+
 
   return (
     <div className={`${elimikaDesignSystem.components.pageContainer} px-4 sm:px-6`}>
@@ -141,65 +112,64 @@ const EnrollmentsPage = () => {
           <div>
             <h1 className='text-foreground text-xl font-bold sm:text-2xl'>Enrollments</h1>
             <p className='text-muted-foreground text-sm'>
-              Review all students enrolled in each course
+              Review all students enrolled in each class
             </p>
           </div>
         </div>
       </section>
 
-
       {/* Two-column layout */}
       <div className='flex flex-col gap-6 lg:flex-row'>
-        {/* Left: Course List */}
-        {/* Course Selector (Mobile) */}
+        {/* Class Selector (Mobile) */}
         <div className='flex flex-col gap-2 lg:hidden'>
-          <p className='text-sm'>Select a course to see its enrollment details</p>
+          <p className='text-sm'>Select a class to see its enrollment details</p>
           <Select
-            value={selectedCourseId ?? undefined}
-            onValueChange={value => setSelectedCourseId(value)}
+            value={selectedClassId ?? undefined}
+            onValueChange={value => setSelectedClassId(value)}
           >
             <SelectTrigger className='w-full'>
-              <SelectValue placeholder='Select a course' />
+              <SelectValue placeholder='Select a class' />
             </SelectTrigger>
 
             <SelectContent>
-              {filteredCourses?.map(course => {
-                const enrollmentCount = enrollmentsForSelectedCourse.filter(
-                  e => e.course_uuid === course.uuid
-                ).length;
+              {instructorClasses.map((classItem: any) => {
+                const enrollmentCount = enrollmentCountsByClass[classItem.uuid] || 0;
 
                 return (
-                  <SelectItem key={course.uuid} value={course.uuid}>
+                  <SelectItem key={classItem.uuid} value={classItem.uuid}>
                     <div className='flex w-full items-center justify-between gap-2'>
-                      <span className='truncate'>{course.name}</span>
-                      <span className='text-muted-foreground text-xs'>({enrollmentCount})</span>
+                      <span className='truncate'>{classItem.title}</span>
+                      <span className='text-muted-foreground text-xs'>
+                        ({enrollmentCount})
+                      </span>
                     </div>
                   </SelectItem>
                 );
               })}
             </SelectContent>
+
           </Select>
         </div>
 
-        {/* Course List (Desktop) */}
+        {/* Class List (Desktop) */}
         <div className='hidden space-y-2 lg:block lg:max-h-[calc(100vh-250px)] lg:w-1/3 lg:overflow-y-auto'>
-          {filteredCourses?.map(course => {
-            const enrollmentCount = enrollmentsForSelectedCourse.filter(
-              e => e.course_uuid === course.uuid
-            ).length;
-
-            const isSelected = selectedCourseId === course.uuid;
+          {instructorClasses.map((classItem: any) => {
+            const enrollmentCount = enrollmentCountsByClass[classItem.uuid] || 0;
+            const isSelected = selectedClassId === classItem.uuid;
 
             return (
               <button
-                key={course.uuid}
-                onClick={() => setSelectedCourseId(course.uuid)}
+                key={classItem.uuid}
+                onClick={() => setSelectedClassId(classItem.uuid)}
                 className={`flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left text-sm transition-all ${isSelected
                   ? 'border-primary bg-primary/10 shadow-sm'
                   : 'border-border bg-background hover:bg-muted'
                   }`}
               >
-                <span className='text-foreground truncate font-medium'>{course.name}</span>
+                <span className='truncate font-medium'>
+                  {classItem.title || 'Unnamed Class'}
+                </span>
+
                 <Badge variant='secondary' className='shrink-0'>
                   {enrollmentCount}
                 </Badge>
@@ -210,12 +180,12 @@ const EnrollmentsPage = () => {
 
         {/* Right: Enrollments List */}
         <div className='space-y-4 lg:max-h-[calc(100vh-250px)] lg:w-2/3 lg:overflow-y-auto'>
-          {selectedCourseId === null ? (
+          {selectedClassId === null ? (
             <Card className='p-6 text-center sm:p-12'>
               <CheckCircle2 className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-              <p className='text-foreground text-lg font-medium'>Select a course</p>
+              <p className='text-foreground text-lg font-medium'>Select a class</p>
               <p className='text-muted-foreground text-sm'>
-                Choose a course on the left to view enrollments.
+                Choose a class on the left to view enrollments.
               </p>
             </Card>
           ) : isLoadingEnrollments ? (
@@ -233,25 +203,24 @@ const EnrollmentsPage = () => {
                 </Card>
               ))}
             </div>
-          ) : enrichedEnrollments.length === 0 ? (
+          ) : students.length === 0 ? (
             <Card className='p-6 text-center sm:p-12'>
               <CheckCircle2 className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
               <p className='text-foreground text-lg font-medium'>No enrollments</p>
               <p className='text-muted-foreground text-sm'>
-                No students have enrolled in this course yet.
+                No students have enrolled in this class yet.
               </p>
             </Card>
           ) : (
-            enrichedEnrollments.map(enrollment => (
+            students.map(student => (
               <Card
-                key={enrollment.uuid}
+                key={student?.uuid}
                 className='flex flex-col gap-3 p-4 sm:flex-row sm:items-center'
               >
                 <Avatar>
-                  <AvatarImage src={enrollment.studentAvatar} />
+                  <AvatarImage src={student?.full_name} />
                   <AvatarFallback>
-                    {enrollment.studentName
-                      .split(' ')
+                    {student?.full_name?.split(' ')
                       .map((n: any) => n[0])
                       .join('')
                       .toUpperCase()}
@@ -259,17 +228,17 @@ const EnrollmentsPage = () => {
                 </Avatar>
 
                 <div className='min-w-0 flex-1'>
-                  <p className='text-foreground truncate font-semibold'>{enrollment.studentName}</p>
-                  <p className='text-muted-foreground flex items-center gap-1 text-xs'>
+                  <p className='text-foreground truncate font-semibold'>{student?.full_name}</p>
+                  {/* <p className='text-muted-foreground flex items-center gap-1 text-xs'>
                     <Clock className='h-3 w-3 shrink-0' />
-                    {/* enrollment time */}
-                  </p>
+                    enrollment time
+                  </p> */}
                 </div>
 
                 <Button
                   size='sm'
                   className='w-full sm:w-auto'
-                  onClick={() => handleViewProfile(enrollment.studentName)}
+                  onClick={() => handleViewProfile(student?.uuid as string)}
                 >
                   View Profile
                 </Button>

@@ -2,7 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
@@ -39,7 +38,6 @@ const EnrollmentsPage = () => {
 
   const isEnrollmentsLoading = enrollmentQueries.some(q => q.isLoading);
 
-
   const enrollmentsByCourse = useMemo(() => {
     return enrollmentQueries.reduce<Record<string, any[]>>((acc, query, index) => {
       acc[courseUuids[index]] = query.data?.data?.content ?? [];
@@ -65,7 +63,6 @@ const EnrollmentsPage = () => {
   });
 
   const isStudentsLoading = studentQueries.some(q => q.isLoading);
-
 
   const enrichedEnrollments = enrollmentsForSelectedCourse.map((enrollment, index) => {
     const studentData = studentQueries[index]?.data?.data;
@@ -166,7 +163,7 @@ const EnrollmentsPage = () => {
           ) : (
             <>
               {enrichedEnrollments.map(enrollment => (
-                <Card key={enrollment.uuid} className='flex items-center gap-4 p-4'>
+                <Card key={enrollment.uuid} className='flex flex-row items-center gap-4 p-4'>
                   <Avatar>
                     <AvatarImage src={enrollment.studentAvatar} />
                     <AvatarFallback>
@@ -192,14 +189,14 @@ const EnrollmentsPage = () => {
                     </p>
                   </div>
 
-                  <Button
+                  {/* <Button
                     size='sm'
                     onClick={() =>
                       handleViewProfile(enrollment.studentName)
                     }
                   >
                     View Profile
-                  </Button>
+                  </Button> */}
                 </Card>
               ))}
             </>

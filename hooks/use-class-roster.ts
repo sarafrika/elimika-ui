@@ -7,29 +7,23 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 export function useClassRoster(classId: string | undefined) {
-  // 1. Fetch all enrollments for a class
   const enrollmentQuery = useQuery(
     getEnrollmentsForClassOptions({
       path: { uuid: classId as string },
     })
   );
 
-  const enrollments = enrollmentQuery?.data?.data ?? [];
+  const allEnrollments = enrollmentQuery?.data?.data ?? [];
 
-  // 2. Deduplicate by student_uuid
   const uniqueEnrollments = useMemo(() => {
-    if (!enrollments) return [];
-
     return Object.values(
-      // @ts-ignore
-      enrollments?.reduce((acc: any, e: any) => {
+      allEnrollments.reduce((acc: any, e: any) => {
         acc[e.student_uuid] = e;
         return acc;
       }, {})
     );
-  }, [enrollments]);
+  }, [allEnrollments]);
 
-  // 3. Fetch individual STUDENT data
   const studentQueries = useQueries({
     queries: uniqueEnrollments.map((enrol: any) => ({
       ...getStudentByIdOptions({
@@ -39,10 +33,8 @@ export function useClassRoster(classId: string | undefined) {
     })),
   });
 
-  // Extract student records
   const students = studentQueries.map((q: any) => q?.data?.data).filter(Boolean);
 
-  // 4. Fetch USER PROFILES for each student
   const userQueries = useQueries({
     queries: students.map((stu: any) => ({
       ...getUserByUuidOptions({
@@ -54,7 +46,6 @@ export function useClassRoster(classId: string | undefined) {
 
   const users = userQueries.map(q => q.data?.data).filter(Boolean);
 
-  // 5. Combine into a useful structure
   const roster = useMemo(() => {
     return uniqueEnrollments.map((enrollment: any, index: any) => ({
       enrollment,
@@ -63,9 +54,19 @@ export function useClassRoster(classId: string | undefined) {
     }));
   }, [uniqueEnrollments, studentQueries, userQueries]);
 
+  const rosterAllEnrollments = useMemo(() => {
+    return allEnrollments.map(enrollment => {
+      const student = students.find(s => s.uuid === enrollment.student_uuid);
+      const user = student ? users.find(u => u.uuid === student.user_uuid) : null;
+      return { enrollment, student, user };
+    });
+  }, [allEnrollments, students, users]);
+
   return {
-    roster,
+    roster, // unique enrollments
+    rosterAllEnrollments, // all enrollments
     uniqueEnrollments,
+    allEnrollments,
     isLoading:
       enrollmentQuery.isLoading ||
       studentQueries.some(q => q.isLoading) ||

@@ -36,18 +36,12 @@ const elimikaDesignSystem = {
   },
 };
 
-const proficiencyScoreMap: Record<string, number> = {
-  BEGINNER: 25,
-  INTERMEDIATE: 50,
-  ADVANCED: 75,
-  EXPERT: 100,
-};
 
-const proficiencyLabelMap: Record<string, string> = {
-  BEGINNER: 'Beginner',
-  INTERMEDIATE: 'Intermediate',
-  ADVANCED: 'Advanced',
-  EXPERT: 'Expert',
+const proficiencyScoreMap: Record<string, number> = {
+  beginner: 25,
+  intermediate: 50,
+  advanced: 75,
+  expert: 100,
 };
 
 const skillColorMap = [
@@ -146,7 +140,7 @@ const MySkillsPage = () => {
     .slice(0, 3)
     .map((skill: any, index: number) => ({
       name: skill.skill_name,
-      level: proficiencyLabelMap[skill.proficiency_level],
+      level: skill.proficiency_level,
       icon: '⭐',
       color: skillColorMap[index % skillColorMap.length],
     }));
