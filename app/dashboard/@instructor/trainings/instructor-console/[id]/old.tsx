@@ -1,43 +1,56 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useClassRoster } from '@/hooks/use-class-roster';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
-import { useInstructorInfo } from '@/hooks/use-instructor-info';
 import {
   getClassDefinitionOptions,
-  getCourseAssessmentsOptions,
   getCourseByUuidOptions,
+  getCourseRubricsOptions,
   getInstructorCalendarOptions,
-  getInstructorScheduleOptions,
   markAttendanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
-  Calendar1Icon,
+  Award,
+  BookOpen,
   CheckCircle,
-  Clock,
-  Copy,
-  Facebook,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
   FileText,
-  Link,
-  Linkedin,
-  Mail,
+  ImageIcon,
+  Lock,
   MessageCircle,
-  Twitter,
+  Play,
+  Search,
+  Settings,
+  Users,
+  X,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
-
-import { SidebarMenuButton } from '@/components/ui/sidebar';
-import { useClassRoster } from '@/hooks/use-class-roster';
-import { BarChart2, Camera, Search, Upload, UserCheck } from 'lucide-react';
 import moment from 'moment';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { toast } from 'sonner';
+import { Card, CardContent, CardHeader } from '../../../../../../components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '../../../../../../components/ui/collapsible';
+import { Skeleton } from '../../../../../../components/ui/skeleton';
+import PDFViewer from '../../../../@student/_components/pdf-viewer';
+import { VideoPlayer } from '../../../../@student/schedule/classes/[id]/VideoPlayer';
 
 const localizer = momentLocalizer(moment);
 
@@ -70,30 +83,22 @@ export default function ClassPreviewPage() {
     ...getClassDefinitionOptions({ path: { uuid: classId as string } }),
     enabled: !!classId,
   });
-  const classData = data?.data;
+  const classData = data?.data?.class_definition;
 
-  const {
-    data: courseDetail,
-    isLoading,
-    isFetched,
-  } = useQuery({
+
+  const { data: courseDetail } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: classData?.course_uuid as string } }),
     enabled: !!classData?.course_uuid,
   });
   const course = courseDetail?.data;
 
-  const { data: cAssesssment } = useQuery({
-    ...getCourseAssessmentsOptions({
-      path: { courseUuid: classData?.course_uuid as string },
+  const { data: courseRubrics } = useQuery({
+    ...getCourseRubricsOptions({
+      path: { courseUuid: course?.uuid as string },
       query: { pageable: {} },
     }),
-    enabled: !!classData?.course_uuid,
+    enabled: !!course?.uuid,
   });
-  const { instructorInfo } = useInstructorInfo({
-    instructorUuid: classData?.default_instructor_uuid as string,
-  });
-  // @ts-ignore
-  const instructor = instructorInfo?.data;
 
   const {
     isLoading: isAllLessonsDataLoading,
@@ -102,7 +107,7 @@ export default function ClassPreviewPage() {
   } = useCourseLessonsWithContent({ courseUuid: classData?.course_uuid as string });
 
   const [registrationLink] = useState(
-    `https://elimika.sarafrika.com/trainings/${classData?.uuid}/register`
+    `https://elimika.sarafrika.com/dashboard/browse-courses/enroll/${course?.uuid}`
   );
   const [copied, setCopied] = useState(false);
 
@@ -111,7 +116,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const shareToSocial = (platform: string) => {
@@ -131,23 +136,15 @@ export default function ClassPreviewPage() {
     }
   };
 
-  const { data: timetable } = useQuery({
-    ...getInstructorScheduleOptions({
-      path: { instructorUuid: classData?.default_instructor_uuid as string },
-      query: {
-        start: '2026-11-02' as any,
-        end: '2026-12-19' as any,
-      },
-    }),
-  });
-
-  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [grade, setGrade] = useState<number | ''>('');
+  const [status, setStatus] = useState<'Submitted' | 'Excused' | 'Missing'>('Submitted');
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [showQR, setShowQR] = useState(false);
 
   const markAttendance = useMutation(markAttendanceMutation());
-  const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
+  const { roster, isLoading: rosterLoading } = useClassRoster(classId);
 
   const { data: classSchedule } = useQuery({
     ...getInstructorCalendarOptions({
@@ -157,32 +154,6 @@ export default function ClassPreviewPage() {
     enabled: !!classData?.default_instructor_uuid,
   });
 
-  // console.log(classSchedule?.data, "class schedule!!")
-  // console.log(roster, "cllass roster!!", rosterLoading)
-
-  const activityLog = [
-    { name: 'Dianne Russel', action: 'Checked in via QR', time: '8:35 AM' },
-    { name: 'Jacob Jones', action: 'Submitted Assignment 2', time: '9:15 AM' },
-    { name: 'Leslie Alexander', action: 'Downloaded Lecture Slides', time: '10:02 AM' },
-  ];
-
-  const rubric = [
-    { criteria: 'Attendance', weight: '20%', description: 'Consistency and punctuality' },
-    { criteria: 'Participation', weight: '25%', description: 'Engagement during sessions' },
-    { criteria: 'Assignments', weight: '35%', description: 'Completion and quality' },
-    { criteria: 'Exam', weight: '20%', description: 'Final test performance' },
-  ];
-
-  const performance = [
-    { name: 'Dianne Russel', participation: 95, score: 88, progress: 92 },
-    { name: 'Jacob Jones', participation: 78, score: 70, progress: 75 },
-    { name: 'Leslie Alexander', participation: 85, score: 90, progress: 88 },
-  ];
-
-  const toggleAttendance = (student: string) => {
-    setAttendance(prev => ({ ...prev, [student]: !prev[student] }));
-  };
-
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const names = Array.from(e.target.files).map(f => f.name);
@@ -190,343 +161,534 @@ export default function ClassPreviewPage() {
     }
   };
 
-  if (isLoading || isAllLessonsDataLoading || classIsLoading) {
+  const handleSaveGrade = () => { };
+
+  const [isReading, setIsReading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const firstLesson = lessonsWithContent?.[0]?.lesson;
+  const [expandedModules, setExpandedModules] = useState<string[]>([firstLesson?.uuid as string]);
+  const [selectedLesson, setSelectedLesson] = useState<any>(firstLesson);
+  const contentTypeName = contentTypeMap[selectedLesson?.content_type_uuid] || 'text';
+
+  const toggleModule = (skillId: string) => {
+    setExpandedModules(prev =>
+      prev.includes(skillId) ? prev.filter(id => id !== skillId) : [...prev, skillId]
+    );
+  };
+
+  const handleLessonSelect = (lesson: any) => {
+    setSelectedLesson(lesson);
+    setIsPlaying(false);
+  };
+
+  const handleStartLesson = () => {
+    if (!selectedLesson) {
+      toast.message('Please select a lesson to start.');
+      return;
+    }
+
+    const contentTypeName = contentTypeMap[selectedLesson?.content_type_uuid];
+
+    if (contentTypeName === 'video') {
+      setIsPlaying(true);
+    } else if (contentTypeName === 'pdf' || contentTypeName === 'text') {
+      setIsReading(true);
+    } else {
+      toast.message('Lesson type not supported for viewing.');
+    }
+  };
+
+  const getLessonIcon = (type: any['type'], completed: boolean, locked: boolean) => {
+    if (locked) return <Lock className='text-muted-foreground h-4 w-4' />;
+    if (completed) return <CheckCircle className='text-success h-4 w-4' />;
+
+    switch (type) {
+      case 'video':
+        return <Play className='text-primary h-4 w-4' />;
+      case 'reading':
+        return <BookOpen className='text-accent h-4 w-4' />;
+      case 'quiz':
+        return <FileText className='text-warning h-4 w-4' />;
+      case 'assignment':
+        return <Award className='text-success h-4 w-4' />;
+      default:
+        return <Play className='h-4 w-4' />;
+    }
+  };
+
+  if (isAllLessonsDataLoading || classIsLoading || rosterLoading) {
     return (
-      <div className='flex flex-col gap-6 space-y-2'>
+      <div className='flex flex-col gap-6 space-y-2 p-6'>
         <Skeleton className='h-[150px] w-full' />
-
         <div className='flex flex-row items-center justify-between gap-4'>
-          <Skeleton className='h-[250px] w-2/3' />
-          <Skeleton className='h-[250px] w-1/3' />
+          <Skeleton className='h-[450px] w-2/3' />
+          <Skeleton className='h-[450px] w-1/3' />
         </div>
-
         <Skeleton className='h-[100px] w-full' />
       </div>
     );
   }
 
   return (
-    <div className='mb-20 space-y-6'>
-      <Card className='flex h-auto flex-row pb-20'>
-        {/* Sidebar */}
-        <aside className='border-border/100 flex w-64 flex-col border-r p-4'>
-          <h2 className='mb-4 text-lg font-semibold'>Class Menu</h2>
-          <div className='space-y-2'>
-            {[
-              { id: 'roster', label: 'Class Roster', icon: UserCheck },
-              { id: 'schedule', label: 'Class Schedule', icon: Calendar1Icon },
-              { id: 'attendance', label: 'Attendance', icon: Clock },
-              { id: 'resources', label: 'Resources', icon: Upload },
-              { id: 'activity', label: 'Activity Log', icon: FileText },
-              { id: 'rubric', label: 'Assessment Rubric', icon: BarChart2 },
-              { id: 'performance', label: 'Performance', icon: CheckCircle },
-            ].map(({ id, label, icon: Icon }) => (
-              <SidebarMenuButton
-                key={id}
-                size='lg'
-                onClick={() => setActiveTab(id)}
-                className={`flex w-full items-center justify-start gap-3 rounded-lg text-sm transition-colors ${
-                  activeTab === id
-                    ? 'bg-card text-foreground font-medium'
-                    : 'hover:bg-muted/70 text-muted-foreground'
-                }`}
-              >
-                <div className='flex items-center justify-center rounded-lg'>
-                  <Icon className='size-4' />
-                </div>
-                <span className='truncate'>{label}</span>
-              </SidebarMenuButton>
-            ))}
+    <div className='bg-background text-foreground flex min-h-screen'>
+      {/* Left Sidebar - Students List */}
+      <aside className='border-border bg-card flex w-72 flex-col border-r'>
+        {/* Search Header */}
+        <div className='border-border border-b p-4'>
+          <div className='relative'>
+            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+            <Input type='text' placeholder='Search students...' className='bg-background pl-10' />
           </div>
-        </aside>
+        </div>
 
-        {/* Main Section */}
-        <main className='flex-1 overflow-y-auto p-6'>
-          <h1 className='mb-4 text-xl font-bold'>
-            {activeTab === 'roster' && '📋 Class Roster'}
-            {activeTab === 'schedule' && '📋 Class Schedule'}
-            {activeTab === 'attendance' && '🕒 Attendance Tracking'}
-            {activeTab === 'resources' && '📁 Resource Distribution'}
-            {activeTab === 'activity' && '📜 Activity Log'}
-            {activeTab === 'rubric' && '📊 Class Attendance Assessment Rubric'}
-            {activeTab === 'performance' && '📈 Performance Tracking'}
-          </h1>
+        {/* Students Count */}
+        <div className='border-border border-b px-4 py-3'>
+          <p className='flex items-center justify-between text-sm'>
+            <span className='text-foreground font-medium'>All Students</span>
+            <span className='bg-primary/10 text-primary rounded-full px-2.5 py-0.5 text-xs font-semibold'>
+              {roster?.length}
+            </span>
+          </p>
+        </div>
 
-          {/* CLASS ROSTER */}
-          {activeTab === 'roster' && (
-            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
-              <div className='relative mb-3 flex flex-row items-center'>
-                <Search size={18} className='text-muted-foreground absolute left-3' />
-                <Input
-                  type='text'
-                  placeholder='Search learner'
-                  className='w-full rounded-lg border py-2 pr-3 pl-10 text-sm'
-                />
-              </div>
-              <ul className='divide-y'>
-                {roster?.map((entry: any) => (
-                  <li key={entry?.user?.uuid} className='flex items-center justify-between py-2'>
-                    <span>{entry?.user?.full_name}</span>
-                    <span className='text-muted-foreground text-xs'>
-                      {entry?.enrollment?.status === 'ENROLLED' ? 'Active' : 'Inactive'}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
+        {/* Students Scroll Area */}
+        <ScrollArea className='flex-1'>
+          <div className='space-y-1 p-2'>
+            {roster?.map((entry: any) => {
+              const name = entry?.user?.full_name ?? 'Unknown';
+              const isActive = entry?.enrollment?.status === 'ENROLLED';
+              const isSelected = selectedStudent?.user?.uuid === entry?.user?.uuid;
 
-          {/* CLASS SCHEDULE */}
-          {activeTab === 'schedule' && (
-            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
-              <div className='relative mb-3 flex flex-row items-center'>
-                <Search size={18} className='text-muted-foreground absolute left-3' />
-                <Input
-                  type='text'
-                  placeholder='Search learner'
-                  className='w-full rounded-lg border py-2 pr-3 pl-10 text-sm'
-                />
-              </div>
-
-              <ul className='divide-y'>class schedule in order</ul>
-            </Card>
-          )}
-
-          {/* ATTENDANCE TRACKING */}
-          {activeTab === 'attendance' && (
-            <Card className='border-border/100 space-y-4 rounded-xl border p-5 shadow-sm'>
-              <div className='flex items-center justify-between'>
-                <h2 className='font-semibold'>Manual Attendance</h2>
+              return (
                 <button
-                  onClick={() => setShowQR(!showQR)}
-                  className='bg-primary flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white'
+                  key={entry?.user?.uuid}
+                  onClick={() => setSelectedStudent(entry)}
+                  className={`group relative w-full rounded-lg px-3 py-2.5 text-left transition-all duration-150 ${isSelected ? 'bg-primary/10 shadow-sm' : 'hover:bg-accent/50'
+                    }`}
                 >
-                  <Camera /> {showQR ? 'Hide QR' : 'Show QR Scanner'}
-                </button>
-              </div>
+                  {/* Left accent bar */}
+                  <div
+                    className={`absolute top-0 left-0 h-full w-1 rounded-r transition-all ${isSelected ? 'bg-primary' : 'opacity-0'
+                      }`}
+                  />
 
-              {showQR && (
-                <div className='bg-muted text-muted-foreground flex justify-center rounded-lg py-10 text-sm'>
-                  [Mock QR Scanner Placeholder]
-                </div>
-              )}
-
-              <div className='divide-y'>
-                {roster.map((entry: any) => {
-                  const enrollmentUuid = entry?.enrollment?.uuid;
-                  const fullName = entry?.user?.full_name;
-                  const isAttendanceMarked = entry?.enrollment?.is_attendance_marked;
-                  const isPresent = attendance[enrollmentUuid] ?? isAttendanceMarked;
-
-                  return (
-                    <div key={enrollmentUuid} className='flex items-center justify-between py-2'>
-                      <span>{fullName}</span>
-
-                      <button
-                        onClick={() => {
-                          markAttendance.mutate(
-                            {
-                              path: { enrollmentUuid },
-                              query: { attended: true },
-                            },
-                            {
-                              onSuccess: () => {
-                                toggleAttendance(enrollmentUuid);
-                              },
-                            }
-                          );
-                        }}
-                        className={`rounded-lg px-3 py-1 text-xs ${
-                          isPresent ? 'text-muted-foreground' : 'text-text-muted-foreground'
-                        }`}
+                  <div className='flex items-center justify-between gap-2 pl-1'>
+                    <div className='flex min-w-0 flex-1 items-center gap-2.5'>
+                      {/* Avatar */}
+                      <div
+                        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold ${isSelected
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-primary/15 text-primary'
+                          }`}
                       >
-                        {isPresent ? 'Present' : 'Mark Present'}
-                      </button>
+                        {name
+                          .split(' ')
+                          .map((n: string) => n?.[0])
+                          .slice(0, 2)
+                          .join('')}
+                      </div>
+
+                      {/* Name & Status */}
+                      <div className='flex min-w-0 flex-1 flex-col'>
+                        <span
+                          className={`truncate text-sm ${isSelected ? 'text-foreground font-semibold' : 'font-medium'
+                            }`}
+                        >
+                          {name}
+                        </span>
+                        <span
+                          className={`text-xs ${isActive ? 'text-success' : 'text-muted-foreground'
+                            }`}
+                        >
+                          {isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
                     </div>
-                  );
-                })}
+
+                    <ChevronRight
+                      className={`h-4 w-4 flex-shrink-0 transition-opacity ${isSelected
+                        ? 'text-primary opacity-100'
+                        : 'text-muted-foreground opacity-0 group-hover:opacity-70'
+                        }`}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+
+            {roster?.length === 0 && (
+              <div className='flex flex-col items-center justify-center py-12 text-center'>
+                <Users className='mb-3 h-8 w-8 opacity-40' />
+                <p className='text-muted-foreground text-xs'>No enrolled students</p>
               </div>
-            </Card>
-          )}
-
-          {/* RESOURCE DISTRIBUTION */}
-          {activeTab === 'resources' && (
-            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
-              <label className='text-muted-foreground mb-2 block text-sm font-medium'>
-                Upload Class Resources
-              </label>
-              <input type='file' multiple onChange={handleFileUpload} className='mb-4 text-sm' />
-              <ul className='list-disc space-y-1 pl-5 text-sm'>
-                {uploadedFiles.length === 0 && (
-                  <li className='text-muted-foreground'>No files uploaded yet</li>
-                )}
-                {uploadedFiles.map((file, i) => (
-                  <li key={i} className='text-muted-foreground cursor-pointer hover:underline'>
-                    {file}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
-          {/* ACTIVITY LOG */}
-          {activeTab === 'activity' && (
-            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
-              <table className='w-full text-sm'>
-                <thead>
-                  <tr className='text-muted-foreground border-b text-left'>
-                    <th className='py-2'>Learner</th>
-                    <th className='py-2'>Activity</th>
-                    <th className='py-2'>Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activityLog.map((log, i) => (
-                    <tr key={i} className='border-border/100 hover:bg-background border-b'>
-                      <td className='py-2'>{log.name}</td>
-                      <td className='py-2'>{log.action}</td>
-                      <td className='text-muted-foreground py-2'>{log.time}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          )}
-
-          {/* ASSESSMENT RUBRIC */}
-          {activeTab === 'rubric' && (
-            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
-              <table className='w-full text-sm'>
-                <thead>
-                  <tr className='border-b text-left'>
-                    <th className='py-2'>Criteria</th>
-                    <th className='py-2'>Weight</th>
-                    <th className='py-2'>Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rubric.map((r, i) => (
-                    <tr key={i} className='hover:bg-background border-b'>
-                      <td className='py-2 font-medium'>{r.criteria}</td>
-                      <td className='text-muted-foreground py-2'>{r.weight}</td>
-                      <td className='py-2'>{r.description}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          )}
-
-          {/* PERFORMANCE TRACKING */}
-          {activeTab === 'performance' && (
-            <Card className='border-border/100 rounded-xl border p-5 shadow-sm'>
-              <table className='w-full text-sm'>
-                <thead>
-                  <tr className='border-b text-left'>
-                    <th className='py-2'>Learner</th>
-                    <th className='py-2'>Participation</th>
-                    <th className='py-2'>Score</th>
-                    <th className='py-2'>Progress</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {performance.map((p, i) => (
-                    <tr key={i} className='hover:bg-background border-b'>
-                      <td className='py-2 font-medium'>{p.name}</td>
-                      <td className='py-2'>{p.participation}%</td>
-                      <td className='py-2'>{p.score}%</td>
-                      <td className='py-2'>{p.progress}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          )}
-        </main>
-      </Card>
-
-      {/* Registration Link and Sharing */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Link className='h-5 w-5' />
-            Registration Link
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='flex gap-2'>
-            <Input value={registrationLink} readOnly className='font-mono text-sm' />
-            <Button
-              onClick={() => copyToClipboard(registrationLink)}
-              variant='outline'
-              className='gap-2'
-            >
-              <Copy className='h-4 w-4' />
-              {copied ? 'Copied!' : 'Copy'}
-            </Button>
+            )}
           </div>
+        </ScrollArea>
+      </aside>
 
-          <div className='space-y-3'>
-            <h4 className='font-medium'>Share Your Class</h4>
-            <div className='flex flex-wrap gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => copyToClipboard(registrationLink)}
-                className='gap-2'
-              >
-                <Copy className='h-4 w-4' />
-                Copy Link
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => shareToSocial('facebook')}
-                className='gap-2'
-              >
-                <Facebook className='h-4 w-4' />
-                Facebook
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => shareToSocial('twitter')}
-                className='gap-2'
-              >
-                <Twitter className='h-4 w-4' />
-                Twitter
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => shareToSocial('linkedin')}
-                className='gap-2'
-              >
-                <Linkedin className='h-4 w-4' />
-                LinkedIn
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => shareToSocial('whatsapp')}
-                className='gap-2'
-              >
-                <MessageCircle className='h-4 w-4' />
-                WhatsApp
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => shareToSocial('email')}
-                className='gap-2'
-              >
-                <Mail className='h-4 w-4' />
-                Email
-              </Button>
+      {/* Main Content */}
+      <main className='flex-1 overflow-y-auto px-6 py-6'>
+        {/* Class Header Card */}
+        <Card className='border-border from-card via-card to-card/80 mb-6 bg-gradient-to-br'>
+          <CardHeader className='pb-4'>
+            <div className='space-y-4'>
+              <div>
+                <h1 className='text-foreground mb-2 text-3xl font-bold'>{classData?.title}</h1>
+                <p className='text-muted-foreground max-w-2xl text-sm leading-relaxed'>
+                  {classData?.capacity_info}
+                </p>
+                <p className='text-muted-foreground max-w-2xl text-sm leading-relaxed'>
+                  {classData?.location_type} -  {classData?.location_name}
+                </p>
+              </div>
+
+              {/* Quick Actions */}
+              <div className='flex flex-wrap gap-2 pt-2'>
+                <Button size='sm' variant='outline'>
+                  Share Class
+                </Button>
+                <Button size='sm' variant='outline'>
+                  View Analytics
+                </Button>
+                <Button size='sm' variant='outline'>
+                  Export Roster
+                </Button>
+              </div>
             </div>
+          </CardHeader>
+        </Card>
+
+        {/* Content Section */}
+        <div className='grid grid-cols-1 gap-6 xl:grid-cols-3'>
+          {/* Left: Course Content & Lessons */}
+          <div className='space-y-6 xl:col-span-2'>
+            {!isPlaying && !isReading && (
+              <Card className='border-border'>
+                <CardHeader className='pb-4'>
+                  <h2 className='text-foreground flex items-center gap-2 text-lg font-semibold'>
+                    <BookOpen className='text-primary h-5 w-5' />
+                    Course Content
+                  </h2>
+                </CardHeader>
+
+                <CardContent>
+                  <ScrollArea className='h-[60vh]'>
+                    <div className='space-y-2 pr-4'>
+                      {lessonsWithContent?.map((skill, skillIndex) => (
+                        <Collapsible
+                          key={skillIndex}
+                          open={expandedModules.includes(skill?.lesson?.uuid as string)}
+                          onOpenChange={() => toggleModule(skill?.lesson?.uuid as string)}
+                        >
+                          <Card className='border-border/50 hover:border-border transition-colors'>
+                            <CollapsibleTrigger className='w-full'>
+                              <CardHeader className='hover:bg-accent/30 cursor-pointer py-3 transition-colors'>
+                                <div className='flex items-center justify-between'>
+                                  <div className='flex items-center gap-3'>
+                                    <span className='text-primary/60 min-w-[1.5rem] text-xs font-semibold'>
+                                      {String(skillIndex + 1).padStart(2, '0')}
+                                    </span>
+                                    <h3 className='text-foreground font-medium'>
+                                      {skill?.lesson?.title}
+                                    </h3>
+                                  </div>
+                                  {expandedModules.includes(skill?.lesson?.uuid as string) ? (
+                                    <ChevronUp className='text-muted-foreground h-5 w-5' />
+                                  ) : (
+                                    <ChevronDown className='text-muted-foreground h-5 w-5' />
+                                  )}
+                                </div>
+                              </CardHeader>
+                            </CollapsibleTrigger>
+
+                            <CollapsibleContent>
+                              <CardContent className='space-y-2 pt-0'>
+                                {skill?.content?.data?.map((content: any) => (
+                                  <button
+                                    key={content.uuid}
+                                    onClick={() => handleLessonSelect(content)}
+                                    className={`border-border/50 hover:border-primary/50 hover:bg-accent/30 w-full rounded-lg border-2 p-3 transition-all ${selectedLesson?.uuid === content.uuid
+                                      ? 'border-primary bg-primary/5'
+                                      : ''
+                                      }`}
+                                  >
+                                    <div className='flex items-center justify-between gap-3'>
+                                      <div className='flex min-w-0 flex-1 items-center gap-3'>
+                                        {getLessonIcon('', false, false)}
+                                        <div className='min-w-0 text-left'>
+                                          <p className='text-foreground truncate text-sm font-medium'>
+                                            {content.title}
+                                          </p>
+                                          <p className='text-muted-foreground text-xs capitalize'>
+                                            {content.type}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <ChevronRight className='text-muted-foreground h-4 w-4 flex-shrink-0' />
+                                    </div>
+                                  </button>
+                                ))}
+                              </CardContent>
+                            </CollapsibleContent>
+                          </Card>
+                        </Collapsible>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Lesson Preview Card */}
+            {selectedLesson && !isPlaying && !isReading && (
+              <Card className='border-border overflow-hidden'>
+                <div className='bg-muted group relative aspect-video w-full overflow-hidden'>
+                  {course?.thumbnail_url ? (
+                    <img
+                      src={course.thumbnail_url}
+                      alt={classData?.title}
+                      className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-105'
+                    />
+                  ) : (
+                    <div className='text-muted-foreground flex h-full items-center justify-center'>
+                      <ImageIcon className='h-12 w-12 opacity-40' />
+                    </div>
+                  )}
+                </div>
+
+                <CardContent className='space-y-4 pt-6'>
+                  <div className='space-y-1'>
+                    <h2 className='text-foreground text-xl font-semibold'>
+                      {selectedLesson?.title}
+                    </h2>
+                    {selectedLesson?.subtitle && (
+                      <p className='text-muted-foreground text-sm'>{selectedLesson.subtitle}</p>
+                    )}
+                  </div>
+
+                  <Button onClick={handleStartLesson} className='w-full gap-2 py-6 text-base'>
+                    <Play className='h-5 w-5' />
+                    Begin Class
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Video Player */}
+            {isPlaying && contentTypeName === 'video' && (
+              <VideoPlayer
+                isOpen={isPlaying && contentTypeName === 'video'}
+                onClose={() => setIsPlaying(false)}
+                videoUrl={selectedLesson?.content_text || 'https://www.youtube.com/shorts/qYrG2qRyJR0'}
+                title={selectedLesson?.title}
+              />
+            )}
+
+            {/* Reading Mode */}
+            {isReading && (contentTypeName === 'pdf' || contentTypeName === 'text') && (
+              <Card className='border-border flex flex-col overflow-hidden'>
+                <CardHeader className='border-border bg-accent/20 border-b py-3'>
+                  <div className='flex items-center justify-between'>
+                    <div className='space-y-1'>
+                      <h2 className='text-foreground text-sm font-semibold'>
+                        {selectedLesson?.title}
+                      </h2>
+                      <p className='text-muted-foreground text-xs'>{selectedLesson?.description}</p>
+                    </div>
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      onClick={() => setIsReading(false)}
+                      className='gap-1'
+                    >
+                      <X className='h-4 w-4' />
+                      Close
+                    </Button>
+                  </div>
+
+                  {/* Zoom Controls */}
+                  <div className='mt-3 flex gap-2'>
+                    <Button size='sm' variant='outline'>
+                      <ZoomIn className='h-4 w-4' />
+                    </Button>
+                    <Button size='sm' variant='outline'>
+                      <ZoomOut className='h-4 w-4' />
+                    </Button>
+                    <Button size='sm' variant='outline'>
+                      <Settings className='h-4 w-4' />
+                    </Button>
+                  </div>
+                </CardHeader>
+
+                <ScrollArea className='flex-1'>
+                  <div className='prose prose-sm dark:prose-invert max-w-none p-6'>
+                    {contentTypeName === 'text' && (
+                      <div dangerouslySetInnerHTML={{ __html: selectedLesson?.content_text }} />
+                    )}
+
+                    {contentTypeName === 'pdf' && (
+                      <div className='flex flex-col items-center gap-4'>
+                        <p className='text-muted-foreground text-sm italic'>PDF content viewer</p>
+                        <PDFViewer file={selectedLesson?.content_text} />
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </Card>
+            )}
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Right: Student Details Panel */}
+          {selectedStudent && (
+            <div className='xl:col-span-1'>
+              <Card className='border-border sticky top-6 flex max-h-[calc(100vh-10rem)] flex-col overflow-hidden'>
+                {/* Header */}
+                <CardHeader className='border-border bg-accent/10 border-b py-3'>
+                  <div className='flex items-center justify-between'>
+                    <div className='space-y-1'>
+                      <h3 className='text-foreground font-semibold'>
+                        {selectedStudent?.user?.full_name}
+                      </h3>
+                      <p className='text-muted-foreground text-xs'>
+                        Graded: <span className='text-foreground font-semibold'>20/50</span>
+                      </p>
+                    </div>
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      onClick={() => setSelectedStudent(null)}
+                      className='h-8 w-8 p-0'
+                    >
+                      <X className='h-4 w-4' />
+                    </Button>
+                  </div>
+                </CardHeader>
+
+                <ScrollArea className='flex-1'>
+                  <CardContent className='space-y-6 pt-4'>
+                    {/* Submission Section */}
+                    <div className='space-y-3'>
+                      <h4 className='text-foreground text-sm font-semibold'>Submission</h4>
+
+                      <div className='bg-accent/5 space-y-3 rounded-lg p-3'>
+                        <div className='flex items-center justify-between text-sm'>
+                          <span className='text-muted-foreground'>Due Date</span>
+                          <span className='text-foreground font-medium'>02/10/2024</span>
+                        </div>
+
+                        <div>
+                          <Label className='text-muted-foreground text-xs'>Grade</Label>
+                          <Input
+                            type='number'
+                            placeholder='e.g. 80'
+                            className='bg-background mt-1.5 text-sm'
+                            value={grade === '' ? '' : grade}
+                            onChange={e =>
+                              setGrade(e.target.value === '' ? '' : Number(e.target.value))
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator className='bg-border/50' />
+
+                    {/* Status Section */}
+                    <div className='space-y-3'>
+                      <h4 className='text-foreground text-sm font-semibold'>Status</h4>
+                      <RadioGroup
+                        value={status}
+                        onValueChange={value =>
+                          setStatus(value as 'Submitted' | 'Excused' | 'Missing')
+                        }
+                        className='space-y-2'
+                      >
+                        {[
+                          { value: 'Submitted', label: 'Submitted' },
+                          { value: 'Excused', label: 'Excused' },
+                          { value: 'Missing', label: 'Missing' },
+                        ].map(item => (
+                          <div key={item.value} className='flex items-center space-x-2'>
+                            <RadioGroupItem value={item.value} id={item.value.toLowerCase()} />
+                            <Label
+                              htmlFor={item.value.toLowerCase()}
+                              className='cursor-pointer text-sm font-normal'
+                            >
+                              {item.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+
+                    <Separator className='bg-border/50' />
+
+                    {/* Actions */}
+                    <div className='space-y-2'>
+                      <Button className='w-full'>Save Grade</Button>
+                      <Button variant='outline' className='w-full'>
+                        Toggle Present
+                      </Button>
+                    </div>
+
+                    <Separator className='bg-border/50' />
+
+                    {/* Submission Details */}
+                    <div className='space-y-3'>
+                      <h4 className='text-foreground text-sm font-semibold'>Submission Details</h4>
+
+                      <div className='bg-accent/5 space-y-2 rounded-lg p-3 text-sm'>
+                        <div>
+                          <span className='text-muted-foreground'>Word Count:</span>
+                          <span className='text-foreground ml-2 font-medium'>500</span>
+                        </div>
+
+                        <div className='border-border space-y-2 border-t pt-2'>
+                          <p className='text-foreground text-xs font-semibold'>Files Uploaded</p>
+                          {uploadedFiles.length === 0 ? (
+                            <p className='text-muted-foreground text-xs'>No files yet</p>
+                          ) : (
+                            <ul className='space-y-1'>
+                              {uploadedFiles.map((file, i) => (
+                                <li
+                                  key={i}
+                                  className='text-primary flex cursor-pointer items-center gap-2 text-xs hover:underline'
+                                >
+                                  <FileText className='h-3 w-3' />
+                                  <span className='truncate'>{file}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className='text-muted-foreground text-xs'>Upload File</Label>
+                        <Input
+                          type='file'
+                          multiple
+                          onChange={handleFileUpload}
+                          className='bg-background mt-1.5 text-xs'
+                        />
+                      </div>
+
+                      <Button
+                        variant='link'
+                        className='text-primary h-auto gap-2 px-0 text-xs font-medium'
+                      >
+                        <MessageCircle className='h-3 w-3' /> View Comments (50)
+                      </Button>
+                    </div>
+                  </CardContent>
+                </ScrollArea>
+              </Card>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
+// ...existing code...
