@@ -6,21 +6,7 @@ import { useCourseCreator } from '@/context/course-creator-context';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useState } from 'react';
-import { getCourseEnrollmentsOptions } from '../../../../services/client/@tanstack/react-query.gen';
-
-type CourseReview = {
-  id: string;
-  rating: number; // 1–5
-  comment: string;
-  author?: string;
-  createdAt: Date;
-};
-
-type Course = {
-  id: string;
-  title: string;
-  reviews?: CourseReview[];
-};
+import { getCourseEnrollmentsOptions, getCourseReviewsOptions } from '../../../../services/client/@tanstack/react-query.gen';
 
 export default function CourseCreatorAnalyticsPage() {
   const [openCourseId, setOpenCourseId] = useState<string | null>(null);
@@ -45,14 +31,6 @@ export default function CourseCreatorAnalyticsPage() {
           operational compliance.
         </p>
       </header>
-
-      <div className='flex flex-col gap-2 rounded-md border-l-4 border-yellow-500 bg-yellow-50 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:bg-yellow-950/20 dark:text-yellow-200'>
-        <div className='flex flex-col gap-2'>
-          <p className='font-medium'>
-            🚧 This page is under construction. Requires API to fetch course reviews..
-          </p>
-        </div>
-      </div>
 
       <Card className='lg:col-span-2'>
         <CardHeader>
@@ -239,28 +217,22 @@ function CourseReviewSummary({
   isOpen: boolean;
   onToggle: () => void;
 }) {
-  const reviews =
-    course.reviews ??
-    [
-      // {
-      //   uuid: 'rev-1234',
-      //   rating: 5,
-      //   student_uuid: 'student-uuid-1',
-      //   comments: 'Very clear explanations and engaging sessions.',
-      //   created_date: '2025-11-18T09:00:00',
-      //   is_anonymous: false,
-      //   created_by: 'student@example.com',
-      // },
-    ];
-
-  const { data } = useQuery({
+  const { data: enrollmentData } = useQuery({
     ...getCourseEnrollmentsOptions({
       path: { courseUuid: course?.uuid as string },
       query: { pageable: {} },
     }),
     enabled: !!course?.uuid,
   });
-  const enrollmentData = data?.data?.content || [];
+  const enrollments = enrollmentData?.data?.content || [];
+
+  const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
+    ...getCourseReviewsOptions({ path: { courseUuid: course?.uuid as string } }),
+    enabled: !!course?.uuid,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const reviews = reviewsData?.data || [];
 
   const reviewCount = reviews.length;
 
@@ -279,16 +251,20 @@ function CourseReviewSummary({
         className='flex w-full items-center justify-between p-4 text-left'
         aria-expanded={isOpen}
       >
-        <div>
-          <p className='font-medium'>{course.name}</p>
+        <div className='flex flex-col gap-2'>
+          <div className='flex flex-row items-center gap-2' >
+            <p className='font-medium'>{course.name}</p>
+            <p className='text-muted-foreground text-xs'>{enrollments?.length} enrollment(s)</p>
 
-          <div className='flex flex-row items-center gap-4'>
+          </div>
+          <div className='flex flex-col items-start gap-2'>
             <p className='text-muted-foreground text-xs'>
-              {reviewCount
-                ? `${reviewCount} review${reviewCount > 1 ? 's' : ''}`
-                : 'No reviews yet'}
+              {reviewsLoading
+                ? 'Loading reviews...'
+                : reviewCount
+                  ? `${reviewCount} review${reviewCount > 1 ? 's' : ''}`
+                  : 'No reviews yet'}
             </p>
-            <p className='text-muted-foreground text-xs'>{enrollmentData?.length}</p>
           </div>
         </div>
 
@@ -299,33 +275,40 @@ function CourseReviewSummary({
               <span className='text-sm font-medium'>{averageRating}</span>
             </>
           ) : (
-            <span className='text-muted-foreground text-sm'>—</span>
-          )}
+            <>
+              <RatingStars value={0} />
+              <span className='text-sm font-medium'>{averageRating}</span>
+            </>)}
         </div>
       </button>
 
       {/* Body */}
-      {isOpen && reviewCount > 0 && (
+      {isOpen && (
         <div className='border-border/60 space-y-3 border-t p-4'>
-          {reviews.map((review: any) => (
-            <div
-              key={review.uuid}
-              className='border-border/60 bg-muted/40 rounded-lg border p-3 text-sm'
-            >
-              <div className='flex items-center justify-between'>
-                <p className=''>{review.student_uuid}</p>
-                <span className='text-muted-foreground flex justify-end self-end text-xs'>
-                  {format(new Date(review.created_date), 'dd MMM yyyy')}
-                </span>
+          {reviewsLoading ? (
+            <p className='text-muted-foreground text-center text-sm'>Loading reviews...</p>
+          ) : reviewCount > 0 ? (
+            reviews.slice(0, 5).map((review: any) => (
+              <div
+                key={review.uuid}
+                className='border-border/60 bg-muted/40 rounded-lg border p-3 text-sm'
+              >
+                <div className='flex items-center justify-between'>
+                  <RatingStars value={review.rating || 0} />
+                  <span className='text-muted-foreground text-xs'>
+                    {format(new Date(review.created_date), 'dd MMM yyyy')}
+                  </span>
+                </div>
+
+                <p className='mt-2'>{review.headline}</p>
+                <p className='text-muted-foreground mt-1 text-xs'>{review.comments}</p>
               </div>
-
-              <p className='mt-2'>{review.comments}</p>
-
-              {!review.is_anonymous && (
-                <p className='text-muted-foreground mt-1 text-xs'>{review.created_by}</p>
-              )}
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className='text-muted-foreground text-center text-sm'>
+              No reviews yet for this course.
+            </p>
+          )}
         </div>
       )}
     </div>
