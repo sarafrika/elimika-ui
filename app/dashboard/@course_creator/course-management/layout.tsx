@@ -32,27 +32,6 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
       </div>
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6'>
-        {/* {!hideNav && (
-          <aside className=''>
-            <nav className='flex space-x-2 lg:mb-6 lg:flex-row lg:space-y-1 lg:space-x-6'>
-              {sidebarNavItems.map(item => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    buttonVariants({ variant: 'ghost' }),
-                    pathname === item.href
-                      ? 'bg-muted hover:bg-muted'
-                      : 'hover:bg-transparent hover:underline',
-                    'justify-start lg:min-w-[200px] lg:justify-center'
-                  )}
-                >
-                  {item.title}
-                </Link>
-              ))}
-            </nav>
-          </aside>
-        )} */}
         <div className='lg:auto w-full flex-1'>
           {!hideNav && (
             <div className='mx-auto flex w-6xl gap-4 rounded-xl p-2'>

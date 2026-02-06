@@ -27,6 +27,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
@@ -265,6 +272,7 @@ export function CatalogueWorkspace({
   const includeHidden = copy.includeHiddenByDefault;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [displayLimit, setDisplayLimit] = useState(20);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const profile = useUserProfile();
   const organisation = useOrganisation();
 
@@ -444,6 +452,13 @@ export function CatalogueWorkspace({
     }
   };
 
+  const handleSelectRow = (row: CatalogueRow) => {
+    setSelectedId(row.id);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsSheetOpen(true);
+    }
+  };
+
   return (
     <div className={`flex flex-col gap-4 overflow-hidden lg:flex-row ${heightClass} min-h-0`}>
       <Card className='flex h-full min-h-0 flex-col lg:w-[420px] lg:max-w-[440px] lg:min-w-[380px]'>
@@ -509,7 +524,7 @@ export function CatalogueWorkspace({
                       <button
                         key={row.id}
                         type='button'
-                        onClick={() => setSelectedId(row.id)}
+                        onClick={() => handleSelectRow(row)}
                         className={`group w-full rounded-[16px] border p-3.5 text-left transition-all duration-200 ${selectedId === row.id
                           ? 'border-primary bg-primary/10 ring-primary/20 shadow-md ring-1'
                           : 'border-border/60 bg-card hover:border-primary/50 hover:bg-muted/50 hover:shadow-sm'
@@ -589,33 +604,71 @@ export function CatalogueWorkspace({
         </CardContent>
       </Card>
 
-      <Card className='flex min-h-0 flex-1 flex-col'>
-        <CardHeader className='border-border/60 flex flex-col gap-3 border-b lg:flex-col lg:items-start lg:justify-between'>
-          <div className='flex-1 space-y-1.5'>
-            <div className='flex items-center gap-2'>
-              {selectedRow && (
-                <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-[10px]'>
-                  {selectedRow.typeLabel === 'Course' && (
-                    <BookOpen className='text-primary h-4 w-4' />
-                  )}
-                  {selectedRow.typeLabel === 'Class' && (
-                    <GraduationCap className='text-primary h-4 w-4' />
-                  )}
-                  {selectedRow.typeLabel === 'Item' && <Package className='text-primary h-4 w-4' />}
-                </div>
-              )}
-              <CardTitle className='text-foreground text-lg font-semibold'>
-                {selectedRow ? selectedRow.displayTitle : 'Select a catalogue item'}
-              </CardTitle>
-            </div>
-            <CardDescription className='text-sm'>
-              {selectedRow
-                ? 'Review pricing, visibility, and linked metadata'
-                : 'Choose an item from the list to see its details'}
-            </CardDescription>
+      {/* Desktop Details Panel */}
+      <Card className='hidden min-h-0 flex-1 flex-col lg:flex'>
+        <CatalogueDetailsContent
+          catalogueQuery={catalogueQuery}
+          selectedRow={selectedRow}
+          titleMaps={titleMaps}
+          handleCopy={handleCopy}
+        />
+      </Card>
+
+      {/* Mobile Details Sheet */}
+      <CatalogueDetailsSheet
+        open={isSheetOpen && Boolean(selectedRow)}
+        onOpenChange={setIsSheetOpen}
+        catalogueQuery={catalogueQuery}
+        selectedRow={selectedRow}
+        titleMaps={titleMaps}
+        handleCopy={handleCopy}
+      />
+    </div>
+  );
+}
+
+function CatalogueDetailsSheet({
+  open,
+  onOpenChange,
+  catalogueQuery,
+  selectedRow,
+  titleMaps,
+  handleCopy,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  catalogueQuery: any;
+  selectedRow: CatalogueRow | null;
+  titleMaps: TitleMaps;
+  handleCopy: (value?: string | null) => Promise<void>;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className='flex w-full max-w-xl flex-col border-l p-0'>
+        <SheetHeader className='flex-shrink-0 border-b px-6 py-5'>
+          <div className='flex items-center gap-2'>
+            {selectedRow && (
+              <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-[10px]'>
+                {selectedRow.typeLabel === 'Course' && (
+                  <BookOpen className='text-primary h-4 w-4' />
+                )}
+                {selectedRow.typeLabel === 'Class' && (
+                  <GraduationCap className='text-primary h-4 w-4' />
+                )}
+                {selectedRow.typeLabel === 'Item' && <Package className='text-primary h-4 w-4' />}
+              </div>
+            )}
+            <SheetTitle className='text-foreground text-lg font-semibold'>
+              {selectedRow ? selectedRow.displayTitle : 'Catalogue Details'}
+            </SheetTitle>
           </div>
-          <div className='flex flex-wrap items-center gap-2 lg:justify-end'>
-            {selectedRow ? (
+          <SheetDescription className='text-sm'>
+            {selectedRow
+              ? 'Review pricing, visibility, and linked metadata'
+              : 'Choose an item to see its details'}
+          </SheetDescription>
+          {selectedRow && (
+            <div className='flex flex-wrap items-center gap-2 pt-2'>
               <div className='border-primary/30 bg-primary/5 text-foreground flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold'>
                 <DollarSign className='text-primary h-4 w-4' />
                 <span>
@@ -629,161 +682,252 @@ export function CatalogueWorkspace({
                   </span>
                 )}
               </div>
-            ) : null}
-            {selectedRow?.detailsHref ? (
-              <Button variant='default' size='sm' asChild className='shrink-0'>
-                <Link href={selectedRow.detailsHref} className='inline-flex items-center gap-2'>
-                  <ExternalLink className='h-4 w-4' />
-                  Open
-                </Link>
-              </Button>
-            ) : null}
-          </div>
-        </CardHeader>
-        <CardContent className='flex-1 overflow-hidden p-0'>
+              {selectedRow?.detailsHref && (
+                <Button variant='default' size='sm' asChild className='shrink-0'>
+                  <Link href={selectedRow.detailsHref} className='inline-flex items-center gap-2'>
+                    <ExternalLink className='h-4 w-4' />
+                    Open
+                  </Link>
+                </Button>
+              )}
+            </div>
+          )}
+        </SheetHeader>
+        <ScrollArea className='h-0 flex-1 pr-3'>
           {catalogueQuery.isLoading ? (
-            <div className='space-y-4 p-6'>
+            <div className='space-y-4 px-6 py-5'>
               <Skeleton className='h-6 w-1/3' />
               <Skeleton className='h-4 w-1/2' />
               <Skeleton className='h-32 w-full' />
             </div>
           ) : selectedRow ? (
-            <ScrollArea className='h-full px-6 py-5 pr-8'>
-              <div className='space-y-6'>
-                {/* Status Badges */}
-                <div className='flex flex-wrap items-center gap-2'>
-                  <Badge
-                    variant={selectedRow.isActive ? 'default' : 'secondary'}
-                    className='gap-1.5'
-                  >
-                    {selectedRow.isActive ? (
-                      <CheckCircle2 className='h-3.5 w-3.5' />
-                    ) : (
-                      <XCircle className='h-3.5 w-3.5' />
-                    )}
-                    {selectedRow.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                  <Badge
-                    variant={selectedRow.isPublic ? 'secondary' : 'outline'}
-                    className='gap-1.5'
-                  >
-                    {selectedRow.isPublic ? (
-                      <Eye className='h-3.5 w-3.5' />
-                    ) : (
-                      <EyeOff className='h-3.5 w-3.5' />
-                    )}
-                    {selectedRow.isPublic ? 'Public' : 'Private'}
-                  </Badge>
-                  <Badge variant='outline' className='gap-1.5'>
-                    {selectedRow.typeLabel === 'Course' && <BookOpen className='h-3.5 w-3.5' />}
-                    {selectedRow.typeLabel === 'Class' && <GraduationCap className='h-3.5 w-3.5' />}
-                    {selectedRow.typeLabel === 'Item' && <Package className='h-3.5 w-3.5' />}
-                    {selectedRow.typeLabel}
-                  </Badge>
-                </div>
-
-                {/* Description (if available) */}
-                {(() => {
-                  const linkedEntity = selectedRow.courseId
-                    ? titleMaps.courseMap.get(selectedRow.courseId)
-                    : selectedRow.classId
-                      ? titleMaps.classMap.get(selectedRow.classId)
-                      : null;
-                  const description = linkedEntity?.description || linkedEntity?.summary;
-
-                  return description ? (
-                    <div className='border-border/60 bg-muted/30 rounded-[16px] border p-5'>
-                      <p className='text-muted-foreground mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
-                        <BookOpen className='h-3.5 w-3.5' />
-                        Description
-                      </p>
-                      <div
-                        className='prose prose-sm text-foreground max-w-none'
-                        dangerouslySetInnerHTML={{
-                          __html:
-                            description.replace(/<[^>]*>/g, '').substring(0, 300) +
-                            (description.length > 300 ? '...' : ''),
-                        }}
-                      />
-                    </div>
-                  ) : null;
-                })()}
-
-                {/* Creator/Instructor Information */}
-                <CatalogueItemCreatorInfo
-                  selectedRow={selectedRow}
-                  courseMap={titleMaps.courseMap}
-                  classMap={titleMaps.classMap}
-                />
-
-                {/* Pricing - More Prominent */}
-                <CatalogueItemPricing selectedRow={selectedRow} courseMap={titleMaps.courseMap} />
-
-                {/* Key Information */}
-                <div className='space-y-3'>
-                  <p className='text-muted-foreground flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
-                    <Calendar className='h-3.5 w-3.5' />
-                    Timeline
-                  </p>
-                  <div className='grid gap-3 sm:grid-cols-2'>
-                    <DetailTile label='Created' value={formatDate(selectedRow.createdAt)} />
-                    <DetailTile label='Updated' value={formatDate(selectedRow.updatedAt)} />
-                  </div>
-                </div>
-
-                {/* Technical Details - Collapsed by default look */}
-                <details className='group border-border/60 bg-card/50 rounded-[16px] border' open>
-                  <summary className='text-foreground hover:bg-muted/30 flex cursor-pointer items-center justify-between p-4 text-sm font-semibold transition'>
-                    Technical Details
-                    <span className='text-muted-foreground transition group-open:rotate-180'>
-                      ▼
-                    </span>
-                  </summary>
-                  <div className='border-border/60 space-y-3 border-t p-4'>
-                    <div className='grid gap-3 sm:grid-cols-2'>
-                      <DetailTile label='Product code' value={selectedRow.productCode ?? '—'} />
-                      <DetailTile label='Variant code' value={selectedRow.variantCode ?? '—'} />
-                      {selectedRow.courseId && (
-                        <DetailTile label='Course ID' value={selectedRow.courseId} />
-                      )}
-                      {selectedRow.classId && (
-                        <DetailTile label='Class ID' value={selectedRow.classId} />
-                      )}
-                    </div>
-                  </div>
-                </details>
-
-                {/* Actions */}
-                <div className='border-border/60 flex flex-wrap gap-2 border-t pt-4'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => handleCopy(selectedRow.variantCode ?? selectedRow.productCode)}
-                  >
-                    <Copy className='mr-2 h-4 w-4' />
-                    Copy SKU
-                  </Button>
-                  {selectedRow.detailsHref ? (
-                    <Button variant='default' size='sm' asChild>
-                      <Link
-                        href={selectedRow.detailsHref}
-                        className='inline-flex items-center gap-2'
-                      >
-                        <ExternalLink className='h-4 w-4' />
-                        View full details
-                      </Link>
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            </ScrollArea>
+            <div className='px-6 py-5'>
+              <CatalogueDetailsBody
+                selectedRow={selectedRow}
+                titleMaps={titleMaps}
+                handleCopy={handleCopy}
+              />
+            </div>
           ) : (
             <div className='text-muted-foreground flex h-full items-center justify-center px-6 text-sm'>
-              Select a catalogue item on the left to load its details.
+              Select a catalogue item to load its details.
             </div>
           )}
-        </CardContent>
-      </Card>
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function CatalogueDetailsContent({
+  catalogueQuery,
+  selectedRow,
+  titleMaps,
+  handleCopy,
+}: {
+  catalogueQuery: any;
+  selectedRow: CatalogueRow | null;
+  titleMaps: TitleMaps;
+  handleCopy: (value?: string | null) => Promise<void>;
+}) {
+  return (
+    <>
+      <CardHeader className='border-border/60 flex flex-col gap-3 border-b lg:flex-col lg:items-start lg:justify-between'>
+        <div className='flex-1 space-y-1.5'>
+          <div className='flex items-center gap-2'>
+            {selectedRow && (
+              <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-[10px]'>
+                {selectedRow.typeLabel === 'Course' && (
+                  <BookOpen className='text-primary h-4 w-4' />
+                )}
+                {selectedRow.typeLabel === 'Class' && (
+                  <GraduationCap className='text-primary h-4 w-4' />
+                )}
+                {selectedRow.typeLabel === 'Item' && <Package className='text-primary h-4 w-4' />}
+              </div>
+            )}
+            <CardTitle className='text-foreground text-lg font-semibold'>
+              {selectedRow ? selectedRow.displayTitle : 'Select a catalogue item'}
+            </CardTitle>
+          </div>
+          <CardDescription className='text-sm'>
+            {selectedRow
+              ? 'Review pricing, visibility, and linked metadata'
+              : 'Choose an item from the list to see its details'}
+          </CardDescription>
+        </div>
+        <div className='flex flex-wrap items-center gap-2 lg:justify-end'>
+          {selectedRow ? (
+            <div className='border-primary/30 bg-primary/5 text-foreground flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold'>
+              <DollarSign className='text-primary h-4 w-4' />
+              <span>
+                {selectedRow.unitAmount !== null && selectedRow.unitAmount !== undefined
+                  ? formatMoney(selectedRow.unitAmount, selectedRow.currency ?? undefined)
+                  : 'No price set'}
+              </span>
+              {selectedRow.currency && (
+                <span className='text-muted-foreground text-xs font-medium'>
+                  ({selectedRow.currency})
+                </span>
+              )}
+            </div>
+          ) : null}
+          {selectedRow?.detailsHref ? (
+            <Button variant='default' size='sm' asChild className='shrink-0'>
+              <Link href={selectedRow.detailsHref} className='inline-flex items-center gap-2'>
+                <ExternalLink className='h-4 w-4' />
+                Open
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </CardHeader>
+      <CardContent className='flex-1 overflow-hidden p-0'>
+        {catalogueQuery.isLoading ? (
+          <div className='space-y-4 p-6'>
+            <Skeleton className='h-6 w-1/3' />
+            <Skeleton className='h-4 w-1/2' />
+            <Skeleton className='h-32 w-full' />
+          </div>
+        ) : selectedRow ? (
+          <ScrollArea className='h-full px-6 py-5 pr-8'>
+            <CatalogueDetailsBody
+              selectedRow={selectedRow}
+              titleMaps={titleMaps}
+              handleCopy={handleCopy}
+            />
+          </ScrollArea>
+        ) : (
+          <div className='text-muted-foreground flex h-full items-center justify-center px-6 text-sm'>
+            Select a catalogue item on the left to load its details.
+          </div>
+        )}
+      </CardContent>
+    </>
+  );
+}
+
+function CatalogueDetailsBody({
+  selectedRow,
+  titleMaps,
+  handleCopy,
+}: {
+  selectedRow: CatalogueRow;
+  titleMaps: TitleMaps;
+  handleCopy: (value?: string | null) => Promise<void>;
+}) {
+  return (
+    <div className='space-y-6'>
+      {/* Status Badges */}
+      <div className='flex flex-wrap items-center gap-2'>
+        <Badge variant={selectedRow.isActive ? 'default' : 'secondary'} className='gap-1.5'>
+          {selectedRow.isActive ? (
+            <CheckCircle2 className='h-3.5 w-3.5' />
+          ) : (
+            <XCircle className='h-3.5 w-3.5' />
+          )}
+          {selectedRow.isActive ? 'Active' : 'Inactive'}
+        </Badge>
+        <Badge variant={selectedRow.isPublic ? 'secondary' : 'outline'} className='gap-1.5'>
+          {selectedRow.isPublic ? (
+            <Eye className='h-3.5 w-3.5' />
+          ) : (
+            <EyeOff className='h-3.5 w-3.5' />
+          )}
+          {selectedRow.isPublic ? 'Public' : 'Private'}
+        </Badge>
+        <Badge variant='outline' className='gap-1.5'>
+          {selectedRow.typeLabel === 'Course' && <BookOpen className='h-3.5 w-3.5' />}
+          {selectedRow.typeLabel === 'Class' && <GraduationCap className='h-3.5 w-3.5' />}
+          {selectedRow.typeLabel === 'Item' && <Package className='h-3.5 w-3.5' />}
+          {selectedRow.typeLabel}
+        </Badge>
+      </div>
+
+      {/* Description (if available) */}
+      {(() => {
+        const linkedEntity = selectedRow.courseId
+          ? titleMaps.courseMap.get(selectedRow.courseId)
+          : selectedRow.classId
+            ? titleMaps.classMap.get(selectedRow.classId)
+            : null;
+        const description = linkedEntity?.description || linkedEntity?.summary;
+
+        return description ? (
+          <div className='border-border/60 bg-muted/30 rounded-[16px] border p-5'>
+            <p className='text-muted-foreground mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
+              <BookOpen className='h-3.5 w-3.5' />
+              Description
+            </p>
+            <div
+              className='prose prose-sm text-foreground max-w-none'
+              dangerouslySetInnerHTML={{
+                __html:
+                  description.replace(/<[^>]*>/g, '').substring(0, 300) +
+                  (description.length > 300 ? '...' : ''),
+              }}
+            />
+          </div>
+        ) : null;
+      })()}
+
+      {/* Creator/Instructor Information */}
+      <CatalogueItemCreatorInfo
+        selectedRow={selectedRow}
+        courseMap={titleMaps.courseMap}
+        classMap={titleMaps.classMap}
+      />
+
+      {/* Pricing - More Prominent */}
+      <CatalogueItemPricing selectedRow={selectedRow} courseMap={titleMaps.courseMap} />
+
+      {/* Key Information */}
+      <div className='space-y-3'>
+        <p className='text-muted-foreground flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
+          <Calendar className='h-3.5 w-3.5' />
+          Timeline
+        </p>
+        <div className='grid gap-3 sm:grid-cols-2'>
+          <DetailTile label='Created' value={formatDate(selectedRow.createdAt)} />
+          <DetailTile label='Updated' value={formatDate(selectedRow.updatedAt)} />
+        </div>
+      </div>
+
+      {/* Technical Details - Collapsed by default look */}
+      <details className='group border-border/60 bg-card/50 rounded-[16px] border' open>
+        <summary className='text-foreground hover:bg-muted/30 flex cursor-pointer items-center justify-between p-4 text-sm font-semibold transition'>
+          Technical Details
+          <span className='text-muted-foreground transition group-open:rotate-180'>▼</span>
+        </summary>
+        <div className='border-border/60 space-y-3 border-t p-4'>
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <DetailTile label='Product code' value={selectedRow.productCode ?? '—'} />
+            <DetailTile label='Variant code' value={selectedRow.variantCode ?? '—'} />
+            {selectedRow.courseId && <DetailTile label='Course ID' value={selectedRow.courseId} />}
+            {selectedRow.classId && <DetailTile label='Class ID' value={selectedRow.classId} />}
+          </div>
+        </div>
+      </details>
+
+      {/* Actions */}
+      <div className='border-border/60 flex flex-wrap gap-2 border-t pt-4'>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => handleCopy(selectedRow.variantCode ?? selectedRow.productCode)}
+        >
+          <Copy className='mr-2 h-4 w-4' />
+          Copy SKU
+        </Button>
+        {selectedRow.detailsHref ? (
+          <Button variant='default' size='sm' asChild>
+            <Link href={selectedRow.detailsHref} className='inline-flex items-center gap-2'>
+              <ExternalLink className='h-4 w-4' />
+              View full details
+            </Link>
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }

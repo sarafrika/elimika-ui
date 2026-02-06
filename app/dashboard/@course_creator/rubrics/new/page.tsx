@@ -992,7 +992,7 @@ const RubricManager: React.FC = () => {
   }
 
   return (
-    <div className='mx-auto min-h-screen max-w-7xl space-y-6 p-6'>
+    <div className='mx-auto min-h-screen max-w-7xl space-y-6 p-0 sm:p-6'>
       <div className='flex gap-2'>
         <div className='relative flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />

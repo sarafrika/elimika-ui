@@ -38,7 +38,7 @@ const ProgramsPage = () => {
     };
 
     return (
-        <div className='min-h-screen bg-background p-6'>
+        <div className='min-h-screen bg-background'>
             {/* Header */}
             {/* <div className='flex items-end justify-end'>
                 {view === 'list' && (

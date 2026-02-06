@@ -6,7 +6,7 @@ import {
     useQueryClient,
 } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Filter, PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { toast } from 'sonner';
@@ -140,7 +140,7 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
     }
 
     return (
-        <div className='mx-auto w-full max-w-7xl space-y-6 px-4 pt-4 pb-10'>
+        <div className='mx-auto w-full max-w-7xl space-y-6 pt-4 pb-10'>
             {/* Header */}
             <header className='flex flex-col items-start justify-between gap-4 md:flex-row md:items-center'>
                 <div>
@@ -149,47 +149,49 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
                     </p>
                 </div>
 
-                {onCreate && (
-                    <Button onClick={onCreate}>
-                        <PlusCircle className='mr-2 h-4 w-4' />
-                        Create program
-                    </Button>
-                )}
+                <div className='flex self-end' >
+                    {onCreate && (
+                        <Button onClick={onCreate}>
+                            <PlusCircle className='mr-2 h-4 w-4' />
+                            Create program
+                        </Button>
+                    )}
+                </div>
             </header>
 
             {/* Main Card */}
             <Card>
-                <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
+                <CardHeader className='border-border/50 flex flex-col gap-3 border-b pb-3 md:gap-4 md:pb-4'>
                     <div>
-                        <CardTitle className='text-base font-semibold'>Training programs</CardTitle>
-                        <CardDescription>
+                        <CardTitle className='text-sm font-semibold md:text-base'>Training programs</CardTitle>
+                        <CardDescription className='text-xs md:text-sm'>
                             {programs.length} program{programs.length === 1 ? '' : 's'} available.
                         </CardDescription>
                     </div>
 
-                    <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+                    <div className='w-full flex flex-row gap-2'>
                         {/* Search Input */}
                         <Input
                             type='text'
                             placeholder='Search programs...'
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className='w-full sm:w-[250px]'
+                            className='w-full text-sm md:text-base'
                         />
 
                         {/* Status Filter */}
                         <div className='flex items-center gap-2'>
-                            <Filter className='text-muted-foreground hidden h-4 w-4 sm:block' />
+                            {/* <Filter className='text-muted-foreground h-3.5 w-3.5 flex-shrink-0 md:h-4 md:w-4' /> */}
                             <Select
                                 value={statusFilter}
                                 onValueChange={(value) => setStatusFilter(value as ProgramStatusFilter)}
                             >
-                                <SelectTrigger className='w-full sm:w-[180px]'>
+                                <SelectTrigger className='w-full text-sm md:text-base'>
                                     <SelectValue placeholder='Filter by status' />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {STATUS_OPTIONS.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
+                                        <SelectItem key={option.value} value={option.value} className='text-sm md:text-base'>
                                             {option.label}
                                         </SelectItem>
                                     ))}
@@ -201,49 +203,52 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
 
                 <CardContent className='p-0'>
                     {filteredPrograms.length === 0 ? (
-                        <div className='flex flex-col items-center justify-center space-y-4 py-16 text-center'>
-                            <p className='text-lg font-medium'>
+                        <div className='flex flex-col items-center justify-center space-y-3 px-4 py-12 text-center md:space-y-4 md:py-16'>
+                            <p className='text-base font-medium md:text-lg'>
                                 {searchTerm || statusFilter !== 'all'
                                     ? 'No programs match this filter.'
                                     : 'No programs found.'}
                             </p>
-                            <p className='text-muted-foreground text-sm'>
+                            <p className='text-muted-foreground text-xs md:text-sm'>
                                 {searchTerm || statusFilter !== 'all'
                                     ? 'Try adjusting your search or filter criteria.'
                                     : 'Create your first training program to get started.'}
                             </p>
                             {onCreate && (
-                                <Button variant='outline' onClick={onCreate}>
-                                    <PlusCircle className='mr-2 h-4 w-4' />
+                                <Button variant='outline' onClick={onCreate} className='text-sm md:text-base'>
+                                    <PlusCircle className='mr-2 h-3.5 w-3.5 md:h-4 md:w-4' />
                                     Create program
                                 </Button>
                             )}
                         </div>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className='w-[35%]'>Program</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Capacity</TableHead>
-                                    <TableHead>Price</TableHead>
-                                    <TableHead>Last updated</TableHead>
-                                    <TableHead className='text-right'>Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredPrograms.map((program) => (
-                                    <ProgramRow
-                                        key={program.uuid}
-                                        program={program}
-                                        onEdit={onEdit}
-                                        onPreview={onPreview}
-                                        onDelete={setDeleteConfirm}
-                                    />
-                                ))}
-                            </TableBody>
-                        </Table>
+                        <>
+                            <div className=''>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className='w-[35%]'>Program</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Capacity</TableHead>
+                                            <TableHead>Price</TableHead>
+                                            <TableHead>Last updated</TableHead>
+                                            <TableHead className='text-right'>Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredPrograms.map((program) => (
+                                            <ProgramRow
+                                                key={program.uuid}
+                                                program={program}
+                                                onEdit={onEdit}
+                                                onPreview={onPreview}
+                                                onDelete={setDeleteConfirm}
+                                            />
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>
@@ -304,9 +309,6 @@ function ProgramRow({ program, onEdit, onPreview, onDelete }: ProgramRowProps) {
             </TableCell>
             <TableCell onClick={() => onPreview(program.uuid)}>
                 <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
-            </TableCell>
-            <TableCell onClick={() => onPreview(program.uuid)}>
-                <span className='text-sm'>{program.program_type || '—'}</span>
             </TableCell>
             <TableCell onClick={() => onPreview(program.uuid)}>
                 <span className='font-medium'>{program.class_limit} spots</span>

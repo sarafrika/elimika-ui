@@ -411,46 +411,46 @@ const InstructorsApplicationPage = () => {
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
       {/* Compact Header */}
-      <section className='mb-6'>
-        <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+      <section className='mb-4 md:mb-6'>
+        <div className='mb-3 flex flex-col gap-2 md:mb-4 md:gap-3'>
           <div>
-            <h1 className='text-foreground text-2xl font-bold'>Instructors</h1>
-            <p className='text-muted-foreground text-sm'>
+            <h1 className='text-foreground text-xl font-bold md:text-2xl'>Instructors</h1>
+            <p className='text-muted-foreground text-xs md:text-sm'>
               Review and manage applications from instructors and organizations
             </p>
           </div>
         </div>
       </section>
 
-      <main className='flex gap-6'>
+      <main className='flex flex-col gap-4 lg:flex-row lg:gap-6'>
         {/* Sidebar - Instructors List */}
-        <aside className='w-80 flex-shrink-0'>
-          <Card className='p-4'>
-            <h2 className='mb-4 text-lg font-semibold'>All Instructors</h2>
-            <div className='max-h-[calc(100vh-250px)] space-y-3 overflow-y-auto'>
+        <aside className='w-full lg:w-80 lg:flex-shrink-0'>
+          <Card className='p-3 md:p-4'>
+            <h2 className='mb-3 text-base font-semibold md:mb-4 md:text-lg'>All Instructors</h2>
+            <div className='max-h-[300px] space-y-2 overflow-y-auto md:max-h-[calc(100vh-250px)] md:space-y-3'>
               {isLoadingInstructors ? (
                 // Loading skeletons
                 [...Array(3)].map((_, i) => (
                   <div
                     key={i}
-                    className='border-border bg-muted/30 animate-pulse rounded-xl border p-4'
+                    className='border-border bg-muted/30 animate-pulse rounded-lg border p-3 md:rounded-xl md:p-4'
                   >
-                    <div className='flex items-start gap-4'>
-                      <Skeleton className='h-12 w-12 rounded-full' />
+                    <div className='flex items-start gap-3 md:gap-4'>
+                      <Skeleton className='h-10 w-10 rounded-full md:h-12 md:w-12' />
                       <div className='flex-1 space-y-2'>
-                        <Skeleton className='h-4 w-3/4 rounded' />
-                        <Skeleton className='h-3 w-full rounded' />
+                        <Skeleton className='h-3 w-3/4 rounded md:h-4' />
+                        <Skeleton className='h-2.5 w-full rounded md:h-3' />
                       </div>
                     </div>
                   </div>
                 ))
               ) : instructors.length === 0 ? (
-                <p className='text-muted-foreground py-10 text-center text-sm'>
+                <p className='text-muted-foreground py-8 text-center text-xs md:py-10 md:text-sm'>
                   No instructors found
                 </p>
               ) : (
                 instructors.map(instructorItem => {
-                  const instructorData = instructorItem.data?.data; // actual nested data
+                  const instructorData = instructorItem.data?.data;
                   const fullName = instructorData?.full_name || 'Unknown Instructor';
                   const bio =
                     instructorData?.bio ||
@@ -467,19 +467,19 @@ const InstructorsApplicationPage = () => {
                     <button
                       key={instructorItem.uuid}
                       onClick={() => setSelectedInstructorUuid(instructorItem.uuid)}
-                      className={`flex w-full items-start gap-4 rounded-xl border p-4 text-left shadow-sm transition-all duration-150 ${selectedInstructorUuid === instructorItem.uuid
+                      className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left shadow-sm transition-all duration-150 md:gap-4 md:rounded-xl md:p-4 ${selectedInstructorUuid === instructorItem.uuid
                         ? 'bg-primary/10 border-primary shadow-md'
                         : 'bg-background hover:bg-muted border-border'
                         }`}
                     >
-                      <Avatar className='h-12 w-12 flex-shrink-0'>
+                      <Avatar className='h-10 w-10 flex-shrink-0 md:h-12 md:w-12'>
                         <AvatarImage src={instructorData?.profile_picture_url} />
                         <AvatarFallback>{initials}</AvatarFallback>
                       </Avatar>
                       <div className='min-w-0 flex-1'>
-                        <p className='truncate text-sm font-semibold'>{fullName}</p>
+                        <p className='truncate text-xs font-semibold md:text-sm'>{fullName}</p>
                         <p
-                          className='text-muted-foreground mt-1 line-clamp-2 text-xs'
+                          className='text-muted-foreground mt-1 line-clamp-2 text-[11px] md:text-xs'
                           dangerouslySetInnerHTML={{ __html: bio }}
                         />
                       </div>
@@ -494,54 +494,54 @@ const InstructorsApplicationPage = () => {
         {/* Main View - Selected Instructor Details */}
         <div className='flex-1'>
           {!selectedInstructorUuid ? (
-            <Card className='p-12'>
+            <Card className='p-8 md:p-12'>
               <div className='text-muted-foreground text-center'>
-                <User className='mx-auto mb-4 h-12 w-12' />
-                <p>Select an instructor to view details</p>
+                <User className='mx-auto mb-3 h-10 w-10 md:mb-4 md:h-12 md:w-12' />
+                <p className='text-sm md:text-base'>Select an instructor to view details</p>
               </div>
             </Card>
           ) : (
             <div>
-              <div className='border-muted-foreground/10 mb-6 flex gap-6 border-b'>
+              <div className='border-muted-foreground/10 mb-4 flex gap-3 overflow-x-auto border-b md:mb-6 md:gap-6'>
                 <button
                   onClick={() => setTabs('profile')}
-                  className={`px-2 pb-2 text-[15px] font-medium transition-colors ${tabs === 'profile'
+                  className={`whitespace-nowrap px-2 pb-2 text-sm font-medium transition-colors md:text-[15px] ${tabs === 'profile'
                     ? 'border-primary text-primary border-b-2 font-extrabold'
                     : 'text-muted-foreground hover:text-foreground'
                     }`}
                 >
-                  Instructor Profile
+                  Profile
                 </button>
 
                 <button
                   onClick={() => setTabs('course-application')}
-                  className={`px-2 pb-2 text-[15px] font-medium transition-colors ${tabs === 'course-application'
+                  className={`whitespace-nowrap px-2 pb-2 text-sm font-medium transition-colors md:text-[15px] ${tabs === 'course-application'
                     ? 'border-primary text-primary border-b-2 font-extrabold'
                     : 'text-muted-foreground hover:text-foreground'
                     }`}
                 >
-                  Course Training Application ({stats.pending})
+                  Courses ({stats.pending})
                 </button>
 
                 <button
                   onClick={() => setTabs('program-application')}
-                  className={`px-2 pb-2 text-[15px] font-medium transition-colors ${tabs === 'program-application'
+                  className={`whitespace-nowrap px-2 pb-2 text-sm font-medium transition-colors md:text-[15px] ${tabs === 'program-application'
                     ? 'border-primary text-primary border-b-2 font-extrabold'
                     : 'text-muted-foreground hover:text-foreground'
                     }`}
                 >
-                  Program Training Application ({programStats.pending})
+                  Programs ({programStats.pending})
                 </button>
               </div>
 
               {tabs === 'profile' && (
-                <div className='space-y-6'>
+                <div className='space-y-4 md:space-y-6'>
                   {/* Header Card */}
-                  <Card className='p-6'>
-                    <div className='flex items-start gap-6'>
-                      <Avatar className='h-24 w-24'>
+                  <Card className='p-4 md:p-6'>
+                    <div className='flex flex-col gap-4 md:flex-row md:items-start md:gap-6'>
+                      <Avatar className='h-20 w-20 md:h-24 md:w-24'>
                         <AvatarImage src={instructor?.profile_picture_url} />
-                        <AvatarFallback className='text-2xl'>
+                        <AvatarFallback className='text-xl md:text-2xl'>
                           {instructor?.full_name
                             ?.split(' ')
                             .map(n => n[0])
@@ -549,39 +549,41 @@ const InstructorsApplicationPage = () => {
                         </AvatarFallback>
                       </Avatar>
                       <div className='flex-1'>
-                        <div className='flex items-start justify-between'>
+                        <div className='flex flex-col gap-2 md:flex-row md:items-start md:justify-between'>
                           <div>
-                            <h2 className='text-2xl font-bold'>{instructor?.full_name}</h2>
-                            <p className='text-muted-foreground'>
+                            <h2 className='text-xl font-bold md:text-2xl'>{instructor?.full_name}</h2>
+                            <p className='text-muted-foreground text-sm md:text-base'>
                               {instructor?.professional_headline || 'Instructor'}
                             </p>
                           </div>
-                          <Badge variant='secondary'>{instructor?.status || 'Active'}</Badge>
+                          <Badge variant='secondary' className='self-start'>
+                            {instructor?.status || 'Active'}
+                          </Badge>
                         </div>
 
-                        <div className='mt-4 grid grid-cols-2 gap-4'>
+                        <div className='mt-3 grid grid-cols-1 gap-2 md:mt-4 md:grid-cols-2 md:gap-4'>
                           {instructor?.email && (
-                            <div className='flex items-center gap-2 text-sm'>
-                              <Mail className='text-muted-foreground h-4 w-4' />
-                              <span>{instructor.email}</span>
+                            <div className='flex items-center gap-2 text-xs md:text-sm'>
+                              <Mail className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
+                              <span className='truncate'>{instructor.email}</span>
                             </div>
                           )}
                           {instructor?.phone && (
-                            <div className='flex items-center gap-2 text-sm'>
-                              <Phone className='text-muted-foreground h-4 w-4' />
+                            <div className='flex items-center gap-2 text-xs md:text-sm'>
+                              <Phone className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
                               <span>{instructor.phone}</span>
                             </div>
                           )}
                           {instructor?.location && (
-                            <div className='flex items-center gap-2 text-sm'>
-                              <MapPin className='text-muted-foreground h-4 w-4' />
-                              <span>{instructor.location}</span>
+                            <div className='flex items-center gap-2 text-xs md:text-sm'>
+                              <MapPin className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
+                              <span className='truncate'>{instructor.location}</span>
                             </div>
                           )}
                           {instructor?.organization && (
-                            <div className='flex items-center gap-2 text-sm'>
-                              <Building className='text-muted-foreground h-4 w-4' />
-                              <span>{instructor.organization}</span>
+                            <div className='flex items-center gap-2 text-xs md:text-sm'>
+                              <Building className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
+                              <span className='truncate'>{instructor.organization}</span>
                             </div>
                           )}
                         </div>
@@ -590,11 +592,11 @@ const InstructorsApplicationPage = () => {
 
                     {instructor?.bio && (
                       <>
-                        <Separator className='my-4' />
+                        <Separator className='my-3 md:my-4' />
                         <div>
-                          <h3 className='mb-2 font-semibold'>About</h3>
+                          <h3 className='mb-2 text-sm font-semibold md:text-base'>About</h3>
                           <p
-                            className='text-muted-foreground text-sm'
+                            className='text-muted-foreground text-xs md:text-sm'
                             dangerouslySetInnerHTML={{ __html: instructor.bio }}
                           />
                         </div>
@@ -603,134 +605,137 @@ const InstructorsApplicationPage = () => {
                   </Card>
 
                   {/* Skills */}
-                  {
-                    <Card className='p-6'>
-                      <div className='mb-2 flex items-center gap-2'>
-                        <Award className='text-primary h-5 w-5' />
-                        <h3 className='text-lg font-semibold'>Skills</h3>
-                      </div>
-                      {skills?.length === 0 ? <EmptyStateCard
-                        message="No skill found"
-
-                      /> : <div className='flex flex-col flex-wrap gap-2'>
+                  <Card className='p-4 md:p-6'>
+                    <div className='mb-2 flex items-center gap-2'>
+                      <Award className='text-primary h-4 w-4 md:h-5 md:w-5' />
+                      <h3 className='text-base font-semibold md:text-lg'>Skills</h3>
+                    </div>
+                    {skills?.length === 0 ? (
+                      <EmptyStateCard message='No skill found' />
+                    ) : (
+                      <div className='flex flex-col flex-wrap gap-2'>
                         {skills.map((skill: any) => {
                           return (
                             <div key={skill.uuid} className='flex flex-row items-center gap-2'>
-                              <p>{skill.skill_name}</p>
-                              <Badge key={skill.uuid} variant={'secondary'}>
+                              <p className='text-sm md:text-base'>{skill.skill_name}</p>
+                              <Badge variant={'secondary'} className='text-xs'>
                                 ({skill.proficiency_level})
                               </Badge>
                             </div>
                           );
                         })}
-                      </div>}
-
-                    </Card>
-                  }
+                      </div>
+                    )}
+                  </Card>
 
                   {/* Education */}
-                  {
-                    <Card className='p-6'>
-                      <div className='mb-4 flex items-center gap-2'>
-                        <GraduationCap className='text-primary h-5 w-5' />
-                        <h3 className='text-lg font-semibold'>Education</h3>
-                      </div>
-                      {education?.length === 0 ? <EmptyStateCard
-                        message="No education found"
-                      /> : <div className='space-y-4'>
+                  <Card className='p-4 md:p-6'>
+                    <div className='mb-3 flex items-center gap-2 md:mb-4'>
+                      <GraduationCap className='text-primary h-4 w-4 md:h-5 md:w-5' />
+                      <h3 className='text-base font-semibold md:text-lg'>Education</h3>
+                    </div>
+                    {education?.length === 0 ? (
+                      <EmptyStateCard message='No education found' />
+                    ) : (
+                      <div className='space-y-3 md:space-y-4'>
                         {education.map((edu: any) => (
-                          <div key={edu.uuid} className='flex items-center justify-between gap-4'>
-                            <div className='flex gap-4'>
+                          <div
+                            key={edu.uuid}
+                            className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4'
+                          >
+                            <div className='flex gap-3 md:gap-4'>
                               <div className='flex-shrink-0'>
-                                <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full'>
-                                  <GraduationCap className='text-primary h-5 w-5' />
+                                <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full md:h-10 md:w-10'>
+                                  <GraduationCap className='text-primary h-4 w-4 md:h-5 md:w-5' />
                                 </div>
                               </div>
                               <div>
-                                <h4 className='font-medium'>{edu.qualification}</h4>
-
-                                <p className='text-muted-foreground text-sm'>
+                                <h4 className='text-sm font-medium md:text-base'>
+                                  {edu.qualification}
+                                </h4>
+                                <p className='text-muted-foreground text-xs md:text-sm'>
                                   {edu.education_level}
                                 </p>
-
-                                <p className='text-muted-foreground text-sm'>{edu.school_name}</p>
+                                <p className='text-muted-foreground text-xs md:text-sm'>
+                                  {edu.school_name}
+                                </p>
                               </div>
                             </div>
-                            <div className='flex flex-col self-start'>
-                              <p className='text-muted-foreground mt-1 flex items-center gap-1 text-[13px]'>
+                            <div className='flex flex-col self-start md:self-auto'>
+                              <p className='text-muted-foreground mt-1 flex items-center gap-1 text-[11px] md:text-[13px]'>
                                 {edu.years_since_completion} years
                               </p>
-                              <p className='text-muted-foreground mt-1 flex items-center gap-1 text-[13px]'>
+                              <p className='text-muted-foreground mt-1 flex items-center gap-1 text-[11px] md:text-[13px]'>
                                 Completed {edu.year_completed}
                               </p>
                             </div>
                           </div>
                         ))}
-                      </div>}
-                    </Card>
-                  }
+                      </div>
+                    )}
+                  </Card>
 
                   {/* Documents */}
-                  {
-                    <Card className='p-6'>
-                      <div className='mb-4 flex items-center gap-2'>
-                        <FileText className='text-primary h-5 w-5' />
-                        <h3 className='text-lg font-semibold'>Documents</h3>
-                      </div>
+                  <Card className='p-4 md:p-6'>
+                    <div className='mb-3 flex items-center gap-2 md:mb-4'>
+                      <FileText className='text-primary h-4 w-4 md:h-5 md:w-5' />
+                      <h3 className='text-base font-semibold md:text-lg'>Documents</h3>
+                    </div>
 
-                      {documents?.length === 0 ? <EmptyStateCard
-                        message="No document found"
-
-                      /> : <div className='space-y-2'>
+                    {documents?.length === 0 ? (
+                      <EmptyStateCard message='No document found' />
+                    ) : (
+                      <div className='space-y-2'>
                         {documents.map((doc: any) => (
                           <div
                             key={doc.uuid}
-                            className='flex items-center justify-between rounded-lg border p-3'
+                            className='flex items-center justify-between rounded-lg border p-2.5 md:p-3'
                           >
-                            <div className='flex items-center gap-3'>
-                              <FileText className='text-muted-foreground h-4 w-4' />
+                            <div className='flex items-center gap-2 md:gap-3'>
+                              <FileText className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
                               <div>
-                                <p className='text-sm font-medium'>
+                                <p className='text-xs font-medium md:text-sm'>
                                   {doc.document_name || doc.name}
                                 </p>
-                                <p className='text-muted-foreground text-xs'>
+                                <p className='text-muted-foreground text-[10px] md:text-xs'>
                                   {doc.document_type || doc.type}
                                 </p>
                               </div>
                             </div>
                           </div>
                         ))}
-                      </div>}
-
-
-
-                    </Card>
-                  }
+                      </div>
+                    )}
+                  </Card>
 
                   {/* Reviews */}
-                  {
-                    <Card className='p-6'>
-                      <div className='mb-2 flex items-center gap-2'>
-                        <Star className='text-primary h-5 w-5' />
-                        <h3 className='text-lg font-semibold'>Reviews</h3>
-                      </div>
+                  <Card className='p-4 md:p-6'>
+                    <div className='mb-2 flex items-center gap-2'>
+                      <Star className='text-primary h-4 w-4 md:h-5 md:w-5' />
+                      <h3 className='text-base font-semibold md:text-lg'>Reviews</h3>
+                    </div>
 
-                      {reviews.length === 0 ? <EmptyStateCard message='No review found' /> : <div className='space-y-4'>
+                    {reviews.length === 0 ? (
+                      <EmptyStateCard message='No review found' />
+                    ) : (
+                      <div className='space-y-3 md:space-y-4'>
                         {reviews?.map((review: any) => (
-                          <div key={review.uuid} className='border-b pb-4 last:border-0 last:pb-0'>
-                            <div className='mb-2 flex items-center justify-between gap-2'>
+                          <div key={review.uuid} className='border-b pb-3 last:border-0 last:pb-0 md:pb-4'>
+                            <div className='mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
                               <div>
-                                <span className='text-muted-foreground text-sm font-bold'>
+                                <span className='text-muted-foreground text-xs font-bold md:text-sm'>
                                   {review.reviewer_name ?? 'Reviewer name'}
                                 </span>
-                                <p className='text-[14px] font-semibold'>{review.headline}</p>
-                                <p className='text-sm'>{review.comments}</p>
+                                <p className='text-[13px] font-semibold md:text-[14px]'>
+                                  {review.headline}
+                                </p>
+                                <p className='text-xs md:text-sm'>{review.comments}</p>
                               </div>
                               <div className='flex self-start'>
                                 {[...Array(5)].map((_, i) => (
                                   <Star
                                     key={i}
-                                    className={`h-4 w-4 ${i < (review.rating || 0)
+                                    className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < (review.rating || 0)
                                       ? 'fill-yellow-400 text-yellow-400'
                                       : 'text-gray-300'
                                       }`}
@@ -740,85 +745,95 @@ const InstructorsApplicationPage = () => {
                             </div>
                           </div>
                         ))}
-                      </div>}
-                    </Card>
-                  }
+                      </div>
+                    )}
+                  </Card>
                 </div>
               )}
 
               {tabs === 'course-application' && (
-                <div className='space-y-6'>
-                  <div className='grid gap-3 sm:grid-cols-4'>
-                    <div className='border-border bg-card rounded-lg border p-3'>
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-muted rounded-lg p-2'>
-                          <FileText className='text-primary h-4 w-4' />
+                <div className='space-y-4 md:space-y-6'>
+                  <h3 className='font-bold text-md' >Instructor's Application to Train Courses</h3>
+
+                  <div className='grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4'>
+                    <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                      <div className='flex items-center gap-2 md:gap-3'>
+                        <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                          <FileText className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs'>Total Applications</p>
-                          <p className='text-foreground text-lg font-bold'>{stats.total}</p>
+                          <p className='text-muted-foreground text-[10px] md:text-xs'>Total</p>
+                          <p className='text-foreground text-base font-bold md:text-lg'>
+                            {stats.total}
+                          </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className='border-border bg-card rounded-lg border p-3'>
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-muted rounded-lg p-2'>
-                          <Clock className='text-primary h-4 w-4' />
+                    <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                      <div className='flex items-center gap-2 md:gap-3'>
+                        <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                          <Clock className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs'>Pending Review</p>
-                          <p className='text-foreground text-lg font-bold'>{stats.pending}</p>
+                          <p className='text-muted-foreground text-[10px] md:text-xs'>Pending</p>
+                          <p className='text-foreground text-base font-bold md:text-lg'>
+                            {stats.pending}
+                          </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className='border-border bg-card rounded-lg border p-3'>
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-muted rounded-lg p-2'>
-                          <CheckCircle2 className='text-primary h-4 w-4' />
+                    <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                      <div className='flex items-center gap-2 md:gap-3'>
+                        <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                          <CheckCircle2 className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs'>Approved</p>
-                          <p className='text-foreground text-lg font-bold'>{stats.approved}</p>
+                          <p className='text-muted-foreground text-[10px] md:text-xs'>Approved</p>
+                          <p className='text-foreground text-base font-bold md:text-lg'>
+                            {stats.approved}
+                          </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className='border-border bg-card flex flex-row items-center justify-between rounded-lg border p-3'>
-                      {/* Revoked */}
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-destructive/10 rounded-lg p-2'>
-                          <XCircle className='text-destructive h-4 w-4' />
+                    <div className='border-border bg-card col-span-2 flex flex-row items-center justify-between rounded-lg border p-2.5 md:p-3 lg:col-span-1'>
+                      <div className='flex items-center gap-2 md:gap-3'>
+                        <div className='bg-destructive/10 rounded-lg p-1.5 md:p-2'>
+                          <XCircle className='text-destructive h-3.5 w-3.5 md:h-4 md:w-4' />
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs'>Revoked</p>
-                          <p className='text-foreground text-lg font-bold'>{stats.revoked}</p>
+                          <p className='text-muted-foreground text-[10px] md:text-xs'>Revoked</p>
+                          <p className='text-foreground text-base font-bold md:text-lg'>
+                            {stats.revoked}
+                          </p>
                         </div>
                       </div>
 
-                      <div>{' | '}</div>
+                      <div className='text-muted-foreground'>|</div>
 
-                      {/* Rejected */}
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-warning/10 rounded-lg p-2'>
-                          <AlertCircle className='text-warning/60 h-4 w-4' />
+                      <div className='flex items-center gap-2 md:gap-3'>
+                        <div className='bg-warning/10 rounded-lg p-1.5 md:p-2'>
+                          <AlertCircle className='text-warning/60 h-3.5 w-3.5 md:h-4 md:w-4' />
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs'>Rejected</p>
-                          <p className='text-foreground text-lg font-bold'>{stats.rejected}</p>
+                          <p className='text-muted-foreground text-[10px] md:text-xs'>Rejected</p>
+                          <p className='text-foreground text-base font-bold md:text-lg'>
+                            {stats.rejected}
+                          </p>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Filters and Search */}
-                  <section className='mb-6'>
-                    <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-                      <div className='flex items-center gap-3'>
-                        <Filter className='text-muted-foreground h-4 w-4' />
+                  <section className='mb-4 md:mb-6'>
+                    <div className='flex flex-col gap-2 md:gap-3'>
+                      <div className='flex flex-wrap items-center gap-2 md:gap-3'>
+                        <Filter className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
                         <select
-                          className='border-border bg-background rounded-md border px-3 py-2 text-sm'
+                          className='border-border bg-background rounded-md border px-2 py-1.5 text-xs md:px-3 md:py-2 md:text-sm'
                           value={statusFilter}
                           onChange={event => {
                             setStatusFilter(event.target.value);
@@ -832,7 +847,7 @@ const InstructorsApplicationPage = () => {
                           ))}
                         </select>
                         <select
-                          className='border-border bg-background rounded-md border px-3 py-2 text-sm'
+                          className='border-border bg-background rounded-md border px-2 py-1.5 text-xs md:px-3 md:py-2 md:text-sm'
                           value={applicantTypeFilter}
                           onChange={event => {
                             setApplicantTypeFilter(event.target.value);
@@ -853,27 +868,28 @@ const InstructorsApplicationPage = () => {
                               setStatusFilter('');
                               setApplicantTypeFilter('');
                             }}
+                            className='h-7 px-2 md:h-8 md:px-3'
                           >
-                            <X className='h-4 w-4' />
+                            <X className='h-3.5 w-3.5 md:h-4 md:w-4' />
                           </Button>
                         )}
                       </div>
                       <div className='relative'>
-                        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+                        <Search className='text-muted-foreground absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2 md:left-3 md:h-4 md:w-4' />
                         <Input
                           placeholder='Search by applicant name...'
                           value={searchValue}
                           onChange={event => setSearchValue(event.target.value)}
-                          className='w-full pl-10 sm:w-80'
+                          className='w-full pl-8 text-xs md:pl-10 md:text-sm'
                         />
                         {searchValue && (
                           <Button
                             variant='ghost'
                             size='sm'
                             onClick={() => setSearchValue('')}
-                            className='absolute top-1/2 right-1 h-7 -translate-y-1/2'
+                            className='absolute top-1/2 right-1 h-6 -translate-y-1/2 md:h-7'
                           >
-                            <X className='h-4 w-4' />
+                            <X className='h-3.5 w-3.5 md:h-4 md:w-4' />
                           </Button>
                         )}
                       </div>
@@ -883,20 +899,24 @@ const InstructorsApplicationPage = () => {
                   {/* Applications Grid */}
                   <section className={elimikaDesignSystem.spacing.content}>
                     {applicationsQuery.isLoading ? (
-                      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+                      <div className='grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3'>
                         {[...Array(6)].map((_, i) => (
-                          <Skeleton key={i} className='h-64 w-full' />
+                          <Skeleton key={i} className='h-56 w-full md:h-64' />
                         ))}
                       </div>
                     ) : filteredApplications.length === 0 ? (
                       <div className={elimikaDesignSystem.components.emptyState.container}>
                         <FileText className={elimikaDesignSystem.components.emptyState.icon} />
-                        <h3 className={elimikaDesignSystem.components.emptyState.title}>
+                        <h3
+                          className={`${elimikaDesignSystem.components.emptyState.title} text-sm md:text-base`}
+                        >
                           {searchValue || statusFilter || applicantTypeFilter
                             ? 'No applications found'
                             : 'No training applications yet'}
                         </h3>
-                        <p className={elimikaDesignSystem.components.emptyState.description}>
+                        <p
+                          className={`${elimikaDesignSystem.components.emptyState.description} text-xs md:text-sm`}
+                        >
                           {searchValue || statusFilter || applicantTypeFilter
                             ? 'Try adjusting your search or filter criteria'
                             : 'Applications will appear here when instructors or organizations apply to train your courses'}
@@ -904,7 +924,7 @@ const InstructorsApplicationPage = () => {
                       </div>
                     ) : (
                       <>
-                        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+                        <div className='grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3'>
                           {filteredApplications.map(application => (
                             <ApplicationCard
                               type='course'
@@ -919,16 +939,17 @@ const InstructorsApplicationPage = () => {
 
                         {/* Pagination */}
                         {totalPages > 1 && (
-                          <div className='mt-6 flex items-center justify-center gap-2'>
+                          <div className='mt-4 flex items-center justify-center gap-2 md:mt-6'>
                             <Button
                               variant='outline'
                               size='sm'
                               onClick={() => setPage(p => Math.max(0, p - 1))}
                               disabled={page === 0}
+                              className='h-8 text-xs md:h-9 md:text-sm'
                             >
                               Previous
                             </Button>
-                            <span className='text-muted-foreground text-sm'>
+                            <span className='text-muted-foreground text-xs md:text-sm'>
                               Page {page + 1} of {totalPages}
                             </span>
                             <Button
@@ -936,6 +957,7 @@ const InstructorsApplicationPage = () => {
                               size='sm'
                               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                               disabled={page >= totalPages - 1}
+                              className='h-8 text-xs md:h-9 md:text-sm'
                             >
                               Next
                             </Button>
@@ -958,78 +980,89 @@ const InstructorsApplicationPage = () => {
               )}
 
               {tabs === 'program-application' && (
-                <div className='space-y-6'>
-                  <div className='grid gap-3 sm:grid-cols-4'>
-                    <div className='border-border bg-card rounded-lg border p-3'>
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-muted rounded-lg p-2'>
-                          <FileText className='text-primary h-4 w-4' />
+                <div className='space-y-4 md:space-y-6'>
+                  <h3 className='font-bold text-md' >Instructor's Application to Train Programs</h3>
+
+
+                  <div className='grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4'>
+                    <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                      <div className='flex items-center gap-2 md:gap-3'>
+                        <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                          <FileText className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs'>Total Applications</p>
-                          <p className='text-foreground text-lg font-bold'>{programStats.total}</p>
+                          <p className='text-muted-foreground text-[10px] md:text-xs'>Total</p>
+                          <p className='text-foreground text-base font-bold md:text-lg'>
+                            {programStats.total}
+                          </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className='border-border bg-card rounded-lg border p-3'>
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-muted rounded-lg p-2'>
-                          <Clock className='text-primary h-4 w-4' />
+                    <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                      <div className='flex items-center gap-2 md:gap-3'>
+                        <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                          <Clock className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs'>Pending Review</p>
-                          <p className='text-foreground text-lg font-bold'>{programStats.pending}</p>
+                          <p className='text-muted-foreground text-[10px] md:text-xs'>Pending</p>
+                          <p className='text-foreground text-base font-bold md:text-lg'>
+                            {programStats.pending}
+                          </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className='border-border bg-card rounded-lg border p-3'>
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-muted rounded-lg p-2'>
-                          <CheckCircle2 className='text-primary h-4 w-4' />
+                    <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                      <div className='flex items-center gap-2 md:gap-3'>
+                        <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                          <CheckCircle2 className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs'>Approved</p>
-                          <p className='text-foreground text-lg font-bold'>{programStats.approved}</p>
+                          <p className='text-muted-foreground text-[10px] md:text-xs'>Approved</p>
+                          <p className='text-foreground text-base font-bold md:text-lg'>
+                            {programStats.approved}
+                          </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className='border-border bg-card flex flex-row items-center justify-between rounded-lg border p-3'>
-                      {/* Revoked */}
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-destructive/10 rounded-lg p-2'>
-                          <XCircle className='text-destructive h-4 w-4' />
+                    <div className='border-border bg-card col-span-2 flex flex-row items-center justify-between rounded-lg border p-2.5 md:p-3 lg:col-span-1'>
+                      <div className='flex items-center gap-2 md:gap-3'>
+                        <div className='bg-destructive/10 rounded-lg p-1.5 md:p-2'>
+                          <XCircle className='text-destructive h-3.5 w-3.5 md:h-4 md:w-4' />
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs'>Revoked</p>
-                          <p className='text-foreground text-lg font-bold'>{programStats.revoked}</p>
+                          <p className='text-muted-foreground text-[10px] md:text-xs'>Revoked</p>
+                          <p className='text-foreground text-base font-bold md:text-lg'>
+                            {programStats.revoked}
+                          </p>
                         </div>
                       </div>
 
-                      <div>{' | '}</div>
+                      <div className='text-muted-foreground'>|</div>
 
-                      {/* Rejected */}
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-warning/10 rounded-lg p-2'>
-                          <AlertCircle className='text-warning/60 h-4 w-4' />
+                      <div className='flex items-center gap-2 md:gap-3'>
+                        <div className='bg-warning/10 rounded-lg p-1.5 md:p-2'>
+                          <AlertCircle className='text-warning/60 h-3.5 w-3.5 md:h-4 md:w-4' />
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs'>Rejected</p>
-                          <p className='text-foreground text-lg font-bold'>{stats.rejected}</p>
+                          <p className='text-muted-foreground text-[10px] md:text-xs'>Rejected</p>
+                          <p className='text-foreground text-base font-bold md:text-lg'>
+                            {stats.rejected}
+                          </p>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Filters and Search */}
-                  <section className='mb-6'>
-                    <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-                      <div className='flex items-center gap-3'>
-                        <Filter className='text-muted-foreground h-4 w-4' />
+                  <section className='mb-4 md:mb-6'>
+                    <div className='flex flex-col gap-2 md:gap-3'>
+                      <div className='flex flex-wrap items-center gap-2 md:gap-3'>
+                        <Filter className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
                         <select
-                          className='border-border bg-background rounded-md border px-3 py-2 text-sm'
+                          className='border-border bg-background rounded-md border px-2 py-1.5 text-xs md:px-3 md:py-2 md:text-sm'
                           value={statusFilter}
                           onChange={event => {
                             setStatusFilter(event.target.value);
@@ -1043,7 +1076,7 @@ const InstructorsApplicationPage = () => {
                           ))}
                         </select>
                         <select
-                          className='border-border bg-background rounded-md border px-3 py-2 text-sm'
+                          className='border-border bg-background rounded-md border px-2 py-1.5 text-xs md:px-3 md:py-2 md:text-sm'
                           value={applicantTypeFilter}
                           onChange={event => {
                             setApplicantTypeFilter(event.target.value);
@@ -1064,27 +1097,28 @@ const InstructorsApplicationPage = () => {
                               setStatusFilter('');
                               setApplicantTypeFilter('');
                             }}
+                            className='h-7 px-2 md:h-8 md:px-3'
                           >
-                            <X className='h-4 w-4' />
+                            <X className='h-3.5 w-3.5 md:h-4 md:w-4' />
                           </Button>
                         )}
                       </div>
                       <div className='relative'>
-                        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+                        <Search className='text-muted-foreground absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2 md:left-3 md:h-4 md:w-4' />
                         <Input
                           placeholder='Search by applicant name...'
                           value={searchValue}
                           onChange={event => setSearchValue(event.target.value)}
-                          className='w-full pl-10 sm:w-80'
+                          className='w-full pl-8 text-xs md:pl-10 md:text-sm'
                         />
                         {searchValue && (
                           <Button
                             variant='ghost'
                             size='sm'
                             onClick={() => setSearchValue('')}
-                            className='absolute top-1/2 right-1 h-7 -translate-y-1/2'
+                            className='absolute top-1/2 right-1 h-6 -translate-y-1/2 md:h-7'
                           >
-                            <X className='h-4 w-4' />
+                            <X className='h-3.5 w-3.5 md:h-4 md:w-4' />
                           </Button>
                         )}
                       </div>
@@ -1094,20 +1128,24 @@ const InstructorsApplicationPage = () => {
                   {/* Applications Grid */}
                   <section className={elimikaDesignSystem.spacing.content}>
                     {programApplicationsQuery.isLoading ? (
-                      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+                      <div className='grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3'>
                         {[...Array(6)].map((_, i) => (
-                          <Skeleton key={i} className='h-64 w-full' />
+                          <Skeleton key={i} className='h-56 w-full md:h-64' />
                         ))}
                       </div>
                     ) : filteredProgramApplications.length === 0 ? (
                       <div className={elimikaDesignSystem.components.emptyState.container}>
                         <FileText className={elimikaDesignSystem.components.emptyState.icon} />
-                        <h3 className={elimikaDesignSystem.components.emptyState.title}>
+                        <h3
+                          className={`${elimikaDesignSystem.components.emptyState.title} text-sm md:text-base`}
+                        >
                           {searchValue || statusFilter || applicantTypeFilter
                             ? 'No applications found'
                             : 'No training applications yet'}
                         </h3>
-                        <p className={elimikaDesignSystem.components.emptyState.description}>
+                        <p
+                          className={`${elimikaDesignSystem.components.emptyState.description} text-xs md:text-sm`}
+                        >
                           {searchValue || statusFilter || applicantTypeFilter
                             ? 'Try adjusting your search or filter criteria'
                             : 'Applications will appear here when instructors or organizations apply to train your courses'}
@@ -1115,7 +1153,7 @@ const InstructorsApplicationPage = () => {
                       </div>
                     ) : (
                       <>
-                        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+                        <div className='grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3'>
                           {filteredProgramApplications.map((application: any) => (
                             <ApplicationCard
                               type='program'
@@ -1130,16 +1168,17 @@ const InstructorsApplicationPage = () => {
 
                         {/* Pagination */}
                         {programTotalPages > 1 && (
-                          <div className='mt-6 flex items-center justify-center gap-2'>
+                          <div className='mt-4 flex items-center justify-center gap-2 md:mt-6'>
                             <Button
                               variant='outline'
                               size='sm'
                               onClick={() => setPage(p => Math.max(0, p - 1))}
                               disabled={page === 0}
+                              className='h-8 text-xs md:h-9 md:text-sm'
                             >
                               Previous
                             </Button>
-                            <span className='text-muted-foreground text-sm'>
+                            <span className='text-muted-foreground text-xs md:text-sm'>
                               Page {page + 1} of {totalPages}
                             </span>
                             <Button
@@ -1147,6 +1186,7 @@ const InstructorsApplicationPage = () => {
                               size='sm'
                               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                               disabled={page >= totalPages - 1}
+                              className='h-8 text-xs md:h-9 md:text-sm'
                             >
                               Next
                             </Button>
