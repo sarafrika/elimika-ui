@@ -44,6 +44,10 @@ export default function TrainingManagementPage() {
             classesWithCourseAndInstructor={classesWithCourseAndInstructor}
             loading={loading}
           />
+          {/* <NewTimeTablePage
+            classesWithCourseAndInstructor={classesWithCourseAndInstructor}
+            loading={loading}
+          /> */}
         </TabsContent>
 
         <TabsContent value='students' className='space-y-6'>

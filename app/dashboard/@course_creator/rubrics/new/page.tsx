@@ -185,9 +185,9 @@ const RubricManager: React.FC = () => {
       uuid: criterion.uuid || '',
       scoring: Array.isArray(criterion.scoring)
         ? criterion.scoring.map((score: any) => ({
-            ...score,
-            uuid: score.uuid || '',
-          }))
+          ...score,
+          uuid: score.uuid || '',
+        }))
         : [],
     }));
 
