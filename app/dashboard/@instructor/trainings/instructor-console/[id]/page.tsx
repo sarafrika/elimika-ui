@@ -257,7 +257,7 @@ export default function TrainingInterfacePage() {
   }
 
   return (
-    <div className='bg-background min-h-screen p-6'>
+    <div className='bg-background min-h-screen p-0 sm:p-6'>
       {/* Header Card */}
       <Card className='border-border mb-6'>
         <CardHeader>
@@ -274,6 +274,10 @@ export default function TrainingInterfacePage() {
                 <div className='flex items-center gap-2'>
                   <Users className='text-muted-foreground h-4 w-4' />
                   <span className='text-muted-foreground'>{roster?.length || 0} Students</span>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Users className='text-muted-foreground h-4 w-4' />
+                  <span className='text-muted-foreground'>{classData?.max_participants - roster?.length} Seats availabe</span>
                 </div>
                 <div className='flex items-center gap-2'>
                   <Calendar className='text-muted-foreground h-4 w-4' />

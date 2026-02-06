@@ -2,9 +2,10 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { RubricAssociationForm } from './rubric-association-form';
+import { AssignmentRubricAssociationForm } from './assignment-rubric-association-form';
+import { AttendanceRubricAssociationForm } from './attendance-rubric-association-form';
 
-const tabs = ['Assignment Rubrics', 'Attendance Rubric'];
+const tabs = ['Assignment Rubric', 'Attendance Rubric'];
 
 type CriteriaCreationFormProps = {
   course: any;
@@ -15,7 +16,7 @@ const CriteriaCreationForm = ({
   course,
 }: CriteriaCreationFormProps) => {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState('Assignment Rubrics');
+  const [activeTab, setActiveTab] = useState('Assignment Rubric');
 
   return (
     <div className='mb-10 w-full'>
@@ -35,19 +36,23 @@ const CriteriaCreationForm = ({
       </div>
 
       <div>
-        {activeTab === 'Assignment Rubrics' && (
+        {activeTab === 'Assignment Rubric' && (
           <div>
-            <RubricAssociationForm courseUuid={course?.data?.uuid as string} associatedBy={course?.data?.course_creator_uuid as string} />
+            <AssignmentRubricAssociationForm courseUuid={course?.data?.uuid as string} associatedBy={course?.data?.course_creator_uuid as string} />
 
             <div className='text-muted-foreground flex min-h-[300px] flex-col items-center justify-center gap-6 px-3 py-2 text-center text-sm'>
-              <p>No rubrics assigned yet</p>
+              <p>No assignment rubric assigned yet</p>
             </div>
           </div>
         )}
 
-        {activeTab === 'Attendance' && (
-          <div className='text-muted-foreground flex min-h-[300px] flex-col items-center justify-center gap-6 px-3 py-2 text-center text-sm'>
-            <p>No attendance recorded yet</p>
+        {activeTab === 'Attendance Rubric' && (
+          <div>
+            <AttendanceRubricAssociationForm courseUuid={course?.data?.uuid as string} associatedBy={course?.data?.course_creator_uuid as string} />
+
+            <div className='text-muted-foreground flex min-h-[300px] flex-col items-center justify-center gap-6 px-3 py-2 text-center text-sm'>
+              <p>No attendance rubric assigned yet</p>
+            </div>
           </div>
         )}
       </div>
