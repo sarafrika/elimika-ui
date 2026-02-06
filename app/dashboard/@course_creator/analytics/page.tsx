@@ -248,17 +248,18 @@ function CourseReviewSummary({
       {/* Header */}
       <button
         onClick={onToggle}
-        className='flex w-full items-center justify-between p-4 text-left'
+        className='flex w-full flex-col gap-3 p-3 text-left md:flex-row md:items-center md:justify-between md:p-4'
         aria-expanded={isOpen}
       >
-        <div className='flex flex-col gap-2'>
-          <div className='flex flex-row items-center gap-2' >
-            <p className='font-medium'>{course.name}</p>
-            <p className='text-muted-foreground text-xs'>{enrollments?.length} enrollment(s)</p>
-
+        <div className='flex flex-1 flex-col gap-2'>
+          <div className='flex flex-col gap-1.5 md:flex-row md:items-center md:gap-2'>
+            <p className='text-sm font-medium md:text-base'>{course.name}</p>
+            <p className='text-muted-foreground text-[11px] md:text-xs'>
+              {enrollments?.length} enrollment(s)
+            </p>
           </div>
-          <div className='flex flex-col items-start gap-2'>
-            <p className='text-muted-foreground text-xs'>
+          <div className='flex flex-col items-start gap-1.5 md:gap-2'>
+            <p className='text-muted-foreground text-[11px] md:text-xs'>
               {reviewsLoading
                 ? 'Loading reviews...'
                 : reviewCount
@@ -268,44 +269,49 @@ function CourseReviewSummary({
           </div>
         </div>
 
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-2 self-start md:self-auto'>
           {averageRating !== null ? (
             <>
               <RatingStars value={Math.round(averageRating)} />
-              <span className='text-sm font-medium'>{averageRating}</span>
+              <span className='text-xs font-medium md:text-sm'>{averageRating}</span>
             </>
           ) : (
             <>
               <RatingStars value={0} />
-              <span className='text-sm font-medium'>{averageRating}</span>
-            </>)}
+              <span className='text-muted-foreground text-xs font-medium md:text-sm'>0</span>
+            </>
+          )}
         </div>
       </button>
 
       {/* Body */}
       {isOpen && (
-        <div className='border-border/60 space-y-3 border-t p-4'>
+        <div className='border-border/60 space-y-2.5 border-t p-3 md:space-y-3 md:p-4'>
           {reviewsLoading ? (
-            <p className='text-muted-foreground text-center text-sm'>Loading reviews...</p>
+            <p className='text-muted-foreground text-center text-xs md:text-sm'>
+              Loading reviews...
+            </p>
           ) : reviewCount > 0 ? (
             reviews.slice(0, 5).map((review: any) => (
               <div
                 key={review.uuid}
-                className='border-border/60 bg-muted/40 rounded-lg border p-3 text-sm'
+                className='border-border/60 bg-muted/40 rounded-lg border p-2.5 text-xs md:p-3 md:text-sm'
               >
-                <div className='flex items-center justify-between'>
+                <div className='flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
                   <RatingStars value={review.rating || 0} />
-                  <span className='text-muted-foreground text-xs'>
+                  <span className='text-muted-foreground text-[10px] md:text-xs'>
                     {format(new Date(review.created_date), 'dd MMM yyyy')}
                   </span>
                 </div>
 
-                <p className='mt-2'>{review.headline}</p>
-                <p className='text-muted-foreground mt-1 text-xs'>{review.comments}</p>
+                <p className='mt-2 text-xs font-medium md:text-sm'>{review.headline}</p>
+                <p className='text-muted-foreground mt-1 text-[11px] md:text-xs'>
+                  {review.comments}
+                </p>
               </div>
             ))
           ) : (
-            <p className='text-muted-foreground text-center text-sm'>
+            <p className='text-muted-foreground text-center text-xs md:text-sm'>
               No reviews yet for this course.
             </p>
           )}

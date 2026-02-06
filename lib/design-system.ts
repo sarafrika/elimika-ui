@@ -47,7 +47,7 @@ export const elimikaDesignSystem = {
   // Component variants
   components: {
     // Main page container
-    pageContainer: 'space-y-8 p-6 lg:p-10',
+    pageContainer: 'space-y-8 p-2 sm:p-6 lg:p-10',
 
     // Header section (for page titles)
     header: {

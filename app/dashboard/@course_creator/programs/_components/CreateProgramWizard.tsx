@@ -206,34 +206,37 @@ const CreateProgramWizard = ({
     };
 
     return (
-        <div className='p-6'>
-            <div className='mb-6 flex items-end justify-end'>
-                <Button type='button' variant={'ghost'} onClick={onCancel}>
-                    <X />
+        <div className=''>
+            <div className='mb-4 flex items-end justify-end md:mb-6'>
+                <Button type='button' variant={'ghost'} onClick={onCancel} className='h-8 w-8 p-0 md:h-10 md:w-10'>
+                    <X className='h-4 w-4 md:h-5 md:w-5' />
                 </Button>
             </div>
 
-            <div className='mb-8'>
-                <div className='flex items-center justify-between'>
-                    <div className='flex items-center gap-4'>
+            <div className='mb-6 md:mb-8'>
+                <div className='flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between'>
+                    {/* Step 1 */}
+                    <div className='flex w-full items-center gap-3 md:w-auto md:gap-4'>
                         <div
-                            className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold ${step >= 1
+                            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold md:h-10 md:w-10 md:text-base ${step >= 1
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-muted text-muted-foreground'
                                 }`}
                         >
                             {step > 1 ? '✓' : '1'}
                         </div>
-                        <div>
-                            <div className='font-medium text-foreground'>Basic Information</div>
-                            <div className='text-sm text-muted-foreground'>
+                        <div className='min-w-0 flex-1'>
+                            <div className='truncate text-sm font-medium text-foreground md:text-base'>
+                                Basic Information
+                            </div>
+                            <div className='truncate text-xs text-muted-foreground md:text-sm'>
                                 Program details and settings
                             </div>
                         </div>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className='h-0.5 w-24 bg-muted'>
+                    {/* Progress Bar - Hidden on mobile */}
+                    <div className='hidden h-0.5 w-16 bg-muted md:block lg:w-24'>
                         <div
                             className={`h-full transition-all ${step >= 2 ? 'bg-primary' : 'bg-muted'
                                 }`}
@@ -241,22 +244,30 @@ const CreateProgramWizard = ({
                     </div>
 
                     {/* Step 2 */}
-                    <div className='flex items-center gap-4'>
+                    <div className='flex w-full items-center gap-3 md:w-auto md:gap-4'>
                         <div
-                            className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold ${step >= 2
+                            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold md:h-10 md:w-10 md:text-base ${step >= 2
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-muted text-muted-foreground'
                                 }`}
                         >
                             2
                         </div>
-                        <div>
-                            <div className='font-medium text-foreground'>Courses & Requirements</div>
-                            <div className='text-sm text-muted-foreground'>
+                        <div className='min-w-0 flex-1'>
+                            <div className='truncate text-sm font-medium text-foreground md:text-base'>
+                                Courses & Requirements
+                            </div>
+                            <div className='truncate text-xs text-muted-foreground md:text-sm'>
                                 Add courses and set requirements
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Mobile Progress Indicator */}
+                <div className='mt-3 flex gap-1 md:hidden'>
+                    <div className={`h-1 flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-muted'}`} />
+                    <div className={`h-1 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-muted'}`} />
                 </div>
             </div>
 
@@ -282,16 +293,16 @@ const CreateProgramWizard = ({
                             editingProgram={latestProgramData}
                         />
                     ) : (
-                        <div className='rounded-lg border border-border bg-card p-8 text-center'>
+                        <div className='rounded-lg border border-border bg-card p-6 text-center md:p-8'>
                             <div className='text-muted-foreground'>
-                                <p className='mb-2 text-lg font-semibold'>Program UUID not found</p>
-                                <p className='text-sm'>
+                                <p className='mb-2 text-base font-semibold md:text-lg'>Program UUID not found</p>
+                                <p className='text-xs md:text-sm'>
                                     Please go back and try again, or contact support if the issue
                                     persists.
                                 </p>
                                 <Button
                                     onClick={() => setStep(1)}
-                                    className='mt-4 rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90'
+                                    className='mt-3 w-full rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 md:mt-4 md:w-auto md:text-base'
                                 >
                                     Go Back
                                 </Button>

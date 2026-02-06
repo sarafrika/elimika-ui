@@ -59,7 +59,7 @@ export default function CourseCreatorCoursesContent() {
   }, [courses, statusFilter]);
 
   return (
-    <div className='mx-auto w-full max-w-6xl space-y-6 px-4 py-10'>
+    <div className='mx-auto w-full max-w-6xl space-y-6 py-10'>
       <header className='flex flex-col items-start justify-between gap-4 md:flex-row md:items-center'>
         <div>
           {/* <h1 className='text-3xl font-semibold tracking-tight'>Courses</h1> */}

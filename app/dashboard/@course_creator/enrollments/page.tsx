@@ -125,6 +125,8 @@ const EnrollmentsPage = () => {
 
         {/* Right: Enrollments List */}
         <div className='space-y-4 overflow-y-auto lg:max-h-[calc(100vh-250px)] lg:w-2/3'>
+          <h3 className='font-bold text-md'>List of enrolled students under course</h3>
+
           {selectedCourseId === null ? (
             <Card className='p-12 text-center'>
               <CheckCircle2 className='text-muted-foreground mx-auto mb-4 h-12 w-12' />

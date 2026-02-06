@@ -145,35 +145,34 @@ const ProgramBasicInfo = ({
     };
 
     return (
-        <form onSubmit={handleSubmit} className='space-y-6'>
-            <div className='rounded-lg border border-border p-6'>
-                <div className='mb-4 flex items-center justify-between'>
-                    <h3 className='text-lg font-semibold text-foreground'>
+        <form onSubmit={handleSubmit} className='space-y-4 md:space-y-6'>
+            <div className='rounded-lg border border-border p-4 md:p-6'>
+                <div className='mb-3 flex flex-col gap-2 md:mb-4 md:flex-row md:items-center md:justify-between'>
+                    <h3 className='text-base font-semibold text-foreground md:text-lg'>
                         Program Information
                     </h3>
 
                     {isEditing && (
                         <div className="flex items-center gap-2">
                             {hasChanges ? (
-                                <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-xs font-medium text-warning">
+                                <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-2.5 py-0.5 text-[11px] font-medium text-warning md:px-3 md:py-1 md:text-xs">
                                     <span className="h-1.5 w-1.5 rounded-full bg-warning" />
                                     Unsaved changes
                                 </span>
                             ) : (
-                                <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-medium text-success">
+                                <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-0.5 text-[11px] font-medium text-success md:px-3 md:py-1 md:text-xs">
                                     <span className="h-1.5 w-1.5 rounded-full bg-success" />
                                     No changes
                                 </span>
                             )}
                         </div>
                     )}
-
                 </div>
 
-                <div className='mb-10 space-y-5'>
+                <div className='mb-6 space-y-4 md:mb-10 md:space-y-5'>
                     {/* Title */}
                     <div>
-                        <Label className='mb-2 block text-sm font-medium text-foreground'>
+                        <Label className='mb-1.5 block text-xs font-medium text-foreground md:mb-2 md:text-sm'>
                             Program Title *
                         </Label>
                         <Input
@@ -181,16 +180,16 @@ const ProgramBasicInfo = ({
                             value={formData.title}
                             onChange={(e) => handleChange('title', e.target.value)}
                             className={`w-full rounded-lg border ${errors.title ? 'border-destructive' : 'border-border'
-                                } px-4 py-2 focus:border-primary focus:outline-none`}
+                                } px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-base`}
                         />
                         {errors.title && (
-                            <p className='mt-1 text-sm text-destructive'>{errors.title}</p>
+                            <p className='mt-1 text-xs text-destructive md:text-sm'>{errors.title}</p>
                         )}
                     </div>
 
                     {/* Description */}
                     <div>
-                        <Label className='mb-2 block text-sm font-medium text-foreground'>
+                        <Label className='mb-1.5 block text-xs font-medium text-foreground md:mb-2 md:text-sm'>
                             Description *
                         </Label>
                         <Textarea
@@ -198,55 +197,55 @@ const ProgramBasicInfo = ({
                             onChange={(e) => handleChange('description', e.target.value)}
                             rows={4}
                             className={`w-full rounded-lg border ${errors.description ? 'border-destructive' : 'border-border'
-                                } px-4 py-2 focus:border-primary focus:outline-none`}
+                                } px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-base`}
                         />
                         {errors.description && (
-                            <p className='mt-1 text-sm text-destructive'>{errors.description}</p>
+                            <p className='mt-1 text-xs text-destructive md:text-sm'>{errors.description}</p>
                         )}
                     </div>
 
                     {/* Objectives */}
                     <div>
-                        <Label className='mb-2 block text-sm font-medium text-foreground'>
+                        <Label className='mb-1.5 block text-xs font-medium text-foreground md:mb-2 md:text-sm'>
                             Learning Objectives
                         </Label>
                         <Textarea
                             value={formData.objectives ?? ''}
                             onChange={(e) => handleChange('objectives', e.target.value)}
                             rows={3}
-                            className='w-full rounded-lg border border-border px-4 py-2 focus:border-primary focus:outline-none'
+                            className='w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-base'
                         />
                     </div>
 
                     {/* Prerequisites */}
                     <div>
-                        <Label className='mb-2 block text-sm font-medium text-foreground'>
+                        <Label className='mb-1.5 block text-xs font-medium text-foreground md:mb-2 md:text-sm'>
                             Prerequisites
                         </Label>
                         <Textarea
                             value={formData.prerequisites ?? ''}
                             onChange={(e) => handleChange('prerequisites', e.target.value)}
                             rows={3}
-                            className='w-full rounded-lg border border-border px-4 py-2 focus:border-primary focus:outline-none'
+                            className='w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-base'
                         />
                     </div>
 
                     {/* Currency & Price */}
-                    <div className='grid gap-4 md:grid-cols-2'>
+                    <div className='grid gap-3 md:grid-cols-2 md:gap-4'>
                         <div>
-                            <Label className='mb-2 block text-sm font-medium text-foreground'>
+                            <Label className='mb-1.5 block text-xs font-medium text-foreground md:mb-2 md:text-sm'>
                                 Currency *
                             </Label>
                             <Input
                                 type='text'
                                 value={'KES'}
                                 disabled
-                                className='w-full rounded-lg border border-border bg-muted px-4 py-2'
+                                className='w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm md:px-4 md:text-base'
                             />
                         </div>
 
                         <div>
-                            <Label className='mb-2 block text-sm font-medium text-foreground'>
+                            <Label className='mb-1.5 block text-xs font-medium text-foreground md:mb-2 md:text-sm'>
                                 Price *
                             </Label>
                             <Input
@@ -256,18 +255,18 @@ const ProgramBasicInfo = ({
                                 value={formData.price}
                                 onChange={(e) => handleChange('price', Number(e.target.value))}
                                 className={`w-full rounded-lg border ${errors.price ? 'border-destructive' : 'border-border'
-                                    } px-4 py-2`}
+                                    } px-3 py-2 text-sm md:px-4 md:text-base`}
                             />
                             {errors.price && (
-                                <p className='mt-1 text-sm text-destructive'>{errors.price}</p>
+                                <p className='mt-1 text-xs text-destructive md:text-sm'>{errors.price}</p>
                             )}
                         </div>
                     </div>
 
                     {/* Class Limit & Categories */}
-                    <div className='grid gap-4 md:grid-cols-2'>
+                    <div className='grid gap-3 md:grid-cols-2 md:gap-4'>
                         <div>
-                            <Label className='mb-2 block text-sm font-medium text-foreground'>
+                            <Label className='mb-1.5 block text-xs font-medium text-foreground md:mb-2 md:text-sm'>
                                 Class Limit *
                             </Label>
                             <Input
@@ -276,20 +275,20 @@ const ProgramBasicInfo = ({
                                 value={formData.class_limit}
                                 onChange={(e) => handleChange('class_limit', Number(e.target.value))}
                                 className={`w-full rounded-lg border ${errors.class_limit ? 'border-destructive' : 'border-border'
-                                    } px-4 py-2`}
+                                    } px-3 py-2 text-sm md:px-4 md:text-base`}
                             />
                             {errors.class_limit && (
-                                <p className='mt-1 text-sm text-destructive'>{errors.class_limit}</p>
+                                <p className='mt-1 text-xs text-destructive md:text-sm'>{errors.class_limit}</p>
                             )}
                         </div>
 
                         <div className='w-full'>
-                            <Label className='mb-2 block text-sm font-medium text-foreground'>
+                            <Label className='mb-1.5 block text-xs font-medium text-foreground md:mb-2 md:text-sm'>
                                 Categories
                             </Label>
 
                             <Select value='' onValueChange={handleAddCategory}>
-                                <SelectTrigger className='w-full'>
+                                <SelectTrigger className='w-full text-sm md:text-base'>
                                     <SelectValue placeholder='Add category' />
                                 </SelectTrigger>
 
@@ -297,7 +296,7 @@ const ProgramBasicInfo = ({
                                     {categories
                                         .filter((c) => !selectedCategories.includes(c.uuid))
                                         .map((c) => (
-                                            <SelectItem key={c.uuid} value={c.uuid}>
+                                            <SelectItem key={c.uuid} value={c.uuid} className='text-sm md:text-base'>
                                                 {c.name}
                                             </SelectItem>
                                         ))}
@@ -305,17 +304,17 @@ const ProgramBasicInfo = ({
                             </Select>
 
                             {selectedCategories.length > 0 && (
-                                <div className='mt-3 flex w-full flex-wrap gap-2'>
+                                <div className='mt-2 flex w-full flex-wrap gap-1.5 md:mt-3 md:gap-2'>
                                     {selectedCategories.map((uuid) => (
                                         <div
                                             key={uuid}
-                                            className='flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary'
+                                            className='flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary md:gap-2 md:px-3 md:py-1 md:text-sm'
                                         >
-                                            {getCategoryName(uuid)}
+                                            <span className='truncate max-w-[120px] md:max-w-none'>{getCategoryName(uuid)}</span>
                                             <button
                                                 type='button'
                                                 onClick={() => handleRemoveCategory(uuid)}
-                                                className='text-primary hover:text-primary/80'
+                                                className='text-primary hover:text-primary/80 flex-shrink-0'
                                             >
                                                 ×
                                             </button>
@@ -329,13 +328,13 @@ const ProgramBasicInfo = ({
             </div>
 
             {/* Actions */}
-            <div className='flex justify-end gap-3'>
+            <div className='flex flex-col gap-2 md:flex-row md:justify-end md:gap-3'>
                 <Button
                     type='button'
                     variant={'ghost'}
                     onClick={onCancel}
                     disabled={isLoading}
-                    className='rounded-lg border border-border px-6 py-2 text-foreground'
+                    className='w-full rounded-lg border border-border px-4 py-2 text-sm text-foreground md:w-auto md:px-6 md:text-base'
                 >
                     Cancel
                 </Button>
@@ -343,7 +342,7 @@ const ProgramBasicInfo = ({
                 <Button
                     type='submit'
                     disabled={isLoading}
-                    className='rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90'
+                    className='w-full rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 md:w-auto md:px-6 md:text-base'
                 >
                     {isLoading ? (
                         'Saving...'

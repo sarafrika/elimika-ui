@@ -101,7 +101,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
   const paginationMetadata = data?.data?.metadata;
 
   return (
-    <div className='mx-auto w-full max-w-6xl space-y-6 px-4 py-10'>
+    <div className='mx-auto w-full max-w-6xl space-y-6 py-10'>
       <div className='mb-6 flex items-end justify-between'>
         <div>
           <p className='text-muted-foreground mt-2 max-w-2xl text-sm'>
