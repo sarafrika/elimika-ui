@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
   SheetContent,
@@ -22,13 +23,12 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
-  type AdminOrganisation,
   useUnverifyAdminOrganisation,
   useUpdateAdminOrganisation,
   useVerifyAdminOrganisation,
+  type AdminOrganisation,
 } from '@/services/admin';
 import { useAdminBranches } from '@/services/admin/branches';
 import {
@@ -40,24 +40,22 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
+  BookOpen,
   Building2,
+  Calendar,
+  ChevronRight,
   Loader2,
   MapPin,
   Shield,
   ShieldOff,
-  Users,
-  BookOpen,
-  GraduationCap,
-  Calendar,
   TrendingUp,
-  ExternalLink,
-  ChevronRight,
+  Users
 } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import Link from 'next/link';
 
 const organisationFormSchema = z.object({
   name: zOrganisation.shape.name,
@@ -223,11 +221,10 @@ function OrganisationListPanel({
       <button
         key={org.uuid ?? org.name}
         type='button'
-        className={`relative w-full rounded-2xl border p-4 text-left transition ${
-          selectedOrganisationId === org.uuid
+        className={`relative w-full rounded-2xl border p-4 text-left transition ${selectedOrganisationId === org.uuid
             ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-1'
             : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'
-        }`}
+          }`}
         onClick={() => onSelect(org)}
       >
         {selectedOrganisationId === org.uuid ? (
@@ -679,13 +676,13 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
     defaultValues: organisation
       ? mapOrganisationToForm(organisation)
       : {
-          name: '',
-          description: '',
-          active: false,
-          licence_no: '',
-          location: '',
-          country: '',
-        },
+        name: '',
+        description: '',
+        active: false,
+        licence_no: '',
+        location: '',
+        country: '',
+      },
     mode: 'onBlur',
   });
 
@@ -916,13 +913,13 @@ function OrganisationDetailSheet({
     defaultValues: organisation
       ? mapOrganisationToForm(organisation)
       : {
-          name: '',
-          description: '',
-          active: false,
-          licence_no: '',
-          location: '',
-          country: '',
-        },
+        name: '',
+        description: '',
+        active: false,
+        licence_no: '',
+        location: '',
+        country: '',
+      },
     mode: 'onBlur',
   });
 
@@ -988,7 +985,7 @@ function OrganisationDetailSheet({
               </SheetDescription>
             </SheetHeader>
           </div>
-          <ScrollArea className='flex-1 px-6 py-4'>
+          <ScrollArea className='h-0 flex-1 px-6 py-4'>
             {organisation ? (
               <div className='space-y-6 pb-10'>
                 <OrganisationSummary organisation={organisation} variant='compact' />
@@ -1180,10 +1177,10 @@ function OrganisationBranchesCard({
   const { data, isLoading } = useAdminBranches(
     organisationUuid
       ? {
-          organizationUuid: organisationUuid,
-          page: 0,
-          size: 5,
-        }
+        organizationUuid: organisationUuid,
+        page: 0,
+        size: 5,
+      }
       : null
   );
 

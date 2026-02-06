@@ -1,6 +1,5 @@
 'use client';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,15 +33,15 @@ import {
   getAdminUsersOptions,
   getAllUsersOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
 import { zUser } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
-import { z } from 'zod';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 const userFormSchema = z.object({
   first_name: zUser.shape.first_name,
@@ -121,11 +120,11 @@ export function AdminUserWorkspace({
   const { data, isLoading } = useQuery(
     useAdminEndpoint
       ? getAdminUsersOptions({
-          query: {
-            filters: {},
-            pageable: { page, size: 20, sort: ['created_date,desc'] },
-          },
-        })
+        query: {
+          filters: {},
+          pageable: { page, size: 20, sort: ['created_date,desc'] },
+        },
+      })
       : getAllUsersOptions({ query: { pageable: { page, size: 20, sort: ['created_date,desc'] } } })
   );
 
@@ -327,7 +326,7 @@ function UserListPanel({
   return (
     <div className='bg-background flex min-h-0 w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
       <div className='space-y-2 border-b p-4'>
-        <div className='flex flex-col gap-2'>
+        <div className='flex flex-row gap-2'>
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
             <SelectTrigger>
               <SelectValue placeholder='Status' />
@@ -521,14 +520,14 @@ function UserDetailSheet({ user, open, onOpenChange }: UserDetailSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='w-full max-w-xl border-l'>
-        <SheetHeader>
+      <SheetContent className='flex w-full max-w-xl flex-col border-l'>
+        <SheetHeader className='flex-shrink-0'>
           <SheetTitle>Review user details</SheetTitle>
           <SheetDescription>
             Manage identity info, toggle access, and record compliance notes.
           </SheetDescription>
         </SheetHeader>
-        <ScrollArea className='mt-4 flex-1 pr-3'>
+        <ScrollArea className='mt-4 h-0 flex-1 pr-3'>
           {user ? (
             <UserDetailsForm
               form={form}
@@ -557,7 +556,7 @@ interface UserDetailsFormProps {
 function UserDetailsForm({ form, onSubmit, isPending, user }: UserDetailsFormProps) {
   return (
     <Form {...form}>
-      <form className='mt-6 space-y-6 pb-6' onSubmit={form.handleSubmit(onSubmit)}>
+      <form className='mt-6 px-4 sm:px-0 space-y-6 pb-6' onSubmit={form.handleSubmit(onSubmit)}>
         <div className='grid gap-4 md:grid-cols-2'>
           <FormField
             control={form.control}

@@ -378,7 +378,7 @@ function StudentDetailSheet({ student, open, onOpenChange }: StudentDetailSheetP
           <SheetTitle>Student Details</SheetTitle>
           <SheetDescription>View student profile information</SheetDescription>
         </SheetHeader>
-        <ScrollArea className='mt-4 flex-1 pr-3'>
+        <ScrollArea className='mt-4 px-4 sm:px-0 h-0 flex-1 pr-3'>
           <div className='space-y-6'>
             <div>
               <h3 className='mb-4 text-lg font-semibold'>Personal Information</h3>
