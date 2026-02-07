@@ -37,7 +37,6 @@ const ProgramCourseManagement = ({
     onSaveDraft,
     onBack,
     isPublishing,
-    editingProgram,
 }: any) => {
     const qc = useQueryClient();
 
@@ -349,9 +348,9 @@ const ProgramCourseManagement = ({
                         variant={'ghost'}
                         className='rounded-lg border border-border px-6 py-2 font-medium text-foreground hover:bg-muted'
                     >
-                        Save as Draft
+                        Save
                     </Button>
-                    <Button
+                    {/* <Button
                         onClick={onPublish}
                         disabled={
                             isPublishing ||
@@ -362,7 +361,7 @@ const ProgramCourseManagement = ({
                         {isPublishing
                             ? 'Publishing...'
                             : 'Publish Program'}
-                    </Button>
+                    </Button> */}
                 </div>
             </div>
 

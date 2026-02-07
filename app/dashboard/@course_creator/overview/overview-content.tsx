@@ -155,7 +155,7 @@ function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetiz
           </div>
           <div>
             <p className='text-muted-foreground'>Revenue split</p>
-            <p className='text-lg font-semibold'>
+            <p className="text-lg font-semibold whitespace-pre-line">
               {formatShareRange(monetization.creatorShareRange, monetization.instructorShareRange)}
             </p>
             {!monetization.consistentRevenueSplit && (
@@ -334,17 +334,22 @@ function formatFeeRange(min?: number | null, max?: number | null) {
 }
 
 function formatShareRange(
-  creatorRange?: { min?: number | null; max?: number | null },
-  instructorRange?: { min?: number | null; max?: number | null }
+  creatorRange?: [number | null | undefined, number | null | undefined],
+  instructorRange?: [number | null | undefined, number | null | undefined]
 ) {
   if (!creatorRange || !instructorRange) return 'Not set';
-  const creatorShare =
-    creatorRange.min && creatorRange.max
-      ? `${creatorRange.min}% – ${creatorRange.max}%`
-      : `${creatorRange.min ?? creatorRange.max}%`;
-  const instructorShare =
-    instructorRange.min && instructorRange.max
-      ? `${instructorRange.min}% – ${instructorRange.max}%`
-      : `${instructorRange.min ?? instructorRange.max}%`;
-  return `${creatorShare} creator • ${instructorShare} instructor`;
+
+  const formatRange = (min?: number | null, max?: number | null) => {
+    if (min == null && max == null) return 'Not set';
+    if (min != null && max != null && min !== max) {
+      return `${min}% – ${max}%`;
+    }
+    return `${min ?? max}%`;
+  };
+
+  const creatorShare = formatRange(creatorRange[0], creatorRange[1]);
+  const instructorShare = formatRange(instructorRange[0], instructorRange[1]);
+
+  return `${creatorShare} creator\n${instructorShare} instructor`;
 }
+

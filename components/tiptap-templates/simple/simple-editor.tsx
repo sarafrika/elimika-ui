@@ -192,17 +192,19 @@ export function SimpleEditor({
     extensions: [
       StarterKit.configure({
         horizontalRule: false,
-        link: {
-          openOnClick: false,
-          enableClickSelection: true,
-        },
       }),
       HorizontalRule,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TaskList,
       TaskItem.configure({ nested: true }),
       Highlight.configure({ multicolor: true }),
-      Image,
+      Image.configure({
+        inline: true,
+        allowBase64: true, // Add this
+        HTMLAttributes: {
+          class: 'tiptap-image',
+        },
+      }),
       Typography,
       Superscript,
       Subscript,
@@ -231,7 +233,6 @@ export function SimpleEditor({
 
   React.useEffect(() => {
     if (editor && value !== undefined && value !== editor.getHTML()) {
-      //@ts-expect-error
       editor.commands.setContent(value, false);
     }
   }, [value, editor]);

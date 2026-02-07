@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
@@ -35,6 +36,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '../../../../../components/ui/select';
+import { Skeleton } from '../../../../../components/ui/skeleton';
 import {
     Table,
     TableBody,
@@ -48,6 +50,7 @@ import {
     searchTrainingProgramsOptions,
     searchTrainingProgramsQueryKey
 } from '../../../../../services/client/@tanstack/react-query.gen';
+
 
 type ProgramStatusFilter = 'all' | 'published' | 'draft' | 'archived';
 
@@ -88,6 +91,7 @@ interface ProgramsListProps {
 
 const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProps) => {
     const qc = useQueryClient();
+    const router = useRouter()
 
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -133,8 +137,17 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
 
     if (isLoading) {
         return (
-            <div className='flex h-64 items-center justify-center'>
-                <div className='text-muted-foreground'>Loading programs...</div>
+            <div className='mx-auto w-full max-w-7xl space-y-6 pt-4 pb-10'>
+                <Card>
+                    <CardHeader className='border-border/50 border-b'>
+                        <Skeleton className='h-4 w-40' />
+                        <Skeleton className='mt-2 h-3 w-64' />
+                    </CardHeader>
+
+                    <CardContent className='p-0'>
+                        <ProgramsTableSkeleton rows={6} />
+                    </CardContent>
+                </Card>
             </div>
         );
     }
@@ -151,7 +164,7 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
 
                 <div className='flex self-end' >
                     {onCreate && (
-                        <Button onClick={onCreate}>
+                        <Button onClick={() => router.push('/dashboard/programs/create-new-program')}>
                             <PlusCircle className='mr-2 h-4 w-4' />
                             Create program
                         </Button>
@@ -176,7 +189,7 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
                             placeholder='Search programs...'
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className='w-full text-sm md:text-base'
+                            className='w-full text-sm md:text-md'
                         />
 
                         {/* Status Filter */}
@@ -186,12 +199,12 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
                                 value={statusFilter}
                                 onValueChange={(value) => setStatusFilter(value as ProgramStatusFilter)}
                             >
-                                <SelectTrigger className='w-full text-sm md:text-base'>
+                                <SelectTrigger className='w-full text-sm md:text-md'>
                                     <SelectValue placeholder='Filter by status' />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {STATUS_OPTIONS.map((option) => (
-                                        <SelectItem key={option.value} value={option.value} className='text-sm md:text-base'>
+                                        <SelectItem key={option.value} value={option.value} className='text-sm md:text-md'>
                                             {option.label}
                                         </SelectItem>
                                     ))}
@@ -362,5 +375,66 @@ function formatCurrency(value: number): string {
         maximumFractionDigits: 0,
     }).format(value);
 }
+
+
+function ProgramsTableSkeleton({ rows = 5 }: { rows?: number }) {
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead className='w-[35%]'>Program</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Capacity</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Last updated</TableHead>
+                    <TableHead className='text-right'>Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+
+            <TableBody>
+                {Array.from({ length: rows }).map((_, i) => (
+                    <TableRow key={i}>
+                        {/* Program */}
+                        <TableCell>
+                            <div className='flex flex-col gap-2'>
+                                <Skeleton className='h-4 w-[70%]' />
+                                <Skeleton className='h-3 w-[90%]' />
+                            </div>
+                        </TableCell>
+
+                        {/* Status */}
+                        <TableCell>
+                            <Skeleton className='h-6 w-20 rounded-full' />
+                        </TableCell>
+
+                        {/* Capacity */}
+                        <TableCell>
+                            <Skeleton className='h-4 w-16' />
+                        </TableCell>
+
+                        {/* Price */}
+                        <TableCell>
+                            <Skeleton className='h-4 w-20' />
+                        </TableCell>
+
+                        {/* Last updated */}
+                        <TableCell>
+                            <Skeleton className='h-4 w-24' />
+                        </TableCell>
+
+                        {/* Actions */}
+                        <TableCell className='text-right'>
+                            <div className='flex justify-end gap-2'>
+                                <Skeleton className='h-8 w-12' />
+                                <Skeleton className='h-8 w-8' />
+                            </div>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    );
+}
+
 
 export default ProgramsList;

@@ -21,7 +21,7 @@ export default function ProgramManagementLayout({ children }: ProgramManagementL
                 </div>
             </div>
             <Separator />
-            <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6'>
+            <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6 max-w-7xl mx-auto mb-10'>
                 {children}
             </div>
         </div>

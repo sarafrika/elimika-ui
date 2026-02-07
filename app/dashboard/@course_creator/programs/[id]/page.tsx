@@ -2,15 +2,24 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Pen, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Button } from '../../../../../components/ui/button';
+import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
 import {
     getProgramCoursesOptions,
     getProgramEnrollmentsOptions,
     getTrainingProgramByUuidOptions,
 } from '../../../../../services/client/@tanstack/react-query.gen';
 
-const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) => {
+const ProgramPreview = ({ onEdit }: any) => {
+    const router = useRouter()
+    const params = useParams()
+    const programUuid = params?.id
+
+    const { replaceBreadcrumbs } = useBreadcrumb();
+
+
     const [activeTab, setActiveTab] = useState<'overview' | 'courses' | 'enrollments'>(
         'overview'
     );
@@ -20,6 +29,23 @@ const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) =>
         enabled: !!programUuid,
     });
     const program = data?.data
+
+    useEffect(() => {
+        replaceBreadcrumbs([
+            { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+            {
+                id: 'programs',
+                title: 'Programs',
+                url: '/dashboard/programs',
+            },
+            {
+                id: 'program-details',
+                title: `${program?.title}`,
+                url: `/dashboard/programs/${program?.uuid}`,
+                isLast: true,
+            },
+        ]);
+    }, [replaceBreadcrumbs]);
 
     const { data: programCourses, isLoading: coursesLoading } = useQuery({
         ...getProgramCoursesOptions({ path: { programUuid } }),
@@ -71,10 +97,10 @@ const ProgramPreview = ({ programUuid, onBack, onEdit, editingProgram }: any) =>
             {/* Header */}
             <div className='mb-4 md:mb-6'>
                 <button
-                    onClick={onBack}
-                    className='mb-3 flex items-center gap-2 text-sm text-primary hover:underline md:mb-4 md:text-base'
+                    onClick={() => router.push('/dashboard/programs')}
+                    className='mb- py-4 flex items-center gap-2 text-sm text-primary hover:underline md:mb-4 md:text-base'
                 >
-                    ← Back to Programs
+                    ← Back
                 </button>
 
                 <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4'>

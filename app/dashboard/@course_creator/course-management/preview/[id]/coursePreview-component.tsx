@@ -10,10 +10,10 @@ import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseRubrics } from '@/hooks/use-course-rubric';
 import {
-  getCourseAssessmentsOptions,
   getCourseByUuidOptions,
   getCourseLessonsOptions,
   getCourseReviewsOptions,
+  getCourseRubricsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -80,8 +80,8 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
   });
 
   // FETCH ASSESSMENTS
-  const { data: assessmentsData } = useQuery({
-    ...getCourseAssessmentsOptions({
+  const { data: assessmentRubrics } = useQuery({
+    ...getCourseRubricsOptions({
       path: { courseUuid: courseId as string },
       query: { pageable: {} },
     }),
