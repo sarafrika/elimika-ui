@@ -31,7 +31,7 @@ type Props = {
     initialData: ProgramFormData;
     onSubmit: (data: ProgramFormData) => void;
     onCancel: () => void;
-    onContinue?: () => void;
+    onContinue?: () => void; // Add this as optional prop
     isLoading: boolean;
     isEditing: boolean;
 };
@@ -40,7 +40,7 @@ const ProgramBasicInfo = ({
     initialData,
     onSubmit,
     onCancel,
-    onContinue,
+    onContinue, // Now using this
     isLoading,
     isEditing,
 }: Props) => {
@@ -134,11 +134,15 @@ const ProgramBasicInfo = ({
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if (isEditing && !hasChanges && onContinue) {
-            onContinue();
-            return;
+        // If editing and no changes, just continue to next step
+        if (isEditing && !hasChanges) {
+            if (onContinue) {
+                onContinue();
+            }
+            return; // Don't call onSubmit
         }
 
+        // If there are changes or creating new, validate and submit
         if (validate()) {
             onSubmit(formData);
         }
@@ -148,7 +152,7 @@ const ProgramBasicInfo = ({
         <form onSubmit={handleSubmit} className='space-y-4 md:space-y-6'>
             <div className='rounded-lg border border-border p-4 md:p-6'>
                 <div className='mb-3 flex flex-col gap-2 md:mb-4 md:flex-row md:items-center md:justify-between'>
-                    <h3 className='text-base font-semibold text-foreground md:text-lg'>
+                    <h3 className='text-md font-semibold text-foreground md:text-lg'>
                         Program Information
                     </h3>
 
@@ -180,7 +184,7 @@ const ProgramBasicInfo = ({
                             value={formData.title}
                             onChange={(e) => handleChange('title', e.target.value)}
                             className={`w-full rounded-lg border ${errors.title ? 'border-destructive' : 'border-border'
-                                } px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-base`}
+                                } px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-md`}
                         />
                         {errors.title && (
                             <p className='mt-1 text-xs text-destructive md:text-sm'>{errors.title}</p>
@@ -197,7 +201,7 @@ const ProgramBasicInfo = ({
                             onChange={(e) => handleChange('description', e.target.value)}
                             rows={4}
                             className={`w-full rounded-lg border ${errors.description ? 'border-destructive' : 'border-border'
-                                } px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-base`}
+                                } px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-md`}
                         />
                         {errors.description && (
                             <p className='mt-1 text-xs text-destructive md:text-sm'>{errors.description}</p>
@@ -213,7 +217,7 @@ const ProgramBasicInfo = ({
                             value={formData.objectives ?? ''}
                             onChange={(e) => handleChange('objectives', e.target.value)}
                             rows={3}
-                            className='w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-base'
+                            className='w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-md'
                         />
                     </div>
 
@@ -226,7 +230,7 @@ const ProgramBasicInfo = ({
                             value={formData.prerequisites ?? ''}
                             onChange={(e) => handleChange('prerequisites', e.target.value)}
                             rows={3}
-                            className='w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-base'
+                            className='w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none md:px-4 md:text-md'
                         />
                     </div>
 
@@ -240,7 +244,7 @@ const ProgramBasicInfo = ({
                                 type='text'
                                 value={'KES'}
                                 disabled
-                                className='w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm md:px-4 md:text-base'
+                                className='w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm md:px-4 md:text-md'
                             />
                         </div>
 
@@ -255,7 +259,7 @@ const ProgramBasicInfo = ({
                                 value={formData.price}
                                 onChange={(e) => handleChange('price', Number(e.target.value))}
                                 className={`w-full rounded-lg border ${errors.price ? 'border-destructive' : 'border-border'
-                                    } px-3 py-2 text-sm md:px-4 md:text-base`}
+                                    } px-3 py-2 text-sm md:px-4 md:text-md`}
                             />
                             {errors.price && (
                                 <p className='mt-1 text-xs text-destructive md:text-sm'>{errors.price}</p>
@@ -275,7 +279,7 @@ const ProgramBasicInfo = ({
                                 value={formData.class_limit}
                                 onChange={(e) => handleChange('class_limit', Number(e.target.value))}
                                 className={`w-full rounded-lg border ${errors.class_limit ? 'border-destructive' : 'border-border'
-                                    } px-3 py-2 text-sm md:px-4 md:text-base`}
+                                    } px-3 py-2 text-sm md:px-4 md:text-md`}
                             />
                             {errors.class_limit && (
                                 <p className='mt-1 text-xs text-destructive md:text-sm'>{errors.class_limit}</p>
@@ -288,7 +292,7 @@ const ProgramBasicInfo = ({
                             </Label>
 
                             <Select value='' onValueChange={handleAddCategory}>
-                                <SelectTrigger className='w-full text-sm md:text-base'>
+                                <SelectTrigger className='w-full text-sm md:text-md'>
                                     <SelectValue placeholder='Add category' />
                                 </SelectTrigger>
 
@@ -296,7 +300,7 @@ const ProgramBasicInfo = ({
                                     {categories
                                         .filter((c) => !selectedCategories.includes(c.uuid))
                                         .map((c) => (
-                                            <SelectItem key={c.uuid} value={c.uuid} className='text-sm md:text-base'>
+                                            <SelectItem key={c.uuid} value={c.uuid} className='text-sm md:text-md'>
                                                 {c.name}
                                             </SelectItem>
                                         ))}
@@ -334,7 +338,7 @@ const ProgramBasicInfo = ({
                     variant={'ghost'}
                     onClick={onCancel}
                     disabled={isLoading}
-                    className='w-full rounded-lg border border-border px-4 py-2 text-sm text-foreground md:w-auto md:px-6 md:text-base'
+                    className='w-full rounded-lg border border-border px-4 py-2 text-sm text-foreground md:w-auto md:px-6 md:text-md'
                 >
                     Cancel
                 </Button>
@@ -342,7 +346,7 @@ const ProgramBasicInfo = ({
                 <Button
                     type='submit'
                     disabled={isLoading}
-                    className='w-full rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 md:w-auto md:px-6 md:text-base'
+                    className='w-full rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 md:w-auto md:px-6 md:text-md'
                 >
                     {isLoading ? (
                         'Saving...'

@@ -16,6 +16,7 @@ import {
   ImageIcon,
   PlusCircle,
   Trash2,
+  UploadCloud,
   Video,
   X,
 } from 'lucide-react';
@@ -31,14 +32,8 @@ import {
   FormMessage,
 } from '../../../../components/ui/form';
 import { Input } from '../../../../components/ui/input';
+import { RadioGroup, RadioGroupItem } from '../../../../components/ui/radio-group';
 import { ScrollArea } from '../../../../components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../../components/ui/select';
 import { cn } from '../../../../lib/utils';
 import {
   addLessonContentMutation,
@@ -551,19 +546,21 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                         <X className='h-4 w-4' />
                       </Button>
                     </CardHeader>
+
                     <CardContent className='pt-6'>
                       <Form {...contentForm}>
-                        <div className='space-y-4'>
+                        <div className='space-y-6'>
                           {/* Content Type */}
                           <FormField
                             control={contentForm.control}
-                            name='content_type'
+                            name="content_type"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
-                                  Content Type
+                                <FormLabel className="text-foreground mb-2 block text-sm font-medium">
+                                  Content Type (Select a content type to add)
                                 </FormLabel>
-                                <Select
+
+                                <RadioGroup
                                   value={field.value}
                                   onValueChange={(value: ContentType) => {
                                     field.onChange(value);
@@ -574,21 +571,37 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                     );
 
                                     if (typeObj) {
-                                      contentForm.setValue('content_type_uuid', typeObj.uuid);
+                                      contentForm.setValue("content_type_uuid", typeObj.uuid);
                                     }
                                   }}
+                                  className="flex gap-3"
                                 >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value='TEXT'>Text</SelectItem>
-                                    <SelectItem value='IMAGE'>Image</SelectItem>
-                                    <SelectItem value='VIDEO'>Video</SelectItem>
-                                    <SelectItem value='AUDIO'>Audio</SelectItem>
-                                    <SelectItem value='PDF'>PDF</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                  {(['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'PDF'] as ContentType[]).map(type => {
+                                    const selected = field.value === type;
+
+                                    return (
+                                      <FormItem key={type} className="space-y-0">
+                                        <FormControl>
+                                          <RadioGroupItem value={type} className="sr-only" />
+                                        </FormControl>
+
+                                        <FormLabel
+                                          className={cn(
+                                            "flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition",
+                                            "hover:bg-muted",
+                                            selected
+                                              ? "border-primary bg-primary/10 text-primary"
+                                              : "border-border"
+                                          )}
+                                        >
+                                          {getContentIcon(type)}
+                                          <span className="capitalize">{type.toLowerCase()}</span>
+                                        </FormLabel>
+                                      </FormItem>
+                                    );
+                                  })}
+                                </RadioGroup>
+
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -642,7 +655,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
-                                    URL
+                                    URL (enter media URL or upload media)
                                   </FormLabel>
                                   <Input
                                     {...field}
@@ -667,7 +680,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
-                                      URL
+                                      URL (enter media URL or upload media)
                                     </FormLabel>
                                     <Input
                                       {...field}
@@ -707,23 +720,27 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                   onChange={e => setMediaFile(e.target.files?.[0] || null)}
                                 />
 
+
                                 <div
                                   onClick={() => fileInputRef.current?.click()}
-                                  className='cursor-pointer rounded-md text-center'
+                                  className="flex cursor-pointer flex-col items-center justify-center gap-2 text-center"
                                 >
-                                  <p className='text-foreground mb-1 font-medium'>
+                                  <UploadCloud className="h-10 w-10 text-muted-foreground" />
+
+                                  <p className="text-foreground font-medium">
                                     {mediaFile
                                       ? mediaFile.name
-                                      : contentForm.getValues('file_url')
-                                        ? 'File uploaded - Click to change'
-                                        : 'Drag & drop or click to upload'}
+                                      : contentForm.getValues("file_url")
+                                        ? "File uploaded — click to replace"
+                                        : "Click to upload or drag & drop"}
                                   </p>
-                                  <p className='text-muted-foreground text-sm'>
-                                    Support for {contentType.toLowerCase()} files
+
+                                  <p className="text-muted-foreground text-sm">
+                                    Supports {contentType.toLowerCase()} files
                                   </p>
                                 </div>
 
-                                <Button
+                                {mediaFile && <Button
                                   type='button'
                                   disabled={!mediaFile || uploadLessonMedia.isPending}
                                   onClick={() => {
@@ -763,7 +780,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                   className='w-full bg-primary'
                                 >
                                   {uploadLessonMedia.isPending ? 'Uploading...' : 'Upload Media'}
-                                </Button>
+                                </Button>}
+
                               </div>
                             </div>
                           )}

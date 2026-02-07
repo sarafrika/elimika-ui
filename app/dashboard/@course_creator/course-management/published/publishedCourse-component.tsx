@@ -66,7 +66,7 @@ export default function PublishedCoursesComponent({
   const [page, setPage] = useState(0);
 
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data, isFetched } = useQuery({
+  const { data, isLoading } = useQuery({
     ...searchCoursesOptions({
       query: {
         searchParams: { status: 'published', course_creator_uuid_eq: courseCreatorId },
@@ -135,7 +135,7 @@ export default function PublishedCoursesComponent({
         </Button>
       </div>
 
-      {!isFetched && (
+      {isLoading ? (
         <Card>
           <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
             <div className='space-y-2'>
@@ -188,125 +188,130 @@ export default function PublishedCoursesComponent({
             </Table>
           </CardContent>
         </Card>
-      )}
+      ) :
+        <>
+          {publishedCourses?.length === 0 ? (
+            <div className='bg-muted/20 rounded-md py-12 text-center'>
+              <FilePenIcon className='text-muted-foreground mx-auto h-8 w-8' />
+              <h3 className='text-md mt-4 font-medium'>No published courses</h3>
+              <p className='text-muted-foreground mt-2 text-sm'>
+                You don&apos;t have any published courses yet.
+              </p>
+            </div>
+          ) : <Card>
+            <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
+              <div>
+                <CardTitle className='text-base font-semibold'>Published Courses</CardTitle>
+                <CardDescription>
+                  {publishedCourses.length} draft course{publishedCourses.length === 1 ? '' : 's'} owned
+                  by this creator.
+                </CardDescription>
+              </div>
+            </CardHeader>
 
-      {isFetched && publishedCourses?.length === 0 && (
-        <div className='bg-muted/20 rounded-md py-12 text-center'>
-          <FilePenIcon className='text-muted-foreground mx-auto h-8 w-8' />
-          <h3 className='text-md mt-4 font-medium'>No published courses</h3>
-          <p className='text-muted-foreground mt-2 text-sm'>
-            You don&apos;t have any published courses yet.
-          </p>
-        </div>
-      )}
-
-      <Card>
-        <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
-          <div>
-            <CardTitle className='text-base font-semibold'>Published Courses</CardTitle>
-            <CardDescription>
-              {publishedCourses.length} draft course{publishedCourses.length === 1 ? '' : 's'} owned
-              by this creator.
-            </CardDescription>
-          </div>
-        </CardHeader>
-
-        <CardContent className='p-0'>
-          {publishedCourses?.length >= 1 && (
-            <div className='bg-card border-border/50 rounded-t-0 overflow-hidden rounded-t-lg'>
-              <Table>
-                {/* <TableCaption className='py-4'>A list of your published courses</TableCaption> */}
-                <TableHeader className=''>
-                  <TableRow>
-                    {/* <TableHead>
+            <CardContent className='p-0'>
+              {publishedCourses?.length >= 1 && (
+                <div className='bg-card border-border/50 rounded-t-0 overflow-hidden rounded-t-lg'>
+                  <Table>
+                    {/* <TableCaption className='py-4'>A list of your published courses</TableCaption> */}
+                    <TableHeader className=''>
+                      <TableRow>
+                        {/* <TableHead>
                   <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                 </TableHead> */}
-                    <TableHead></TableHead>
-                    <TableHead>Course Name</TableHead>
-                    <TableHead>Categories</TableHead>
-                    <TableHead>Class Limit</TableHead>
-                    <TableHead>Last Updated</TableHead>
-                    <TableHead className='mx-auto text-center'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
+                        <TableHead></TableHead>
+                        <TableHead>Course Name</TableHead>
+                        <TableHead>Categories</TableHead>
+                        <TableHead>Class Limit</TableHead>
+                        <TableHead>Last Updated</TableHead>
+                        <TableHead className='mx-auto text-center'>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
 
-                <TableBody>
-                  {publishedCourses?.map((course: any) => (
-                    <TableRow key={course.uuid}>
-                      {/* <TableHead>
+                    <TableBody>
+                      {publishedCourses?.map((course: any) => (
+                        <TableRow key={course.uuid}>
+                          {/* <TableHead>
                     <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                   </TableHead> */}
 
-                      <TableCell className='py-1'>
-                        <Image
-                          src={course?.thumbnail_url as string}
-                          alt='thumbnail'
-                          width={48}
-                          height={48}
-                          className='bg-muted-foreground/30 min-h-12 min-w-12 rounded-md'
-                        />
-                      </TableCell>
+                          <TableCell className='py-1'>
+                            <Image
+                              src={course?.thumbnail_url as string}
+                              alt='thumbnail'
+                              width={48}
+                              height={48}
+                              className='bg-muted-foreground/30 min-h-12 min-w-12 rounded-md'
+                            />
+                          </TableCell>
 
-                      <TableCell className='font-medium'>
-                        <div>
-                          <h1 className='max-w-[270px] truncate'>{course.name}</h1>
-                          <div className='text-muted-foreground text-xs'>
-                            <RichTextRenderer htmlString={course?.description} maxChars={42} />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className='flex max-w-[250px] flex-wrap gap-1'>
-                          {Array.isArray(course.category_names) &&
-                            course.category_names.map((name: string) => (
-                              <Badge
-                                key={name}
-                                className='bg-muted/70 rounded-full text-black capitalize dark:text-white'
-                              >
-                                {name}
-                              </Badge>
-                            ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>{course.class_limit || 'Unlimited'}</TableCell>
-                      <TableCell>{formatCourseDate(course.updated_date)}</TableCell>
-                      <TableCell className='text-center'>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant='ghost' size='icon'>
-                              <span className='sr-only'>Open menu</span>
-                              <MoreVertical className='h-4 w-4' />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            <DropdownMenuItem>
-                              <Link
-                                href={`/dashboard/course-management/preview/${course.uuid}`}
-                                className='flex w-full items-center'
-                              >
-                                <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
-                                View
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant='destructive'
-                              onClick={() => handleUnpublish(course.uuid)}
-                            >
-                              <TrashIcon className='mr-2 h-4 w-4' />
-                              Unpublish
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                          <TableCell className='font-medium'>
+                            <div>
+                              <h1 className='max-w-[270px] truncate'>{course.name}</h1>
+                              <div className='text-muted-foreground text-xs'>
+                                <RichTextRenderer htmlString={course?.description} maxChars={42} />
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className='flex max-w-[250px] flex-wrap gap-1'>
+                              {Array.isArray(course.category_names) &&
+                                course.category_names.map((name: string) => (
+                                  <Badge
+                                    key={name}
+                                    className='bg-muted/70 rounded-full text-black capitalize dark:text-white'
+                                  >
+                                    {name}
+                                  </Badge>
+                                ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>{course.class_limit || 'Unlimited'}</TableCell>
+                          <TableCell>{formatCourseDate(course.updated_date)}</TableCell>
+                          <TableCell className='text-center'>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant='ghost' size='icon'>
+                                  <span className='sr-only'>Open menu</span>
+                                  <MoreVertical className='h-4 w-4' />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align='end'>
+                                <DropdownMenuItem>
+                                  <Link
+                                    href={`/dashboard/course-management/preview/${course.uuid}`}
+                                    className='flex w-full items-center'
+                                  >
+                                    <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
+                                    View
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  variant='destructive'
+                                  onClick={() => handleUnpublish(course.uuid)}
+                                >
+                                  <TrashIcon className='mr-2 h-4 w-4' />
+                                  Unpublish
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>}
+        </>
+
+      }
+
+
+
+
 
       {/*  @ts-ignore */}
       {paginationMetadata?.totalPages >= 1 && (
