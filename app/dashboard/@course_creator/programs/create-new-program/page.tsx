@@ -15,6 +15,7 @@ import { X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '../../../../../components/ui/button';
+import { Skeleton } from '../../../../../components/ui/skeleton';
 import { useCourseCreator } from '../../../../../context/course-creator-context';
 import ProgramBasicInfo from './ProgramBasicInfo';
 import ProgramCourseManagement from './ProgramCourseManagement';
@@ -71,7 +72,7 @@ const CreateProgramWizard = ({
         total_duration_hours: 0,
         total_duration_minutes: 0,
         status: 'draft',
-        active: false,
+        active: true,
     });
 
     // Initialize form data when editing
@@ -232,10 +233,17 @@ const CreateProgramWizard = ({
     // Show loading state while fetching program data
     if (programId && isLoading) {
         return (
-            <div className='flex min-h-[400px] items-center justify-center'>
-                <div className='text-center'>
-                    <div className='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent' />
-                    <p className='text-sm text-muted-foreground'>Loading program...</p>
+            <div className="flex min-h-[400px] items-center justify-center">
+                <div className="w-full max-w-md space-y-4">
+                    <Skeleton className="h-6 w-3/4 mx-auto" />
+
+                    <Skeleton className="h-4 w-1/2 mx-auto" />
+
+                    <div className="space-y-3 pt-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                    </div>
                 </div>
             </div>
         );

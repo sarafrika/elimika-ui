@@ -131,6 +131,7 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
                     setDeleteConfirm(null);
                     toast.success("Program Deleted Successfully")
                 },
+                onError: (error) => toast.error(error?.message)
             }
         );
     };

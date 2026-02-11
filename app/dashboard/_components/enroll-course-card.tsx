@@ -123,7 +123,7 @@ export default function EnrollCourseCard({
 
   return (
     <div className='group cursor-pointer'>
-      <Card className='relative h-full w-full max-w-full overflow-hidden rounded-3xl border-0 shadow-lg transition-all duration-300 hover:shadow-2xl sm:w-[380px]'>
+      <Card className='relative pt-0 mt-6 h-full w-full max-w-full overflow-hidden rounded-3xl border-0 shadow-lg transition-all duration-300 hover:shadow-2xl sm:w-[380px]'>
         {/* Gradient overlay on hover - light mode only */}
         <div className='pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/60 via-black/0 to-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:hidden' />
 

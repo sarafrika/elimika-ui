@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Skeleton } from "../../../../../components/ui/skeleton";
 import { useBreadcrumb } from "../../../../../context/breadcrumb-provider";
 import { getProgramCoursesOptions, getProgramEnrollmentsOptions, getTrainingProgramByUuidOptions } from "../../../../../services/client/@tanstack/react-query.gen";
 
@@ -59,8 +60,17 @@ export default function CourseDetailsPage() {
 
   if (programLoading) {
     return (
-      <div className='flex h-96 items-center justify-center'>
-        <div className='text-muted-foreground'>Loading program details…</div>
+      <div className="flex h-96 items-center justify-center">
+        <div className="w-full max-w-lg space-y-4">
+          <Skeleton className="h-6 w-2/3 mx-auto" />
+          <Skeleton className="h-4 w-1/2 mx-auto" />
+
+          <div className="space-y-3 pt-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-11/12" />
+            <Skeleton className="h-4 w-10/12" />
+          </div>
+        </div>
       </div>
     );
   }

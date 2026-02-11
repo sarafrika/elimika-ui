@@ -140,7 +140,7 @@ export function CourseCard({
 
           {/* Title and Subtitle */}
           <h3 className='group-hover:text-primary mb-1 line-clamp-2 min-h-12 font-bold transition-colors'>
-            {course?.name}
+            {course?.name || course?.title}
           </h3>
 
           <div className='text-muted-foreground mb-3 line-clamp-2 text-sm'>

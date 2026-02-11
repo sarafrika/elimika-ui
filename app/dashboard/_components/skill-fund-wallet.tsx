@@ -4,9 +4,9 @@ import { Card } from '@/components/ui/card';
 import { Wallet } from 'lucide-react';
 
 type WalletProps = {
-  currency: string;
-  balance: number;
-  lockedBalance?: number;
+  currency_code: string;
+  balance_amount: number;
+  locked_balance_amount?: number;
 };
 
 type SkillsFundWalletCardProps = {
@@ -16,9 +16,9 @@ type SkillsFundWalletCardProps = {
 };
 
 export const sampleWallet = {
-  currency: 'KES',
-  balance: 30000,
-  lockedBalance: 10000,
+  currency_code: 'KES',
+  balance_amount: 0,
+  locked_balance_amount: 0,
 };
 
 export const SkillsFundWalletCard = ({ wallet, user, role }: SkillsFundWalletCardProps) => {
@@ -53,7 +53,7 @@ export const SkillsFundWalletCard = ({ wallet, user, role }: SkillsFundWalletCar
           <div>
             <p className='text-muted-foreground text-sm'>Skills Wallet Balance</p>
             <h2 className='text-green-700'>
-              {wallet.currency} ${wallet.balance.toFixed(2)}
+              {wallet.currency_code} ${wallet.balance_amount.toFixed(2)}
             </h2>
           </div>
           <div className='rounded-lg bg-green-100 p-3'>
@@ -61,11 +61,11 @@ export const SkillsFundWalletCard = ({ wallet, user, role }: SkillsFundWalletCar
           </div>
         </div>
 
-        {wallet.lockedBalance !== undefined && wallet.lockedBalance > 0 && (
+        {wallet.locked_balance_amount !== undefined && wallet.locked_balance_amount > 0 && (
           <div className='border-t border-green-200 pt-3'>
             <p className='text-muted-foreground text-sm'>Locked Balance</p>
             <p className='text-orange-700'>
-              {wallet.currency} ${wallet.lockedBalance.toFixed(2)}
+              {wallet.currency_code} ${wallet.locked_balance_amount.toFixed(2)}
             </p>
           </div>
         )}
