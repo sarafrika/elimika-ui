@@ -14,144 +14,144 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Award, CheckCircle, FileText, LockIcon, Unlock, Upload, Users } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AlertCircle, Award, CheckCircle, FileText, LockIcon, Unlock, Upload, Users } from 'lucide-react';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useInstructor } from '../../../../context/instructor-context';
 import { cn } from '../../../../lib/utils';
-import { getInstructorDocumentsQueryKey, uploadInstructorDocumentMutation } from '../../../../services/client/@tanstack/react-query.gen';
-import { sampleWallet, SkillsFundWalletCard } from '../../_components/skill-fund-wallet';
+import { getInstructorDocumentsQueryKey, getWalletOptions, uploadInstructorDocumentMutation } from '../../../../services/client/@tanstack/react-query.gen';
+import { SkillsFundWalletCard } from '../../_components/skill-fund-wallet';
 
 const skillsFundApplications: any[] = [
-  {
-    id: 'app-001',
-    applicantId: 'student_001',
-    applicantName: 'Alice Kimani',
-    applicantType: 'student',
-    fundType: 'scholarship',
-    program: 'Full Stack Development Bootcamp',
-    reason: 'I want to upskill in web development to become job-ready.',
-    amount: 45000,
-    currency: 'KES',
-    documents: [
-      {
-        id: 'doc-001',
-        name: 'National ID',
-        type: 'identification',
-        url: '/uploads/app-001/national-id.pdf',
-      },
-      {
-        id: 'doc-002',
-        name: 'Motivation Letter',
-        type: 'letter',
-        url: '/uploads/app-001/motivation-letter.pdf',
-      },
-    ],
-    status: 'under-review',
-    submittedAt: new Date('2025-10-01T10:00:00'),
-    reviewedAt: new Date('2025-10-05T15:00:00'),
-    reviewedBy: 'admin_002',
-  },
+  // {
+  //   id: 'app-001',
+  //   applicantId: 'student_001',
+  //   applicantName: 'Alice Kimani',
+  //   applicantType: 'student',
+  //   fundType: 'scholarship',
+  //   program: 'Full Stack Development Bootcamp',
+  //   reason: 'I want to upskill in web development to become job-ready.',
+  //   amount: 45000,
+  //   currency: 'KES',
+  //   documents: [
+  //     {
+  //       id: 'doc-001',
+  //       name: 'National ID',
+  //       type: 'identification',
+  //       url: '/uploads/app-001/national-id.pdf',
+  //     },
+  //     {
+  //       id: 'doc-002',
+  //       name: 'Motivation Letter',
+  //       type: 'letter',
+  //       url: '/uploads/app-001/motivation-letter.pdf',
+  //     },
+  //   ],
+  //   status: 'under-review',
+  //   submittedAt: new Date('2025-10-01T10:00:00'),
+  //   reviewedAt: new Date('2025-10-05T15:00:00'),
+  //   reviewedBy: 'admin_002',
+  // },
 
-  {
-    id: 'app-002',
-    applicantId: 'instructor_001',
-    applicantName: 'Brian Otieno',
-    applicantType: 'instructor',
-    fundType: 'training-support',
-    program: 'Instructional Design Workshop',
-    reason: 'To improve my course creation and student engagement techniques.',
-    amount: 20000,
-    currency: 'KES',
-    documents: [
-      {
-        id: 'doc-003',
-        name: 'Workshop Registration',
-        type: 'receipt',
-        url: '/uploads/app-002/registration.pdf',
-      },
-    ],
-    status: 'approved',
-    submittedAt: new Date('2025-09-15T09:30:00'),
-    reviewedAt: new Date('2025-09-18T11:00:00'),
-    reviewedBy: 'admin_001',
-    disbursedAt: new Date('2025-09-20T10:00:00'),
-    linkedCourseId: 'course_099',
-  },
+  // {
+  //   id: 'app-002',
+  //   applicantId: 'instructor_001',
+  //   applicantName: 'Brian Otieno',
+  //   applicantType: 'instructor',
+  //   fundType: 'training-support',
+  //   program: 'Instructional Design Workshop',
+  //   reason: 'To improve my course creation and student engagement techniques.',
+  //   amount: 20000,
+  //   currency: 'KES',
+  //   documents: [
+  //     {
+  //       id: 'doc-003',
+  //       name: 'Workshop Registration',
+  //       type: 'receipt',
+  //       url: '/uploads/app-002/registration.pdf',
+  //     },
+  //   ],
+  //   status: 'approved',
+  //   submittedAt: new Date('2025-09-15T09:30:00'),
+  //   reviewedAt: new Date('2025-09-18T11:00:00'),
+  //   reviewedBy: 'admin_001',
+  //   disbursedAt: new Date('2025-09-20T10:00:00'),
+  //   linkedCourseId: 'course_099',
+  // },
 
-  {
-    id: 'app-003',
-    applicantId: 'student_002',
-    applicantName: 'David Wanjala',
-    applicantType: 'student',
-    fundType: 'loan',
-    program: 'Data Analytics Professional Certificate',
-    reason:
-      'I need financial support to complete my training and access better career opportunities.',
-    amount: 60000,
-    currency: 'KES',
-    documents: [],
-    status: 'draft',
-  },
+  // {
+  //   id: 'app-003',
+  //   applicantId: 'student_002',
+  //   applicantName: 'David Wanjala',
+  //   applicantType: 'student',
+  //   fundType: 'loan',
+  //   program: 'Data Analytics Professional Certificate',
+  //   reason:
+  //     'I need financial support to complete my training and access better career opportunities.',
+  //   amount: 60000,
+  //   currency: 'KES',
+  //   documents: [],
+  //   status: 'draft',
+  // },
 
-  {
-    id: 'app-004',
-    applicantId: 'student_003',
-    applicantName: 'Carol Wanjiru',
-    applicantType: 'student',
-    fundType: 'grant',
-    program: 'UI/UX Design Certification',
-    reason: 'I aim to transition into product design but cannot afford the full tuition.',
-    amount: 35000,
-    currency: 'KES',
-    documents: [
-      {
-        id: 'doc-004',
-        name: 'Statement of Purpose',
-        type: 'letter',
-        url: '/uploads/app-004/sop.pdf',
-      },
-    ],
-    status: 'rejected',
-    submittedAt: new Date('2025-09-10T08:45:00'),
-    reviewedAt: new Date('2025-09-12T14:00:00'),
-    reviewedBy: 'admin_003',
-    rejectionReason: 'Incomplete documentation and unclear learning goals.',
-  },
+  // {
+  //   id: 'app-004',
+  //   applicantId: 'student_003',
+  //   applicantName: 'Carol Wanjiru',
+  //   applicantType: 'student',
+  //   fundType: 'grant',
+  //   program: 'UI/UX Design Certification',
+  //   reason: 'I aim to transition into product design but cannot afford the full tuition.',
+  //   amount: 35000,
+  //   currency: 'KES',
+  //   documents: [
+  //     {
+  //       id: 'doc-004',
+  //       name: 'Statement of Purpose',
+  //       type: 'letter',
+  //       url: '/uploads/app-004/sop.pdf',
+  //     },
+  //   ],
+  //   status: 'rejected',
+  //   submittedAt: new Date('2025-09-10T08:45:00'),
+  //   reviewedAt: new Date('2025-09-12T14:00:00'),
+  //   reviewedBy: 'admin_003',
+  //   rejectionReason: 'Incomplete documentation and unclear learning goals.',
+  // },
 
-  {
-    id: 'app-005',
-    applicantId: 'instructor_002',
-    applicantName: 'Dr. Mercy Nduta',
-    applicantType: 'instructor',
-    fundType: 'grant',
-    program: 'Advanced AI Mentorship Program',
-    reason: 'To mentor students and contribute to the AI research community.',
-    amount: 75000,
-    currency: 'KES',
-    documents: [
-      {
-        id: 'doc-005',
-        name: 'Proposal',
-        type: 'project-proposal',
-        url: '/uploads/app-005/proposal.pdf',
-      },
-      {
-        id: 'doc-006',
-        name: 'Curriculum Vitae',
-        type: 'cv',
-        url: '/uploads/app-005/cv.pdf',
-      },
-    ],
-    status: 'disbursed',
-    submittedAt: new Date('2025-08-20T10:00:00'),
-    reviewedAt: new Date('2025-08-22T16:30:00'),
-    reviewedBy: 'admin_004',
-    disbursedAt: new Date('2025-08-25T09:00:00'),
-    linkedCourseId: 'course_120',
-  },
+  // {
+  //   id: 'app-005',
+  //   applicantId: 'instructor_002',
+  //   applicantName: 'Dr. Mercy Nduta',
+  //   applicantType: 'instructor',
+  //   fundType: 'grant',
+  //   program: 'Advanced AI Mentorship Program',
+  //   reason: 'To mentor students and contribute to the AI research community.',
+  //   amount: 75000,
+  //   currency: 'KES',
+  //   documents: [
+  //     {
+  //       id: 'doc-005',
+  //       name: 'Proposal',
+  //       type: 'project-proposal',
+  //       url: '/uploads/app-005/proposal.pdf',
+  //     },
+  //     {
+  //       id: 'doc-006',
+  //       name: 'Curriculum Vitae',
+  //       type: 'cv',
+  //       url: '/uploads/app-005/cv.pdf',
+  //     },
+  //   ],
+  //   status: 'disbursed',
+  //   submittedAt: new Date('2025-08-20T10:00:00'),
+  //   reviewedAt: new Date('2025-08-22T16:30:00'),
+  //   reviewedBy: 'admin_004',
+  //   disbursedAt: new Date('2025-08-25T09:00:00'),
+  //   linkedCourseId: 'course_120',
+  // },
 ];
 
 type Props = {
@@ -163,9 +163,12 @@ type Props = {
 const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) => {
   const instructor = useInstructor();
   const instructorApplications = skillsFundApplications;
-
-
   const qc = useQueryClient()
+
+  const { data: walletData } = useQuery({
+    ...getWalletOptions({ path: { userUuid: instructor?.user_uuid as string } }),
+    enabled: !!instructor?.user_uuid,
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -186,27 +189,27 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
   });
 
   const trainingOpportunities = [
-    {
-      id: 'opp-1',
-      title: 'Workshop Facilitation Grant',
-      description: 'Funding for conducting skills development workshops',
-      maxAmount: 3000,
-      requirements: ['Training Proposal', 'Participant Count', 'Outcomes Plan'],
-    },
-    {
-      id: 'opp-2',
-      title: 'Mentorship Program Support',
-      description: 'Support for long-term mentorship initiatives',
-      maxAmount: 5000,
-      requirements: ['Mentorship Plan', 'Track Record', 'Impact Metrics'],
-    },
-    {
-      id: 'opp-3',
-      title: 'Course Development Fund',
-      description: 'Funding to create and deliver new courses',
-      maxAmount: 2500,
-      requirements: ['Course Curriculum', 'Target Audience', 'Learning Outcomes'],
-    },
+    // {
+    //   id: 'opp-1',
+    //   title: 'Workshop Facilitation Grant',
+    //   description: 'Funding for conducting skills development workshops',
+    //   maxAmount: 3000,
+    //   requirements: ['Training Proposal', 'Participant Count', 'Outcomes Plan'],
+    // },
+    // {
+    //   id: 'opp-2',
+    //   title: 'Mentorship Program Support',
+    //   description: 'Support for long-term mentorship initiatives',
+    //   maxAmount: 5000,
+    //   requirements: ['Mentorship Plan', 'Track Record', 'Impact Metrics'],
+    // },
+    // {
+    //   id: 'opp-3',
+    //   title: 'Course Development Fund',
+    //   description: 'Funding to create and deliver new courses',
+    //   maxAmount: 2500,
+    //   requirements: ['Course Curriculum', 'Target Audience', 'Learning Outcomes'],
+    // },
   ];
 
   const handleSubmitApplication = () => {
@@ -266,9 +269,32 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
     }
   };
 
+  // Handle opening modal with auto-filled data from opportunity card
+  const handleApplyToOpportunity = (opportunity: typeof trainingOpportunities[0]) => {
+    setNewApplication({
+      fundType: 'training-support',
+      currency: 'USD',
+      program: opportunity.title,
+      amount: opportunity.maxAmount,
+      reason: opportunity.description,
+      documents: [],
+    });
+    setShowApplicationModal(true);
+  };
+
+  // Handle opening empty application modal
+  const handleOpenEmptyApplication = () => {
+    setNewApplication({
+      fundType: 'training-support',
+      currency: 'USD',
+      documents: [],
+    });
+    setShowApplicationModal(true);
+  };
+
   return (
     <div className='mx-auto w-full space-y-6'>
-      <SkillsFundWalletCard wallet={sampleWallet} user={instructor} role={''} />
+      <SkillsFundWalletCard wallet={walletData?.data} user={instructor} role={''} />
 
       {/* Quick Stats */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
@@ -309,7 +335,7 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Locked Funds</p>
-              <p className='text-2xl'>${wallet?.lockedBalance?.toFixed(0) || 0}</p>
+              <p className='text-2xl'>{walletData?.data?.currency_code} {wallet?.lockedBalance?.toFixed(0) || 0}</p>
             </div>
           </div>
         </Card>
@@ -331,45 +357,59 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
       <Card className='p-6'>
         <div className='mb-6 flex items-center justify-between'>
           <h3>Training Fund Opportunities</h3>
-          <Button onClick={() => setShowApplicationModal(true)}>Apply for Funding</Button>
+          <Button onClick={handleOpenEmptyApplication}>Apply for Funding</Button>
         </div>
 
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-          {trainingOpportunities.map(opp => (
-            <Card key={opp.id} className='hover:border-primary border-2 p-4 transition-colors'>
-              <div className='space-y-3'>
-                <div>
-                  <h4>{opp.title}</h4>
-                  <p className='text-muted-foreground mt-1 text-sm'>{opp.description}</p>
-                </div>
+        {trainingOpportunities.length === 0 ? (
+          /* Empty State for Opportunities */
+          <div className='py-16 text-center'>
+            <div className='bg-muted/50 mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full'>
+              <AlertCircle className='text-muted-foreground h-10 w-10' />
+            </div>
+            <h4 className='mb-2'>No Funding Opportunities Available</h4>
+            <p className='text-muted-foreground mb-6 text-sm'>
+              There are currently no training fund opportunities available. Check back later or submit a custom application.
+            </p>
 
-                <div className='space-y-2'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-muted-foreground text-sm'>Max Funding</span>
-                    <span>${opp.maxAmount.toLocaleString()}</span>
-                  </div>
+          </div>
+        ) : (
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+            {trainingOpportunities.map(opp => (
+              <Card key={opp.id} className='hover:border-primary border-2 p-4 transition-colors'>
+                <div className='space-y-3'>
                   <div>
-                    <p className='text-muted-foreground mb-1 text-xs'>Requirements:</p>
-                    {opp.requirements.map((req, idx) => (
-                      <Badge key={idx} variant='outline' className='mr-1 mb-1 text-xs'>
-                        {req}
-                      </Badge>
-                    ))}
+                    <h4>{opp.title}</h4>
+                    <p className='text-muted-foreground mt-1 text-sm'>{opp.description}</p>
                   </div>
-                </div>
 
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className='w-full'
-                  onClick={() => setShowApplicationModal(true)}
-                >
-                  Apply
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+                  <div className='space-y-2'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground text-sm'>Max Funding</span>
+                      <span>${opp.maxAmount.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <p className='text-muted-foreground mb-1 text-xs'>Requirements:</p>
+                      {opp.requirements.map((req, idx) => (
+                        <Badge key={idx} variant='outline' className='mr-1 mb-1 text-xs'>
+                          {req}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='w-full'
+                    onClick={() => handleApplyToOpportunity(opp)}
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* Fund History & Reporting */}
@@ -381,14 +421,11 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
           {instructorApplications.length === 0 ? (
             <div className='py-12 text-center'>
               <Award className='text-muted-foreground mx-auto mb-4 h-16 w-16' />
-              <p className='text-muted-foreground'>No applications yet</p>
-              <Button
-                onClick={() => setShowApplicationModal(true)}
-                variant='outline'
-                className='mt-4'
-              >
-                Apply for Training Fund
-              </Button>
+              <p className='text-muted-foreground mb-2'>No applications yet</p>
+              <p className='text-muted-foreground mb-4 text-sm'>
+                Browse available opportunities and submit your first application
+              </p>
+
             </div>
           ) : (
             <div className='space-y-3'>
@@ -445,7 +482,7 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
                   <span>Available Balance</span>
                 </div>
                 <span className='text-success text-xl'>
-                  ${sampleWallet?.balance.toFixed(2) || '0.00'}
+                  {walletData?.data?.currency_code} {walletData?.data?.balance_amount?.toFixed(2) || '0.00'}
                 </span>
               </div>
               <p className='text-success text-sm'>Ready to withdraw or use for expenses</p>
@@ -458,7 +495,7 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
                   <span>Locked Funds</span>
                 </div>
                 <span className='text-warning text-xl'>
-                  ${sampleWallet?.lockedBalance?.toFixed(2) || '0.00'}
+                  {walletData?.data?.currency_code} {walletData?.data?.locked_balance_amount?.toFixed(2) || '0.00'}
                 </span>
               </div>
               <p className='text-warning text-sm'>Unlocks upon completing each class session</p>
@@ -511,7 +548,7 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
             </div>
 
             <div>
-              <Label>Amount Requested (USD)</Label>
+              <Label>Amount Requested (KES)</Label>
               <Input
                 type='number'
                 placeholder='0.00'

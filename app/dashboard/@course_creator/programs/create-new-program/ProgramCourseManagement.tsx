@@ -33,10 +33,8 @@ import {
 
 const ProgramCourseManagement = ({
     programUuid,
-    onPublish,
     onSaveDraft,
     onBack,
-    isPublishing,
 }: any) => {
     const qc = useQueryClient();
 
@@ -50,17 +48,17 @@ const ProgramCourseManagement = ({
         is_mandatory: true,
     });
 
-    /* =======================
-       Queries
-    ======================= */
-
-    const { data: allCoursesData } = useQuery(
-        getAllCoursesOptions({ query: { pageable: {} } })
-    );
+    const { data: allCoursesData } = useQuery({
+        ...getAllCoursesOptions({ query: { pageable: {} } }),
+        staleTime: Infinity,
+        refetchOnWindowFocus: false,
+    });
 
     const { data: programCourses } = useQuery({
         ...getProgramCoursesOptions({ path: { programUuid } }),
         enabled: !!programUuid,
+        staleTime: Infinity,
+        refetchOnWindowFocus: false,
     });
 
     const { data: programRequirements } = useQuery({
@@ -69,11 +67,10 @@ const ProgramCourseManagement = ({
             query: { pageable: {} },
         }),
         enabled: !!programUuid,
+        staleTime: Infinity,
+        refetchOnWindowFocus: false,
     });
 
-    /* =======================
-       Mutations
-    ======================= */
 
     const addCourseMut = useMutation({
         ...addProgramCourseMutation(),
@@ -130,10 +127,6 @@ const ProgramCourseManagement = ({
         },
     });
 
-    /* =======================
-       Derived Data
-    ======================= */
-
     const allCourses = allCoursesData?.data?.content || [];
     const assignedCourseUuids =
         programCourses?.data?.map((pc) => pc.uuid) || [];
@@ -141,9 +134,6 @@ const ProgramCourseManagement = ({
         (c) => !assignedCourseUuids.includes(c.uuid)
     );
 
-    /* =======================
-       Handlers
-    ======================= */
 
     const handleAddCourse = () => {
         if (!selectedCourse) return;

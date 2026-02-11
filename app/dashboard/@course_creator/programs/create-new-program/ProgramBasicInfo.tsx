@@ -11,6 +11,7 @@ import { Input } from '../../../../../components/ui/input';
 import { Label } from '../../../../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 import { Textarea } from '../../../../../components/ui/textarea';
+import { Switch } from '../../../../../components/ui/switch';
 
 type ProgramFormData = {
     title: string;
@@ -22,7 +23,9 @@ type ProgramFormData = {
     price: number;
     instructor_uuid?: string;
     categories: string[];
-    category_uuid: string
+    category_uuid: string;
+    active: boolean;
+
 };
 
 type FormErrors = Partial<Record<keyof ProgramFormData, string>>;
@@ -31,7 +34,7 @@ type Props = {
     initialData: ProgramFormData;
     onSubmit: (data: ProgramFormData) => void;
     onCancel: () => void;
-    onContinue?: () => void; // Add this as optional prop
+    onContinue?: () => void;
     isLoading: boolean;
     isEditing: boolean;
 };
@@ -40,7 +43,7 @@ const ProgramBasicInfo = ({
     initialData,
     onSubmit,
     onCancel,
-    onContinue, // Now using this
+    onContinue,
     isLoading,
     isEditing,
 }: Props) => {
@@ -100,6 +103,8 @@ const ProgramBasicInfo = ({
         if (normalizeString(formData.prerequisites) !== normalizeString(initialData.prerequisites)) return true;
         if (formData.class_limit !== initialData.class_limit) return true;
         if (formData.price !== initialData.price) return true;
+        if (formData.active !== initialData.active) return true;
+
 
         const initialCategories = initialData.categories ?? [];
         const currentCategories = formData.categories ?? [];
@@ -328,6 +333,27 @@ const ProgramBasicInfo = ({
                             )}
                         </div>
                     </div>
+
+                    {/* Status */}
+                    <div className="flex items-center justify-between rounded-lg border border-border p-3 md:p-4">
+                        <div>
+                            <Label className="text-sm font-medium">Program Status</Label>
+                            <p className="text-xs text-muted-foreground">
+                                Inactive programs are hidden from users
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                                {formData.active ? 'Active' : 'Inactive'}
+                            </span>
+                            <Switch
+                                checked={formData.active}
+                                onCheckedChange={(checked) => handleChange('active', checked)}
+                            />
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
