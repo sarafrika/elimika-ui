@@ -90,7 +90,13 @@ const EnrollmentPage = () => {
     setDateError(null);
   };
 
-  const { data: catalogues } = useQuery(listCatalogItemsOptions());
+  const { data: catalogues } = useQuery({
+    ...listCatalogItemsOptions(),
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
   const {
     classes = [],
     loading,

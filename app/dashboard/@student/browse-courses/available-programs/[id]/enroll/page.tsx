@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
-import useBundledClassInfo from '@/hooks/use-course-classes';
 import {
   addItemMutation,
   createCartMutation,
@@ -14,13 +13,14 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertCircle, Armchair, ArrowLeft, Calendar, DollarSign, MapPin, User } from 'lucide-react';
+import { AlertCircle, Armchair, ArrowLeft, BookOpen, Calendar, DollarSign, MapPin, User } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import RichTextRenderer from '../../../../../../../components/editors/richTextRenders';
 import { useUserProfile } from '../../../../../../../context/profile-context';
 import { useUserDomain } from '../../../../../../../context/user-domain-context';
+import useProgramBundledClassInfo from '../../../../../../../hooks/use-program-classes';
 import { useScheduleStats } from '../../../../../../../hooks/use-schedule-stats';
 import { useCartStore } from '../../../../../../../store/cart-store';
 import { ClassScheduleCalendar } from '../../../../../../class-invite/page';
@@ -34,7 +34,7 @@ const EnrollClassPage = () => {
   const domain = useUserDomain()
   const user = useUserProfile()
 
-  const courseId = params?.id as string;
+  const programId = params?.id as string;
   const classId = searchParams.get('id');
 
   const [enrollmentError, setEnrollmentError] = useState(false);
@@ -43,7 +43,7 @@ const EnrollClassPage = () => {
   const student = useStudent();
 
   // Fetch class information
-  const { classes = [], loading } = useBundledClassInfo(courseId, undefined, undefined, student);
+  const { classes = [], loading } = useProgramBundledClassInfo(programId, undefined, undefined, student);
 
   // Find the specific class
   const enrollingClass = useMemo(() => {
@@ -85,19 +85,19 @@ const EnrollClassPage = () => {
 
   // Update breadcrumbs
   useEffect(() => {
-    if (courseId && enrollingClass) {
+    if (programId && enrollingClass) {
       replaceBreadcrumbs([
         { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
         { id: 'courses', title: 'Browse Courses', url: `/dashboard/browse-courses` },
         {
-          id: 'course-details',
-          title: 'Available Classes',
-          url: `/dashboard/browse-courses/available-classes/${courseId}`,
+          id: 'program-details',
+          title: 'Available Programs',
+          url: `/dashboard/browse-courses/available-programs/${programId}`,
         },
         {
           id: 'enroll',
           title: 'Enroll',
-          url: `/dashboard/browse-courses/available-classes/${courseId}/enroll?id=${classId}`,
+          url: `/dashboard/browse-courses/available-programs/${programId}/enroll?id=${classId}`,
         },
       ]);
     }
@@ -199,7 +199,7 @@ const EnrollClassPage = () => {
           toast.success(data?.message || 'Student enrolled successfully');
 
           // Navigate back to available classes
-          router.push(`/dashboard/browse-courses/available-classes/${courseId}`);
+          router.push(`/dashboard/browse-courses/available-programs/${programId}`);
         },
         onError: err => {
           handleCreateCartAndPay(enrollingClass)
@@ -210,7 +210,7 @@ const EnrollClassPage = () => {
 
 
   const handleCancel = () => {
-    router.push(`/dashboard/browse-courses/available-classes/${courseId}`);
+    router.push(`/dashboard/browse-courses/available-programs/${programId}`);
   };
 
   if (loading) {
@@ -258,9 +258,9 @@ const EnrollClassPage = () => {
         <Card className='space-y-6 p-6'>
           {/* Course Name */}
           <div className='space-y-2'>
-            <h2 className='text-2xl font-semibold'>{enrollingClass?.course?.name || 'N/A'}</h2>
-            {enrollingClass?.course?.description && (
-              <RichTextRenderer htmlString={enrollingClass.course.description} />
+            <h2 className='text-2xl font-semibold'>{enrollingClass?.title || 'N/A'}</h2>
+            {enrollingClass?.description && (
+              <RichTextRenderer htmlString={enrollingClass?.description} />
             )}
           </div>
 
@@ -353,6 +353,30 @@ const EnrollClassPage = () => {
             </div>
           </div>
         </Card>
+
+        {/* Courses Card */}
+        <Card className="bg-primary/5 p-6">
+          <h3 className="font-semibold">Courses Included in This Training</h3>
+
+          <ul className="text-muted-foreground space-y-2 text-sm">
+            {enrollingClass?.course?.length === 0 && (
+              <li className="text-sm text-muted-foreground">
+                No courses available
+              </li>
+            )}
+
+            {enrollingClass?.course?.map((course: any) => (
+              <li
+                key={course.uuid}
+                className="flex items-start gap-2"
+              >
+                <BookOpen className="text-primary mt-0.5 h-4 w-4" />
+                <span>{course.title || course.name}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+
 
         <CardContent className='p-0'>
           <ClassScheduleCalendar schedules={schedule as any} />

@@ -19,7 +19,7 @@ export const NotificationSection = ({
   onChange: (updates: Partial<NotificationSettings>) => void;
 }) => {
   return (
-    <Card className='overflow-hidden border shadow-sm'>
+    <Card className='overflow-hidden border shadow-sm pt-0'>
       <div className='bg-muted/50 border-b px-6 py-4'>
         <h3 className='text-foreground text-lg font-semibold'>Notification</h3>
       </div>

@@ -24,8 +24,10 @@ import { ScheduleSection } from './ScheduleSection';
 // Types
 export interface ClassDetails {
   uuid: string;
-  course_uuid: string;
+  course_uuid: null | string;
+  program_uuid: null | string;
   title: string;
+  description: string,
   categories: string[];
   class_type: string; // 'group' | 'private'
   location_type: string; // 'online' | 'in_person' | 'hybrid'
@@ -192,7 +194,9 @@ const ClassBuilderPage = () => {
   const [classDetails, setClassDetails] = useState<ClassDetails>({
     uuid: '',
     course_uuid: '',
+    program_uuid: null,
     title: '',
+    description: '',
     categories: [],
     class_type: '',
     rate_card: '',
@@ -250,7 +254,9 @@ const ClassBuilderPage = () => {
       setClassDetails({
         uuid: classData?.uuid || '',
         course_uuid: classData?.course_uuid as string,
+        program_uuid: classData?.program_uuid || null,
         title: classData?.title || '',
+        description: classData?.description || '',
         categories: Array.isArray(classData?.categories)
           ? classData?.categories
           : classData?.categories
@@ -304,10 +310,22 @@ const ClassBuilderPage = () => {
 
   // Form Validation
   const isFormValid = (): boolean => {
-    if (!classDetails?.course_uuid || !classDetails?.title) {
-      toast.error('Please complete Class Details');
-      return false;
-    }
+    const isFormValid = () => {
+      // ✅ Must have either program_uuid OR course_uuid
+      if (!classDetails?.program_uuid && !classDetails?.course_uuid) {
+        toast.error('Please select either a Program or a Course');
+        return false;
+      }
+
+      // ✅ Optional: prevent both at the same time (if that's a rule)
+      if (classDetails?.program_uuid && classDetails?.course_uuid) {
+        toast.error('Please select only one: Program or Course');
+        return false;
+      }
+      return true;
+    };
+
+
     if (
       !scheduleSettings.startClass.date ||
       !scheduleSettings.startClass.startTime ||
@@ -356,8 +374,9 @@ const ClassBuilderPage = () => {
 
       const payload = {
         course_uuid: classDetails.course_uuid,
+        program_uuid: classDetails.program_uuid,
         title: classDetails.title,
-        description: '',
+        description: classDetails.description,
         default_instructor_uuid: instructor?.uuid as string,
         class_visibility: 'PUBLIC',
         session_format: 'GROUP',

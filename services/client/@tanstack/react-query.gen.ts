@@ -247,6 +247,8 @@ import {
   createQuizSchedule,
   getAssignmentSchedules,
   createAssignmentSchedule,
+  getClassDefinitionsForProgram,
+  createClassDefinitionForProgram,
   getAllCertificates,
   createCertificate,
   uploadCertificatePdf,
@@ -1106,6 +1108,10 @@ import type {
   CreateAssignmentScheduleData,
   CreateAssignmentScheduleError,
   CreateAssignmentScheduleResponse,
+  GetClassDefinitionsForProgramData,
+  CreateClassDefinitionForProgramData,
+  CreateClassDefinitionForProgramError,
+  CreateClassDefinitionForProgramResponse,
   GetAllCertificatesData,
   GetAllCertificatesError,
   GetAllCertificatesResponse,
@@ -11814,6 +11820,81 @@ export const createAssignmentScheduleMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await createAssignmentSchedule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getClassDefinitionsForProgramQueryKey = (
+  options: Options<GetClassDefinitionsForProgramData>
+) => createQueryKey('getClassDefinitionsForProgram', options);
+
+/**
+ * Get class definitions for a training program
+ */
+export const getClassDefinitionsForProgramOptions = (
+  options: Options<GetClassDefinitionsForProgramData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassDefinitionsForProgram({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassDefinitionsForProgramQueryKey(options),
+  });
+};
+
+export const createClassDefinitionForProgramQueryKey = (
+  options: Options<CreateClassDefinitionForProgramData>
+) => createQueryKey('createClassDefinitionForProgram', options);
+
+/**
+ * Create a new class definition for a training program
+ */
+export const createClassDefinitionForProgramOptions = (
+  options: Options<CreateClassDefinitionForProgramData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createClassDefinitionForProgram({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createClassDefinitionForProgramQueryKey(options),
+  });
+};
+
+/**
+ * Create a new class definition for a training program
+ */
+export const createClassDefinitionForProgramMutation = (
+  options?: Partial<Options<CreateClassDefinitionForProgramData>>
+): UseMutationOptions<
+  CreateClassDefinitionForProgramResponse,
+  CreateClassDefinitionForProgramError,
+  Options<CreateClassDefinitionForProgramData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateClassDefinitionForProgramResponse,
+    CreateClassDefinitionForProgramError,
+    Options<CreateClassDefinitionForProgramData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createClassDefinitionForProgram({
         ...options,
         ...localOptions,
         throwOnError: true,

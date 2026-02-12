@@ -1745,6 +1745,12 @@ export const QuizQuestionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
+      readOnly: true,
+    },
     requires_options: {
       type: 'boolean',
       description:
@@ -1756,12 +1762,6 @@ export const QuizQuestionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable category of the question type.',
       example: 'Multiple Choice Question',
-      readOnly: true,
-    },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
       readOnly: true,
     },
     points_display: {
@@ -2670,6 +2670,13 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_profile_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
+      example: true,
+      readOnly: true,
+    },
     has_location_coordinates: {
       type: 'boolean',
       description:
@@ -2682,13 +2689,6 @@ export const InstructorSchema = {
       description:
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
       example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
-    is_profile_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
-      example: true,
       readOnly: true,
     },
   },
@@ -2932,6 +2932,13 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
@@ -2984,13 +2991,6 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
       readOnly: true,
     },
   },
@@ -3146,6 +3146,13 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     duration_in_months: {
       type: 'integer',
       format: 'int32',
@@ -3193,13 +3200,6 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
       readOnly: true,
     },
   },
@@ -3340,20 +3340,10 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    years_since_completion: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
-      example: 4,
-      readOnly: true,
-    },
-    education_level: {
-      $ref: '#/components/schemas/EducationLevelEnum',
-    },
-    has_certificate_number: {
+    is_complete: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
       example: true,
       readOnly: true,
     },
@@ -3370,10 +3360,20 @@ export const InstructorEducationSchema = {
       example: 2020,
       readOnly: true,
     },
-    is_complete: {
+    years_since_completion: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
+      example: 4,
+      readOnly: true,
+    },
+    education_level: {
+      $ref: '#/components/schemas/EducationLevelEnum',
+    },
+    has_certificate_number: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
       example: true,
       readOnly: true,
     },
@@ -3619,6 +3619,13 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
+    },
     file_size_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted file size.',
@@ -3647,13 +3654,6 @@ export const InstructorDocumentSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum',
-    },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
     },
   },
   required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
@@ -6106,6 +6106,7 @@ export const ClassDefinitionSchema = {
     default_instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
     organisation_uuid: 'org12345-6789-abcd-ef01-234567890abc',
     course_uuid: 'course123-4567-89ab-cdef-123456789abc',
+    program_uuid: null,
     training_fee: 240,
     class_visibility: 'PUBLIC',
     session_format: 'GROUP',
@@ -6184,10 +6185,17 @@ export const ClassDefinitionSchema = {
         '**[OPTIONAL]** Reference to the course UUID if this class is part of a structured course.',
       example: 'course123-4567-89ab-cdef-123456789abc',
     },
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the training program UUID if this class is part of a training programme.',
+      example: 'program123-4567-89ab-cdef-123456789abc',
+    },
     training_fee: {
       type: 'number',
       description:
-        '**[OPTIONAL]** Training fee charged for sessions created from this class definition. Must meet the course minimum training fee when a course is linked.',
+        '**[OPTIONAL]** Training fee charged for sessions created from this class definition. Must match the approved training rate for linked courses or training programs.',
       example: 220,
       minimum: 0,
     },
@@ -8309,12 +8317,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -8331,6 +8333,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -9709,6 +9717,12 @@ export const AssignmentSubmissionSchema = {
       example: 'Mixed Media Submission',
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
     submission_status_display: {
       type: 'string',
       description:
@@ -9720,12 +9734,6 @@ export const AssignmentSubmissionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Summary of files attached to this submission.',
       example: 2,
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
       readOnly: true,
     },
   },
@@ -11585,6 +11593,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: 1,
+      readOnly: true,
+    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -11595,12 +11609,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: 1,
       readOnly: true,
     },
     grade_display: {

@@ -742,6 +742,12 @@ import type {
   CreateAssignmentScheduleData,
   CreateAssignmentScheduleResponses,
   CreateAssignmentScheduleErrors,
+  GetClassDefinitionsForProgramData,
+  GetClassDefinitionsForProgramResponses,
+  GetClassDefinitionsForProgramErrors,
+  CreateClassDefinitionForProgramData,
+  CreateClassDefinitionForProgramResponses,
+  CreateClassDefinitionForProgramErrors,
   GetAllCertificatesData,
   GetAllCertificatesResponses,
   GetAllCertificatesErrors,
@@ -1559,6 +1565,8 @@ import {
   createQuizScheduleResponseTransformer,
   getAssignmentSchedulesResponseTransformer,
   createAssignmentScheduleResponseTransformer,
+  getClassDefinitionsForProgramResponseTransformer,
+  createClassDefinitionForProgramResponseTransformer,
   getAllCertificatesResponseTransformer,
   createCertificateResponseTransformer,
   uploadCertificatePdfResponseTransformer,
@@ -9158,6 +9166,64 @@ export const createAssignmentSchedule = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/{classUuid}/assignments',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get class definitions for a training program
+ */
+export const getClassDefinitionsForProgram = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassDefinitionsForProgramData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassDefinitionsForProgramResponses,
+    GetClassDefinitionsForProgramErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassDefinitionsForProgramResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/program/{programUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Create a new class definition for a training program
+ */
+export const createClassDefinitionForProgram = <ThrowOnError extends boolean = false>(
+  options: Options<CreateClassDefinitionForProgramData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateClassDefinitionForProgramResponses,
+    CreateClassDefinitionForProgramErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createClassDefinitionForProgramResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/program/{programUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',

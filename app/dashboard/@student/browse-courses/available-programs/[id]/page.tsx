@@ -5,10 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
-import useBundledClassInfo from '@/hooks/use-course-classes';
 import {
   enrollStudentMutation,
-  getProgramCoursesOptions,
   getStudentScheduleQueryKey,
   listCatalogItemsOptions
 } from '@/services/client/@tanstack/react-query.gen';
@@ -18,6 +16,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Label } from '../../../../../../components/ui/label';
+import useProgramBundledClassInfo from '../../../../../../hooks/use-program-classes';
 import { CustomLoadingState } from '../../../../@course_creator/_components/loading-state';
 import EnrollCourseCard from '../../../../_components/enroll-course-card';
 
@@ -46,13 +45,6 @@ const EnrollmentPage = () => {
       ]);
     }
   }, [replaceBreadcrumbs, programId]);
-
-  const { data: courses } = useQuery({
-    ...getProgramCoursesOptions({ path: { programUuid: programId } }),
-    enabled: !!programId,
-    staleTime: 5 * 60 * 1000,
-  })
-  const courseId = courses?.data?.[0]?.uuid || ''
 
   // --- Date filter: default to a 1-year span, but classes won't load until user clicks Apply
   const today = new Date();
@@ -98,16 +90,23 @@ const EnrollmentPage = () => {
     setDateError(null);
   };
 
-  const { data: catalogues } = useQuery(listCatalogItemsOptions());
+  const { data: catalogues } = useQuery({
+    ...listCatalogItemsOptions(),
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
   const {
     classes = [],
     loading,
     isError,
-  } = useBundledClassInfo(courseId, appliedStart ?? undefined, appliedEnd ?? undefined, student);
+  } = useProgramBundledClassInfo(programId, appliedStart ?? undefined, appliedEnd ?? undefined, student);
 
-  const filteredClasses = classes.filter(cls =>
-    catalogues?.data?.some(cat => cat.class_definition_uuid === cls.uuid)
-  );
+  const filteredClasses = classes
+  // const filteredClasses = classes.filter(cls =>
+  //   catalogues?.data?.some(cat => cat.class_definition_uuid === cls.uuid)
+  // );
 
   const { formattedStart, formattedEnd } = useMemo(() => {
     if (!enrollingClass) {
@@ -280,7 +279,7 @@ const EnrollmentPage = () => {
                     setEnrollingClass(cls);
                     // setOpenEnrollModal(true);
                     router.push(
-                      `/dashboard/browse-courses/available-classes/${courseId}/enroll?id=${cls?.uuid}`
+                      `/dashboard/browse-courses/available-programs/${programId}/enroll?id=${cls?.uuid}`
                     );
                   }}
                   variant='full'
