@@ -15,7 +15,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from 'date-fns';
-import { Armchair, ChevronLeft, ChevronRight, Clock, Layers, MapPin, Users } from 'lucide-react';
+import { Armchair, BookOpen, ChevronLeft, ChevronRight, Clock, Layers, MapPin, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -33,6 +33,36 @@ function ClassInviteContent() {
   const data = combinedClass?.class;
   const schedules = combinedClass?.schedule;
   const course = combinedClass?.course;
+  const program = combinedClass?.program;
+  const enrollments = combinedClass?.enrollments
+  const programCourses = combinedClass?.pCourses
+
+  const uniqueEnrollments = useMemo(() => {
+    if (!enrollments) return [];
+
+    const map = new Map();
+
+    enrollments.forEach((enrollment: any) => {
+      if (enrollment.student_uuid && !map.has(enrollment.student_uuid)) {
+        map.set(enrollment.student_uuid, enrollment);
+      }
+    });
+
+    return Array.from(map.values());
+  }, [enrollments]);
+
+
+  const getEnrollUrl = () => {
+    if (course?.uuid) {
+      return `/dashboard/browse-courses/available-classes/${course.uuid}/enroll?id=${uuid}`;
+    }
+
+    if (program?.uuid) {
+      return `/dashboard/browse-courses/available-programs/${program.uuid}/enroll?id=${uuid}`;
+    }
+
+    return '';
+  };
 
   const handleRegister = () => {
     if (user?.activeDomain !== 'student') {
@@ -42,122 +72,254 @@ function ClassInviteContent() {
       return;
     }
 
-    window.open(
-      `/dashboard/browse-courses/available-classes/${course?.uuid}/enroll?id=${uuid}`,
-      '_blank'
-    );
+    const url = getEnrollUrl();
+    if (url) window.open(url, '_blank');
   };
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(
-      `${window.location.origin}/dashboard/browse-courses/available-classes/${course?.uuid}/enroll?id=${uuid}`
-    );
+    const url = getEnrollUrl();
+    if (!url) return;
+
+    await navigator.clipboard.writeText(`${window.location.origin}${url}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
 
   return (
     <div className='mx-auto w-full max-w-5xl px-6 py-12 lg:py-16'>
       {isLoading ? (
         <Skeleton className='h-[420px] w-full rounded-[28px]' />
       ) : (
-        <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
-          <CardHeader className='space-y-4'>
-            <div className='flex flex-wrap gap-2'>
-              <Badge className='rounded-full'>{data?.session_format}</Badge>
-              <Badge variant='outline' className='rounded-full'>
-                {data?.class_visibility}
-              </Badge>
-              <Badge
-                variant='outline'
-                className='border-primary/30 bg-primary/10 text-primary rounded-full'
-              >
-                {data?.duration_formatted}
-              </Badge>
-            </div>
-
-            <CardTitle className='text-3xl font-semibold'>{data?.title}</CardTitle>
-
-            {data?.description ? (
-              <CardDescription className='text-muted-foreground'>
-                {data?.description}
-              </CardDescription>
-            ) : null}
-          </CardHeader>
-
-          <div>
-            <CourseDetailedCard course={course as any} />
-          </div>
-
-          <CardContent className='space-y-6'>
-            {/* DETAILS */}
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <InfoRow
-                icon={<Clock className='h-4 w-4' />}
-                label='CLASS BEGINS'
-                value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
-                  data?.default_end_time
-                ).toLocaleTimeString()}`}
-              />
-
-              <InfoRow
-                icon={<MapPin className='h-4 w-4' />}
-                label='Location'
-                value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
-              />
-
-              <InfoRow
-                icon={<Users className='h-4 w-4' />}
-                label='Capacity'
-                value={data?.capacity_info}
-              />
-
-              <InfoRow
-                icon={<Layers className='h-4 w-4' />}
-                label='Fee'
-                value={
-                  typeof data?.training_fee === 'number'
-                    ? `KES ${data?.training_fee.toLocaleString()}`
-                    : 'Free'
-                }
-              />
-
-              {/*
-                            /////////////////////////////////////////////////////
-                            NEEDS TO BE UPDATED WITH ACTUAL CLASS ENROLLMENT LIST
-                            /////////////////////////////////////////////////////
-                            */}
-              <InfoRow
-                icon={<Armchair className='h-4 w-4' />}
-                label='Available Seats'
-                value={
-                  <div>
-                    {data?.max_participants} of {data?.max_participants}
+        <>
+          {data?.course_uuid &&
+            <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
+              <CardHeader className='space-y-4'>
+                <div className='flex flxe-row items-center justify-between' >
+                  <div className='flex flex-wrap gap-2'>
+                    <Badge className='rounded-full'>{data?.session_format}</Badge>
+                    <Badge variant='outline' className='rounded-full'>
+                      {data?.class_visibility}
+                    </Badge>
+                    <Badge
+                      variant='outline'
+                      className='border-primary/30 bg-primary/10 text-primary rounded-full'
+                    >
+                      {data?.duration_formatted}
+                    </Badge>
                   </div>
-                }
-              />
-            </div>
-          </CardContent>
 
-          <CardContent>
-            <ClassScheduleCalendar schedules={schedules as any} />
-          </CardContent>
+                  <span className="px-3 py-1 text-xs font-semibold text-on-primary bg-primary rounded-full shadow-sm">
+                    COURSE
+                  </span>
+                </div>
 
-          {/* CTA */}
-          <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
-            <div className='text-muted-foreground text-sm'>Open to the public • Limited seats</div>
+                <CardTitle className='text-3xl font-semibold'>{data?.title}</CardTitle>
 
-            <div className='flex items-center gap-3'>
-              <Button onClick={handleRegister} size='lg' className='rounded-full px-10'>
-                Register for Class
-              </Button>
+                {data?.description ? (
+                  <CardDescription className='text-muted-foreground'>
+                    {data?.description}
+                  </CardDescription>
+                ) : null}
+              </CardHeader>
 
-              <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
-                {copied ? 'Copied!' : 'Copy link'}
-              </Button>
-            </div>
-          </div>
-        </Card>
+              <div>
+                <CourseDetailedCard course={course as any} />
+              </div>
+
+              <CardContent className='space-y-6'>
+                {/* DETAILS */}
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <InfoRow
+                    icon={<Clock className='h-4 w-4' />}
+                    label='CLASS BEGINS'
+                    value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
+                      data?.default_end_time
+                    ).toLocaleTimeString()}`}
+                  />
+
+                  <InfoRow
+                    icon={<MapPin className='h-4 w-4' />}
+                    label='Location'
+                    value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
+                  />
+
+                  <InfoRow
+                    icon={<Users className='h-4 w-4' />}
+                    label='Capacity'
+                    value={data?.capacity_info}
+                  />
+
+                  <InfoRow
+                    icon={<Layers className='h-4 w-4' />}
+                    label='Fee'
+                    value={
+                      typeof data?.training_fee === 'number'
+                        ? `KES ${data?.training_fee.toLocaleString()}`
+                        : 'Free'
+                    }
+                  />
+
+                  <InfoRow
+                    icon={<Armchair className='h-4 w-4' />}
+                    label='Available Seats'
+                    value={
+                      <div>
+                        {Number(data?.max_participants) - uniqueEnrollments?.length} of {data?.max_participants}
+                      </div>
+                    }
+                  />
+                </div>
+              </CardContent>
+
+              <CardContent>
+                <ClassScheduleCalendar schedules={schedules as any} />
+              </CardContent>
+
+              {/* CTA */}
+              <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='text-muted-foreground text-sm'>Open to the public • Limited seats</div>
+
+                <div className='flex items-center gap-3'>
+                  <Button onClick={handleRegister} size='lg' className='rounded-full px-10'>
+                    Register for Class
+                  </Button>
+
+                  <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
+                    {copied ? 'Copied!' : 'Copy link'}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          }
+
+          {data?.program_uuid &&
+            <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
+              <CardHeader className='space-y-4'>
+                <div className='flex flxe-row items-center justify-between' >
+                  <div className='flex flex-wrap gap-2'>
+                    <Badge className='rounded-full'>{data?.session_format}</Badge>
+                    <Badge variant='outline' className='rounded-full'>
+                      {data?.class_visibility}
+                    </Badge>
+                    <Badge
+                      variant='outline'
+                      className='border-primary/30 bg-primary/10 text-primary rounded-full'
+                    >
+                      {data?.duration_formatted}
+                    </Badge>
+                  </div>
+
+                  <span className="px-3 py-1 text-xs font-semibold text-on-accent bg-accent rounded-full shadow-sm">
+                    PROGRAM
+                  </span>
+                </div>
+
+                <CardTitle className='text-3xl font-semibold'>{data?.title}</CardTitle>
+
+                {data?.description ? (
+                  <CardDescription className='text-muted-foreground'>
+                    {data?.description}
+                  </CardDescription>
+                ) : null}
+              </CardHeader>
+
+
+              <div>
+                <ProgramDetailsCard program={program as any} />
+              </div>
+
+
+              {/* Courses Card */}
+              <CardContent className="bg-primary/5 p-6 space-y-3 mx-6 rounded-lg">
+                <h3 className="font-semibold">Courses Included in This Training</h3>
+
+                <ul className="text-muted-foreground space-y-2 text-sm">
+                  {programCourses?.length === 0 && (
+                    <li className="text-sm text-muted-foreground">
+                      No courses available
+                    </li>
+                  )}
+
+                  {programCourses?.map((course: any) => (
+                    <li
+                      key={course.uuid}
+                      className="flex items-start gap-2"
+                    >
+                      <BookOpen className="text-primary mt-0.5 h-4 w-4" />
+                      <span>{course.title || course.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+
+              <CardContent className='space-y-6'>
+                {/* DETAILS */}
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <InfoRow
+                    icon={<Clock className='h-4 w-4' />}
+                    label='CLASS BEGINS'
+                    value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
+                      data?.default_end_time
+                    ).toLocaleTimeString()}`}
+                  />
+
+                  <InfoRow
+                    icon={<MapPin className='h-4 w-4' />}
+                    label='Location'
+                    value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
+                  />
+
+                  <InfoRow
+                    icon={<Users className='h-4 w-4' />}
+                    label='Capacity'
+                    value={data?.capacity_info}
+                  />
+
+                  <InfoRow
+                    icon={<Layers className='h-4 w-4' />}
+                    label='Fee'
+                    value={
+                      typeof data?.training_fee === 'number'
+                        ? `KES ${data?.training_fee.toLocaleString()}`
+                        : 'Free'
+                    }
+                  />
+
+                  <InfoRow
+                    icon={<Armchair className='h-4 w-4' />}
+                    label='Available Seats'
+                    value={
+                      <div>
+                        {Number(data?.max_participants) - uniqueEnrollments?.length} of {data?.max_participants}
+                      </div>
+                    }
+                  />
+                </div>
+              </CardContent>
+
+
+              <CardContent>
+                <ClassScheduleCalendar schedules={schedules as any} />
+              </CardContent>
+
+              {/* CTA */}
+              <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='text-muted-foreground text-sm'>Open to the public • Limited seats</div>
+
+                <div className='flex items-center gap-3'>
+                  <Button onClick={handleRegister} size='lg' className='rounded-full px-10'>
+                    Register for Class
+                  </Button>
+
+                  <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
+                    {copied ? 'Copied!' : 'Copy link'}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          }
+        </>
       )}
     </div>
   );
@@ -370,13 +532,13 @@ export function CourseDetailedCard({ course }: CourseProps) {
       <section className='flex flex-row items-center justify-between'>
         <div>
           <div className='space-y-1'>
-            <h2 className='text-2xl font-bold'>{course.name}</h2>
+            <h2 className='text-2xl font-bold'>{course?.name}</h2>
             <p className='text-muted-foreground text-sm'>
-              <strong>Category:</strong> {course.category_names.join(', ')}
+              <strong>Category:</strong> {course?.category_names.join(', ')}
             </p>
-            {course.difficulty_uuid && (
+            {course?.difficulty_uuid && (
               <p className='text-muted-foreground text-sm'>
-                <strong>Difficulty:</strong>
+                <strong>Difficulty:</strong> {"  "}
                 {difficultyMap[course?.difficulty_uuid as string]}
               </p>
             )}
@@ -385,41 +547,41 @@ export function CourseDetailedCard({ course }: CourseProps) {
           {/* Duration, Class limit, Age range */}
           <div className='text-muted-foreground flex flex-wrap gap-4 text-sm'>
             <p>
-              <strong>Class Limit:</strong> {course.class_limit} students
+              <strong>Class Limit:</strong> {course?.class_limit} students
             </p>
             <p>
-              <strong>Age Range:</strong> {course.age_lower_limit} – {course.age_upper_limit} years
+              <strong>Age Range:</strong> {course?.age_lower_limit} – {course?.age_upper_limit} years
             </p>
           </div>
         </div>
 
         {/* Intro video player */}
-        {course.intro_video_url && (
+        {course?.intro_video_url && (
           <div className='w-full max-w-2/5'>
-            <video src={course.intro_video_url} controls className='w-full rounded-md' />
+            <video src={course?.intro_video_url} controls className='w-full rounded-md' />
           </div>
         )}
       </section>
 
       <div className='flex flex-row items-start justify-between gap-8'>
         {/* Objectives */}
-        {course.objectives && (
+        {course?.objectives && (
           <div>
             <h3 className='font-semibold'>Objectives</h3>
             <div
               className='text-muted-foreground text-sm'
-              dangerouslySetInnerHTML={{ __html: course.objectives }}
+              dangerouslySetInnerHTML={{ __html: course?.objectives }}
             />
           </div>
         )}
 
         {/* Prerequisites */}
-        {course.prerequisites && (
+        {course?.prerequisites && (
           <div>
             <h3 className='font-semibold'>Prerequisites</h3>
             <div
               className='text-muted-foreground text-sm'
-              dangerouslySetInnerHTML={{ __html: course.prerequisites }}
+              dangerouslySetInnerHTML={{ __html: course?.prerequisites }}
             />
           </div>
         )}
@@ -427,3 +589,35 @@ export function CourseDetailedCard({ course }: CourseProps) {
     </CardContent>
   );
 }
+
+
+export function ProgramDetailsCard({ program }: any) {
+  return (
+    <CardContent className='space-y-6'>
+      <div className='flex flex-row items-start justify-between gap-8'>
+        {/* Objectives */}
+        {program?.objectives && (
+          <div>
+            <h3 className='font-semibold'>Objectives</h3>
+            <div
+              className='text-muted-foreground text-sm'
+              dangerouslySetInnerHTML={{ __html: program?.objectives }}
+            />
+          </div>
+        )}
+
+        {/* Prerequisites */}
+        {program?.prerequisites && (
+          <div>
+            <h3 className='font-semibold'>Prerequisites</h3>
+            <div
+              className='text-muted-foreground text-sm'
+              dangerouslySetInnerHTML={{ __html: program?.prerequisites }}
+            />
+          </div>
+        )}
+      </div>
+    </CardContent>
+  );
+}
+

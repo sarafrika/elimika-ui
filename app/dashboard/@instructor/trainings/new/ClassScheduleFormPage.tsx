@@ -53,20 +53,33 @@ export const ClassScheduleFormPage = ({
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
 
   const isFormValid = () => {
-    if (!classDetails?.course_uuid || !classDetails?.title) {
-      toast.error('Please complete Class Details first');
+    // ✅ Must have either program_uuid OR course_uuid
+    if (!classDetails?.program_uuid && !classDetails?.course_uuid) {
+      toast.error('Please select either a Program or a Course');
       return false;
     }
+
+    // ✅ Optional: prevent both at the same time (if that's a rule)
+    if (classDetails?.program_uuid && classDetails?.course_uuid) {
+      toast.error('Please select only one: Program or Course');
+      return false;
+    }
+
+    // ✅ Schedule validation
     if (!data.startClass.date || !data.startClass.startTime || !data.startClass.endTime) {
       toast.error('Please fill in all schedule fields');
       return false;
     }
+
+    // ✅ Weekly repeat validation
     if (data.repeat.unit === 'week' && (!data.repeat.days || data.repeat.days.length === 0)) {
       toast.error('Please select at least one day of the week');
       return false;
     }
+
     return true;
   };
+
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

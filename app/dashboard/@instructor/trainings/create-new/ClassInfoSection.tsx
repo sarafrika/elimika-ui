@@ -18,12 +18,16 @@ export const ClassInformationSection = ({
   const inviteUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/class-invite?id=${data?.uuid}` : '';
 
-  const registrationurl =
-    typeof window !== 'undefined' ? `${window.location.origin}/dashboard/browse-courses/available-classes/${data?.course_uuid}/enroll?id=${data?.uuid}` : '';
-
+  const registrationUrl = origin
+    ? data?.course_uuid
+      ? `${origin}/dashboard/browse-courses/available-classes/${data.course_uuid}/enroll?id=${data.uuid}`
+      : data?.program_uuid
+        ? `${origin}/dashboard/browse-courses/available-classes/${data.program_uuid}/enroll?id=${data.uuid}`
+        : ''
+    : '';
 
   return (
-    <Card className='overflow-hidden border shadow-sm'>
+    <Card className='overflow-hidden border shadow-sm pt-0'>
       <div className='bg-muted/50 border-b px-6 py-4'>
         <h3 className='text-foreground text-lg font-semibold'>Class Information</h3>
       </div>
@@ -84,8 +88,8 @@ export const ClassInformationSection = ({
               Class Registration Link
             </TableCell>
             <TableCell className='bg-card flex items-center gap-2 py-4'>
-              <Input value={registrationurl} readOnly className='flex-1' />
-              <CopyInviteButton url={registrationurl} />
+              <Input value={registrationUrl} readOnly className='flex-1' />
+              <CopyInviteButton url={registrationUrl} />
             </TableCell>
           </TableRow>
         </TableBody>

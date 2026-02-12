@@ -4,10 +4,13 @@ import {
   getClassScheduleOptions,
   getCourseByUuidOptions,
   getCourseLessonsOptions,
+  getEnrollmentsForClassOptions,
+  getProgramCoursesOptions,
+  getTrainingProgramByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
 export const useClassDetails = (classId?: string) => {
-  // 1️⃣ Fetch class definition
+  //  Fetch class definition
   const {
     data: classDefinitionData,
     isLoading: isLoadingClass,
@@ -18,11 +21,9 @@ export const useClassDetails = (classId?: string) => {
     }),
     enabled: !!classId,
   });
-
   const classDefinition = classDefinitionData?.data?.class_definition;
-  const courseUuid = classDefinition?.course_uuid;
 
-  // 2️⃣ Fetch class schedule
+  //  Fetch class schedule
   const { data: classScheduleData, isLoading: isLoadingSchedule } = useQuery({
     ...getClassScheduleOptions({
       path: { uuid: classId as string },
@@ -31,16 +32,18 @@ export const useClassDetails = (classId?: string) => {
     enabled: !!classId,
   });
 
-  // 2️⃣ Fetch class enrollment
+  //  Fetch class enrollment
   const { data: classEnrollments, isLoading: isLoadingEnrollments } = useQuery({
-    ...getClassScheduleOptions({
+    ...getEnrollmentsForClassOptions({
       path: { uuid: classId as string },
-      query: { pageable: {} },
     }),
     enabled: !!classId,
   });
 
-  // 3️⃣ Fetch course details
+  const courseUuid = classDefinition?.course_uuid;
+  const programUuid = classDefinition?.program_uuid
+
+  //  Fetch course details
   const { data: courseDetailData, isLoading: isLoadingCourse } = useQuery({
     ...getCourseByUuidOptions({
       path: { uuid: courseUuid as string },
@@ -48,7 +51,22 @@ export const useClassDetails = (classId?: string) => {
     enabled: !!courseUuid,
   });
 
-  // 4️⃣ Fetch course lessons
+  const { data: pCourses, isLoading: isPCoursesLoading } = useQuery({
+    ...getProgramCoursesOptions({
+      path: { programUuid: programUuid as string },
+    }),
+    enabled: !!programUuid,
+  });
+
+  //  Fetch program details
+  const { data: programDetailData, isLoading: isLoadingProgram } = useQuery({
+    ...getTrainingProgramByUuidOptions({
+      path: { uuid: programUuid as string },
+    }),
+    enabled: !!programUuid,
+  });
+
+  // Fetch course lessons
   const { data: courseLessonsData, isLoading: isLoadingLessons } = useQuery({
     ...getCourseLessonsOptions({
       path: { courseUuid: courseUuid as string },
@@ -57,21 +75,24 @@ export const useClassDetails = (classId?: string) => {
     enabled: !!courseUuid,
   });
 
+
   // 🧩 Combined loading state
   const isLoading =
     isLoadingClass ||
     isLoadingSchedule ||
     isLoadingEnrollments ||
     isLoadingCourse ||
-    isLoadingLessons;
+    isLoadingLessons || isPCoursesLoading || isLoadingProgram;
 
   return {
     data: {
       class: classDefinition,
       schedule: classScheduleData?.data?.content ?? [],
       course: courseDetailData?.data,
+      pCourses: pCourses?.data || [],
+      program: programDetailData?.data,
       lessons: courseLessonsData?.data?.content ?? [],
-      enrollments: classEnrollments?.data?.content ?? [],
+      enrollments: classEnrollments?.data ?? [],
     },
     isLoading,
     isError: isClassError,

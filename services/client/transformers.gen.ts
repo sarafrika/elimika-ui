@@ -194,6 +194,8 @@ import type {
   CreateQuizScheduleResponse,
   GetAssignmentSchedulesResponse,
   CreateAssignmentScheduleResponse,
+  GetClassDefinitionsForProgramResponse,
+  CreateClassDefinitionForProgramResponse,
   GetAllCertificatesResponse,
   CreateCertificateResponse,
   UploadCertificatePdfResponse,
@@ -3557,6 +3559,29 @@ export const createAssignmentScheduleResponseTransformer = async (
   return data;
 };
 
+const apiResponseListClassDefinitionResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return classDefinitionResponseSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getClassDefinitionsForProgramResponseTransformer = async (
+  data: any
+): Promise<GetClassDefinitionsForProgramResponse> => {
+  data = apiResponseListClassDefinitionResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createClassDefinitionForProgramResponseTransformer = async (
+  data: any
+): Promise<CreateClassDefinitionForProgramResponse> => {
+  data = apiResponseClassDefinitionResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoCertificateSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -5248,15 +5273,6 @@ export const getEnrollmentsForClassResponseTransformer = async (
   data: any
 ): Promise<GetEnrollmentsForClassResponse> => {
   data = apiResponseListEnrollmentSchemaResponseTransformer(data);
-  return data;
-};
-
-const apiResponseListClassDefinitionResponseSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = data.data.map((item: any) => {
-      return classDefinitionResponseSchemaResponseTransformer(item);
-    });
-  }
   return data;
 };
 

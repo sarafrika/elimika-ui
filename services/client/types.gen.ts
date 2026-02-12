@@ -842,6 +842,10 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
+  /**
    * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
    */
   readonly requires_options?: boolean;
@@ -849,10 +853,6 @@ export type QuizQuestion = {
    * **[READ-ONLY]** Human-readable category of the question type.
    */
   readonly question_category?: string;
-  /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
   /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
@@ -1298,6 +1298,10 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   */
+  readonly is_profile_complete?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
@@ -1305,10 +1309,6 @@ export type Instructor = {
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
-   */
-  readonly is_profile_complete?: boolean;
 };
 
 /**
@@ -1424,6 +1424,10 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
@@ -1453,10 +1457,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
-  /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1529,6 +1529,10 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
@@ -1557,10 +1561,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
-  /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1625,14 +1625,9 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Number of years since the qualification was completed.
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
-  readonly years_since_completion?: number;
-  education_level?: EducationLevelEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
-   */
-  readonly has_certificate_number?: boolean;
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
@@ -1642,9 +1637,14 @@ export type InstructorEducation = {
    */
   readonly formatted_completion?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   * **[READ-ONLY]** Number of years since the qualification was completed.
    */
-  readonly is_complete?: boolean;
+  readonly years_since_completion?: number;
+  education_level?: EducationLevelEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
+   */
+  readonly has_certificate_number?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -1758,6 +1758,10 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
   readonly file_size_formatted?: string;
@@ -1774,10 +1778,6 @@ export type InstructorDocument = {
    */
   readonly has_expiry_date?: boolean;
   verification_status?: VerificationStatusEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
 };
 
 export type ApiResponseInstructorDocument = {
@@ -2923,7 +2923,11 @@ export type ClassDefinition = {
    */
   course_uuid?: string;
   /**
-   * **[OPTIONAL]** Training fee charged for sessions created from this class definition. Must meet the course minimum training fee when a course is linked.
+   * **[OPTIONAL]** Reference to the training program UUID if this class is part of a training programme.
+   */
+  program_uuid?: string;
+  /**
+   * **[OPTIONAL]** Training fee charged for sessions created from this class definition. Must match the approved training rate for linked courses or training programs.
    */
   training_fee?: number;
   class_visibility: ClassVisibilityEnum;
@@ -4093,10 +4097,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -4108,6 +4108,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -4957,6 +4961,10 @@ export type AssignmentSubmission = {
    */
   readonly submission_category?: string;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.
    */
   readonly submission_status_display?: string;
@@ -4964,10 +4972,6 @@ export type AssignmentSubmission = {
    * **[READ-ONLY]** Summary of files attached to this submission.
    */
   readonly file_count_display?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 export type ApiResponseAssignmentSubmissionAttachment = {
@@ -5804,6 +5808,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
+   */
+  readonly time_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -5811,10 +5819,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
-   */
-  readonly time_display?: string;
   /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
@@ -16406,6 +16410,87 @@ export type CreateAssignmentScheduleResponses = {
 
 export type CreateAssignmentScheduleResponse =
   CreateAssignmentScheduleResponses[keyof CreateAssignmentScheduleResponses];
+
+export type GetClassDefinitionsForProgramData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the training program
+     */
+    programUuid: string;
+  };
+  query?: {
+    /**
+     * Whether to include only active class definitions
+     */
+    activeOnly?: boolean;
+  };
+  url: '/api/v1/classes/program/{programUuid}';
+};
+
+export type GetClassDefinitionsForProgramErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetClassDefinitionsForProgramError =
+  GetClassDefinitionsForProgramErrors[keyof GetClassDefinitionsForProgramErrors];
+
+export type GetClassDefinitionsForProgramResponses = {
+  /**
+   * Class definitions retrieved successfully
+   */
+  200: ApiResponseListClassDefinitionResponse;
+};
+
+export type GetClassDefinitionsForProgramResponse =
+  GetClassDefinitionsForProgramResponses[keyof GetClassDefinitionsForProgramResponses];
+
+export type CreateClassDefinitionForProgramData = {
+  body: ClassDefinition;
+  path: {
+    /**
+     * UUID of the training program
+     */
+    programUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/program/{programUuid}';
+};
+
+export type CreateClassDefinitionForProgramErrors = {
+  /**
+   * Invalid input data
+   */
+  400: ApiResponseClassDefinitionResponse;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateClassDefinitionForProgramError =
+  CreateClassDefinitionForProgramErrors[keyof CreateClassDefinitionForProgramErrors];
+
+export type CreateClassDefinitionForProgramResponses = {
+  /**
+   * Class definition created successfully
+   */
+  201: ApiResponseClassDefinitionResponse;
+};
+
+export type CreateClassDefinitionForProgramResponse =
+  CreateClassDefinitionForProgramResponses[keyof CreateClassDefinitionForProgramResponses];
 
 export type GetAllCertificatesData = {
   body?: never;
