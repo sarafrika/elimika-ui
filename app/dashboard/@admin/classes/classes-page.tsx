@@ -668,13 +668,14 @@ export default function AdminClassPage() {
 
     // console.log(selectedEvent?.id, "209821f4-48a4-44a3-a292-27245e785172")
 
-    // if (loading) {
-    //     return (
-    //         <div className="h-screen flex items-center justify-center">
-    //             <div className="text-muted-foreground">Loading class schedules...</div>
-    //         </div>
-    //     );
-    // }
+
+    if (loading) {
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <div className="text-muted-foreground">Loading class schedules...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="h-screen border rounded-2xl flex flex-col bg-background font-sans overflow-hidden">
