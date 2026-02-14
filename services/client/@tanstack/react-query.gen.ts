@@ -242,6 +242,7 @@ import {
   selectPaymentSession,
   addItem,
   completeCart,
+  getAllClassDefinitions,
   createClassDefinition,
   getQuizSchedules,
   createQuizSchedule,
@@ -274,6 +275,7 @@ import {
   assignAdminDomain,
   getAdminUsers,
   createAdminUser,
+  moderateProgram,
   moderateOrganisation,
   createOrganisationUser,
   verifyInstructor,
@@ -283,6 +285,7 @@ import {
   makeDefault,
   deactivate,
   activate,
+  moderateCourse,
   updateScheduledInstanceStatus,
   reorderScoringLevels,
   markAttendance,
@@ -441,12 +444,16 @@ import {
   getSystemAdminUsers,
   getOrganizationAdminUsers,
   getAdminEligibleUsers,
+  getProgramApprovalStatus,
+  listPendingPrograms,
   isOrganisationVerified,
   getPendingOrganisations,
   isInstructorVerified,
   getOrganisationSupportedDomains,
   getDashboardStatistics,
   getDashboardActivity,
+  getCourseApprovalStatus,
+  listPendingCourses,
   clearInstructorAvailability,
   revokeLink,
   dissociateRubric,
@@ -1097,6 +1104,9 @@ import type {
   CompleteCartData,
   CompleteCartError,
   CompleteCartResponse,
+  GetAllClassDefinitionsData,
+  GetAllClassDefinitionsError,
+  GetAllClassDefinitionsResponse,
   CreateClassDefinitionData,
   CreateClassDefinitionError,
   CreateClassDefinitionResponse,
@@ -1187,6 +1197,9 @@ import type {
   CreateAdminUserData,
   CreateAdminUserError,
   CreateAdminUserResponse,
+  ModerateProgramData,
+  ModerateProgramError,
+  ModerateProgramResponse,
   ModerateOrganisationData,
   ModerateOrganisationError,
   ModerateOrganisationResponse,
@@ -1212,6 +1225,9 @@ import type {
   ActivateData,
   ActivateError,
   ActivateResponse,
+  ModerateCourseData,
+  ModerateCourseError,
+  ModerateCourseResponse,
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusError,
   UpdateScheduledInstanceStatusResponse,
@@ -1542,6 +1558,10 @@ import type {
   GetAdminEligibleUsersData,
   GetAdminEligibleUsersError,
   GetAdminEligibleUsersResponse,
+  GetProgramApprovalStatusData,
+  ListPendingProgramsData,
+  ListPendingProgramsError,
+  ListPendingProgramsResponse,
   IsOrganisationVerifiedData,
   GetPendingOrganisationsData,
   GetPendingOrganisationsError,
@@ -1552,6 +1572,10 @@ import type {
   GetDashboardActivityData,
   GetDashboardActivityError,
   GetDashboardActivityResponse,
+  GetCourseApprovalStatusData,
+  ListPendingCoursesData,
+  ListPendingCoursesError,
+  ListPendingCoursesResponse,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityError,
   ClearInstructorAvailabilityResponse,
@@ -11644,6 +11668,75 @@ export const completeCartMutation = (
   return mutationOptions;
 };
 
+export const getAllClassDefinitionsQueryKey = (options: Options<GetAllClassDefinitionsData>) =>
+  createQueryKey('getAllClassDefinitions', options);
+
+/**
+ * Get all class definitions
+ */
+export const getAllClassDefinitionsOptions = (options: Options<GetAllClassDefinitionsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAllClassDefinitions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAllClassDefinitionsQueryKey(options),
+  });
+};
+
+export const getAllClassDefinitionsInfiniteQueryKey = (
+  options: Options<GetAllClassDefinitionsData>
+): QueryKey<Options<GetAllClassDefinitionsData>> =>
+  createQueryKey('getAllClassDefinitions', options, true);
+
+/**
+ * Get all class definitions
+ */
+export const getAllClassDefinitionsInfiniteOptions = (
+  options: Options<GetAllClassDefinitionsData>
+) => {
+  return infiniteQueryOptions<
+    GetAllClassDefinitionsResponse,
+    GetAllClassDefinitionsError,
+    InfiniteData<GetAllClassDefinitionsResponse>,
+    QueryKey<Options<GetAllClassDefinitionsData>>,
+    | number
+    | Pick<QueryKey<Options<GetAllClassDefinitionsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetAllClassDefinitionsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllClassDefinitions({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllClassDefinitionsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const createClassDefinitionQueryKey = (options: Options<CreateClassDefinitionData>) =>
   createQueryKey('createClassDefinition', options);
 
@@ -13238,6 +13331,54 @@ export const createAdminUserMutation = (
   return mutationOptions;
 };
 
+export const moderateProgramQueryKey = (options: Options<ModerateProgramData>) =>
+  createQueryKey('moderateProgram', options);
+
+/**
+ * Moderate training program approval
+ */
+export const moderateProgramOptions = (options: Options<ModerateProgramData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await moderateProgram({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: moderateProgramQueryKey(options),
+  });
+};
+
+/**
+ * Moderate training program approval
+ */
+export const moderateProgramMutation = (
+  options?: Partial<Options<ModerateProgramData>>
+): UseMutationOptions<
+  ModerateProgramResponse,
+  ModerateProgramError,
+  Options<ModerateProgramData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ModerateProgramResponse,
+    ModerateProgramError,
+    Options<ModerateProgramData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await moderateProgram({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const moderateOrganisationQueryKey = (options: Options<ModerateOrganisationData>) =>
   createQueryKey('moderateOrganisation', options);
 
@@ -13625,6 +13766,50 @@ export const activateMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await activate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const moderateCourseQueryKey = (options: Options<ModerateCourseData>) =>
+  createQueryKey('moderateCourse', options);
+
+/**
+ * Moderate course approval
+ */
+export const moderateCourseOptions = (options: Options<ModerateCourseData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await moderateCourse({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: moderateCourseQueryKey(options),
+  });
+};
+
+/**
+ * Moderate course approval
+ */
+export const moderateCourseMutation = (
+  options?: Partial<Options<ModerateCourseData>>
+): UseMutationOptions<ModerateCourseResponse, ModerateCourseError, Options<ModerateCourseData>> => {
+  const mutationOptions: UseMutationOptions<
+    ModerateCourseResponse,
+    ModerateCourseError,
+    Options<ModerateCourseData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await moderateCourse({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -21478,6 +21663,94 @@ export const getAdminEligibleUsersInfiniteOptions = (
   );
 };
 
+export const getProgramApprovalStatusQueryKey = (options: Options<GetProgramApprovalStatusData>) =>
+  createQueryKey('getProgramApprovalStatus', options);
+
+/**
+ * Get training program approval status
+ */
+export const getProgramApprovalStatusOptions = (options: Options<GetProgramApprovalStatusData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgramApprovalStatus({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgramApprovalStatusQueryKey(options),
+  });
+};
+
+export const listPendingProgramsQueryKey = (options: Options<ListPendingProgramsData>) =>
+  createQueryKey('listPendingPrograms', options);
+
+/**
+ * List training programs pending approval
+ */
+export const listPendingProgramsOptions = (options: Options<ListPendingProgramsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listPendingPrograms({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listPendingProgramsQueryKey(options),
+  });
+};
+
+export const listPendingProgramsInfiniteQueryKey = (
+  options: Options<ListPendingProgramsData>
+): QueryKey<Options<ListPendingProgramsData>> =>
+  createQueryKey('listPendingPrograms', options, true);
+
+/**
+ * List training programs pending approval
+ */
+export const listPendingProgramsInfiniteOptions = (options: Options<ListPendingProgramsData>) => {
+  return infiniteQueryOptions<
+    ListPendingProgramsResponse,
+    ListPendingProgramsError,
+    InfiniteData<ListPendingProgramsResponse>,
+    QueryKey<Options<ListPendingProgramsData>>,
+    | number
+    | Pick<QueryKey<Options<ListPendingProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListPendingProgramsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listPendingPrograms({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listPendingProgramsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const isOrganisationVerifiedQueryKey = (options: Options<IsOrganisationVerifiedData>) =>
   createQueryKey('isOrganisationVerified', options);
 
@@ -21705,6 +21978,93 @@ export const getDashboardActivityInfiniteOptions = (options: Options<GetDashboar
         return data;
       },
       queryKey: getDashboardActivityInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getCourseApprovalStatusQueryKey = (options: Options<GetCourseApprovalStatusData>) =>
+  createQueryKey('getCourseApprovalStatus', options);
+
+/**
+ * Get course approval status
+ */
+export const getCourseApprovalStatusOptions = (options: Options<GetCourseApprovalStatusData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseApprovalStatus({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseApprovalStatusQueryKey(options),
+  });
+};
+
+export const listPendingCoursesQueryKey = (options: Options<ListPendingCoursesData>) =>
+  createQueryKey('listPendingCourses', options);
+
+/**
+ * List courses pending approval
+ */
+export const listPendingCoursesOptions = (options: Options<ListPendingCoursesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listPendingCourses({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listPendingCoursesQueryKey(options),
+  });
+};
+
+export const listPendingCoursesInfiniteQueryKey = (
+  options: Options<ListPendingCoursesData>
+): QueryKey<Options<ListPendingCoursesData>> => createQueryKey('listPendingCourses', options, true);
+
+/**
+ * List courses pending approval
+ */
+export const listPendingCoursesInfiniteOptions = (options: Options<ListPendingCoursesData>) => {
+  return infiniteQueryOptions<
+    ListPendingCoursesResponse,
+    ListPendingCoursesError,
+    InfiniteData<ListPendingCoursesResponse>,
+    QueryKey<Options<ListPendingCoursesData>>,
+    | number
+    | Pick<QueryKey<Options<ListPendingCoursesData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListPendingCoursesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listPendingCourses({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listPendingCoursesInfiniteQueryKey(options),
     }
   );
 };

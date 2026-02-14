@@ -222,8 +222,8 @@ function OrganisationListPanel({
         key={org.uuid ?? org.name}
         type='button'
         className={`relative w-full rounded-2xl border p-4 text-left transition ${selectedOrganisationId === org.uuid
-            ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-1'
-            : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'
+          ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-1'
+          : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'
           }`}
         onClick={() => onSelect(org)}
       >
@@ -287,7 +287,7 @@ function OrganisationListPanel({
         </div>
       </div>
 
-      <ScrollArea className='flex-1 px-6 py-4'>
+      <ScrollArea className='h-0 flex-1 px-6 py-4'>
         <div className='flex flex-col gap-4 pb-8'>{renderContent()}</div>
       </ScrollArea>
 

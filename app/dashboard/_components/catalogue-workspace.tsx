@@ -919,14 +919,14 @@ function CatalogueDetailsBody({
           <Copy className='mr-2 h-4 w-4' />
           Copy SKU
         </Button>
-        {selectedRow.detailsHref ? (
+        {/* {selectedRow.detailsHref ? (
           <Button variant='default' size='sm' asChild>
             <Link href={selectedRow.detailsHref} className='inline-flex items-center gap-2'>
               <ExternalLink className='h-4 w-4' />
               View full details
             </Link>
           </Button>
-        ) : null}
+        ) : null} */}
       </div>
     </div>
   );

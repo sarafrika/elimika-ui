@@ -727,6 +727,9 @@ import type {
   CompleteCartData,
   CompleteCartResponses,
   CompleteCartErrors,
+  GetAllClassDefinitionsData,
+  GetAllClassDefinitionsResponses,
+  GetAllClassDefinitionsErrors,
   CreateClassDefinitionData,
   CreateClassDefinitionResponses,
   CreateClassDefinitionErrors,
@@ -823,6 +826,9 @@ import type {
   CreateAdminUserData,
   CreateAdminUserResponses,
   CreateAdminUserErrors,
+  ModerateProgramData,
+  ModerateProgramResponses,
+  ModerateProgramErrors,
   ModerateOrganisationData,
   ModerateOrganisationResponses,
   ModerateOrganisationErrors,
@@ -850,6 +856,9 @@ import type {
   ActivateData,
   ActivateResponses,
   ActivateErrors,
+  ModerateCourseData,
+  ModerateCourseResponses,
+  ModerateCourseErrors,
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusResponses,
   UpdateScheduledInstanceStatusErrors,
@@ -1324,6 +1333,12 @@ import type {
   GetAdminEligibleUsersData,
   GetAdminEligibleUsersResponses,
   GetAdminEligibleUsersErrors,
+  GetProgramApprovalStatusData,
+  GetProgramApprovalStatusResponses,
+  GetProgramApprovalStatusErrors,
+  ListPendingProgramsData,
+  ListPendingProgramsResponses,
+  ListPendingProgramsErrors,
   IsOrganisationVerifiedData,
   IsOrganisationVerifiedResponses,
   IsOrganisationVerifiedErrors,
@@ -1342,6 +1357,12 @@ import type {
   GetDashboardActivityData,
   GetDashboardActivityResponses,
   GetDashboardActivityErrors,
+  GetCourseApprovalStatusData,
+  GetCourseApprovalStatusResponses,
+  GetCourseApprovalStatusErrors,
+  ListPendingCoursesData,
+  ListPendingCoursesResponses,
+  ListPendingCoursesErrors,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityResponses,
   ClearInstructorAvailabilityErrors,
@@ -1560,6 +1581,7 @@ import {
   selectPaymentSessionResponseTransformer,
   addItemResponseTransformer,
   completeCartResponseTransformer,
+  getAllClassDefinitionsResponseTransformer,
   createClassDefinitionResponseTransformer,
   getQuizSchedulesResponseTransformer,
   createQuizScheduleResponseTransformer,
@@ -1591,10 +1613,12 @@ import {
   assignAdminDomainResponseTransformer,
   getAdminUsersResponseTransformer,
   createAdminUserResponseTransformer,
+  moderateProgramResponseTransformer,
   moderateOrganisationResponseTransformer,
   createOrganisationUserResponseTransformer,
   verifyInstructorResponseTransformer,
   unverifyInstructorResponseTransformer,
+  moderateCourseResponseTransformer,
   getCartResponseTransformer,
   updateCartResponseTransformer,
   updateQuizScheduleResponseTransformer,
@@ -1718,9 +1742,11 @@ import {
   getSystemAdminUsersResponseTransformer,
   getOrganizationAdminUsersResponseTransformer,
   getAdminEligibleUsersResponseTransformer,
+  listPendingProgramsResponseTransformer,
   getPendingOrganisationsResponseTransformer,
   getDashboardStatisticsResponseTransformer,
   getDashboardActivityResponseTransformer,
+  listPendingCoursesResponseTransformer,
   removeItemResponseTransformer,
   removeAdminDomainResponseTransformer,
 } from './transformers.gen';
@@ -9028,6 +9054,33 @@ export const completeCart = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get all class definitions
+ */
+export const getAllClassDefinitions = <ThrowOnError extends boolean = false>(
+  options: Options<GetAllClassDefinitionsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAllClassDefinitionsResponses,
+    GetAllClassDefinitionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAllClassDefinitionsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes',
+    ...options,
+  });
+};
+
+/**
  * Create a new class definition
  */
 export const createClassDefinition = <ThrowOnError extends boolean = false>(
@@ -9986,6 +10039,33 @@ export const createAdminUser = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Moderate training program approval
+ */
+export const moderateProgram = <ThrowOnError extends boolean = false>(
+  options: Options<ModerateProgramData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ModerateProgramResponses,
+    ModerateProgramErrors,
+    ThrowOnError
+  >({
+    responseTransformer: moderateProgramResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/programs/{uuid}/moderate',
+    ...options,
+  });
+};
+
+/**
  * Moderate organization verification
  * Handles organization approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
  */
@@ -10223,6 +10303,33 @@ export const activate = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/currencies/{code}/activate',
+    ...options,
+  });
+};
+
+/**
+ * Moderate course approval
+ */
+export const moderateCourse = <ThrowOnError extends boolean = false>(
+  options: Options<ModerateCourseData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ModerateCourseResponses,
+    ModerateCourseErrors,
+    ThrowOnError
+  >({
+    responseTransformer: moderateCourseResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/courses/{uuid}/moderate',
     ...options,
   });
 };
@@ -14919,6 +15026,59 @@ export const getAdminEligibleUsers = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get training program approval status
+ */
+export const getProgramApprovalStatus = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramApprovalStatusData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetProgramApprovalStatusResponses,
+    GetProgramApprovalStatusErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/programs/{uuid}/approval-status',
+    ...options,
+  });
+};
+
+/**
+ * List training programs pending approval
+ */
+export const listPendingPrograms = <ThrowOnError extends boolean = false>(
+  options: Options<ListPendingProgramsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListPendingProgramsResponses,
+    ListPendingProgramsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listPendingProgramsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/programs/pending',
+    ...options,
+  });
+};
+
+/**
  * Check if organization is verified
  * Checks whether a specific organization has been verified by an admin. Returns true if the organization has admin verification status.
  */
@@ -15079,6 +15239,59 @@ export const getDashboardActivity = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/dashboard/activity-feed',
+    ...options,
+  });
+};
+
+/**
+ * Get course approval status
+ */
+export const getCourseApprovalStatus = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseApprovalStatusData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseApprovalStatusResponses,
+    GetCourseApprovalStatusErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/courses/{uuid}/approval-status',
+    ...options,
+  });
+};
+
+/**
+ * List courses pending approval
+ */
+export const listPendingCourses = <ThrowOnError extends boolean = false>(
+  options: Options<ListPendingCoursesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListPendingCoursesResponses,
+    ListPendingCoursesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listPendingCoursesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/courses/pending',
     ...options,
   });
 };

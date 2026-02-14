@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { format, formatDistanceToNow } from 'date-fns';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -13,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -23,22 +26,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
-import { RuleDrawer } from './RuleDrawer';
-import { RulePreview } from './RulePreview';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
   useSystemRules,
   type SystemRule,
   type SystemRuleCategory,
   type SystemRuleStatus,
 } from '@/services/admin/system-config';
+import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQueries } from '@tanstack/react-query';
+import { format, formatDistanceToNow } from 'date-fns';
 import {
+  Eye,
   Filter,
   MoreVertical,
   Pencil,
@@ -46,10 +45,11 @@ import {
   RefreshCcw,
   SlidersHorizontal,
   X,
-  Eye,
 } from 'lucide-react';
-import { useQueries } from '@tanstack/react-query';
-import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { RuleDrawer } from './RuleDrawer';
+import { RulePreview } from './RulePreview';
 
 const categoryFilters: { value: SystemRuleCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All categories' },
@@ -268,72 +268,77 @@ export function SystemConfigContent() {
             Govern platform policies with scoped, prioritized rules. Manage lifecycle, payloads, and
             audit trail.
           </p>
-          {lastUpdated ? (
-            <p className='text-muted-foreground text-xs'>Last change {lastUpdated}</p>
-          ) : null}
+
         </div>
-        <div className='flex flex-wrap gap-2'>
-          <Button variant='outline' size='default' onClick={() => refetch()} className='gap-2'>
-            <RefreshCcw className='h-4 w-4' />
-            Refresh
-          </Button>
-          <Button size='default' className='gap-2 shadow-sm' onClick={openCreate}>
-            <Plus className='h-4 w-4' />
-            New rule
-          </Button>
+        <div className='flex flex-col gap-1'>
+          <div className='flex flex-wrap gap-2'>
+            <Button variant='outline' size='default' onClick={() => refetch()} className='gap-2'>
+              <RefreshCcw className='h-4 w-4' />
+              Refresh
+            </Button>
+            <Button size='default' className='gap-2 shadow-sm' onClick={openCreate}>
+              <Plus className='h-4 w-4' />
+              New rule
+            </Button>
+          </div>
+          {lastUpdated ? (
+            <p className='text-muted-foreground text-end text-xs'>Last change {lastUpdated}</p>
+          ) : null}
         </div>
       </div>
 
-      <Card className='shadow-md'>
-        <CardHeader className='bg-muted/30 space-y-5 border-b pb-6'>
+      <Card className='shadow-md pb-6 pt-0'>
+        <CardHeader className='bg-muted/30 space-y-2 border-b py-6'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
               <SlidersHorizontal className='text-primary h-5 w-5' />
               <h2 className='text-foreground text-lg font-semibold'>Filters & List</h2>
             </div>
-            <div className='text-muted-foreground text-xs'>
-              {rules.length} {rules.length === 1 ? 'rule' : 'rules'} shown
+            <div className='grid items-center gap-3 md:grid-cols-2 lg:grid-cols-3'>
+              <Select
+                value={category}
+                onValueChange={value => {
+                  setCategory(value as SystemRuleCategory | 'all');
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Category' />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryFilters.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={status}
+                onValueChange={value => {
+                  setStatus(value as SystemRuleStatus | 'all');
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Status' />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusFilters.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className='text-muted-foreground text-xs'>
+                {rules.length} {rules.length === 1 ? 'rule' : 'rules'} shown
+              </div>
             </div>
           </div>
-          <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-3'>
-            <Select
-              value={category}
-              onValueChange={value => {
-                setCategory(value as SystemRuleCategory | 'all');
-                setPage(0);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder='Category' />
-              </SelectTrigger>
-              <SelectContent>
-                {categoryFilters.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
 
-            <Select
-              value={status}
-              onValueChange={value => {
-                setStatus(value as SystemRuleStatus | 'all');
-                setPage(0);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder='Status' />
-              </SelectTrigger>
-              <SelectContent>
-                {statusFilters.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className='flex flex-wrap items-center gap-2'>
             {activeFilters.length === 0 ? (
@@ -475,8 +480,8 @@ export function SystemConfigContent() {
                             <span className='text-muted-foreground text-xs'>
                               {rule.updatedDate
                                 ? formatDistanceToNow(new Date(rule.updatedDate), {
-                                    addSuffix: true,
-                                  })
+                                  addSuffix: true,
+                                })
                                 : 'Never'}
                             </span>
                           </div>
@@ -521,77 +526,77 @@ export function SystemConfigContent() {
           <div className='md:hidden'>
             {isLoading
               ? Array.from({ length: 3 }).map((_, index) => (
-                  <Card key={`mobile-skel-${index}`} className='mb-3 shadow-sm'>
-                    <CardContent className='space-y-3 p-5'>
-                      <Skeleton className='h-5 w-36' />
-                      <Skeleton className='h-4 w-24' />
-                      <Skeleton className='h-4 w-full' />
-                    </CardContent>
-                  </Card>
-                ))
+                <Card key={`mobile-skel-${index}`} className='mb-3 shadow-sm'>
+                  <CardContent className='space-y-3 p-5'>
+                    <Skeleton className='h-5 w-36' />
+                    <Skeleton className='h-4 w-24' />
+                    <Skeleton className='h-4 w-full' />
+                  </CardContent>
+                </Card>
+              ))
               : rules.map(rule => (
-                  <Card
-                    key={rule.uuid}
-                    className='mb-3 cursor-pointer shadow-sm transition-all hover:shadow-md'
-                    onClick={() => openEdit(rule)}
-                  >
-                    <CardContent className='space-y-4 p-5'>
-                      <div className='flex items-start justify-between gap-3'>
-                        <div className='space-y-1.5'>
-                          <p className='text-foreground text-base font-semibold'>{rule.key}</p>
-                          <Badge variant='outline' className='rounded-full text-xs'>
-                            {rule.category}
-                          </Badge>
-                        </div>
-                        <Badge
-                          variant={statusBadgeVariant[rule.status ?? ''] ?? 'outline'}
-                          className='rounded-full'
-                        >
-                          {rule.status ?? '—'}
+                <Card
+                  key={rule.uuid}
+                  className='mb-3 cursor-pointer shadow-sm transition-all hover:shadow-md'
+                  onClick={() => openEdit(rule)}
+                >
+                  <CardContent className='space-y-4 p-5'>
+                    <div className='flex items-start justify-between gap-3'>
+                      <div className='space-y-1.5'>
+                        <p className='text-foreground text-base font-semibold'>{rule.key}</p>
+                        <Badge variant='outline' className='rounded-full text-xs'>
+                          {rule.category}
                         </Badge>
                       </div>
-                      <div className='space-y-2 text-sm'>
-                        <div className='flex items-center justify-between'>
-                          <span className='text-muted-foreground text-xs'>Scope</span>
-                          <span>{formatScope(rule)}</span>
-                        </div>
-                        <div className='flex items-center justify-between'>
-                          <span className='text-muted-foreground text-xs'>Priority</span>
-                          <span>{rule.priority ?? '—'}</span>
-                        </div>
-                        <div className='text-muted-foreground flex items-center justify-between text-xs'>
-                          <span>{formatWindow(rule)}</span>
-                        </div>
-                        <div className='text-muted-foreground flex items-center justify-between text-xs'>
-                          <span>Updated by</span>
-                          <span className='text-foreground'>{resolveUserName(rule.updatedBy)}</span>
-                        </div>
+                      <Badge
+                        variant={statusBadgeVariant[rule.status ?? ''] ?? 'outline'}
+                        className='rounded-full'
+                      >
+                        {rule.status ?? '—'}
+                      </Badge>
+                    </div>
+                    <div className='space-y-2 text-sm'>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-muted-foreground text-xs'>Scope</span>
+                        <span>{formatScope(rule)}</span>
                       </div>
-                      <div className='flex justify-end gap-2'>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={event => {
-                            event.stopPropagation();
-                            handleViewDetails(rule);
-                          }}
-                        >
-                          View
-                        </Button>
-                        <Button
-                          variant='secondary'
-                          size='sm'
-                          onClick={event => {
-                            event.stopPropagation();
-                            openEdit(rule);
-                          }}
-                        >
-                          Edit
-                        </Button>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-muted-foreground text-xs'>Priority</span>
+                        <span>{rule.priority ?? '—'}</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      <div className='text-muted-foreground flex items-center justify-between text-xs'>
+                        <span>{formatWindow(rule)}</span>
+                      </div>
+                      <div className='text-muted-foreground flex items-center justify-between text-xs'>
+                        <span>Updated by</span>
+                        <span className='text-foreground'>{resolveUserName(rule.updatedBy)}</span>
+                      </div>
+                    </div>
+                    <div className='flex justify-end gap-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={event => {
+                          event.stopPropagation();
+                          handleViewDetails(rule);
+                        }}
+                      >
+                        View
+                      </Button>
+                      <Button
+                        variant='secondary'
+                        size='sm'
+                        onClick={event => {
+                          event.stopPropagation();
+                          openEdit(rule);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
           </div>
 
           <Separator className='mt-6' />

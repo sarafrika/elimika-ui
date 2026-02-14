@@ -195,7 +195,7 @@ export default function AdminCoursesPage() {
             label='Avg creator share'
             value={Math.round(
               courses.reduce((acc, course) => acc + (course.creator_share_percentage ?? 0), 0) /
-                (courses.length || 1)
+              (courses.length || 1)
             )}
           />
         </div>

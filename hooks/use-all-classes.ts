@@ -1,33 +1,28 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import {
-  getClassDefinitionsForInstructorOptions,
+  getAllClassDefinitionsOptions,
   getClassScheduleOptions,
   getCourseByUuidOptions,
   getInstructorByUuidOptions
 } from '../services/client/@tanstack/react-query.gen';
 
-function useInstructorClassesWithDetails(instructorUuid?: string) {
-
+function useAllClassesWithDetails() {
   const { data, isLoading, isPending, isFetching } = useQuery({
-    ...getClassDefinitionsForInstructorOptions({
-      path: { instructorUuid: instructorUuid ?? '' },
-      query: {},
+    ...getAllClassDefinitionsOptions({
+      query: { pageable: {} },
     }),
-    enabled: !!instructorUuid,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
-
-  const classesData = data?.data ?? [];
+  const classesData = data?.data?.content ?? [];
 
   const classes = useMemo(
     () => classesData.map(item => item.class_definition),
     [classesData]
   );
-
 
   const uniqueCourseUuids = useMemo(() => {
     const set = new Set<string>();
@@ -132,6 +127,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     }));
   }, [classes, courseMap, instructorMap, schedules]);
 
+
   const isCoursesLoading = courseQueries.some(q => q.isLoading || q.isFetching);
   const isInstructorsLoading = instructorQueries.some(q => q.isLoading || q.isFetching);
   const isSchedulesLoading = scheduleQueries.some(q => q.isLoading || q.isFetching);
@@ -150,4 +146,4 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   };
 }
 
-export default useInstructorClassesWithDetails;
+export default useAllClassesWithDetails;

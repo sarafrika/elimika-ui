@@ -1222,11 +1222,6 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     requires_options: z
       .boolean()
       .describe(
@@ -1242,6 +1237,11 @@ export const zQuizQuestion = z
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -1448,6 +1448,13 @@ export const zTrainingProgram = z
       )
       .optional(),
     published: z.boolean().describe('**[REQUIRED]** Indicates if the program is published,'),
+    admin_approved: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates whether the training program has been approved by an admin for learner/instructor use.'
+      )
+      .readonly()
+      .optional(),
     created_date: z
       .string()
       .datetime()
@@ -2974,6 +2981,13 @@ export const zCourse = z
       .describe(
         '**[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.'
       )
+      .optional(),
+    admin_approved: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates whether the course has been approved by an admin for learner/instructor use.'
+      )
+      .readonly()
       .optional(),
     training_requirements: z
       .array(zCourseTrainingRequirement)
@@ -5730,6 +5744,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -5743,11 +5762,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -7424,6 +7438,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -7437,11 +7456,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -8559,6 +8573,19 @@ export const zPagedDtoCommerceCatalogueItem = z.object({
 export const zApiResponsePagedDtoCommerceCatalogueItem = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCommerceCatalogueItem.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPagedDtoClassDefinitionResponse = z.object({
+  content: z.array(zClassDefinitionResponse).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoClassDefinitionResponse = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoClassDefinitionResponse.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -12316,6 +12343,19 @@ export const zCompleteCartData = z.object({
  */
 export const zCompleteCartResponse = zOrderResponse;
 
+export const zGetAllClassDefinitionsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Class definitions retrieved successfully
+ */
+export const zGetAllClassDefinitionsResponse = zApiResponsePagedDtoClassDefinitionResponse;
+
 export const zCreateClassDefinitionData = z.object({
   body: zClassDefinition,
   path: z.never().optional(),
@@ -12765,6 +12805,22 @@ export const zCreateAdminUserData = z.object({
  */
 export const zCreateAdminUserResponse = zApiResponseUser;
 
+export const zModerateProgramData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.object({
+    action: z.string(),
+    reason: z.string().optional(),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zModerateProgramResponse = zApiResponseTrainingProgram;
+
 export const zModerateOrganisationData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -12901,6 +12957,22 @@ export const zActivateData = z.object({
  * OK
  */
 export const zActivateResponse = zApiResponseCurrency;
+
+export const zModerateCourseData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.object({
+    action: z.string(),
+    reason: z.string().optional(),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zModerateCourseResponse = zApiResponseCourse;
 
 export const zUpdateScheduledInstanceStatusData = z.object({
   body: z.never().optional(),
@@ -15146,6 +15218,32 @@ export const zGetAdminEligibleUsersData = z.object({
  */
 export const zGetAdminEligibleUsersResponse = zApiResponsePagedDtoUser;
 
+export const zGetProgramApprovalStatusData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetProgramApprovalStatusResponse = zApiResponseBoolean;
+
+export const zListPendingProgramsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zListPendingProgramsResponse = zApiResponsePagedDtoTrainingProgram;
+
 export const zIsOrganisationVerifiedData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -15219,6 +15317,32 @@ export const zGetDashboardActivityData = z.object({
  * Dashboard activity retrieved successfully
  */
 export const zGetDashboardActivityResponse = zApiResponsePagedDtoAdminActivityEvent;
+
+export const zGetCourseApprovalStatusData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseApprovalStatusResponse = zApiResponseBoolean;
+
+export const zListPendingCoursesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zListPendingCoursesResponse = zApiResponsePagedDtoCourse;
 
 export const zClearInstructorAvailabilityData = z.object({
   body: z.never().optional(),
