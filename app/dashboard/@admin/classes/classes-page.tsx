@@ -581,7 +581,7 @@ export default function AdminClassPage() {
             });
         });
         return events;
-    }, []);
+    }, [classesWithCourseAndInstructor]); // ← ADD THIS
 
     const filteredEvents = useMemo(() => {
         let events = allEvents;
@@ -597,7 +597,7 @@ export default function AdminClassPage() {
             }
         }
         return events;
-    }, [allEvents, selectedClassId, selectedInstructorId,]);
+    }, [allEvents, selectedClassId, selectedInstructorId, classesWithCourseAndInstructor]);
 
     const uniqueClasses = useMemo(() => {
         if (!classesWithCourseAndInstructor) return [];
@@ -606,7 +606,7 @@ export default function AdminClassPage() {
             name: `${classDef.title} - ${classDef.course?.name || 'Unknown'}`,
         }));
         return [{ id: 'all', name: 'All Classes' }, ...classes];
-    }, []);
+    }, [classesWithCourseAndInstructor]);
 
     const uniqueInstructors = useMemo(() => {
         if (!classesWithCourseAndInstructor) return [];
@@ -620,7 +620,7 @@ export default function AdminClassPage() {
             }
         });
         return Array.from(instructorMap.values());
-    }, []);
+    }, [classesWithCourseAndInstructor]);
 
     useEffect(() => {
         if (selectedClassId && selectedClassId !== 'all') {
@@ -633,7 +633,7 @@ export default function AdminClassPage() {
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedClassId]); // Only run when selectedClassId changes
+    }, [selectedClassId]);
 
     const handleDateChange = (direction: 'prev' | 'next') => {
         const newDate = new Date(currentDate);
