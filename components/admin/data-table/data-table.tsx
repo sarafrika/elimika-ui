@@ -68,7 +68,7 @@ export function AdminDataTable<TData>({
     <Card className='border-border/50 overflow-hidden border shadow-sm'>
       <CardHeader className='space-y-4'>
         <div className='flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between'>
-          <div>
+          <div className='w-full'>
             <Badge
               variant='outline'
               className='border-primary/40 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
@@ -76,12 +76,14 @@ export function AdminDataTable<TData>({
               Administrative
             </Badge>
 
-            <CardTitle className='mt-2 text-xl font-semibold'>{title}</CardTitle>
-            {description ? (
-              <CardDescription className='max-w-2xl text-sm leading-relaxed'>
-                {description}
-              </CardDescription>
-            ) : null}
+            <section className='mt-2 flex flex-row items-center justify-between w-full' >
+              <CardTitle className='text-xl font-semibold'>{title}</CardTitle>
+              {description ? (
+                <CardDescription className='max-w-2xl text-sm leading-relaxed'>
+                  {description}
+                </CardDescription>
+              ) : null}
+            </section>
           </div>
           {headerActions ? <div className='flex items-center gap-2'>{headerActions}</div> : null}
         </div>

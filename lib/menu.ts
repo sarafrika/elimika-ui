@@ -411,6 +411,11 @@ export default {
       icon: BookOpen,
     },
     {
+      title: 'Programs',
+      url: '/dashboard/programs',
+      icon: BookOpen,
+    },
+    {
       title: 'Classes',
       url: '/dashboard/classes',
       icon: FileStackIcon,
