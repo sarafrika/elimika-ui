@@ -1745,12 +1745,6 @@ export const QuizQuestionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     requires_options: {
       type: 'boolean',
       description:
@@ -1768,6 +1762,12 @@ export const QuizQuestionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: 2,
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -1954,6 +1954,7 @@ export const TrainingProgramSchema = {
     price: 899.99,
     status: 'PUBLISHED',
     active: true,
+    admin_approved: true,
     created_date: '2024-04-01T12:00:00',
     created_by: 'instructor@sarafrika.com',
     updated_date: '2024-04-15T15:30:00',
@@ -2062,6 +2063,13 @@ export const TrainingProgramSchema = {
       type: 'boolean',
       description: '**[REQUIRED]** Indicates if the program is published,',
       example: true,
+    },
+    admin_approved: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates whether the training program has been approved by an admin for learner/instructor use.',
+      example: false,
+      readOnly: true,
     },
     created_date: {
       type: 'string',
@@ -3707,6 +3715,7 @@ export const CourseSchema = {
     banner_url: 'https://cdn.sarafrika.com/courses/java-advanced-banner.jpg',
     status: 'PUBLISHED',
     active: true,
+    admin_approved: true,
     training_requirements: [
       {
         uuid: '5a8074cc-8893-497b-8d58-4b151c994a80',
@@ -3904,6 +3913,13 @@ export const CourseSchema = {
       description:
         '**[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.',
       example: true,
+    },
+    admin_approved: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates whether the course has been approved by an admin for learner/instructor use.',
+      example: false,
+      readOnly: true,
     },
     training_requirements: {
       type: 'array',
@@ -8317,6 +8333,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -8333,12 +8355,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -11593,6 +11609,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -11609,12 +11631,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
       readOnly: true,
     },
   },
@@ -13973,6 +13989,42 @@ export const PagedDTOCommerceCatalogueItemSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/CommerceCatalogueItem',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOClassDefinitionResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOClassDefinitionResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOClassDefinitionResponseSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassDefinitionResponse',
       },
     },
     metadata: {

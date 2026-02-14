@@ -64,7 +64,7 @@ export default function InstructorsPage() {
           },
         }
       );
-    } catch (_error) {}
+    } catch (_error) { }
   };
 
   const handleRejectInstructor = async (instructor: Instructor) => {
@@ -80,7 +80,7 @@ export default function InstructorsPage() {
           },
         }
       );
-    } catch (_error) {}
+    } catch (_error) { }
   };
 
   const getStatusBadge = (instructorId: string) => {
@@ -90,7 +90,7 @@ export default function InstructorsPage() {
   const getStatusBadgeComponent = (instructorId: string) => {
     const status = getStatusBadge(instructorId);
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      approved: 'default',
+      verified: 'default',
       pending: 'secondary',
       rejected: 'destructive',
     };
@@ -169,52 +169,56 @@ export default function InstructorsPage() {
   }
 
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
-      {/* Left Sidebar - Instructor List */}
-      <InstructorsList
-        instructors={filteredAndSortedInstructors as any}
-        selectedInstructor={selectedInstructor}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-        onInstructorSelect={handleInstructorSelect}
-        onInstructorDelete={handleInstructorDelete}
-        getStatusBadgeComponent={getStatusBadgeComponent}
-        isLoading={isLoading}
-      />
+    <section>
+      {/* <div className='text-sm'>  List of Categories here?</div> */}
 
-      {/* Right Panel - Instructor Details (Desktop only) */}
-      <InstructorDetailsPanel
-        instructor={selectedInstructor}
-        onApprove={handleApproveInstructor}
-        onReject={handleRejectInstructor}
-        getStatusBadgeComponent={getStatusBadgeComponent}
-        isApprovePending={approveInstrucor.isPending}
-        isRejectPending={rejectInstructor.isPending}
-      />
+      <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
+        {/* Left Sidebar - Instructor List */}
+        <InstructorsList
+          instructors={filteredAndSortedInstructors as any}
+          selectedInstructor={selectedInstructor}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          onInstructorSelect={handleInstructorSelect}
+          onInstructorDelete={handleInstructorDelete}
+          getStatusBadgeComponent={getStatusBadgeComponent}
+          isLoading={isLoading}
+        />
 
-      {/* Mobile Modal */}
-      <InstructorMobileModal
-        instructor={selectedInstructor}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onApprove={handleApproveInstructor}
-        onReject={handleRejectInstructor}
-        getStatusBadgeComponent={getStatusBadgeComponent}
-      />
+        {/* Right Panel - Instructor Details (Desktop only) */}
+        <InstructorDetailsPanel
+          instructor={selectedInstructor}
+          onApprove={handleApproveInstructor}
+          onReject={handleRejectInstructor}
+          getStatusBadgeComponent={getStatusBadgeComponent}
+          isApprovePending={approveInstrucor.isPending}
+          isRejectPending={rejectInstructor.isPending}
+        />
 
-      <DeleteModal
-        open={openDeleteModal}
-        setOpen={setOpenDeleteModal}
-        title='Delete Instructor'
-        description='This instructor will be deleted permanently. Are you sure you want to delete this instructor? This action cannot be undone.'
-        onConfirm={confirmDeleteInstructor}
-        isLoading={deleteInstructor.isPending}
-        confirmText='Delete Instructor'
-      />
-    </div>
+        {/* Mobile Modal */}
+        <InstructorMobileModal
+          instructor={selectedInstructor}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onApprove={handleApproveInstructor}
+          onReject={handleRejectInstructor}
+          getStatusBadgeComponent={getStatusBadgeComponent}
+        />
+
+        <DeleteModal
+          open={openDeleteModal}
+          setOpen={setOpenDeleteModal}
+          title='Delete Instructor'
+          description='This instructor will be deleted permanently. Are you sure you want to delete this instructor? This action cannot be undone.'
+          onConfirm={confirmDeleteInstructor}
+          isLoading={deleteInstructor.isPending}
+          confirmText='Delete Instructor'
+        />
+      </div>
+    </section>
   );
 }

@@ -16,6 +16,7 @@ import {
   DollarSign,
   FileCheck,
   FileStack,
+  FileStackIcon,
   FileText,
   GraduationCap,
   Handshake,
@@ -37,7 +38,7 @@ import {
   UserPlus,
   Users,
   UsersIcon,
-  Wallet,
+  Wallet
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { UserDomain } from './types';
@@ -403,6 +404,16 @@ export default {
       title: 'Users',
       url: '/dashboard/users',
       icon: UsersIcon,
+    },
+    {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: BookOpen,
+    },
+    {
+      title: 'Classes',
+      url: '/dashboard/classes',
+      icon: FileStackIcon,
     },
     {
       title: 'Students',

@@ -1,14 +1,5 @@
 'use client';
 
-import { AdminDataTablePagination } from './data-table-pagination';
-import { AdminDataTableToolbar } from './data-table-toolbar';
-import type {
-  AdminDataTableColumn,
-  AdminDataTableEmptyState,
-  AdminDataTableFilter,
-  AdminDataTablePagination as AdminDataTablePaginationConfig,
-  AdminDataTableSearch,
-} from './types';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -29,6 +20,15 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
+import { AdminDataTablePagination } from './data-table-pagination';
+import { AdminDataTableToolbar } from './data-table-toolbar';
+import type {
+  AdminDataTableColumn,
+  AdminDataTableEmptyState,
+  AdminDataTableFilter,
+  AdminDataTablePagination as AdminDataTablePaginationConfig,
+  AdminDataTableSearch,
+} from './types';
 
 interface AdminDataTableProps<TData> {
   title: string;
@@ -75,6 +75,7 @@ export function AdminDataTable<TData>({
             >
               Administrative
             </Badge>
+
             <CardTitle className='mt-2 text-xl font-semibold'>{title}</CardTitle>
             {description ? (
               <CardDescription className='max-w-2xl text-sm leading-relaxed'>
@@ -88,6 +89,7 @@ export function AdminDataTable<TData>({
           <AdminDataTableToolbar search={search} filters={filters} />
         ) : null}
       </CardHeader>
+
       <CardContent className='p-0'>
         {showTable ? (
           <Table>
@@ -104,37 +106,38 @@ export function AdminDataTable<TData>({
                 ))}
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {isLoading
                 ? Array.from({ length: 6 }).map((_, index) => (
-                    <TableRow key={`loading-${index}`}>
+                  <TableRow key={`loading-${index}`}>
+                    {columns.map(column => (
+                      <TableCell key={column.id}>
+                        <Skeleton className='h-4 w-full' />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+                : data.map((item, index) => {
+                  const rowId = getRowId?.(item, index) ?? String(index);
+                  return (
+                    <TableRow
+                      key={rowId}
+                      className={cn(
+                        'hover:bg-muted/40 transition-colors',
+                        onRowClick ? 'cursor-pointer' : undefined,
+                        selectedId && rowId === selectedId ? 'bg-primary/5' : undefined
+                      )}
+                      onClick={() => (onRowClick ? onRowClick(item) : undefined)}
+                    >
                       {columns.map(column => (
-                        <TableCell key={column.id}>
-                          <Skeleton className='h-4 w-full' />
+                        <TableCell key={column.id} className={column.className}>
+                          {column.cell(item)}
                         </TableCell>
                       ))}
                     </TableRow>
-                  ))
-                : data.map((item, index) => {
-                    const rowId = getRowId?.(item, index) ?? String(index);
-                    return (
-                      <TableRow
-                        key={rowId}
-                        className={cn(
-                          'hover:bg-muted/40 transition-colors',
-                          onRowClick ? 'cursor-pointer' : undefined,
-                          selectedId && rowId === selectedId ? 'bg-primary/5' : undefined
-                        )}
-                        onClick={() => (onRowClick ? onRowClick(item) : undefined)}
-                      >
-                        {columns.map(column => (
-                          <TableCell key={column.id} className={column.className}>
-                            {column.cell(item)}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    );
-                  })}
+                  );
+                })}
             </TableBody>
           </Table>
         ) : null}

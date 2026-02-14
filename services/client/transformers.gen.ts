@@ -189,6 +189,7 @@ import type {
   SelectPaymentSessionResponse,
   AddItemResponse,
   CompleteCartResponse,
+  GetAllClassDefinitionsResponse,
   CreateClassDefinitionResponse,
   GetQuizSchedulesResponse,
   CreateQuizScheduleResponse,
@@ -220,10 +221,12 @@ import type {
   AssignAdminDomainResponse,
   GetAdminUsersResponse,
   CreateAdminUserResponse,
+  ModerateProgramResponse,
   ModerateOrganisationResponse,
   CreateOrganisationUserResponse,
   VerifyInstructorResponse,
   UnverifyInstructorResponse,
+  ModerateCourseResponse,
   GetCartResponse,
   UpdateCartResponse,
   UpdateQuizScheduleResponse,
@@ -347,9 +350,11 @@ import type {
   GetSystemAdminUsersResponse,
   GetOrganizationAdminUsersResponse,
   GetAdminEligibleUsersResponse,
+  ListPendingProgramsResponse,
   GetPendingOrganisationsResponse,
   GetDashboardStatisticsResponse,
   GetDashboardActivityResponse,
+  ListPendingCoursesResponse,
   RemoveItemResponse,
   RemoveAdminDomainResponse,
 } from './types.gen';
@@ -3457,6 +3462,32 @@ export const completeCartResponseTransformer = async (data: any): Promise<Comple
   return data;
 };
 
+const pagedDtoClassDefinitionResponseSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return classDefinitionResponseSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoClassDefinitionResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoClassDefinitionResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getAllClassDefinitionsResponseTransformer = async (
+  data: any
+): Promise<GetAllClassDefinitionsResponse> => {
+  data = apiResponsePagedDtoClassDefinitionResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 export const createClassDefinitionResponseTransformer = async (
   data: any
 ): Promise<CreateClassDefinitionResponse> => {
@@ -3925,6 +3956,13 @@ export const createAdminUserResponseTransformer = async (
   return data;
 };
 
+export const moderateProgramResponseTransformer = async (
+  data: any
+): Promise<ModerateProgramResponse> => {
+  data = apiResponseTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
 export const moderateOrganisationResponseTransformer = async (
   data: any
 ): Promise<ModerateOrganisationResponse> => {
@@ -3957,6 +3995,13 @@ export const unverifyInstructorResponseTransformer = async (
   data: any
 ): Promise<UnverifyInstructorResponse> => {
   data = apiResponseInstructorSchemaResponseTransformer(data);
+  return data;
+};
+
+export const moderateCourseResponseTransformer = async (
+  data: any
+): Promise<ModerateCourseResponse> => {
+  data = apiResponseCourseSchemaResponseTransformer(data);
   return data;
 };
 
@@ -5490,6 +5535,13 @@ export const getAdminEligibleUsersResponseTransformer = async (
   return data;
 };
 
+export const listPendingProgramsResponseTransformer = async (
+  data: any
+): Promise<ListPendingProgramsResponse> => {
+  data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getPendingOrganisationsResponseTransformer = async (
   data: any
 ): Promise<GetPendingOrganisationsResponse> => {
@@ -5807,6 +5859,13 @@ export const getDashboardActivityResponseTransformer = async (
   data: any
 ): Promise<GetDashboardActivityResponse> => {
   data = apiResponsePagedDtoAdminActivityEventSchemaResponseTransformer(data);
+  return data;
+};
+
+export const listPendingCoursesResponseTransformer = async (
+  data: any
+): Promise<ListPendingCoursesResponse> => {
+  data = apiResponsePagedDtoCourseSchemaResponseTransformer(data);
   return data;
 };
 

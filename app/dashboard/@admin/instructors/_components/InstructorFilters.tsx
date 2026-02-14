@@ -1,6 +1,5 @@
-import { Search, Filter, SortAsc, SortDesc } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -8,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Filter, Search, SortAsc, SortDesc } from 'lucide-react';
 
 interface InstructorFiltersProps {
   searchQuery: string;
@@ -48,7 +48,7 @@ export default function InstructorFilters({
           <SelectContent>
             <SelectItem value='all'>All Statuses</SelectItem>
             <SelectItem value='pending'>Pending</SelectItem>
-            <SelectItem value='approved'>Approved</SelectItem>
+            <SelectItem value='verified'>Verified</SelectItem>
             <SelectItem value='rejected'>Rejected</SelectItem>
           </SelectContent>
         </Select>

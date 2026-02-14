@@ -842,10 +842,6 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
    */
   readonly requires_options?: boolean;
@@ -857,6 +853,10 @@ export type QuizQuestion = {
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -996,6 +996,10 @@ export type TrainingProgram = {
    * **[REQUIRED]** Indicates if the program is published,
    */
   published: boolean;
+  /**
+   * **[READ-ONLY]** Indicates whether the training program has been approved by an admin for learner/instructor use.
+   */
+  readonly admin_approved?: boolean;
   /**
    * **[READ-ONLY]** Timestamp when the program was created. Automatically set by the system.
    */
@@ -1882,6 +1886,10 @@ export type Course = {
    * **[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.
    */
   active?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates whether the course has been approved by an admin for learner/instructor use.
+   */
+  readonly admin_approved?: boolean;
   /**
    * **[READ-ONLY]** Structured resources required to deliver this course during instructor-led training sessions.
    */
@@ -4097,6 +4105,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -4108,10 +4120,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -5808,6 +5816,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -5819,10 +5831,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -6877,6 +6885,21 @@ export type ApiResponsePagedDtoCommerceCatalogueItem = {
 
 export type PagedDtoCommerceCatalogueItem = {
   content?: Array<CommerceCatalogueItem>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoClassDefinitionResponse = {
+  success?: boolean;
+  data?: PagedDtoClassDefinitionResponse;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoClassDefinitionResponse = {
+  content?: Array<ClassDefinitionResponse>;
   metadata?: PageMetadata;
   links?: PageLinks;
 };
@@ -16235,6 +16258,39 @@ export type CompleteCartResponses = {
 
 export type CompleteCartResponse = CompleteCartResponses[keyof CompleteCartResponses];
 
+export type GetAllClassDefinitionsData = {
+  body?: never;
+  path?: never;
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/classes';
+};
+
+export type GetAllClassDefinitionsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetAllClassDefinitionsError =
+  GetAllClassDefinitionsErrors[keyof GetAllClassDefinitionsErrors];
+
+export type GetAllClassDefinitionsResponses = {
+  /**
+   * Class definitions retrieved successfully
+   */
+  200: ApiResponsePagedDtoClassDefinitionResponse;
+};
+
+export type GetAllClassDefinitionsResponse =
+  GetAllClassDefinitionsResponses[keyof GetAllClassDefinitionsResponses];
+
 export type CreateClassDefinitionData = {
   body: ClassDefinition;
   path?: never;
@@ -17361,6 +17417,40 @@ export type CreateAdminUserResponses = {
 
 export type CreateAdminUserResponse = CreateAdminUserResponses[keyof CreateAdminUserResponses];
 
+export type ModerateProgramData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query: {
+    action: string;
+    reason?: string;
+  };
+  url: '/api/v1/admin/programs/{uuid}/moderate';
+};
+
+export type ModerateProgramErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ModerateProgramError = ModerateProgramErrors[keyof ModerateProgramErrors];
+
+export type ModerateProgramResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseTrainingProgram;
+};
+
+export type ModerateProgramResponse = ModerateProgramResponses[keyof ModerateProgramResponses];
+
 export type ModerateOrganisationData = {
   body?: never;
   path: {
@@ -17691,6 +17781,40 @@ export type ActivateResponses = {
 };
 
 export type ActivateResponse = ActivateResponses[keyof ActivateResponses];
+
+export type ModerateCourseData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query: {
+    action: string;
+    reason?: string;
+  };
+  url: '/api/v1/admin/courses/{uuid}/moderate';
+};
+
+export type ModerateCourseErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ModerateCourseError = ModerateCourseErrors[keyof ModerateCourseErrors];
+
+export type ModerateCourseResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourse;
+};
+
+export type ModerateCourseResponse = ModerateCourseResponses[keyof ModerateCourseResponses];
 
 export type UpdateScheduledInstanceStatusData = {
   body?: never;
@@ -23326,6 +23450,71 @@ export type GetAdminEligibleUsersResponses = {
 export type GetAdminEligibleUsersResponse =
   GetAdminEligibleUsersResponses[keyof GetAdminEligibleUsersResponses];
 
+export type GetProgramApprovalStatusData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/programs/{uuid}/approval-status';
+};
+
+export type GetProgramApprovalStatusErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetProgramApprovalStatusError =
+  GetProgramApprovalStatusErrors[keyof GetProgramApprovalStatusErrors];
+
+export type GetProgramApprovalStatusResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseBoolean;
+};
+
+export type GetProgramApprovalStatusResponse =
+  GetProgramApprovalStatusResponses[keyof GetProgramApprovalStatusResponses];
+
+export type ListPendingProgramsData = {
+  body?: never;
+  path?: never;
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/programs/pending';
+};
+
+export type ListPendingProgramsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListPendingProgramsError = ListPendingProgramsErrors[keyof ListPendingProgramsErrors];
+
+export type ListPendingProgramsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoTrainingProgram;
+};
+
+export type ListPendingProgramsResponse =
+  ListPendingProgramsResponses[keyof ListPendingProgramsResponses];
+
 export type IsOrganisationVerifiedData = {
   body?: never;
   path: {
@@ -23529,6 +23718,71 @@ export type GetDashboardActivityResponses = {
 
 export type GetDashboardActivityResponse =
   GetDashboardActivityResponses[keyof GetDashboardActivityResponses];
+
+export type GetCourseApprovalStatusData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/courses/{uuid}/approval-status';
+};
+
+export type GetCourseApprovalStatusErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseApprovalStatusError =
+  GetCourseApprovalStatusErrors[keyof GetCourseApprovalStatusErrors];
+
+export type GetCourseApprovalStatusResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseBoolean;
+};
+
+export type GetCourseApprovalStatusResponse =
+  GetCourseApprovalStatusResponses[keyof GetCourseApprovalStatusResponses];
+
+export type ListPendingCoursesData = {
+  body?: never;
+  path?: never;
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/courses/pending';
+};
+
+export type ListPendingCoursesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListPendingCoursesError = ListPendingCoursesErrors[keyof ListPendingCoursesErrors];
+
+export type ListPendingCoursesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourse;
+};
+
+export type ListPendingCoursesResponse =
+  ListPendingCoursesResponses[keyof ListPendingCoursesResponses];
 
 export type ClearInstructorAvailabilityData = {
   body?: never;

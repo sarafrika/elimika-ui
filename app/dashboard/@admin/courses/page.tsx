@@ -1,5 +1,6 @@
-import AdminCoursesPage from './courses-page';
+import CoursesPage from './courses';
 
 export default function Page() {
-  return <AdminCoursesPage />;
+  // return <AdminCoursesPage />;
+  return <CoursesPage />
 }

@@ -37,6 +37,7 @@ import {
   Facebook,
   FileQuestion,
   FileText,
+  Globe,
   Link,
   Linkedin,
   Mail,
@@ -49,13 +50,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
+import { useProgramLessonsWithContent } from '../../../../../../hooks/use-programlessonwithcontent';
 import { useScheduleStats } from '../../../../../../hooks/use-schedule-stats';
 import { AudioPlayer } from '../../../../@student/schedule/classes/[id]/AudioPlayer';
 import { ReadingMode } from '../../../../@student/schedule/classes/[id]/ReadingMode';
 import { ClassScheduleCalendar } from '../../../../@student/schedule/classes/[id]/SudentClassSchedule';
 import { VideoPlayer } from '../../../../@student/schedule/classes/[id]/VideoPlayer';
 
-interface ContentItem {
+export interface ContentItem {
   uuid: string;
   title: string;
   content_type_uuid: string;
@@ -112,6 +114,8 @@ export default function ClassPreviewPage() {
   const { data: combinedClass, isLoading: classIsLoading } = useClassDetails(classId as string);
   const classData = combinedClass?.class;
   const course = combinedClass?.course;
+  const programCourses = combinedClass?.pCourses;
+  const program = combinedClass?.program;
   const schedules = combinedClass?.schedule;
   const scheduleStats = useScheduleStats(schedules as any);
   const totalAmount = classData?.training_fee! * scheduleStats?.totalHours as number
@@ -160,12 +164,51 @@ export default function ClassPreviewPage() {
     contentTypeMap,
   } = useCourseLessonsWithContent({ courseUuid: classData?.course_uuid as string });
 
-  const registrationLink = typeof window !== 'undefined'
-    ? `${window.location.origin}/dashboard/browse-courses/available-classes/${course?.uuid}/enroll?id=${classId}`
-    : '';
+  const {
+    isLoading: isLoading,
+    coursesWithLessons,
+    contentTypeMap: programContentTypeMap,
+  } = useProgramLessonsWithContent({ programUuid: classData?.program_uuid as string, programCourses: programCourses });
 
-  const inviteLink =
-    typeof window !== 'undefined' ? `${window.location.origin}/class-invite?id=${classId}` : '';
+  const isClassForProgram = !!classData?.program_uuid;
+  const isClassForCourse = !!classData?.course_uuid;
+
+  const totalProgramLessons = coursesWithLessons?.reduce((sum, courseData) => {
+    return sum + (courseData.lessons?.length || 0);
+  }, 0);
+
+
+  // Helper to get enrollment URL
+  const getRegistrationLink = () => {
+    if (typeof window === 'undefined') return '';
+
+    if (course?.uuid) {
+      return `${window.location.origin}/dashboard/browse-courses/available-classes/${course.uuid}/enroll?id=${classId}`;
+    }
+
+    if (program?.uuid) {
+      return `${window.location.origin}/dashboard/browse-courses/available-programs/${program.uuid}/enroll?id=${classId}`;
+    }
+
+    return '';
+  };
+
+  const getInviteLink = () => {
+    if (typeof window === 'undefined') return '';
+
+    if (course?.uuid) {
+      return `${window.location.origin}/class-invite?id=${classId}`;
+    }
+
+    if (program?.uuid) {
+      return `${window.location.origin}/program-invite?id=${classId}`;
+    }
+
+    return '';
+  };
+
+  const registrationLink = getRegistrationLink();
+  const inviteLink = getInviteLink();
 
   const [copied, setCopied] = useState(false);
 
@@ -393,7 +436,7 @@ export default function ClassPreviewPage() {
                 <BookOpen className="h-4 w-4" />
                 <span className="text-xs">Lessons</span>
               </div>
-              <div className="font-medium">{lessonsWithContent?.length}</div>
+              <div className="font-medium">{lessonsWithContent?.length || totalProgramLessons}</div>
             </div>
 
             <div className="space-y-1">
@@ -452,54 +495,152 @@ export default function ClassPreviewPage() {
             <CardHeader>
               <CardTitle>Class Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+
+            <CardContent className="space-y-6">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-sm text-muted-foreground">Course:</span>
-                    <div className="font-medium">{course?.name}</div>
+                {/* Left Column */}
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-border bg-muted/50 p-4">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Course
+                    </span>
+                    {course?.uuid &&
+                      <div className="mt-2 text-base font-semibold text-foreground">
+                        {course?.name || '—'}</div>
+                    }
+
+                    {program?.uuid && (
+                      <div className="mt-2 text-base font-semibold text-foreground">
+                        {programCourses && programCourses?.length > 0 ? (
+                          <ul className="list-disc list-inside space-y-1">
+                            {programCourses?.map((c) => (
+                              <li key={c.uuid}>{c.name || '—'}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          '—'
+                        )}
+                      </div>
+                    )}
+
                   </div>
 
-                  <div>
-                    <span className="text-sm text-muted-foreground">Target Audience:</span>
-                    {/* <div className="font-medium">{classData.targetAudience.join(', ')}</div> */}
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-sm text-muted-foreground">Academic Period:</span>
-                    <div className="font-medium">
-                      {/* {classData?.default_start_time as string} -{' '}
-                                            {classData?.default_end_time as string} */}
+                  <div className="rounded-lg border border-border bg-muted/50 p-4">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Class Type
+                    </span>
+                    <div className="mt-2 flex items-center gap-2">
+                      {classData?.location_type === 'ONLINE' && (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                          <span className="text-xs font-bold text-primary">ON</span>
+                        </div>
+                      )}
+                      {classData?.location_type === 'IN_PERSON' && (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/50">
+                          <span className="text-xs font-bold text-accent-foreground">IP</span>
+                        </div>
+                      )}
+                      {classData?.location_type === 'HYBRID' && (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
+                          <span className="text-xs font-bold text-secondary-foreground">HY</span>
+                        </div>
+                      )}
+                      <span className="text-base font-semibold text-foreground capitalize">
+                        {classData?.location_type?.toLowerCase().replace('_', ' ') || '—'}
+                      </span>
                     </div>
                   </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">Class Type:</span>
-                    <div className="font-medium capitalize">{classData?.location_type}</div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-border bg-muted/50 p-4">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Academic Period
+                    </span>
+                    <div className="mt-2 space-y-1 text-sm">
+                      {classData?.default_start_time && classData?.default_end_time ? (
+                        <>
+                          {/* Extract the date from start_time */}
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-muted-foreground">Date:</span>
+                            <span className="font-semibold text-foreground">
+                              {new Date(classData.default_start_time).toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </span>
+                            <span className="font-semibold text-foreground">
+                              {new Date(classData.default_start_time).toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                            <span className="font-semibold text-foreground">
+                              {new Date(classData.default_end_time).toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+
+
+                        </>
+                      ) : (
+                        <span className="text-foreground">—</span>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">Visibility:</span>
-                    {/* <div className="flex items-center gap-2 font-medium">
-                                            {classData.visibility.publicity === 'public' ? (
-                                                <Globe className="w-4 h-4 text-success" />
-                                            ) : (
-                                                <Globe className="w-4 h-4 text-primary" />
-                                            )}
-                                            <span className="capitalize">{classData.visibility.publicity}</span>
-                                        </div> */}
+
+
+                  <div className="rounded-lg border border-border bg-muted/50 p-4">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Visibility
+                    </span>
+                    <div className="mt-2 flex items-center gap-2">
+                      {classData?.class_visibility === 'PUBLIC' ? (
+                        <>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                            <Globe className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <div className="text-base font-semibold text-foreground">Public</div>
+                            <div className="text-xs text-muted-foreground">Visible to everyone</div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <div className="text-base font-semibold text-foreground">Private</div>
+                            <div className="text-xs text-muted-foreground">Invitation only</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Description:</span>
-                <div className="mt-1">
-                  <RichTextRenderer
-                    maxChars={100}
-                    htmlString={classData?.description as string}
-                  />
+
+              {/* Description Section - Full Width */}
+              <div className="rounded-lg border border-border bg-muted/50 p-4">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Description
+                </span>
+                <div className="mt-2 text-foreground">
+                  {classData?.description ? (
+                    <RichTextRenderer maxChars={100} htmlString={classData.description as string} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No description provided</p>
+                  )}
                 </div>
               </div>
             </CardContent>
+
           </Card>
         </TabsContent>
 
@@ -512,9 +653,11 @@ export default function ClassPreviewPage() {
         <TabsContent value="skills" className="space-y-4">
           <Card>
             <CardContent className="space-y-3 p-4">
-              {isAllLessonsDataLoading && <Spinner />}
+              {/* Loading State */}
+              {(isAllLessonsDataLoading || isLoading) && <Spinner />}
 
-              {lessonsWithContent?.length === 0 && (
+              {/* Empty State - Course */}
+              {isClassForCourse && !isAllLessonsDataLoading && lessonsWithContent?.length === 0 && (
                 <div className="flex flex-col items-center justify-center rounded-lg bg-muted/30 p-6 text-center text-sm text-muted-foreground">
                   <FileQuestion className="mb-3 h-8 w-8 text-muted-foreground" />
                   <h4 className="font-medium">No Class Resources</h4>
@@ -522,30 +665,37 @@ export default function ClassPreviewPage() {
                 </div>
               )}
 
-              {lessonsWithContent?.map((skill, skillIndex) => (
+              {/* Empty State - Program */}
+              {isClassForProgram && !isLoading && coursesWithLessons?.length === 0 && (
+                <div className="flex flex-col items-center justify-center rounded-lg bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+                  <FileQuestion className="mb-3 h-8 w-8 text-muted-foreground" />
+                  <h4 className="font-medium">No Program Resources</h4>
+                  <p>This program doesn&apos;t have any resources/content yet.</p>
+                </div>
+              )}
+
+              {/* Course Skills */}
+              {isClassForCourse && lessonsWithContent?.map((skill, skillIndex) => (
                 <div key={skillIndex}>
-                  <div className="mb-2 font-semibold">
-                    {/* Show lesson index + title */}
+                  <div className="mb-2 font-semibold text-foreground">
                     Lesson {skillIndex + 1}: {skill.lesson?.title}
                   </div>
 
-                  {/* Lesson contents */}
                   {skill?.content?.data?.map((c, cIndex) => {
                     const contentTypeName = contentTypeMap[c.content_type_uuid] || 'file';
 
                     return (
                       <div
                         key={c.uuid}
-                        className="flex items-center justify-between rounded-lg p-3 hover:bg-card"
+                        className="flex mt-1.5 items-center justify-between rounded-lg border border-border bg-card p-3 hover:bg-accent/50 transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           {getResourceIcon(contentTypeName)}
                           <div>
-                            {/* Show content index + title */}
-                            <div className="font-medium">
+                            <div className="font-medium text-foreground">
                               {cIndex + 1}. {c.title}
                             </div>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-sm text-muted-foreground capitalize">
                               {contentTypeName}
                             </div>
                           </div>
@@ -563,6 +713,61 @@ export default function ClassPreviewPage() {
                       </div>
                     );
                   })}
+                </div>
+              ))}
+
+              {/* Program Skills */}
+              {isClassForProgram && coursesWithLessons?.map((courseData, courseIndex) => (
+                <div key={courseData.course.uuid} className="space-y-4">
+                  {/* Course Header */}
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-4">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    <span className="text-lg font-semibold text-foreground">
+                      {courseData.course.name}
+                    </span>
+                  </div>
+
+                  {/* Lessons within this course */}
+                  {courseData.lessons.map((skill, skillIndex) => (
+                    <div key={skill.lesson.uuid} className="ml-4">
+                      <div className="mb-2 font-semibold text-foreground">
+                        Lesson {skillIndex + 1}: {skill.lesson?.title}
+                      </div>
+
+                      {skill?.content?.data?.map((c, cIndex) => {
+                        const contentTypeName = programContentTypeMap[c.content_type_uuid] || 'file';
+
+                        return (
+                          <div
+                            key={c.uuid}
+                            className="flex mt-1.5 items-center justify-between rounded-lg border border-border bg-card p-3 hover:bg-accent/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              {getResourceIcon(contentTypeName)}
+                              <div>
+                                <div className="font-medium text-foreground">
+                                  {cIndex + 1}. {c.title}
+                                </div>
+                                <div className="text-sm text-muted-foreground capitalize">
+                                  {contentTypeName}
+                                </div>
+                              </div>
+                            </div>
+
+                            <Button
+                              onClick={() => handleViewContent(c, contentTypeName)}
+                              variant="outline"
+                              size="sm"
+                              className="gap-2"
+                            >
+                              <Eye className="h-3 w-3" />
+                              View
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
               ))}
             </CardContent>
@@ -646,12 +851,12 @@ export default function ClassPreviewPage() {
         <CardHeader className='gap-4' >
           <CardTitle className="flex items-center gap-2">
             <Link className="h-5 w-5" />
-            Registration Link
+            Class Invite Link
           </CardTitle>
           <div className="flex gap-2">
-            <Input value={registrationLink} readOnly className="font-mono text-sm" />
+            <Input value={inviteLink} readOnly className="font-mono text-sm" />
             <Button
-              onClick={() => copyLink(registrationLink, setCopied)}
+              onClick={() => copyLink(inviteLink, setCopied)}
               variant="outline"
               className="gap-2"
             >
@@ -664,12 +869,12 @@ export default function ClassPreviewPage() {
         <CardHeader className='gap-4' >
           <CardTitle className="flex items-center gap-2">
             <Link className="h-5 w-5" />
-            Class Invite Link
+            Registration Link
           </CardTitle>
           <div className="flex gap-2">
-            <Input value={inviteLink} readOnly className="font-mono text-sm" />
+            <Input value={registrationLink} readOnly className="font-mono text-sm" />
             <Button
-              onClick={() => copyLink(inviteLink, setCopied)}
+              onClick={() => copyLink(registrationLink, setCopied)}
               variant="outline"
               className="gap-2"
             >
