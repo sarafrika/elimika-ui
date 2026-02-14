@@ -3,8 +3,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Home, MapPin, Search, Settings, Users, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import useAllClassesWithDetails from '../../../../hooks/use-all-classes';
-import { searchEnrollmentsOptions } from '../../../../services/client/@tanstack/react-query.gen';
+import { Badge } from '../../../../components/ui/badge';
+import useInstructorClassesWithDetails from '../../../../hooks/use-instructor-classes';
+import { useStudentsMap } from '../../../../hooks/use-studentsMap';
+import { getEnrollmentsForInstanceOptions } from '../../../../services/client/@tanstack/react-query.gen';
 
 // Types
 type ViewMode = 'day' | 'week' | 'month' | 'year';
@@ -67,16 +69,10 @@ interface StudentEnrollment {
     attendanceStatus: 'present' | 'absent' | 'pending';
 }
 
-const SAMPLE_STUDENTS: StudentEnrollment[] = [
-    { id: '1', name: 'John Doe', enrollmentDate: new Date('2026-01-15'), attendanceStatus: 'present' },
-    { id: '2', name: 'Jane Smith', enrollmentDate: new Date('2026-01-16'), attendanceStatus: 'present' },
-    { id: '3', name: 'Mike Wilson', enrollmentDate: new Date('2026-01-18'), attendanceStatus: 'absent' },
-    { id: '4', name: 'Emily Brown', enrollmentDate: new Date('2026-01-20'), attendanceStatus: 'pending' },
-    { id: '5', name: 'David Lee', enrollmentDate: new Date('2026-01-22'), attendanceStatus: 'present' },
-    { id: '6', name: 'Sarah Johnson', enrollmentDate: new Date('2026-01-25'), attendanceStatus: 'present' },
-    { id: '7', name: 'Robert Chen', enrollmentDate: new Date('2026-01-28'), attendanceStatus: 'absent' },
-    { id: '8', name: 'Lisa Anderson', enrollmentDate: new Date('2026-02-01'), attendanceStatus: 'pending' },
-];
+// Skeleton component for loading states
+const Skeleton: React.FC<{ className?: string }> = ({ className = '' }) => (
+    <div className={`animate-pulse bg-muted rounded ${className}`} />
+);
 
 // Semantic color palette using Tailwind colors
 const COLOR_PALETTE = [
@@ -523,22 +519,43 @@ const StudentEnrollmentTable: React.FC<{ students: StudentEnrollment[] }> = ({ s
                             <tr>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">Name</th>
                                 <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">Enrolled</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">Status</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">Attendance</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {students.map((student) => (
-                                <tr key={student.id} className="hover:bg-accent transition-colors">
-                                    <td className="px-3 py-2 text-sm font-medium text-foreground">{student.name}</td>
-                                    <td className="px-3 py-2 text-sm text-muted-foreground">
-                                        {student.enrollmentDate.toLocaleDateString('en-US', {
-                                            month: 'short', day: 'numeric', year: 'numeric',
-                                        })}
+                            {students.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan={3}
+                                        className="px-3 py-6 text-center text-sm text-muted-foreground"
+                                    >
+                                        No students enrolled for this session
                                     </td>
-                                    <td className="px-3 py-2">{getStatusBadge(student.attendanceStatus)}</td>
                                 </tr>
-                            ))}
+                            ) : (
+                                students.map((student) => (
+                                    <tr
+                                        key={student.id}
+                                        className="hover:bg-accent transition-colors"
+                                    >
+                                        <td className="px-3 py-2 text-sm font-medium text-foreground">
+                                            {student.name}
+                                        </td>
+                                        <td className="px-3 py-2 text-sm text-muted-foreground">
+                                            {student.enrollmentDate.toLocaleDateString("en-US", {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                            })}
+                                        </td>
+                                        <td className="px-3 py-2">
+                                            {getStatusBadge(student.attendanceStatus)}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
+
                     </table>
                 </div>
             </div>
@@ -555,7 +572,7 @@ export default function AdminClassPage() {
     const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({ classes: false, instructors: false });
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    const { classes: classesWithCourseAndInstructor, loading } = useAllClassesWithDetails();
+    const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails("a95a2c0d-2097-40ae-a4ce-6630111d12d1");
 
     const allEvents = useMemo<CalendarEvent[]>(() => {
         if (!classesWithCourseAndInstructor) return [];
@@ -581,7 +598,7 @@ export default function AdminClassPage() {
             });
         });
         return events;
-    }, [classesWithCourseAndInstructor]); // ← ADD THIS
+    }, [classesWithCourseAndInstructor]);
 
     const filteredEvents = useMemo(() => {
         let events = allEvents;
@@ -652,34 +669,108 @@ export default function AdminClassPage() {
         setViewMode('month');
     };
 
-    const { data: enrollmentsData } = useQuery({
-        ...searchEnrollmentsOptions({
-            query: {
-                pageable: {},
-                searchParams: {
-                    class_definition_uuid_eq: selectedEvent?.classDefinitionId as string,
-                }
-            }
+    // Fetch enrollment data for selected event
+    const { data } = useQuery({
+        ...getEnrollmentsForInstanceOptions({
+            path: { instanceUuid: selectedEvent?.id || '' }
         }),
+        enabled: !!selectedEvent?.id,
     })
-    // console.log(enrollmentsData?.data?.content, "ENROL DST")
+    const enrollmentsData = data?.data || [];
+    const studentUuids = enrollmentsData
+        .map((enrollment) => enrollment?.student_uuid)
+        .filter(Boolean);
 
-    // console.log(selectedEvent?.classDefinitionId, "88f4e22d-f27b-4918-9e46-712cfb02a122")
+    const { studentsMap, isLoading: isLoadingStudents } = useStudentsMap(studentUuids);
 
-    // console.log(selectedEvent?.id, "209821f4-48a4-44a3-a292-27245e785172")
+    // Transform enrollment data for StudentEnrollmentTable
+    const transformedStudents: StudentEnrollment[] = useMemo(() => {
+        return enrollmentsData.map((enrollment) => {
+            const student = studentsMap[enrollment.student_uuid || ''];
 
+            // Determine attendance status
+            let attendanceStatus: 'present' | 'absent' | 'pending' = 'pending';
+            if (enrollment.is_attendance_marked) {
+                attendanceStatus = enrollment.did_attend ? 'present' : 'absent';
+            }
 
-    if (loading) {
-        return (
-            <div className="h-screen flex items-center justify-center">
-                <div className="text-muted-foreground">Loading class schedules...</div>
-            </div>
-        );
-    }
+            return {
+                id: enrollment.uuid || '',
+                name: student?.full_name || 'Unknown Student',
+                enrollmentDate: new Date(enrollment.created_date || selectedEvent?.startTime || new Date()),
+                attendanceStatus,
+            };
+        });
+    }, [enrollmentsData, studentsMap, selectedEvent?.startTime]);
+
 
     return (
-        <div className="h-screen border rounded-2xl flex flex-col bg-background font-sans overflow-hidden">
-            <style jsx global>{`
+        <main>
+            <div className='flex flex-col space-y-3 py-6'>
+                <Badge
+                    variant='outline'
+                    className='border-primary/60 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
+                >
+                    Class management
+                </Badge>
+
+                {/* Description */}
+                <p className='text-muted-foreground max-w-3xl text-sm leading-relaxed'>
+                    Oversee and manage all classes across the platform, including scheduling, instructor assignments, attendance tracking, and revenue oversight to ensure smooth operations.
+                </p>
+            </div>
+
+            {loading ? (
+                <div className="h-screen border rounded-2xl flex flex-col bg-background font-sans overflow-hidden">
+                    <div className="bg-background border-b border-border px-4 md:px-6 py-3 md:py-4">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-6">
+                                <Skeleton className="h-6 w-32" />
+                                <div className="flex items-center gap-2">
+                                    <Skeleton className="h-8 w-8 rounded-lg" />
+                                    <Skeleton className="h-5 w-40" />
+                                    <Skeleton className="h-8 w-8 rounded-lg" />
+                                </div>
+                                <Skeleton className="h-9 w-64 rounded-lg" />
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Skeleton className="h-8 w-24 rounded-lg" />
+                                <Skeleton className="h-8 w-8 rounded-lg" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex flex-1 overflow-hidden">
+                        <div className="w-60 md:w-64 bg-background border-r border-border flex flex-col">
+                            <div className="p-3 md:p-4 border-b border-border">
+                                <Skeleton className="h-9 w-full rounded-lg" />
+                            </div>
+                            <div className="flex-1 p-4 space-y-3">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-32 w-full" />
+                            </div>
+                        </div>
+                        <div className="flex-1 p-4 space-y-2">
+                            <Skeleton className="h-12 w-full" />
+                            <Skeleton className="h-12 w-full" />
+                            <Skeleton className="h-12 w-full" />
+                            <Skeleton className="h-12 w-full" />
+                            <Skeleton className="h-12 w-full" />
+                        </div>
+                        <div className="hidden lg:block lg:w-80 bg-muted/30 border-l border-border p-4 space-y-4">
+                            <Skeleton className="h-20 w-full" />
+                            <Skeleton className="h-16 w-full" />
+                            <Skeleton className="h-16 w-full" />
+                            <Skeleton className="h-16 w-full" />
+                            <Skeleton className="h-32 w-full" />
+                        </div>
+                    </div>
+                </div>
+
+            ) : (
+
+                <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
+                    <style jsx global>{`
                 .scrollbar-hide {
                     -ms-overflow-style: none;
                     scrollbar-width: none;
@@ -688,127 +779,147 @@ export default function AdminClassPage() {
                     display: none;
                 }
             `}</style>
+                    <CalendarHeader
+                        currentDate={currentDate}
+                        viewMode={viewMode}
+                        onViewChange={setViewMode}
+                        onDateChange={handleDateChange}
+                        eventCount={filteredEvents.length}
+                    />
+                    <div className="flex flex-1 overflow-hidden relative">
+                        <button
+                            className="lg:hidden fixed bottom-4 right-4 z-50 bg-foreground text-background p-3 rounded-full shadow-lg"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        >
+                            <Search className="w-5 h-5" />
+                        </button>
+                        <div className={`${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-60 md:w-64 bg-background border-r border-border flex flex-col transition-transform duration-300 ease-in-out z-40 h-full`}>
+                            <div className="p-3 md:p-4 border-b border-border">
+                                <div className="relative">
+                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search classes..."
+                                        className="w-full pl-9 pr-3 py-1.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex-1 overflow-y-auto scrollbar-hide">
+                                <Dropdown label="Classes" count={uniqueClasses.length} isOpen={openDropdowns.classes} onToggle={() => setOpenDropdowns((prev) => ({ ...prev, classes: !prev.classes }))} items={uniqueClasses} onItemClick={(id) => { setSelectedClassId(id); setSelectedInstructorId(null); setIsMobileMenuOpen(false); }} selectedId={selectedClassId} />
+                                <Dropdown label="Instructors" count={uniqueInstructors.length} isOpen={openDropdowns.instructors} onToggle={() => setOpenDropdowns((prev) => ({ ...prev, instructors: !prev.instructors }))} items={uniqueInstructors} onItemClick={(id) => { setSelectedInstructorId(selectedInstructorId === id ? null : id); setIsMobileMenuOpen(false); }} selectedId={selectedInstructorId} />
+                            </div>
+                            {(selectedClassId !== 'all' || selectedInstructorId) && (
+                                <div className="p-3 md:p-4 border-t border-border">
+                                    <button onClick={() => { setSelectedClassId('all'); setSelectedInstructorId(null); setIsMobileMenuOpen(false); }} className="w-full text-xs md:text-sm font-medium text-foreground hover:text-foreground transition-colors text-center py-1.5 border border-input rounded-lg hover:bg-accent">
+                                        Clear All Filters
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        {isMobileMenuOpen && <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30" onClick={() => setIsMobileMenuOpen(false)} />}
 
-            <CalendarHeader
-                currentDate={currentDate}
-                viewMode={viewMode}
-                onViewChange={setViewMode}
-                onDateChange={handleDateChange}
-                eventCount={filteredEvents.length}
-            />
 
-            <div className="flex flex-1 overflow-hidden relative">
-                <button
-                    className="lg:hidden fixed bottom-4 right-4 z-50 bg-foreground text-background p-3 rounded-full shadow-lg"
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                >
-                    <Search className="w-5 h-5" />
-                </button>
-                <div className={`${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-60 md:w-64 bg-background border-r border-border flex flex-col transition-transform duration-300 ease-in-out z-40 h-full`}>
-                    <div className="p-3 md:p-4 border-b border-border">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                            {/* <input
-                                type="text"
-                                placeholder="Search classes..."
-                                className="w-full pl-9 pr-3 py-1.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground"
-                            /> */}
+                        <div className="flex-1 flex flex-col overflow-hidden bg-background">
+                            {viewMode === 'week' && <WeekView events={filteredEvents} onEventSelect={setSelectedEvent} selectedEvent={selectedEvent} currentDate={currentDate} />}
+                            {viewMode === 'day' && <DayView events={filteredEvents} onEventSelect={setSelectedEvent} selectedEvent={selectedEvent} currentDate={currentDate} />}
+                            {viewMode === 'month' && <MonthView events={filteredEvents} onEventSelect={setSelectedEvent} currentDate={currentDate} />}
+                            {viewMode === 'year' && <YearView events={filteredEvents} currentDate={currentDate} onMonthClick={handleMonthClick} />}
+                        </div>
+
+
+
+                        <div className="hidden lg:block lg:w-80 bg-muted/30 border-l border-border overflow-y-auto scrollbar-hide">
+                            {selectedEvent ? (
+                                <div>
+                                    <div className="p-4 border-b border-border bg-background">
+                                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Class Session</h3>
+                                        <h2 className="text-base font-bold text-foreground">{selectedEvent.title}</h2>
+                                        <p className="text-sm text-muted-foreground mt-0.5">{selectedEvent.courseName}</p>
+                                    </div>
+                                    <div className="p-4 space-y-4">
+                                        <div className="border-b border-border pb-3">
+                                            <div className="flex items-center gap-1.5 mb-1.5">
+                                                <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date & Time</span>
+                                            </div>
+                                            <p className="text-sm text-foreground mt-0.5">
+                                                {new Date(selectedEvent.startTime).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {new Date(selectedEvent.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {new Date(selectedEvent.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                        </div>
+                                        <div className="border-b border-border pb-3">
+                                            <div className="flex items-center gap-1.5 mb-1.5">
+                                                <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Instructor</span>
+                                            </div>
+                                            <p className="text-sm text-foreground mt-0.5">{selectedEvent.instructor}</p>
+                                        </div>
+                                        <div className="border-b border-border pb-3">
+                                            <div className="flex items-center gap-1.5 mb-1.5">
+                                                <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Location</span>
+                                            </div>
+                                            <p className="text-sm text-foreground mt-0.5">{selectedEvent.location} ({selectedEvent.locationType})</p>
+                                        </div>
+                                        <div className="border-b border-border pb-3">
+                                            <div className="flex items-center gap-1.5 mb-1.5">
+                                                <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Capacity</span>
+                                            </div>
+                                            <p className="text-sm text-foreground mt-0.5">{selectedEvent.maxParticipants} participants</p>
+                                        </div>
+                                        <div className="border-b border-border pb-3">
+                                            <div className="flex items-center gap-1.5 mb-1.5">
+                                                <Home className="w-3.5 h-3.5 text-muted-foreground" />
+                                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Session Format</span>
+                                            </div>
+                                            <p className="text-sm text-foreground mt-0.5">{selectedEvent.sessionFormat}</p>
+                                        </div>
+                                        <div className="border-t border-border pt-3">
+                                            <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+                                                <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-0.5">Training Fee</div>
+                                                <div className="text-xl font-bold text-primary">${selectedEvent.trainingFee}</div>
+                                            </div>
+                                        </div>
+                                        {isLoadingStudents ? (
+                                            <div className="mt-4">
+                                                <Skeleton className="h-4 w-32 mb-2" />
+                                                <div className="border border-border rounded-lg overflow-hidden">
+                                                    <div className="bg-muted border-b border-border p-3 flex gap-4">
+                                                        <Skeleton className="h-3 w-20" />
+                                                        <Skeleton className="h-3 w-24" />
+                                                        <Skeleton className="h-3 w-16" />
+                                                    </div>
+                                                    <div className="divide-y divide-border">
+                                                        {[1, 2, 3].map((i) => (
+                                                            <div key={i} className="p-3 flex gap-4">
+                                                                <Skeleton className="h-4 w-24" />
+                                                                <Skeleton className="h-4 w-20" />
+                                                                <Skeleton className="h-6 w-16 rounded-full" />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <StudentEnrollmentTable students={transformedStudents} />
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-6 flex items-center justify-center h-full">
+                                    <div className="text-center text-muted-foreground">
+                                        <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                                        <p className="text-sm">Select a class session to view details</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
-
-                    <div className="flex-1 overflow-y-auto scrollbar-hide">
-                        <Dropdown label="Classes" count={uniqueClasses.length} isOpen={openDropdowns.classes} onToggle={() => setOpenDropdowns((prev) => ({ ...prev, classes: !prev.classes }))} items={uniqueClasses} onItemClick={(id) => { setSelectedClassId(id); setSelectedInstructorId(null); setIsMobileMenuOpen(false); }} selectedId={selectedClassId} />
-
-                        <Dropdown label="Instructors" count={uniqueInstructors.length} isOpen={openDropdowns.instructors} onToggle={() => setOpenDropdowns((prev) => ({ ...prev, instructors: !prev.instructors }))} items={uniqueInstructors} onItemClick={(id) => { setSelectedInstructorId(selectedInstructorId === id ? null : id); setIsMobileMenuOpen(false); }} selectedId={selectedInstructorId} />
-                    </div>
-
-                    {(selectedClassId !== 'all' || selectedInstructorId) && (
-                        <div className="p-3 md:p-4 border-t border-border">
-                            <button onClick={() => { setSelectedClassId('all'); setSelectedInstructorId(null); setIsMobileMenuOpen(false); }} className="w-full text-xs md:text-sm font-medium text-foreground hover:text-foreground transition-colors text-center py-1.5 border border-input rounded-lg hover:bg-accent">
-                                Clear All Filters
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {isMobileMenuOpen && <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30" onClick={() => setIsMobileMenuOpen(false)} />}
-
-
-                <div className="flex-1 flex flex-col overflow-hidden bg-background">
-                    {viewMode === 'week' && <WeekView events={filteredEvents} onEventSelect={setSelectedEvent} selectedEvent={selectedEvent} currentDate={currentDate} />}
-                    {viewMode === 'day' && <DayView events={filteredEvents} onEventSelect={setSelectedEvent} selectedEvent={selectedEvent} currentDate={currentDate} />}
-                    {viewMode === 'month' && <MonthView events={filteredEvents} onEventSelect={setSelectedEvent} currentDate={currentDate} />}
-                    {viewMode === 'year' && <YearView events={filteredEvents} currentDate={currentDate} onMonthClick={handleMonthClick} />}
-                </div>
+                </div >
+            )}
 
 
 
-                <div className="hidden lg:block lg:w-80 bg-muted/30 border-l border-border overflow-y-auto scrollbar-hide">
-                    {selectedEvent ? (
-                        <div>
-                            <div className="p-4 border-b border-border bg-background">
-                                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Class Session</h3>
-                                <h2 className="text-base font-bold text-foreground">{selectedEvent.title}</h2>
-                                <p className="text-sm text-muted-foreground mt-0.5">{selectedEvent.courseName}</p>
-                            </div>
-                            <div className="p-4 space-y-4">
-                                <div className="border-b border-border pb-3">
-                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                        <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date & Time</span>
-                                    </div>
-                                    <p className="text-sm text-foreground mt-0.5">
-                                        {new Date(selectedEvent.startTime).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {new Date(selectedEvent.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {new Date(selectedEvent.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                </div>
-                                <div className="border-b border-border pb-3">
-                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                        <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Instructor</span>
-                                    </div>
-                                    <p className="text-sm text-foreground mt-0.5">{selectedEvent.instructor}</p>
-                                </div>
-                                <div className="border-b border-border pb-3">
-                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                        <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Location</span>
-                                    </div>
-                                    <p className="text-sm text-foreground mt-0.5">{selectedEvent.location} ({selectedEvent.locationType})</p>
-                                </div>
-                                <div className="border-b border-border pb-3">
-                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                        <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Capacity</span>
-                                    </div>
-                                    <p className="text-sm text-foreground mt-0.5">{selectedEvent.maxParticipants} participants</p>
-                                </div>
-                                <div className="border-b border-border pb-3">
-                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                        <Home className="w-3.5 h-3.5 text-muted-foreground" />
-                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Session Format</span>
-                                    </div>
-                                    <p className="text-sm text-foreground mt-0.5">{selectedEvent.sessionFormat}</p>
-                                </div>
-                                <div className="border-t border-border pt-3">
-                                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
-                                        <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-0.5">Training Fee</div>
-                                        <div className="text-xl font-bold text-primary">${selectedEvent.trainingFee}</div>
-                                    </div>
-                                </div>
-
-                                <StudentEnrollmentTable students={SAMPLE_STUDENTS} />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="p-6 flex items-center justify-center h-full">
-                            <div className="text-center text-muted-foreground">
-                                <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                                <p className="text-sm">Select a class session to view details</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
+        </main>
     );
 }

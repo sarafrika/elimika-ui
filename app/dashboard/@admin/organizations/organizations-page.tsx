@@ -23,7 +23,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { extractPage } from '@/lib/api-helpers';
 import {
   useUnverifyAdminOrganisation,
   useUpdateAdminOrganisation,
@@ -43,19 +43,23 @@ import {
   BookOpen,
   Building2,
   Calendar,
+  ChevronLeft,
   ChevronRight,
   Loader2,
   MapPin,
+  Search,
   Shield,
   ShieldOff,
   TrendingUp,
-  Users
+  Users,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 
 const organisationFormSchema = z.object({
   name: zOrganisation.shape.name,
@@ -83,6 +87,10 @@ function useInvalidateOrganisationList() {
 export default function AdminOrganisationsPage() {
   const [page, setPage] = useState(0);
   const [selectedOrganisationId, setSelectedOrganisationId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [verificationFilter, setVerificationFilter] = useState<'all' | 'verified' | 'unverified'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
+
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const pageSize = 20;
 
@@ -90,46 +98,99 @@ export default function AdminOrganisationsPage() {
     ...getAllOrganisationsOptions({
       query: {
         pageable: {
-          page,
-          size: pageSize,
+          page: 0, // Fetch all from page 0
+          size: 1000, // Fetch a large number to do client-side filtering
         },
       },
     }),
   });
 
-  const { items: organisations, metadata } = useMemo(
+  const { items: allOrganisations, metadata } = useMemo(
     () => extractPage<AdminOrganisation>(data),
     [data]
   );
-  const totalAvailable = getTotalFromMetadata(metadata);
-  const totalPages = Math.max(
-    metadata.totalPages ?? (totalAvailable > 0 ? Math.ceil(totalAvailable / pageSize) : 1),
-    1
-  );
+
+  // Apply filters
+  const filteredOrganisations = useMemo(() => {
+    return allOrganisations.filter(org => {
+      // Search filter
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        const matchesSearch =
+          org.name.toLowerCase().includes(searchLower) ||
+          org.location?.toLowerCase().includes(searchLower) ||
+          org.email?.toLowerCase().includes(searchLower) ||
+          org.phone_number?.toLowerCase().includes(searchLower);
+
+        if (!matchesSearch) return false;
+      }
+
+      // Verification filter
+      if (verificationFilter === 'verified' && !org.admin_verified) {
+        return false;
+      }
+      if (verificationFilter === 'unverified' && org.admin_verified) {
+        return false;
+      }
+
+      // Active filter
+      if (activeFilter === 'active' && !org.active) {
+        return false;
+      }
+      if (activeFilter === 'inactive' && org.active) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [allOrganisations, searchQuery, verificationFilter, activeFilter]);
+
+  // Paginate filtered results
+  const paginatedOrganisations = useMemo(() => {
+    const start = page * pageSize;
+    return filteredOrganisations.slice(start, start + pageSize);
+  }, [filteredOrganisations, page, pageSize]);
+
+  // Calculate stats from ALL organisations (not filtered)
+  const totalAvailable = allOrganisations.length;
   const verifiedCount = useMemo(
-    () => organisations.filter(org => org.admin_verified).length,
-    [organisations]
+    () => allOrganisations.filter(org => org.admin_verified).length,
+    [allOrganisations]
   );
   const unverifiedCount = useMemo(
-    () => organisations.length - verifiedCount,
-    [organisations, verifiedCount]
+    () => allOrganisations.length - verifiedCount,
+    [allOrganisations, verifiedCount]
   );
-  const inViewCount = organisations.length;
 
+  // Total pages based on filtered results
+  const totalPages = Math.max(
+    Math.ceil(filteredOrganisations.length / pageSize),
+    1
+  );
+
+  const inViewCount = paginatedOrganisations.length;
+
+  // Reset to page 0 when filters change
   useEffect(() => {
-    if (!selectedOrganisationId && organisations.length > 0) {
-      setSelectedOrganisationId(organisations[0]?.uuid ?? null);
+    setPage(0);
+  }, [searchQuery, verificationFilter, activeFilter]);
+
+  // Auto-select first org when list changes
+  useEffect(() => {
+    if (!selectedOrganisationId && paginatedOrganisations.length > 0) {
+      setSelectedOrganisationId(paginatedOrganisations[0]?.uuid ?? null);
     }
-  }, [organisations, selectedOrganisationId]);
+  }, [paginatedOrganisations, selectedOrganisationId]);
 
+  // Reset page if it exceeds total pages
   useEffect(() => {
-    if (page >= totalPages) {
+    if (page >= totalPages && totalPages > 0) {
       setPage(0);
     }
   }, [page, totalPages]);
 
   const selectedOrganisation =
-    organisations.find(org => org.uuid === selectedOrganisationId) ?? null;
+    allOrganisations.find(org => org.uuid === selectedOrganisationId) ?? null;
 
   const handleSelectOrganisation = (organisation: AdminOrganisation | null) => {
     setSelectedOrganisationId(organisation?.uuid ?? null);
@@ -141,7 +202,7 @@ export default function AdminOrganisationsPage() {
   return (
     <div className='bg-background flex h-[calc(100vh-120px)] flex-col overflow-hidden lg:flex-row'>
       <OrganisationListPanel
-        organisations={organisations}
+        organisations={paginatedOrganisations}
         selectedOrganisationId={selectedOrganisationId}
         onSelect={handleSelectOrganisation}
         isLoading={isLoading}
@@ -152,6 +213,12 @@ export default function AdminOrganisationsPage() {
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        verificationFilter={verificationFilter}
+        onVerificationFilterChange={setVerificationFilter}
+        activeFilter={activeFilter}
+        onActiveFilterChange={setActiveFilter}
       />
 
       <OrganisationDetailsPanel organisation={selectedOrganisation} />
@@ -177,6 +244,13 @@ interface OrganisationListPanelProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  //
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  verificationFilter: 'all' | 'verified' | 'unverified';
+  onVerificationFilterChange: (filter: 'all' | 'verified' | 'unverified') => void;
+  activeFilter: 'all' | 'active' | 'inactive';
+  onActiveFilterChange: (filter: 'all' | 'active' | 'inactive') => void;
 }
 
 function OrganisationListPanel({
@@ -191,27 +265,33 @@ function OrganisationListPanel({
   page,
   totalPages,
   onPageChange,
+  searchQuery,
+  onSearchChange,
+  verificationFilter,
+  onVerificationFilterChange,
+  activeFilter,
+  onActiveFilterChange,
 }: OrganisationListPanelProps) {
   const renderContent = () => {
     if (isLoading) {
-      return Array.from({ length: 6 }).map((_, index) => (
+      return Array.from({ length: 4 }).map((_, index) => (
         <div
           key={`skeleton-${index}`}
-          className='border-border/60 bg-muted/40 animate-pulse rounded-2xl border p-4'
+          className='border-border/60 bg-muted/40 animate-pulse rounded-lg border p-3'
         >
-          <div className='bg-muted h-4 w-1/2 rounded' />
-          <div className='bg-muted mt-2 h-3 w-1/3 rounded' />
+          <div className='bg-muted h-3 w-1/2 rounded' />
+          <div className='bg-muted mt-1.5 h-2 w-1/3 rounded' />
         </div>
       ));
     }
 
     if (organisations.length === 0) {
       return (
-        <div className='border-border/60 bg-muted/30 flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed p-6 text-center'>
-          <Building2 className='text-muted-foreground mb-3 h-10 w-10' />
-          <p className='text-sm font-medium'>No organisations found</p>
-          <p className='text-muted-foreground text-xs'>
-            Invite or onboard organisations to review them here.
+        <div className='border-border/60 bg-muted/30 flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed p-4 text-center'>
+          <Building2 className='text-muted-foreground mb-2 h-8 w-8' />
+          <p className='text-xs font-medium'>No organisations found</p>
+          <p className='text-muted-foreground text-[11px]'>
+            Try adjusting your filters or search.
           </p>
         </div>
       );
@@ -221,43 +301,46 @@ function OrganisationListPanel({
       <button
         key={org.uuid ?? org.name}
         type='button'
-        className={`relative w-full rounded-2xl border p-4 text-left transition ${selectedOrganisationId === org.uuid
+        className={`relative w-full rounded-lg border p-3 text-left transition ${selectedOrganisationId === org.uuid
           ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-1'
           : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'
           }`}
         onClick={() => onSelect(org)}
       >
-        {selectedOrganisationId === org.uuid ? (
-          <Badge
-            variant='secondary'
-            className='absolute top-3 right-3 text-[10px] font-semibold uppercase'
-          >
-            Selected
-          </Badge>
-        ) : null}
-        <div className='flex items-start justify-between gap-3'>
-          <div>
-            <p className='font-semibold'>{org.name}</p>
-            <p className='text-muted-foreground flex items-center gap-1 text-xs'>
-              <MapPin className='h-3.5 w-3.5' />
-              {org.location || 'Location not provided'}
+        {selectedOrganisationId === org.uuid && (
+          <div className='absolute top-2 right-2 h-2 w-2 rounded-full bg-primary' />
+        )}
+
+        <div className='flex items-start justify-between gap-2'>
+          <div className='flex-1 min-w-0'>
+            <p className='font-semibold text-sm truncate'>{org.name}</p>
+            <p className='text-muted-foreground flex items-center gap-1 text-[11px] mt-0.5'>
+              <MapPin className='h-3 w-3 flex-shrink-0' />
+              <span className='truncate'>{org.location || 'Location not provided'}</span>
             </p>
           </div>
-          <Badge variant={org.active ? 'secondary' : 'outline'}>
+          <Badge
+            variant={org.active ? 'secondary' : 'outline'}
+            className='text-[10px] flex-shrink-0'
+          >
             {org.active ? 'Active' : 'Inactive'}
           </Badge>
         </div>
-        <div className='mt-3 flex flex-wrap gap-2 text-xs'>
-          <Badge variant={org.admin_verified ? 'success' : 'secondary'} className='gap-1'>
+
+        <div className='mt-2 flex items-center justify-between gap-2 text-[11px]'>
+          <Badge
+            variant={org.admin_verified ? 'default' : 'secondary'}
+            className='gap-1 text-[10px]'
+          >
             {org.admin_verified ? (
-              <Shield className='h-3 w-3' />
+              <Shield className='h-2.5 w-2.5' />
             ) : (
-              <ShieldOff className='h-3 w-3' />
+              <ShieldOff className='h-2.5 w-2.5' />
             )}
             {org.admin_verified ? 'Verified' : 'Pending'}
           </Badge>
-          <span className='text-muted-foreground'>
-            Created: {org.created_date ? format(new Date(org.created_date), 'dd MMM yyyy') : '—'}
+          <span className='text-muted-foreground truncate'>
+            {org.created_date ? format(new Date(org.created_date), 'dd MMM yyyy') : '—'}
           </span>
         </div>
       </button>
@@ -266,45 +349,169 @@ function OrganisationListPanel({
 
   return (
     <div className='border-border/60 bg-card/95 flex w-full flex-col border-b backdrop-blur lg:max-w-md lg:border-r lg:border-b-0'>
-      <div className='border-border/60 border-b p-6'>
-        <Badge
-          variant='outline'
-          className='border-border/60 bg-muted/60 text-xs font-semibold tracking-wide uppercase'
-        >
-          Organisation registry
-        </Badge>
-        <h1 className='mt-3 text-2xl font-semibold'>Trusted partners</h1>
-        <p className='text-muted-foreground mt-1 text-sm'>
-          Validate onboarding requests, maintain licensing metadata, and manage platform
-          availability for every training partner.
-        </p>
-
-        <div className='text-muted-foreground mt-6 grid grid-cols-2 gap-3 text-xs sm:flex sm:flex-wrap'>
-          <span className='rounded-full border px-3 py-1'>In view: {inViewCount}</span>
-          <span className='rounded-full border px-3 py-1'>Verified: {verifiedCount}</span>
-          <span className='rounded-full border px-3 py-1'>Unverified: {unverifiedCount}</span>
-          <span className='rounded-full border px-3 py-1'>Total available: {totalAvailable}</span>
+      {/* Compact Header */}
+      <div className='border-border/60 border-b p-4'>
+        <div className='flex items-start justify-between gap-2 mb-3'>
+          <div>
+            <Badge
+              variant='outline'
+              className='border-border/60 bg-muted/60 text-[10px] font-semibold tracking-wide uppercase'
+            >
+              Organisation registry
+            </Badge>
+            <h1 className='mt-2 text-lg font-semibold'>Trusted partners</h1>
+          </div>
         </div>
+
+        {/* Compact Stats */}
+        <div className='text-muted-foreground flex flex-wrap gap-1.5 text-xs mb-3'>
+          <span className='rounded-full border px-3 py-1'>
+            {inViewCount} in view
+          </span>
+          <span className='rounded-full border px-3 py-1'>
+            {verifiedCount} verified
+          </span>
+          <span className='rounded-full border px-3 py-1'>
+            {unverifiedCount} pending
+          </span>
+          <span className='rounded-full border px-3 py-1'>
+            {totalAvailable} total
+          </span>
+        </div>
+
+        {/* Search */}
+        <div className='relative mb-2'>
+          <Search className='absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground' />
+          <Input
+            placeholder='Search organisations...'
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className='pl-8 h-8 text-sm'
+          />
+          {searchQuery && (
+            <button
+              onClick={() => onSearchChange('')}
+              className='absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground'
+            >
+              <X className='h-3.5 w-3.5' />
+            </button>
+          )}
+        </div>
+
+        {/* Filters */}
+        <div className='flex gap-2'>
+          <Select
+            value={verificationFilter}
+            onValueChange={(value: 'all' | 'verified' | 'unverified') =>
+              onVerificationFilterChange(value)
+            }
+          >
+            <SelectTrigger className='h-8 text-xs flex-1'>
+              <SelectValue placeholder='Verification' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all' className='text-xs'>All status</SelectItem>
+              <SelectItem value='verified' className='text-xs'>Verified</SelectItem>
+              <SelectItem value='unverified' className='text-xs'>Unverified</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={activeFilter}
+            onValueChange={(value: 'all' | 'active' | 'inactive') =>
+              onActiveFilterChange(value)
+            }
+          >
+            <SelectTrigger className='h-8 text-xs flex-1'>
+              <SelectValue placeholder='Status' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all' className='text-xs'>All</SelectItem>
+              <SelectItem value='active' className='text-xs'>Active</SelectItem>
+              <SelectItem value='inactive' className='text-xs'>Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Reset Filters */}
+          {(searchQuery || verificationFilter !== 'all' || activeFilter !== 'all') && (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => {
+                onSearchChange('');
+                onVerificationFilterChange('all');
+                onActiveFilterChange('all');
+              }}
+              className='h-8 px-2'
+            >
+              <X className='h-3.5 w-3.5' />
+            </Button>
+          )}
+        </div>
+
+        {/* Active Filters Display */}
+        {(searchQuery || verificationFilter !== 'all' || activeFilter !== 'all') && (
+          <div className='flex flex-wrap items-center gap-1.5 mt-2'>
+            <span className='text-[10px] text-muted-foreground'>Active:</span>
+            {searchQuery && (
+              <Badge variant='secondary' className='text-[10px] gap-1'>
+                Search: {searchQuery}
+                <button
+                  onClick={() => onSearchChange('')}
+                  className='hover:text-destructive'
+                >
+                  <X className='h-2.5 w-2.5' />
+                </button>
+              </Badge>
+            )}
+            {verificationFilter !== 'all' && (
+              <Badge variant='secondary' className='text-[10px] gap-1'>
+                {verificationFilter === 'verified' ? 'Verified' : 'Unverified'}
+                <button
+                  onClick={() => onVerificationFilterChange('all')}
+                  className='hover:text-destructive'
+                >
+                  <X className='h-2.5 w-2.5' />
+                </button>
+              </Badge>
+            )}
+            {activeFilter !== 'all' && (
+              <Badge variant='secondary' className='text-[10px] gap-1'>
+                {activeFilter === 'active' ? 'Active' : 'Inactive'}
+                <button
+                  onClick={() => onActiveFilterChange('all')}
+                  className='hover:text-destructive'
+                >
+                  <X className='h-2.5 w-2.5' />
+                </button>
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
-      <ScrollArea className='h-0 flex-1 px-6 py-4'>
-        <div className='flex flex-col gap-4 pb-8'>{renderContent()}</div>
+      {/* Scrollable List - More compact */}
+      <ScrollArea className='h-0 flex-1 px-4 py-3'>
+        <div className='flex flex-col gap-2 pb-4'>{renderContent()}</div>
       </ScrollArea>
 
-      <div className='border-border/60 flex flex-col gap-3 border-t px-6 py-4'>
-        <div className='flex items-center justify-between text-sm'>
+      {/* Compact Pagination */}
+      <div className='border-border/60 border-t px-4 py-3'>
+        <div className='flex items-center justify-between text-sm mb-2'>
           <Button
             variant='ghost'
             size='sm'
             onClick={() => onPageChange(Math.max(page - 1, 0))}
             disabled={page === 0}
+            className='h-7 px-2 text-xs'
           >
+            <ChevronLeft className='h-3.5 w-3.5' />
             Previous
           </Button>
-          <div className='flex items-center gap-2'>
-            {/* Page numbers */}
+
+          <div className='flex items-center gap-1'>
             {(() => {
-              const maxVisible = 5;
+              const maxVisible = 3;
               const half = Math.floor(maxVisible / 2);
               let start = Math.max(0, page - half);
               let end = Math.min(totalPages, start + maxVisible);
@@ -323,14 +530,14 @@ function OrganisationListPanel({
                     variant={0 === page ? 'default' : 'ghost'}
                     size='sm'
                     onClick={() => onPageChange(0)}
-                    className='h-8 w-8 p-0'
+                    className='h-7 w-7 p-0 text-xs'
                   >
                     1
                   </Button>
                 );
                 if (start > 1) {
                   pages.push(
-                    <span key='ellipsis-start' className='text-muted-foreground px-1'>
+                    <span key='ellipsis-start' className='text-muted-foreground px-0.5 text-xs'>
                       ...
                     </span>
                   );
@@ -345,7 +552,7 @@ function OrganisationListPanel({
                     variant={i === page ? 'default' : 'ghost'}
                     size='sm'
                     onClick={() => onPageChange(i)}
-                    className='h-8 w-8 p-0'
+                    className='h-7 w-7 p-0 text-xs'
                   >
                     {i + 1}
                   </Button>
@@ -356,7 +563,7 @@ function OrganisationListPanel({
               if (end < totalPages) {
                 if (end < totalPages - 1) {
                   pages.push(
-                    <span key='ellipsis-end' className='text-muted-foreground px-1'>
+                    <span key='ellipsis-end' className='text-muted-foreground px-0.5 text-xs'>
                       ...
                     </span>
                   );
@@ -367,7 +574,7 @@ function OrganisationListPanel({
                     variant={totalPages - 1 === page ? 'default' : 'ghost'}
                     size='sm'
                     onClick={() => onPageChange(totalPages - 1)}
-                    className='h-8 w-8 p-0'
+                    className='h-7 w-7 p-0 text-xs'
                   >
                     {totalPages}
                   </Button>
@@ -377,16 +584,20 @@ function OrganisationListPanel({
               return pages;
             })()}
           </div>
+
           <Button
             variant='ghost'
             size='sm'
             onClick={() => onPageChange(Math.min(page + 1, totalPages - 1))}
             disabled={page + 1 >= totalPages}
+            className='h-7 px-2 text-xs'
           >
             Next
+            <ChevronRight className='h-3.5 w-3.5' />
           </Button>
         </div>
-        <div className='text-muted-foreground text-center text-xs'>
+
+        <div className='text-muted-foreground text-center text-[11px]'>
           Showing {inViewCount} of {totalAvailable} organizations
         </div>
       </div>

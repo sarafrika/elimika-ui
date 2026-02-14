@@ -1,9 +1,9 @@
-import { Suspense } from 'react';
-import { Loader2, UsersIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import OrganizationUsersList from './_components/OrganizationUsersList';
-import OrganizationUserDetailsPanel from './_components/OrganizationUserDetailsPanel';
 import { getUsersByOrganisation } from '@/services/client';
+import { Loader2, UsersIcon } from 'lucide-react';
+import { Suspense } from 'react';
+import OrganizationUserDetailsPanel from './_components/OrganizationUserDetailsPanel';
+import OrganizationUsersList from './_components/OrganizationUsersList';
 
 function OrganizationUsersLoading() {
   return (
