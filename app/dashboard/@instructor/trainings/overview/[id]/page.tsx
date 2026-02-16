@@ -21,9 +21,7 @@ import { useClassRoster } from '@/hooks/use-class-roster';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useInstructorInfo } from '@/hooks/use-instructor-info';
 import { getResourceIcon } from '@/lib/resources-icon';
-import {
-  getCourseAssessmentsOptions
-} from '@/services/client/@tanstack/react-query.gen';
+import { getCourseAssessmentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
@@ -44,7 +42,7 @@ import {
   MapPin,
   MessageCircle,
   Twitter,
-  Users
+  Users,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -65,12 +63,7 @@ export interface ContentItem {
   description?: string;
 }
 
-type SharePlatform =
-  | "facebook"
-  | "twitter"
-  | "linkedin"
-  | "whatsapp"
-  | "email";
+type SharePlatform = 'facebook' | 'twitter' | 'linkedin' | 'whatsapp' | 'email';
 
 type ShareOptions = {
   title?: string;
@@ -110,7 +103,6 @@ export default function ClassPreviewPage() {
     ]);
   }, [replaceBreadcrumbs, classId]);
 
-
   const { data: combinedClass, isLoading: classIsLoading } = useClassDetails(classId as string);
   const classData = combinedClass?.class;
   const course = combinedClass?.course;
@@ -118,8 +110,8 @@ export default function ClassPreviewPage() {
   const program = combinedClass?.program;
   const schedules = combinedClass?.schedule;
   const scheduleStats = useScheduleStats(schedules as any);
-  const totalAmount = classData?.training_fee! * scheduleStats?.totalHours as number
-  const amountPayable = totalAmount
+  const totalAmount = (classData?.training_fee! * scheduleStats?.totalHours) as number;
+  const amountPayable = totalAmount;
 
   // Format dates
   const { formattedStart, formattedEnd } = useMemo(() => {
@@ -128,12 +120,8 @@ export default function ClassPreviewPage() {
     }
 
     try {
-      const start = classData?.default_start_time
-        ? new Date(classData.default_start_time)
-        : null;
-      const end = classData?.default_end_time
-        ? new Date(classData.default_end_time)
-        : null;
+      const start = classData?.default_start_time ? new Date(classData.default_start_time) : null;
+      const end = classData?.default_end_time ? new Date(classData.default_end_time) : null;
 
       return {
         formattedStart: start ? format(start, 'MMM dd, yyyy • hh:mm a') : 'N/A',
@@ -168,7 +156,10 @@ export default function ClassPreviewPage() {
     isLoading: isLoading,
     coursesWithLessons,
     contentTypeMap: programContentTypeMap,
-  } = useProgramLessonsWithContent({ programUuid: classData?.program_uuid as string, programCourses: programCourses });
+  } = useProgramLessonsWithContent({
+    programUuid: classData?.program_uuid as string,
+    programCourses: programCourses,
+  });
 
   const isClassForProgram = !!classData?.program_uuid;
   const isClassForCourse = !!classData?.course_uuid;
@@ -176,7 +167,6 @@ export default function ClassPreviewPage() {
   const totalProgramLessons = coursesWithLessons?.reduce((sum, courseData) => {
     return sum + (courseData.lessons?.length || 0);
   }, 0);
-
 
   // Helper to get enrollment URL
   const getRegistrationLink = () => {
@@ -232,18 +222,14 @@ export default function ClassPreviewPage() {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
-    } catch (err) {
-    }
+    } catch (err) {}
   };
 
-  const shareToSocial = (
-    platform: SharePlatform,
-    { title, links }: ShareOptions
-  ) => {
-    const joinedLinks = links.join("\n");
+  const shareToSocial = (platform: SharePlatform, { title, links }: ShareOptions) => {
+    const joinedLinks = links.join('\n');
     const encodedLinks = encodeURIComponent(joinedLinks);
     const encodedText = encodeURIComponent(
-      title ? `Check out this class: ${title}` : "Check this out"
+      title ? `Check out this class: ${title}` : 'Check this out'
     );
 
     const urls: Record<SharePlatform, string> = {
@@ -252,11 +238,11 @@ export default function ClassPreviewPage() {
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedLinks}`,
       whatsapp: `https://wa.me/?text=${encodedText}%0A${encodedLinks}`,
       email: `mailto:?subject=${encodeURIComponent(
-        title ?? "Shared Links"
+        title ?? 'Shared Links'
       )}&body=${encodedText}%0A${encodedLinks}`,
     };
 
-    window.open(urls[platform], "_blank", "width=600,height=400");
+    window.open(urls[platform], '_blank', 'width=600,height=400');
   };
 
   const { roster } = useClassRoster(classId);
@@ -275,39 +261,38 @@ export default function ClassPreviewPage() {
     }
   };
 
-
   if (isAllLessonsDataLoading || classIsLoading) {
     return (
-      <div className="flex flex-col gap-6 space-y-2">
-        <Skeleton className="h-[150px] w-full" />
+      <div className='flex flex-col gap-6 space-y-2'>
+        <Skeleton className='h-[150px] w-full' />
 
-        <div className="flex flex-row items-center justify-between gap-4">
-          <Skeleton className="h-[250px] w-2/3" />
-          <Skeleton className="h-[250px] w-1/3" />
+        <div className='flex flex-row items-center justify-between gap-4'>
+          <Skeleton className='h-[250px] w-2/3' />
+          <Skeleton className='h-[250px] w-1/3' />
         </div>
 
-        <Skeleton className="h-[100px] w-full" />
+        <Skeleton className='h-[100px] w-full' />
       </div>
     );
   }
 
   return (
-    <div className="mb-20 space-y-6">
+    <div className='mb-20 space-y-6'>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-4'>
           <div>
             {classData?.is_active ? (
               <>
-                <h1 className="text-2xl font-semibold text-success">Active Class</h1>
-                <p className="text-muted-foreground">
+                <h1 className='text-success text-2xl font-semibold'>Active Class</h1>
+                <p className='text-muted-foreground'>
                   Your class is live and accepting new students.
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-2xl font-semibold text-foreground">Inactive Class</h1>
-                <p className="text-muted-foreground">
+                <h1 className='text-foreground text-2xl font-semibold'>Inactive Class</h1>
+                <p className='text-muted-foreground'>
                   This class is currently not active. Activate it to allow student enrollment.
                 </p>
               </>
@@ -317,10 +302,10 @@ export default function ClassPreviewPage() {
 
         <Button
           onClick={() => router.push(`/dashboard/trainings/create-new?id=${classData?.uuid}`)}
-          variant="outline"
-          className="gap-2"
+          variant='outline'
+          className='gap-2'
         >
-          <Edit className="h-4 w-4" />
+          <Edit className='h-4 w-4' />
           Edit Class
         </Button>
       </div>
@@ -328,43 +313,43 @@ export default function ClassPreviewPage() {
       {/* Status Banner */}
       <div>
         {classData?.is_active ? (
-          <Card className="border-success/30 bg-success/10">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="h-6 w-6 text-success" />
+          <Card className='border-success/30 bg-success/10'>
+            <CardContent className='p-4'>
+              <div className='flex items-center gap-3'>
+                <CheckCircle className='text-success h-6 w-6' />
                 <div>
-                  <h3 className="font-semibold text-success">Class Published Successfully!</h3>
-                  <p className="text-sm text-success">
-                    Your class is now live and students can enroll. Share the registration link
-                    to start getting enrollments.
+                  <h3 className='text-success font-semibold'>Class Published Successfully!</h3>
+                  <p className='text-success text-sm'>
+                    Your class is now live and students can enroll. Share the registration link to
+                    start getting enrollments.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-warning/40 bg-warning/10">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
+          <Card className='border-warning/40 bg-warning/10'>
+            <CardContent className='p-4'>
+              <div className='flex items-center gap-3'>
                 <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 text-warning"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+                  xmlns='http://www.w3.org/2000/svg'
+                  className='text-warning h-6 w-6'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
                 >
                   <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
                     strokeWidth={2}
-                    d="M12 9v2m0 4h.01M21 12A9 9 0 1112 3a9 9 0 019 9z"
+                    d='M12 9v2m0 4h.01M21 12A9 9 0 1112 3a9 9 0 019 9z'
                   />
                 </svg>
                 <div>
-                  <h3 className="font-semibold text-warning">Class is Currently Inactive</h3>
-                  <p className="text-sm text-warning">
-                    Students cannot enroll in this class until it's activated. You can activate
-                    it from your dashboard.
+                  <h3 className='text-warning font-semibold'>Class is Currently Inactive</h3>
+                  <p className='text-warning text-sm'>
+                    Students cannot enroll in this class until it's activated. You can activate it
+                    from your dashboard.
                   </p>
                 </div>
               </div>
@@ -374,17 +359,15 @@ export default function ClassPreviewPage() {
       </div>
 
       {/* Class Preview Card */}
-      <Card className="border-2">
+      <Card className='border-2'>
         <CardHeader>
-          <div className="space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <CardTitle className="text-2xl mb-2">
-                  {classData?.title}
-                </CardTitle>
-                <div className="flex flex-wrap gap-2">
+          <div className='space-y-3'>
+            <div className='flex items-start justify-between gap-4'>
+              <div className='flex-1'>
+                <CardTitle className='mb-2 text-2xl'>{classData?.title}</CardTitle>
+                <div className='flex flex-wrap gap-2'>
                   {course?.category_names?.map((category: string, idx: number) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
+                    <Badge key={idx} variant='outline' className='text-xs'>
                       {category}
                     </Badge>
                   ))}
@@ -402,74 +385,71 @@ export default function ClassPreviewPage() {
             </div>
 
             {classData?.description && (
-              <div className="text-muted-foreground">
-                <RichTextRenderer
-                  maxChars={100}
-                  htmlString={classData?.description as string}
-                />
+              <div className='text-muted-foreground'>
+                <RichTextRenderer maxChars={100} htmlString={classData?.description as string} />
               </div>
             )}
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className='space-y-6'>
           {/* Primary Info Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span className="text-xs">Instructor</span>
+          <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+            <div className='space-y-1'>
+              <div className='text-muted-foreground flex items-center gap-2'>
+                <Users className='h-4 w-4' />
+                <span className='text-xs'>Instructor</span>
               </div>
-              <div className="font-medium">{instructor?.full_name}</div>
+              <div className='font-medium'>{instructor?.full_name}</div>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span className="text-xs">Duration  ({classData?.duration_formatted}/class)</span>
+            <div className='space-y-1'>
+              <div className='text-muted-foreground flex items-center gap-2'>
+                <Clock className='h-4 w-4' />
+                <span className='text-xs'>Duration ({classData?.duration_formatted}/class)</span>
               </div>
-              <div className="font-medium">{scheduleStats?.totalHours}</div>
+              <div className='font-medium'>{scheduleStats?.totalHours}</div>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <BookOpen className="h-4 w-4" />
-                <span className="text-xs">Lessons</span>
+            <div className='space-y-1'>
+              <div className='text-muted-foreground flex items-center gap-2'>
+                <BookOpen className='h-4 w-4' />
+                <span className='text-xs'>Lessons</span>
               </div>
-              <div className="font-medium">{lessonsWithContent?.length || totalProgramLessons}</div>
+              <div className='font-medium'>{lessonsWithContent?.length || totalProgramLessons}</div>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <FileText className="h-4 w-4" />
-                <span className="text-xs">Assignments/Quizzes</span>
+            <div className='space-y-1'>
+              <div className='text-muted-foreground flex items-center gap-2'>
+                <FileText className='h-4 w-4' />
+                <span className='text-xs'>Assignments/Quizzes</span>
               </div>
-              <div className="font-medium">{totalAssignments}</div>
+              <div className='font-medium'>{totalAssignments}</div>
             </div>
           </div>
 
           {/* Secondary Info */}
-          <div className="flex flex-wrap items-center gap-6 pt-4 border-t">
-            <div className="flex items-center gap-2 text-sm">
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Start Date</span>
-              <span className="font-medium">{formattedStart}</span>
+          <div className='flex flex-wrap items-center gap-6 border-t pt-4'>
+            <div className='flex items-center gap-2 text-sm'>
+              <CalendarDays className='text-muted-foreground h-4 w-4' />
+              <span className='text-muted-foreground'>Start Date</span>
+              <span className='font-medium'>{formattedStart}</span>
             </div>
 
             {classData?.location_type && (
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{classData?.location_type}</span>
+              <div className='flex items-center gap-2 text-sm'>
+                <MapPin className='text-muted-foreground h-4 w-4' />
+                <span className='font-medium'>{classData?.location_type}</span>
               </div>
             )}
 
-            <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium">KES {amountPayable.toFixed(2)}</span>
+            <div className='flex items-center gap-2 text-sm'>
+              <span className='font-medium'>KES {amountPayable.toFixed(2)}</span>
             </div>
 
-            <div className="flex items-center gap-2 text-sm">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">
+            <div className='flex items-center gap-2 text-sm'>
+              <Users className='text-muted-foreground h-4 w-4' />
+              <span className='font-medium'>
                 {roster?.length} / {classData?.max_participants} students
               </span>
             </div>
@@ -482,70 +462,68 @@ export default function ClassPreviewPage() {
       </Card>
 
       {/* Class Management Tabs */}
-      <Tabs defaultValue="details" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="details">Class Details</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
-          <TabsTrigger value="skills">Skills</TabsTrigger>
-          <TabsTrigger value="students">Students</TabsTrigger>
+      <Tabs defaultValue='details' className='space-y-4'>
+        <TabsList className='grid w-full grid-cols-4'>
+          <TabsTrigger value='details'>Class Details</TabsTrigger>
+          <TabsTrigger value='schedule'>Schedule</TabsTrigger>
+          <TabsTrigger value='skills'>Skills</TabsTrigger>
+          <TabsTrigger value='students'>Students</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="space-y-4">
+        <TabsContent value='details' className='space-y-4'>
           <Card>
             <CardHeader>
               <CardTitle>Class Information</CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <CardContent className='space-y-6'>
+              <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
                 {/* Left Column */}
-                <div className="space-y-4">
-                  <div className="rounded-lg border border-border bg-muted/50 p-4">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <div className='space-y-4'>
+                  <div className='border-border bg-muted/50 rounded-lg border p-4'>
+                    <span className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
                       Course
                     </span>
-                    {course?.uuid &&
-                      <div className="mt-2 text-base font-semibold text-foreground">
-                        {course?.name || '—'}</div>
-                    }
+                    {course?.uuid && (
+                      <div className='text-foreground mt-2 text-base font-semibold'>
+                        {course?.name || '—'}
+                      </div>
+                    )}
 
                     {program?.uuid && (
-                      <div className="mt-2 text-base font-semibold text-foreground">
+                      <div className='text-foreground mt-2 text-base font-semibold'>
                         {programCourses && programCourses?.length > 0 ? (
-                          <ul className="list-disc list-inside space-y-1">
-                            {programCourses?.map((c) => (
-                              <li key={c.uuid}>{c.name || '—'}</li>
-                            ))}
+                          <ul className='list-inside list-disc space-y-1'>
+                            {programCourses?.map(c => <li key={c.uuid}>{c.name || '—'}</li>)}
                           </ul>
                         ) : (
                           '—'
                         )}
                       </div>
                     )}
-
                   </div>
 
-                  <div className="rounded-lg border border-border bg-muted/50 p-4">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <div className='border-border bg-muted/50 rounded-lg border p-4'>
+                    <span className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
                       Class Type
                     </span>
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className='mt-2 flex items-center gap-2'>
                       {classData?.location_type === 'ONLINE' && (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                          <span className="text-xs font-bold text-primary">ON</span>
+                        <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full'>
+                          <span className='text-primary text-xs font-bold'>ON</span>
                         </div>
                       )}
                       {classData?.location_type === 'IN_PERSON' && (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/50">
-                          <span className="text-xs font-bold text-accent-foreground">IP</span>
+                        <div className='bg-accent/50 flex h-8 w-8 items-center justify-center rounded-full'>
+                          <span className='text-accent-foreground text-xs font-bold'>IP</span>
                         </div>
                       )}
                       {classData?.location_type === 'HYBRID' && (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
-                          <span className="text-xs font-bold text-secondary-foreground">HY</span>
+                        <div className='bg-secondary flex h-8 w-8 items-center justify-center rounded-full'>
+                          <span className='text-secondary-foreground text-xs font-bold'>HY</span>
                         </div>
                       )}
-                      <span className="text-base font-semibold text-foreground capitalize">
+                      <span className='text-foreground text-base font-semibold capitalize'>
                         {classData?.location_type?.toLowerCase().replace('_', ' ') || '—'}
                       </span>
                     </div>
@@ -553,18 +531,18 @@ export default function ClassPreviewPage() {
                 </div>
 
                 {/* Right Column */}
-                <div className="space-y-4">
-                  <div className="rounded-lg border border-border bg-muted/50 p-4">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <div className='space-y-4'>
+                  <div className='border-border bg-muted/50 rounded-lg border p-4'>
+                    <span className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
                       Academic Period
                     </span>
-                    <div className="mt-2 space-y-1 text-sm">
+                    <div className='mt-2 space-y-1 text-sm'>
                       {classData?.default_start_time && classData?.default_end_time ? (
                         <>
                           {/* Extract the date from start_time */}
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-muted-foreground">Date:</span>
-                            <span className="font-semibold text-foreground">
+                          <div className='flex items-center gap-2'>
+                            <span className='text-muted-foreground font-medium'>Date:</span>
+                            <span className='text-foreground font-semibold'>
                               {new Date(classData.default_start_time).toLocaleDateString('en-US', {
                                 weekday: 'short',
                                 month: 'short',
@@ -572,52 +550,49 @@ export default function ClassPreviewPage() {
                                 year: 'numeric',
                               })}
                             </span>
-                            <span className="font-semibold text-foreground">
+                            <span className='text-foreground font-semibold'>
                               {new Date(classData.default_start_time).toLocaleTimeString('en-US', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}
                             </span>
-                            <span className="font-semibold text-foreground">
+                            <span className='text-foreground font-semibold'>
                               {new Date(classData.default_end_time).toLocaleTimeString('en-US', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}
                             </span>
                           </div>
-
-
                         </>
                       ) : (
-                        <span className="text-foreground">—</span>
+                        <span className='text-foreground'>—</span>
                       )}
                     </div>
                   </div>
 
-
-                  <div className="rounded-lg border border-border bg-muted/50 p-4">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <div className='border-border bg-muted/50 rounded-lg border p-4'>
+                    <span className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
                       Visibility
                     </span>
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className='mt-2 flex items-center gap-2'>
                       {classData?.class_visibility === 'PUBLIC' ? (
                         <>
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                            <Globe className="h-4 w-4 text-primary" />
+                          <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full'>
+                            <Globe className='text-primary h-4 w-4' />
                           </div>
                           <div>
-                            <div className="text-base font-semibold text-foreground">Public</div>
-                            <div className="text-xs text-muted-foreground">Visible to everyone</div>
+                            <div className='text-foreground text-base font-semibold'>Public</div>
+                            <div className='text-muted-foreground text-xs'>Visible to everyone</div>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                            <Globe className="h-4 w-4 text-muted-foreground" />
+                          <div className='bg-muted flex h-8 w-8 items-center justify-center rounded-full'>
+                            <Globe className='text-muted-foreground h-4 w-4' />
                           </div>
                           <div>
-                            <div className="text-base font-semibold text-foreground">Private</div>
-                            <div className="text-xs text-muted-foreground">Invitation only</div>
+                            <div className='text-foreground text-base font-semibold'>Private</div>
+                            <div className='text-muted-foreground text-xs'>Invitation only</div>
                           </div>
                         </>
                       )}
@@ -627,154 +602,156 @@ export default function ClassPreviewPage() {
               </div>
 
               {/* Description Section - Full Width */}
-              <div className="rounded-lg border border-border bg-muted/50 p-4">
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <div className='border-border bg-muted/50 rounded-lg border p-4'>
+                <span className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
                   Description
                 </span>
-                <div className="mt-2 text-foreground">
+                <div className='text-foreground mt-2'>
                   {classData?.description ? (
                     <RichTextRenderer maxChars={100} htmlString={classData.description as string} />
                   ) : (
-                    <p className="text-sm text-muted-foreground italic">No description provided</p>
+                    <p className='text-muted-foreground text-sm italic'>No description provided</p>
                   )}
                 </div>
               </div>
             </CardContent>
-
           </Card>
         </TabsContent>
 
-        <TabsContent value="schedule" className="space-y-4">
+        <TabsContent value='schedule' className='space-y-4'>
           <CardContent>
             <ClassScheduleCalendar schedules={schedules as any} />
           </CardContent>
         </TabsContent>
 
-        <TabsContent value="skills" className="space-y-4">
+        <TabsContent value='skills' className='space-y-4'>
           <Card>
-            <CardContent className="space-y-3 p-4">
+            <CardContent className='space-y-3 p-4'>
               {/* Loading State */}
               {(isAllLessonsDataLoading || isLoading) && <Spinner />}
 
               {/* Empty State - Course */}
               {isClassForCourse && !isAllLessonsDataLoading && lessonsWithContent?.length === 0 && (
-                <div className="flex flex-col items-center justify-center rounded-lg bg-muted/30 p-6 text-center text-sm text-muted-foreground">
-                  <FileQuestion className="mb-3 h-8 w-8 text-muted-foreground" />
-                  <h4 className="font-medium">No Class Resources</h4>
+                <div className='bg-muted/30 text-muted-foreground flex flex-col items-center justify-center rounded-lg p-6 text-center text-sm'>
+                  <FileQuestion className='text-muted-foreground mb-3 h-8 w-8' />
+                  <h4 className='font-medium'>No Class Resources</h4>
                   <p>This class doesn&apos;t have any resources/content yet.</p>
                 </div>
               )}
 
               {/* Empty State - Program */}
               {isClassForProgram && !isLoading && coursesWithLessons?.length === 0 && (
-                <div className="flex flex-col items-center justify-center rounded-lg bg-muted/30 p-6 text-center text-sm text-muted-foreground">
-                  <FileQuestion className="mb-3 h-8 w-8 text-muted-foreground" />
-                  <h4 className="font-medium">No Program Resources</h4>
+                <div className='bg-muted/30 text-muted-foreground flex flex-col items-center justify-center rounded-lg p-6 text-center text-sm'>
+                  <FileQuestion className='text-muted-foreground mb-3 h-8 w-8' />
+                  <h4 className='font-medium'>No Program Resources</h4>
                   <p>This program doesn&apos;t have any resources/content yet.</p>
                 </div>
               )}
 
               {/* Course Skills */}
-              {isClassForCourse && lessonsWithContent?.map((skill, skillIndex) => (
-                <div key={skillIndex}>
-                  <div className="mb-2 font-semibold text-foreground">
-                    Lesson {skillIndex + 1}: {skill.lesson?.title}
-                  </div>
+              {isClassForCourse &&
+                lessonsWithContent?.map((skill, skillIndex) => (
+                  <div key={skillIndex}>
+                    <div className='text-foreground mb-2 font-semibold'>
+                      Lesson {skillIndex + 1}: {skill.lesson?.title}
+                    </div>
 
-                  {skill?.content?.data?.map((c, cIndex) => {
-                    const contentTypeName = contentTypeMap[c.content_type_uuid] || 'file';
+                    {skill?.content?.data?.map((c, cIndex) => {
+                      const contentTypeName = contentTypeMap[c.content_type_uuid] || 'file';
 
-                    return (
-                      <div
-                        key={c.uuid}
-                        className="flex mt-1.5 items-center justify-between rounded-lg border border-border bg-card p-3 hover:bg-accent/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          {getResourceIcon(contentTypeName)}
-                          <div>
-                            <div className="font-medium text-foreground">
-                              {cIndex + 1}. {c.title}
-                            </div>
-                            <div className="text-sm text-muted-foreground capitalize">
-                              {contentTypeName}
-                            </div>
-                          </div>
-                        </div>
-
-                        <Button
-                          onClick={() => handleViewContent(c, contentTypeName)}
-                          variant="outline"
-                          size="sm"
-                          className="gap-2"
+                      return (
+                        <div
+                          key={c.uuid}
+                          className='border-border bg-card hover:bg-accent/50 mt-1.5 flex items-center justify-between rounded-lg border p-3 transition-colors'
                         >
-                          <Eye className="h-3 w-3" />
-                          View
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-
-              {/* Program Skills */}
-              {isClassForProgram && coursesWithLessons?.map((courseData, courseIndex) => (
-                <div key={courseData.course.uuid} className="space-y-4">
-                  {/* Course Header */}
-                  <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-4">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                    <span className="text-lg font-semibold text-foreground">
-                      {courseData.course.name}
-                    </span>
-                  </div>
-
-                  {/* Lessons within this course */}
-                  {courseData.lessons.map((skill, skillIndex) => (
-                    <div key={skill.lesson.uuid} className="ml-4">
-                      <div className="mb-2 font-semibold text-foreground">
-                        Lesson {skillIndex + 1}: {skill.lesson?.title}
-                      </div>
-
-                      {skill?.content?.data?.map((c, cIndex) => {
-                        const contentTypeName = programContentTypeMap[c.content_type_uuid] || 'file';
-
-                        return (
-                          <div
-                            key={c.uuid}
-                            className="flex mt-1.5 items-center justify-between rounded-lg border border-border bg-card p-3 hover:bg-accent/50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
-                              {getResourceIcon(contentTypeName)}
-                              <div>
-                                <div className="font-medium text-foreground">
-                                  {cIndex + 1}. {c.title}
-                                </div>
-                                <div className="text-sm text-muted-foreground capitalize">
-                                  {contentTypeName}
-                                </div>
+                          <div className='flex items-center gap-3'>
+                            {getResourceIcon(contentTypeName)}
+                            <div>
+                              <div className='text-foreground font-medium'>
+                                {cIndex + 1}. {c.title}
+                              </div>
+                              <div className='text-muted-foreground text-sm capitalize'>
+                                {contentTypeName}
                               </div>
                             </div>
-
-                            <Button
-                              onClick={() => handleViewContent(c, contentTypeName)}
-                              variant="outline"
-                              size="sm"
-                              className="gap-2"
-                            >
-                              <Eye className="h-3 w-3" />
-                              View
-                            </Button>
                           </div>
-                        );
-                      })}
+
+                          <Button
+                            onClick={() => handleViewContent(c, contentTypeName)}
+                            variant='outline'
+                            size='sm'
+                            className='gap-2'
+                          >
+                            <Eye className='h-3 w-3' />
+                            View
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+
+              {/* Program Skills */}
+              {isClassForProgram &&
+                coursesWithLessons?.map((courseData, courseIndex) => (
+                  <div key={courseData.course.uuid} className='space-y-4'>
+                    {/* Course Header */}
+                    <div className='border-border bg-muted/50 flex items-center gap-2 rounded-lg border p-4'>
+                      <BookOpen className='text-primary h-5 w-5' />
+                      <span className='text-foreground text-lg font-semibold'>
+                        {courseData.course.name}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              ))}
+
+                    {/* Lessons within this course */}
+                    {courseData.lessons.map((skill, skillIndex) => (
+                      <div key={skill.lesson.uuid} className='ml-4'>
+                        <div className='text-foreground mb-2 font-semibold'>
+                          Lesson {skillIndex + 1}: {skill.lesson?.title}
+                        </div>
+
+                        {skill?.content?.data?.map((c, cIndex) => {
+                          const contentTypeName =
+                            programContentTypeMap[c.content_type_uuid] || 'file';
+
+                          return (
+                            <div
+                              key={c.uuid}
+                              className='border-border bg-card hover:bg-accent/50 mt-1.5 flex items-center justify-between rounded-lg border p-3 transition-colors'
+                            >
+                              <div className='flex items-center gap-3'>
+                                {getResourceIcon(contentTypeName)}
+                                <div>
+                                  <div className='text-foreground font-medium'>
+                                    {cIndex + 1}. {c.title}
+                                  </div>
+                                  <div className='text-muted-foreground text-sm capitalize'>
+                                    {contentTypeName}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <Button
+                                onClick={() => handleViewContent(c, contentTypeName)}
+                                variant='outline'
+                                size='sm'
+                                className='gap-2'
+                              >
+                                <Eye className='h-3 w-3' />
+                                View
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                ))}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="students" className="space-y-4">
+        <TabsContent value='students' className='space-y-4'>
           <Card>
             <CardHeader>
               <CardTitle>Enrolled Students</CardTitle>
@@ -782,17 +759,15 @@ export default function ClassPreviewPage() {
 
             <CardContent>
               {!roster || roster.length === 0 ? (
-                <div className="py-8 text-center">
-                  <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                  <h3 className="mb-2 font-medium text-foreground">
-                    No students enrolled yet
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
+                <div className='py-8 text-center'>
+                  <Users className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                  <h3 className='text-foreground mb-2 font-medium'>No students enrolled yet</h3>
+                  <p className='text-muted-foreground text-sm'>
                     Share your registration link to start getting enrollments
                   </p>
                 </div>
               ) : (
-                <div className="rounded-md border border-border">
+                <div className='border-border rounded-md border'>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -813,7 +788,7 @@ export default function ClassPreviewPage() {
                         return (
                           <TableRow key={index}>
                             {/* NAME */}
-                            <TableCell className="font-medium">
+                            <TableCell className='font-medium'>
                               {user?.full_name || 'Unknown Student'}
                             </TableCell>
 
@@ -824,13 +799,11 @@ export default function ClassPreviewPage() {
                             <TableCell>{student?.primaryGuardianContact || '--'}</TableCell>
 
                             {/* SECONDARY GUARDIAN */}
-                            <TableCell>
-                              {student?.secondaryGuardianContact || '--'}
-                            </TableCell>
+                            <TableCell>{student?.secondaryGuardianContact || '--'}</TableCell>
 
                             {/* STATUS */}
                             <TableCell>
-                              <Badge variant="success">
+                              <Badge variant='success'>
                                 {entry.enrollment?.status || 'UNKNOWN'}
                               </Badge>
                             </TableCell>
@@ -848,115 +821,114 @@ export default function ClassPreviewPage() {
 
       {/* Registration Link and Sharing */}
       <Card>
-        <CardHeader className='gap-4' >
-          <CardTitle className="flex items-center gap-2">
-            <Link className="h-5 w-5" />
+        <CardHeader className='gap-4'>
+          <CardTitle className='flex items-center gap-2'>
+            <Link className='h-5 w-5' />
             Class Invite Link
           </CardTitle>
-          <div className="flex gap-2">
-            <Input value={inviteLink} readOnly className="font-mono text-sm" />
+          <div className='flex gap-2'>
+            <Input value={inviteLink} readOnly className='font-mono text-sm' />
             <Button
               onClick={() => copyLink(inviteLink, setCopied)}
-              variant="outline"
-              className="gap-2"
+              variant='outline'
+              className='gap-2'
             >
-              <Copy className="h-4 w-4" />
+              <Copy className='h-4 w-4' />
               {copied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
         </CardHeader>
 
-        <CardHeader className='gap-4' >
-          <CardTitle className="flex items-center gap-2">
-            <Link className="h-5 w-5" />
+        <CardHeader className='gap-4'>
+          <CardTitle className='flex items-center gap-2'>
+            <Link className='h-5 w-5' />
             Registration Link
           </CardTitle>
-          <div className="flex gap-2">
-            <Input value={registrationLink} readOnly className="font-mono text-sm" />
+          <div className='flex gap-2'>
+            <Input value={registrationLink} readOnly className='font-mono text-sm' />
             <Button
               onClick={() => copyLink(registrationLink, setCopied)}
-              variant="outline"
-              className="gap-2"
+              variant='outline'
+              className='gap-2'
             >
-              <Copy className="h-4 w-4" />
+              <Copy className='h-4 w-4' />
               {copied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4 px-6">
-          <div className="space-y-3">
-            <h4 className="font-medium">Share Your Class</h4>
-            <div className="flex flex-wrap gap-2">
-
+        <CardContent className='space-y-4 px-6'>
+          <div className='space-y-3'>
+            <h4 className='font-medium'>Share Your Class</h4>
+            <div className='flex flex-wrap gap-2'>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={() =>
-                  shareToSocial("facebook", {
+                  shareToSocial('facebook', {
                     title: classData?.title,
                     links: [registrationLink, inviteLink],
                   })
                 }
-                className="gap-2"
+                className='gap-2'
               >
-                <Facebook className="h-4 w-4" />
+                <Facebook className='h-4 w-4' />
                 Facebook
               </Button>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={() =>
-                  shareToSocial("twitter", {
+                  shareToSocial('twitter', {
                     title: classData?.title,
                     links: [registrationLink, inviteLink],
                   })
                 }
-                className="gap-2"
+                className='gap-2'
               >
-                <Twitter className="h-4 w-4" />
+                <Twitter className='h-4 w-4' />
                 Twitter
               </Button>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={() =>
-                  shareToSocial("linkedin", {
+                  shareToSocial('linkedin', {
                     title: classData?.title,
                     links: [registrationLink, inviteLink],
                   })
                 }
-                className="gap-2"
+                className='gap-2'
               >
-                <Linkedin className="h-4 w-4" />
+                <Linkedin className='h-4 w-4' />
                 LinkedIn
               </Button>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={() =>
-                  shareToSocial("whatsapp", {
+                  shareToSocial('whatsapp', {
                     title: classData?.title,
                     links: [registrationLink, inviteLink],
                   })
                 }
-                className="gap-2"
+                className='gap-2'
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className='h-4 w-4' />
                 WhatsApp
               </Button>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={() =>
-                  shareToSocial("email", {
+                  shareToSocial('email', {
                     title: classData?.title,
                     links: [registrationLink, inviteLink],
                   })
                 }
-                className="gap-2"
+                className='gap-2'
               >
-                <Mail className="h-4 w-4" />
+                <Mail className='h-4 w-4' />
                 Email
               </Button>
             </div>

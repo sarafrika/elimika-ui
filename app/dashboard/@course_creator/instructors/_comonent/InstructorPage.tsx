@@ -10,7 +10,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { extractPage } from '@/lib/api-helpers';
 import { elimikaDesignSystem } from '@/lib/design-system';
-import { CourseTrainingApplication, getInstructorByUuid, ProgramTrainingApplication } from '@/services/client';
+import {
+  CourseTrainingApplication,
+  getInstructorByUuid,
+  ProgramTrainingApplication,
+} from '@/services/client';
 import {
   decideOnProgramTrainingApplicationMutation,
   decideOnTrainingApplicationMutation,
@@ -51,7 +55,7 @@ import {
   User,
   Users,
   X,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 import { format } from 'path';
 import { useMemo, useState } from 'react';
@@ -88,7 +92,7 @@ const InstructorsApplicationPage = () => {
   const applicationsQuery = useQuery({
     ...searchTrainingApplicationsOptions({
       query: {
-        searchParams: { course_creator_uuid: courseCreator?.uuid as string, },
+        searchParams: { course_creator_uuid: courseCreator?.uuid as string },
         pageable: { page, size: pageSize },
       },
     }),
@@ -100,18 +104,17 @@ const InstructorsApplicationPage = () => {
     ...searchProgramTrainingApplicationsOptions({
       query: {
         searchParams: {},
-        pageable: { page, size: pageSize }
-      }
-    })
-  })
-  const programApplicationsPage = extractPage<ProgramTrainingApplication>(programApplicationsQuery.data);
+        pageable: { page, size: pageSize },
+      },
+    }),
+  });
+  const programApplicationsPage = extractPage<ProgramTrainingApplication>(
+    programApplicationsQuery.data
+  );
   const allProgramApplications = programApplicationsPage.items;
 
   const instructorUuids = useMemo(() => {
-    const combined = [
-      ...(allApplications ?? []),
-      ...(allProgramApplications ?? []),
-    ];
+    const combined = [...(allApplications ?? []), ...(allProgramApplications ?? [])];
 
     return Array.from(
       new Set(
@@ -209,7 +212,7 @@ const InstructorsApplicationPage = () => {
   }, [instructorQueries]);
 
   // COURSE APPLICATIONS
-  // Apply filters 
+  // Apply filters
   const filteredApplications = useMemo(() => {
     let items = allApplications;
 
@@ -258,7 +261,7 @@ const InstructorsApplicationPage = () => {
   }, [filteredApplications]);
 
   // PROGRAM APPLICATIONS
-  // Apply filters 
+  // Apply filters
   const filteredProgramApplications = useMemo(() => {
     let items = allProgramApplications;
     if (selectedInstructorUuid) {
@@ -287,7 +290,13 @@ const InstructorsApplicationPage = () => {
     }
 
     return items;
-  }, [allProgramApplications, selectedInstructorUuid, statusFilter, applicantTypeFilter, searchValue]);
+  }, [
+    allProgramApplications,
+    selectedInstructorUuid,
+    statusFilter,
+    applicantTypeFilter,
+    searchValue,
+  ]);
 
   const programTotalPages = Math.max(Math.ceil(filteredProgramApplications.length / pageSize), 1);
 
@@ -295,10 +304,14 @@ const InstructorsApplicationPage = () => {
   const programStats = useMemo(() => {
     return {
       total: filteredProgramApplications.length,
-      pending: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'pending').length,
-      approved: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'approved').length,
-      revoked: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'revoked').length,
-      rejected: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'rejected').length,
+      pending: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'pending')
+        .length,
+      approved: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'approved')
+        .length,
+      revoked: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'revoked')
+        .length,
+      rejected: filteredProgramApplications.filter(a => a.status?.toLowerCase() === 'rejected')
+        .length,
       instructors: filteredProgramApplications.filter(
         a => a.applicant_type?.toLowerCase() === 'instructor'
       ).length,
@@ -389,10 +402,9 @@ const InstructorsApplicationPage = () => {
         onError: (error: any) => {
           const errorDuration = 8000;
 
-          toast.error(
-            error?.message || `Failed to ${reviewAction} application`,
-            { duration: errorDuration }
-          );
+          toast.error(error?.message || `Failed to ${reviewAction} application`, {
+            duration: errorDuration,
+          });
 
           // if (error?.message?.includes('Missing approvals')) {
           //   setTimeout(() => {
@@ -403,7 +415,6 @@ const InstructorsApplicationPage = () => {
           //   }, errorDuration);
           // }
         },
-
       }
     );
   };
@@ -467,10 +478,11 @@ const InstructorsApplicationPage = () => {
                     <button
                       key={instructorItem.uuid}
                       onClick={() => setSelectedInstructorUuid(instructorItem.uuid)}
-                      className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left shadow-sm transition-all duration-150 md:gap-4 md:rounded-xl md:p-4 ${selectedInstructorUuid === instructorItem.uuid
-                        ? 'bg-primary/10 border-primary shadow-md'
-                        : 'bg-background hover:bg-muted border-border'
-                        }`}
+                      className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left shadow-sm transition-all duration-150 md:gap-4 md:rounded-xl md:p-4 ${
+                        selectedInstructorUuid === instructorItem.uuid
+                          ? 'bg-primary/10 border-primary shadow-md'
+                          : 'bg-background hover:bg-muted border-border'
+                      }`}
                     >
                       <Avatar className='h-10 w-10 flex-shrink-0 md:h-12 md:w-12'>
                         <AvatarImage src={instructorData?.profile_picture_url} />
@@ -505,30 +517,33 @@ const InstructorsApplicationPage = () => {
               <div className='border-muted-foreground/10 mb-4 flex gap-3 overflow-x-auto border-b md:mb-6 md:gap-6'>
                 <button
                   onClick={() => setTabs('profile')}
-                  className={`whitespace-nowrap px-2 pb-2 text-sm font-medium transition-colors md:text-[15px] ${tabs === 'profile'
-                    ? 'border-primary text-primary border-b-2 font-extrabold'
-                    : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
+                    tabs === 'profile'
+                      ? 'border-primary text-primary border-b-2 font-extrabold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
                   Profile
                 </button>
 
                 <button
                   onClick={() => setTabs('course-application')}
-                  className={`whitespace-nowrap px-2 pb-2 text-sm font-medium transition-colors md:text-[15px] ${tabs === 'course-application'
-                    ? 'border-primary text-primary border-b-2 font-extrabold'
-                    : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
+                    tabs === 'course-application'
+                      ? 'border-primary text-primary border-b-2 font-extrabold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
                   Courses ({stats.pending})
                 </button>
 
                 <button
                   onClick={() => setTabs('program-application')}
-                  className={`whitespace-nowrap px-2 pb-2 text-sm font-medium transition-colors md:text-[15px] ${tabs === 'program-application'
-                    ? 'border-primary text-primary border-b-2 font-extrabold'
-                    : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
+                    tabs === 'program-application'
+                      ? 'border-primary text-primary border-b-2 font-extrabold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
                   Programs ({programStats.pending})
                 </button>
@@ -551,7 +566,9 @@ const InstructorsApplicationPage = () => {
                       <div className='flex-1'>
                         <div className='flex flex-col gap-2 md:flex-row md:items-start md:justify-between'>
                           <div>
-                            <h2 className='text-xl font-bold md:text-2xl'>{instructor?.full_name}</h2>
+                            <h2 className='text-xl font-bold md:text-2xl'>
+                              {instructor?.full_name}
+                            </h2>
                             <p className='text-muted-foreground text-sm md:text-base'>
                               {instructor?.professional_headline || 'Instructor'}
                             </p>
@@ -720,7 +737,10 @@ const InstructorsApplicationPage = () => {
                     ) : (
                       <div className='space-y-3 md:space-y-4'>
                         {reviews?.map((review: any) => (
-                          <div key={review.uuid} className='border-b pb-3 last:border-0 last:pb-0 md:pb-4'>
+                          <div
+                            key={review.uuid}
+                            className='border-b pb-3 last:border-0 last:pb-0 md:pb-4'
+                          >
                             <div className='mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
                               <div>
                                 <span className='text-muted-foreground text-xs font-bold md:text-sm'>
@@ -735,10 +755,11 @@ const InstructorsApplicationPage = () => {
                                 {[...Array(5)].map((_, i) => (
                                   <Star
                                     key={i}
-                                    className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < (review.rating || 0)
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
-                                      }`}
+                                    className={`h-3.5 w-3.5 md:h-4 md:w-4 ${
+                                      i < (review.rating || 0)
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
                                   />
                                 ))}
                               </div>
@@ -753,7 +774,7 @@ const InstructorsApplicationPage = () => {
 
               {tabs === 'course-application' && (
                 <div className='space-y-4 md:space-y-6'>
-                  <h3 className='font-bold text-md' >Instructor's Application to Train Courses</h3>
+                  <h3 className='text-md font-bold'>Instructor's Application to Train Courses</h3>
 
                   <div className='grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4'>
                     <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
@@ -981,8 +1002,7 @@ const InstructorsApplicationPage = () => {
 
               {tabs === 'program-application' && (
                 <div className='space-y-4 md:space-y-6'>
-                  <h3 className='font-bold text-md' >Instructor's Application to Train Programs</h3>
-
+                  <h3 className='text-md font-bold'>Instructor's Application to Train Programs</h3>
 
                   <div className='grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4'>
                     <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
@@ -1264,13 +1284,13 @@ function ApplicationCard({
   onApprove,
   onReject,
   onRevoke,
-  type = 'course'
+  type = 'course',
 }: {
   application: any;
   onApprove: () => void;
   onReject: () => void;
   onRevoke: () => void;
-  type: string
+  type: string;
 }) {
   const isPending = application.status?.toLowerCase() === 'pending';
   const isApproved = application.status?.toLowerCase() === 'approved';
@@ -1304,9 +1324,7 @@ function ApplicationCard({
     enabled: !isCourse && !!application?.program_uuid,
   });
 
-  const name = isCourse
-    ? courseData?.data?.name
-    : programData?.data?.title;
+  const name = isCourse ? courseData?.data?.name : programData?.data?.title;
 
   return (
     <div className={elimikaDesignSystem.components.listCard.base}>
@@ -1318,7 +1336,7 @@ function ApplicationCard({
         </Badge>
       </div>
 
-      <p className='text-[13px] truncate'>{name}</p>
+      <p className='truncate text-[13px]'>{name}</p>
 
       <Separator className='my-3' />
 

@@ -47,13 +47,19 @@ import {
   Trash2,
   TrendingUp,
   Users,
-  X
+  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { getAllTrainingProgramsOptions, getAllTrainingProgramsQueryKey, getProgramCoursesOptions, getProgramEnrollmentsOptions, moderateProgramMutation } from '../../../../services/client/@tanstack/react-query.gen';
+import {
+  getAllTrainingProgramsOptions,
+  getAllTrainingProgramsQueryKey,
+  getProgramCoursesOptions,
+  getProgramEnrollmentsOptions,
+  moderateProgramMutation,
+} from '../../../../services/client/@tanstack/react-query.gen';
 
 // Course type based on the example data
 interface Course {
@@ -139,19 +145,19 @@ export default function AdminProgramsPage() {
   const { data: programsData, isLoading } = useQuery({
     ...getAllTrainingProgramsOptions({
       query: {
-        pageable: { page, size: 20 }
-      }
+        pageable: { page, size: 20 },
+      },
     }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
-  const allPrograms = programsData?.data?.content || []
+  const allPrograms = programsData?.data?.content || [];
   const programUuids = useMemo(() => allPrograms.map(c => c.uuid).filter(Boolean), [allPrograms]);
 
   const enrollmentQueries = useQueries({
-    queries: programUuids.map((uuid) => ({
+    queries: programUuids.map(uuid => ({
       ...getProgramEnrollmentsOptions({
         path: { programUuid: uuid },
         query: {
@@ -199,7 +205,7 @@ export default function AdminProgramsPage() {
         const searchLower = searchQuery.toLowerCase();
         const matchesSearch =
           program.title.toLowerCase().includes(searchLower) ||
-          program.description?.toLowerCase().includes(searchLower)
+          program.description?.toLowerCase().includes(searchLower);
         // program.category_names.some(cat => cat.toLowerCase().includes(searchLower));
 
         if (!matchesSearch) return false;
@@ -244,10 +250,13 @@ export default function AdminProgramsPage() {
     return Array.from(categories).sort();
   }, [allPrograms]);
 
-  const categoryOptions = useMemo(() => [
-    { label: 'All categories', value: 'all' },
-    ...uniqueCategories.map(cat => ({ label: cat, value: cat }))
-  ], [uniqueCategories]);
+  const categoryOptions = useMemo(
+    () => [
+      { label: 'All categories', value: 'all' },
+      ...uniqueCategories.map(cat => ({ label: cat, value: cat })),
+    ],
+    [uniqueCategories]
+  );
 
   const totalItems = filteredPrograms.length;
   const totalPages = Math.ceil(totalItems / 20);
@@ -281,13 +290,10 @@ export default function AdminProgramsPage() {
         cell: program => (
           <div className='space-y-2 py-1'>
             <div className='flex items-start justify-between gap-2'>
-              <div className='font-semibold line-clamp-2 flex-1'>{program.title}</div>
+              <div className='line-clamp-2 flex-1 font-semibold'>{program.title}</div>
               {/* Show status badge on mobile */}
-              <div className='sm:hidden flex-shrink-0'>
-                <Badge
-                  variant={statusBadgeVariant(program.status)}
-                  className='capitalize text-xs'
-                >
+              <div className='flex-shrink-0 sm:hidden'>
+                <Badge variant={statusBadgeVariant(program.status)} className='text-xs capitalize'>
                   {program.status.replace(/_/g, ' ')}
                 </Badge>
               </div>
@@ -312,10 +318,10 @@ export default function AdminProgramsPage() {
             </div> */}
 
             {/* Mobile-only info */}
-            <div className='sm:hidden flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+            <div className='text-muted-foreground flex flex-wrap items-center gap-2 text-xs sm:hidden'>
               {program.active && (
                 <div className='flex items-center gap-1'>
-                  <CheckCircle2 className='h-3 w-3 text-primary' />
+                  <CheckCircle2 className='text-primary h-3 w-3' />
                   <span>Active</span>
                 </div>
               )}
@@ -327,7 +333,7 @@ export default function AdminProgramsPage() {
 
             {/* Description - hidden on mobile */}
             {program.description && (
-              <div className='text-muted-foreground text-sm line-clamp-2'>
+              <div className='text-muted-foreground line-clamp-2 text-sm'>
                 {stripHtml(truncateText(program.description, 100))}
               </div>
             )}
@@ -339,8 +345,8 @@ export default function AdminProgramsPage() {
         header: 'Status',
         className: 'hidden sm:table-cell',
         cell: program => (
-          <div className='flex flex-col md:flex-row gap-1'>
-            <Badge variant={statusBadgeVariant(program.status)} className='capitalize w-fit'>
+          <div className='flex flex-col gap-1 md:flex-row'>
+            <Badge variant={statusBadgeVariant(program.status)} className='w-fit capitalize'>
               {program.status.replace(/_/g, ' ')}
             </Badge>
             {program.active && (
@@ -349,7 +355,6 @@ export default function AdminProgramsPage() {
                 Active
               </Badge>
             )}
-
           </div>
         ),
       },
@@ -358,7 +363,7 @@ export default function AdminProgramsPage() {
         header: 'Admin Approved',
         className: 'hidden md:table-cell min-w-[140px]',
         cell: program => (
-          <div className='text-sm space-y-1'>
+          <div className='space-y-1 text-sm'>
             {program.admin_approved ? (
               <Badge variant='outline' className='w-fit text-xs'>
                 <CheckCircle2 className='mr-1 h-3 w-3' />
@@ -391,13 +396,9 @@ export default function AdminProgramsPage() {
 
           return (
             <div className='flex items-center gap-2'>
-              <Users className='h-4 w-4 text-muted-foreground' />
-              <span className='text-sm font-medium'>
-                {enrollment?.total ?? 0}
-              </span>
-              <span className='text-xs text-muted-foreground'>
-                / {program.class_limit}
-              </span>
+              <Users className='text-muted-foreground h-4 w-4' />
+              <span className='text-sm font-medium'>{enrollment?.total ?? 0}</span>
+              <span className='text-muted-foreground text-xs'>/ {program.class_limit}</span>
             </div>
           );
         },
@@ -457,11 +458,12 @@ export default function AdminProgramsPage() {
         <div className='flex flex-col gap-6'>
           {/* Description */}
           <p className='text-muted-foreground max-w-3xl text-sm leading-relaxed'>
-            Manage program listings, monitor enrollments, and oversee revenue distribution across your platform.
+            Manage program listings, monitor enrollments, and oversee revenue distribution across
+            your platform.
           </p>
 
           {/* Stats Grid */}
-          <div className='grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6'>
+          <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'>
             <MetricCard
               icon={<BookOpen className='text-primary h-5 w-5' />}
               label='Total programs'
@@ -483,12 +485,12 @@ export default function AdminProgramsPage() {
               value={stats.active}
             />
             <MetricCard
-              icon={<CheckCircle2 className='text-green-600 h-5 w-5' />}
+              icon={<CheckCircle2 className='h-5 w-5 text-green-600' />}
               label='Approved'
               value={stats.approved}
             />
             <MetricCard
-              icon={<X className='text-orange-600 h-5 w-5' />}
+              icon={<X className='h-5 w-5 text-orange-600' />}
               label='Not approved'
               value={stats.notApproved}
             />
@@ -498,29 +500,29 @@ export default function AdminProgramsPage() {
           <div className='flex flex-col gap-3'>
             {/* Search Bar */}
             <div className='relative'>
-              <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+              <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
               <Input
                 placeholder='Search by program name, description, or category…'
                 value={searchQuery}
-                onChange={(e) => {
+                onChange={e => {
                   setSearchQuery(e.target.value);
                   setPage(0);
                 }}
-                className='pl-9 h-9'
+                className='h-9 pl-9'
               />
             </div>
 
             {/* Filters Row */}
-            <div className='flex flex-col sm:flex-row gap-2 sm:gap-3'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:gap-3'>
               {/* Admin Approval Filter */}
               <Select
                 value={adminApprovalFilter}
-                onValueChange={(value) => {
+                onValueChange={value => {
                   setAdminApprovalFilter(value || 'all');
                   setPage(0);
                 }}
               >
-                <SelectTrigger className='w-full sm:w-[180px] h-9'>
+                <SelectTrigger className='h-9 w-full sm:w-[180px]'>
                   <SelectValue placeholder='Admin approval' />
                 </SelectTrigger>
                 <SelectContent>
@@ -535,12 +537,12 @@ export default function AdminProgramsPage() {
               {/* Status Filter */}
               <Select
                 value={statusFilter}
-                onValueChange={(value) => {
+                onValueChange={value => {
                   setStatusFilter(value || 'all');
                   setPage(0);
                 }}
               >
-                <SelectTrigger className='w-full sm:w-[160px] h-9'>
+                <SelectTrigger className='h-9 w-full sm:w-[160px]'>
                   <SelectValue placeholder='Status' />
                 </SelectTrigger>
                 <SelectContent>
@@ -555,12 +557,12 @@ export default function AdminProgramsPage() {
               {/* Active Filter */}
               <Select
                 value={activeFilter}
-                onValueChange={(value) => {
+                onValueChange={value => {
                   setActiveFilter(value || 'all');
                   setPage(0);
                 }}
               >
-                <SelectTrigger className='w-full sm:w-[160px] h-9'>
+                <SelectTrigger className='h-9 w-full sm:w-[160px]'>
                   <SelectValue placeholder='Active' />
                 </SelectTrigger>
                 <SelectContent>
@@ -575,12 +577,12 @@ export default function AdminProgramsPage() {
               {/* Category Filter */}
               <Select
                 value={categoryFilter}
-                onValueChange={(value) => {
+                onValueChange={value => {
                   setCategoryFilter(value || 'all');
                   setPage(0);
                 }}
               >
-                <SelectTrigger className='w-full sm:w-[180px] h-9'>
+                <SelectTrigger className='h-9 w-full sm:w-[180px]'>
                   <SelectValue placeholder='Category' />
                 </SelectTrigger>
                 <SelectContent>
@@ -604,7 +606,7 @@ export default function AdminProgramsPage() {
                   setCategoryFilter('all');
                   setPage(0);
                 }}
-                className='w-full sm:w-auto h-9 text-xs'
+                className='h-9 w-full text-xs sm:w-auto'
               >
                 <X className='h-4 w-4' />
                 Reset
@@ -612,85 +614,86 @@ export default function AdminProgramsPage() {
             </div>
 
             {/* Active Filters Display */}
-            {(searchQuery || statusFilter !== 'all' || activeFilter !== 'all' ||
-              adminApprovalFilter !== 'not_approved' || categoryFilter !== 'all') && (
-                <div className='flex flex-wrap items-center gap-2'>
-                  <span className='text-xs text-muted-foreground'>Active filters:</span>
-                  {searchQuery && (
-                    <Badge variant='secondary' className='text-xs'>
-                      Search: {searchQuery}
-                      <button
-                        onClick={() => {
-                          setSearchQuery('');
-                          setPage(0);
-                        }}
-                        className='ml-1.5 hover:text-destructive'
-                      >
-                        <X className='h-3 w-3' />
-                      </button>
-                    </Badge>
-                  )}
-                  {adminApprovalFilter !== 'not_approved' && (
-                    <Badge variant='secondary' className='text-xs'>
-                      {adminApprovalOptions.find(o => o.value === adminApprovalFilter)?.label}
-                      <button
-                        onClick={() => {
-                          setAdminApprovalFilter('not_approved');
-                          setPage(0);
-                        }}
-                        className='ml-1.5 hover:text-destructive'
-                      >
-                        <X className='h-3 w-3' />
-                      </button>
-                    </Badge>
-                  )}
-                  {statusFilter !== 'all' && (
-                    <Badge variant='secondary' className='text-xs'>
-                      {statusOptions.find(o => o.value === statusFilter)?.label}
-                      <button
-                        onClick={() => {
-                          setStatusFilter('all');
-                          setPage(0);
-                        }}
-                        className='ml-1.5 hover:text-destructive'
-                      >
-                        <X className='h-3 w-3' />
-                      </button>
-                    </Badge>
-                  )}
-                  {activeFilter !== 'all' && (
-                    <Badge variant='secondary' className='text-xs'>
-                      {activeOptions.find(o => o.value === activeFilter)?.label}
-                      <button
-                        onClick={() => {
-                          setActiveFilter('all');
-                          setPage(0);
-                        }}
-                        className='ml-1.5 hover:text-destructive'
-                      >
-                        <X className='h-3 w-3' />
-                      </button>
-                    </Badge>
-                  )}
-                  {categoryFilter !== 'all' && (
-                    <Badge variant='secondary' className='text-xs'>
-                      {categoryOptions.find(o => o.value === categoryFilter)?.label}
-                      <button
-                        onClick={() => {
-                          setCategoryFilter('all');
-                          setPage(0);
-                        }}
-                        className='ml-1.5 hover:text-destructive'
-                      >
-                        <X className='h-3 w-3' />
-                      </button>
-                    </Badge>
-                  )}
-                </div>
-              )}
+            {(searchQuery ||
+              statusFilter !== 'all' ||
+              activeFilter !== 'all' ||
+              adminApprovalFilter !== 'not_approved' ||
+              categoryFilter !== 'all') && (
+              <div className='flex flex-wrap items-center gap-2'>
+                <span className='text-muted-foreground text-xs'>Active filters:</span>
+                {searchQuery && (
+                  <Badge variant='secondary' className='text-xs'>
+                    Search: {searchQuery}
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setPage(0);
+                      }}
+                      className='hover:text-destructive ml-1.5'
+                    >
+                      <X className='h-3 w-3' />
+                    </button>
+                  </Badge>
+                )}
+                {adminApprovalFilter !== 'not_approved' && (
+                  <Badge variant='secondary' className='text-xs'>
+                    {adminApprovalOptions.find(o => o.value === adminApprovalFilter)?.label}
+                    <button
+                      onClick={() => {
+                        setAdminApprovalFilter('not_approved');
+                        setPage(0);
+                      }}
+                      className='hover:text-destructive ml-1.5'
+                    >
+                      <X className='h-3 w-3' />
+                    </button>
+                  </Badge>
+                )}
+                {statusFilter !== 'all' && (
+                  <Badge variant='secondary' className='text-xs'>
+                    {statusOptions.find(o => o.value === statusFilter)?.label}
+                    <button
+                      onClick={() => {
+                        setStatusFilter('all');
+                        setPage(0);
+                      }}
+                      className='hover:text-destructive ml-1.5'
+                    >
+                      <X className='h-3 w-3' />
+                    </button>
+                  </Badge>
+                )}
+                {activeFilter !== 'all' && (
+                  <Badge variant='secondary' className='text-xs'>
+                    {activeOptions.find(o => o.value === activeFilter)?.label}
+                    <button
+                      onClick={() => {
+                        setActiveFilter('all');
+                        setPage(0);
+                      }}
+                      className='hover:text-destructive ml-1.5'
+                    >
+                      <X className='h-3 w-3' />
+                    </button>
+                  </Badge>
+                )}
+                {categoryFilter !== 'all' && (
+                  <Badge variant='secondary' className='text-xs'>
+                    {categoryOptions.find(o => o.value === categoryFilter)?.label}
+                    <button
+                      onClick={() => {
+                        setCategoryFilter('all');
+                        setPage(0);
+                      }}
+                      className='hover:text-destructive ml-1.5'
+                    >
+                      <X className='h-3 w-3' />
+                    </button>
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
-
-
         </div>
       </div>
 
@@ -739,7 +742,7 @@ interface ProgramDetailSheetProps {
 }
 
 function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetProps) {
-  const qc = useQueryClient()
+  const qc = useQueryClient();
 
   const [moderationDialog, setModerationDialog] = useState<{
     open: boolean;
@@ -815,8 +818,8 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
           path: { uuid: program.uuid },
           query: {
             reason: moderationDialog.reason,
-            action: moderationDialog.action
-          }
+            action: moderationDialog.action,
+          },
         },
         {
           onSuccess: data => {
@@ -839,7 +842,7 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className='w-full sm:max-w-2xl md:max-w-3xl lg:max-w-5xl border-l overflow-y-auto'>
+        <SheetContent className='w-full overflow-y-auto border-l sm:max-w-2xl md:max-w-3xl lg:max-w-5xl'>
           <SheetHeader>
             <SheetTitle>Program details</SheetTitle>
             <SheetDescription>
@@ -847,20 +850,17 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
             </SheetDescription>
           </SheetHeader>
           {program ? (
-            <div className='mt-0 mx-2 md:mx-6 mb-12'>
-              <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
-
+            <div className='mx-2 mt-0 mb-12 md:mx-6'>
+              <section className='mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end'>
                 {/* Revenue Card */}
-                <div className="rounded-2xl bg-card text-card-foreground shadow-sm border border-border p-4 sm:p-6 w-full sm:max-w-sm">
-                  <div className="flex flex-col space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Program Price
-                    </h3>
-                    <p className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">
+                <div className='bg-card text-card-foreground border-border w-full rounded-2xl border p-4 shadow-sm sm:max-w-sm sm:p-6'>
+                  <div className='flex flex-col space-y-2'>
+                    <h3 className='text-muted-foreground text-sm font-medium'>Program Price</h3>
+                    <p className='text-primary text-2xl font-bold tracking-tight sm:text-3xl'>
                       KES {program.price?.toLocaleString() || 0}
                     </p>
                     {program.program_type && (
-                      <Badge variant="outline" className="w-fit">
+                      <Badge variant='outline' className='w-fit'>
                         {program.program_type}
                       </Badge>
                     )}
@@ -868,38 +868,37 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
+                <div className='flex w-full flex-col gap-3 sm:w-auto sm:flex-row'>
                   <Button
-                    size="sm"
+                    size='sm'
                     onClick={() => openModerationDialog('approve')}
                     disabled={approveProgram.isPending || program?.admin_approved}
-                    className="w-full sm:w-auto min-w-[110px]"
+                    className='w-full min-w-[110px] sm:w-auto'
                   >
-                    <Edit className="mr-2 h-4 w-4" />
+                    <Edit className='mr-2 h-4 w-4' />
                     {approveProgram.isPending && moderationDialog.action === 'approve' ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className='h-4 w-4 animate-spin' />
                     ) : (
                       'Approve Program'
                     )}
                   </Button>
 
                   <Button
-                    size="sm"
-                    variant="destructive"
+                    size='sm'
+                    variant='destructive'
                     onClick={() => openModerationDialog('reject')}
                     disabled={approveProgram.isPending}
-                    className="w-full sm:w-auto min-w-[100px]"
+                    className='w-full min-w-[100px] sm:w-auto'
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className='mr-2 h-4 w-4' />
                     {approveProgram.isPending && moderationDialog.action === 'reject' ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className='h-4 w-4 animate-spin' />
                     ) : (
                       'Reject Program'
                     )}
                   </Button>
                 </div>
               </section>
-
 
               <Tabs defaultValue='details' className='w-full'>
                 <TabsList className='grid w-full grid-cols-3'>
@@ -913,7 +912,7 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                     <form className='space-y-6' onSubmit={form.handleSubmit(handleSubmit)}>
                       {/* Program Info Section */}
                       <div className='space-y-4'>
-                        <div className='flex flex-row items-center justify-between' >
+                        <div className='flex flex-row items-center justify-between'>
                           <h3 className='text-sm font-semibold'>Basic information</h3>
 
                           {program.admin_approved ? (
@@ -1000,7 +999,11 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                                   <Input
                                     type='number'
                                     value={field.value ?? ''}
-                                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                    onChange={e =>
+                                      field.onChange(
+                                        e.target.value ? Number(e.target.value) : undefined
+                                      )
+                                    }
                                     min={1}
                                   />
                                 </FormControl>
@@ -1025,7 +1028,11 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                                 <Input
                                   type='number'
                                   value={field.value ?? ''}
-                                  onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                  onChange={e =>
+                                    field.onChange(
+                                      e.target.value ? Number(e.target.value) : undefined
+                                    )
+                                  }
                                   placeholder='0'
                                 />
                               </FormControl>
@@ -1041,11 +1048,7 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                             <FormItem>
                               <FormLabel>Objectives</FormLabel>
                               <FormControl>
-                                <Textarea
-                                  placeholder='Program objectives'
-                                  rows={3}
-                                  {...field}
-                                />
+                                <Textarea placeholder='Program objectives' rows={3} {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1059,11 +1062,7 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                             <FormItem>
                               <FormLabel>Prerequisites</FormLabel>
                               <FormControl>
-                                <Textarea
-                                  placeholder='Program prerequisites'
-                                  rows={3}
-                                  {...field}
-                                />
+                                <Textarea placeholder='Program prerequisites' rows={3} {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1087,7 +1086,10 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                                 </p>
                               </div>
                               <FormControl>
-                                <Switch checked={Boolean(field.value)} onCheckedChange={field.onChange} />
+                                <Switch
+                                  checked={Boolean(field.value)}
+                                  onCheckedChange={field.onChange}
+                                />
                               </FormControl>
                             </FormItem>
                           )}
@@ -1096,16 +1098,16 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
 
                       {/* Metadata */}
                       <div className='bg-muted/40 rounded-lg border p-4'>
-                        <h4 className='text-sm font-semibold mb-3'>Metadata</h4>
+                        <h4 className='mb-3 text-sm font-semibold'>Metadata</h4>
                         <div className='grid gap-3 text-xs'>
                           <div className='grid gap-2 sm:grid-cols-2'>
                             <div>
                               <span className='text-muted-foreground'>Program UUID:</span>
-                              <p className='font-mono mt-0.5'>{program.uuid}</p>
+                              <p className='mt-0.5 font-mono'>{program.uuid}</p>
                             </div>
                             <div>
                               <span className='text-muted-foreground'>Creator UUID:</span>
-                              <p className='font-mono mt-0.5'>{program.course_creator_uuid}</p>
+                              <p className='mt-0.5 font-mono'>{program.course_creator_uuid}</p>
                             </div>
                             <div>
                               <span className='text-muted-foreground'>Created:</span>
@@ -1131,10 +1133,10 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                         </div>
                       </div>
 
-                      <Button type='submit' className='w-full'
-                        disabled={true}
-                      >
-                        {updateProgram.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                      <Button type='submit' className='w-full' disabled={true}>
+                        {updateProgram.isPending && (
+                          <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        )}
                         Save changes
                       </Button>
                     </form>
@@ -1159,7 +1161,7 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
       </Sheet>
 
       {/* Moderation Dialog */}
-      <Dialog open={moderationDialog.open} onOpenChange={(open) => !open && closeModerationDialog()}>
+      <Dialog open={moderationDialog.open} onOpenChange={open => !open && closeModerationDialog()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -1182,7 +1184,7 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                     : 'Enter rejection reason...'
                 }
                 value={moderationDialog.reason}
-                onChange={(e) => setModerationDialog(prev => ({ ...prev, reason: e.target.value }))}
+                onChange={e => setModerationDialog(prev => ({ ...prev, reason: e.target.value }))}
                 rows={4}
               />
             </div>
@@ -1198,7 +1200,10 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
             <Button
               variant={moderationDialog.action === 'reject' ? 'destructive' : 'default'}
               onClick={handleModerationSubmit}
-              disabled={approveProgram.isPending || (moderationDialog.action === 'reject' && !moderationDialog.reason.trim())}
+              disabled={
+                approveProgram.isPending ||
+                (moderationDialog.action === 'reject' && !moderationDialog.reason.trim())
+              }
             >
               {approveProgram.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
               {moderationDialog.action === 'approve' ? 'Approve' : 'Reject'}
@@ -1211,7 +1216,14 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
 }
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../../components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../components/ui/dialog';
 import { Label } from '../../../../components/ui/label';
 import { useProgramLessonsWithContent } from '../../../../hooks/use-programlessonwithcontent';
 import { useStudentsMap } from '../../../../hooks/use-studentsMap';
@@ -1258,7 +1270,7 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
     contentTypeMap: programContentTypeMap,
   } = useProgramLessonsWithContent({
     programUuid: program?.uuid as string,
-    programCourses: programCourses
+    programCourses: programCourses,
   });
 
   const handleViewContent = (content: ContentItem, contentType: string) => {
@@ -1289,9 +1301,12 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
       0
     );
     const totalItems = coursesWithLessons.reduce((courseSum, course) => {
-      return courseSum + course.lessons.reduce((lessonSum, lesson) => {
-        return lessonSum + (lesson?.content?.data?.length || 0);
-      }, 0);
+      return (
+        courseSum +
+        course.lessons.reduce((lessonSum, lesson) => {
+          return lessonSum + (lesson?.content?.data?.length || 0);
+        }, 0)
+      );
     }, 0);
 
     return { totalCourses, totalLessons, totalItems };
@@ -1300,10 +1315,10 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
   return (
     <div className='space-y-6'>
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className='mb-3 flex items-center justify-between'>
           <h3 className='text-sm font-semibold'>Program content</h3>
           {!isLoading && coursesWithLessons && coursesWithLessons.length > 0 && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className='text-muted-foreground flex items-center gap-2 text-xs'>
               <span>{contentStats.totalCourses} courses</span>
               <span>•</span>
               <span>{contentStats.totalLessons} lessons</span>
@@ -1318,9 +1333,9 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
           <Card>
             <CardContent className='p-6'>
               <div className='flex flex-col items-center justify-center py-12 text-center'>
-                <Loader2 className='h-12 w-12 text-primary mb-4 animate-spin' />
-                <h4 className='text-sm font-semibold mb-2'>Loading program content...</h4>
-                <p className='text-sm text-muted-foreground max-w-sm'>
+                <Loader2 className='text-primary mb-4 h-12 w-12 animate-spin' />
+                <h4 className='mb-2 text-sm font-semibold'>Loading program content...</h4>
+                <p className='text-muted-foreground max-w-sm text-sm'>
                   Please wait while we fetch the courses and materials.
                 </p>
               </div>
@@ -1333,15 +1348,15 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
           <Card>
             <CardContent className='p-6'>
               <div className='flex flex-col items-center justify-center py-12 text-center'>
-                <div className="bg-primary/10 rounded-full p-4 mb-4">
-                  <FileQuestion className='h-12 w-12 text-primary' />
+                <div className='bg-primary/10 mb-4 rounded-full p-4'>
+                  <FileQuestion className='text-primary h-12 w-12' />
                 </div>
-                <h4 className='text-base font-semibold mb-2 text-foreground'>
+                <h4 className='text-foreground mb-2 text-base font-semibold'>
                   No content available yet
                 </h4>
-                <p className='text-sm text-muted-foreground max-w-sm mb-4'>
-                  This program doesn&apos;t have any courses or materials yet.
-                  Content will appear here once it&apos;s been added.
+                <p className='text-muted-foreground mb-4 max-w-sm text-sm'>
+                  This program doesn&apos;t have any courses or materials yet. Content will appear
+                  here once it&apos;s been added.
                 </p>
               </div>
             </CardContent>
@@ -1351,69 +1366,73 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
         {/* Program Content */}
         {!isLoading && coursesWithLessons && coursesWithLessons.length > 0 && (
           <Card>
-            <CardContent className="space-y-6 p-6">
+            <CardContent className='space-y-6 p-6'>
               {coursesWithLessons.map((courseData, courseIndex) => {
                 return (
-                  <div key={courseData.course.uuid} className="space-y-4">
+                  <div key={courseData.course.uuid} className='space-y-4'>
                     {/* Course Header */}
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex min-h-10 min-w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    <div className='border-primary/20 bg-primary/5 flex items-center justify-between gap-3 rounded-lg border px-4 py-3'>
+                      <div className='flex items-center gap-3'>
+                        <div className='bg-primary/10 text-primary flex min-h-10 min-w-10 items-center justify-center rounded-full text-sm font-bold'>
                           {courseIndex + 1}
                         </div>
                         <div>
-                          <h4 className="font-semibold text-foreground">
+                          <h4 className='text-foreground font-semibold'>
                             {courseData.course.name}
                           </h4>
                           {courseData.course.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-1">
+                            <p className='text-muted-foreground line-clamp-1 text-xs'>
                               {stripHtml(courseData.course.description)}
                             </p>
                           )}
                         </div>
                       </div>
-                      <Badge variant="secondary" className="text-xs gap-1">
-                        <FileText className="h-3 w-3" />
-                        {courseData.lessons.length} {courseData.lessons.length === 1 ? 'lesson' : 'lessons'}
+                      <Badge variant='secondary' className='gap-1 text-xs'>
+                        <FileText className='h-3 w-3' />
+                        {courseData.lessons.length}{' '}
+                        {courseData.lessons.length === 1 ? 'lesson' : 'lessons'}
                       </Badge>
                     </div>
 
                     {/* Lessons within this course */}
                     {courseData.lessons.length === 0 ? (
-                      <div className="ml-4 rounded-lg border border-dashed border-border bg-muted/20 p-4 text-center">
-                        <p className="text-sm text-muted-foreground">
-                          No lessons in this course
-                        </p>
+                      <div className='border-border bg-muted/20 ml-4 rounded-lg border border-dashed p-4 text-center'>
+                        <p className='text-muted-foreground text-sm'>No lessons in this course</p>
                       </div>
                     ) : (
-                      <div className="space-y-4 ml-4">
+                      <div className='ml-4 space-y-4'>
                         {courseData.lessons.map((skill, skillIndex) => {
-                          const hasLessonContent = skill?.content?.data && skill.content.data.length > 0;
+                          const hasLessonContent =
+                            skill?.content?.data && skill.content.data.length > 0;
 
                           return (
-                            <div key={skill.lesson.uuid} className="space-y-3">
+                            <div key={skill.lesson.uuid} className='space-y-3'>
                               {/* Lesson Header */}
-                              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-foreground">
+                              <div className='border-border bg-muted/30 flex items-center gap-3 rounded-lg border px-4 py-3'>
+                                <div className='bg-muted text-foreground flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold'>
                                   {skillIndex + 1}
                                 </div>
-                                <div className="flex-1">
-                                  <h5 className="font-medium text-foreground">
+                                <div className='flex-1'>
+                                  <h5 className='text-foreground font-medium'>
                                     {skill.lesson?.title}
                                   </h5>
                                   {skill.lesson?.description && (
-                                    <p className="text-xs text-muted-foreground line-clamp-1">
+                                    <p className='text-muted-foreground line-clamp-1 text-xs'>
                                       {stripHtml(skill.lesson.description)}
                                     </p>
                                   )}
                                 </div>
                                 {hasLessonContent ? (
-                                  <Badge variant="outline" className="text-xs gap-1">
-                                    <FileText className="h-3 w-3" />
-                                    {skill.content.data.length} {skill.content.data.length === 1 ? 'item' : 'items'}
+                                  <Badge variant='outline' className='gap-1 text-xs'>
+                                    <FileText className='h-3 w-3' />
+                                    {skill.content.data.length}{' '}
+                                    {skill.content.data.length === 1 ? 'item' : 'items'}
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className="text-xs text-muted-foreground">
+                                  <Badge
+                                    variant='outline'
+                                    className='text-muted-foreground text-xs'
+                                  >
                                     No content
                                   </Badge>
                                 )}
@@ -1421,35 +1440,38 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
 
                               {/* Lesson Content */}
                               {!hasLessonContent ? (
-                                <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-center">
-                                  <p className="text-xs text-muted-foreground">
+                                <div className='border-border bg-muted/20 rounded-lg border border-dashed p-3 text-center'>
+                                  <p className='text-muted-foreground text-xs'>
                                     No materials added to this lesson
                                   </p>
                                 </div>
                               ) : (
-                                <div className="space-y-2">
+                                <div className='space-y-2'>
                                   {skill.content.data.map((c, cIndex) => {
-                                    const contentType = programContentTypeMap[c.content_type_uuid] || 'file';
+                                    const contentType =
+                                      programContentTypeMap[c.content_type_uuid] || 'file';
 
                                     return (
                                       <div
                                         key={c.uuid}
-                                        className="group flex items-center justify-between rounded-lg border border-border bg-card p-3 hover:bg-accent/50 hover:border-primary/50 transition-all"
+                                        className='group border-border bg-card hover:bg-accent/50 hover:border-primary/50 flex items-center justify-between rounded-lg border p-3 transition-all'
                                       >
-                                        <div className="flex items-center gap-3">
-                                          <div className="rounded-lg bg-muted p-2 group-hover:bg-primary/10 transition-colors">
+                                        <div className='flex items-center gap-3'>
+                                          <div className='bg-muted group-hover:bg-primary/10 rounded-lg p-2 transition-colors'>
                                             {getResourceIcon(contentType)}
                                           </div>
                                           <div>
-                                            <div className="font-medium text-foreground">
+                                            <div className='text-foreground font-medium'>
                                               {c.title}
                                             </div>
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                                              <span className="capitalize">{contentType}</span>
+                                            <div className='text-muted-foreground mt-0.5 flex items-center gap-2 text-xs'>
+                                              <span className='capitalize'>{contentType}</span>
                                               {c.description && (
                                                 <>
                                                   <span>•</span>
-                                                  <span className="line-clamp-1">{c.description}</span>
+                                                  <span className='line-clamp-1'>
+                                                    {c.description}
+                                                  </span>
                                                 </>
                                               )}
                                             </div>
@@ -1458,11 +1480,11 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
 
                                         <Button
                                           onClick={() => handleViewContent(c, contentType)}
-                                          variant="outline"
-                                          size="sm"
-                                          className="gap-2"
+                                          variant='outline'
+                                          size='sm'
+                                          className='gap-2'
                                         >
-                                          <Eye className="h-3 w-3" />
+                                          <Eye className='h-3 w-3' />
                                           View
                                         </Button>
                                       </div>
@@ -1513,29 +1535,33 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
           <h3 className='text-sm font-semibold'>Program details</h3>
 
           <div className='grid gap-4 sm:grid-cols-2'>
-            <Card className="p-0">
-              <CardContent className="p-4">
-                <h4 className='text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide'>
+            <Card className='p-0'>
+              <CardContent className='p-4'>
+                <h4 className='text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase'>
                   Objectives
                 </h4>
                 <div
-                  className='text-sm text-foreground prose prose-sm max-w-none'
+                  className='text-foreground prose prose-sm max-w-none text-sm'
                   dangerouslySetInnerHTML={{
-                    __html: program.objectives || '<p class="text-muted-foreground italic">No objectives specified</p>'
+                    __html:
+                      program.objectives ||
+                      '<p class="text-muted-foreground italic">No objectives specified</p>',
                   }}
                 />
               </CardContent>
             </Card>
 
-            <Card className="p-0">
-              <CardContent className="p-4">
-                <h4 className='text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide'>
+            <Card className='p-0'>
+              <CardContent className='p-4'>
+                <h4 className='text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase'>
                   Prerequisites
                 </h4>
                 <div
-                  className='text-sm text-foreground prose prose-sm max-w-none'
+                  className='text-foreground prose prose-sm max-w-none text-sm'
                   dangerouslySetInnerHTML={{
-                    __html: program.prerequisites || '<p class="text-muted-foreground italic">No prerequisites</p>'
+                    __html:
+                      program.prerequisites ||
+                      '<p class="text-muted-foreground italic">No prerequisites</p>',
                   }}
                 />
               </CardContent>
@@ -1543,15 +1569,15 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
           </div>
 
           <div className='grid gap-4 sm:grid-cols-2'>
-            <Card className="p-0">
+            <Card className='p-0'>
               <CardContent className='p-4'>
                 <div className='flex items-center gap-3'>
                   <div className='bg-primary/10 rounded-full p-2'>
-                    <Users className='h-4 w-4 text-primary' />
+                    <Users className='text-primary h-4 w-4' />
                   </div>
                   <div>
-                    <div className='text-xs text-muted-foreground font-medium'>Class limit</div>
-                    <div className='text-sm font-semibold text-foreground'>
+                    <div className='text-muted-foreground text-xs font-medium'>Class limit</div>
+                    <div className='text-foreground text-sm font-semibold'>
                       {program.class_limit} student{program.class_limit !== 1 ? 's' : ''}
                     </div>
                   </div>
@@ -1559,15 +1585,15 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
               </CardContent>
             </Card>
 
-            <Card className="p-0">
+            <Card className='p-0'>
               <CardContent className='p-4'>
                 <div className='flex items-center gap-3'>
                   <div className='bg-primary/10 rounded-full p-2'>
-                    <Clock className='h-4 w-4 text-primary' />
+                    <Clock className='text-primary h-4 w-4' />
                   </div>
                   <div>
-                    <div className='text-xs text-muted-foreground font-medium'>Duration</div>
-                    <div className='text-sm font-semibold text-foreground'>
+                    <div className='text-muted-foreground text-xs font-medium'>Duration</div>
+                    <div className='text-foreground text-sm font-semibold'>
                       {program.total_duration_display}
                     </div>
                   </div>
@@ -1583,8 +1609,8 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
 
 // Update enrollments placeholder for programs
 function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
-  const size = 10
-  const [page, setPage] = useState(0)
+  const size = 10;
+  const [page, setPage] = useState(0);
 
   const { data, isFetching } = useQuery({
     ...getProgramEnrollmentsOptions({
@@ -1603,12 +1629,12 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
     enabled: !!program?.uuid,
   });
 
-  const enrollments = data?.data?.content || []
-  const pagination = data?.data?.metadata
+  const enrollments = data?.data?.content || [];
+  const pagination = data?.data?.metadata;
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage)
-  }
+    setPage(newPage);
+  };
 
   const studentUuids = useMemo(() => {
     return Array.from(new Set(enrollments.map((e: any) => e.student_uuid).filter(Boolean)));
@@ -1616,18 +1642,17 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
 
   const { studentsMap, isLoading: isLoadingStudents } = useStudentsMap(studentUuids);
 
-  const activeEnrollments = enrollments.filter((i: any) => i?.status === "active")
-  const activeStudents = activeEnrollments.length
+  const activeEnrollments = enrollments.filter((i: any) => i?.status === 'active');
+  const activeStudents = activeEnrollments.length;
   const averageProgress =
     activeStudents === 0
       ? 0
       : activeEnrollments.reduce(
-        (sum: number, student: any) =>
-          sum + (student?.progressPercentage || 0),
-        0
-      ) / activeStudents
+          (sum: number, student: any) => sum + (student?.progressPercentage || 0),
+          0
+        ) / activeStudents;
 
-  const isTableLoading = isFetching || isLoadingStudents
+  const isTableLoading = isFetching || isLoadingStudents;
 
   return (
     <div className='space-y-6'>
@@ -1637,10 +1662,10 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
           <CardContent className='p-4'>
             <div className='flex items-center gap-3'>
               <div className='bg-primary/10 rounded-full p-2'>
-                <Users className='h-5 w-5 text-primary' />
+                <Users className='text-primary h-5 w-5' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground font-medium'>Total enrollments</p>
+                <p className='text-muted-foreground text-xs font-medium'>Total enrollments</p>
                 <p className='text-xl font-semibold'>{enrollments.length}</p>
               </div>
             </div>
@@ -1651,10 +1676,10 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
           <CardContent className='p-4'>
             <div className='flex items-center gap-3'>
               <div className='bg-primary/10 rounded-full p-2'>
-                <TrendingUp className='h-5 w-5 text-primary' />
+                <TrendingUp className='text-primary h-5 w-5' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground font-medium'>Active students</p>
+                <p className='text-muted-foreground text-xs font-medium'>Active students</p>
                 <p className='text-xl font-semibold'>{activeStudents}</p>
               </div>
             </div>
@@ -1665,10 +1690,10 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
           <CardContent className='p-4'>
             <div className='flex items-center gap-3'>
               <div className='bg-primary/10 rounded-full p-2'>
-                <CheckCircle2 className='h-5 w-5 text-primary' />
+                <CheckCircle2 className='text-primary h-5 w-5' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground font-medium'>Completion rate</p>
+                <p className='text-muted-foreground text-xs font-medium'>Completion rate</p>
                 <p className='text-xl font-semibold'>{Math.round(averageProgress)}%</p>
               </div>
             </div>
@@ -1679,10 +1704,10 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
           <CardContent className='p-4'>
             <div className='flex items-center gap-3'>
               <div className='bg-primary/10 rounded-full p-2'>
-                <Clock className='h-5 w-5 text-primary' />
+                <Clock className='text-primary h-5 w-5' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground font-medium'>Avg. progress</p>
+                <p className='text-muted-foreground text-xs font-medium'>Avg. progress</p>
                 <p className='text-xl font-semibold'>{Math.round(averageProgress)}%</p>
               </div>
             </div>
@@ -1691,119 +1716,106 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold mb-3">
-          Enrollment overview
-        </h3>
+        <h3 className='mb-3 text-sm font-semibold'>Enrollment overview</h3>
 
         <Card className='pt-0'>
-          <CardContent className="p-0">
+          <CardContent className='p-0'>
             {enrollments.length === 0 && !isFetching ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="bg-primary/10 rounded-full p-4 mb-4">
-                  <Users className="h-8 w-8 text-primary" />
+              <div className='flex flex-col items-center justify-center py-16 text-center'>
+                <div className='bg-primary/10 mb-4 rounded-full p-4'>
+                  <Users className='text-primary h-8 w-8' />
                 </div>
 
-                <h4 className="text-base font-semibold mb-1">
-                  No enrollments yet
-                </h4>
+                <h4 className='mb-1 text-base font-semibold'>No enrollments yet</h4>
 
-                <p className="text-sm text-muted-foreground max-w-sm mb-4">
-                  This program doesn't have any students enrolled yet.
-                  Once learners join, their progress and activity will appear here.
+                <p className='text-muted-foreground mb-4 max-w-sm text-sm'>
+                  This program doesn't have any students enrolled yet. Once learners join, their
+                  progress and activity will appear here.
                 </p>
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto rounded-2xl">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted">
-                      <tr className="text-left">
-                        <th className="p-4 font-medium">Student</th>
-                        <th className="p-4 font-medium">Status</th>
-                        <th className="p-4 font-medium">Progress</th>
-                        <th className="p-4 font-medium">Duration</th>
-                        <th className="p-4 font-medium">Enrolled</th>
+                <div className='overflow-x-auto rounded-2xl'>
+                  <table className='w-full text-sm'>
+                    <thead className='bg-muted'>
+                      <tr className='text-left'>
+                        <th className='p-4 font-medium'>Student</th>
+                        <th className='p-4 font-medium'>Status</th>
+                        <th className='p-4 font-medium'>Progress</th>
+                        <th className='p-4 font-medium'>Duration</th>
+                        <th className='p-4 font-medium'>Enrolled</th>
                       </tr>
                     </thead>
 
                     <tbody>
-                      {isTableLoading ? (
-                        Array.from({ length: 5 }).map((_, index) => (
-                          <tr
-                            key={`skeleton-${index}`}
-                            className="border-t"
-                          >
-                            <td className="p-4">
-                              <Skeleton className="h-4 w-32" />
-                            </td>
-                            <td className="p-4">
-                              <Skeleton className="h-4 w-16" />
-                            </td>
-                            <td className="p-4">
-                              <Skeleton className="h-4 w-12" />
-                            </td>
-                            <td className="p-4">
-                              <Skeleton className="h-4 w-16" />
-                            </td>
-                            <td className="p-4">
-                              <Skeleton className="h-4 w-20" />
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        enrollments.map((enrollment: any) => {
-                          const student = studentsMap[enrollment.student_uuid]
-
-                          return (
-                            <tr
-                              key={enrollment.uuid}
-                              className="border-t hover:bg-muted/40 transition-colors"
-                            >
-                              <td className="p-4 font-medium">
-                                {student?.full_name || "—"}
+                      {isTableLoading
+                        ? Array.from({ length: 5 }).map((_, index) => (
+                            <tr key={`skeleton-${index}`} className='border-t'>
+                              <td className='p-4'>
+                                <Skeleton className='h-4 w-32' />
                               </td>
-
-                              <td className="p-4">
-                                <Badge
-                                  variant={enrollment.status === 'active' ? 'default' : 'secondary'}
-                                  className="capitalize"
-                                >
-                                  {enrollment.status}
-                                </Badge>
+                              <td className='p-4'>
+                                <Skeleton className='h-4 w-16' />
                               </td>
-
-                              <td className="p-4">
-                                {enrollment.progress_display || '0%'}
+                              <td className='p-4'>
+                                <Skeleton className='h-4 w-12' />
                               </td>
-
-                              <td className="p-4">
-                                {enrollment.enrollment_duration || '—'}
+                              <td className='p-4'>
+                                <Skeleton className='h-4 w-16' />
                               </td>
-
-                              <td className="p-4">
-                                {enrollment.enrollment_date
-                                  ? new Date(enrollment.enrollment_date).toLocaleDateString()
-                                  : '—'}
+                              <td className='p-4'>
+                                <Skeleton className='h-4 w-20' />
                               </td>
                             </tr>
-                          )
-                        })
-                      )}
+                          ))
+                        : enrollments.map((enrollment: any) => {
+                            const student = studentsMap[enrollment.student_uuid];
+
+                            return (
+                              <tr
+                                key={enrollment.uuid}
+                                className='hover:bg-muted/40 border-t transition-colors'
+                              >
+                                <td className='p-4 font-medium'>{student?.full_name || '—'}</td>
+
+                                <td className='p-4'>
+                                  <Badge
+                                    variant={
+                                      enrollment.status === 'active' ? 'default' : 'secondary'
+                                    }
+                                    className='capitalize'
+                                  >
+                                    {enrollment.status}
+                                  </Badge>
+                                </td>
+
+                                <td className='p-4'>{enrollment.progress_display || '0%'}</td>
+
+                                <td className='p-4'>{enrollment.enrollment_duration || '—'}</td>
+
+                                <td className='p-4'>
+                                  {enrollment.enrollment_date
+                                    ? new Date(enrollment.enrollment_date).toLocaleDateString()
+                                    : '—'}
+                                </td>
+                              </tr>
+                            );
+                          })}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Pagination */}
                 {pagination && !isTableLoading && (
-                  <div className="flex items-center justify-between p-4 border-t">
-                    <p className="text-sm text-muted-foreground">
+                  <div className='flex items-center justify-between border-t p-4'>
+                    <p className='text-muted-foreground text-sm'>
                       Page {pagination?.pageNumber + 1} of {pagination.totalPages}
                     </p>
 
-                    <div className="flex gap-2">
+                    <div className='flex gap-2'>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant='outline'
+                        size='sm'
                         disabled={page === 0}
                         onClick={() => handlePageChange(page - 1)}
                       >
@@ -1811,8 +1823,8 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
                       </Button>
 
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant='outline'
+                        size='sm'
                         disabled={page + 1 >= pagination?.totalPages}
                         onClick={() => handlePageChange(page + 1)}
                       >
@@ -1828,7 +1840,7 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
       </div>
 
       {/* Current settings */}
-      <div className='border rounded-lg p-4 space-y-2'>
+      <div className='space-y-2 rounded-lg border p-4'>
         <h4 className='text-sm font-semibold'>Program settings</h4>
         <div className='flex items-center justify-between text-sm'>
           <span className='text-muted-foreground'>Active:</span>
@@ -1853,7 +1865,7 @@ interface MetricCardProps {
 
 function MetricCard({ icon, label, value }: MetricCardProps) {
   return (
-    <Card className='bg-background/80 p-0 supports-[backdrop-filter]:bg-background/60 backdrop-blur'>
+    <Card className='bg-background/80 supports-[backdrop-filter]:bg-background/60 p-0 backdrop-blur'>
       <CardContent className='flex items-center gap-3 p-4'>
         <div className='bg-primary/10 rounded-full p-2'>{icon}</div>
         <div>

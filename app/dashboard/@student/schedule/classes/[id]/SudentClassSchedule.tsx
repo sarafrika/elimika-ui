@@ -177,8 +177,9 @@ export function ClassScheduleCalendar({ schedules, onScheduleClick }: ClassSched
                   className={`min-h-[60px] rounded-md border p-0.5 text-xs transition-colors sm:min-h-[90px] sm:p-1 ${isOutsideMonth ? 'bg-muted/30 text-muted-foreground' : 'bg-card'} ${sessions.length ? 'border-primary hover:bg-primary/5' : ''} ${isToday ? 'ring-primary ring-1 sm:ring-2' : ''} `}
                 >
                   <div
-                    className={`text-right text-[10px] font-medium sm:text-xs ${isToday ? 'text-primary' : ''
-                      }`}
+                    className={`text-right text-[10px] font-medium sm:text-xs ${
+                      isToday ? 'text-primary' : ''
+                    }`}
                   >
                     {format(date, 'd')}
                   </div>
@@ -191,8 +192,9 @@ export function ClassScheduleCalendar({ schedules, onScheduleClick }: ClassSched
                         <button
                           key={s.uuid}
                           onClick={() => onScheduleClick?.(s)}
-                          className={`hover:bg-primary/20 w-full rounded px-0.5 py-0.5 text-left text-[8px] transition-colors sm:px-1 sm:text-[10px] ${isPast ? 'opacity-60' : ''
-                            }`}
+                          className={`hover:bg-primary/20 w-full rounded px-0.5 py-0.5 text-left text-[8px] transition-colors sm:px-1 sm:text-[10px] ${
+                            isPast ? 'opacity-60' : ''
+                          }`}
                         >
                           <div className='hidden truncate text-sm font-semibold sm:block'>
                             {s.title}
@@ -215,7 +217,7 @@ export function ClassScheduleCalendar({ schedules, onScheduleClick }: ClassSched
           </div>
 
           {/* Range Hint */}
-          <div className='flex flex-row items-center justify-between text-muted-foreground mt-3 text-center text-[11px] sm:text-xs' >
+          <div className='text-muted-foreground mt-3 flex flex-row items-center justify-between text-center text-[11px] sm:text-xs'>
             <p>There are {schedules.length} instances under this class</p>
             <p>
               Showing schedule from <strong>{format(minMonth, 'MMM d, yyyy')}</strong> to{' '}

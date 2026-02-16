@@ -33,14 +33,14 @@ export function CertificateUploadModal({
   onDragActive,
   dragActive,
 }: CertificateUploadModalProps) {
-  const student = useStudent()
+  const student = useStudent();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(selectedFile);
 
-  const uploadCertMut = useMutation(uploadCertificatePdfMutation())
+  const uploadCertMut = useMutation(uploadCertificatePdfMutation());
 
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -95,17 +95,20 @@ export function CertificateUploadModal({
       const formData = new FormData();
       formData.append('file', file);
 
-      uploadCertMut.mutate({
-        path: { uuid: student?.uuid as string },
-        body: { file: file as any }
-      }, {
-        onSuccess: (data) => {
-          toast.success(data?.message)
+      uploadCertMut.mutate(
+        {
+          path: { uuid: student?.uuid as string },
+          body: { file: file as any },
         },
-        onError: (error) => {
-          toast.error(error?.message)
+        {
+          onSuccess: data => {
+            toast.success(data?.message);
+          },
+          onError: error => {
+            toast.error(error?.message);
+          },
         }
-      })
+      );
 
       onUploadComplete();
       setFile(null);
@@ -151,8 +154,9 @@ export function CertificateUploadModal({
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                }`}
+              className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+                dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+              }`}
             >
               <Upload className='text-muted-foreground mx-auto mb-3 h-8 w-8' />
               <p className='text-foreground mb-2 text-sm font-medium'>

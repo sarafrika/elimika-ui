@@ -15,13 +15,26 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Award, CheckCircle, FileText, LockIcon, Unlock, Upload, Users } from 'lucide-react';
+import {
+  AlertCircle,
+  Award,
+  CheckCircle,
+  FileText,
+  LockIcon,
+  Unlock,
+  Upload,
+  Users,
+} from 'lucide-react';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useInstructor } from '../../../../context/instructor-context';
 import { cn } from '../../../../lib/utils';
-import { getInstructorDocumentsQueryKey, getWalletOptions, uploadInstructorDocumentMutation } from '../../../../services/client/@tanstack/react-query.gen';
+import {
+  getInstructorDocumentsQueryKey,
+  getWalletOptions,
+  uploadInstructorDocumentMutation,
+} from '../../../../services/client/@tanstack/react-query.gen';
 import { SkillsFundWalletCard } from '../../_components/skill-fund-wallet';
 
 const skillsFundApplications: any[] = [
@@ -54,7 +67,6 @@ const skillsFundApplications: any[] = [
   //   reviewedAt: new Date('2025-10-05T15:00:00'),
   //   reviewedBy: 'admin_002',
   // },
-
   // {
   //   id: 'app-002',
   //   applicantId: 'instructor_001',
@@ -80,7 +92,6 @@ const skillsFundApplications: any[] = [
   //   disbursedAt: new Date('2025-09-20T10:00:00'),
   //   linkedCourseId: 'course_099',
   // },
-
   // {
   //   id: 'app-003',
   //   applicantId: 'student_002',
@@ -95,7 +106,6 @@ const skillsFundApplications: any[] = [
   //   documents: [],
   //   status: 'draft',
   // },
-
   // {
   //   id: 'app-004',
   //   applicantId: 'student_003',
@@ -120,7 +130,6 @@ const skillsFundApplications: any[] = [
   //   reviewedBy: 'admin_003',
   //   rejectionReason: 'Incomplete documentation and unclear learning goals.',
   // },
-
   // {
   //   id: 'app-005',
   //   applicantId: 'instructor_002',
@@ -163,7 +172,7 @@ type Props = {
 const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) => {
   const instructor = useInstructor();
   const instructorApplications = skillsFundApplications;
-  const qc = useQueryClient()
+  const qc = useQueryClient();
 
   const { data: walletData } = useQuery({
     ...getWalletOptions({ path: { userUuid: instructor?.user_uuid as string } }),
@@ -172,13 +181,12 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false)
+  const [isDragging, setIsDragging] = useState(false);
 
   const isPdfFile = (file: File) =>
     file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
-  const uploadInstructorDocument = useMutation(uploadInstructorDocumentMutation())
-
+  const uploadInstructorDocument = useMutation(uploadInstructorDocumentMutation());
 
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -270,7 +278,7 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
   };
 
   // Handle opening modal with auto-filled data from opportunity card
-  const handleApplyToOpportunity = (opportunity: typeof trainingOpportunities[0]) => {
+  const handleApplyToOpportunity = (opportunity: (typeof trainingOpportunities)[0]) => {
     setNewApplication({
       fundType: 'training-support',
       currency: 'USD',
@@ -335,7 +343,9 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Locked Funds</p>
-              <p className='text-2xl'>{walletData?.data?.currency_code} {wallet?.lockedBalance?.toFixed(0) || 0}</p>
+              <p className='text-2xl'>
+                {walletData?.data?.currency_code} {wallet?.lockedBalance?.toFixed(0) || 0}
+              </p>
             </div>
           </div>
         </Card>
@@ -368,9 +378,9 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
             </div>
             <h4 className='mb-2'>No Funding Opportunities Available</h4>
             <p className='text-muted-foreground mb-6 text-sm'>
-              There are currently no training fund opportunities available. Check back later or submit a custom application.
+              There are currently no training fund opportunities available. Check back later or
+              submit a custom application.
             </p>
-
           </div>
         ) : (
           <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
@@ -425,7 +435,6 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
               <p className='text-muted-foreground mb-4 text-sm'>
                 Browse available opportunities and submit your first application
               </p>
-
             </div>
           ) : (
             <div className='space-y-3'>
@@ -482,7 +491,8 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
                   <span>Available Balance</span>
                 </div>
                 <span className='text-success text-xl'>
-                  {walletData?.data?.currency_code} {walletData?.data?.balance_amount?.toFixed(2) || '0.00'}
+                  {walletData?.data?.currency_code}{' '}
+                  {walletData?.data?.balance_amount?.toFixed(2) || '0.00'}
                 </span>
               </div>
               <p className='text-success text-sm'>Ready to withdraw or use for expenses</p>
@@ -495,7 +505,8 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
                   <span>Locked Funds</span>
                 </div>
                 <span className='text-warning text-xl'>
-                  {walletData?.data?.currency_code} {walletData?.data?.locked_balance_amount?.toFixed(2) || '0.00'}
+                  {walletData?.data?.currency_code}{' '}
+                  {walletData?.data?.locked_balance_amount?.toFixed(2) || '0.00'}
                 </span>
               </div>
               <p className='text-warning text-sm'>Unlocks upon completing each class session</p>
@@ -579,10 +590,8 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
 
               <div
                 className={cn(
-                  'space-y-4 rounded-lg mt-2 border-2 flex flex-col items-center border-dashed p-8 transition-all',
-                  isDragging
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-background'
+                  'mt-2 flex flex-col items-center space-y-4 rounded-lg border-2 border-dashed p-8 transition-all',
+                  isDragging ? 'border-primary bg-primary/5' : 'border-border bg-background'
                 )}
                 onDragOver={e => {
                   e.preventDefault();
@@ -603,13 +612,12 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
 
                   setMediaFile(file);
                 }}
-
               >
                 <Input
                   ref={fileInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
+                  type='file'
+                  accept='application/pdf'
+                  className='hidden'
                   onChange={e => {
                     const file = e.target.files?.[0];
                     if (!file) return;
@@ -624,21 +632,19 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
                   }}
                 />
 
-
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className='cursor-pointer rounded-md text-center'
                 >
                   <Upload className='text-muted-foreground mx-auto mb-2 h-8 w-8' />
 
-                  <p className="text-foreground text-[13px] mb-1 font-medium">
+                  <p className='text-foreground mb-1 text-[13px] font-medium'>
                     {mediaFile
                       ? mediaFile.name
                       : 'Click or drag and drop to upload curriculum, credentials, and participant list'}
                   </p>
 
                   <p className='text-muted-foreground mt-1 text-xs'>PDF (max 5MB)</p>
-
                 </div>
 
                 <Button
@@ -674,9 +680,9 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
                             }),
                           });
                         },
-                        onError: (error) => {
-                          toast.error(error?.message)
-                        }
+                        onError: error => {
+                          toast.error(error?.message);
+                        },
                       }
                     );
                   }}
@@ -732,10 +738,8 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
 
               <div
                 className={cn(
-                  'space-y-4 rounded-lg mt-2 border-2 flex flex-col items-center border-dashed p-8 transition-all',
-                  isDragging
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-background'
+                  'mt-2 flex flex-col items-center space-y-4 rounded-lg border-2 border-dashed p-8 transition-all',
+                  isDragging ? 'border-primary bg-primary/5' : 'border-border bg-background'
                 )}
                 onDragOver={e => {
                   e.preventDefault();
@@ -756,13 +760,12 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
 
                   setMediaFile(file);
                 }}
-
               >
                 <Input
                   ref={fileInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
+                  type='file'
+                  accept='application/pdf'
+                  className='hidden'
                   onChange={e => {
                     const file = e.target.files?.[0];
                     if (!file) return;
@@ -777,21 +780,19 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
                   }}
                 />
 
-
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className='cursor-pointer rounded-md text-center'
                 >
                   <Upload className='text-muted-foreground mx-auto mb-2 h-8 w-8' />
 
-                  <p className="text-foreground text-[13px] mb-1 font-medium">
+                  <p className='text-foreground mb-1 text-[13px] font-medium'>
                     {mediaFile
                       ? mediaFile.name
                       : 'Click or drag and drop to upload attendance sheets, receipts, and completion certificates'}
                   </p>
 
                   <p className='text-muted-foreground mt-1 text-xs'>PDF (max 5MB)</p>
-
                 </div>
 
                 <Button
@@ -827,9 +828,9 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
                             }),
                           });
                         },
-                        onError: (error) => {
-                          toast.error(error?.message)
-                        }
+                        onError: error => {
+                          toast.error(error?.message);
+                        },
                       }
                     );
                   }}

@@ -41,7 +41,7 @@ export const useClassDetails = (classId?: string) => {
   });
 
   const courseUuid = classDefinition?.course_uuid;
-  const programUuid = classDefinition?.program_uuid
+  const programUuid = classDefinition?.program_uuid;
 
   //  Fetch course details
   const { data: courseDetailData, isLoading: isLoadingCourse } = useQuery({
@@ -75,14 +75,15 @@ export const useClassDetails = (classId?: string) => {
     enabled: !!courseUuid,
   });
 
-
   // 🧩 Combined loading state
   const isLoading =
     isLoadingClass ||
     isLoadingSchedule ||
     isLoadingEnrollments ||
     isLoadingCourse ||
-    isLoadingLessons || isPCoursesLoading || isLoadingProgram;
+    isLoadingLessons ||
+    isPCoursesLoading ||
+    isLoadingProgram;
 
   return {
     data: {

@@ -155,7 +155,7 @@ function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetiz
           </div>
           <div>
             <p className='text-muted-foreground'>Revenue split</p>
-            <p className="text-lg font-semibold whitespace-pre-line">
+            <p className='text-lg font-semibold whitespace-pre-line'>
               {formatShareRange(monetization.creatorShareRange, monetization.instructorShareRange)}
             </p>
             {!monetization.consistentRevenueSplit && (
@@ -264,7 +264,7 @@ function QuickActionsCard() {
           title='Share assets'
           description='Upload brand kits and curriculum collateral.'
           href='#'
-        // href='/dashboard/libraries'
+          // href='/dashboard/libraries'
         />
         <ActionTile
           title='Create syllabus'
@@ -309,7 +309,11 @@ function ActionTile({
   href: string;
 }) {
   return (
-    <Link prefetch href={href} className='border-border/70 bg-muted/20 flex h-full flex-col justify-between rounded-2xl border p-3 text-sm'>
+    <Link
+      prefetch
+      href={href}
+      className='border-border/70 bg-muted/20 flex h-full flex-col justify-between rounded-2xl border p-3 text-sm'
+    >
       <div className='space-y-1'>
         <p className='text-foreground font-semibold'>{title}</p>
         <p className='text-muted-foreground text-xs'>{description}</p>
@@ -352,4 +356,3 @@ function formatShareRange(
 
   return `${creatorShare} creator\n${instructorShare} instructor`;
 }
-

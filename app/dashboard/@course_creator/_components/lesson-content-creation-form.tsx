@@ -42,7 +42,7 @@ import {
   getLessonContentOptions,
   getLessonContentQueryKey,
   updateLessonContentMutation,
-  uploadLessonMediaMutation
+  uploadLessonMediaMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 
 type LessonCreationFormProps = {
@@ -135,7 +135,6 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
     const content = contentTypeList?.data?.content;
     return Array.isArray(content) ? content : [];
   }, [contentTypeList]);
-
 
   React.useEffect(() => {
     if (!contentForm.getValues('content_type_uuid') && contentTypeData.length > 0) {
@@ -241,7 +240,6 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
       });
     }
   }, [activeLesson, form]);
-
 
   const handleSaveLessonContent = (data: LessonContentValues) => {
     const courseId = course?.data?.uuid as string;
@@ -366,7 +364,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const getContentIcon = (type: string) => {
@@ -475,10 +473,11 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                         )}
                       >
                         <div
-                          className={`flex h-8 w-8 items-center justify-center rounded-lg ${selectedContentId === content.uuid
-                            ? 'bg-primary/20 text-primary'
-                            : 'bg-background text-muted-foreground'
-                            }`}
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                            selectedContentId === content.uuid
+                              ? 'bg-primary/20 text-primary'
+                              : 'bg-background text-muted-foreground'
+                          }`}
                         >
                           {getContentIcon(content.content_type_key)}
                         </div>
@@ -553,10 +552,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                           {/* Content Type */}
                           <FormField
                             control={contentForm.control}
-                            name="content_type"
+                            name='content_type'
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-foreground mb-2 block text-sm font-medium">
+                                <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
                                   Content Type (Select a content type to add)
                                 </FormLabel>
 
@@ -571,31 +570,33 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                     );
 
                                     if (typeObj) {
-                                      contentForm.setValue("content_type_uuid", typeObj.uuid);
+                                      contentForm.setValue('content_type_uuid', typeObj.uuid);
                                     }
                                   }}
-                                  className="flex gap-3"
+                                  className='flex gap-3'
                                 >
-                                  {(['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'PDF'] as ContentType[]).map(type => {
+                                  {(
+                                    ['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'PDF'] as ContentType[]
+                                  ).map(type => {
                                     const selected = field.value === type;
 
                                     return (
-                                      <FormItem key={type} className="space-y-0">
+                                      <FormItem key={type} className='space-y-0'>
                                         <FormControl>
-                                          <RadioGroupItem value={type} className="sr-only" />
+                                          <RadioGroupItem value={type} className='sr-only' />
                                         </FormControl>
 
                                         <FormLabel
                                           className={cn(
-                                            "flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition",
-                                            "hover:bg-muted",
+                                            'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition',
+                                            'hover:bg-muted',
                                             selected
-                                              ? "border-primary bg-primary/10 text-primary"
-                                              : "border-border"
+                                              ? 'border-primary bg-primary/10 text-primary'
+                                              : 'border-border'
                                           )}
                                         >
                                           {getContentIcon(type)}
-                                          <span className="capitalize">{type.toLowerCase()}</span>
+                                          <span className='capitalize'>{type.toLowerCase()}</span>
                                         </FormLabel>
                                       </FormItem>
                                     );
@@ -720,68 +721,68 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                   onChange={e => setMediaFile(e.target.files?.[0] || null)}
                                 />
 
-
                                 <div
                                   onClick={() => fileInputRef.current?.click()}
-                                  className="flex cursor-pointer flex-col items-center justify-center gap-2 text-center"
+                                  className='flex cursor-pointer flex-col items-center justify-center gap-2 text-center'
                                 >
-                                  <UploadCloud className="h-10 w-10 text-muted-foreground" />
+                                  <UploadCloud className='text-muted-foreground h-10 w-10' />
 
-                                  <p className="text-foreground font-medium">
+                                  <p className='text-foreground font-medium'>
                                     {mediaFile
                                       ? mediaFile.name
-                                      : contentForm.getValues("file_url")
-                                        ? "File uploaded — click to replace"
-                                        : "Click to upload or drag & drop"}
+                                      : contentForm.getValues('file_url')
+                                        ? 'File uploaded — click to replace'
+                                        : 'Click to upload or drag & drop'}
                                   </p>
 
-                                  <p className="text-muted-foreground text-sm">
+                                  <p className='text-muted-foreground text-sm'>
                                     Supports {contentType.toLowerCase()} files
                                   </p>
                                 </div>
 
-                                {mediaFile && <Button
-                                  type='button'
-                                  disabled={!mediaFile || uploadLessonMedia.isPending}
-                                  onClick={() => {
-                                    if (!mediaFile) return;
-                                    uploadLessonMedia.mutate(
-                                      {
-                                        body: { file: mediaFile },
-                                        path: {
-                                          courseUuid: course?.data?.uuid,
-                                          lessonUuid: activeLessonId,
+                                {mediaFile && (
+                                  <Button
+                                    type='button'
+                                    disabled={!mediaFile || uploadLessonMedia.isPending}
+                                    onClick={() => {
+                                      if (!mediaFile) return;
+                                      uploadLessonMedia.mutate(
+                                        {
+                                          body: { file: mediaFile },
+                                          path: {
+                                            courseUuid: course?.data?.uuid,
+                                            lessonUuid: activeLessonId,
+                                          },
+                                          query: {
+                                            content_type_uuid:
+                                              contentForm.getValues('content_type_uuid'),
+                                            title: contentForm.getValues('title') || 'Untitled',
+                                            is_required: false,
+                                            description: 'N/A',
+                                          },
                                         },
-                                        query: {
-                                          content_type_uuid:
-                                            contentForm.getValues('content_type_uuid'),
-                                          title: contentForm.getValues('title') || 'Untitled',
-                                          is_required: false,
-                                          description: 'N/A',
-                                        },
-                                      },
-                                      {
-                                        onSuccess: () => {
-                                          toast.success('Media uploaded');
-                                          setMediaFile(null);
-                                          qc.invalidateQueries({
-                                            queryKey: getLessonContentQueryKey({
-                                              path: {
-                                                courseUuid: course?.data?.uuid,
-                                                lessonUuid: activeLessonId,
-                                              },
-                                            }),
-                                          });
-                                          resetContentForm();
-                                        },
-                                      }
-                                    );
-                                  }}
-                                  className='w-full bg-primary'
-                                >
-                                  {uploadLessonMedia.isPending ? 'Uploading...' : 'Upload Media'}
-                                </Button>}
-
+                                        {
+                                          onSuccess: () => {
+                                            toast.success('Media uploaded');
+                                            setMediaFile(null);
+                                            qc.invalidateQueries({
+                                              queryKey: getLessonContentQueryKey({
+                                                path: {
+                                                  courseUuid: course?.data?.uuid,
+                                                  lessonUuid: activeLessonId,
+                                                },
+                                              }),
+                                            });
+                                            resetContentForm();
+                                          },
+                                        }
+                                      );
+                                    }}
+                                    className='bg-primary w-full'
+                                  >
+                                    {uploadLessonMedia.isPending ? 'Uploading...' : 'Upload Media'}
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           )}

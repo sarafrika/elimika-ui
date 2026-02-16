@@ -21,6 +21,7 @@ import {
   GraduationCap,
   Handshake,
   Layers,
+  Layers2,
   LayoutDashboard,
   LibraryIcon,
   LucideBookUser,
@@ -38,7 +39,7 @@ import {
   UserPlus,
   Users,
   UsersIcon,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { UserDomain } from './types';
@@ -235,13 +236,11 @@ export default {
       title: 'Schedule',
       url: '/dashboard/trainings',
       icon: ClipboardList,
-
     },
     {
       title: 'Assessment',
       url: '/dashboard/assessment',
       icon: Layers,
-
     },
     {
       title: 'Enrollments',
@@ -257,7 +256,6 @@ export default {
       title: 'Opportunities',
       url: '/dashboard/opportunities',
       icon: Handshake,
-
     },
     {
       title: 'Skills Fund',
@@ -413,7 +411,7 @@ export default {
     {
       title: 'Programs',
       url: '/dashboard/programs',
-      icon: BookOpen,
+      icon: Layers2,
     },
     {
       title: 'Classes',

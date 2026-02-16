@@ -386,7 +386,6 @@ export const useRubricsWithCriteriaAndScoring = (courseCreatorUuid?: string) => 
   };
 };
 
-
 export const useRubricDetails = (rubricUuid?: string) => {
   const {
     data: matrixData,
@@ -435,10 +434,8 @@ export const useRubricDetails = (rubricUuid?: string) => {
     })),
   });
 
-
   const enrichedCriteria = criteriaList.map((criteria: any, index: number) => {
-    const scoringList =
-      scoringQueries[index]?.data?.data?.data?.content ?? [];
+    const scoringList = scoringQueries[index]?.data?.data?.data?.content ?? [];
 
     return {
       ...criteria,
@@ -446,20 +443,11 @@ export const useRubricDetails = (rubricUuid?: string) => {
     };
   });
 
-  const isLoading =
-    isMatrixLoading ||
-    isCriteriaLoading ||
-    scoringQueries.some(q => q.isLoading);
+  const isLoading = isMatrixLoading || isCriteriaLoading || scoringQueries.some(q => q.isLoading);
 
-  const isFetched =
-    isMatrixFetched ||
-    isCriteriaFetched ||
-    scoringQueries.some(q => q.isFetched);
+  const isFetched = isMatrixFetched || isCriteriaFetched || scoringQueries.some(q => q.isFetched);
 
-  const isError =
-    isMatrixError ||
-    isCriteriaError ||
-    scoringQueries.some(q => q.isError);
+  const isError = isMatrixError || isCriteriaError || scoringQueries.some(q => q.isError);
 
   return {
     rubricUuid,
@@ -470,4 +458,3 @@ export const useRubricDetails = (rubricUuid?: string) => {
     isError,
   };
 };
-

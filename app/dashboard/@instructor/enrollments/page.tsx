@@ -21,31 +21,29 @@ import { useInstructor } from '../../../../context/instructor-context';
 import {
   getClassDefinitionsForInstructorOptions,
   getEnrollmentsForClassOptions,
-  getStudentByIdOptions
+  getStudentByIdOptions,
 } from '../../../../services/client/@tanstack/react-query.gen';
 
 const EnrollmentsPage = () => {
-  const router = useRouter()
+  const router = useRouter();
   const instructor = useInstructor();
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
 
   const { data: classesData } = useQuery({
     ...getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructor?.uuid as string },
-      query: { activeOnly: true }
+      query: { activeOnly: true },
     }),
-    enabled: !!instructor?.uuid
+    enabled: !!instructor?.uuid,
   });
 
-  const instructorClasses =
-    classesData?.data?.map((item: any) => item.class_definition) || [];
+  const instructorClasses = classesData?.data?.map((item: any) => item.class_definition) || [];
 
   useEffect(() => {
     if (!selectedClassId && instructorClasses.length > 0) {
       setSelectedClassId(instructorClasses[0].uuid);
     }
   }, [instructorClasses, selectedClassId]);
-
 
   const enrollmentQueries = useQueries({
     queries: instructorClasses.map((classItem: any) => ({
@@ -67,20 +65,14 @@ const EnrollmentsPage = () => {
   }, [instructorClasses, enrollmentQueries]);
 
   // Get enrollments for selected class
-  const selectedClassIndex = instructorClasses.findIndex(
-    (c: any) => c.uuid === selectedClassId
-  );
+  const selectedClassIndex = instructorClasses.findIndex((c: any) => c.uuid === selectedClassId);
   const enrollmentsForSelectedClass =
     selectedClassIndex >= 0 ? enrollmentQueries[selectedClassIndex]?.data?.data || [] : [];
   const isLoadingEnrollments =
     selectedClassIndex >= 0 ? enrollmentQueries[selectedClassIndex]?.isLoading : false;
 
   const uniqueStudentUuids: string[] = Array.from(
-    new Set(
-      enrollmentsForSelectedClass
-        .map((e: any) => e.student_uuid)
-        .filter(Boolean)
-    )
+    new Set(enrollmentsForSelectedClass.map((e: any) => e.student_uuid).filter(Boolean))
   );
 
   const studentQueries = useQueries({
@@ -92,17 +84,13 @@ const EnrollmentsPage = () => {
     })),
   });
 
-  const studentsData = studentQueries
-    .map(q => q.data)
-    .filter(Boolean);
+  const studentsData = studentQueries.map(q => q.data).filter(Boolean);
 
-  const students =
-    studentsData?.map((item: any) => item.data) || [];
+  const students = studentsData?.map((item: any) => item.data) || [];
 
   const handleViewProfile = (studentUuid: string) => {
-    router.push(`/dashboard/enrollments/${selectedClassId}?id=${studentUuid}`)
+    router.push(`/dashboard/enrollments/${selectedClassId}?id=${studentUuid}`);
   };
-
 
   return (
     <div className={`${elimikaDesignSystem.components.pageContainer} px-4 sm:px-6`}>
@@ -139,15 +127,12 @@ const EnrollmentsPage = () => {
                   <SelectItem key={classItem.uuid} value={classItem.uuid}>
                     <div className='flex w-full items-center justify-between gap-2'>
                       <span className='truncate'>{classItem.title}</span>
-                      <span className='text-muted-foreground text-xs'>
-                        ({enrollmentCount})
-                      </span>
+                      <span className='text-muted-foreground text-xs'>({enrollmentCount})</span>
                     </div>
                   </SelectItem>
                 );
               })}
             </SelectContent>
-
           </Select>
         </div>
 
@@ -161,14 +146,13 @@ const EnrollmentsPage = () => {
               <button
                 key={classItem.uuid}
                 onClick={() => setSelectedClassId(classItem.uuid)}
-                className={`flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left text-sm transition-all ${isSelected
-                  ? 'border-primary bg-primary/10 shadow-sm'
-                  : 'border-border bg-background hover:bg-muted'
-                  }`}
+                className={`flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left text-sm transition-all ${
+                  isSelected
+                    ? 'border-primary bg-primary/10 shadow-sm'
+                    : 'border-border bg-background hover:bg-muted'
+                }`}
               >
-                <span className='truncate font-medium'>
-                  {classItem.title || 'Unnamed Class'}
-                </span>
+                <span className='truncate font-medium'>{classItem.title || 'Unnamed Class'}</span>
 
                 <Badge variant='secondary' className='shrink-0'>
                   {enrollmentCount}
@@ -220,7 +204,8 @@ const EnrollmentsPage = () => {
                 <Avatar>
                   <AvatarImage src={student?.full_name} />
                   <AvatarFallback>
-                    {student?.full_name?.split(' ')
+                    {student?.full_name
+                      ?.split(' ')
                       .map((n: any) => n[0])
                       .join('')
                       .toUpperCase()}

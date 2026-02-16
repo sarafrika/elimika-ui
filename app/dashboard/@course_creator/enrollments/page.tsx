@@ -8,7 +8,7 @@ import { useCourseCreator } from '@/context/course-creator-context';
 import { elimikaDesignSystem } from '@/lib/design-system';
 import {
   getCourseEnrollmentsOptions,
-  getStudentByIdOptions
+  getStudentByIdOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -22,7 +22,6 @@ const EnrollmentsPage = () => {
   const courseUuids = courses.map(course => course.uuid);
 
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-
 
   const enrollmentQueries = useQueries({
     queries: courseUuids.map(courseUuid => ({
@@ -45,11 +44,9 @@ const EnrollmentsPage = () => {
     }, {});
   }, [enrollmentQueries, courseUuids]);
 
-
   const enrollmentsForSelectedCourse = selectedCourseId
-    ? enrollmentsByCourse[selectedCourseId] ?? []
+    ? (enrollmentsByCourse[selectedCourseId] ?? [])
     : [];
-
 
   const studentQueries = useQueries({
     queries: enrollmentsForSelectedCourse.map(enrollment => ({
@@ -97,42 +94,36 @@ const EnrollmentsPage = () => {
         {/* Left: Course List */}
         <div className='space-y-2 overflow-y-auto lg:max-h-[calc(100vh-250px)] lg:w-1/3'>
           {isEnrollmentsLoading
-            ? [...Array(3)].map((_, i) => (
-              <Skeleton key={i} className='h-16 w-full rounded-xl' />
-            ))
+            ? [...Array(3)].map((_, i) => <Skeleton key={i} className='h-16 w-full rounded-xl' />)
             : courses.map(course => {
-              const enrollmentCount =
-                enrollmentsByCourse[course.uuid]?.length ?? 0;
-              const isSelected = selectedCourseId === course.uuid;
+                const enrollmentCount = enrollmentsByCourse[course.uuid]?.length ?? 0;
+                const isSelected = selectedCourseId === course.uuid;
 
-              return (
-                <button
-                  key={course.uuid}
-                  onClick={() => setSelectedCourseId(course.uuid)}
-                  className={`flex w-full items-center justify-between rounded-xl border p-4 text-left text-sm transition-all duration-150 ${isSelected
-                    ? 'border-primary bg-primary/10 shadow-md'
-                    : 'border-border bg-background hover:bg-muted'
+                return (
+                  <button
+                    key={course.uuid}
+                    onClick={() => setSelectedCourseId(course.uuid)}
+                    className={`flex w-full items-center justify-between rounded-xl border p-4 text-left text-sm transition-all duration-150 ${
+                      isSelected
+                        ? 'border-primary bg-primary/10 shadow-md'
+                        : 'border-border bg-background hover:bg-muted'
                     }`}
-                >
-                  <span className='text-foreground font-medium'>
-                    {course.name}
-                  </span>
-                  <Badge variant='secondary'>{enrollmentCount}</Badge>
-                </button>
-              );
-            })}
+                  >
+                    <span className='text-foreground font-medium'>{course.name}</span>
+                    <Badge variant='secondary'>{enrollmentCount}</Badge>
+                  </button>
+                );
+              })}
         </div>
 
         {/* Right: Enrollments List */}
         <div className='space-y-4 overflow-y-auto lg:max-h-[calc(100vh-250px)] lg:w-2/3'>
-          <h3 className='font-bold text-md'>List of enrolled students under course</h3>
+          <h3 className='text-md font-bold'>List of enrolled students under course</h3>
 
           {selectedCourseId === null ? (
             <Card className='p-12 text-center'>
               <CheckCircle2 className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-              <p className='text-foreground text-lg font-medium'>
-                Select a course
-              </p>
+              <p className='text-foreground text-lg font-medium'>Select a course</p>
               <p className='text-muted-foreground text-sm'>
                 Choose a course on the left to view enrollments.
               </p>
@@ -155,9 +146,7 @@ const EnrollmentsPage = () => {
           ) : enrichedEnrollments.length === 0 ? (
             <Card className='p-12 text-center'>
               <CheckCircle2 className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-              <p className='text-foreground text-lg font-medium'>
-                No enrollments
-              </p>
+              <p className='text-foreground text-lg font-medium'>No enrollments</p>
               <p className='text-muted-foreground text-sm'>
                 No students have enrolled in this course yet.
               </p>
@@ -178,16 +167,13 @@ const EnrollmentsPage = () => {
                   </Avatar>
 
                   <div className='min-w-0 flex-1'>
-                    <p className='text-foreground font-semibold'>
-                      {enrollment.studentName}
-                    </p>
+                    <p className='text-foreground font-semibold'>{enrollment.studentName}</p>
                     <p className='text-muted-foreground flex items-center gap-1 text-xs'>
                       <Clock className='h-3 w-3' />
                       Enrolled{' '}
-                      {formatDistanceToNow(
-                        new Date(enrollment.enrollment_date),
-                        { addSuffix: true }
-                      )}
+                      {formatDistanceToNow(new Date(enrollment.enrollment_date), {
+                        addSuffix: true,
+                      })}
                     </p>
                   </div>
 

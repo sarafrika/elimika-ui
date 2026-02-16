@@ -988,7 +988,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           {hasIncompleteTrainingRequirements && (
-            <p className='text-end text-destructive text-sm'>
+            <p className='text-destructive text-end text-sm'>
               Please complete or remove all training requirements before saving.
             </p>
           )}

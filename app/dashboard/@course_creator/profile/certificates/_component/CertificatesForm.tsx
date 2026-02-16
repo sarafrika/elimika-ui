@@ -133,10 +133,13 @@ export default function CertificatesSettings() {
     name: 'certifications',
   });
 
-  const uploadDocumentMut = useMutation(uploadCourseCreatorDocumentMutation())
+  const uploadDocumentMut = useMutation(uploadCourseCreatorDocumentMutation());
   const handleUplod = () => {
-    uploadDocumentMut.mutate({ path: { courseCreatorUuid: "" }, query: { document_type_uuid: "", education_uuid: '' } })
-  }
+    uploadDocumentMut.mutate({
+      path: { courseCreatorUuid: '' },
+      query: { document_type_uuid: '', education_uuid: '' },
+    });
+  };
 
   const addCertMutation = useMutation(addCourseCreatorCertificationMutation());
   const updateCertMutation = useMutation(updateCourseCreatorCertificationMutation());

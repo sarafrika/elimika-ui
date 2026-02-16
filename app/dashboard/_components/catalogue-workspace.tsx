@@ -525,18 +525,20 @@ export function CatalogueWorkspace({
                         key={row.id}
                         type='button'
                         onClick={() => handleSelectRow(row)}
-                        className={`group w-full rounded-[16px] border p-3.5 text-left transition-all duration-200 ${selectedId === row.id
-                          ? 'border-primary bg-primary/10 ring-primary/20 shadow-md ring-1'
-                          : 'border-border/60 bg-card hover:border-primary/50 hover:bg-muted/50 hover:shadow-sm'
-                          }`}
+                        className={`group w-full rounded-[16px] border p-3.5 text-left transition-all duration-200 ${
+                          selectedId === row.id
+                            ? 'border-primary bg-primary/10 ring-primary/20 shadow-md ring-1'
+                            : 'border-border/60 bg-card hover:border-primary/50 hover:bg-muted/50 hover:shadow-sm'
+                        }`}
                       >
                         <div className='flex gap-3'>
                           {/* Icon */}
                           <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-colors ${selectedId === row.id
-                              ? 'bg-primary/15 text-primary'
-                              : 'bg-primary/10 text-primary group-hover:bg-primary/15'
-                              }`}
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-colors ${
+                              selectedId === row.id
+                                ? 'bg-primary/15 text-primary'
+                                : 'bg-primary/10 text-primary group-hover:bg-primary/15'
+                            }`}
                           >
                             <TypeIcon className='h-4.5 w-4.5' />
                           </div>

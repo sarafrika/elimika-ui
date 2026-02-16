@@ -72,9 +72,9 @@ export function LessonDetailsSidebar({
   if (!lesson) {
     return (
       <Card>
-        <CardContent className="p-6 text-center sm:p-8">
-          <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Select a lesson to view details</p>
+        <CardContent className='p-6 text-center sm:p-8'>
+          <BookOpen className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+          <p className='text-muted-foreground text-sm'>Select a lesson to view details</p>
         </CardContent>
       </Card>
     );
@@ -84,10 +84,7 @@ export function LessonDetailsSidebar({
     const contentTypeName = contentTypeMap[lesson?.content_type_uuid as string];
     const typeKey = contentTypeName?.toLowerCase() || 'default';
 
-    return (
-      LESSON_TYPE_MAP[typeKey as keyof typeof LESSON_TYPE_MAP] ||
-      LESSON_TYPE_MAP.default
-    );
+    return LESSON_TYPE_MAP[typeKey as keyof typeof LESSON_TYPE_MAP] || LESSON_TYPE_MAP.default;
   };
 
   const typeInfo = getLessonTypeInfo();
@@ -95,12 +92,12 @@ export function LessonDetailsSidebar({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="line-clamp-2 text-base sm:text-lg">{lesson.title}</CardTitle>
+        <CardTitle className='line-clamp-2 text-base sm:text-lg'>{lesson.title}</CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className='space-y-4'>
         {/* Lesson Type */}
-        <div className="flex items-center gap-3">
+        <div className='flex items-center gap-3'>
           <div className={`${typeInfo.bgColor} rounded-lg p-3`}>
             {typeInfo.label === 'Video' && (
               <Video className={`h-5 w-5 sm:h-6 sm:w-6 ${typeInfo.iconColor}`} />
@@ -122,9 +119,9 @@ export function LessonDetailsSidebar({
             )}
           </div>
           <div>
-            <p className="text-sm font-medium sm:text-base">{typeInfo.label}</p>
+            <p className='text-sm font-medium sm:text-base'>{typeInfo.label}</p>
             {lesson.duration && (
-              <p className="text-xs text-muted-foreground sm:text-sm">{lesson.duration}</p>
+              <p className='text-muted-foreground text-xs sm:text-sm'>{lesson.duration}</p>
             )}
           </div>
         </div>
@@ -134,7 +131,7 @@ export function LessonDetailsSidebar({
           <>
             <Separator />
             <div>
-              <p className="text-sm text-muted-foreground">{lesson.description}</p>
+              <p className='text-muted-foreground text-sm'>{lesson.description}</p>
             </div>
           </>
         )}
@@ -142,41 +139,39 @@ export function LessonDetailsSidebar({
         <Separator />
 
         {/* Action Buttons */}
-        <div className="space-y-2">
+        <div className='space-y-2'>
           {!isCompleted ? (
             <>
-              <Button className="w-full gap-2" size="lg" onClick={onStartLesson}>
-                <Play className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Button className='w-full gap-2' size='lg' onClick={onStartLesson}>
+                <Play className='h-4 w-4 sm:h-5 sm:w-5' />
                 View Lesson Content
               </Button>
 
-              <Button variant="outline" className="w-full" onClick={onMarkComplete}>
+              <Button variant='outline' className='w-full' onClick={onMarkComplete}>
                 Mark as Complete
               </Button>
             </>
           ) : (
             <>
-              <div className="py-4 text-center">
-                <div className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-success/10 sm:h-14 sm:w-14">
+              <div className='py-4 text-center'>
+                <div className='bg-success/10 mb-2 inline-flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
                   <svg
-                    className="h-6 w-6 text-success sm:h-7 sm:w-7"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    className='text-success h-6 w-6 sm:h-7 sm:w-7'
+                    fill='none'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth='2'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
                   >
-                    <path d="M5 13l4 4L19 7"></path>
+                    <path d='M5 13l4 4L19 7'></path>
                   </svg>
                 </div>
-                <p className="text-sm font-medium text-success sm:text-base">
-                  Lesson Completed!
-                </p>
+                <p className='text-success text-sm font-medium sm:text-base'>Lesson Completed!</p>
               </div>
 
-              <Button variant="outline" className="w-full gap-2" onClick={onStartLesson}>
-                <Play className="h-4 w-4" />
+              <Button variant='outline' className='w-full gap-2' onClick={onStartLesson}>
+                <Play className='h-4 w-4' />
                 Review Lesson
               </Button>
             </>
@@ -186,26 +181,26 @@ export function LessonDetailsSidebar({
         <Separator />
 
         {/* Progress Stats */}
-        <div className="space-y-3 text-xs sm:space-y-4 sm:text-sm">
-          <h4 className="text-sm font-semibold sm:text-base">Your Progress</h4>
+        <div className='space-y-3 text-xs sm:space-y-4 sm:text-sm'>
+          <h4 className='text-sm font-semibold sm:text-base'>Your Progress</h4>
 
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Completed Lessons</span>
-            <span className="font-medium">
+          <div className='flex items-center justify-between'>
+            <span className='text-muted-foreground'>Completed Lessons</span>
+            <span className='font-medium'>
               {completedLessons} / {totalLessons}
             </span>
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Overall Progress</span>
-            <span className="font-medium">{overallProgress}%</span>
+          <div className='flex items-center justify-between'>
+            <span className='text-muted-foreground'>Overall Progress</span>
+            <span className='font-medium'>{overallProgress}%</span>
           </div>
 
           <Separator />
 
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Time Spent</span>
-            <span className="font-medium">{timeSpent}</span>
+          <div className='flex items-center justify-between'>
+            <span className='text-muted-foreground'>Time Spent</span>
+            <span className='font-medium'>{timeSpent}</span>
           </div>
         </div>
       </CardContent>

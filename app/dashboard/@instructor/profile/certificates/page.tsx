@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
-import { getInstructorDocumentsOptions, getInstructorDocumentsQueryKey, uploadInstructorDocumentMutation } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getInstructorDocumentsOptions,
+  getInstructorDocumentsQueryKey,
+  uploadInstructorDocumentMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorDocument } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Download, FileWarning, RefreshCw, ShieldCheck, UploadCloud } from 'lucide-react';
@@ -91,16 +95,16 @@ const renderDocuments = (
 export default function CertificatesPage() {
   const instructor = useInstructor();
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const qc = useQueryClient()
+  const qc = useQueryClient();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false)
+  const [isDragging, setIsDragging] = useState(false);
 
   const isPdfFile = (file: File) =>
     file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
-  const uploadInstructorDocument = useMutation(uploadInstructorDocumentMutation())
+  const uploadInstructorDocument = useMutation(uploadInstructorDocumentMutation());
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -149,10 +153,8 @@ export default function CertificatesPage() {
 
       <div
         className={cn(
-          'space-y-4 rounded-lg border-2 flex flex-col items-center border-dashed p-8 transition-all',
-          isDragging
-            ? 'border-primary bg-primary/5'
-            : 'border-border bg-background'
+          'flex flex-col items-center space-y-4 rounded-lg border-2 border-dashed p-8 transition-all',
+          isDragging ? 'border-primary bg-primary/5' : 'border-border bg-background'
         )}
         onDragOver={e => {
           e.preventDefault();
@@ -173,13 +175,12 @@ export default function CertificatesPage() {
 
           setMediaFile(file);
         }}
-
       >
         <Input
           ref={fileInputRef}
-          type="file"
-          accept="application/pdf"
-          className="hidden"
+          type='file'
+          accept='application/pdf'
+          className='hidden'
           onChange={e => {
             const file = e.target.files?.[0];
             if (!file) return;
@@ -194,21 +195,15 @@ export default function CertificatesPage() {
           }}
         />
 
-
         <div
           onClick={() => fileInputRef.current?.click()}
           className='cursor-pointer rounded-md text-center'
         >
-          <p className="text-foreground mb-1 font-medium">
-            {mediaFile
-              ? mediaFile.name
-              : 'Drag & drop or click to upload a PDF'}
+          <p className='text-foreground mb-1 font-medium'>
+            {mediaFile ? mediaFile.name : 'Drag & drop or click to upload a PDF'}
           </p>
 
-          <p className="text-muted-foreground text-sm">
-            PDF files only (application/pdf)
-          </p>
-
+          <p className='text-muted-foreground text-sm'>PDF files only (application/pdf)</p>
         </div>
 
         <Button
@@ -244,9 +239,9 @@ export default function CertificatesPage() {
                     }),
                   });
                 },
-                onError: (error) => {
-                  toast.error(error?.message)
-                }
+                onError: error => {
+                  toast.error(error?.message);
+                },
               }
             );
           }}

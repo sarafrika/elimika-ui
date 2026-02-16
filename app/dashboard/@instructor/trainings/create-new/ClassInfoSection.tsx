@@ -14,7 +14,6 @@ export const ClassInformationSection = ({
   data: ClassDetails;
   onChange: (updates: Partial<ClassDetails>) => void;
 }) => {
-
   const inviteUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/class-invite?id=${data?.uuid}` : '';
 
@@ -27,7 +26,7 @@ export const ClassInformationSection = ({
     : '';
 
   return (
-    <Card className='overflow-hidden border shadow-sm pt-0'>
+    <Card className='overflow-hidden border pt-0 shadow-sm'>
       <div className='bg-muted/50 border-b px-6 py-4'>
         <h3 className='text-foreground text-lg font-semibold'>Class Information</h3>
       </div>
@@ -74,9 +73,7 @@ export const ClassInformationSection = ({
           </TableRow>
 
           <TableRow className='hover:bg-transparent'>
-            <TableCell className='bg-muted/30 py-4 font-semibold'>
-              Class Invite Link
-            </TableCell>
+            <TableCell className='bg-muted/30 py-4 font-semibold'>Class Invite Link</TableCell>
             <TableCell className='bg-card flex items-center gap-2 py-4'>
               <Input value={inviteUrl} readOnly className='flex-1' />
               <CopyInviteButton url={inviteUrl} />

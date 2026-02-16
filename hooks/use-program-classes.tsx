@@ -6,10 +6,15 @@ import {
   getInstructorByUuidOptions,
   getProgramCoursesOptions,
   getStudentScheduleOptions,
-  listCatalogItemsOptions
+  listCatalogItemsOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
-function useProgramBundledClassInfo(programUuid?: string, startDate?: any, endDate?: any, student?: any) {
+function useProgramBundledClassInfo(
+  programUuid?: string,
+  startDate?: any,
+  endDate?: any,
+  student?: any
+) {
   // Fetch class definitions
   const { data, isLoading, isError, isFetching } = useQuery({
     ...getClassDefinitionsForProgramOptions({ path: { programUuid: programUuid ?? '' } }),
@@ -20,7 +25,7 @@ function useProgramBundledClassInfo(programUuid?: string, startDate?: any, endDa
   // Fetch program courses
   const { data: pCourses } = useQuery({
     ...getProgramCoursesOptions({ path: { programUuid: programUuid as string } }),
-    enabled: !!programUuid
+    enabled: !!programUuid,
   });
 
   // Extract unique instructor UUIDs to avoid duplicate fetches
@@ -34,7 +39,6 @@ function useProgramBundledClassInfo(programUuid?: string, startDate?: any, endDa
     return Array.from(uuids);
   }, [classes]);
 
-
   // Fetch schedules for each class
   const scheduleQueries = useQueries({
     queries: classes.map((cls: any) => ({
@@ -45,7 +49,7 @@ function useProgramBundledClassInfo(programUuid?: string, startDate?: any, endDa
 
   // Fetch unique instructors only
   const instructorQueries = useQueries({
-    queries: uniqueInstructorUuids.map((uuid) => ({
+    queries: uniqueInstructorUuids.map(uuid => ({
       ...getInstructorByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
     })),
@@ -57,9 +61,7 @@ function useProgramBundledClassInfo(programUuid?: string, startDate?: any, endDa
 
   // Build a lookup map for catalogue by class_definition_uuid
   const catalogueMap = useMemo(
-    () => Object.fromEntries(
-      catalogueItems.map((item: any) => [item.class_definition_uuid, item])
-    ),
+    () => Object.fromEntries(catalogueItems.map((item: any) => [item.class_definition_uuid, item])),
     [catalogueItems]
   );
 
@@ -93,12 +95,16 @@ function useProgramBundledClassInfo(programUuid?: string, startDate?: any, endDa
   // Bundle all class information
   const bundledClassInfo = useMemo(() => {
     return classes.map((cls: any, i: number) => {
-      const classEnrollments = enrollments.filter((en: any) => en.class_definition_uuid === cls.uuid);
+      const classEnrollments = enrollments.filter(
+        (en: any) => en.class_definition_uuid === cls.uuid
+      );
 
       return {
         ...cls,
         course: cls.program_uuid ? pCourses?.data : null,
-        instructor: cls.default_instructor_uuid ? instructorMap.get(cls.default_instructor_uuid) ?? null : null,
+        instructor: cls.default_instructor_uuid
+          ? (instructorMap.get(cls.default_instructor_uuid) ?? null)
+          : null,
         schedule: schedules[i],
         enrollments: classEnrollments,
         catalogue: catalogueMap[cls.uuid] ?? null,
@@ -110,8 +116,7 @@ function useProgramBundledClassInfo(programUuid?: string, startDate?: any, endDa
   const isInstructorsLoading = instructorQueries.some(q => q.isLoading || q.isFetching);
   const isSchedulesLoading = scheduleQueries.some(q => q.isLoading || q.isFetching);
 
-  const loading =
-    isLoading || isFetching || isInstructorsLoading || isSchedulesLoading;
+  const loading = isLoading || isFetching || isInstructorsLoading || isSchedulesLoading;
 
   return {
     classes: bundledClassInfo,

@@ -59,22 +59,20 @@ const WaitingListPage = () => {
 
       {/* Tab Content */}
       <section className='animate-fadeIn'>
-        {activeTab === "waiting-list" && (
-          <div className="bg-card border-border rounded-lg border p-4 shadow-sm sm:p-6">
-            <h2 className="text-foreground mb-4 text-xl font-semibold">
-              Waiting List
-            </h2>
+        {activeTab === 'waiting-list' && (
+          <div className='bg-card border-border rounded-lg border p-4 shadow-sm sm:p-6'>
+            <h2 className='text-foreground mb-4 text-xl font-semibold'>Waiting List</h2>
 
-            <div className="flex flex-col items-center justify-center rounded-md p-8 text-center">
-              <Users className="text-muted-foreground mb-3 h-8 w-8" />
+            <div className='flex flex-col items-center justify-center rounded-md p-8 text-center'>
+              <Users className='text-muted-foreground mb-3 h-8 w-8' />
 
-              <p className="text-foreground text-sm font-medium sm:text-base">
+              <p className='text-foreground text-sm font-medium sm:text-base'>
                 No students in the waiting list
               </p>
 
-              <p className="text-muted-foreground mt-1 max-w-sm text-xs sm:text-sm">
-                Students who request to join your class but haven’t been enrolled yet
-                will appear here.
+              <p className='text-muted-foreground mt-1 max-w-sm text-xs sm:text-sm'>
+                Students who request to join your class but haven’t been enrolled yet will appear
+                here.
               </p>
             </div>
           </div>

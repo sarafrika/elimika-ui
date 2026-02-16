@@ -387,8 +387,9 @@ export function TrainingClassList({
                       </div>
                       <div className='bg-primary/10 h-2 overflow-hidden rounded-full'>
                         <div
-                          className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
-                            }`}
+                          className={`h-full transition-all duration-500 ${
+                            enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                          }`}
                           style={{ width: `${enrolledPercentage}%` }}
                         />
                       </div>

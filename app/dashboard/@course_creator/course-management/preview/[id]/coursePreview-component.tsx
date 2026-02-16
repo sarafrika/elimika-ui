@@ -13,7 +13,7 @@ import {
   getCourseByUuidOptions,
   getCourseLessonsOptions,
   getCourseReviewsOptions,
-  getCourseRubricsOptions
+  getCourseRubricsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -93,8 +93,8 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
     enabled: !!courseId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-  })
-  const reviews = reviewsData?.data || []
+  });
+  const reviews = reviewsData?.data || [];
 
   const { data: courseRubrics, isLoading: rubric, errors } = useCourseRubrics(courseId as string);
 
@@ -352,11 +352,11 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         </CardHeader>
 
         <CardContent className='p-0'>
-          <div className="space-y-4 p-6">
+          <div className='space-y-4 p-6'>
             {reviews?.length ? (
-              reviews?.slice(0, 5)?.map(review => (
-                <ReviewCard key={review.uuid} review={review} type='others' />
-              ))
+              reviews
+                ?.slice(0, 5)
+                ?.map(review => <ReviewCard key={review.uuid} review={review} type='others' />)
             ) : (
               <div className='border-border/60 text-muted-foreground border-t text-center text-sm'>
                 No reviews yet for this course.
@@ -414,4 +414,3 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: a
     </div>
   );
 }
-

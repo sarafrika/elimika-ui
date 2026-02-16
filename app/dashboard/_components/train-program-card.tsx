@@ -10,16 +10,7 @@ import {
   getCourseCreatorByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import {
-  BookOpen,
-  CheckCircle2,
-  Clock,
-  Heart,
-  Pencil,
-  Share,
-  Users,
-  XCircle
-} from 'lucide-react';
+import { BookOpen, CheckCircle2, Clock, Heart, Pencil, Share, Users, XCircle } from 'lucide-react';
 
 interface TrainProgramCardProps {
   program: ProgramCourse & { application?: any };
@@ -192,7 +183,6 @@ export function TrainProgramCard({
               <Users className='h-4 w-4' />
               <span>{program?.class_limit} max participants</span>
             </div>
-
           </div>
 
           {/* Price and Actions */}
@@ -204,9 +194,7 @@ export function TrainProgramCard({
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-2'>
                 {program?.price && (
-                  <span className='text-muted-foreground text-sm'>
-                    KES {program?.price}
-                  </span>
+                  <span className='text-muted-foreground text-sm'>KES {program?.price}</span>
                 )}
               </div>
             </div>
@@ -243,14 +231,15 @@ export function TrainProgramCard({
           </div>
           {/* Review note */}
           <span
-            className={`text-center text-xs italic transition-colors duration-200 ${applicationStatus === 'pending'
-              ? 'text-warning'
-              : applicationStatus === 'approved'
-                ? 'text-success'
-                : applicationStatus === 'revoked'
-                  ? 'text-destructive'
-                  : 'text-muted-foreground'
-              } `}
+            className={`text-center text-xs italic transition-colors duration-200 ${
+              applicationStatus === 'pending'
+                ? 'text-warning'
+                : applicationStatus === 'approved'
+                  ? 'text-success'
+                  : applicationStatus === 'revoked'
+                    ? 'text-destructive'
+                    : 'text-muted-foreground'
+            } `}
           >
             {applicationReviewNote || 'No review note provided'}
           </span>

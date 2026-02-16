@@ -35,7 +35,7 @@ import {
   Settings2,
   Shield,
   Trash2,
-  X
+  X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -167,8 +167,8 @@ const SAMPLE_BILLING_HISTORY: BillingHistory[] = [
 ];
 
 const SettingsPage = () => {
-  const user = useUserProfile()
-  const router = useRouter()
+  const user = useUserProfile();
+  const router = useRouter();
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(SAMPLE_PAYMENT_METHODS);
   const [connectedApps, setConnectedApps] = useState<ConnectedApp[]>(SAMPLE_CONNECTED_APPS);
@@ -186,8 +186,7 @@ const SettingsPage = () => {
   const [showAccountId, setShowAccountId] = useState(false);
   const [copiedAccountId, setCopiedAccountId] = useState(false);
 
-  const [openDelete, setOpenDelete] = useState(false)
-
+  const [openDelete, setOpenDelete] = useState(false);
 
   const handleCopyAccountId = () => {
     navigator.clipboard.writeText(user?.uuid as string);
@@ -240,7 +239,7 @@ const SettingsPage = () => {
         </div>
       </section>
 
-      <div className='space-y-6' >
+      <div className='space-y-6'>
         {/* Account Information */}
         <Card className='p-6'>
           <h2 className='mb-4 text-lg font-semibold'>Account Information</h2>
@@ -331,16 +330,16 @@ const SettingsPage = () => {
                           <li>Connected apps and integrations</li>
                         </ul>
                       </AlertDialogDescription>
-                      <div className='flex flex-row gap-2 self-end' >
-                        <Button variant="outline" onClick={() => setOpenDelete(false)}>
+                      <div className='flex flex-row gap-2 self-end'>
+                        <Button variant='outline' onClick={() => setOpenDelete(false)}>
                           Cancel
                         </Button>
 
                         <Button
-                          variant="destructive"
+                          variant='destructive'
                           onClick={async () => {
-                            await handleDeleteAccount()
-                            setOpenDelete(false)
+                            await handleDeleteAccount();
+                            setOpenDelete(false);
                           }}
                         >
                           Yes, Delete
@@ -356,7 +355,7 @@ const SettingsPage = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue='billing' className='space-y-6 hidden'>
+      <Tabs defaultValue='billing' className='hidden space-y-6'>
         <TabsList className='grid w-full grid-cols-3'>
           <TabsTrigger value='billing'>
             <CreditCard className='mr-2 h-4 w-4' />
@@ -459,7 +458,7 @@ const SettingsPage = () => {
           </Card>
 
           {/* Billing History */}
-          <Card className='p-6 hidden'>
+          <Card className='hidden p-6'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-lg font-semibold'>Billing History</h2>
               <Button variant='outline' size='sm'>
@@ -615,7 +614,7 @@ const SettingsPage = () => {
         </TabsContent>
 
         {/* Connected Apps Tab */}
-        <TabsContent value='apps' className='space-y-6 hidden'>
+        <TabsContent value='apps' className='hidden space-y-6'>
           <Card className='p-6'>
             <div className='mb-4 flex items-center justify-between'>
               <div>
@@ -630,14 +629,11 @@ const SettingsPage = () => {
               </Button>
             </div>
 
-            <div className='flex flex-1 flex-col justify-center items-center text-center text-muted-foreground my-40'>
-              <p className='text-sm'>
-                This feature will be available soon. Stay tuned!
-              </p>
+            <div className='text-muted-foreground my-40 flex flex-1 flex-col items-center justify-center text-center'>
+              <p className='text-sm'>This feature will be available soon. Stay tuned!</p>
             </div>
 
-
-            <div className='space-y-4 hidden'>
+            <div className='hidden space-y-4'>
               {connectedApps.map(app => (
                 <div key={app.id} className='rounded-lg border p-4'>
                   <div className='mb-3 flex items-start justify-between'>

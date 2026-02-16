@@ -10,7 +10,7 @@ import {
   createCartMutation,
   enrollStudentMutation,
   getCartQueryKey,
-  getStudentScheduleQueryKey
+  getStudentScheduleQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -31,8 +31,8 @@ const EnrollClassPage = () => {
   const params = useParams();
   const router = useRouter();
   const qc = useQueryClient();
-  const domain = useUserDomain()
-  const user = useUserProfile()
+  const domain = useUserDomain();
+  const user = useUserProfile();
 
   const courseId = params?.id as string;
   const classId = searchParams.get('id');
@@ -133,17 +133,20 @@ const EnrollClassPage = () => {
         {
           onSuccess: (data: any) => {
             const cartId = data?.data?.id || null;
-            if (cartId) { setCartId(cartId) }
+            if (cartId) {
+              setCartId(cartId);
+            }
 
             qc.invalidateQueries({
-              queryKey: getCartQueryKey({ path: { cartId: cartId as string } })
-            })
+              queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
+            });
 
             toast.success('Class added to cart!');
-            router.push('/cart')
-
+            router.push('/cart');
           },
-          onError: (error: any) => { toast.error(error.message); },
+          onError: (error: any) => {
+            toast.error(error.message);
+          },
         }
       );
 
@@ -161,10 +164,10 @@ const EnrollClassPage = () => {
       {
         onSuccess: data => {
           qc.invalidateQueries({
-            queryKey: getCartQueryKey({ path: { cartId: savedCartId as string } })
-          })
+            queryKey: getCartQueryKey({ path: { cartId: savedCartId as string } }),
+          });
 
-          router.push('/cart')
+          router.push('/cart');
           toast.success('Class added to cart!');
         },
       }
@@ -202,12 +205,11 @@ const EnrollClassPage = () => {
           router.push(`/dashboard/browse-courses/available-classes/${courseId}`);
         },
         onError: err => {
-          handleCreateCartAndPay(enrollingClass)
+          handleCreateCartAndPay(enrollingClass);
         },
       }
     );
   };
-
 
   const handleCancel = () => {
     router.push(`/dashboard/browse-courses/available-classes/${courseId}`);
@@ -409,8 +411,6 @@ const EnrollClassPage = () => {
           >
             {enrollStudent.isPending ? 'Enrolling...' : 'Yes, Enroll Me'}
           </Button>
-
-
         </div>
       </div>
     </div>

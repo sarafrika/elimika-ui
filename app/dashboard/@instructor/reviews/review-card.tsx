@@ -47,9 +47,7 @@ export function ReviewCard({ review, type = 'instructor' }: ReviewCardProps) {
       <CardHeader className='flex flex-row items-center justify-between space-y-0'>
         <div className='flex items-center gap-3'>
           <Avatar>
-            {!review.is_anonymous && (
-              <AvatarImage src={student?.data?.avatar_url} />
-            )}
+            {!review.is_anonymous && <AvatarImage src={student?.data?.avatar_url} />}
             <AvatarFallback>
               {review.is_anonymous ? 'AS' : isLoading ? '…' : getInitials(fullName)}
             </AvatarFallback>
@@ -57,18 +55,17 @@ export function ReviewCard({ review, type = 'instructor' }: ReviewCardProps) {
 
           <div>
             <p className='leading-none font-medium'>
-              {review.is_anonymous
-                ? 'Anonymous Student'
-                : isLoading
-                  ? <Skeleton className='h-4 w-24' />
-                  : fullName
-              }
+              {review.is_anonymous ? (
+                'Anonymous Student'
+              ) : isLoading ? (
+                <Skeleton className='h-4 w-24' />
+              ) : (
+                fullName
+              )}
             </p>
           </div>
         </div>
-        <p className='text-muted-foreground text-xs'>
-          {moment(review.created_date).fromNow()}
-        </p>
+        <p className='text-muted-foreground text-xs'>{moment(review.created_date).fromNow()}</p>
       </CardHeader>
 
       <CardContent className='space-y-2'>

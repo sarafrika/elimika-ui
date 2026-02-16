@@ -7,16 +7,15 @@ import {
   getInstructorByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
-function useAllClassesWithDetails() {
+function useAmdinClassesWithDetails() {
   const { data, isLoading, isPending, isFetching } = useQuery({
-    ...getAllClassDefinitionsOptions({
-      query: { pageable: {} },
-    }),
+    ...getAllClassDefinitionsOptions({ query: { pageable: {} } }),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
+
   const classesData = data?.data?.content ?? [];
 
   const classes = useMemo(() => classesData.map(item => item.class_definition), [classesData]);
@@ -132,4 +131,4 @@ function useAllClassesWithDetails() {
   };
 }
 
-export default useAllClassesWithDetails;
+export default useAmdinClassesWithDetails;

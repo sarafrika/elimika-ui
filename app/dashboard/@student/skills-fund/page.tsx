@@ -39,7 +39,11 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useStudent } from '../../../../context/student-context';
 import { cn } from '../../../../lib/utils';
-import { getInstructorDocumentsQueryKey, getUserByUuidOptions, uploadInstructorDocumentMutation } from '../../../../services/client/@tanstack/react-query.gen';
+import {
+  getInstructorDocumentsQueryKey,
+  getUserByUuidOptions,
+  uploadInstructorDocumentMutation,
+} from '../../../../services/client/@tanstack/react-query.gen';
 import { sampleWallet, SkillsFundWalletCard } from '../../_components/skill-fund-wallet';
 
 const skillsFundApplications: any[] = [
@@ -186,17 +190,16 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
   });
   const student = data?.data;
 
-  const qc = useQueryClient()
+  const qc = useQueryClient();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false)
+  const [isDragging, setIsDragging] = useState(false);
 
   const isPdfFile = (file: File) =>
     file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
-  const uploadInstructorDocument = useMutation(uploadInstructorDocumentMutation())
-
+  const uploadInstructorDocument = useMutation(uploadInstructorDocumentMutation());
 
   const studentApplications = skillsFundApplications;
   const classes = [
@@ -624,10 +627,8 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
 
               <div
                 className={cn(
-                  'space-y-4 rounded-lg mt-2 border-2 flex flex-col items-center border-dashed p-8 transition-all',
-                  isDragging
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-background'
+                  'mt-2 flex flex-col items-center space-y-4 rounded-lg border-2 border-dashed p-8 transition-all',
+                  isDragging ? 'border-primary bg-primary/5' : 'border-border bg-background'
                 )}
                 onDragOver={e => {
                   e.preventDefault();
@@ -648,13 +649,12 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
 
                   setMediaFile(file);
                 }}
-
               >
                 <Input
                   ref={fileInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
+                  type='file'
+                  accept='application/pdf'
+                  className='hidden'
                   onChange={e => {
                     const file = e.target.files?.[0];
                     if (!file) return;
@@ -669,21 +669,17 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
                   }}
                 />
 
-
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className='cursor-pointer rounded-md text-center'
                 >
                   <Upload className='text-muted-foreground mx-auto mb-2 h-8 w-8' />
 
-                  <p className="text-foreground text-[13px] mb-1 font-medium">
-                    {mediaFile
-                      ? mediaFile.name
-                      : 'Click to upload or drag and drop'}
+                  <p className='text-foreground mb-1 text-[13px] font-medium'>
+                    {mediaFile ? mediaFile.name : 'Click to upload or drag and drop'}
                   </p>
 
                   <p className='text-muted-foreground mt-1 text-xs'>PDF (max 5MB)</p>
-
                 </div>
 
                 <Button
@@ -719,9 +715,9 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
                             }),
                           });
                         },
-                        onError: (error) => {
-                          toast.error(error?.message)
-                        }
+                        onError: error => {
+                          toast.error(error?.message);
+                        },
                       }
                     );
                   }}

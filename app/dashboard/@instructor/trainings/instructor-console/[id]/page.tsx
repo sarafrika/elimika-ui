@@ -6,9 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassRoster } from '@/hooks/use-class-roster';
-import {
-  markAttendanceMutation
-} from '@/services/client/@tanstack/react-query.gen';
+import { markAttendanceMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
@@ -19,7 +17,7 @@ import {
   Search,
   TrendingUp,
   Users,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 import moment from 'moment';
 import { useParams } from 'next/navigation';
@@ -47,7 +45,7 @@ import {
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
 
 export default function TrainingInterfacePage() {
-  const qc = useQueryClient()
+  const qc = useQueryClient();
   const params = useParams();
   const classId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -80,7 +78,9 @@ export default function TrainingInterfacePage() {
 
   const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
   const [isAttendanceDrawerOpen, setIsAttendanceDrawerOpen] = useState(false);
-  const [attendanceRecords, setAttendanceRecords] = useState<Record<string, Record<string, boolean>>>({});
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
   const [searchQuery, setSearchQuery] = useState('');
 
   // Get current week boundaries (Sunday to Saturday)
@@ -117,7 +117,6 @@ export default function TrainingInterfacePage() {
     return groups;
   }, [schedules]);
 
-
   const isScheduleEnabled = (schedule: any) => {
     const scheduleDate = moment(schedule.start_time);
     return scheduleDate.isBetween(startOfWeek, endOfWeek, null, '[]');
@@ -134,7 +133,6 @@ export default function TrainingInterfacePage() {
   };
   const progress = calculateProgress();
 
-
   // Map of schedule instance UUID → students
   const studentsByScheduleInstance = useMemo(() => {
     const map: Record<string, any[]> = {};
@@ -148,12 +146,10 @@ export default function TrainingInterfacePage() {
     return map;
   }, [rosterAllEnrollments]);
 
-
   // Get the list of students for the currently selected schedule
   const studentsForThisSchedule = selectedSchedule
-    ? studentsByScheduleInstance[selectedSchedule.uuid] ?? []
+    ? (studentsByScheduleInstance[selectedSchedule.uuid] ?? [])
     : [];
-
 
   // group enrollments per student:
   const enrollmentsByStudent = useMemo(() => {
@@ -175,7 +171,6 @@ export default function TrainingInterfacePage() {
     return map;
   }, [roster]);
 
-
   // Calculate student attendance
   const calculateStudentAttendance = (studentId: string) => {
     const studentEnrollments = enrollmentsByStudent[studentId] || [];
@@ -187,15 +182,12 @@ export default function TrainingInterfacePage() {
       totalSessions,
       markedSessions: markedSessions.length,
       presentCount: presentSessions.length,
-      percentage:
-        totalSessions > 0
-          ? (presentSessions.length / totalSessions) * 100
-          : 0,
+      percentage: totalSessions > 0 ? (presentSessions.length / totalSessions) * 100 : 0,
     };
   };
 
   // Handle attendance marking
-  const markAttendanceMut = useMutation(markAttendanceMutation())
+  const markAttendanceMut = useMutation(markAttendanceMutation());
   const [loadingEnrollmentUuid, setLoadingEnrollmentUuid] = useState<string | null>(null);
 
   const handleMarkAttendance = async (
@@ -209,7 +201,7 @@ export default function TrainingInterfacePage() {
     markAttendanceMut.mutate(
       {
         path: { enrollmentUuid },
-        query: { attended: isPresent }
+        query: { attended: isPresent },
       },
       {
         onSuccess: () => {
@@ -221,7 +213,8 @@ export default function TrainingInterfacePage() {
             },
           }));
           toast.success(
-            `Marked ${isPresent ? 'Present' : 'Absent'} for ${roster?.find((r: any) => r.user.uuid === studentId)?.user.full_name
+            `Marked ${isPresent ? 'Present' : 'Absent'} for ${
+              roster?.find((r: any) => r.user.uuid === studentId)?.user.full_name
             }`
           );
         },
@@ -232,9 +225,13 @@ export default function TrainingInterfacePage() {
     );
   };
 
-
   // Handle start class
-  const handleStartClass = (schedule: any) => {
+  const handlleMarkAttendance = (schedule: any) => {
+    setSelectedSchedule(schedule);
+    setIsAttendanceDrawerOpen(true);
+  };
+
+  const handleLaunchClass = (schedule: any) => {
     setSelectedSchedule(schedule);
     setIsAttendanceDrawerOpen(true);
   };
@@ -277,7 +274,9 @@ export default function TrainingInterfacePage() {
                 </div>
                 <div className='flex items-center gap-2'>
                   <Users className='text-muted-foreground h-4 w-4' />
-                  <span className='text-muted-foreground'>{classData?.max_participants - roster?.length} Seats availabe</span>
+                  <span className='text-muted-foreground'>
+                    {classData?.max_participants - roster?.length} Seats availabe
+                  </span>
                 </div>
                 <div className='flex items-center gap-2'>
                   <Calendar className='text-muted-foreground h-4 w-4' />
@@ -350,10 +349,7 @@ export default function TrainingInterfacePage() {
                       const isFuture = moment(schedule.start_time).isAfter(endOfWeek);
 
                       return (
-                        <TableRow
-                          key={schedule.uuid}
-                          className={!isEnabled ? 'opacity-50' : ''}
-                        >
+                        <TableRow key={schedule.uuid} className={!isEnabled ? 'opacity-50' : ''}>
                           <TableCell className='font-medium'>{index + 1}</TableCell>
                           <TableCell>
                             <div className='space-y-1'>
@@ -392,9 +388,9 @@ export default function TrainingInterfacePage() {
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell className='flex flex-row self-end justify-end text-right gap-2'>
+                          <TableCell className='flex flex-row justify-end gap-2 self-end text-right'>
                             <Button
-                              onClick={() => handleStartClass(schedule)}
+                              onClick={() => handlleMarkAttendance(schedule)}
                               disabled={!isEnabled}
                               size='sm'
                               variant={isEnabled ? 'default' : 'outline'}
@@ -411,7 +407,7 @@ export default function TrainingInterfacePage() {
                             </Button>
 
                             <Button
-                              onClick={() => handleStartClass(schedule)}
+                              onClick={() => handleLaunchClass(schedule)}
                               disabled={!isEnabled}
                               size='sm'
                               variant={isEnabled ? 'default' : 'outline'}
@@ -419,7 +415,7 @@ export default function TrainingInterfacePage() {
                             >
                               {isEnabled ? (
                                 <>
-                                  Start Class
+                                  Launch Class
                                   <ChevronRight className='h-4 w-4' />
                                 </>
                               ) : (
@@ -440,7 +436,7 @@ export default function TrainingInterfacePage() {
 
       {/* Attendance Drawer */}
       <Sheet open={isAttendanceDrawerOpen} onOpenChange={setIsAttendanceDrawerOpen}>
-        <SheetContent className='w-[500px] sm:max-w-[500px] px-6'>
+        <SheetContent className='w-[500px] px-6 sm:max-w-[500px]'>
           <SheetHeader>
             <SheetTitle>Mark Attendance</SheetTitle>
             <SheetDescription>
@@ -477,7 +473,7 @@ export default function TrainingInterfacePage() {
             <ScrollArea className='h-[calc(100vh-280px)]'>
               <div className='space-y-2'>
                 {studentsForThisSchedule
-                  .filter((entry) =>
+                  .filter(entry =>
                     entry.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
                   )
                   .map((entry: any) => {
@@ -489,7 +485,7 @@ export default function TrainingInterfacePage() {
                     );
                     const currentStatus = entry?.enrollment?.did_attend;
                     const isMarked = entry?.enrollment?.is_attendance_marked;
-                    const enrollmentUuid = entry?.enrollment?.uuid
+                    const enrollmentUuid = entry?.enrollment?.uuid;
 
                     return (
                       <Card key={studentId} className='border-border overflow-hidden'>
@@ -508,7 +504,8 @@ export default function TrainingInterfacePage() {
                                 <div>
                                   <div className='text-foreground font-medium'>{name}</div>
                                   <div className='text-muted-foreground text-xs'>
-                                    {attendance.presentCount} / {attendance.totalSessions} sessions marked
+                                    {attendance.presentCount} / {attendance.totalSessions} sessions
+                                    marked
                                   </div>
                                 </div>
                               </div>
@@ -523,35 +520,46 @@ export default function TrainingInterfacePage() {
                             {/* Progress Bar */}
                             <Progress value={attendance.percentage} className='h-1.5' />
 
-
                             {/* Action Buttons */}
                             <div className='flex gap-2'>
                               <Button
-                                onClick={() => handleMarkAttendance(studentId, enrollmentUuid, true)}
+                                onClick={() =>
+                                  handleMarkAttendance(studentId, enrollmentUuid, true)
+                                }
                                 variant={currentStatus === true ? 'success' : 'outline'}
                                 size='sm'
                                 className='flex-1 gap-1.5'
-                                disabled={loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending}
+                                disabled={
+                                  loadingEnrollmentUuid === enrollmentUuid &&
+                                  markAttendanceMut.isPending
+                                }
                               >
-                                {loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending ? (
-                                  <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                                {loadingEnrollmentUuid === enrollmentUuid &&
+                                markAttendanceMut.isPending ? (
+                                  <span className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                                 ) : (
-                                  <CheckCircle className='h-4 w-4 mr-1' />
+                                  <CheckCircle className='mr-1 h-4 w-4' />
                                 )}
                                 Present
                               </Button>
 
                               <Button
-                                onClick={() => handleMarkAttendance(studentId, enrollmentUuid, false)}
+                                onClick={() =>
+                                  handleMarkAttendance(studentId, enrollmentUuid, false)
+                                }
                                 variant={currentStatus === false ? 'destructive' : 'outline'}
                                 size='sm'
                                 className='flex-1 gap-1.5'
-                                disabled={loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending}
+                                disabled={
+                                  loadingEnrollmentUuid === enrollmentUuid &&
+                                  markAttendanceMut.isPending
+                                }
                               >
-                                {loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending ? (
-                                  <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                                {loadingEnrollmentUuid === enrollmentUuid &&
+                                markAttendanceMut.isPending ? (
+                                  <span className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                                 ) : (
-                                  <XCircle className='h-4 w-4 mr-1' />
+                                  <XCircle className='mr-1 h-4 w-4' />
                                 )}
                                 Absent
                               </Button>

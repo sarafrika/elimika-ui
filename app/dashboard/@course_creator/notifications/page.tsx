@@ -73,8 +73,7 @@ interface Notification {
   link?: string;
 }
 
-const SAMPLE_NOTIFICATIONS: Notification[] = []
-
+const SAMPLE_NOTIFICATIONS: Notification[] = [];
 
 const getNotificationIcon = (type: NotificationType) => {
   const iconMap: Record<NotificationType, any> = {
@@ -238,10 +237,11 @@ const NotificationsPage = () => {
                 return (
                   <Card
                     key={notification.id}
-                    className={`p-4 transition-colors ${notification.status === 'unread'
-                      ? 'bg-primary/5 border-l-primary border-l-4'
-                      : ''
-                      }`}
+                    className={`p-4 transition-colors ${
+                      notification.status === 'unread'
+                        ? 'bg-primary/5 border-l-primary border-l-4'
+                        : ''
+                    }`}
                   >
                     <div className='flex gap-4'>
                       {/* Icon */}
@@ -350,7 +350,6 @@ const NotificationsPage = () => {
 };
 
 export default NotificationsPage;
-
 
 // const SAMPLE_NOTIFICATIONS: Notification[] = [
 //   {
@@ -546,4 +545,3 @@ export default NotificationsPage;
 //     link: '/dashboard/requests/req-010',
 //   },
 // ];
-

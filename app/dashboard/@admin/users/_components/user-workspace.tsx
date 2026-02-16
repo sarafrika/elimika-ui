@@ -120,11 +120,11 @@ export function AdminUserWorkspace({
   const { data, isLoading } = useQuery(
     useAdminEndpoint
       ? getAdminUsersOptions({
-        query: {
-          filters: {},
-          pageable: { page, size: 20, sort: ['created_date,desc'] },
-        },
-      })
+          query: {
+            filters: {},
+            pageable: { page, size: 20, sort: ['created_date,desc'] },
+          },
+        })
       : getAllUsersOptions({ query: { pageable: { page, size: 20, sort: ['created_date,desc'] } } })
   );
 
@@ -556,7 +556,7 @@ interface UserDetailsFormProps {
 function UserDetailsForm({ form, onSubmit, isPending, user }: UserDetailsFormProps) {
   return (
     <Form {...form}>
-      <form className='mt-6 px-4 sm:px-0 space-y-6 pb-6' onSubmit={form.handleSubmit(onSubmit)}>
+      <form className='mt-6 space-y-6 px-4 pb-6 sm:px-0' onSubmit={form.handleSubmit(onSubmit)}>
         <div className='grid gap-4 md:grid-cols-2'>
           <FormField
             control={form.control}

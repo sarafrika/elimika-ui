@@ -268,7 +268,6 @@ export function SystemConfigContent() {
             Govern platform policies with scoped, prioritized rules. Manage lifecycle, payloads, and
             audit trail.
           </p>
-
         </div>
         <div className='flex flex-col gap-1'>
           <div className='flex flex-wrap gap-2'>
@@ -287,7 +286,7 @@ export function SystemConfigContent() {
         </div>
       </div>
 
-      <Card className='shadow-md pb-6 pt-0'>
+      <Card className='pt-0 pb-6 shadow-md'>
         <CardHeader className='bg-muted/30 space-y-2 border-b py-6'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
@@ -338,7 +337,6 @@ export function SystemConfigContent() {
               </div>
             </div>
           </div>
-
 
           <div className='flex flex-wrap items-center gap-2'>
             {activeFilters.length === 0 ? (
@@ -480,8 +478,8 @@ export function SystemConfigContent() {
                             <span className='text-muted-foreground text-xs'>
                               {rule.updatedDate
                                 ? formatDistanceToNow(new Date(rule.updatedDate), {
-                                  addSuffix: true,
-                                })
+                                    addSuffix: true,
+                                  })
                                 : 'Never'}
                             </span>
                           </div>
@@ -526,77 +524,77 @@ export function SystemConfigContent() {
           <div className='md:hidden'>
             {isLoading
               ? Array.from({ length: 3 }).map((_, index) => (
-                <Card key={`mobile-skel-${index}`} className='mb-3 shadow-sm'>
-                  <CardContent className='space-y-3 p-5'>
-                    <Skeleton className='h-5 w-36' />
-                    <Skeleton className='h-4 w-24' />
-                    <Skeleton className='h-4 w-full' />
-                  </CardContent>
-                </Card>
-              ))
+                  <Card key={`mobile-skel-${index}`} className='mb-3 shadow-sm'>
+                    <CardContent className='space-y-3 p-5'>
+                      <Skeleton className='h-5 w-36' />
+                      <Skeleton className='h-4 w-24' />
+                      <Skeleton className='h-4 w-full' />
+                    </CardContent>
+                  </Card>
+                ))
               : rules.map(rule => (
-                <Card
-                  key={rule.uuid}
-                  className='mb-3 cursor-pointer shadow-sm transition-all hover:shadow-md'
-                  onClick={() => openEdit(rule)}
-                >
-                  <CardContent className='space-y-4 p-5'>
-                    <div className='flex items-start justify-between gap-3'>
-                      <div className='space-y-1.5'>
-                        <p className='text-foreground text-base font-semibold'>{rule.key}</p>
-                        <Badge variant='outline' className='rounded-full text-xs'>
-                          {rule.category}
+                  <Card
+                    key={rule.uuid}
+                    className='mb-3 cursor-pointer shadow-sm transition-all hover:shadow-md'
+                    onClick={() => openEdit(rule)}
+                  >
+                    <CardContent className='space-y-4 p-5'>
+                      <div className='flex items-start justify-between gap-3'>
+                        <div className='space-y-1.5'>
+                          <p className='text-foreground text-base font-semibold'>{rule.key}</p>
+                          <Badge variant='outline' className='rounded-full text-xs'>
+                            {rule.category}
+                          </Badge>
+                        </div>
+                        <Badge
+                          variant={statusBadgeVariant[rule.status ?? ''] ?? 'outline'}
+                          className='rounded-full'
+                        >
+                          {rule.status ?? '—'}
                         </Badge>
                       </div>
-                      <Badge
-                        variant={statusBadgeVariant[rule.status ?? ''] ?? 'outline'}
-                        className='rounded-full'
-                      >
-                        {rule.status ?? '—'}
-                      </Badge>
-                    </div>
-                    <div className='space-y-2 text-sm'>
-                      <div className='flex items-center justify-between'>
-                        <span className='text-muted-foreground text-xs'>Scope</span>
-                        <span>{formatScope(rule)}</span>
+                      <div className='space-y-2 text-sm'>
+                        <div className='flex items-center justify-between'>
+                          <span className='text-muted-foreground text-xs'>Scope</span>
+                          <span>{formatScope(rule)}</span>
+                        </div>
+                        <div className='flex items-center justify-between'>
+                          <span className='text-muted-foreground text-xs'>Priority</span>
+                          <span>{rule.priority ?? '—'}</span>
+                        </div>
+                        <div className='text-muted-foreground flex items-center justify-between text-xs'>
+                          <span>{formatWindow(rule)}</span>
+                        </div>
+                        <div className='text-muted-foreground flex items-center justify-between text-xs'>
+                          <span>Updated by</span>
+                          <span className='text-foreground'>{resolveUserName(rule.updatedBy)}</span>
+                        </div>
                       </div>
-                      <div className='flex items-center justify-between'>
-                        <span className='text-muted-foreground text-xs'>Priority</span>
-                        <span>{rule.priority ?? '—'}</span>
+                      <div className='flex justify-end gap-2'>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={event => {
+                            event.stopPropagation();
+                            handleViewDetails(rule);
+                          }}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant='secondary'
+                          size='sm'
+                          onClick={event => {
+                            event.stopPropagation();
+                            openEdit(rule);
+                          }}
+                        >
+                          Edit
+                        </Button>
                       </div>
-                      <div className='text-muted-foreground flex items-center justify-between text-xs'>
-                        <span>{formatWindow(rule)}</span>
-                      </div>
-                      <div className='text-muted-foreground flex items-center justify-between text-xs'>
-                        <span>Updated by</span>
-                        <span className='text-foreground'>{resolveUserName(rule.updatedBy)}</span>
-                      </div>
-                    </div>
-                    <div className='flex justify-end gap-2'>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={event => {
-                          event.stopPropagation();
-                          handleViewDetails(rule);
-                        }}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        variant='secondary'
-                        size='sm'
-                        onClick={event => {
-                          event.stopPropagation();
-                          openEdit(rule);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
           </div>
 
           <Separator className='mt-6' />

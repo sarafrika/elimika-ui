@@ -5,7 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getAllCategoriesOptions, getAllTrainingProgramsOptions, getPublishedCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getAllCategoriesOptions,
+  getAllTrainingProgramsOptions,
+  getPublishedCoursesOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Layers, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -33,27 +37,24 @@ export default function MyCoursesPage() {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-  })
+  });
 
   const courses = data?.data?.content || [];
   const programs = programsData?.data?.content || [];
 
   const paginationMetadata = data?.data?.metadata;
-  const programPaginationMetadata = programsData?.data?.metadata
+  const programPaginationMetadata = programsData?.data?.metadata;
 
   const { data: apiCat } = useQuery({
     ...getAllCategoriesOptions({ query: { pageable: {} } }),
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-  })
+  });
 
   const apiCategories = apiCat?.data?.content || [];
 
-  const CATEGORIES = [
-    { name: 'All', displayName: 'All Categories' },
-    ...apiCategories,
-  ];
+  const CATEGORIES = [{ name: 'All', displayName: 'All Categories' }, ...apiCategories];
 
   const currentCategory = CATEGORIES.find(cat => cat.name === selectedCategory);
 
@@ -69,7 +70,6 @@ export default function MyCoursesPage() {
       course?.category_names?.some(
         (cat: string) => cat.toLowerCase() === currentCategory?.name.toLowerCase()
       );
-
 
     return matchesSearch && matchesCategory;
   });
@@ -87,12 +87,10 @@ export default function MyCoursesPage() {
         (cat: string) => cat.toLowerCase() === currentCategory?.name.toLowerCase()
       );
 
-
     return matchesSearch && matchesCategory;
   });
 
   const [activeTab, setActiveTab] = useState<'courses' | 'programs'>('courses');
-
 
   // Reset filters when switching tabs
   const handleTabChange = (value: string) => {
@@ -173,7 +171,7 @@ export default function MyCoursesPage() {
                     <TabsTrigger
                       key={category.name}
                       value={category.name}
-                      className='flex flex-shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 hover:text-black data-[state=active]:bg-white data-[state=active]:text-black dark:hover:bg-gray-700 dark:hover:text-white  dark:data-[state=active]:text-white'
+                      className='flex flex-shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 hover:text-black data-[state=active]:bg-white data-[state=active]:text-black dark:hover:bg-gray-700 dark:hover:text-white dark:data-[state=active]:text-white'
                     >
                       {category.name}
                     </TabsTrigger>
@@ -186,9 +184,7 @@ export default function MyCoursesPage() {
           {/* Results */}
           <div className='mb-6'>
             <div className='flex items-center justify-between'>
-              <h2>
-                {selectedCategory === 'all' ? 'All Courses' : currentCategory?.name}
-              </h2>
+              <h2>{selectedCategory === 'all' ? 'All Courses' : currentCategory?.name}</h2>
               <p className='text-muted-foreground text-sm'>
                 {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
               </p>
@@ -301,18 +297,8 @@ export default function MyCoursesPage() {
                 }}
               />
             )}
-
           </TabsContent>
-
-
-
         </Tabs>
-
-
-
-
-
-
       </div>
     </div>
   );

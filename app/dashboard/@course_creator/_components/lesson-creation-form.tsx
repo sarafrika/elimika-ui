@@ -9,15 +9,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import {
-  FileText,
-  FileUp,
-  Headphones,
-  ImageIcon,
-  PlusCircle,
-  Trash2,
-  Video
-} from 'lucide-react';
+import { FileText, FileUp, Headphones, ImageIcon, PlusCircle, Trash2, Video } from 'lucide-react';
 import { Button } from '../../../../components/ui/button';
 import { CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
 import {
@@ -466,7 +458,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const handleDeleteContent = async (resolvedId: any, lessonId: any, contentId: any) => {
@@ -492,7 +484,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const getContentIcon = (type: string) => {
