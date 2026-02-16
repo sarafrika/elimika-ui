@@ -159,7 +159,6 @@ export default function StudentsPage({
   const handleDelete = (studentUuid: string, e: React.MouseEvent) => {
     e.stopPropagation();
     // Implement delete logic
-    console.log('Delete student:', studentUuid);
   };
 
   const handleStudentClick = (student: any) => {
@@ -407,8 +406,8 @@ export default function StudentsPage({
                       setIsMobileMenuOpen(false);
                     }}
                     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${selectedCategory === category
-                        ? 'bg-primary/10 text-primary'
-                        : 'hover:bg-muted'
+                      ? 'bg-primary/10 text-primary'
+                      : 'hover:bg-muted'
                       }`}
                   >
                     <Building2 size={16} />
@@ -595,8 +594,8 @@ function StudentDetailsContent({
                         </div>
                         <div
                           className={`rounded-full px-2 py-1 text-xs font-medium ${enrollment?.status === 'COMPLETED'
-                              ? 'text-success/70 bg-success/10'
-                              : 'text-primary/70 bg-primary/10'
+                            ? 'text-success/70 bg-success/10'
+                            : 'text-primary/70 bg-primary/10'
                             }`}
                         >
                           {enrollment?.status || 'IN_PROGRESS'}
