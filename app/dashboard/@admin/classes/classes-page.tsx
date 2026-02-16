@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Badge } from '../../../../components/ui/badge';
+import { Card } from '../../../../components/ui/card';
 import useAmdinClassesWithDetails from '../../../../hooks/use-admin-classes';
 import { useStudentsMap } from '../../../../hooks/use-studentsMap';
 import { getEnrollmentsForInstanceOptions } from '../../../../services/client/@tanstack/react-query.gen';
@@ -131,11 +132,10 @@ const Dropdown: React.FC<{
         {items.map(item => (
           <div
             key={item.id}
-            className={`flex cursor-pointer items-center justify-between rounded px-2.5 py-1.5 text-xs transition-colors md:text-sm ${
-              selectedId === item.id
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-muted-foreground hover:bg-primary/5'
-            }`}
+            className={`flex cursor-pointer items-center justify-between rounded px-2.5 py-1.5 text-xs transition-colors md:text-sm ${selectedId === item.id
+              ? 'bg-primary/10 text-primary font-medium'
+              : 'text-muted-foreground hover:bg-primary/5'
+              }`}
             onClick={() => onItemClick?.(item.id)}
           >
             <span className='truncate'>{item.name}</span>
@@ -167,7 +167,7 @@ const CalendarHeader: React.FC<{
   };
 
   return (
-    <div className='bg-background border-border border-b px-4 py-3 md:px-6 md:py-4'>
+    <div className='bg-background border-border border-b px-4 pb-3 md:px-6 md:py-3'>
       <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center md:gap-6'>
           <h1 className='text-foreground text-lg font-bold tracking-tight md:text-xl'>
@@ -195,11 +195,10 @@ const CalendarHeader: React.FC<{
               <button
                 key={view}
                 onClick={() => onViewChange(view)}
-                className={`rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all md:px-3.5 md:text-sm ${
-                  viewMode === view
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all md:px-3.5 md:text-sm ${viewMode === view
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
               >
                 {view.charAt(0).toUpperCase() + view.slice(1)}
               </button>
@@ -311,9 +310,8 @@ const WeekView: React.FC<{
                         return (
                           <div
                             key={event.id}
-                            className={`absolute cursor-pointer overflow-hidden rounded-lg p-1.5 transition-all hover:shadow-lg md:p-2 ${
-                              selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
-                            }`}
+                            className={`absolute cursor-pointer overflow-hidden rounded-lg p-1.5 transition-all hover:shadow-lg md:p-2 ${selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
+                              }`}
                             style={{
                               backgroundColor: event.color,
                               height: `${getEventHeight(event)}px`,
@@ -393,9 +391,8 @@ const DayView: React.FC<{
                 {hourEvents.map((event, idx) => (
                   <div
                     key={event.id}
-                    className={`absolute cursor-pointer rounded-lg p-2 transition-all hover:shadow-lg md:p-3 ${
-                      selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
-                    }`}
+                    className={`absolute cursor-pointer rounded-lg p-2 transition-all hover:shadow-lg md:p-3 ${selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
+                      }`}
                     style={{
                       backgroundColor: event.color,
                       height: `${getEventHeight(event)}px`,
@@ -567,11 +564,10 @@ const YearView: React.FC<{
                   return (
                     <div
                       key={i}
-                      className={`rounded p-0.5 text-center text-[10px] md:text-xs ${
-                        hasEvent
-                          ? 'bg-primary/10 text-primary font-semibold'
-                          : 'text-muted-foreground hover:bg-primary/5'
-                      }`}
+                      className={`rounded p-0.5 text-center text-[10px] md:text-xs ${hasEvent
+                        ? 'bg-primary/10 text-primary font-semibold'
+                        : 'text-muted-foreground hover:bg-primary/5'
+                        }`}
                     >
                       {dayNumber}
                     </div>
@@ -669,7 +665,7 @@ export default function AdminClassPage() {
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { classes: classesWithCourseAndInstructor, loading } = useAmdinClassesWithDetails();
+  const { classes: classesWithCourseAndInstructor, loading, isPending } = useAmdinClassesWithDetails();
 
   const allEvents = useMemo<CalendarEvent[]>(() => {
     if (!classesWithCourseAndInstructor) return [];
@@ -823,8 +819,8 @@ export default function AdminClassPage() {
         </p>
       </div>
 
-      {loading ? (
-        <div className='bg-background flex h-screen flex-col overflow-hidden rounded-2xl border font-sans'>
+      {isPending ? (
+        <Card className='bg-background flex h-[calc(75vh-4rem)] flex-col overflow-hidden rounded-2xl border font-sans'>
           <div className='bg-background border-border border-b px-4 py-3 md:px-6 md:py-4'>
             <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
               <div className='flex flex-col gap-3 sm:flex-row sm:items-center md:gap-6'>
@@ -868,9 +864,9 @@ export default function AdminClassPage() {
               <Skeleton className='h-32 w-full' />
             </div>
           </div>
-        </div>
+        </Card>
       ) : (
-        <div className='bg-background flex h-screen flex-col overflow-hidden font-sans'>
+        <Card className='bg-background pt-0 flex h-[calc(75vh-2rem)] sm:h-[calc(82vh-2rem)] md:h-[calc(80vh-2rem)] flex-col overflow-hidden font-sans'>
           <style jsx global>{`
             .scrollbar-hide {
               -ms-overflow-style: none;
@@ -880,6 +876,7 @@ export default function AdminClassPage() {
               display: none;
             }
           `}</style>
+
           <CalendarHeader
             currentDate={currentDate}
             viewMode={viewMode}
@@ -887,6 +884,7 @@ export default function AdminClassPage() {
             onDateChange={handleDateChange}
             eventCount={filteredEvents.length}
           />
+
           <div className='relative flex flex-1 overflow-hidden'>
             <button
               className='bg-foreground text-background fixed right-4 bottom-4 z-50 rounded-full p-3 shadow-lg lg:hidden'
@@ -894,8 +892,9 @@ export default function AdminClassPage() {
             >
               <Search className='h-5 w-5' />
             </button>
+
             <div
-              className={`${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} bg-background border-border fixed z-40 flex h-full w-60 flex-col border-r transition-transform duration-300 ease-in-out md:w-64 lg:relative lg:translate-x-0`}
+              className={`${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} bg-background border-border fixed z-40 flex h-full w-60 flex-col border-r transition-transform duration-300 ease-in-out md:w-64 lg:relative lg:translate-x-0 overflow-y-hidden`}
             >
               <div className='border-border border-b p-3 md:p-4'>
                 <div className='relative'>
@@ -907,6 +906,28 @@ export default function AdminClassPage() {
                   />
                 </div>
               </div>
+              {(selectedClassId !== 'all' || selectedInstructorId) && (
+                <div className='border-border border-t p-3 md:p-4'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-muted-foreground text-xs font-medium md:text-sm'>
+                      Clear all filters
+                    </span>
+
+                    <button
+                      onClick={() => {
+                        setSelectedClassId('all');
+                        setSelectedInstructorId(null);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className='hover:bg-muted rounded-full p-1 transition-colors'
+                      aria-label='Clear filters'
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className='scrollbar-hide flex-1 overflow-y-auto'>
                 <Dropdown
                   label='Classes'
@@ -937,20 +958,7 @@ export default function AdminClassPage() {
                   selectedId={selectedInstructorId}
                 />
               </div>
-              {(selectedClassId !== 'all' || selectedInstructorId) && (
-                <div className='border-border border-t p-3 md:p-4'>
-                  <button
-                    onClick={() => {
-                      setSelectedClassId('all');
-                      setSelectedInstructorId(null);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className='text-foreground hover:text-foreground border-input hover:bg-primary/5 w-full rounded-lg border py-1.5 text-center text-xs font-medium transition-colors md:text-sm'
-                  >
-                    Clear All Filters
-                  </button>
-                </div>
-              )}
+
             </div>
             {isMobileMenuOpen && (
               <div
@@ -959,7 +967,7 @@ export default function AdminClassPage() {
               />
             )}
 
-            <div className='bg-background flex flex-1 flex-col overflow-hidden'>
+            <div className='bg-background flex flex-1 flex-col overflow-hidden pt-2'>
               {viewMode === 'week' && (
                 <WeekView
                   events={filteredEvents}
@@ -1121,7 +1129,7 @@ export default function AdminClassPage() {
               )}
             </div>
           </div>
-        </div>
+        </Card>
       )}
     </main>
   );
