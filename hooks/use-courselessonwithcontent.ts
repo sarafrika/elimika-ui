@@ -24,7 +24,7 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
     enabled: !!courseUuid,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: false,
   });
 
   const lessonContentQueries = useQueries({
@@ -39,7 +39,7 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
         enabled: !!lesson.uuid,
         staleTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
-        refetchOnMount: false
+        refetchOnMount: false,
       })) || [],
   });
 

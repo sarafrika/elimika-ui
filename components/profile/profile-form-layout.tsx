@@ -253,11 +253,11 @@ export function ProfileFormSection({
   return (
     <Card
       className={cn(
-        'border-border/60 supports-[backdrop-filter]:bg-background/60 shadow-sm backdrop-blur',
+        'border-border/60 supports-[backdrop-filter]:bg-background/60 pt-0 shadow-sm backdrop-blur',
         className
       )}
     >
-      <CardHeader className='border-border/60 bg-muted/40 border-b'>
+      <CardHeader className='border-border/60 bg-muted/40 border-b pt-6'>
         <div className='flex items-center gap-3'>
           {icon}
           <div>

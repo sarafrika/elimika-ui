@@ -4,11 +4,10 @@ import {
   getClassDefinitionsForInstructorOptions,
   getClassScheduleOptions,
   getCourseByUuidOptions,
-  getInstructorByUuidOptions
+  getInstructorByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
 function useInstructorClassesWithDetails(instructorUuid?: string) {
-
   const { data, isLoading, isPending, isFetching } = useQuery({
     ...getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructorUuid ?? '' },
@@ -23,11 +22,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
 
   const classesData = data?.data ?? [];
 
-  const classes = useMemo(
-    () => classesData.map(item => item.class_definition),
-    [classesData]
-  );
-
+  const classes = useMemo(() => classesData.map(item => item.class_definition), [classesData]);
 
   const uniqueCourseUuids = useMemo(() => {
     const set = new Set<string>();
@@ -45,9 +40,8 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     return Array.from(set);
   }, [classes]);
 
-
   const courseQueries = useQueries({
-    queries: uniqueCourseUuids.map((uuid) => ({
+    queries: uniqueCourseUuids.map(uuid => ({
       ...getCourseByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
       staleTime: 5 * 60 * 1000,
@@ -72,9 +66,8 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     return map;
   }, [uniqueCourseUuids, courseDataArray]);
 
-
   const instructorQueries = useQueries({
-    queries: uniqueInstructorUuids.map((uuid) => ({
+    queries: uniqueInstructorUuids.map(uuid => ({
       ...getInstructorByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
       staleTime: 5 * 60 * 1000,
@@ -98,12 +91,11 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     return map;
   }, [uniqueInstructorUuids, instructorDataArray]);
 
-
   const scheduleQueries = useQueries({
     queries: classes.map((cls: any) => ({
       ...getClassScheduleOptions({
         path: { uuid: cls.uuid as string },
-        query: { pageable: {} }
+        query: { pageable: {} },
       }),
       enabled: !!cls.uuid,
       staleTime: 5 * 60 * 1000,
@@ -118,15 +110,12 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     [scheduleQueries]
   );
 
-
   const classesWithCourseAndInstructor = useMemo(() => {
     return classes.map((cls: any, i: number) => ({
       ...cls,
-      course: cls.course_uuid
-        ? courseMap.get(cls.course_uuid) ?? null
-        : null,
+      course: cls.course_uuid ? (courseMap.get(cls.course_uuid) ?? null) : null,
       instructor: cls.default_instructor_uuid
-        ? instructorMap.get(cls.default_instructor_uuid) ?? null
+        ? (instructorMap.get(cls.default_instructor_uuid) ?? null)
         : null,
       schedule: schedules[i] ?? null,
     }));
@@ -137,11 +126,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   const isSchedulesLoading = scheduleQueries.some(q => q.isLoading || q.isFetching);
 
   const loading =
-    isLoading ||
-    isFetching ||
-    isCoursesLoading ||
-    isInstructorsLoading ||
-    isSchedulesLoading;
+    isLoading || isFetching || isCoursesLoading || isInstructorsLoading || isSchedulesLoading;
 
   return {
     classes: classesWithCourseAndInstructor,

@@ -38,7 +38,7 @@ const skillColorMap = [
 ];
 
 const MySkillsPage = () => {
-  const router = useRouter()
+  const router = useRouter();
   const instructor = useInstructor();
   const uuid = instructor?.uuid as string;
   const { domains } = useUserDomains();
@@ -46,7 +46,6 @@ const MySkillsPage = () => {
   const hasStudentProfile = Array.isArray(domains) && domains.includes('student');
 
   const [showStudentProfileNotice, setShowStudentProfileNotice] = useState(false);
-
 
   const { data: studentSearch } = useQuery({
     ...searchStudentsOptions({
@@ -71,16 +70,15 @@ const MySkillsPage = () => {
   // const skills = useMockData ? mockSkills : apiSkills;
   const skills = apiSkills;
 
-
   // overall progress = average proficiency score
   const overallProgress =
     skills.length > 0
       ? Math.round(
-        skills.reduce(
-          (acc: number, skill: any) => acc + (proficiencyScoreMap[skill.proficiency_level] || 0),
-          0
-        ) / skills.length
-      )
+          skills.reduce(
+            (acc: number, skill: any) => acc + (proficiencyScoreMap[skill.proficiency_level] || 0),
+            0
+          ) / skills.length
+        )
       : 0;
 
   // top 3 skills by proficiency
@@ -110,7 +108,6 @@ const MySkillsPage = () => {
   const studentEnrollmentsApi = studentEnrollmentData?.data;
   // const studentEnrollments = useMockEnrollment ? mockStudentEnrollments : studentEnrollmentsApi;
   const studentEnrollments = studentEnrollmentsApi;
-
 
   const uniqueClassDefinitionUuids = [
     ...new Set(studentEnrollments?.map(e => e.class_definition_uuid)),
@@ -191,45 +188,48 @@ const MySkillsPage = () => {
         </div>
       </section>
 
+      {showStudentProfileNotice && (
+        <div className='border-destructive bg-destructive/10 text-destructive my-6 flex flex-col gap-3 rounded-md border-l-4 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
+          <div className='flex flex-col gap-1'>
+            <p className='font-medium'>⚠️ Student profile required</p>
+            <p className='text-destructive/90 text-sm'>
+              To add skills to your skill set, you need a student profile. If you already have one,
+              simply switch profile. Otherwise, create a student profile to continue.
+            </p>
+          </div>
 
-      {showStudentProfileNotice && <div className='my-6 flex flex-col gap-3 rounded-md border-l-4 border-destructive bg-destructive/10 p-4 text-destructive shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
-        <div className='flex flex-col gap-1'>
-          <p className='font-medium'>⚠️ Student profile required</p>
-          <p className='text-sm text-destructive/90'>
-            To add skills to your skill set, you need a student profile.
-            If you already have one, simply switch profile. Otherwise, create a student profile to continue.
-          </p>
+          <div className='flex gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              className='border-destructive text-destructive hover:bg-destructive/10'
+              onClick={async () => {
+                if (userDomain.activeDomain === 'student') return;
+
+                userDomain.setActiveDomain('student');
+
+                // allow context to update
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                router.push('/dashboard/overview');
+                router.refresh();
+              }}
+            >
+              Switch profile
+            </Button>
+
+            {!hasStudentProfile && (
+              <Button
+                size='sm'
+                className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                onClick={() => router.push('/dashboard/add-profile')}
+              >
+                Create profile
+              </Button>
+            )}
+          </div>
         </div>
-
-        <div className='flex gap-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            className='border-destructive text-destructive hover:bg-destructive/10'
-            onClick={async () => {
-              if (userDomain.activeDomain === 'student') return;
-
-              userDomain.setActiveDomain('student');
-
-              // allow context to update
-              await new Promise(resolve => setTimeout(resolve, 300));
-
-              router.push('/dashboard/overview');
-              router.refresh();
-            }}
-          >
-            Switch profile
-          </Button>
-
-          {!hasStudentProfile && <Button
-            size='sm'
-            className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-            onClick={() => router.push('/dashboard/add-profile')}
-          >
-            Create profile
-          </Button>}
-        </div>
-      </div>}
+      )}
 
       {/* Hero Section - Skills Snapshot */}
       <section className='mb-8'>
@@ -345,7 +345,6 @@ const MySkillsPage = () => {
             </div>
             <p className='text-2xl font-bold text-yellow-600'>{stats.inProgress}</p>
           </div>
-
         </div>
       </section>
 
@@ -440,12 +439,13 @@ const MySkillsPage = () => {
                           </div>
                           <div className='bg-background border-input h-2 w-full overflow-hidden rounded-full border'>
                             <div
-                              className={`h-2 rounded-full transition-all duration-500 ${en?.course?.status === 'complete' || en?.course?.status === 'passed'
-                                ? 'bg-success'
-                                : en?.course?.status === 'failed'
-                                  ? 'bg-destructive'
-                                  : 'bg-yellow-500'
-                                }`}
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                en?.course?.status === 'complete' || en?.course?.status === 'passed'
+                                  ? 'bg-success'
+                                  : en?.course?.status === 'failed'
+                                    ? 'bg-destructive'
+                                    : 'bg-yellow-500'
+                              }`}
                               style={{ width: `${en?.course?.progress || 0}%` }}
                             />
                           </div>
@@ -571,7 +571,6 @@ export function EnrollmentSkeleton() {
     </div>
   );
 }
-
 
 const mockSkills = [
   {

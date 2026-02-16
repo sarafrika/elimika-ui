@@ -17,17 +17,10 @@ import {
   getCourseLessonsOptions,
   getCourseReviewsOptions,
   getCourseReviewsQueryKey,
-  submitCourseReviewMutation
+  submitCourseReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  BookOpen,
-  Clock,
-  FileText,
-  Play,
-  PlusCircle,
-  Users,
-} from 'lucide-react';
+import { BookOpen, Clock, FileText, Play, PlusCircle, Users } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -40,7 +33,7 @@ type CourseDetailsProps = {
   courseId?: string;
   handleEnroll?: () => void;
   userRole?: string;
-  student_uuid?: string
+  student_uuid?: string;
 };
 
 interface ContentItem {
@@ -55,10 +48,10 @@ export default function ReusableCourseDetailsPage({
   courseId: propCourseId,
   handleEnroll,
   userRole,
-  student_uuid
+  student_uuid,
 }: CourseDetailsProps) {
   const router = useRouter();
-  const qc = useQueryClient()
+  const qc = useQueryClient();
   const params = useParams();
   const courseId = propCourseId || (params?.id as string);
 
@@ -69,30 +62,35 @@ export default function ReusableCourseDetailsPage({
   const [feedbackComment, setFeedbackComment] = useState('');
   const [headline, setHeadline] = useState('');
 
-  const reviewCourseMut = useMutation(submitCourseReviewMutation())
+  const reviewCourseMut = useMutation(submitCourseReviewMutation());
   const handleSubmitFeedback = () => {
-    reviewCourseMut.mutate({
-      body: {
-        course_uuid: courseId as string,
-        rating: rating,
-        student_uuid: student_uuid as string,
-        comments: feedbackComment,
-        headline: headline,
-        is_anonymous: false,
-
-      }, path: { courseUuid: courseId as string }
-    }, {
-      onSuccess: (data) => {
-        toast.success(data?.message)
-        setShowFeedbackDialog(false)
-        qc.invalidateQueries({ queryKey: getCourseReviewsQueryKey({ path: { courseUuid: courseId as string } }) })
+    reviewCourseMut.mutate(
+      {
+        body: {
+          course_uuid: courseId as string,
+          rating: rating,
+          student_uuid: student_uuid as string,
+          comments: feedbackComment,
+          headline: headline,
+          is_anonymous: false,
+        },
+        path: { courseUuid: courseId as string },
       },
-      onError: (error) => {
-        toast.error(error?.message)
-        setShowFeedbackDialog(false)
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          setShowFeedbackDialog(false);
+          qc.invalidateQueries({
+            queryKey: getCourseReviewsQueryKey({ path: { courseUuid: courseId as string } }),
+          });
+        },
+        onError: error => {
+          toast.error(error?.message);
+          setShowFeedbackDialog(false);
+        },
       }
-    })
-  }
+    );
+  };
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
@@ -108,7 +106,7 @@ export default function ReusableCourseDetailsPage({
     enabled: !!courseId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-  })
+  });
 
   useEffect(() => {
     if (courseData) {
@@ -128,7 +126,7 @@ export default function ReusableCourseDetailsPage({
         {
           id: 'course-details',
           title: courseData?.name,
-          url: `/dashboard/browse-courses/${courseData?.uuid}`
+          url: `/dashboard/browse-courses/${courseData?.uuid}`,
         },
       ]);
     }
@@ -152,10 +150,7 @@ export default function ReusableCourseDetailsPage({
   const lessons = courseLessons?.data?.content;
   const lessonUuids = lessons?.map((lesson: any) => lesson.uuid) || [];
 
-  const {
-    data: cAssignments,
-    isLoading: assignmentLoading,
-  } = useQuery({
+  const { data: cAssignments, isLoading: assignmentLoading } = useQuery({
     ...getAllAssignmentsOptions({ query: { pageable: {} } }),
   });
 
@@ -163,10 +158,7 @@ export default function ReusableCourseDetailsPage({
   const filteredAssignments =
     assignments?.filter((assignment: any) => lessonUuids.includes(assignment.lesson_uuid)) || [];
 
-  const {
-    data: cQuizzes,
-    isLoading: quizzesLoading,
-  } = useQuery({
+  const { data: cQuizzes, isLoading: quizzesLoading } = useQuery({
     ...getAllQuizzesOptions({ query: { pageable: {} } }),
   });
 
@@ -212,7 +204,7 @@ export default function ReusableCourseDetailsPage({
               </Badge>
             </div>
 
-            <div className='flex flex-row items-center gap-3 mb-2'>
+            <div className='mb-2 flex flex-row items-center gap-3'>
               <h1 className='text-lg font-bold'>{courseData?.name}</h1>
               <div className='flex items-center gap-2'>
                 {courseData?.category_names?.map((category, index) => (
@@ -277,8 +269,8 @@ export default function ReusableCourseDetailsPage({
                       </div>
                     </div>
                   ) : (
-                    <div className='flex flex-col items-center gap-2 text-center text-muted-foreground'>
-                      <BookOpen className='h-12 w-12 text-primary/40' />
+                    <div className='text-muted-foreground flex flex-col items-center gap-2 text-center'>
+                      <BookOpen className='text-primary/40 h-12 w-12' />
                       <p className='text-sm'>Intro video display not available</p>
                     </div>
                   )}
@@ -340,32 +332,32 @@ export default function ReusableCourseDetailsPage({
               {/* Quick Stats */}
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
                 <div className='flex items-start gap-3'>
-                  <div className='rounded-lg bg-primary/10 p-2'>
-                    <FileText className='h-5 w-5 text-primary' />
+                  <div className='bg-primary/10 rounded-lg p-2'>
+                    <FileText className='text-primary h-5 w-5' />
                   </div>
                   <div>
                     <p className='text-2xl font-bold'>{lessonsWithContent?.length || 0}</p>
-                    <p className='text-sm text-muted-foreground'>Lessons</p>
+                    <p className='text-muted-foreground text-sm'>Lessons</p>
                   </div>
                 </div>
 
                 <div className='flex items-start gap-3'>
-                  <div className='rounded-lg bg-primary/10 p-2'>
-                    <Clock className='h-5 w-5 text-primary' />
+                  <div className='bg-primary/10 rounded-lg p-2'>
+                    <Clock className='text-primary h-5 w-5' />
                   </div>
                   <div>
                     <p className='text-2xl font-bold'>{filteredQuizzes?.length || 0}</p>
-                    <p className='text-sm text-muted-foreground'>Quizzes</p>
+                    <p className='text-muted-foreground text-sm'>Quizzes</p>
                   </div>
                 </div>
 
                 <div className='flex items-start gap-3'>
-                  <div className='rounded-lg bg-primary/10 p-2'>
-                    <BookOpen className='h-5 w-5 text-primary' />
+                  <div className='bg-primary/10 rounded-lg p-2'>
+                    <BookOpen className='text-primary h-5 w-5' />
                   </div>
                   <div>
                     <p className='text-2xl font-bold'>{filteredAssignments?.length || 0}</p>
-                    <p className='text-sm text-muted-foreground'>Assignments</p>
+                    <p className='text-muted-foreground text-sm'>Assignments</p>
                   </div>
                 </div>
               </div>
@@ -388,14 +380,14 @@ export default function ReusableCourseDetailsPage({
                 <div className='flex flex-col items-start justify-center gap-2'>
                   {lessonsWithContent?.slice(0, 5).map((lesson: any, index: number) => (
                     <div key={lesson?.lesson?.uuid} className='flex items-start gap-2'>
-                      <div className='h-5 w-5 shrink-0 rounded-full bg-green-100 flex items-center justify-center'>
+                      <div className='flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100'>
                         <span className='text-xs text-green-700'>{index + 1}</span>
                       </div>
                       <p className='text-sm'>{lesson?.lesson?.title}</p>
                     </div>
                   ))}
                   {lessonsWithContent?.length > 5 && (
-                    <p className='text-sm text-muted-foreground col-span-2'>
+                    <p className='text-muted-foreground col-span-2 text-sm'>
                       ...and {Number(lessonsWithContent.length) - 5} more lesson(s)
                     </p>
                   )}
@@ -405,25 +397,26 @@ export default function ReusableCourseDetailsPage({
               <Separator />
 
               <div>
-                <div className='flex flex-row items-center justify-between' >
+                <div className='flex flex-row items-center justify-between'>
                   <h3 className='mb-3 text-lg font-semibold'>Course Reviews</h3>
 
                   {userRole !== 'instructor' && (
-                    <Button
-                      onClick={() => setShowFeedbackDialog(true)}
-                    >
+                    <Button onClick={() => setShowFeedbackDialog(true)}>
                       <PlusCircle />
                       Add review
-                    </Button>)}
+                    </Button>
+                  )}
                 </div>
 
-                <div className="space-y-4 mt-4">
+                <div className='mt-4 space-y-4'>
                   {reviews?.data?.length ? (
-                    reviews?.data?.slice(0, 5)?.map(review => (
-                      <ReviewCard key={review.uuid} review={review} type='others' />
-                    ))
+                    reviews?.data
+                      ?.slice(0, 5)
+                      ?.map(review => (
+                        <ReviewCard key={review.uuid} review={review} type='others' />
+                      ))
                   ) : (
-                    <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                    <div className='text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
                       No reviews yet.
                     </div>
                   )}

@@ -15,7 +15,13 @@ import {
 } from '../../../../components/ui/dialog';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../../components/ui/select';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import { useMultipleClassDetails } from '../../../../hooks/use-class-multiple-details';
 import { useUserDomains } from '../../../../hooks/use-user-query';
@@ -29,13 +35,11 @@ import {
 } from '../../../../services/client/@tanstack/react-query.gen';
 import { EnrollmentSkeleton, SkillSkeleton } from '../../@instructor/my-skills/page';
 
-
 const elimikaDesignSystem = {
   components: {
     pageContainer: 'container mx-auto px-4 py-6 max-w-7xl',
   },
 };
-
 
 const proficiencyScoreMap: Record<string, number> = {
   beginner: 25,
@@ -44,23 +48,16 @@ const proficiencyScoreMap: Record<string, number> = {
   expert: 100,
 };
 
-const skillColorMap = [
-  'bg-primary',
-  'bg-secondary',
-  'bg-accent',
-  'bg-muted',
-  'bg-primary/80',
-];
+const skillColorMap = ['bg-primary', 'bg-secondary', 'bg-accent', 'bg-muted', 'bg-primary/80'];
 
 const MySkillsPage = () => {
-  const router = useRouter()
+  const router = useRouter();
   const creator = useCourseCreator();
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   const uuid = creator?.profile?.uuid as string;
   const { domains } = useUserDomains();
   const userDomain = useUserDomain();
   const hasStudentProfile = Array.isArray(domains) && domains.includes('student');
-
 
   const [showStudentProfileNotice, setShowStudentProfileNotice] = useState(false);
   const [isAddSkillModalOpen, setIsAddSkillModalOpen] = useState(false);
@@ -71,7 +68,10 @@ const MySkillsPage = () => {
     ...addCourseCreatorSkillMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getCourseCreatorSkillsQueryKey({ query: { pageable: {} }, path: { courseCreatorUuid: uuid as string } }),
+        queryKey: getCourseCreatorSkillsQueryKey({
+          query: { pageable: {} },
+          path: { courseCreatorUuid: uuid as string },
+        }),
       });
       // Reset form and close modal
       setNewSkillName('');
@@ -99,7 +99,7 @@ const MySkillsPage = () => {
     ...searchStudentsOptions({
       query: {
         pageable: {},
-        searchParams: { user_uuid_eq: creator?.profile?.user_uuid as string, },
+        searchParams: { user_uuid_eq: creator?.profile?.user_uuid as string },
       },
     }),
     enabled: !!creator?.profile?.user_uuid,
@@ -123,11 +123,11 @@ const MySkillsPage = () => {
   const overallProgress =
     skills.length > 0
       ? Math.round(
-        skills.reduce(
-          (acc: number, skill: any) => acc + (proficiencyScoreMap[skill.proficiency_level] || 0),
-          0
-        ) / skills.length
-      )
+          skills.reduce(
+            (acc: number, skill: any) => acc + (proficiencyScoreMap[skill.proficiency_level] || 0),
+            0
+          ) / skills.length
+        )
       : 0;
 
   // top 3 skills by proficiency
@@ -180,7 +180,12 @@ const MySkillsPage = () => {
         text_color: 'text-primary',
         icon: CheckCircle,
       },
-      failed: { text: 'Failed', bg: 'bg-destructive/10', text_color: 'text-destructive', icon: XCircle },
+      failed: {
+        text: 'Failed',
+        bg: 'bg-destructive/10',
+        text_color: 'text-destructive',
+        icon: XCircle,
+      },
       incomplete: {
         text: 'In Progress',
         bg: 'bg-muted',
@@ -224,7 +229,7 @@ const MySkillsPage = () => {
             </p>
           </div>
 
-          <div className='flex flex-row items-center gap-4' >
+          <div className='flex flex-row items-center gap-4'>
             {/* <Button
               size='default'
               className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2'
@@ -249,46 +254,48 @@ const MySkillsPage = () => {
         </div>
       </section>
 
-      {showStudentProfileNotice && <div className='my-6 flex flex-col gap-3 rounded-md border-l-4 border-destructive bg-destructive/10 p-4 text-destructive shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
-        <div className='flex flex-col gap-1'>
-          <p className='font-medium'>⚠️ Student profile required</p>
-          <p className='text-sm text-destructive/90'>
-            To add skills to your skill set, you need a student profile.
-            If you already have one, simply switch profile. Otherwise, create a student profile to continue.
-          </p>
+      {showStudentProfileNotice && (
+        <div className='border-destructive bg-destructive/10 text-destructive my-6 flex flex-col gap-3 rounded-md border-l-4 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
+          <div className='flex flex-col gap-1'>
+            <p className='font-medium'>⚠️ Student profile required</p>
+            <p className='text-destructive/90 text-sm'>
+              To add skills to your skill set, you need a student profile. If you already have one,
+              simply switch profile. Otherwise, create a student profile to continue.
+            </p>
+          </div>
+
+          <div className='flex gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              className='border-destructive text-destructive hover:bg-destructive/10'
+              onClick={async () => {
+                if (userDomain.activeDomain === 'student') return;
+
+                userDomain.setActiveDomain('student');
+
+                // allow context to update
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                router.push('/dashboard/overview');
+                router.refresh();
+              }}
+            >
+              Switch profile
+            </Button>
+
+            {!hasStudentProfile && (
+              <Button
+                size='sm'
+                className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                onClick={() => router.push('/dashboard/add-profile')}
+              >
+                Create profile
+              </Button>
+            )}
+          </div>
         </div>
-
-        <div className='flex gap-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            className='border-destructive text-destructive hover:bg-destructive/10'
-            onClick={async () => {
-              if (userDomain.activeDomain === 'student') return;
-
-              userDomain.setActiveDomain('student');
-
-              // allow context to update
-              await new Promise(resolve => setTimeout(resolve, 300));
-
-              router.push('/dashboard/overview');
-              router.refresh();
-            }}
-          >
-            Switch profile
-          </Button>
-
-          {!hasStudentProfile && <Button
-            size='sm'
-            className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-            onClick={() => router.push('/dashboard/add-profile')}
-          >
-            Create profile
-          </Button>}
-        </div>
-      </div>}
-
-
+      )}
 
       {/* Hero Section - Skills Snapshot */}
       <section className='mb-8'>
@@ -343,7 +350,8 @@ const MySkillsPage = () => {
                   </p>
                   <Button
                     onClick={() => setIsAddSkillModalOpen(true)}
-                    className='hidden items-center gap-2'>
+                    className='hidden items-center gap-2'
+                  >
                     <PlusCircle className='h-4 w-4' />
                     Add Your First Skill
                   </Button>
@@ -363,7 +371,7 @@ const MySkillsPage = () => {
               ) : (
                 <div>
                   <h3 className='text-foreground mb-3 flex items-center gap-2 text-sm font-semibold'>
-                    <Star className='h-4 w-4 fill-primary text-primary' />
+                    <Star className='fill-primary text-primary h-4 w-4' />
                     Top Skills
                   </h3>
                   <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
@@ -406,17 +414,17 @@ const MySkillsPage = () => {
           </div>
           <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
             <div className='mb-1 flex items-center gap-2'>
-              <CheckCircle className='h-4 w-4 text-primary' />
+              <CheckCircle className='text-primary h-4 w-4' />
               <p className='text-muted-foreground text-xs'>Completed</p>
             </div>
-            <p className='text-2xl font-bold text-primary'>{stats.completed}</p>
+            <p className='text-primary text-2xl font-bold'>{stats.completed}</p>
           </div>
           <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
             <div className='mb-1 flex items-center gap-2'>
-              <Clock className='h-4 w-4 text-muted-foreground' />
+              <Clock className='text-muted-foreground h-4 w-4' />
               <p className='text-muted-foreground text-xs'>In Progress</p>
             </div>
-            <p className='text-2xl font-bold text-muted-foreground'>{stats.inProgress}</p>
+            <p className='text-muted-foreground text-2xl font-bold'>{stats.inProgress}</p>
           </div>
           {/* <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
             <div className='mb-1 flex items-center gap-2'>
@@ -519,12 +527,13 @@ const MySkillsPage = () => {
                           </div>
                           <div className='bg-background border-input h-2 w-full overflow-hidden rounded-full border'>
                             <div
-                              className={`h-2 rounded-full transition-all duration-500 ${en?.course?.status === 'complete' || en?.course?.status === 'passed'
-                                ? 'bg-primary'
-                                : en?.course?.status === 'failed'
-                                  ? 'bg-destructive'
-                                  : 'bg-muted-foreground'
-                                }`}
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                en?.course?.status === 'complete' || en?.course?.status === 'passed'
+                                  ? 'bg-primary'
+                                  : en?.course?.status === 'failed'
+                                    ? 'bg-destructive'
+                                    : 'bg-muted-foreground'
+                              }`}
                               style={{ width: `${en?.course?.progress || 0}%` }}
                             />
                           </div>
@@ -566,10 +575,9 @@ const MySkillsPage = () => {
 
       <section className='mb-20' />
 
-
       {/* Add Skill Modal */}
       <Dialog open={isAddSkillModalOpen} onOpenChange={setIsAddSkillModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className='sm:max-w-[500px]'>
           <DialogHeader>
             <DialogTitle>Add New Skill</DialogTitle>
             <DialogDescription>
@@ -577,55 +585,47 @@ const MySkillsPage = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="skill-name">Skill Name</Label>
+          <div className='space-y-4 py-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='skill-name'>Skill Name</Label>
               <Input
-                id="skill-name"
-                placeholder="e.g., Instructional Design"
+                id='skill-name'
+                placeholder='e.g., Instructional Design'
                 value={newSkillName}
-                onChange={(e) => setNewSkillName(e.target.value)}
+                onChange={e => setNewSkillName(e.target.value)}
                 disabled={addSkillMutation.isPending}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="proficiency-level">Proficiency Level</Label>
+            <div className='space-y-2'>
+              <Label htmlFor='proficiency-level'>Proficiency Level</Label>
               <Select
                 value={newSkillProficiency}
                 onValueChange={setNewSkillProficiency}
                 disabled={addSkillMutation.isPending}
               >
-                <SelectTrigger id="proficiency-level">
-                  <SelectValue placeholder="Select proficiency level" />
+                <SelectTrigger id='proficiency-level'>
+                  <SelectValue placeholder='Select proficiency level' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ProficiencyLevelEnum.BEGINNER}>
-                    Beginner
-                  </SelectItem>
-                  <SelectItem value={ProficiencyLevelEnum.INTERMEDIATE}>
-                    Intermediate
-                  </SelectItem>
-                  <SelectItem value={ProficiencyLevelEnum.ADVANCED}>
-                    Advanced
-                  </SelectItem>
-                  <SelectItem value={ProficiencyLevelEnum.EXPERT}>
-                    Expert
-                  </SelectItem>
+                  <SelectItem value={ProficiencyLevelEnum.BEGINNER}>Beginner</SelectItem>
+                  <SelectItem value={ProficiencyLevelEnum.INTERMEDIATE}>Intermediate</SelectItem>
+                  <SelectItem value={ProficiencyLevelEnum.ADVANCED}>Advanced</SelectItem>
+                  <SelectItem value={ProficiencyLevelEnum.EXPERT}>Expert</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {addSkillMutation.isError && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              <div className='bg-destructive/10 text-destructive rounded-md p-3 text-sm'>
                 Failed to add skill. Please try again.
               </div>
             )}
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className='flex justify-end gap-3'>
             <Button
-              variant="outline"
+              variant='outline'
               onClick={() => {
                 setIsAddSkillModalOpen(false);
                 setNewSkillName('');
@@ -649,7 +649,6 @@ const MySkillsPage = () => {
 };
 
 export default MySkillsPage;
-
 
 const mockSkills = [
   {

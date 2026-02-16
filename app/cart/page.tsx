@@ -9,7 +9,7 @@ import type { CartItemResponse } from '@/services/client';
 import {
   getCartOptions,
   getCartQueryKey,
-  removeItemMutation
+  removeItemMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -20,7 +20,7 @@ import {
   Package,
   ShieldCheck,
   ShoppingCart,
-  Trash2
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
@@ -44,7 +44,7 @@ const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CUR
 export default function CartPage() {
   const { cartId } = useCartStore();
   const queryClient = useQueryClient();
-  const removeItemMut = useMutation(removeItemMutation())
+  const removeItemMut = useMutation(removeItemMutation());
 
   // Fetch cart data
   const cartQuery = useQuery({
@@ -158,20 +158,24 @@ export default function CartPage() {
                 <CardContent className='space-y-4'>
                   {cartItems.map((item, index) => (
                     <div key={item.id}>
-                      <CartItem item={item}
-                        handleRemoveItem={(id) => {
-                          removeItemMut.mutate({
-                            path: { cartId: cartId as string, itemId: id }
-                          }, {
-                            onSuccess: (data) => {
-                              queryClient.invalidateQueries({
-                                queryKey: getCartQueryKey({ path: { cartId: cartId as string } })
-                              })
-                              toast.success("Cart Item removed successfully")
+                      <CartItem
+                        item={item}
+                        handleRemoveItem={id => {
+                          removeItemMut.mutate(
+                            {
+                              path: { cartId: cartId as string, itemId: id },
+                            },
+                            {
+                              onSuccess: data => {
+                                queryClient.invalidateQueries({
+                                  queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
+                                });
+                                toast.success('Cart Item removed successfully');
+                              },
                             }
-                          })
-                        }
-                        } />
+                          );
+                        }}
+                      />
                       {index < cartItems.length - 1 && <Separator className='bg-border mt-4' />}
                     </div>
                   ))}
@@ -268,7 +272,13 @@ export default function CartPage() {
   );
 }
 
-function CartItem({ item, handleRemoveItem }: { item: CartItemResponse, handleRemoveItem: (id: string) => void }) {
+function CartItem({
+  item,
+  handleRemoveItem,
+}: {
+  item: CartItemResponse;
+  handleRemoveItem: (id: string) => void;
+}) {
   const title = item.title ?? item.variant_title ?? 'Course';
   const quantity = item.quantity ?? 1;
   const unitPrice = useMemo(() => {
@@ -328,7 +338,7 @@ function CartItem({ item, handleRemoveItem }: { item: CartItemResponse, handleRe
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 }
 

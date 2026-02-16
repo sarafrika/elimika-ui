@@ -8,7 +8,7 @@ import { useStudent } from '@/context/student-context';
 import {
   enrollStudentMutation,
   getStudentScheduleQueryKey,
-  listCatalogItemsOptions
+  listCatalogItemsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addYears, format } from 'date-fns';
@@ -101,9 +101,14 @@ const EnrollmentPage = () => {
     classes = [],
     loading,
     isError,
-  } = useProgramBundledClassInfo(programId, appliedStart ?? undefined, appliedEnd ?? undefined, student);
+  } = useProgramBundledClassInfo(
+    programId,
+    appliedStart ?? undefined,
+    appliedEnd ?? undefined,
+    student
+  );
 
-  const filteredClasses = classes
+  const filteredClasses = classes;
   // const filteredClasses = classes.filter(cls =>
   //   catalogues?.data?.some(cat => cat.class_definition_uuid === cls.uuid)
   // );
@@ -167,7 +172,6 @@ const EnrollmentPage = () => {
     );
   };
   // @ts-ignore
-
 
   return (
     <div className='space-y-4 pb-10'>
@@ -289,7 +293,6 @@ const EnrollmentPage = () => {
           )}
         </>
       )}
-
     </div>
   );
 };

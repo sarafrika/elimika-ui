@@ -43,7 +43,6 @@ type FeedbackDialogProps = {
   isSubmitting?: boolean;
 };
 
-
 export function FeedbackDialog({
   type = 'instructor',
   open,
@@ -77,14 +76,14 @@ export function FeedbackDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className='space-y-4'>
           <div>
             <Label>Headline</Label>
             <Textarea
-              placeholder="Title your review..."
+              placeholder='Title your review...'
               value={headline}
               onChange={e => onHeadlineChange(e.target.value)}
-              className="mt-2"
+              className='mt-2'
               rows={4}
             />
           </div>
@@ -92,38 +91,35 @@ export function FeedbackDialog({
           <div>
             <Label>Your Feedback</Label>
             <Textarea
-              placeholder="Share your experience..."
+              placeholder='Share your experience...'
               value={feedback}
               onChange={e => onFeedbackChange(e.target.value)}
-              className="mt-2"
+              className='mt-2'
               rows={4}
             />
           </div>
 
           <div
-            className={`mb-8 grid gap-4 ${isInstructor ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
-              }`}
+            className={`mb-8 grid gap-4 ${
+              isInstructor ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
+            }`}
           >
-            <RatingField
-              label="Overall Rating"
-              value={rating}
-              onChange={onRatingChange}
-            />
+            <RatingField label='Overall Rating' value={rating} onChange={onRatingChange} />
 
             {isInstructor && (
               <>
                 <RatingField
-                  label="Clarity"
+                  label='Clarity'
                   value={clarityRating ?? 0}
                   onChange={onClarityRatingChange!}
                 />
                 <RatingField
-                  label="Engagement"
+                  label='Engagement'
                   value={engagementRating ?? 0}
                   onChange={onEngagementRatingChange!}
                 />
                 <RatingField
-                  label="Punctuality"
+                  label='Punctuality'
                   value={punctualityRating ?? 0}
                   onChange={onPunctualityRatingChange!}
                 />
@@ -133,7 +129,7 @@ export function FeedbackDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
 
@@ -145,7 +141,6 @@ export function FeedbackDialog({
     </Dialog>
   );
 }
-
 
 function RatingField({
   label,

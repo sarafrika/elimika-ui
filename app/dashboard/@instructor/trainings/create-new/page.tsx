@@ -27,7 +27,7 @@ export interface ClassDetails {
   course_uuid: null | string;
   program_uuid: null | string;
   title: string;
-  description: string,
+  description: string;
   categories: string[];
   class_type: string; // 'group' | 'private'
   location_type: string; // 'online' | 'in_person' | 'hybrid'
@@ -324,7 +324,6 @@ const ClassBuilderPage = () => {
       }
       return true;
     };
-
 
     if (
       !scheduleSettings.startClass.date ||

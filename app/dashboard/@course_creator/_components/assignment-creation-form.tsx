@@ -25,7 +25,7 @@ import {
   getAssignmentAttachmentsQueryKey,
   getCourseRubricsOptions,
   searchAssignmentsOptions,
-  uploadAssignmentAttachmentMutation
+  uploadAssignmentAttachmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 
 export type AssignmentCreationFormProps = {
@@ -64,11 +64,13 @@ export const AssignmentCreationForm = ({
 }: AssignmentCreationFormProps) => {
   const qc = useQueryClient();
 
-  const { data: rubrics } = useQuery(
-    {
-      ...getCourseRubricsOptions({ path: { courseUuid: courseId as string }, query: { pageable: {} } }),
-      enabled: !!courseId
-    });
+  const { data: rubrics } = useQuery({
+    ...getCourseRubricsOptions({
+      path: { courseUuid: courseId as string },
+      query: { pageable: {} },
+    }),
+    enabled: !!courseId,
+  });
 
   const { data: assignments } = useQuery({
     ...searchAssignmentsOptions({
@@ -98,8 +100,8 @@ export const AssignmentCreationForm = ({
 
   const { data: attachments } = useQuery({
     ...getAssignmentAttachmentsOptions({ path: { assignmentUuid: assignmentUuid as string } }),
-    enabled: !!assignmentUuid
-  })
+    enabled: !!assignmentUuid,
+  });
 
   // File upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -250,28 +252,29 @@ export const AssignmentCreationForm = ({
     );
   };
 
-  const deleteAttachmentMut = useMutation(deleteAssignmentAttachmentMutation())
+  const deleteAttachmentMut = useMutation(deleteAssignmentAttachmentMutation());
   const handleDeleteAttachment = async (attachmentUuid: string) => {
-    if (!confirm('Are you sure you want to delete this attachment?')) return
+    if (!confirm('Are you sure you want to delete this attachment?')) return;
 
     try {
-      deleteAttachmentMut.mutate({ path: { assignmentUuid: assignmentUuid as string, attachmentUuid: attachmentUuid } }, {
-        onSuccess: () => {
-          toast.success("Deleted successfully")
-          qc.invalidateQueries({
-            queryKey: getAssignmentAttachmentsQueryKey({
-              path: { assignmentUuid: assignmentUuid as string },
-            }),
-          });
-        },
-        onError: (error) => {
-          toast.error(error?.message)
+      deleteAttachmentMut.mutate(
+        { path: { assignmentUuid: assignmentUuid as string, attachmentUuid: attachmentUuid } },
+        {
+          onSuccess: () => {
+            toast.success('Deleted successfully');
+            qc.invalidateQueries({
+              queryKey: getAssignmentAttachmentsQueryKey({
+                path: { assignmentUuid: assignmentUuid as string },
+              }),
+            });
+          },
+          onError: error => {
+            toast.error(error?.message);
+          },
         }
-      })
-    } catch (error) {
-    }
-  }
-
+      );
+    } catch (error) {}
+  };
 
   return (
     <div className='grid grid-cols-4 gap-6'>
@@ -572,28 +575,26 @@ export const AssignmentCreationForm = ({
                   </p>
                 </div>
 
-                <div className="space-y-3">
+                <div className='space-y-3'>
                   {attachments?.data?.map(file => (
                     <div
                       key={file.uuid}
-                      className="flex items-start justify-between rounded-lg border border-border bg-white p-4 hover:border-primary transition"
+                      className='border-border hover:border-primary flex items-start justify-between rounded-lg border bg-white p-4 transition'
                     >
                       {/* Left: File info */}
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl">
-                          {getFileIcon(file.mime_type)}
-                        </span>
+                      <div className='flex items-start gap-3'>
+                        <span className='text-2xl'>{getFileIcon(file.mime_type)}</span>
 
                         <div>
-                          <p className="font-medium text-muted-foreground">
+                          <p className='text-muted-foreground font-medium'>
                             {file.original_filename}
                           </p>
 
-                          <p className="text-xs text-muted-foreground truncate max-w-xs">
+                          <p className='text-muted-foreground max-w-xs truncate text-xs'>
                             {file.file_url}
                           </p>
 
-                          <p className="text-xs text-muted-foreground">
+                          <p className='text-muted-foreground text-xs'>
                             {formatFileSize(Number(file.file_size_bytes))} •{' '}
                             {new Date(file.created_date).toLocaleDateString()}
                           </p>
@@ -601,7 +602,7 @@ export const AssignmentCreationForm = ({
                       </div>
 
                       {/* Right: Actions */}
-                      <div className="flex items-center gap-2">
+                      <div className='flex items-center gap-2'>
                         {/* View */}
                         {/* <a
                           href={file.file_url}
@@ -616,16 +617,15 @@ export const AssignmentCreationForm = ({
                         {/* Delete */}
                         <button
                           onClick={() => handleDeleteAttachment(file.uuid)}
-                          className="inline-flex items-center gap-1 rounded-md border border-destructive/20 px-2.5 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/5"
+                          className='border-destructive/20 text-destructive hover:bg-destructive/5 inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm font-medium'
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className='h-4 w-4' />
                           Delete
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
-
 
                 <div
                   className={cn(
@@ -697,7 +697,8 @@ export const AssignmentCreationForm = ({
                   </Button>
 
                   <p className='text-muted-foreground text-xs'>
-                    Supported formats: PDF, Images (JPG, PNG), Audio (MP3, WAV), Video (MP4), Documents
+                    Supported formats: PDF, Images (JPG, PNG), Audio (MP3, WAV), Video (MP4),
+                    Documents
                   </p>
                 </div>
               </div>
@@ -730,17 +731,17 @@ export const AssignmentCreationForm = ({
 };
 
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
 export function getFileIcon(mime: string) {
-  if (mime.includes('pdf')) return <FileSpreadsheet />
-  if (mime.includes('image')) return <Image />
-  if (mime.includes('word')) return <FileText />
-  if (mime.includes('video')) return <Video />
-  return '📎'
+  if (mime.includes('pdf')) return <FileSpreadsheet />;
+  if (mime.includes('image')) return <Image />;
+  if (mime.includes('word')) return <FileText />;
+  if (mime.includes('video')) return <Video />;
+  return '📎';
 }

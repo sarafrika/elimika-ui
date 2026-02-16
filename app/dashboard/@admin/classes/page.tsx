@@ -1,9 +1,7 @@
-import AdminClassPage from './classes-page'
+import AdminClassPage from './classes-page';
 
 const Page = () => {
-    return (
-        <AdminClassPage />
-    )
-}
+  return <AdminClassPage />;
+};
 
-export default Page
+export default Page;

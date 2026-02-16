@@ -15,7 +15,7 @@ import {
   getLessonContentOptions,
   getLessonContentQueryKey,
   publishCourseMutation,
-  publishCourseQueryKey
+  publishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -131,15 +131,15 @@ export default function CourseBuilderPage() {
       // @ts-expect-error
       training_requirements: Array.isArray(c.training_requirements)
         ? c.training_requirements.map(req => ({
-          uuid: req.uuid,
-          requirement_type: req.requirement_type,
-          name: req.name,
-          description: req.description ?? '',
-          quantity: req.quantity ?? undefined,
-          unit: req.unit ?? '',
-          provided_by: req.provided_by ?? 'course_creator',
-          is_mandatory: !!req.is_mandatory,
-        }))
+            uuid: req.uuid,
+            requirement_type: req.requirement_type,
+            name: req.name,
+            description: req.description ?? '',
+            quantity: req.quantity ?? undefined,
+            unit: req.unit ?? '',
+            provided_by: req.provided_by ?? 'course_creator',
+            is_mandatory: !!req.is_mandatory,
+          }))
         : [],
     });
   }, [courseId, course]);
@@ -202,7 +202,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   if (creatorLoading) {
@@ -346,9 +346,7 @@ export default function CourseBuilderPage() {
               nextButtonText='Continue to Rules'
               previousButtonText='Back to Assessment'
             >
-              <CriteriaCreationForm
-                course={course}
-              />
+              <CriteriaCreationForm course={course} />
             </StepperContent>
 
             <StepperContent
@@ -430,8 +428,6 @@ export default function CourseBuilderPage() {
                 }}
               />
             </StepperContent>
-
-
 
             <StepperContent
               step={9}

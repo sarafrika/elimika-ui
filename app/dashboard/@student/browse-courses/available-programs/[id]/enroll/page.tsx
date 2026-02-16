@@ -9,11 +9,20 @@ import {
   createCartMutation,
   enrollStudentMutation,
   getCartQueryKey,
-  getStudentScheduleQueryKey
+  getStudentScheduleQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertCircle, Armchair, ArrowLeft, BookOpen, Calendar, DollarSign, MapPin, User } from 'lucide-react';
+import {
+  AlertCircle,
+  Armchair,
+  ArrowLeft,
+  BookOpen,
+  Calendar,
+  DollarSign,
+  MapPin,
+  User,
+} from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -31,8 +40,8 @@ const EnrollClassPage = () => {
   const params = useParams();
   const router = useRouter();
   const qc = useQueryClient();
-  const domain = useUserDomain()
-  const user = useUserProfile()
+  const domain = useUserDomain();
+  const user = useUserProfile();
 
   const programId = params?.id as string;
   const classId = searchParams.get('id');
@@ -43,7 +52,12 @@ const EnrollClassPage = () => {
   const student = useStudent();
 
   // Fetch class information
-  const { classes = [], loading } = useProgramBundledClassInfo(programId, undefined, undefined, student);
+  const { classes = [], loading } = useProgramBundledClassInfo(
+    programId,
+    undefined,
+    undefined,
+    student
+  );
 
   // Find the specific class
   const enrollingClass = useMemo(() => {
@@ -133,17 +147,20 @@ const EnrollClassPage = () => {
         {
           onSuccess: (data: any) => {
             const cartId = data?.data?.id || null;
-            if (cartId) { setCartId(cartId) }
+            if (cartId) {
+              setCartId(cartId);
+            }
 
             qc.invalidateQueries({
-              queryKey: getCartQueryKey({ path: { cartId: cartId as string } })
-            })
+              queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
+            });
 
             toast.success('Class added to cart!');
-            router.push('/cart')
-
+            router.push('/cart');
           },
-          onError: (error: any) => { toast.error(error.message); },
+          onError: (error: any) => {
+            toast.error(error.message);
+          },
         }
       );
 
@@ -161,10 +178,10 @@ const EnrollClassPage = () => {
       {
         onSuccess: data => {
           qc.invalidateQueries({
-            queryKey: getCartQueryKey({ path: { cartId: savedCartId as string } })
-          })
+            queryKey: getCartQueryKey({ path: { cartId: savedCartId as string } }),
+          });
 
-          router.push('/cart')
+          router.push('/cart');
           toast.success('Class added to cart!');
         },
       }
@@ -202,12 +219,11 @@ const EnrollClassPage = () => {
           router.push(`/dashboard/browse-courses/available-programs/${programId}`);
         },
         onError: err => {
-          handleCreateCartAndPay(enrollingClass)
+          handleCreateCartAndPay(enrollingClass);
         },
       }
     );
   };
-
 
   const handleCancel = () => {
     router.push(`/dashboard/browse-courses/available-programs/${programId}`);
@@ -355,28 +371,22 @@ const EnrollClassPage = () => {
         </Card>
 
         {/* Courses Card */}
-        <Card className="bg-primary/5 p-6">
-          <h3 className="font-semibold">Courses Included in This Training</h3>
+        <Card className='bg-primary/5 p-6'>
+          <h3 className='font-semibold'>Courses Included in This Training</h3>
 
-          <ul className="text-muted-foreground space-y-2 text-sm">
+          <ul className='text-muted-foreground space-y-2 text-sm'>
             {enrollingClass?.course?.length === 0 && (
-              <li className="text-sm text-muted-foreground">
-                No courses available
-              </li>
+              <li className='text-muted-foreground text-sm'>No courses available</li>
             )}
 
             {enrollingClass?.course?.map((course: any) => (
-              <li
-                key={course.uuid}
-                className="flex items-start gap-2"
-              >
-                <BookOpen className="text-primary mt-0.5 h-4 w-4" />
+              <li key={course.uuid} className='flex items-start gap-2'>
+                <BookOpen className='text-primary mt-0.5 h-4 w-4' />
                 <span>{course.title || course.name}</span>
               </li>
             ))}
           </ul>
         </Card>
-
 
         <CardContent className='p-0'>
           <ClassScheduleCalendar schedules={schedule as any} />
@@ -433,8 +443,6 @@ const EnrollClassPage = () => {
           >
             {enrollStudent.isPending ? 'Enrolling...' : 'Yes, Enroll Me'}
           </Button>
-
-
         </div>
       </div>
     </div>

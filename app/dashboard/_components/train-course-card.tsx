@@ -59,16 +59,12 @@ export function TrainCourseCard({
 
   const { data: courseReviews } = useQuery({
     ...getCourseReviewsOptions({ path: { courseUuid: course?.uuid as string } }),
-    enabled: !!course?.uuid
-  })
-  const ratings = courseReviews?.data
-    ?.map(r => r.rating)
-    .filter((r): r is number => typeof r === "number") ?? [];
+    enabled: !!course?.uuid,
+  });
+  const ratings =
+    courseReviews?.data?.map(r => r.rating).filter((r): r is number => typeof r === 'number') ?? [];
 
-  const averageRating =
-    ratings.length
-      ? ratings.reduce((a, b) => a + b, 0) / ratings.length
-      : 0;
+  const averageRating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -214,7 +210,6 @@ export function TrainCourseCard({
               <Users className='h-4 w-4' />
               <span>{course?.class_limit} max participants</span>
             </div>
-
           </div>
 
           {/* Price and Actions */}
@@ -265,14 +260,15 @@ export function TrainCourseCard({
           </div>
           {/* Review note */}
           <span
-            className={`text-center text-xs italic transition-colors duration-200 ${applicationStatus === 'pending'
-              ? 'text-warning'
-              : applicationStatus === 'approved'
-                ? 'text-success'
-                : applicationStatus === 'revoked'
-                  ? 'text-destructive'
-                  : 'text-muted-foreground'
-              } `}
+            className={`text-center text-xs italic transition-colors duration-200 ${
+              applicationStatus === 'pending'
+                ? 'text-warning'
+                : applicationStatus === 'approved'
+                  ? 'text-success'
+                  : applicationStatus === 'revoked'
+                    ? 'text-destructive'
+                    : 'text-muted-foreground'
+            } `}
           >
             {applicationReviewNote || 'No review note provided'}
           </span>

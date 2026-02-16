@@ -80,7 +80,6 @@ export const ClassScheduleFormPage = ({
     return true;
   };
 
-
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 

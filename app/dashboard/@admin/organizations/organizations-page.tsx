@@ -52,14 +52,20 @@ import {
   ShieldOff,
   TrendingUp,
   Users,
-  X
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../../components/ui/select';
 
 const organisationFormSchema = z.object({
   name: zOrganisation.shape.name,
@@ -88,7 +94,9 @@ export default function AdminOrganisationsPage() {
   const [page, setPage] = useState(0);
   const [selectedOrganisationId, setSelectedOrganisationId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [verificationFilter, setVerificationFilter] = useState<'all' | 'verified' | 'unverified'>('all');
+  const [verificationFilter, setVerificationFilter] = useState<'all' | 'verified' | 'unverified'>(
+    'all'
+  );
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -163,10 +171,7 @@ export default function AdminOrganisationsPage() {
   );
 
   // Total pages based on filtered results
-  const totalPages = Math.max(
-    Math.ceil(filteredOrganisations.length / pageSize),
-    1
-  );
+  const totalPages = Math.max(Math.ceil(filteredOrganisations.length / pageSize), 1);
 
   const inViewCount = paginatedOrganisations.length;
 
@@ -290,9 +295,7 @@ function OrganisationListPanel({
         <div className='border-border/60 bg-muted/30 flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed p-4 text-center'>
           <Building2 className='text-muted-foreground mb-2 h-8 w-8' />
           <p className='text-xs font-medium'>No organisations found</p>
-          <p className='text-muted-foreground text-[11px]'>
-            Try adjusting your filters or search.
-          </p>
+          <p className='text-muted-foreground text-[11px]'>Try adjusting your filters or search.</p>
         </div>
       );
     }
@@ -301,27 +304,28 @@ function OrganisationListPanel({
       <button
         key={org.uuid ?? org.name}
         type='button'
-        className={`relative w-full rounded-lg border p-3 text-left transition ${selectedOrganisationId === org.uuid
-          ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-1'
-          : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'
-          }`}
+        className={`relative w-full rounded-lg border p-3 text-left transition ${
+          selectedOrganisationId === org.uuid
+            ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-1'
+            : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'
+        }`}
         onClick={() => onSelect(org)}
       >
         {selectedOrganisationId === org.uuid && (
-          <div className='absolute top-2 right-2 h-2 w-2 rounded-full bg-primary' />
+          <div className='bg-primary absolute top-2 right-2 h-2 w-2 rounded-full' />
         )}
 
         <div className='flex items-start justify-between gap-2'>
-          <div className='flex-1 min-w-0'>
-            <p className='font-semibold text-sm truncate'>{org.name}</p>
-            <p className='text-muted-foreground flex items-center gap-1 text-[11px] mt-0.5'>
+          <div className='min-w-0 flex-1'>
+            <p className='truncate text-sm font-semibold'>{org.name}</p>
+            <p className='text-muted-foreground mt-0.5 flex items-center gap-1 text-[11px]'>
               <MapPin className='h-3 w-3 flex-shrink-0' />
               <span className='truncate'>{org.location || 'Location not provided'}</span>
             </p>
           </div>
           <Badge
             variant={org.active ? 'secondary' : 'outline'}
-            className='text-[10px] flex-shrink-0'
+            className='flex-shrink-0 text-[10px]'
           >
             {org.active ? 'Active' : 'Inactive'}
           </Badge>
@@ -351,7 +355,7 @@ function OrganisationListPanel({
     <div className='border-border/60 bg-card/95 flex w-full flex-col border-b backdrop-blur lg:max-w-md lg:border-r lg:border-b-0'>
       {/* Compact Header */}
       <div className='border-border/60 border-b p-4'>
-        <div className='flex items-start justify-between gap-2 mb-3'>
+        <div className='mb-3 flex items-start justify-between gap-2'>
           <div>
             <Badge
               variant='outline'
@@ -364,34 +368,26 @@ function OrganisationListPanel({
         </div>
 
         {/* Compact Stats */}
-        <div className='text-muted-foreground flex flex-wrap gap-1.5 text-xs mb-3'>
-          <span className='rounded-full border px-3 py-1'>
-            {inViewCount} in view
-          </span>
-          <span className='rounded-full border px-3 py-1'>
-            {verifiedCount} verified
-          </span>
-          <span className='rounded-full border px-3 py-1'>
-            {unverifiedCount} pending
-          </span>
-          <span className='rounded-full border px-3 py-1'>
-            {totalAvailable} total
-          </span>
+        <div className='text-muted-foreground mb-3 flex flex-wrap gap-1.5 text-xs'>
+          <span className='rounded-full border px-3 py-1'>{inViewCount} in view</span>
+          <span className='rounded-full border px-3 py-1'>{verifiedCount} verified</span>
+          <span className='rounded-full border px-3 py-1'>{unverifiedCount} pending</span>
+          <span className='rounded-full border px-3 py-1'>{totalAvailable} total</span>
         </div>
 
         {/* Search */}
         <div className='relative mb-2'>
-          <Search className='absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground' />
+          <Search className='text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2' />
           <Input
             placeholder='Search organisations...'
             value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className='pl-8 h-8 text-sm'
+            onChange={e => onSearchChange(e.target.value)}
+            className='h-8 pl-8 text-sm'
           />
           {searchQuery && (
             <button
               onClick={() => onSearchChange('')}
-              className='absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground'
+              className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2'
             >
               <X className='h-3.5 w-3.5' />
             </button>
@@ -406,29 +402,39 @@ function OrganisationListPanel({
               onVerificationFilterChange(value)
             }
           >
-            <SelectTrigger className='h-8 text-xs flex-1'>
+            <SelectTrigger className='h-8 flex-1 text-xs'>
               <SelectValue placeholder='Verification' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='all' className='text-xs'>All status</SelectItem>
-              <SelectItem value='verified' className='text-xs'>Verified</SelectItem>
-              <SelectItem value='unverified' className='text-xs'>Unverified</SelectItem>
+              <SelectItem value='all' className='text-xs'>
+                All status
+              </SelectItem>
+              <SelectItem value='verified' className='text-xs'>
+                Verified
+              </SelectItem>
+              <SelectItem value='unverified' className='text-xs'>
+                Unverified
+              </SelectItem>
             </SelectContent>
           </Select>
 
           <Select
             value={activeFilter}
-            onValueChange={(value: 'all' | 'active' | 'inactive') =>
-              onActiveFilterChange(value)
-            }
+            onValueChange={(value: 'all' | 'active' | 'inactive') => onActiveFilterChange(value)}
           >
-            <SelectTrigger className='h-8 text-xs flex-1'>
+            <SelectTrigger className='h-8 flex-1 text-xs'>
               <SelectValue placeholder='Status' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='all' className='text-xs'>All</SelectItem>
-              <SelectItem value='active' className='text-xs'>Active</SelectItem>
-              <SelectItem value='inactive' className='text-xs'>Inactive</SelectItem>
+              <SelectItem value='all' className='text-xs'>
+                All
+              </SelectItem>
+              <SelectItem value='active' className='text-xs'>
+                Active
+              </SelectItem>
+              <SelectItem value='inactive' className='text-xs'>
+                Inactive
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -451,21 +457,18 @@ function OrganisationListPanel({
 
         {/* Active Filters Display */}
         {(searchQuery || verificationFilter !== 'all' || activeFilter !== 'all') && (
-          <div className='flex flex-wrap items-center gap-1.5 mt-2'>
-            <span className='text-[10px] text-muted-foreground'>Active:</span>
+          <div className='mt-2 flex flex-wrap items-center gap-1.5'>
+            <span className='text-muted-foreground text-[10px]'>Active:</span>
             {searchQuery && (
-              <Badge variant='secondary' className='text-[10px] gap-1'>
+              <Badge variant='secondary' className='gap-1 text-[10px]'>
                 Search: {searchQuery}
-                <button
-                  onClick={() => onSearchChange('')}
-                  className='hover:text-destructive'
-                >
+                <button onClick={() => onSearchChange('')} className='hover:text-destructive'>
                   <X className='h-2.5 w-2.5' />
                 </button>
               </Badge>
             )}
             {verificationFilter !== 'all' && (
-              <Badge variant='secondary' className='text-[10px] gap-1'>
+              <Badge variant='secondary' className='gap-1 text-[10px]'>
                 {verificationFilter === 'verified' ? 'Verified' : 'Unverified'}
                 <button
                   onClick={() => onVerificationFilterChange('all')}
@@ -476,7 +479,7 @@ function OrganisationListPanel({
               </Badge>
             )}
             {activeFilter !== 'all' && (
-              <Badge variant='secondary' className='text-[10px] gap-1'>
+              <Badge variant='secondary' className='gap-1 text-[10px]'>
                 {activeFilter === 'active' ? 'Active' : 'Inactive'}
                 <button
                   onClick={() => onActiveFilterChange('all')}
@@ -497,7 +500,7 @@ function OrganisationListPanel({
 
       {/* Compact Pagination */}
       <div className='border-border/60 border-t px-4 py-3'>
-        <div className='flex items-center justify-between text-sm mb-2'>
+        <div className='mb-2 flex items-center justify-between text-sm'>
           <Button
             variant='ghost'
             size='sm'
@@ -887,13 +890,13 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
     defaultValues: organisation
       ? mapOrganisationToForm(organisation)
       : {
-        name: '',
-        description: '',
-        active: false,
-        licence_no: '',
-        location: '',
-        country: '',
-      },
+          name: '',
+          description: '',
+          active: false,
+          licence_no: '',
+          location: '',
+          country: '',
+        },
     mode: 'onBlur',
   });
 
@@ -1124,13 +1127,13 @@ function OrganisationDetailSheet({
     defaultValues: organisation
       ? mapOrganisationToForm(organisation)
       : {
-        name: '',
-        description: '',
-        active: false,
-        licence_no: '',
-        location: '',
-        country: '',
-      },
+          name: '',
+          description: '',
+          active: false,
+          licence_no: '',
+          location: '',
+          country: '',
+        },
     mode: 'onBlur',
   });
 
@@ -1388,10 +1391,10 @@ function OrganisationBranchesCard({
   const { data, isLoading } = useAdminBranches(
     organisationUuid
       ? {
-        organizationUuid: organisationUuid,
-        page: 0,
-        size: 5,
-      }
+          organizationUuid: organisationUuid,
+          page: 0,
+          size: 5,
+        }
       : null
   );
 

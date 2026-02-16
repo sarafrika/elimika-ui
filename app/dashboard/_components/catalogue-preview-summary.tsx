@@ -23,7 +23,6 @@ export function CataloguePreviewSummary({
 }: {
   breadcrumbBase?: { title: string; href: string };
 }) {
-
   const params = useParams();
   const routeId = params?.id as string | undefined;
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -58,15 +57,15 @@ export function CataloguePreviewSummary({
     () =>
       routeId
         ? [
-          { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-          { id: 'catalogue', title: breadcrumbBase.title, url: breadcrumbBase.href },
-          {
-            id: 'preview',
-            title: 'Summary',
-            url: `/dashboard/course-management/preview/${routeId}`,
-            isLast: true,
-          },
-        ]
+            { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+            { id: 'catalogue', title: breadcrumbBase.title, url: breadcrumbBase.href },
+            {
+              id: 'preview',
+              title: 'Summary',
+              url: `/dashboard/course-management/preview/${routeId}`,
+              isLast: true,
+            },
+          ]
         : null,
     [routeId, breadcrumbBase.href, breadcrumbBase.title]
   );
@@ -79,7 +78,7 @@ export function CataloguePreviewSummary({
 
   if (catalogueQuery.isLoading || courseQuery.isLoading) {
     return (
-      <div className='w-full mx-auto max-w-6xl space-y-6 p-6'>
+      <div className='mx-auto w-full max-w-6xl space-y-6 p-6'>
         <Card>
           <CardHeader>
             <Skeleton className='h-6 w-48' />
@@ -96,7 +95,7 @@ export function CataloguePreviewSummary({
 
   if (!catalogueItem) {
     return (
-      <div className='w-full mx-auto max-w-6xl space-y-6 p-6'>
+      <div className='mx-auto w-full max-w-6xl space-y-6 p-6'>
         <Card className='border-destructive/30 bg-destructive/5'>
           <CardHeader>
             <CardTitle className='text-destructive flex items-center gap-2'>
@@ -128,7 +127,7 @@ export function CataloguePreviewSummary({
   }, [catalogueItem.class_definition_uuid, catalogueItem.course_uuid]);
 
   return (
-    <div className='w-full mx-auto max-w-6xl space-y-6 p-6'>
+    <div className='mx-auto w-full max-w-6xl space-y-6 p-6'>
       <Card>
         <CardHeader className='space-y-2'>
           <div className='flex flex-wrap items-center gap-2'>

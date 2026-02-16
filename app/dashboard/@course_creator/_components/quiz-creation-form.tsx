@@ -23,11 +23,8 @@ import {
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
 import { cn } from '../../../../lib/utils';
-import {
-  searchQuizzesOptions
-} from '../../../../services/client/@tanstack/react-query.gen';
+import { searchQuizzesOptions } from '../../../../services/client/@tanstack/react-query.gen';
 import { Question, QuestionType } from './assessment-creation-form';
-
 
 export type QuizCreationFormProps = {
   lessons: any;
@@ -141,20 +138,23 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border hover:border-primary/50'
-                  }`}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
+                  opt.isCorrect
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                    }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                  }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
-                    }`}
+                  className={`text-sm font-medium ${
+                    opt.isCorrect ? 'text-primary' : 'text-foreground'
+                  }`}
                 >
                   {opt.text}
                 </span>
@@ -321,7 +321,6 @@ export const QuizCreationForm = ({
 
   const quizUuid = quizId;
 
-
   const [localQuizData, setLocalQuizData] = useState({
     title: '',
     instructions: '',
@@ -347,7 +346,6 @@ export const QuizCreationForm = ({
       [field]: value,
     }));
   }, []);
-
 
   useEffect(() => {
     if (!quizUuid || quizUuid === '') {
@@ -531,7 +529,6 @@ export const QuizCreationForm = ({
             </div>
           </div>
 
-
           <div className='flex flex-col gap-6'>
             <Separator />
             <div className='-my-4 flex items-center justify-between'>
@@ -581,9 +578,7 @@ export const QuizCreationForm = ({
                 <Input
                   type='number'
                   value={selectedQuizData.attempts_allowed}
-                  onChange={e =>
-                    handleQuizInputChange('attempts_allowed', Number(e.target.value))
-                  }
+                  onChange={e => handleQuizInputChange('attempts_allowed', Number(e.target.value))}
                 />
               </div>
 
@@ -612,11 +607,14 @@ export const QuizCreationForm = ({
                 </Button>
               )}
               <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
-                {isPending ? 'Saving...' : <>{quizUuid && quizUuid !== '' ? 'Update Quiz' : 'Save Quiz'}</>}
+                {isPending ? (
+                  'Saving...'
+                ) : (
+                  <>{quizUuid && quizUuid !== '' ? 'Update Quiz' : 'Save Quiz'}</>
+                )}
               </Button>
             </div>
           </div>
-
 
           {quizUuid && quizUuid !== '' && (
             <div className='mt-8 border-t pt-6'>

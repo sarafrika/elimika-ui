@@ -6,7 +6,10 @@ import { useCourseCreator } from '@/context/course-creator-context';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useState } from 'react';
-import { getCourseEnrollmentsOptions, getCourseReviewsOptions } from '../../../../services/client/@tanstack/react-query.gen';
+import {
+  getCourseEnrollmentsOptions,
+  getCourseReviewsOptions,
+} from '../../../../services/client/@tanstack/react-query.gen';
 
 export default function CourseCreatorAnalyticsPage() {
   const [openCourseId, setOpenCourseId] = useState<string | null>(null);
@@ -239,8 +242,8 @@ function CourseReviewSummary({
   const averageRating =
     reviewCount > 0
       ? Math.round(
-        (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
-      ) / 10
+          (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
+        ) / 10
       : null;
 
   return (

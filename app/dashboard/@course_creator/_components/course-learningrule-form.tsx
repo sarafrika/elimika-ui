@@ -136,7 +136,7 @@ export const CourseLearningRulesForm = forwardRef<CourseFormRef, CourseFormProps
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
           {/* Course Learning Rules */}
-          <div className='border-border space-y-6 rounded-3xl  py-10'>
+          <div className='border-border space-y-6 rounded-3xl py-10'>
             {/* Prerequisites */}
             <FormField
               control={form.control}

@@ -162,7 +162,6 @@ export const ClassDetailsSection = ({
 
   const selectedItem = classFor === 'course' ? selectedCourse : selectedProgram;
 
-
   // Calculate hours between times
   const calculateHours = (start: string, end: string): number => {
     if (!start || !end) return 0;
@@ -238,7 +237,7 @@ export const ClassDetailsSection = ({
     const rateCardKey = `${data.class_type}_${data.location_type}_rate`;
     const rate =
       selectedCourse.application.rate_card[
-      rateCardKey as keyof typeof selectedCourse.application.rate_card
+        rateCardKey as keyof typeof selectedCourse.application.rate_card
       ];
 
     if (rate !== undefined) {
@@ -268,7 +267,7 @@ export const ClassDetailsSection = ({
     const rateCardKey = `${data.class_type}_${data.location_type}_rate`;
     const rate =
       selectedProgram.application.rate_card[
-      rateCardKey as keyof typeof selectedProgram.application.rate_card
+        rateCardKey as keyof typeof selectedProgram.application.rate_card
       ];
 
     if (rate !== undefined) {
@@ -333,17 +332,16 @@ export const ClassDetailsSection = ({
 
   const totalHours = scheduledSessions.reduce((sum, session) => sum + session.hours, 0);
 
-
   return (
-    <Card className='overflow-hidden border shadow-sm pt-0'>
+    <Card className='overflow-hidden border pt-0 shadow-sm'>
       <div className='bg-muted/50 border-b px-6 py-4'>
         <h3 className='text-foreground text-lg font-semibold'>Class Details</h3>
       </div>
 
       <div className='divide-y'>
         {/* Class Type Selector (Course vs Program) */}
-        {!data?.uuid &&
-          <div className='grid grid-cols-3 hover:bg-transparent pb-4'>
+        {!data?.uuid && (
+          <div className='grid grid-cols-3 pb-4 hover:bg-transparent'>
             <div className='bg-muted/30 px-6 font-semibold'>Create Class For *</div>
             <div className='bg-card col-span-2 px-6'>
               <div className='flex gap-4'>
@@ -353,18 +351,21 @@ export const ClassDetailsSection = ({
                     <button
                       key={option.value}
                       onClick={() => handleClassForChange(option.value as 'course' | 'program')}
-                      className={`flex flex-1 items-center gap-3 rounded-lg border-2 p-4 transition-all ${classFor === option.value
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
-                        }`}
+                      className={`flex flex-1 items-center gap-3 rounded-lg border-2 p-4 transition-all ${
+                        classFor === option.value
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}
                     >
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${classFor === option.value ? 'bg-primary/20' : 'bg-muted'
-                          }`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                          classFor === option.value ? 'bg-primary/20' : 'bg-muted'
+                        }`}
                       >
                         <Icon
-                          className={`h-5 w-5 ${classFor === option.value ? 'text-primary' : 'text-muted-foreground'
-                            }`}
+                          className={`h-5 w-5 ${
+                            classFor === option.value ? 'text-primary' : 'text-muted-foreground'
+                          }`}
                         />
                       </div>
                       <div className='text-left'>
@@ -381,8 +382,7 @@ export const ClassDetailsSection = ({
               </div>
             </div>
           </div>
-        }
-
+        )}
 
         {/* Class Name/Category */}
         <div className='grid grid-cols-3 hover:bg-transparent'>
@@ -414,7 +414,7 @@ export const ClassDetailsSection = ({
                 </SelectTrigger>
                 <SelectContent>
                   {approvedCourses.length === 0 ? (
-                    <div className='p-4 text-center text-sm text-muted-foreground'>
+                    <div className='text-muted-foreground p-4 text-center text-sm'>
                       No approved courses available
                     </div>
                   ) : (
@@ -438,7 +438,7 @@ export const ClassDetailsSection = ({
                 </SelectTrigger>
                 <SelectContent>
                   {approvedPrograms.length === 0 ? (
-                    <div className='p-4 text-center text-sm text-muted-foreground'>
+                    <div className='text-muted-foreground p-4 text-center text-sm'>
                       No approved programs available
                     </div>
                   ) : (
@@ -453,7 +453,6 @@ export const ClassDetailsSection = ({
             )}
           </div>
         </div>
-
 
         {/* Class Description */}
         <div className='grid grid-cols-3 hover:bg-transparent'>

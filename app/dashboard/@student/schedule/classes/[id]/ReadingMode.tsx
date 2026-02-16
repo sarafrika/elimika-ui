@@ -98,8 +98,7 @@ export function ReadingMode({
         await document.exitFullscreen();
         setIsFullscreen(false);
       }
-    } catch (err) {
-    }
+    } catch (err) {}
   };
 
   const handleDownload = () => {

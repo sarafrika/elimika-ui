@@ -15,7 +15,16 @@ import {
   startOfMonth,
   startOfWeek,
 } from 'date-fns';
-import { Armchair, BookOpen, ChevronLeft, ChevronRight, Clock, Layers, MapPin, Users } from 'lucide-react';
+import {
+  Armchair,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Layers,
+  MapPin,
+  Users,
+} from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -34,8 +43,8 @@ function ClassInviteContent() {
   const schedules = combinedClass?.schedule;
   const course = combinedClass?.course;
   const program = combinedClass?.program;
-  const enrollments = combinedClass?.enrollments
-  const programCourses = combinedClass?.pCourses
+  const enrollments = combinedClass?.enrollments;
+  const programCourses = combinedClass?.pCourses;
 
   const uniqueEnrollments = useMemo(() => {
     if (!enrollments) return [];
@@ -50,7 +59,6 @@ function ClassInviteContent() {
 
     return Array.from(map.values());
   }, [enrollments]);
-
 
   const getEnrollUrl = () => {
     if (course?.uuid) {
@@ -85,17 +93,16 @@ function ClassInviteContent() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-
   return (
     <div className='mx-auto w-full max-w-5xl px-6 py-12 lg:py-16'>
       {isLoading ? (
         <Skeleton className='h-[420px] w-full rounded-[28px]' />
       ) : (
         <>
-          {data?.course_uuid &&
+          {data?.course_uuid && (
             <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
               <CardHeader className='space-y-4'>
-                <div className='flex flxe-row items-center justify-between' >
+                <div className='flxe-row flex items-center justify-between'>
                   <div className='flex flex-wrap gap-2'>
                     <Badge className='rounded-full'>{data?.session_format}</Badge>
                     <Badge variant='outline' className='rounded-full'>
@@ -109,7 +116,7 @@ function ClassInviteContent() {
                     </Badge>
                   </div>
 
-                  <span className="px-3 py-1 text-xs font-semibold text-on-primary bg-primary rounded-full shadow-sm">
+                  <span className='text-on-primary bg-primary rounded-full px-3 py-1 text-xs font-semibold shadow-sm'>
                     COURSE
                   </span>
                 </div>
@@ -165,7 +172,8 @@ function ClassInviteContent() {
                     label='Available Seats'
                     value={
                       <div>
-                        {Number(data?.max_participants) - uniqueEnrollments?.length} of {data?.max_participants}
+                        {Number(data?.max_participants) - uniqueEnrollments?.length} of{' '}
+                        {data?.max_participants}
                       </div>
                     }
                   />
@@ -178,7 +186,9 @@ function ClassInviteContent() {
 
               {/* CTA */}
               <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
-                <div className='text-muted-foreground text-sm'>Open to the public • Limited seats</div>
+                <div className='text-muted-foreground text-sm'>
+                  Open to the public • Limited seats
+                </div>
 
                 <div className='flex items-center gap-3'>
                   <Button onClick={handleRegister} size='lg' className='rounded-full px-10'>
@@ -191,12 +201,12 @@ function ClassInviteContent() {
                 </div>
               </div>
             </Card>
-          }
+          )}
 
-          {data?.program_uuid &&
+          {data?.program_uuid && (
             <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
               <CardHeader className='space-y-4'>
-                <div className='flex flxe-row items-center justify-between' >
+                <div className='flxe-row flex items-center justify-between'>
                   <div className='flex flex-wrap gap-2'>
                     <Badge className='rounded-full'>{data?.session_format}</Badge>
                     <Badge variant='outline' className='rounded-full'>
@@ -210,7 +220,7 @@ function ClassInviteContent() {
                     </Badge>
                   </div>
 
-                  <span className="px-3 py-1 text-xs font-semibold text-on-accent bg-accent rounded-full shadow-sm">
+                  <span className='text-on-accent bg-accent rounded-full px-3 py-1 text-xs font-semibold shadow-sm'>
                     PROGRAM
                   </span>
                 </div>
@@ -224,29 +234,22 @@ function ClassInviteContent() {
                 ) : null}
               </CardHeader>
 
-
               <div>
                 <ProgramDetailsCard program={program as any} />
               </div>
 
-
               {/* Courses Card */}
-              <CardContent className="bg-primary/5 p-6 space-y-3 mx-6 rounded-lg">
-                <h3 className="font-semibold">Courses Included in This Training</h3>
+              <CardContent className='bg-primary/5 mx-6 space-y-3 rounded-lg p-6'>
+                <h3 className='font-semibold'>Courses Included in This Training</h3>
 
-                <ul className="text-muted-foreground space-y-2 text-sm">
+                <ul className='text-muted-foreground space-y-2 text-sm'>
                   {programCourses?.length === 0 && (
-                    <li className="text-sm text-muted-foreground">
-                      No courses available
-                    </li>
+                    <li className='text-muted-foreground text-sm'>No courses available</li>
                   )}
 
                   {programCourses?.map((course: any) => (
-                    <li
-                      key={course.uuid}
-                      className="flex items-start gap-2"
-                    >
-                      <BookOpen className="text-primary mt-0.5 h-4 w-4" />
+                    <li key={course.uuid} className='flex items-start gap-2'>
+                      <BookOpen className='text-primary mt-0.5 h-4 w-4' />
                       <span>{course.title || course.name}</span>
                     </li>
                   ))}
@@ -291,13 +294,13 @@ function ClassInviteContent() {
                     label='Available Seats'
                     value={
                       <div>
-                        {Number(data?.max_participants) - uniqueEnrollments?.length} of {data?.max_participants}
+                        {Number(data?.max_participants) - uniqueEnrollments?.length} of{' '}
+                        {data?.max_participants}
                       </div>
                     }
                   />
                 </div>
               </CardContent>
-
 
               <CardContent>
                 <ClassScheduleCalendar schedules={schedules as any} />
@@ -305,7 +308,9 @@ function ClassInviteContent() {
 
               {/* CTA */}
               <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
-                <div className='text-muted-foreground text-sm'>Open to the public • Limited seats</div>
+                <div className='text-muted-foreground text-sm'>
+                  Open to the public • Limited seats
+                </div>
 
                 <div className='flex items-center gap-3'>
                   <Button onClick={handleRegister} size='lg' className='rounded-full px-10'>
@@ -318,7 +323,7 @@ function ClassInviteContent() {
                 </div>
               </div>
             </Card>
-          }
+          )}
         </>
       )}
     </div>
@@ -538,7 +543,7 @@ export function CourseDetailedCard({ course }: CourseProps) {
             </p>
             {course?.difficulty_uuid && (
               <p className='text-muted-foreground text-sm'>
-                <strong>Difficulty:</strong> {"  "}
+                <strong>Difficulty:</strong> {'  '}
                 {difficultyMap[course?.difficulty_uuid as string]}
               </p>
             )}
@@ -550,7 +555,8 @@ export function CourseDetailedCard({ course }: CourseProps) {
               <strong>Class Limit:</strong> {course?.class_limit} students
             </p>
             <p>
-              <strong>Age Range:</strong> {course?.age_lower_limit} – {course?.age_upper_limit} years
+              <strong>Age Range:</strong> {course?.age_lower_limit} – {course?.age_upper_limit}{' '}
+              years
             </p>
           </div>
         </div>
@@ -590,7 +596,6 @@ export function CourseDetailedCard({ course }: CourseProps) {
   );
 }
 
-
 export function ProgramDetailsCard({ program }: any) {
   return (
     <CardContent className='space-y-6'>
@@ -620,4 +625,3 @@ export function ProgramDetailsCard({ program }: any) {
     </CardContent>
   );
 }
-

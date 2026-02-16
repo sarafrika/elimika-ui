@@ -31,7 +31,7 @@ export const ScheduleSection = ({
   }, [data.repeat.unit, data.repeat.interval, data.repeat.days]);
 
   return (
-    <Card className='overflow-hidden border shadow-sm pt-0'>
+    <Card className='overflow-hidden border pt-0 shadow-sm'>
       <div className='bg-muted/50 border-b px-6 py-4'>
         <h3 className='text-foreground text-lg font-semibold'>Class Schedule</h3>
       </div>

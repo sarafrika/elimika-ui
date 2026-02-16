@@ -25,7 +25,7 @@ import {
   searchTrainingApplicationsOptions,
   searchTrainingApplicationsQueryKey,
   submitProgramTrainingApplicationMutation,
-  submitTrainingApplicationMutation
+  submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, Filter, GraduationCap, Layers, Search, SortAsc, SortDesc } from 'lucide-react';
@@ -67,9 +67,11 @@ export default function CourseMangementPage() {
     isFetching: isProgramsFetching,
     isFetched: isProgramsFetched,
     isSuccess: isProgramsSuccess,
-  } = useQuery(getAllTrainingProgramsOptions({
-    query: { pageable: { page: programPage, size, sort: [] } }
-  }));
+  } = useQuery(
+    getAllTrainingProgramsOptions({
+      query: { pageable: { page: programPage, size, sort: [] } },
+    })
+  );
 
   const { data: appliedPrograms } = useQuery({
     ...searchProgramTrainingApplicationsOptions({
@@ -124,9 +126,11 @@ export default function CourseMangementPage() {
     isSuccess: isCoursesSuccess,
     isFetched: isCoursesFetched,
     isFetching: isCoursesFetching,
-  } = useQuery(getAllCoursesOptions({
-    query: { pageable: { page: coursePage, size, sort: [] } }
-  }));
+  } = useQuery(
+    getAllCoursesOptions({
+      query: { pageable: { page: coursePage, size, sort: [] } },
+    })
+  );
 
   const { data: appliedCourses } = useQuery({
     ...searchTrainingApplicationsOptions({
@@ -328,7 +332,7 @@ export default function CourseMangementPage() {
 
               <div className='flex flex-wrap gap-2'>
                 <Select value={statusFilter || ''} onValueChange={setStatusFilter}>
-                  <SelectTrigger className='flex-1 min-w-[150px]'>
+                  <SelectTrigger className='min-w-[150px] flex-1'>
                     <Filter className='mr-2 h-4 w-4' />
                     <SelectValue placeholder='Filter by status' />
                   </SelectTrigger>
@@ -362,9 +366,7 @@ export default function CourseMangementPage() {
             {/* Results count */}
             <div className='mb-6'>
               <div className='flex items-center justify-between'>
-                <p className='text-muted-foreground text-sm'>
-                  Browse available courses to train
-                </p>
+                <p className='text-muted-foreground text-sm'>Browse available courses to train</p>
                 <p className='text-muted-foreground text-sm'>
                   {filteredCourses.length} course{filteredCourses.length === 1 ? '' : 's'} found
                 </p>
@@ -381,28 +383,31 @@ export default function CourseMangementPage() {
             )}
 
             {/* Empty State */}
-            {!isCoursesFetching && isCoursesFetched && isCoursesSuccess && filteredCourses.length === 0 && (
-              <div className='py-16 text-center'>
-                <BookOpen className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
-                <h3 className='mb-2 text-lg font-semibold'>No courses found</h3>
-                <p className='text-muted-foreground mb-4'>
-                  {searchQuery || statusFilter !== 'all'
-                    ? 'Try adjusting your filters to see more results.'
-                    : 'No training courses are currently available.'}
-                </p>
-                {(searchQuery || statusFilter !== 'all') && (
-                  <Button
-                    variant='outline'
-                    onClick={() => {
-                      setSearchQuery('');
-                      setStatusFilter('all');
-                    }}
-                  >
-                    Clear filters
-                  </Button>
-                )}
-              </div>
-            )}
+            {!isCoursesFetching &&
+              isCoursesFetched &&
+              isCoursesSuccess &&
+              filteredCourses.length === 0 && (
+                <div className='py-16 text-center'>
+                  <BookOpen className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
+                  <h3 className='mb-2 text-lg font-semibold'>No courses found</h3>
+                  <p className='text-muted-foreground mb-4'>
+                    {searchQuery || statusFilter !== 'all'
+                      ? 'Try adjusting your filters to see more results.'
+                      : 'No training courses are currently available.'}
+                  </p>
+                  {(searchQuery || statusFilter !== 'all') && (
+                    <Button
+                      variant='outline'
+                      onClick={() => {
+                        setSearchQuery('');
+                        setStatusFilter('all');
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  )}
+                </div>
+              )}
 
             {/* Course Grid */}
             {filteredCourses.length > 0 && (
@@ -447,9 +452,7 @@ export default function CourseMangementPage() {
             {/* Results count */}
             <div className='mb-6'>
               <div className='flex items-center justify-between'>
-                <p className='text-muted-foreground text-sm'>
-                  Browse available programs to train
-                </p>
+                <p className='text-muted-foreground text-sm'>Browse available programs to train</p>
                 <p className='text-muted-foreground text-sm'>
                   {filteredPrograms.length} program{filteredPrograms.length === 1 ? '' : 's'} found
                 </p>
@@ -466,28 +469,31 @@ export default function CourseMangementPage() {
             )}
 
             {/* Empty State */}
-            {!isProgramsFetching && isProgramsFetched && isProgramsSuccess && filteredPrograms.length === 0 && (
-              <div className='py-16 text-center'>
-                <GraduationCap className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
-                <h3 className='mb-2 text-lg font-semibold'>No programs found</h3>
-                <p className='text-muted-foreground mb-4'>
-                  {searchQuery || statusFilter !== 'all'
-                    ? 'Try adjusting your filters to see more results.'
-                    : 'No training programs are currently available.'}
-                </p>
-                {(searchQuery || statusFilter !== 'all') && (
-                  <Button
-                    variant='outline'
-                    onClick={() => {
-                      setSearchQuery('');
-                      setStatusFilter('all');
-                    }}
-                  >
-                    Clear filters
-                  </Button>
-                )}
-              </div>
-            )}
+            {!isProgramsFetching &&
+              isProgramsFetched &&
+              isProgramsSuccess &&
+              filteredPrograms.length === 0 && (
+                <div className='py-16 text-center'>
+                  <GraduationCap className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
+                  <h3 className='mb-2 text-lg font-semibold'>No programs found</h3>
+                  <p className='text-muted-foreground mb-4'>
+                    {searchQuery || statusFilter !== 'all'
+                      ? 'Try adjusting your filters to see more results.'
+                      : 'No training programs are currently available.'}
+                  </p>
+                  {(searchQuery || statusFilter !== 'all') && (
+                    <Button
+                      variant='outline'
+                      onClick={() => {
+                        setSearchQuery('');
+                        setStatusFilter('all');
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  )}
+                </div>
+              )}
 
             {/* Program Grid */}
             {filteredPrograms.length > 0 && (

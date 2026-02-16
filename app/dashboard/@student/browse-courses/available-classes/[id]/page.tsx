@@ -7,7 +7,7 @@ import useBundledClassInfo from '@/hooks/use-course-classes';
 import {
   enrollStudentMutation,
   getStudentScheduleQueryKey,
-  listCatalogItemsOptions
+  listCatalogItemsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addYears, format } from 'date-fns';
@@ -167,7 +167,6 @@ const EnrollmentPage = () => {
   };
   // @ts-ignore
 
-
   return (
     <div className='space-y-4 pb-10'>
       <div className='flex items-center justify-between'>
@@ -288,7 +287,6 @@ const EnrollmentPage = () => {
           )}
         </>
       )}
-
     </div>
   );
 };

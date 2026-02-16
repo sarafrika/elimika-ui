@@ -7,7 +7,7 @@ import { useStudent } from '../../../../../context/student-context';
 export default function CourseDetailsPage({ params }: any) {
   const data = params?.id;
   const router = useRouter();
-  const student = useStudent()
+  const student = useStudent();
 
   return (
     <ReusableCourseDetailsPage

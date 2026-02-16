@@ -20,8 +20,7 @@ export function PublicTopNav() {
   const { data: cartData } = useQuery(getCartOptions({ path: { cartId: savedCartId as string } }));
   // @ts-ignore
   const cart = cartData?.data;
-  const cartItemCount = cart?.items?.length
-
+  const cartItemCount = cart?.items?.length;
 
   const navLinks = [
     { label: 'Catalogue', href: '/courses' },
