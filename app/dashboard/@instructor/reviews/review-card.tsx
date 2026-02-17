@@ -47,8 +47,8 @@ export function ReviewCard({ review, type = 'instructor' }: ReviewCardProps) {
       <CardHeader className='flex flex-row items-center justify-between space-y-0'>
         <div className='flex items-center gap-3'>
           <Avatar>
-            {!review.is_anonymous && <AvatarImage src={student?.data?.avatar_url} />}
-            <AvatarFallback>
+            {!review.is_anonymous && <AvatarImage src={student?.data?.profile_image_url} />}
+            <AvatarFallback >
               {review.is_anonymous ? 'AS' : isLoading ? '…' : getInitials(fullName)}
             </AvatarFallback>
           </Avatar>
@@ -64,16 +64,19 @@ export function ReviewCard({ review, type = 'instructor' }: ReviewCardProps) {
               )}
             </p>
           </div>
-        </div>
-        <p className='text-muted-foreground text-xs'>{moment(review.created_date).fromNow()}</p>
-      </CardHeader>
 
-      <CardContent className='space-y-2'>
+          <div className="w-2 h-2 bg-primary/30 rounded-full"></div>
+
+          <p className='text-muted-foreground text-xs'>{moment(review.created_date).fromNow()}</p>
+        </div>
+
         <div className='text-sm text-yellow-500'>
           {'★'.repeat(review.rating)}
           {'☆'.repeat(5 - review.rating)}
         </div>
+      </CardHeader>
 
+      <CardContent className='space-y-2'>
         {review.headline && <p className='text-sm font-medium'>{review.headline}</p>}
 
         <p className='text-muted-foreground text-sm'>{review.comments}</p>

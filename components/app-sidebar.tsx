@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import menu from '@/lib/menu';
 import type { UserDomain } from '@/lib/types';
-import { LibraryBigIcon } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type * as React from 'react';
@@ -56,7 +56,14 @@ export function AppSidebar({
             <SidebarMenuButton size='lg' asChild>
               <Link prefetch href={`/dashboard/overview`}>
                 <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
-                  <LibraryBigIcon className='size-4' />
+                  <Image
+                    alt='Elimika logo in white'
+                    src='/logos/elimika/Artboard 12.svg'
+                    width={40}
+                    height={60}
+                    className='h-20 w-20 drop-shadow-sm'
+                    priority
+                  />
                 </div>
                 <div className='grid flex-1 text-left text-sm leading-tight'>
                   <span className='truncate font-medium capitalize'>
