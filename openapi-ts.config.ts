@@ -1,9 +1,9 @@
 import { defaultPaginationKeywords, defineConfig } from '@hey-api/openapi-ts';
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+const apiBaseUrl = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL;
 
 if (!apiBaseUrl) {
-  throw new Error('Environment variable NEXT_PUBLIC_API_URL is not defined.');
+  throw new Error('Environment variable API_BASE_URL is not defined.');
 }
 
 const normalizedApiBaseUrl = apiBaseUrl.replace(/\/$/, '');
