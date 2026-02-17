@@ -1,18 +1,12 @@
 name: 'Setup Server'
 
 on:
-  workflow_run:
-    workflows: ['Build and Push Docker Image']
-    types:
-      - completed
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   setup_server:
     name: Setup Server
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout Code
@@ -28,13 +22,13 @@ jobs:
           cp .env.sample .env.local
 
           # Replace placeholders with actual secret values
-          sed -i "s|__NEXT_PUBLIC_API_URL__|${{ secrets.NEXT_PUBLIC_API_URL }}|g" .env.local
-          sed -i "s|__NEXT_PUBLIC_KEYCLOAK_REALM__|${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}|g" .env.local
+          sed -i "s|__API_BASE_URL__|${{ secrets.API_BASE_URL }}|g" .env.local
           sed -i "s|__AUTH_URL__|${{ secrets.NEXTAUTH_URL }}|g" .env.local
           sed -i "s|__AUTH_SECRET__|${{ secrets.NEXTAUTH_SECRET }}|g" .env.local
           sed -i "s|__KEYCLOAK_ISSUER__|${{ secrets.KEYCLOAK_ISSUER }}|g" .env.local
           sed -i "s|__KEYCLOAK_CLIENT_ID__|${{ secrets.KEYCLOAK_CLIENT_ID }}|g" .env.local
           sed -i "s|__KEYCLOAK_CLIENT_SECRET__|${{ secrets.KEYCLOAK_CLIENT_SECRET }}|g" .env.local
+          sed -i "s|__KEYCLOAK_REALM__|${{ secrets.KEYCLOAK_REALM }}|g" .env.local
 
           echo "📤 Transferring .env.local to server..."
           scp -i private_key -o StrictHostKeyChecking=no .env.local "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}":~/products/elimika-ui/.env.local

@@ -2,13 +2,13 @@
 
 import type { ApiResponse, ApiResponseWithPagination } from '@/lib/types';
 import type { Instructor } from '@/lib/types/instructor';
-import { getEnvironmentVariable } from '@/lib/utils';
+import { getServerApiBaseUrl } from '@/services/api/base-url';
 
-const BASE_URL = getEnvironmentVariable('NEXT_PUBLIC_API_URL');
 const DEFAULT_PAGE_SIZE = '10';
 
 export async function fetchInstructorProfile(page: number = 0, searchParams?: string) {
   try {
+    const baseUrl = getServerApiBaseUrl();
     const headers = new Headers();
     headers.set('Content-Type', 'application/json');
 
@@ -18,7 +18,7 @@ export async function fetchInstructorProfile(page: number = 0, searchParams?: st
     });
 
     const endpoint = searchParams ? `/search?${searchParams}&` : `?`;
-    const url = `${BASE_URL}/instructors${endpoint}${paginationParams}`;
+    const url = `${baseUrl}/instructors${endpoint}${paginationParams}`;
 
     const response = await fetch(url, { headers });
 
@@ -33,10 +33,11 @@ export async function fetchInstructorProfile(page: number = 0, searchParams?: st
 
 export async function updateInstructorProfile(instructor: Instructor) {
   try {
+    const baseUrl = getServerApiBaseUrl();
     const headers = new Headers();
     headers.set('Content-Type', 'application/json');
 
-    const response = await fetch(`${BASE_URL}/instructors/${instructor.uuid}`, {
+    const response = await fetch(`${baseUrl}/instructors/${instructor.uuid}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify(instructor),

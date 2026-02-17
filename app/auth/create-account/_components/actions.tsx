@@ -3,14 +3,14 @@
 import type { TrainingCenter } from '@/app/auth/create-account/_components/training-center-form';
 import type { User } from '@/app/auth/create-account/_components/user-account-form';
 import type { ApiResponse, ApiResponseWithPagination, UserDomain } from '@/lib/types';
-import { getEnvironmentVariable } from '@/lib/utils';
+import { getServerApiBaseUrl } from '@/services/api/base-url';
 
 const DEFAULT_PAGE_SIZE = 10;
 const EVERY_THIRTY_MINUTES = 60 * 30; // 1,800 seconds
-const BASE_URL = getEnvironmentVariable('NEXT_PUBLIC_API_URL');
 
 export async function createUser(user: User, userDomain: UserDomain, profileImage?: File) {
   try {
+    const baseUrl = getServerApiBaseUrl();
     const formData = new FormData();
 
     formData.append('user', new Blob([JSON.stringify(user)], { type: 'application/json' }));
@@ -21,7 +21,7 @@ export async function createUser(user: User, userDomain: UserDomain, profileImag
 
     formData.append('user_domain', userDomain);
 
-    const url = `${BASE_URL}/users`;
+    const url = `${baseUrl}/users`;
 
     const response = await fetch(url, { method: 'POST', body: formData });
 
@@ -33,10 +33,11 @@ export async function createUser(user: User, userDomain: UserDomain, profileImag
 
 export async function updateUser(user: User) {
   try {
+    const baseUrl = getServerApiBaseUrl();
     const headers = new Headers();
     headers.set('Content-Type', 'application/json');
 
-    const url = `${BASE_URL}/users/${user.uuid}`;
+    const url = `${baseUrl}/users/${user.uuid}`;
 
     const response = await fetch(url, {
       method: 'PUT',
@@ -52,6 +53,7 @@ export async function updateUser(user: User) {
 
 export async function fetchUsers(page: number = 0, searchParams?: string) {
   try {
+    const baseUrl = getServerApiBaseUrl();
     const headers = new Headers();
 
     headers.set('Content-Type', 'application/json');
@@ -62,7 +64,7 @@ export async function fetchUsers(page: number = 0, searchParams?: string) {
     });
 
     const endpoint = searchParams ? `/search?${searchParams}&` : `?`;
-    const url = `${BASE_URL}/users${endpoint}${paginationParams}`;
+    const url = `${baseUrl}/users${endpoint}${paginationParams}`;
 
     const response = await fetch(url, { headers });
 
@@ -74,6 +76,7 @@ export async function fetchUsers(page: number = 0, searchParams?: string) {
 
 export async function fetchTrainingCenters(page: number, params?: string) {
   try {
+    const baseUrl = getServerApiBaseUrl();
     const headers = new Headers();
 
     const paginationParams = new URLSearchParams({
@@ -82,7 +85,7 @@ export async function fetchTrainingCenters(page: number, params?: string) {
     });
 
     const endpoint = params ? `/search?${params}&` : `?`;
-    const url = `${BASE_URL}/organisations${endpoint}${paginationParams}`;
+    const url = `${baseUrl}/organisations${endpoint}${paginationParams}`;
 
     const response = await fetch(url, { headers });
 
@@ -96,9 +99,10 @@ export async function fetchTrainingCenters(page: number, params?: string) {
 
 export async function fetchTrainingCenter(trainingCenterId: string) {
   try {
+    const baseUrl = getServerApiBaseUrl();
     const headers = new Headers();
 
-    const response = await fetch(`${BASE_URL}/organisations/${trainingCenterId}`, {
+    const response = await fetch(`${baseUrl}/organisations/${trainingCenterId}`, {
       headers,
       next: { revalidate: EVERY_THIRTY_MINUTES },
     });
@@ -114,11 +118,12 @@ export async function fetchTrainingCenter(trainingCenterId: string) {
 
 export async function createOrUpdateTrainingCenter(trainingCenter: TrainingCenter) {
   try {
+    const baseUrl = getServerApiBaseUrl();
     const headers = new Headers();
     headers.set('Content-Type', 'application/json');
 
     const response = await fetch(
-      `${BASE_URL}/organisations${trainingCenter.uuid ? `/${trainingCenter.uuid}` : ''}`,
+      `${baseUrl}/organisations${trainingCenter.uuid ? `/${trainingCenter.uuid}` : ''}`,
       {
         method: trainingCenter.uuid ? 'PUT' : 'POST',
         headers,
