@@ -1,17 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import {
-  getCourseByUuidOptions,
-  submitTrainingApplicationMutation,
-} from '@/services/client/@tanstack/react-query.gen';
-import { ApplicantTypeEnum } from '@/services/client/types.gen';
-import { useOrganisation } from '@/context/organisation-context';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -24,10 +15,17 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
+import { useOrganisation } from '@/context/organisation-context';
+import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
+import {
+  getCourseByUuidOptions,
+  submitTrainingApplicationMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { ApplicantTypeEnum } from '@/services/client/types.gen';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
   Building2,
@@ -38,9 +36,11 @@ import {
   Loader2,
   Send,
 } from 'lucide-react';
-import RichTextRenderer from '@/components/editors/richTextRenders';
-import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import * as z from 'zod';
 
 const applicationSchema = z.object({
   private_online_rate: z.coerce.number().min(0, 'Rate must be positive'),

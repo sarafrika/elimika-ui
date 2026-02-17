@@ -27,7 +27,6 @@ export const useStudentsMap = (studentUuids: string[]) => {
     },
     enabled: studentUuids?.length > 0,
     staleTime: 10 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
