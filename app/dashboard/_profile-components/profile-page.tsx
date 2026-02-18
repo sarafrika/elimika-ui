@@ -1,9 +1,10 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { Briefcase, Globe, Mail, MapPin, Phone } from 'lucide-react';
 import React, { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar';
 import type { ProfilePageProps } from './types';
 
 function ProfileHeaderSkeleton() {
@@ -71,6 +72,7 @@ export function ProfilePage({
         .toUpperCase()
         .slice(0, 2);
 
+
     return (
         <div className="p-6 space-y-0 font-sans">
             <div className="bg-card border border-border rounded-2xl p-7">
@@ -81,13 +83,18 @@ export function ProfilePage({
                     {/* Avatar */}
                     <div className="relative shrink-0">
                         <Avatar className="w-[90px] h-[90px] rounded-xl">
-                            <AvatarImage src={profile.avatar_url} alt={profile.full_name} className="object-cover" />
+                            <AvatarImage
+                                src={profile?.profile_image_url}
+                                alt={profile?.full_name}
+                                className="object-cover"
+                            />
                             <AvatarFallback className="rounded-xl text-lg font-semibold bg-primary/10 text-primary">
                                 {initials}
                             </AvatarFallback>
                         </Avatar>
+
                         {profile.is_online && (
-                            <span className="absolute top-1.5 right-1.5 w-3 h-3 rounded-full bg-green-500 border-2 border-card" />
+                            <span className="absolute top-0.5  right-1.5 w-4 h-4 rounded-full bg-success/50 border-2 border-card" />
                         )}
                     </div>
 
@@ -104,18 +111,30 @@ export function ProfilePage({
                         {/* Secondary meta */}
                         <div className="flex flex-wrap gap-x-5 gap-y-1 mb-3">
                             <MetaItem
-                                icon={<span className="text-base">📞</span>}
+                                icon={<Briefcase className="w-4 h-4 text-muted-foreground" />}
+                                value={profile.professional_headline}
+                            />
+                            <MetaItem
+                                icon={<MapPin className="w-4 h-4 text-muted-foreground" />}
+                                value={profile.address}
+                            />
+                        </div>
+
+                        <div className="flex flex-col space-y-3 mb-3">
+                            <MetaItem
+                                icon={<Phone className="w-4 h-4 text-muted-foreground" />}
                                 value={profile.phone}
                             />
                             <MetaItem
-                                icon={<span className="text-base">✉️</span>}
+                                icon={<Mail className="w-4 h-4 text-muted-foreground" />}
                                 value={profile.email}
                             />
                             <MetaItem
-                                icon={<span className="text-base">🌐</span>}
+                                icon={<Globe className="w-4 h-4 text-muted-foreground" />}
                                 value={profile.website}
                             />
                         </div>
+
 
                         {/* ID badge */}
                         <span className="inline-block bg-muted text-muted-foreground text-xs font-bold px-3 py-1 rounded-md tracking-wider">
@@ -124,17 +143,16 @@ export function ProfilePage({
                     </div>
                 </div>
 
-                {/* ── Tab Bar ─────────────────────────────────────────────── */}
                 <div className="flex flex-wrap gap-1 pt-4 border-t border-border">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTabId(tab.id)}
                             className={cn(
-                                'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer',
+                                'px-4.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer',
                                 activeTabId === tab.id
-                                    ? 'bg-primary text-primary-foreground font-semibold'
-                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                    ? 'bg-primary/80 rounded-full text-primary-foreground font-semibold'
+                                    : 'text-muted-foreground hover:bg-muted rounded-full hover:text-foreground'
                             )}
                         >
                             {tab.label}
@@ -143,12 +161,11 @@ export function ProfilePage({
                 </div>
             </div>
 
-            {/* ── Tab Content ─────────────────────────────────────────────── */}
             {TabContent && (
                 <div key={activeTabId} className="animate-in fade-in-0 duration-200">
                     <TabContent
                         userUuid={profile.user_uuid}
-                        domain={'instructor'} // passed from parent in real usage
+                        domain={'student'}
                         sharedProfile={profile}
                     />
                 </div>

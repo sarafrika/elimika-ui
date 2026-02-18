@@ -1,12 +1,5 @@
 'use client';
 
-/**
- * student-tabs.tsx
- *
- * All tab components for the STUDENT domain.
- * Completely different content from instructor tabs — same shell, different registry.
- */
-
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -29,7 +22,6 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value?: 
     );
 }
 
-// ─── About Tab (uses sharedProfile + student-specific fields) ─────────────────
 
 function StudentAboutTab({ sharedProfile, userUuid }: DomainTabProps) {
     const [student, setStudent] = useState<Partial<StudentProfile> | null>(null);
@@ -91,7 +83,6 @@ function StudentAboutTab({ sharedProfile, userUuid }: DomainTabProps) {
 }
 
 // ─── Enrolled Courses Tab ─────────────────────────────────────────────────────
-
 interface EnrolledCourse {
     uuid: string;
     title: string;
@@ -115,9 +106,9 @@ function StudentCoursesTab({ userUuid }: DomainTabProps) {
         // Replace with: fetch(`/api/students/${userUuid}/enrollments`)
         setTimeout(() => {
             setCourses([
-                { uuid: '1', title: 'Intro to Music Theory', instructor: 'Ayomhi Ayo', progress: 72, status: 'active', thumbnail_color: '#667eea' },
-                { uuid: '2', title: 'Guitar Fundamentals', instructor: 'Jane Doe', progress: 100, status: 'completed', thumbnail_color: '#10b981' },
-                { uuid: '3', title: 'Digital Audio Production', instructor: 'Mark Bell', progress: 30, status: 'paused', thumbnail_color: '#f59e0b' },
+                { uuid: '1', title: 'Intro to Music Theory', instructor: 'Ayomhi Ayo', progress: 72, status: 'active', thumbnail_color: 'bg-success/50' },
+                { uuid: '2', title: 'Guitar Fundamentals', instructor: 'Jane Doe', progress: 100, status: 'completed', thumbnail_color: 'bg-success/50' },
+                { uuid: '3', title: 'Digital Audio Production', instructor: 'Mark Bell', progress: 30, status: 'paused', thumbnail_color: 'bg-success/50' },
             ]);
             setIsLoading(false);
         }, 600);
@@ -230,9 +221,9 @@ function StudentScheduleTab({ userUuid }: DomainTabProps) {
     useEffect(() => {
         // Replace with: fetch(`/api/students/${userUuid}/schedule`)
         setSchedule([
-            { uuid: '1', title: 'Music Theory — Module 3', time: 'Mon, 10:00 AM', instructor: 'Ayomhi Ayo', color: '#6366f1' },
-            { uuid: '2', title: 'Guitar Practice Session', time: 'Wed, 2:00 PM', instructor: 'Jane Doe', color: '#10b981' },
-            { uuid: '3', title: 'Audio Production Lab', time: 'Fri, 4:00 PM', instructor: 'Mark Bell', color: '#f59e0b' },
+            { uuid: '1', title: 'Music Theory — Module 3', time: 'Mon, 10:00 AM', instructor: 'Ayomhi Ayo', color: '#' },
+            { uuid: '2', title: 'Guitar Practice Session', time: 'Wed, 2:00 PM', instructor: 'Jane Doe', color: '#' },
+            { uuid: '3', title: 'Audio Production Lab', time: 'Fri, 4:00 PM', instructor: 'Mark Bell', color: '#' },
         ]);
     }, [userUuid]);
 

@@ -33,20 +33,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 import {
-    addInstructorEducationMutation,
-    addInstructorExperienceMutation,
-    deleteInstructorDocumentMutation,
-    deleteInstructorEducationMutation,
-    deleteInstructorExperienceMutation,
-    getInstructorDocumentsOptions,
+    addCourseCreatorEducationMutation,
+    addCourseCreatorExperienceMutation,
+    deleteCourseCreatorDocumentMutation,
+    deleteCourseCreatorEducationMutation,
+    deleteCourseCreatorExperienceMutation,
+    getCourseCreatorDocumentsOptions,
+    getCourseCreatorDocumentsQueryKey,
+    getCourseCreatorEducationOptions,
+    getCourseCreatorEducationQueryKey,
+    getCourseCreatorExperienceOptions,
+    getCourseCreatorExperienceQueryKey,
     getInstructorDocumentsQueryKey,
-    getInstructorEducationOptions,
-    getInstructorEducationQueryKey,
-    getInstructorExperienceOptions,
-    getInstructorExperienceQueryKey,
-    updateInstructorEducationMutation,
-    updateInstructorExperienceMutation,
-    uploadInstructorDocumentMutation
+    updateCourseCreatorEducationMutation,
+    updateCourseCreatorExperienceMutation,
+    uploadCourseCreatorDocumentMutation
 } from '../../../services/client/@tanstack/react-query.gen';
 
 import {
@@ -63,19 +64,14 @@ import {
     XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { CAREER_COLORS, EVENT_GRADIENTS } from '../../../lib/color-themes';
-import CoursesPage from '../@instructor/profile/rate-card/_components/CoursesPage';
+import { CAREER_COLORS } from '../../../lib/color-themes';
 import type { DomainTabProps, TabDefinition } from './types';
-
-// ─── Shared helpers ───────────────────────────────────────────────────────────
 
 function TabShell({ children }: { children: React.ReactNode }) {
     return <div className="pt-5 space-y-4">{children}</div>;
 }
 
-// ─── About Tab ────────────────────────────────────────────────────────────────
-
-function InstructorAboutTab({ sharedProfile }: DomainTabProps) {
+function CreatorAboutTab({ sharedProfile }: DomainTabProps) {
     return (
         <TabShell>
             {sharedProfile.bio ? (
@@ -100,16 +96,11 @@ function InstructorAboutTab({ sharedProfile }: DomainTabProps) {
         </TabShell>
     );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SKILLS CARD TAB — Education management
-// ─────────────────────────────────────────────────────────────────────────────
-
 const DEGREE_OPTIONS = ["Ph.D.", "Master's", "Bachelor's", "Associate's", "Diploma", "Certificate", "Other"] as const;
 
 const edSchema = z.object({
     uuid: z.string().optional(),
-    instructor_uuid: z.string(),
+    course_creator_uuid: z.string(),
     school_name: z.string().min(1, 'Institution is required'),
     qualification: z.string().min(1, 'Degree is required'),
     field_of_study: z.string().min(1, 'Field of study is required'),
@@ -230,25 +221,24 @@ function EducationViewCard({ edu }: { edu: any }) {
     );
 }
 
-function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
+function CreatorSkillsTab({ sharedProfile }: DomainTabProps) {
     const qc = useQueryClient();
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [attachments, setAttachments] = useState<AttachedFile[]>([]);
 
     const { data, isLoading } = useQuery({
-        ...getInstructorEducationOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
+        ...getCourseCreatorEducationOptions({ path: { courseCreatorUuid: sharedProfile?.uuid }, query: { pageable: {} } }),
         enabled: !!sharedProfile?.uuid,
         staleTime: 5 * 60 * 1000,
-        gcTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
     });
 
-    const serverEducations: any[] = data?.data ?? [];
+    const serverEducations: any[] = data?.data?.content ?? [];
 
     const blankEntry = (): EdEntry => ({
-        instructor_uuid: sharedProfile?.uuid ?? '',
+        course_creator_uuid: sharedProfile?.uuid ?? '',
         school_name: '', qualification: '', field_of_study: '',
         certificate_number: '', year_started: '', year_completed: '',
         is_recent_qualification: false, full_description: '',
@@ -262,20 +252,20 @@ function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
 
     const { fields, append, remove, replace } = useFieldArray({ control: form.control, name: 'educations' });
 
-    const addEducationMut = useMutation(addInstructorEducationMutation());
-    const updateEducationMut = useMutation(updateInstructorEducationMutation());
-    const deleteEducationMut = useMutation(deleteInstructorEducationMutation());
-    const uploadDocumentMut = useMutation(uploadInstructorDocumentMutation());
+    const addEducationMut = useMutation(addCourseCreatorEducationMutation());
+    const updateEducationMut = useMutation(updateCourseCreatorEducationMutation());
+    const deleteEducationMut = useMutation(deleteCourseCreatorEducationMutation());
+    const uploadDocumentMut = useMutation(uploadCourseCreatorDocumentMutation());
 
     const invalidateEducation = () => qc.invalidateQueries({
-        queryKey: getInstructorEducationQueryKey({ path: { instructorUuid: sharedProfile?.uuid } }),
+        queryKey: getCourseCreatorEducationQueryKey({ path: { courseCreatorUuid: sharedProfile?.uuid }, query: { pageable: {} } }),
     });
 
     const enterEditMode = () => {
         if (serverEducations.length > 0) {
             const mapped: EdEntry[] = serverEducations.map((ed) => ({
                 uuid: ed.uuid,
-                instructor_uuid: sharedProfile?.uuid ?? '',
+                course_creator_uuid: sharedProfile?.uuid ?? '',
                 school_name: ed.school_name ?? '',
                 qualification: ed.qualification ?? '',
                 field_of_study: ed.field_of_study ?? '',
@@ -310,7 +300,7 @@ function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
         setAttachments((prev) => prev.filter((_, i) => i !== index));
         if (edUuid) {
             deleteEducationMut.mutate(
-                { path: { educationUuid: edUuid, instructorUuid: sharedProfile.uuid } },
+                { path: { educationUuid: edUuid, courseCreatorUuid: sharedProfile.uuid } },
                 { onSuccess: () => { invalidateEducation(); toast.success('Qualification removed'); }, onError: () => toast.error('Could not remove qualification') }
             );
         }
@@ -324,17 +314,17 @@ function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
                 let educationUuid = ed.uuid;
 
                 if (!ed.uuid) {
-                    const resp = await addEducationMut.mutateAsync({ body: { ...ed }, path: { instructorUuid: sharedProfile.uuid } });
+                    const resp = await addEducationMut.mutateAsync({ body: { ...ed, course_creator_uuid: sharedProfile?.uuid }, path: { courseCreatorUuid: sharedProfile.uuid } });
                     educationUuid = resp?.data?.uuid;
                 } else {
-                    await updateEducationMut.mutateAsync({ body: { ...ed }, path: { educationUuid: ed.uuid, instructorUuid: sharedProfile.uuid } });
+                    await updateEducationMut.mutateAsync({ body: { ...ed, course_creator_uuid: sharedProfile?.uuid }, path: { educationUuid: ed.uuid, courseCreatorUuid: sharedProfile.uuid } });
                 }
 
                 if (attachment?.local && educationUuid) {
                     uploadDocumentMut.mutate(
                         {
                             body: { file: attachment.local },
-                            path: { instructorUuid: sharedProfile?.uuid },
+                            path: { courseCreatorUuid: sharedProfile?.uuid },
                             query: {
                                 education_uuid: educationUuid, title: ed.school_name, description: ed.field_of_study,
                                 document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',// contnent type uuid for pdfs
@@ -342,7 +332,7 @@ function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
                             },
                         },
                         {
-                            onSuccess: () => qc.invalidateQueries({ queryKey: getInstructorDocumentsQueryKey({ path: { instructorUuid: sharedProfile?.uuid } }) }),
+                            onSuccess: () => qc.invalidateQueries({ queryKey: getCourseCreatorDocumentsQueryKey({ path: { courseCreatorUuid: sharedProfile?.uuid } }) }),
                             onError: (err) => toast.error(err?.message),
                         }
                     );
@@ -518,7 +508,7 @@ function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
 }
 
 
-function InstructorCertificatesTab({ sharedProfile }: DomainTabProps) {
+function CreatorCertificatesTab({ sharedProfile }: DomainTabProps) {
     const qc = useQueryClient();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
@@ -527,7 +517,7 @@ function InstructorCertificatesTab({ sharedProfile }: DomainTabProps) {
     const [isUploading, setIsUploading] = useState(false);
 
     const { data, isLoading } = useQuery({
-        ...getInstructorDocumentsOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
+        ...getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid: sharedProfile?.uuid } }),
         enabled: !!sharedProfile?.uuid,
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
@@ -535,8 +525,8 @@ function InstructorCertificatesTab({ sharedProfile }: DomainTabProps) {
         refetchOnMount: false,
     });
 
-    const uploadDocumentMut = useMutation(uploadInstructorDocumentMutation());
-    const deleteDocumentMut = useMutation(deleteInstructorDocumentMutation());
+    const uploadDocumentMut = useMutation(uploadCourseCreatorDocumentMutation());
+    const deleteDocumentMut = useMutation(deleteCourseCreatorDocumentMutation());
 
     const invalidateDocs = () => qc.invalidateQueries({
         queryKey: getInstructorDocumentsQueryKey({ path: { instructorUuid: sharedProfile?.uuid } }),
@@ -548,7 +538,7 @@ function InstructorCertificatesTab({ sharedProfile }: DomainTabProps) {
         uploadDocumentMut.mutate(
             {
                 body: { file: stagedFile },
-                path: { instructorUuid: sharedProfile?.uuid },
+                path: { courseCreatorUuid: sharedProfile?.uuid },
                 query: { title: uploadMeta.title, description: uploadMeta.description, document_type_uuid: '', education_uuid: '', experience_uuid: '', expiry_date: '', membership_uuid: '' },
             },
             {
@@ -561,7 +551,7 @@ function InstructorCertificatesTab({ sharedProfile }: DomainTabProps) {
     const handleDelete = (uuid: string) => {
         if (!confirm('Remove this document?')) return;
         deleteDocumentMut.mutate(
-            { path: { documentUuid: uuid, instructorUuid: sharedProfile?.uuid } },
+            { path: { documentUuid: uuid, courseCreatorUuid: sharedProfile?.uuid } },
             { onSuccess: () => { invalidateDocs(); toast.success('Document removed'); }, onError: () => toast.error('Could not remove document') }
         );
     };
@@ -715,7 +705,7 @@ function ExperienceViewCard({ item, color }: { item: any; color: string }) {
                     {item.employment_period || formatDateRange(item.start_date, item.end_date, item.is_current_position)}
                 </span>
                 {item.is_current_position && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Current</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/10 text-success/70 font-medium">Current</span>
                 )}
             </div>
             <p className="text-sm font-semibold text-foreground">{item.position}</p>
@@ -729,13 +719,13 @@ function ExperienceViewCard({ item, color }: { item: any; color: string }) {
     );
 }
 
-function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
+function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
     const qc = useQueryClient();
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     const { data, isLoading } = useQuery({
-        ...getInstructorExperienceOptions({ path: { instructorUuid: sharedProfile?.uuid }, query: { pageable: {} } }),
+        ...getCourseCreatorExperienceOptions({ path: { courseCreatorUuid: sharedProfile?.uuid }, query: { pageable: {} } }),
         enabled: !!sharedProfile?.uuid,
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
@@ -743,12 +733,12 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
         refetchOnMount: false,
     });
 
-    const addExperienceMut = useMutation(addInstructorExperienceMutation());
-    const updateExperienceMut = useMutation(updateInstructorExperienceMutation());
-    const deleteExperienceMut = useMutation(deleteInstructorExperienceMutation());
+    const addExperienceMut = useMutation(addCourseCreatorExperienceMutation());
+    const updateExperienceMut = useMutation(updateCourseCreatorExperienceMutation());
+    const deleteExperienceMut = useMutation(deleteCourseCreatorExperienceMutation());
 
     const invalidateExperience = () => qc.invalidateQueries({
-        queryKey: getInstructorExperienceQueryKey({ path: { instructorUuid: sharedProfile?.uuid }, query: { pageable: {} } }),
+        queryKey: getCourseCreatorExperienceQueryKey({ path: { courseCreatorUuid: sharedProfile?.uuid }, query: { pageable: {} } }),
     });
 
     const serverExperiences: any[] = data?.data?.content ?? [];
@@ -808,7 +798,7 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
         remove(index);
         if (expUuid) {
             deleteExperienceMut.mutate(
-                { path: { experienceUuid: expUuid, instructorUuid: sharedProfile.uuid } },
+                { path: { experienceUuid: expUuid, courseCreatorUuid: sharedProfile.uuid } },
                 { onSuccess: () => { invalidateExperience(); toast.success('Experience removed'); }, onError: () => toast.error('Could not remove experience') }
             );
         }
@@ -820,19 +810,20 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
             for (const [i, exp] of values.experiences.entries()) {
                 const body = {
                     ...exp,
+                    course_creator_uuid: sharedProfile?.uuid,
                     start_date: new Date(`${exp.start_date}-01`),
                     end_date: exp.end_date ? new Date(`${exp.end_date}-01`) : undefined,
                 };
 
                 if (!exp.uuid) {
-                    const resp = await addExperienceMut.mutateAsync({ body, path: { instructorUuid: sharedProfile.uuid } });
+                    const resp = await addExperienceMut.mutateAsync({ body, path: { courseCreatorUuid: sharedProfile.uuid } });
                     if (resp?.data) {
                         const exps = form.getValues('experiences');
                         exps[i] = toFormEntry(resp.data);
                         form.setValue('experiences', exps);
                     }
                 } else {
-                    await updateExperienceMut.mutateAsync({ body, path: { experienceUuid: exp.uuid, instructorUuid: sharedProfile.uuid } });
+                    await updateExperienceMut.mutateAsync({ body, path: { experienceUuid: exp.uuid, courseCreatorUuid: sharedProfile.uuid } });
                 }
             }
             invalidateExperience();
@@ -985,35 +976,35 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
 }
 
 
-function InstructorRatesTab({ userUuid }: DomainTabProps) {
-    return (
-        <TabShell>
-            <CoursesPage />
-        </TabShell>
-    );
-}
-
-function InstructorGalleryTab({ userUuid }: DomainTabProps) {
-    const [items, setItems] = useState<{ id: string; gradient: string; label: string }[]>([]);
-    const [selected, setSelected] = useState<{ id: string; gradient: string; label: string } | null>(null);
+function CreatorGalleryTab({ userUuid }: DomainTabProps) {
+    const [items, setItems] = useState<{ id: string; label: string }[]>([]);
+    const [selected, setSelected] = useState<{ id: string; label: string } | null>(null);
 
     useEffect(() => {
         setItems([
             {
-                id: '1', gradient: `bg-gradient-to-br ${EVENT_GRADIENTS[0]}`, label: 'Course Launch',
+                id: '1',
+                label: 'Course Launch',
             },
             {
-                id: '2', gradient: `bg-gradient-to-br ${EVENT_GRADIENTS[0]}`, label: 'Workshop',
+                id: '2',
+                label: 'Workshop',
             },
             {
-                id: '3', gradient: `bg-gradient-to-br ${EVENT_GRADIENTS[0]}`, label: 'Webinar',
+                id: '3',
+                label: 'Webinar',
             },
             {
-                id: '4', gradient: `bg-gradient-to-br ${EVENT_GRADIENTS[0]}`, label: 'Keynote',
+                id: '4',
+                label: 'Keynote',
             },
-            { id: '5', gradient: `bg-gradient-to-br ${EVENT_GRADIENTS[0]}`, label: 'Demo Day' },
             {
-                id: '6', gradient: `bg-gradient-to-br ${EVENT_GRADIENTS[0]}`, label: 'Onboarding',
+                id: '5',
+                label: 'Demo Day',
+            },
+            {
+                id: '6',
+                label: 'Onboarding',
             },
         ]);
     }, [userUuid]);
@@ -1031,8 +1022,8 @@ function InstructorGalleryTab({ userUuid }: DomainTabProps) {
 
             {selected && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setSelected(null)}>
-                    <div className="w-80 h-60 rounded-2xl flex items-center justify-center" style={{ background: selected.gradient }}>
-                        <span className="text-white text-xl font-bold">{selected.label}</span>
+                    <div className="w-80 h-60 rounded-2xl flex items-center justify-center" style={{ background: "bg-success/>20" }}>
+                        <span className="text-black text-xl font-bold">{selected.label}</span>
                     </div>
                 </div>
             )}
@@ -1040,7 +1031,7 @@ function InstructorGalleryTab({ userUuid }: DomainTabProps) {
     );
 }
 
-function InstructorFriendsTab({ userUuid }: DomainTabProps) {
+function CreatorFriendsTab({ userUuid }: DomainTabProps) {
     const [connections, setConnections] = useState<{ uuid: string; name: string; role: string; avatar_url?: string }[]>([]);
 
     useEffect(() => {
@@ -1079,12 +1070,11 @@ function InstructorFriendsTab({ userUuid }: DomainTabProps) {
 
 
 // ── Tab Registry ──
-export const instructorTabs: TabDefinition[] = [
-    { id: 'about', label: 'About', component: InstructorAboutTab },
-    { id: 'skills', label: 'Skills Card', component: InstructorSkillsTab },
-    { id: 'certs', label: 'Certificates', component: InstructorCertificatesTab },
-    { id: 'career', label: 'Career Pathways', component: InstructorCareerTab },
-    { id: 'rates', label: 'Rate Card', component: InstructorRatesTab },
-    { id: 'gallery', label: 'Gallery', component: InstructorGalleryTab },
-    { id: 'friends', label: 'Connections', component: InstructorFriendsTab },
+export const creatorTabs: TabDefinition[] = [
+    { id: 'about', label: 'About', component: CreatorAboutTab },
+    { id: 'skills', label: 'Skills Card', component: CreatorSkillsTab },
+    { id: 'certs', label: 'Certificates', component: CreatorCertificatesTab },
+    { id: 'career', label: 'Career Pathways', component: CreatorCareerTab },
+    { id: 'gallery', label: 'Gallery', component: CreatorGalleryTab },
+    { id: 'friends', label: 'Connections', component: CreatorFriendsTab },
 ];

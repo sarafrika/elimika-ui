@@ -84,7 +84,7 @@ export default function CoursesPage() {
           },
         }
       );
-    } catch (_error) {}
+    } catch (_error) { }
   };
 
   const handleUnverifyCourse = async (_course: Course) => {
@@ -141,7 +141,7 @@ export default function CoursesPage() {
     );
   };
 
-  const filteredAndSortedCourseCourses = courses
+  const filteredAndSortedCourses = courses
     .filter(course => {
       const matchesSearch =
         course.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -170,9 +170,9 @@ export default function CoursesPage() {
   // }
 
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
+    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row border border-border rounded-lg overflow-hidden'>
       <CourseList
-        courses={filteredAndSortedCourseCourses as any}
+        courses={filteredAndSortedCourses as any}
         selectedCourse={selectedCourse as any}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}

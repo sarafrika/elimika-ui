@@ -1,22 +1,21 @@
-// ─── Domain Types ────────────────────────────────────────────────────────────
 
-export type UserDomain = "instructor" | "student" | "admin" | "course_creator" | "organisation";
+export type UserDomain = "instructor" | "student" | "admin" | "course_creator" | "organization";
 
-// ─── Shared Profile (header data — same across all domains) ──────────────────
 
 export interface SharedUserProfile {
     uuid: string;
     user_uuid: string;
     full_name: string;
     avatar_url?: string;
+    profile_image_url: string;
     email?: string;
     phone?: string;
     website?: string;
     bio?: string;
     is_online?: boolean;
+    address?: string;
 }
 
-// ─── Domain-specific raw data shapes (from your existing contexts) ────────────
 
 export interface InstructorProfile extends SharedUserProfile {
     professional_headline?: string;
@@ -56,13 +55,7 @@ export interface OrganisationProfile extends SharedUserProfile {
     reg_number?: string;
 }
 
-// ─── Tab Registry (the key pattern) ──────────────────────────────────────────
-
-/**
- * Props injected into every domain tab component.
- * Each tab gets the resolved shared profile + the user_uuid
- * so it can make its own domain-specific API calls.
- */
+// ─── Tab Registry 
 export interface DomainTabProps {
     userUuid: string;
     domain: UserDomain;
@@ -72,27 +65,16 @@ export interface DomainTabProps {
 export interface TabDefinition {
     id: string;
     label: string;
-    /** The component that renders the tab content. Handles its own data fetching. */
     component: React.ComponentType<DomainTabProps>;
 }
 
-// ─── ProfilePage Props ────────────────────────────────────────────────────────
 
 export interface ProfilePageProps {
-    /**
-     * List of tab definitions for the active domain.
-     * Pass different arrays per domain — the shell doesn't care about content.
-     */
+
     tabs: TabDefinition[];
-    /**
-     * Resolved shared profile to display in the header.
-     * Normalise your domain-specific profile into this shape upstream.
-     */
+
     profile: SharedUserProfile;
-    /** Whether the profile is loading (shows skeleton). */
     isLoading?: boolean;
-    /** Optional badge to display next to the user's name. */
     headerBadge?: React.ReactNode;
-    /** Default tab id to open. Defaults to first tab. */
     defaultTab?: string;
 }
