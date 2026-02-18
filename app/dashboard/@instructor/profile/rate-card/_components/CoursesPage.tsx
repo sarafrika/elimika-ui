@@ -41,15 +41,30 @@ export default function CoursesPage() {
     enabled: !!user?.instructor?.uuid,
   });
 
+  // const combinedCourses = React.useMemo(() => {
+  //   if (!allCourses?.data?.content || !appliedCourses?.data?.content) return [];
+  //   const appliedMap = new Map(
+  //     appliedCourses.data.content.map((app: any) => [app.course_uuid, app])
+  //   );
+  //   return allCourses.data.content.map((course: any) => ({
+  //     ...course,
+  //     application: appliedMap.get(course.uuid) || null,
+  //   }));
+  // }, [allCourses, appliedCourses]);
   const combinedCourses = React.useMemo(() => {
     if (!allCourses?.data?.content || !appliedCourses?.data?.content) return [];
+
     const appliedMap = new Map(
       appliedCourses.data.content.map((app: any) => [app.course_uuid, app])
     );
-    return allCourses.data.content.map((course: any) => ({
-      ...course,
-      application: appliedMap.get(course.uuid) || null,
-    }));
+
+    // Only return courses that have an application
+    return allCourses.data.content
+      .filter((course: any) => appliedMap.has(course.uuid))
+      .map((course: any) => ({
+        ...course,
+        application: appliedMap.get(course.uuid),
+      }));
   }, [allCourses, appliedCourses]);
 
   const courses = useMemo(() => combinedCourses ?? [], [combinedCourses]);

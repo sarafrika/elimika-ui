@@ -4,7 +4,8 @@ import { Separator } from '@/components/ui/separator';
 import type { CourseCreator } from '@/services/client';
 import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { BadgeCheckIcon, Globe, MapPin, User } from 'lucide-react';
+import { BadgeCheckIcon, Copy, Globe, MapPin, Send, User } from 'lucide-react';
+import { toast } from 'sonner';
 import { Badge } from '../../../../../components/ui/badge';
 
 interface CourseCreatorDetailsProps {
@@ -26,6 +27,35 @@ export default function CourseCreatorDetails({
       {/* Profile Header */}
       <Card>
         <CardHeader className='pb-4'>
+          <div className="flex items-center gap-4">
+            <a
+              href={`/profile-user/${courseCreator?.user_uuid}?domain=course_creator`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 flex items-start justify-start self-start text-primary cursor-pointer rounded-md hover:bg-gray-100 transition"
+            >
+              <div className="flex items-center gap-1 text-sm">
+                <Send size={16} className="text-primary" />
+                <span className="truncate">View full profile</span>
+              </div>
+            </a>
+
+            <button
+              type="button"
+              onClick={() => {
+                const fullUrl = `${window.location.origin}/profile-user/${courseCreator?.user_uuid}?domain=course_creator`;
+                navigator.clipboard.writeText(fullUrl);
+
+                toast.success('Profile link copied to clipboard')
+              }}
+              className="p-2 flex flex-row items-center gap-1 rounded-md hover:bg-gray-100 transition text-sm cursor-pointer"
+              title="Copy profile link"
+            >
+              <Copy size={16} className="text-primary" />
+              <span className="truncate text-primary">Copy profile link</span>
+            </button>
+          </div>
+
           <div className='flex flex-col space-y-4'>
             <div className='flex items-start justify-between'>
               <div className='space-y-2'>
