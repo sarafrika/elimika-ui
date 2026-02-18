@@ -124,12 +124,10 @@ function useAmdinClassesWithDetails() {
   const loading =
     isLoading || isFetching || isCoursesLoading || isInstructorsLoading || isSchedulesLoading;
 
-
   return {
     classes: classesWithCourseAndInstructor,
     loading,
     isPending,
-
   };
 }
 

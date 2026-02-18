@@ -48,7 +48,7 @@ export function ReviewCard({ review, type = 'instructor' }: ReviewCardProps) {
         <div className='flex items-center gap-3'>
           <Avatar>
             {!review.is_anonymous && <AvatarImage src={student?.data?.profile_image_url} />}
-            <AvatarFallback >
+            <AvatarFallback>
               {review.is_anonymous ? 'AS' : isLoading ? '…' : getInitials(fullName)}
             </AvatarFallback>
           </Avatar>
@@ -65,7 +65,7 @@ export function ReviewCard({ review, type = 'instructor' }: ReviewCardProps) {
             </p>
           </div>
 
-          <div className="w-2 h-2 bg-primary/30 rounded-full"></div>
+          <div className='bg-primary/30 h-2 w-2 rounded-full'></div>
 
           <p className='text-muted-foreground text-xs'>{moment(review.created_date).fromNow()}</p>
         </div>

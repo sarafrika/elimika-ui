@@ -117,4 +117,3 @@ export async function OPTIONS(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
   return proxyRequest(request, path);
 }
-

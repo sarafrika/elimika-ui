@@ -132,10 +132,11 @@ const Dropdown: React.FC<{
         {items.map(item => (
           <div
             key={item.id}
-            className={`flex cursor-pointer items-center justify-between rounded px-2.5 py-1.5 text-xs transition-colors md:text-sm ${selectedId === item.id
-              ? 'bg-primary/10 text-primary font-medium'
-              : 'text-muted-foreground hover:bg-primary/5'
-              }`}
+            className={`flex cursor-pointer items-center justify-between rounded px-2.5 py-1.5 text-xs transition-colors md:text-sm ${
+              selectedId === item.id
+                ? 'bg-primary/10 text-primary font-medium'
+                : 'text-muted-foreground hover:bg-primary/5'
+            }`}
             onClick={() => onItemClick?.(item.id)}
           >
             <span className='truncate'>{item.name}</span>
@@ -195,10 +196,11 @@ const CalendarHeader: React.FC<{
               <button
                 key={view}
                 onClick={() => onViewChange(view)}
-                className={`rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all md:px-3.5 md:text-sm ${viewMode === view
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all md:px-3.5 md:text-sm ${
+                  viewMode === view
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
                 {view.charAt(0).toUpperCase() + view.slice(1)}
               </button>
@@ -310,8 +312,9 @@ const WeekView: React.FC<{
                         return (
                           <div
                             key={event.id}
-                            className={`absolute cursor-pointer overflow-hidden rounded-lg p-1.5 transition-all hover:shadow-lg md:p-2 ${selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
-                              }`}
+                            className={`absolute cursor-pointer overflow-hidden rounded-lg p-1.5 transition-all hover:shadow-lg md:p-2 ${
+                              selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
+                            }`}
                             style={{
                               backgroundColor: event.color,
                               height: `${getEventHeight(event)}px`,
@@ -391,8 +394,9 @@ const DayView: React.FC<{
                 {hourEvents.map((event, idx) => (
                   <div
                     key={event.id}
-                    className={`absolute cursor-pointer rounded-lg p-2 transition-all hover:shadow-lg md:p-3 ${selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
-                      }`}
+                    className={`absolute cursor-pointer rounded-lg p-2 transition-all hover:shadow-lg md:p-3 ${
+                      selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
+                    }`}
                     style={{
                       backgroundColor: event.color,
                       height: `${getEventHeight(event)}px`,
@@ -564,10 +568,11 @@ const YearView: React.FC<{
                   return (
                     <div
                       key={i}
-                      className={`rounded p-0.5 text-center text-[10px] md:text-xs ${hasEvent
-                        ? 'bg-primary/10 text-primary font-semibold'
-                        : 'text-muted-foreground hover:bg-primary/5'
-                        }`}
+                      className={`rounded p-0.5 text-center text-[10px] md:text-xs ${
+                        hasEvent
+                          ? 'bg-primary/10 text-primary font-semibold'
+                          : 'text-muted-foreground hover:bg-primary/5'
+                      }`}
                     >
                       {dayNumber}
                     </div>
@@ -665,7 +670,11 @@ export default function AdminClassPage() {
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { classes: classesWithCourseAndInstructor, loading, isPending } = useAmdinClassesWithDetails();
+  const {
+    classes: classesWithCourseAndInstructor,
+    loading,
+    isPending,
+  } = useAmdinClassesWithDetails();
 
   const allEvents = useMemo<CalendarEvent[]>(() => {
     if (!classesWithCourseAndInstructor) return [];
@@ -866,7 +875,7 @@ export default function AdminClassPage() {
           </div>
         </Card>
       ) : (
-        <Card className='bg-background pt-0 flex h-[calc(75vh-2rem)] sm:h-[calc(82vh-2rem)] md:h-[calc(80vh-2rem)] flex-col overflow-hidden font-sans'>
+        <Card className='bg-background flex h-[calc(75vh-2rem)] flex-col overflow-hidden pt-0 font-sans sm:h-[calc(82vh-2rem)] md:h-[calc(80vh-2rem)]'>
           <style jsx global>{`
             .scrollbar-hide {
               -ms-overflow-style: none;
@@ -894,7 +903,7 @@ export default function AdminClassPage() {
             </button>
 
             <div
-              className={`${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} bg-background border-border fixed z-40 flex h-full w-60 flex-col border-r transition-transform duration-300 ease-in-out md:w-64 lg:relative lg:translate-x-0 overflow-y-hidden`}
+              className={`${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} bg-background border-border fixed z-40 flex h-full w-60 flex-col overflow-y-hidden border-r transition-transform duration-300 ease-in-out md:w-64 lg:relative lg:translate-x-0`}
             >
               <div className='border-border border-b p-3 md:p-4'>
                 <div className='relative'>
@@ -958,7 +967,6 @@ export default function AdminClassPage() {
                   selectedId={selectedInstructorId}
                 />
               </div>
-
             </div>
             {isMobileMenuOpen && (
               <div

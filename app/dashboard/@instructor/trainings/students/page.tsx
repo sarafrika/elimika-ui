@@ -1,8 +1,6 @@
 'use client';
 
-import {
-  getAllStudentsOptions
-} from '@/services/client/@tanstack/react-query.gen';
+import { getAllStudentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import StudentsListPage from '../../../_components/student-list-page';
@@ -17,11 +15,9 @@ export default function StudentsPage() {
     })
   );
 
-
   return (
-    <div >
+    <div>
       <StudentsListPage studentsData={studentsData} />
     </div>
   );
 }
-

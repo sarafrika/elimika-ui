@@ -32,8 +32,11 @@ const remotePatterns = Array.from(
         const key = `${pattern.protocol}://${pattern.hostname}:${pattern.port ?? ''}`;
         return [key, pattern] as const;
       })
-      .filter((entry): entry is readonly [string, { protocol: string; hostname: string; port?: string }] =>
-        Boolean(entry)
+      .filter(
+        (
+          entry
+        ): entry is readonly [string, { protocol: string; hostname: string; port?: string }] =>
+          Boolean(entry)
       )
       .map(([key, pattern]) => [key, pattern])
   ).values()

@@ -1,7 +1,7 @@
-import UserProfilePage from "../../_profile-components/user-profile-page"
+import UserProfilePage from '../../_profile-components/user-profile-page';
 
 const Page = () => {
-    return <UserProfilePage />
-}
+  return <UserProfilePage />;
+};
 
-export default Page
+export default Page;

@@ -12,7 +12,9 @@ export default function ReviewLayout({ children }: ReviewLayoutProps) {
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Reviews</h2>
-          <p className='text-muted-foreground text-sm'>Track and improve your service with reviews. .</p>
+          <p className='text-muted-foreground text-sm'>
+            Track and improve your service with reviews. .
+          </p>
         </div>
       </div>
       <Separator />

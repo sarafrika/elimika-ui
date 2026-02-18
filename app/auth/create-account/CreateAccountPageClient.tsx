@@ -49,7 +49,6 @@ type CreateAccountPageClientProps = {
 };
 
 export default function CreateAccountPageClient({ authRealm }: CreateAccountPageClientProps) {
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userDomain, setUserDomain] = useState<UserDomain>('student');
   const [step, setStep] = useState<'training_center' | 'user'>('training_center');

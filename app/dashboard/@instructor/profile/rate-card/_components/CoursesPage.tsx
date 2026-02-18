@@ -99,7 +99,7 @@ export default function CoursesPage() {
           },
         }
       );
-    } catch (_error) { }
+    } catch (_error) {}
   };
 
   const handleUnverifyCourse = async (_course: Course) => {
@@ -185,7 +185,7 @@ export default function CoursesPage() {
   // }
 
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row border border-border rounded-lg overflow-hidden'>
+    <div className='bg-background border-border flex h-[calc(100vh-120px)] flex-col overflow-hidden rounded-lg border lg:flex-row'>
       <CourseList
         courses={filteredAndSortedCourses as any}
         selectedCourse={selectedCourse as any}
