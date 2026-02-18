@@ -10,7 +10,17 @@ import {
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { Award, BadgeCheckIcon, Briefcase, Copy, Globe, GraduationCap, MapPin, Send, User } from 'lucide-react';
+import {
+  Award,
+  BadgeCheckIcon,
+  Briefcase,
+  Copy,
+  Globe,
+  GraduationCap,
+  MapPin,
+  Send,
+  User,
+} from 'lucide-react';
 import type React from 'react';
 import { toast } from 'sonner';
 
@@ -69,32 +79,32 @@ export default function InstructorDetails({
       {/* Profile Header */}
       <Card>
         <CardHeader className='pb-4'>
-          <div className="flex items-center gap-4">
+          <div className='flex items-center gap-4'>
             <a
               href={`/profile-user/${instructor?.user_uuid}?domain=${'instructor'}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 flex items-start justify-start self-start text-primary cursor-pointer rounded-md hover:bg-gray-100 transition"
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-primary flex cursor-pointer items-start justify-start self-start rounded-md p-2 transition hover:bg-gray-100'
             >
-              <div className="flex items-center gap-1 text-sm">
-                <Send size={16} className="text-primary" />
-                <span className="truncate">View full profile</span>
+              <div className='flex items-center gap-1 text-sm'>
+                <Send size={16} className='text-primary' />
+                <span className='truncate'>View full profile</span>
               </div>
             </a>
 
             <button
-              type="button"
+              type='button'
               onClick={() => {
                 const fullUrl = `${window.location.origin}/profile-user/${instructor?.user_uuid}?domain=instructor`;
                 navigator.clipboard.writeText(fullUrl);
 
-                toast.success('Profile link copied to clipboard')
+                toast.success('Profile link copied to clipboard');
               }}
-              className="p-2 flex flex-row items-center gap-1 rounded-md hover:bg-gray-100 transition text-sm cursor-pointer"
-              title="Copy profile link"
+              className='flex cursor-pointer flex-row items-center gap-1 rounded-md p-2 text-sm transition hover:bg-gray-100'
+              title='Copy profile link'
             >
-              <Copy size={16} className="text-primary" />
-              <span className="truncate text-primary">Copy profile link</span>
+              <Copy size={16} className='text-primary' />
+              <span className='text-primary truncate'>Copy profile link</span>
             </button>
           </div>
 
@@ -258,8 +268,8 @@ export default function InstructorDetails({
         </CardHeader>
         <CardContent>
           {!membershipIsPending &&
-            !membershipIsError &&
-            Number(membership?.data?.content?.length) > 0 ? (
+          !membershipIsError &&
+          Number(membership?.data?.content?.length) > 0 ? (
             <div className='grid grid-cols-2 justify-between gap-4'>
               {/* @ts-ignore */}
               {membership?.data?.content?.map((body: any, index) => (
@@ -298,8 +308,8 @@ export default function InstructorDetails({
         </CardHeader>
         <CardContent className='space-y-4'>
           {experienceIsSuccess &&
-            !experienceIsError &&
-            Number(experience?.data?.content?.length) > 0 ? (
+          !experienceIsError &&
+          Number(experience?.data?.content?.length) > 0 ? (
             experience?.data?.content?.map((exp, index) => (
               <div key={index} className='space-y-2'>
                 <div className='flex items-start justify-between'>

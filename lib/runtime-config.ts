@@ -12,7 +12,9 @@ const parseRealmFromIssuer = (issuer?: string) => {
 };
 
 export const getRuntimeAuthRealm = () => {
-  const explicitRealm = normalize(process.env.KEYCLOAK_REALM ?? process.env.NEXT_PUBLIC_KEYCLOAK_REALM);
+  const explicitRealm = normalize(
+    process.env.KEYCLOAK_REALM ?? process.env.NEXT_PUBLIC_KEYCLOAK_REALM
+  );
   if (explicitRealm) {
     return explicitRealm;
   }
