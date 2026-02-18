@@ -67,13 +67,9 @@ import { CAREER_COLORS, EVENT_GRADIENTS } from '../../../lib/color-themes';
 import CoursesPage from '../@instructor/profile/rate-card/_components/CoursesPage';
 import type { DomainTabProps, TabDefinition } from './types';
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-
 function TabShell({ children }: { children: React.ReactNode }) {
     return <div className="pt-5 space-y-4">{children}</div>;
 }
-
-// ─── About Tab ────────────────────────────────────────────────────────────────
 
 function InstructorAboutTab({ sharedProfile }: DomainTabProps) {
     return (
@@ -100,10 +96,6 @@ function InstructorAboutTab({ sharedProfile }: DomainTabProps) {
         </TabShell>
     );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SKILLS CARD TAB — Education management
-// ─────────────────────────────────────────────────────────────────────────────
 
 const DEGREE_OPTIONS = ["Ph.D.", "Master's", "Bachelor's", "Associate's", "Diploma", "Certificate", "Other"] as const;
 

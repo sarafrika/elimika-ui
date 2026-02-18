@@ -4,14 +4,28 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useQuery } from '@tanstack/react-query';
+import {
+    FileText,
+    Mail,
+    Phone,
+    Shield,
+    Tag,
+    User,
+    Users,
+    VenusIcon,
+} from "lucide-react";
+import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
-import type { DomainTabProps, StudentProfile, TabDefinition } from './types';
+import { searchEnrollmentsOptions } from '../../../services/client/@tanstack/react-query.gen';
+import type { DomainTabProps, TabDefinition } from './types';
+
 
 function TabShell({ children }: { children: React.ReactNode }) {
     return <div className="pt-5 space-y-4">{children}</div>;
 }
 
-function InfoRow({ icon, label, value }: { icon: string; label: string; value?: string | null }) {
+function InfoRow({ icon, label, value }: { icon: any; label: string; value?: string | null }) {
     if (!value) return null;
     return (
         <div className="flex items-center gap-3 py-2 border-b border-border last:border-0">
@@ -23,64 +37,126 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value?: 
 }
 
 
-function StudentAboutTab({ sharedProfile, userUuid }: DomainTabProps) {
-    const [student, setStudent] = useState<Partial<StudentProfile> | null>(null);
 
-    useEffect(() => {
-        // Replace with: fetch(`/api/students/${userUuid}/profile`)
-        setTimeout(() => {
-            setStudent({
-                full_name: sharedProfile.full_name,
-                demographic_tag: 'Youth — 13-17',
-                first_guardian_name: 'Parent Instructor Profile 1',
-                first_guardian_mobile: '+254700000003',
-                second_guardian_name: 'Parent Instructor Profile 2',
-                second_guardian_mobile: '+254700000004',
-                primaryGuardianContact: 'Parent Instructor Profile 1 (+254700000003)',
-                secondaryGuardianContact: 'Parent Instructor Profile 2 (+254700000004)',
-            });
-        }, 400);
-    }, [userUuid]);
+function StudentAboutTab({ sharedProfile, userUuid }: DomainTabProps) {
+    const student = sharedProfile
 
     return (
         <TabShell>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold">Student Info</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                        <InfoRow icon="👤" label="Full Name" value={sharedProfile.full_name} />
-                        <InfoRow icon="📞" label="Phone" value={sharedProfile.phone} />
-                        <InfoRow icon="✉️" label="Email" value={sharedProfile.email} />
-                        {student?.demographic_tag && (
-                            <InfoRow icon="🏷️" label="Age Group" value={student.demographic_tag} />
-                        )}
-                    </CardContent>
-                </Card>
+            <div className="space-y-6">
+                {/* Top Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
+                    {/* Student Information */}
+                    <Card className="lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle className="text-base font-semibold">
+                                Student Information
+                            </CardTitle>
+                        </CardHeader>
+
+                        <CardContent className="space-y-4">
+                            <InfoRow
+                                icon={<User className="h-4 w-4 text-muted-foreground" />}
+                                label="Full Name"
+                                value={sharedProfile?.full_name || "Not provided"}
+                            />
+
+                            <InfoRow
+                                icon={<Phone className="h-4 w-4 text-muted-foreground" />}
+                                label="Phone"
+                                value={sharedProfile?.phone || "Not provided"}
+                            />
+
+                            <InfoRow
+                                icon={<Mail className="h-4 w-4 text-muted-foreground" />}
+                                label="Email"
+                                value={sharedProfile?.email || "Not provided"}
+                            />
+
+                            <InfoRow
+                                icon={<VenusIcon className="h-4 w-4 text-muted-foreground" />}
+                                label="Gender"
+                                value={sharedProfile?.gender || "Not provided"}
+                            />
+
+                            {student?.address && (
+                                <InfoRow
+                                    icon={<Tag className="h-4 w-4 text-muted-foreground" />}
+                                    label="Age Group"
+                                    value={student.demographic_tag || "Not provided"}
+                                />
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base font-semibold">
+                                Profile Summary
+                            </CardTitle>
+                        </CardHeader>
+
+                        <CardContent className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                                <User className="h-5 w-5 text-muted-foreground" />
+                            </div>
+
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium">
+                                    {sharedProfile?.full_name || "Unnamed Student"}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {student?.demographic_tag || "No demographic info"}
+                                </p>
+                            </div>
+                        </CardContent>
+
+                        <CardContent>
+                            <p
+                                className="text-muted-foreground text-sm leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: sharedProfile?.student_profile?.bio || "No bio info" }}
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Guardian Section */}
                 <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold">Guardian Contacts</CardTitle>
+                    <CardHeader>
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                            <Shield className="h-4 w-4 text-muted-foreground" />
+                            Guardian Contacts
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-0">
+
+                    <CardContent>
                         {student ? (
-                            <>
-                                <InfoRow icon="👨‍👧" label="Primary" value={student.primaryGuardianContact} />
-                                <InfoRow icon="👩‍👦" label="Secondary" value={student.secondaryGuardianContact} />
-                            </>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <InfoRow
+                                    icon={<Users className="h-4 w-4 text-muted-foreground" />}
+                                    label="Primary Guardian"
+                                    value={sharedProfile?.student_profile.primaryGuardianContact || "Not provided"}
+                                />
+
+                                <InfoRow
+                                    icon={<Users className="h-4 w-4 text-muted-foreground" />}
+                                    label="Secondary Guardian"
+                                    value={sharedProfile?.student_profile.secondaryGuardianContact || "Not provided"}
+                                />
+                            </div>
                         ) : (
-                            <div className="space-y-2">
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-3/4" />
+                            <div className="text-sm text-muted-foreground">
+                                No guardian information available.
                             </div>
                         )}
                     </CardContent>
                 </Card>
             </div>
         </TabShell>
-    );
+    )
 }
+
 
 // ─── Enrolled Courses Tab ─────────────────────────────────────────────────────
 interface EnrolledCourse {
@@ -98,21 +174,44 @@ const STATUS_VARIANT: Record<EnrolledCourse['status'], 'default' | 'secondary' |
     paused: 'outline',
 };
 
-function StudentCoursesTab({ userUuid }: DomainTabProps) {
-    const [courses, setCourses] = useState<EnrolledCourse[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
+    const { data, isLoading } = useQuery({
+        ...searchEnrollmentsOptions({
+            query: {
+                pageable: {}, searchParams: {
+                    student_uuid_eq: sharedProfile?.uuid,
+                }
+            }
+        }),
+        enabled: !!sharedProfile?.uuid
+    })
 
-    useEffect(() => {
-        // Replace with: fetch(`/api/students/${userUuid}/enrollments`)
-        setTimeout(() => {
-            setCourses([
-                { uuid: '1', title: 'Intro to Music Theory', instructor: 'Ayomhi Ayo', progress: 72, status: 'active', thumbnail_color: 'bg-success/50' },
-                { uuid: '2', title: 'Guitar Fundamentals', instructor: 'Jane Doe', progress: 100, status: 'completed', thumbnail_color: 'bg-success/50' },
-                { uuid: '3', title: 'Digital Audio Production', instructor: 'Mark Bell', progress: 30, status: 'paused', thumbnail_color: 'bg-success/50' },
-            ]);
-            setIsLoading(false);
-        }, 600);
-    }, [userUuid]);
+    const enrollments = data?.data?.content || [];
+    const getUniqueBy = (array, key) => {
+        const seen = new Set();
+        return array.filter(item => {
+            if (!item[key] || seen.has(item[key])) return false;
+            seen.add(item[key]);
+            return true;
+        });
+    };
+
+    const uniqueScheduledInstances = getUniqueBy(enrollments, "scheduled_instance_uuid");
+    const uniqueCourses = getUniqueBy(enrollments, "course_uuid");
+    const uniquePrograms = getUniqueBy(enrollments, "program_uuid");
+
+
+    // useEffect(() => {
+    //     // Replace with: fetch(`/api/students/${userUuid}/enrollments`)
+    //     setTimeout(() => {
+    //         setCourses([
+    //             { uuid: '1', title: 'Intro to Music Theory', instructor: 'Ayomhi Ayo', progress: 72, status: 'active', thumbnail_color: 'bg-success/50' },
+    //             { uuid: '2', title: 'Guitar Fundamentals', instructor: 'Jane Doe', progress: 100, status: 'completed', thumbnail_color: 'bg-success/50' },
+    //             { uuid: '3', title: 'Digital Audio Production', instructor: 'Mark Bell', progress: 30, status: 'paused', thumbnail_color: 'bg-success/50' },
+    //         ]);
+    //         setIsLoading(false);
+    //     }, 600);
+    // }, [userUuid]);
 
     if (isLoading)
         return (
@@ -134,7 +233,23 @@ function StudentCoursesTab({ userUuid }: DomainTabProps) {
 
     return (
         <TabShell>
-            {courses.map((course) => (
+            {uniqueCourses.length === 0 &&
+                <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                        <FileText className="h-10 w-10 text-muted-foreground mb-3" />
+                        <p className="text-sm text-muted-foreground">No courses registered yet.</p>
+
+                        <Link
+                            href="/dashboard/browse-courses"
+                            className="mt-1 inline-block rounded-md bg-primary px-4 py-2 text-xs font-medium text-white transition hover:bg-primary/70 active:scale-95 mt-2"
+                        >
+                            Take a new course
+                        </Link>
+                    </CardContent>
+                </Card>
+            }
+
+            {uniqueCourses?.map((course) => (
                 <Card key={course.uuid}>
                     <CardContent className="pt-4 flex items-center gap-4">
                         <div
@@ -258,6 +373,6 @@ function StudentScheduleTab({ userUuid }: DomainTabProps) {
 export const studentTabs: TabDefinition[] = [
     { id: 'about', label: 'About', component: StudentAboutTab },
     { id: 'courses', label: 'My Courses', component: StudentCoursesTab },
-    { id: 'achievements', label: 'Achievements', component: StudentAchievementsTab },
-    { id: 'schedule', label: 'Schedule', component: StudentScheduleTab },
+    // { id: 'achievements', label: 'Achievements', component: StudentAchievementsTab },
+    // { id: 'schedule', label: 'Schedule', component: StudentScheduleTab },
 ];

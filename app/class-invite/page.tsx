@@ -94,7 +94,7 @@ function ClassInviteContent() {
   };
 
   return (
-    <div className='mx-auto w-full max-w-5xl px-6 py-12 lg:py-16'>
+    <div className='mx-auto w-full max-w-6xl px-6 py-12 lg:py-16'>
       {isLoading ? (
         <Skeleton className='h-[420px] w-full rounded-[28px]' />
       ) : (

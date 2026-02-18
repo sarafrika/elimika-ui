@@ -3,32 +3,30 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import Spinner from '@/components/ui/spinner';
 import {
     getStudentScheduleOptions,
     getUserByUuidOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries } from '@tanstack/react-query';
-import { format } from 'date-fns';
 import {
     ArrowLeft,
     Building2,
-    Calendar,
+    Copy,
     Mail,
-    MapPin,
     Menu,
     Phone,
     Search,
+    Send,
     Settings,
     Star,
-    Trash2,
     User,
     UserCheck,
     UserX,
-    X,
+    X
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Badge } from '../../../components/ui/badge';
+import { toast } from 'sonner';
+import { Skeleton } from '../../../components/ui/skeleton';
 
 type FilterType = 'all' | 'active' | 'inactive';
 type Category = 'All';
@@ -283,8 +281,23 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                     {/* Student List */}
                     <div className='flex-1 overflow-y-auto'>
                         {isLoading ? (
-                            <div className='flex items-center justify-center p-8'>
-                                <Spinner />
+                            <div className='divide-y'>
+                                {Array.from({ length: 6 }).map((_, index) => (
+                                    <div
+                                        key={index}
+                                        className='flex items-center gap-3 p-4'
+                                    >
+                                        <Skeleton className='h-10 w-10 rounded-full' />
+                                        <div className='flex-1 space-y-2'>
+                                            <Skeleton className='h-4 w-32' />
+                                            <Skeleton className='h-3 w-24' />
+                                        </div>
+                                        <div className='flex items-center gap-2'>
+                                            <Skeleton className='h-6 w-6 rounded' />
+                                            <Skeleton className='h-6 w-6 rounded' />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         ) : filteredStudents.length === 0 ? (
                             <div className='text-muted-foreground p-8 text-center text-sm'>No students found</div>
@@ -314,7 +327,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                                                 </p>
                                             </div>
 
-                                            <div className='flex items-center gap-1'>
+                                            {/* <div className='flex items-center gap-1'>
                                                 <button
                                                     onClick={e => toggleStar(student?.uuid, e)}
                                                     className='hover:bg-muted-foreground/10 rounded p-1 opacity-0 transition-opacity group-hover:opacity-100'
@@ -330,7 +343,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
-                                            </div>
+                                            </div> */}
                                         </div>
                                     );
                                 })}
@@ -532,6 +545,10 @@ function StudentDetailsContent({
             {!isMobile && (
                 <div className='mb-6 flex items-start justify-between'>
                     <h2 className='text-2xl font-bold'>Student Details</h2>
+
+
+
+
                     {/* <div className='flex gap-2'>
             <button className='rounded-lg p-2 text-yellow-500 hover:bg-muted'>
               <Star
@@ -552,19 +569,54 @@ function StudentDetailsContent({
                 </div>
             )}
 
-            {/* Student Avatar & Basic Info */}
-            <div className='mb-8 flex items-center gap-4'>
-                <Avatar className='h-16 w-16 sm:h-20 sm:w-20'>
-                    <AvatarImage src={selectedStudent?.profile_image_url ?? ''} />
-                    <AvatarFallback className='text-xl sm:text-2xl'>
-                        {selectedStudent?.display_name?.charAt(0)}
-                    </AvatarFallback>
-                </Avatar>
-                <div>
-                    <h3 className='text-lg font-semibold sm:text-xl'>{selectedStudent?.display_name}</h3>
-                    <p className='text-muted-foreground text-sm sm:text-base'>{selectedStudent?.username}</p>
-                </div>
+
+            <div className="flex items-center gap-4 mb-4">
+                <a
+                    href={`/profile-user/${selectedStudent?.uuid}?domain=${'student'}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 flex items-start justify-start self-start text-primary cursor-pointer rounded-md hover:bg-gray-100 transition"
+                >
+                    <div className="flex items-center gap-1 text-sm">
+                        <Send size={16} className="text-primary" />
+                        <span className="truncate">View full profile</span>
+                    </div>
+                </a>
+
+                <button
+                    type="button"
+                    onClick={() => {
+                        const fullUrl = `${window.location.origin}/profile-user/${selectedStudent?.uuid}?domain=student`;
+                        navigator.clipboard.writeText(fullUrl);
+
+                        toast.success('Profile link copied to clipboard')
+                    }}
+                    className="p-2 flex flex-row items-center gap-1 rounded-md hover:bg-gray-100 transition text-sm cursor-pointer"
+                    title="Copy profile link"
+                >
+                    <Copy size={16} className="text-primary" />
+                    <span className="truncate text-primary">Copy profile link</span>
+                </button>
             </div>
+
+            {/* Student Avatar & Basic Info */}
+            <div className='mb-8 flex flex-row items-center justify-between' >
+                <div className='flex items-center gap-4'>
+                    <Avatar className='h-16 w-16 sm:h-20 sm:w-20'>
+                        <AvatarImage src={selectedStudent?.profile_image_url ?? ''} />
+                        <AvatarFallback className='text-xl sm:text-2xl'>
+                            {selectedStudent?.display_name?.charAt(0)}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <h3 className='text-lg font-semibold sm:text-xl'>{selectedStudent?.display_name}</h3>
+                        <p className='text-muted-foreground text-sm sm:text-base'>{selectedStudent?.username}</p>
+                    </div>
+                </div>
+
+
+            </div>
+
 
             {/* Contact Information Grid */}
             <div className='grid gap-6 sm:grid-cols-2'>
@@ -590,95 +642,11 @@ function StudentDetailsContent({
                     </div>
                 </div>
 
-                {/* Address */}
-                <div className='sm:col-span-2'>
-                    <label className='text-muted-foreground mb-1 block text-sm font-medium'>Address</label>
-                    <div className='flex items-start gap-2 text-sm'>
-                        <MapPin size={16} className='text-muted-foreground mt-0.5' />
-                        <span>{selectedStudent?.address || 'Not provided'}</span>
-                    </div>
-                </div>
-
-                {/* Address */}
-                <div className='sm:col-span-2'>
-                    <label className='text-muted-foreground mb-1 block text-sm font-medium'>Date of Birth</label>
-                    <div className='flex items-start gap-2 text-sm'>
-                        <Calendar size={16} className='text-muted-foreground mt-0.5' />
-                        <span>
-                            {selectedStudent.dob ? format(new Date(selectedStudent.dob), 'dd MMM yyyy') : 'N/A'}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Address */}
-                <div className='sm:col-span-2'>
-                    <label className='text-muted-foreground mb-1 block text-sm font-medium'>Gender</label>
-                    <div className='flex items-start gap-2 text-sm'>
-                        <Calendar size={16} className='text-muted-foreground mt-0.5' />
-                        <span>
-                            {selectedStudent.gender || 'N/A'}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Department/Grade */}
-                <div>
-                    <label className='text-muted-foreground mb-1 block text-sm font-medium'>
-                        Grade Level
-                    </label>
-                    <div className='flex items-center gap-2 text-sm'>
-                        <User size={16} className='text-muted-foreground' />
-                        <span>{selectedStudent?.grade_level || 'Not specified'}</span>
-                    </div>
-                </div>
-
-                {/* Student ID */}
-                <div>
-                    <label className='text-muted-foreground mb-1 block text-sm font-medium'>Student ID</label>
-                    <div className='text-sm font-medium'>
-                        {selectedStudent?.student_id || selectedStudent?.uuid?.slice(0, 8)}
-                    </div>
-                </div>
             </div>
 
-            <div className='mt-8'>
-                <h3 className='mb-4 text-lg font-semibold'>Account Status</h3>
-                <dl className='grid gap-4'>
-                    <div>
-                        <dt className='text-muted-foreground text-xs font-medium uppercase'>Status</dt>
-                        <dd className='mt-1'>
-                            <Badge variant={selectedStudent.active ? 'secondary' : 'outline'}>
-                                {selectedStudent.active ? 'Active' : 'Inactive'}
-                            </Badge>
-                        </dd>
-                    </div>
-                    <div>
-                        <dt className='text-muted-foreground text-xs font-medium uppercase'>Created</dt>
-                        <dd className='mt-1 text-sm'>
-                            {selectedStudent.created_date
-                                ? format(new Date(selectedStudent.created_date), 'dd MMM yyyy, HH:mm')
-                                : 'N/A'}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt className='text-muted-foreground text-xs font-medium uppercase'>
-                            Last Updated
-                        </dt>
-                        <dd className='mt-1 text-sm'>
-                            {selectedStudent.updated_date
-                                ? format(new Date(selectedStudent.updated_date), 'dd MMM yyyy, HH:mm')
-                                : 'N/A'}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt className='text-muted-foreground text-xs font-medium uppercase'>UUID</dt>
-                        <dd className='mt-1 font-mono text-xs'>{selectedStudent.uuid || 'N/A'}</dd>
-                    </div>
-                </dl>
-            </div>
 
             {/* Enrolled Courses Section */}
-            <div className='mt-8'>
+            <div className='mt-12'>
                 <h3 className='mb-4 text-base font-semibold sm:text-lg'>Enrolled Classes/Courses</h3>
                 <main className='mx-0'>
                     <CardContent className='p-4'>

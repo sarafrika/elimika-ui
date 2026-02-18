@@ -72,19 +72,17 @@ export function ProfilePage({
         .toUpperCase()
         .slice(0, 2);
 
-
     return (
         <div className="p-6 space-y-0 font-sans">
             <div className="bg-card border border-border rounded-2xl p-7">
 
                 {/* Avatar + Info Row */}
                 <div className="flex items-start gap-6 mb-6">
-
                     {/* Avatar */}
                     <div className="relative shrink-0">
                         <Avatar className="w-[90px] h-[90px] rounded-xl">
                             <AvatarImage
-                                src={profile?.profile_image_url}
+                                src={profile?.profile_image_url || profile?.avatar_url}
                                 alt={profile?.full_name}
                                 className="object-cover"
                             />

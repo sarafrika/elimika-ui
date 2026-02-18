@@ -13,7 +13,7 @@ import type { SharedUserProfile, TabDefinition, UserDomain } from './types';
 const TAB_REGISTRY: Record<UserDomain, TabDefinition[]> = {
     instructor: instructorTabs,
     course_creator: creatorTabs,
-    student: studentTabs, // placeholder — create courseCreatorTabs when ready
+    student: studentTabs,
     admin: instructorTabs,   // placeholder — create adminTabs when ready
     organization: instructorTabs,   // placeholder — create organisationTabs when ready
 };
@@ -29,14 +29,16 @@ function normaliseProfile(
 
             if (!p) return null;
             return {
-                uuid: p.uuid,
+                uuid: p.uuid, active: user?.active,
                 user_uuid: p.user_uuid,
                 full_name: p.full_name,
                 email: user?.email,
                 phone: user?.phone_number,
                 website: p.website,
+                dob: user?.dob,
                 bio: p.bio,
                 avatar_url: user?.profile_image_url,
+                profile_image_url: user?.profile_image_url,
                 is_online: true,
                 address: p.formatted_location,
                 latitude: p.latitude,
@@ -44,22 +46,32 @@ function normaliseProfile(
                 professional_headline: p.professional_headline,
                 admin_verified: p.admin_verified,
                 is_profile_complete: p.is_profile_complete,
+                gender: user?.gender,
             };
         }
 
         case 'student': {
             const p = user?.student;
+
             if (!p) return null;
             return {
-                uuid: p.uuid,
+                uuid: p.uuid, active: user?.active,
                 user_uuid: p.user_uuid,
                 full_name: p.full_name,
                 email: user?.email,
-                phone: user?.phone,
+                phone: user?.phone_number,
+                dob: user?.dob,
                 avatar_url: user?.avatar_url,
+                profile_image_url: user?.profile_image_url,
                 is_online: false,
                 address: p.formatted_location || '',
-
+                latitude: p.latitude,
+                longitude: p.longitude,
+                professional_headline: p.professional_headline,
+                admin_verified: p.admin_verified,
+                is_profile_complete: p.is_profile_complete,
+                gender: user?.gender,
+                student_profile: p
             };
         }
 
@@ -67,30 +79,37 @@ function normaliseProfile(
             const p = user?.admin;
             if (!p) return null;
             return {
-                uuid: p.uuid,
+                uuid: p.uuid, active: user?.active,
                 user_uuid: p.user_uuid,
                 full_name: p.full_name,
                 email: user?.email,
-                phone: user?.phone,
+                phone: user?.phone_number,
                 avatar_url: user?.avatar_url,
+                profile_image_url: user?.profile_image_url,
                 address: p.formatted_location || '',
-
+                latitude: p.latitude,
+                longitude: p.longitude,
+                professional_headline: p.professional_headline,
+                admin_verified: p.admin_verified,
+                is_profile_complete: p.is_profile_complete,
+                gender: user?.gender,
             };
         }
 
         case 'course_creator': {
             const p = user?.courseCreator;
-            // console.log(user, "user ")
 
             if (!p) return null;
             return {
                 uuid: p.uuid,
+                active: user?.active,
                 user_uuid: p.user_uuid,
                 full_name: p.full_name,
                 email: user?.email,
                 phone: user?.phone_number,
                 avatar_url: user?.profile_image_url,
                 bio: p.bio,
+                dob: user?.dob,
                 address: p.address || '',
                 profile_image_url: user?.profile_image_url,
                 username: user?.username,
@@ -98,6 +117,8 @@ function normaliseProfile(
                 professional_headline: p.professional_headline,
                 is_profile_complete: p.is_profile_complete,
                 is_online: true,
+                gender: user?.gender,
+
             };
         }
 
@@ -106,12 +127,16 @@ function normaliseProfile(
             if (!p) return null;
             return {
                 uuid: p.uuid,
+                active: user?.active,
                 user_uuid: p.user_uuid,
                 full_name: p.org_name ?? p.full_name,
                 email: user?.email,
-                phone: user?.phone,
+                dob: user?.dob,
+                phone: user?.phone_number,
                 avatar_url: user?.avatar_url,
                 address: p.formatted_location || '',
+                gender: user?.gender,
+
 
             };
         }
@@ -140,12 +165,12 @@ function DomainBadge({ domain, user }: { domain: UserDomain; user: ReturnType<ty
         >
             ✓ Verified Course Creator</Badge>;
     }
-    if (domain === 'student' && user?.student?.admin_verified) {
+    if (domain === 'student' && user?.active) {
         return <Badge
             variant='outline'
             className='border-primary/60 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
         >
-            ✓ Verified Student</Badge>;
+            ✓ Active Student</Badge>;
     }
     if (domain === 'organization' && user?.organizations?.admin_verified) {
         return <Badge
