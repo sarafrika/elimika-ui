@@ -129,7 +129,7 @@ const activeOptions = [
 const adminApprovalOptions = [
   { label: 'All courses', value: 'all' },
   { label: 'Approved only', value: 'approved' },
-  { label: 'Not approved', value: 'not_approved' },
+  { label: 'Pending Approval', value: 'not_approved' },
 ];
 
 export default function AdminProgramsPage() {
@@ -372,7 +372,7 @@ export default function AdminProgramsPage() {
             ) : (
               <Badge variant='outline' className='w-fit text-xs'>
                 <X className='mr-1 h-3 w-3' />
-                Not approved
+                Pending
               </Badge>
             )}
           </div>
@@ -491,7 +491,7 @@ export default function AdminProgramsPage() {
             />
             <MetricCard
               icon={<X className='h-5 w-5 text-orange-600' />}
-              label='Not approved'
+              label='Pending'
               value={stats.notApproved}
             />
           </div>
@@ -619,80 +619,80 @@ export default function AdminProgramsPage() {
               activeFilter !== 'all' ||
               adminApprovalFilter !== 'not_approved' ||
               categoryFilter !== 'all') && (
-              <div className='flex flex-wrap items-center gap-2'>
-                <span className='text-muted-foreground text-xs'>Active filters:</span>
-                {searchQuery && (
-                  <Badge variant='secondary' className='text-xs'>
-                    Search: {searchQuery}
-                    <button
-                      onClick={() => {
-                        setSearchQuery('');
-                        setPage(0);
-                      }}
-                      className='hover:text-destructive ml-1.5'
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                )}
-                {adminApprovalFilter !== 'not_approved' && (
-                  <Badge variant='secondary' className='text-xs'>
-                    {adminApprovalOptions.find(o => o.value === adminApprovalFilter)?.label}
-                    <button
-                      onClick={() => {
-                        setAdminApprovalFilter('not_approved');
-                        setPage(0);
-                      }}
-                      className='hover:text-destructive ml-1.5'
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                )}
-                {statusFilter !== 'all' && (
-                  <Badge variant='secondary' className='text-xs'>
-                    {statusOptions.find(o => o.value === statusFilter)?.label}
-                    <button
-                      onClick={() => {
-                        setStatusFilter('all');
-                        setPage(0);
-                      }}
-                      className='hover:text-destructive ml-1.5'
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                )}
-                {activeFilter !== 'all' && (
-                  <Badge variant='secondary' className='text-xs'>
-                    {activeOptions.find(o => o.value === activeFilter)?.label}
-                    <button
-                      onClick={() => {
-                        setActiveFilter('all');
-                        setPage(0);
-                      }}
-                      className='hover:text-destructive ml-1.5'
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                )}
-                {categoryFilter !== 'all' && (
-                  <Badge variant='secondary' className='text-xs'>
-                    {categoryOptions.find(o => o.value === categoryFilter)?.label}
-                    <button
-                      onClick={() => {
-                        setCategoryFilter('all');
-                        setPage(0);
-                      }}
-                      className='hover:text-destructive ml-1.5'
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                )}
-              </div>
-            )}
+                <div className='flex flex-wrap items-center gap-2'>
+                  <span className='text-muted-foreground text-xs'>Active filters:</span>
+                  {searchQuery && (
+                    <Badge variant='secondary' className='text-xs'>
+                      Search: {searchQuery}
+                      <button
+                        onClick={() => {
+                          setSearchQuery('');
+                          setPage(0);
+                        }}
+                        className='hover:text-destructive ml-1.5'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  )}
+                  {adminApprovalFilter !== 'not_approved' && (
+                    <Badge variant='secondary' className='text-xs'>
+                      {adminApprovalOptions.find(o => o.value === adminApprovalFilter)?.label}
+                      <button
+                        onClick={() => {
+                          setAdminApprovalFilter('not_approved');
+                          setPage(0);
+                        }}
+                        className='hover:text-destructive ml-1.5'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  )}
+                  {statusFilter !== 'all' && (
+                    <Badge variant='secondary' className='text-xs'>
+                      {statusOptions.find(o => o.value === statusFilter)?.label}
+                      <button
+                        onClick={() => {
+                          setStatusFilter('all');
+                          setPage(0);
+                        }}
+                        className='hover:text-destructive ml-1.5'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  )}
+                  {activeFilter !== 'all' && (
+                    <Badge variant='secondary' className='text-xs'>
+                      {activeOptions.find(o => o.value === activeFilter)?.label}
+                      <button
+                        onClick={() => {
+                          setActiveFilter('all');
+                          setPage(0);
+                        }}
+                        className='hover:text-destructive ml-1.5'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  )}
+                  {categoryFilter !== 'all' && (
+                    <Badge variant='secondary' className='text-xs'>
+                      {categoryOptions.find(o => o.value === categoryFilter)?.label}
+                      <button
+                        onClick={() => {
+                          setCategoryFilter('all');
+                          setPage(0);
+                        }}
+                        className='hover:text-destructive ml-1.5'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  )}
+                </div>
+              )}
           </div>
         </div>
       </div>
@@ -923,7 +923,7 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                           ) : (
                             <Badge variant='outline' className='w-fit text-xs'>
                               <X className='mr-1 h-3 w-3' />
-                              Not Approved
+                              Pending Approval
                             </Badge>
                           )}
                         </div>
@@ -1648,9 +1648,9 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
     activeStudents === 0
       ? 0
       : activeEnrollments.reduce(
-          (sum: number, student: any) => sum + (student?.progressPercentage || 0),
-          0
-        ) / activeStudents;
+        (sum: number, student: any) => sum + (student?.progressPercentage || 0),
+        0
+      ) / activeStudents;
 
   const isTableLoading = isFetching || isLoadingStudents;
 
@@ -1750,57 +1750,57 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
                     <tbody>
                       {isTableLoading
                         ? Array.from({ length: 5 }).map((_, index) => (
-                            <tr key={`skeleton-${index}`} className='border-t'>
+                          <tr key={`skeleton-${index}`} className='border-t'>
+                            <td className='p-4'>
+                              <Skeleton className='h-4 w-32' />
+                            </td>
+                            <td className='p-4'>
+                              <Skeleton className='h-4 w-16' />
+                            </td>
+                            <td className='p-4'>
+                              <Skeleton className='h-4 w-12' />
+                            </td>
+                            <td className='p-4'>
+                              <Skeleton className='h-4 w-16' />
+                            </td>
+                            <td className='p-4'>
+                              <Skeleton className='h-4 w-20' />
+                            </td>
+                          </tr>
+                        ))
+                        : enrollments.map((enrollment: any) => {
+                          const student = studentsMap[enrollment.student_uuid];
+
+                          return (
+                            <tr
+                              key={enrollment.uuid}
+                              className='hover:bg-muted/40 border-t transition-colors'
+                            >
+                              <td className='p-4 font-medium'>{student?.full_name || '—'}</td>
+
                               <td className='p-4'>
-                                <Skeleton className='h-4 w-32' />
+                                <Badge
+                                  variant={
+                                    enrollment.status === 'active' ? 'default' : 'secondary'
+                                  }
+                                  className='capitalize'
+                                >
+                                  {enrollment.status}
+                                </Badge>
                               </td>
+
+                              <td className='p-4'>{enrollment.progress_display || '0%'}</td>
+
+                              <td className='p-4'>{enrollment.enrollment_duration || '—'}</td>
+
                               <td className='p-4'>
-                                <Skeleton className='h-4 w-16' />
-                              </td>
-                              <td className='p-4'>
-                                <Skeleton className='h-4 w-12' />
-                              </td>
-                              <td className='p-4'>
-                                <Skeleton className='h-4 w-16' />
-                              </td>
-                              <td className='p-4'>
-                                <Skeleton className='h-4 w-20' />
+                                {enrollment.enrollment_date
+                                  ? new Date(enrollment.enrollment_date).toLocaleDateString()
+                                  : '—'}
                               </td>
                             </tr>
-                          ))
-                        : enrollments.map((enrollment: any) => {
-                            const student = studentsMap[enrollment.student_uuid];
-
-                            return (
-                              <tr
-                                key={enrollment.uuid}
-                                className='hover:bg-muted/40 border-t transition-colors'
-                              >
-                                <td className='p-4 font-medium'>{student?.full_name || '—'}</td>
-
-                                <td className='p-4'>
-                                  <Badge
-                                    variant={
-                                      enrollment.status === 'active' ? 'default' : 'secondary'
-                                    }
-                                    className='capitalize'
-                                  >
-                                    {enrollment.status}
-                                  </Badge>
-                                </td>
-
-                                <td className='p-4'>{enrollment.progress_display || '0%'}</td>
-
-                                <td className='p-4'>{enrollment.enrollment_duration || '—'}</td>
-
-                                <td className='p-4'>
-                                  {enrollment.enrollment_date
-                                    ? new Date(enrollment.enrollment_date).toLocaleDateString()
-                                    : '—'}
-                                </td>
-                              </tr>
-                            );
-                          })}
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>

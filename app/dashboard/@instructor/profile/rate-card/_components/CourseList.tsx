@@ -43,7 +43,7 @@ export default function CourseList({
       />
 
       {/* Course List */}
-      <div className='flex-1 overflow-y-auto'>
+      <div className='flex-1 overflow-y-auto no-scrollbar'>
         {isLoading ? (
           <div className='flex flex-col gap-3'>
             <Skeleton className='h-[100px] w-full px-4' />

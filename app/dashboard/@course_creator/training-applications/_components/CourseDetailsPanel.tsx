@@ -1,7 +1,4 @@
 import { Button } from '@/components/ui/button';
-import type { Course } from '@/services/client';
-import { CheckCircle, Edit, MoreVertical, Trash2, User, XCircle } from 'lucide-react';
-import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +6,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { Course } from '@/services/client';
+import { CheckCircle, Edit, FileText, MoreVertical, Trash2, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import CourseDetails from './CourseDetails';
 
 interface CourseDetailsPanelProps {
@@ -35,7 +35,7 @@ export default function CourseDetailsPanel({
       <div className='hidden flex-1 flex-col lg:flex'>
         <div className='flex flex-1 items-center justify-center'>
           <div className='text-center'>
-            <User className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+            <FileText className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
             <h2 className='mb-2 text-lg font-medium'>No Course Selected</h2>
             <p className='text-muted-foreground'>Select a course from the list to view details</p>
           </div>
