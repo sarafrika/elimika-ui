@@ -1,13 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  listAllOptions,
-  createCurrencyMutation,
-  updateCurrencyMutation,
-} from '@/services/client/@tanstack/react-query.gen';
-import type { Currency, CurrencyCreateRequest, CurrencyUpdateRequest } from '@/services/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
   Table,
@@ -30,20 +23,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
+import type { Currency, CurrencyCreateRequest, CurrencyUpdateRequest } from '@/services/client';
 import {
-  Plus,
-  Edit,
-  DollarSign,
-  CheckCircle2,
-  XCircle,
-  Star,
-  Loader2,
-  ArrowUp,
+  createCurrencyMutation,
+  listAllOptions,
+  updateCurrencyMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
   ArrowDown,
+  ArrowUp,
   ArrowUpDown,
+  CheckCircle2,
+  DollarSign,
+  Edit,
+  Loader2,
+  Plus,
+  Star,
+  XCircle,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 type CurrencyFormData = {
   code: string;
@@ -261,11 +261,21 @@ export default function CurrenciesPage() {
     <div className='flex min-h-screen flex-col gap-6 p-6'>
       <div className='flex items-start justify-between'>
         <div>
-          <h1 className='text-3xl font-bold tracking-tight'>Currency Management</h1>
-          <p className='text-muted-foreground mt-2'>
-            Manage platform currencies, set default currency, and configure currency properties
-          </p>
+          <Badge
+            variant='outline'
+            className='border-primary/60 bg-primary/10 text-xs font-semibold tracking-wide uppercase'
+          >
+            Currency Management
+          </Badge>
+          <div className='bg-card relative mt-4 overflow-hidden rounded-3xl'>
+            <div className='flex flex-col'>
+              <p className='text-muted-foreground max-w-3xl text-sm leading-relaxed'>
+                Manage platform currencies, set default currency, and configure currency properties
+              </p>{' '}
+            </div>
+          </div>
         </div>
+
         <Button onClick={handleCreate}>
           <Plus className='mr-2 h-4 w-4' />
           Add Currency
@@ -275,7 +285,7 @@ export default function CurrenciesPage() {
       {/* Stats Cards */}
       <div className='grid gap-4 sm:grid-cols-3'>
         <Card>
-          <CardHeader className='pb-3'>
+          <CardHeader>
             <CardDescription>Total Currencies</CardDescription>
             <CardTitle className='text-3xl'>{currencies.length}</CardTitle>
           </CardHeader>
@@ -284,7 +294,7 @@ export default function CurrenciesPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className='pb-3'>
+          <CardHeader>
             <CardDescription>Active Currencies</CardDescription>
             <CardTitle className='text-success-foreground text-3xl'>
               {activeCurrencies.length}
@@ -295,7 +305,7 @@ export default function CurrenciesPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className='pb-3'>
+          <CardHeader>
             <CardDescription>Default Currency</CardDescription>
             <CardTitle className='text-2xl'>{defaultCurrency?.code || '—'}</CardTitle>
           </CardHeader>

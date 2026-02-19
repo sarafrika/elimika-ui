@@ -26,7 +26,7 @@ import { Filter, PlusCircle, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { CatalogueWorkspace } from '../../../_components/catalogue-workspace';
+import { CatalogueWorkspace } from '../../../@admin/catalogue/_components/catalogue-workspace';
 
 type CourseStatusFilter = 'all' | 'draft' | 'in_review' | 'published' | 'archived';
 

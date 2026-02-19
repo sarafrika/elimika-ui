@@ -205,7 +205,7 @@ export default function AdminOrganisationsPage() {
   };
 
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col overflow-hidden lg:flex-row'>
+    <div className='bg-background flex h-[calc(100vh-120px)] w-full flex-col overflow-hidden lg:flex-row'>
       <OrganisationListPanel
         organisations={paginatedOrganisations}
         selectedOrganisationId={selectedOrganisationId}
@@ -951,7 +951,7 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
   };
 
   return (
-    <div className='border-border/60 bg-card hidden w-full flex-col lg:flex lg:h-full lg:max-w-3xl lg:border-l'>
+    <div className='border-border/60 bg-card hidden w-full flex-col lg:flex lg:h-full lg:border-l'>
       {organisation ? (
         <div className='flex h-full min-h-0 flex-col overflow-hidden'>
           {/* Modern Header */}
