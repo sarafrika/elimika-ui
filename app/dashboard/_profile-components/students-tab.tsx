@@ -121,13 +121,13 @@ function StudentAboutTab({ sharedProfile, userUuid }: DomainTabProps) {
                 <InfoRow
                   icon={<Users className='text-muted-foreground h-4 w-4' />}
                   label='Primary Guardian'
-                  value={sharedProfile?.student_profile.primaryGuardianContact || 'Not provided'}
+                  value={sharedProfile?.student_profile?.primaryGuardianContact || 'Not provided'}
                 />
 
                 <InfoRow
                   icon={<Users className='text-muted-foreground h-4 w-4' />}
                   label='Secondary Guardian'
-                  value={sharedProfile?.student_profile.secondaryGuardianContact || 'Not provided'}
+                  value={sharedProfile?.student_profile?.secondaryGuardianContact || 'Not provided'}
                 />
               </div>
             ) : (

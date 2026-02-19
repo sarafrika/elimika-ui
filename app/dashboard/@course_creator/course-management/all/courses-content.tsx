@@ -21,11 +21,13 @@ import {
 } from '@/components/ui/table';
 import { useCourseCreator } from '@/context/course-creator-context';
 import type { Course } from '@/services/client';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Filter, PlusCircle, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { searchCoursesOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import { CatalogueWorkspace } from '../../../@admin/catalogue/_components/catalogue-workspace';
 
 type CourseStatusFilter = 'all' | 'draft' | 'in_review' | 'published' | 'archived';
@@ -49,9 +51,27 @@ const STATUS_BADGE: Record<
 };
 
 export default function CourseCreatorCoursesContent() {
-  const { courses, data } = useCourseCreator();
+  const { data } = useCourseCreator();
   const [statusFilter, setStatusFilter] = useState<CourseStatusFilter>('all');
   const [open, setOpen] = useState(false);
+
+  const size = 20;
+  const [page, setPage] = useState(0);
+
+  const {
+    data: cData,
+    isFetched,
+    isLoading,
+  } = useQuery({
+    ...searchCoursesOptions({
+      query: {
+        searchParams: { course_creator_uuid_eq: data?.profile?.uuid },
+        pageable: {},
+      },
+    }),
+    enabled: !!data?.profile?.uuid,
+  });
+  const courses = cData?.data?.content || [];
 
   const filteredCourses = useMemo(() => {
     if (statusFilter === 'all') return courses;

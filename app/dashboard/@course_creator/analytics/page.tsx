@@ -1,10 +1,20 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { MessageSquare, Star, Users } from 'lucide-react';
 import { useState } from 'react';
 import {
   getCourseEnrollmentsOptions,
@@ -12,7 +22,8 @@ import {
 } from '../../../../services/client/@tanstack/react-query.gen';
 
 export default function CourseCreatorAnalyticsPage() {
-  const [openCourseId, setOpenCourseId] = useState<string | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<any | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const { data, courses } = useCourseCreator();
   const { analytics, monetization, trainingRequirements, verification } = data;
@@ -24,6 +35,11 @@ export default function CourseCreatorAnalyticsPage() {
     { label: 'Draft', count: analytics.draftCourses },
     { label: 'Archived', count: analytics.archivedCourses },
   ];
+
+  const handleViewReviews = (course: any) => {
+    setSelectedCourse(course);
+    setIsSheetOpen(true);
+  };
 
   return (
     <div className='mx-auto w-full max-w-5xl space-y-6 px-4 py-10'>
@@ -43,17 +59,12 @@ export default function CourseCreatorAnalyticsPage() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className='space-y-4'>
+        <CardContent className='space-y-3'>
           {courses.map(course => (
-            <CourseReviewSummary
+            <CourseReviewCard
               key={course.uuid}
               course={course}
-              isOpen={openCourseId === course.uuid}
-              onToggle={() =>
-                setOpenCourseId((prev: any) =>
-                  prev === course?.uuid ? null : (course?.uuid as string)
-                )
-              }
+              onViewReviews={() => handleViewReviews(course)}
             />
           ))}
         </CardContent>
@@ -167,6 +178,13 @@ export default function CourseCreatorAnalyticsPage() {
           </CardContent>
         </Card>
       </section>
+
+      {/* Reviews Sheet */}
+      <ReviewsSheet
+        course={selectedCourse}
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+      />
     </div>
   );
 }
@@ -201,25 +219,20 @@ function formatCurrency(value: number | null) {
 
 function RatingStars({ value }: { value: number }) {
   return (
-    <div className='flex items-center gap-1'>
+    <div className='flex items-center gap-0.5'>
       {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i} className={i < value ? 'text-yellow-500' : 'text-muted-foreground'}>
-          ★
-        </span>
+        <Star
+          key={i}
+          className={`h-4 w-4 ${
+            i < value ? 'fill-yellow-500 text-yellow-500' : 'fill-muted text-muted-foreground'
+          }`}
+        />
       ))}
     </div>
   );
 }
 
-function CourseReviewSummary({
-  course,
-  isOpen,
-  onToggle,
-}: {
-  course: any;
-  isOpen: boolean;
-  onToggle: () => void;
-}) {
+function CourseReviewCard({ course, onViewReviews }: { course: any; onViewReviews: () => void }) {
   const { data: enrollmentData } = useQuery({
     ...getCourseEnrollmentsOptions({
       path: { courseUuid: course?.uuid as string },
@@ -247,79 +260,224 @@ function CourseReviewSummary({
       : null;
 
   return (
-    <div className='border-border/60 rounded-lg border'>
-      {/* Header */}
-      <button
-        onClick={onToggle}
-        className='flex w-full flex-col gap-3 p-3 text-left md:flex-row md:items-center md:justify-between md:p-4'
-        aria-expanded={isOpen}
-      >
-        <div className='flex flex-1 flex-col gap-2'>
-          <div className='flex flex-col gap-1.5 md:flex-row md:items-center md:gap-2'>
-            <p className='text-sm font-medium md:text-base'>{course.name}</p>
-            <p className='text-muted-foreground text-[11px] md:text-xs'>
-              {enrollments?.length} enrollment(s)
-            </p>
+    <div
+      onClick={onViewReviews}
+      role='button'
+      tabIndex={0}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          onViewReviews();
+        }
+      }}
+      className='border-border/60 group bg-card hover:bg-muted/50 focus:ring-primary cursor-pointer rounded-lg border transition-colors focus:ring-2 focus:outline-none'
+    >
+      <div className='flex items-center gap-4 p-4'>
+        {/* Course Info */}
+        <div className='min-w-0 flex-1'>
+          <div className='mb-1 flex items-center gap-2'>
+            <h3 className='truncate text-sm font-medium'>{course.name}</h3>
+            <Badge variant='secondary' className='text-xs'>
+              {enrollments?.length} enrolled
+            </Badge>
           </div>
-          <div className='flex flex-col items-start gap-1.5 md:gap-2'>
-            <p className='text-muted-foreground text-[11px] md:text-xs'>
-              {reviewsLoading
-                ? 'Loading reviews...'
-                : reviewCount
-                  ? `${reviewCount} review${reviewCount > 1 ? 's' : ''}`
-                  : 'No reviews yet'}
-            </p>
+          <div className='text-muted-foreground flex items-center gap-3 text-xs'>
+            <div className='flex items-center gap-1'>
+              <MessageSquare className='h-3 w-3' />
+              <span>
+                {reviewsLoading
+                  ? 'Loading...'
+                  : reviewCount
+                    ? `${reviewCount} review${reviewCount > 1 ? 's' : ''}`
+                    : 'No reviews yet'}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className='flex items-center gap-2 self-start md:self-auto'>
-          {averageRating !== null ? (
-            <>
-              <RatingStars value={Math.round(averageRating)} />
-              <span className='text-xs font-medium md:text-sm'>{averageRating}</span>
-            </>
-          ) : (
-            <>
-              <RatingStars value={0} />
-              <span className='text-muted-foreground text-xs font-medium md:text-sm'>0</span>
-            </>
-          )}
-        </div>
-      </button>
-
-      {/* Body */}
-      {isOpen && (
-        <div className='border-border/60 space-y-2.5 border-t p-3 md:space-y-3 md:p-4'>
-          {reviewsLoading ? (
-            <p className='text-muted-foreground text-center text-xs md:text-sm'>
-              Loading reviews...
-            </p>
-          ) : reviewCount > 0 ? (
-            reviews.slice(0, 5).map((review: any) => (
-              <div
-                key={review.uuid}
-                className='border-border/60 bg-muted/40 rounded-lg border p-2.5 text-xs md:p-3 md:text-sm'
-              >
-                <div className='flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
-                  <RatingStars value={review.rating || 0} />
-                  <span className='text-muted-foreground text-[10px] md:text-xs'>
-                    {format(new Date(review.created_date), 'dd MMM yyyy')}
-                  </span>
+        {/* Rating */}
+        <div className='flex items-center gap-3'>
+          <div className='text-right'>
+            {averageRating !== null ? (
+              <>
+                <div className='mb-0.5 flex items-center gap-1.5'>
+                  <RatingStars value={Math.round(averageRating)} />
                 </div>
+                <p className='text-xs font-medium'>{averageRating} average</p>
+              </>
+            ) : (
+              <>
+                <div className='mb-0.5 flex items-center gap-1.5'>
+                  <RatingStars value={0} />
+                </div>
+                <p className='text-muted-foreground text-xs'>No ratings</p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-                <p className='mt-2 text-xs font-medium md:text-sm'>{review.headline}</p>
-                <p className='text-muted-foreground mt-1 text-[11px] md:text-xs'>
-                  {review.comments}
-                </p>
+function ReviewsSheet({
+  course,
+  isOpen,
+  onClose,
+}: {
+  course: any;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { data: enrollmentData } = useQuery({
+    ...getCourseEnrollmentsOptions({
+      path: { courseUuid: course?.uuid as string },
+      query: { pageable: {} },
+    }),
+    enabled: !!course?.uuid && isOpen,
+  });
+  const enrollments = enrollmentData?.data?.content || [];
+
+  const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
+    ...getCourseReviewsOptions({ path: { courseUuid: course?.uuid as string } }),
+    enabled: !!course?.uuid && isOpen,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const reviews = reviewsData?.data || [];
+
+  const reviewCount = reviews.length;
+
+  const averageRating =
+    reviewCount > 0
+      ? Math.round(
+          (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
+        ) / 10
+      : null;
+
+  // Calculate rating distribution
+  const ratingDistribution = [5, 4, 3, 2, 1].map(rating => {
+    const count = reviews.filter((r: any) => r.rating === rating).length;
+    const percentage = reviewCount > 0 ? (count / reviewCount) * 100 : 0;
+    return { rating, count, percentage };
+  });
+
+  return (
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent className='w-full overflow-y-auto sm:max-w-xl'>
+        <SheetHeader>
+          <SheetTitle>Course Reviews</SheetTitle>
+          <SheetDescription className='line-clamp-2'>{course?.name}</SheetDescription>
+        </SheetHeader>
+
+        <div className='px-6'>
+          {reviewsLoading ? (
+            <div className='flex items-center justify-center py-12'>
+              <div className='text-center'>
+                <div className='border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2'></div>
+                <p className='text-muted-foreground text-sm'>Loading reviews...</p>
               </div>
-            ))
+            </div>
           ) : (
-            <p className='text-muted-foreground text-center text-xs md:text-sm'>
-              No reviews yet for this course.
-            </p>
+            <div className='space-y-6'>
+              {/* Summary Stats */}
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <Card className='p-0'>
+                  <CardContent className='p-4'>
+                    <div className='flex items-center gap-3'>
+                      <div className='bg-primary/10 rounded-full p-3'>
+                        <Users className='text-primary h-5 w-5' />
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground text-xs font-medium'>
+                          Total Enrollments
+                        </p>
+                        <p className='text-xl font-bold'>{enrollments.length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className='p-0'>
+                  <CardContent className='p-4'>
+                    <div className='flex items-center gap-3'>
+                      <div className='rounded-full bg-yellow-500/10 p-3'>
+                        <Star className='h-5 w-5 text-yellow-600' />
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground text-xs font-medium'>Average Rating</p>
+                        <p className='text-xl font-bold'>{averageRating || '0.0'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Rating Distribution */}
+              {reviewCount > 0 && (
+                <Card>
+                  <CardHeader className='pb-3'>
+                    <CardTitle className='text-sm font-semibold'>Rating Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-2'>
+                    {ratingDistribution.map(({ rating, count, percentage }) => (
+                      <div key={rating} className='flex items-center gap-3'>
+                        <div className='flex w-12 items-center gap-1'>
+                          <span className='text-xs font-medium'>{rating}</span>
+                          <Star className='h-3 w-3 fill-yellow-500 text-yellow-500' />
+                        </div>
+                        <Progress value={percentage} className='h-2 flex-1' />
+                        <span className='text-muted-foreground w-8 text-right text-xs'>
+                          {count}
+                        </span>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Reviews List */}
+              <div>
+                <h3 className='mb-3 text-sm font-semibold'>All Reviews ({reviewCount})</h3>
+
+                {reviewCount > 0 ? (
+                  <ScrollArea className='space-y-4'>
+                    {reviews.map((review: any) => (
+                      <Card key={review.uuid} className='mb-3'>
+                        <CardContent className='p-4'>
+                          <div className='mb-2 flex items-start justify-between'>
+                            <RatingStars value={review.rating || 0} />
+                            <span className='text-muted-foreground text-xs'>
+                              {format(new Date(review.created_date), 'dd MMM yyyy')}
+                            </span>
+                          </div>
+
+                          {review.headline && (
+                            <h4 className='mb-2 text-sm font-semibold'>{review.headline}</h4>
+                          )}
+
+                          {review.comments && (
+                            <p className='text-muted-foreground text-sm'>{review.comments}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </ScrollArea>
+                ) : (
+                  <Card>
+                    <CardContent className='p-12 text-center'>
+                      <MessageSquare className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                      <p className='mb-1 text-sm font-medium'>No reviews yet</p>
+                      <p className='text-muted-foreground text-xs'>
+                        This course hasn't received any reviews from students yet.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
           )}
         </div>
-      )}
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

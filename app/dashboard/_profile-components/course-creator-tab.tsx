@@ -295,9 +295,6 @@ function CreatorSkillsTab({ sharedProfile }: DomainTabProps) {
       query: { pageable: {} },
     }),
     enabled: !!sharedProfile?.uuid,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
   });
 
   const serverEducations: any[] = data?.data?.content ?? [];
@@ -504,7 +501,11 @@ function CreatorSkillsTab({ sharedProfile }: DomainTabProps) {
             </div>
           </CardHeader>
           <CardContent className='pt-0'>
-            {serverEducations.length === 0 ? (
+            {serverEducations.map(edu => (
+              <EducationViewCard key={edu.uuid} edu={edu} />
+            ))}
+
+            {serverEducations.length === 0 && (
               <div className='flex flex-col items-center justify-center py-10 text-center'>
                 <GraduationCap className='text-muted-foreground/30 mb-3 h-10 w-10' />
                 <p className='text-muted-foreground text-sm'>No education history added yet.</p>
@@ -518,8 +519,6 @@ function CreatorSkillsTab({ sharedProfile }: DomainTabProps) {
                   Add your first qualification
                 </Button>
               </div>
-            ) : (
-              serverEducations.map(edu => <EducationViewCard key={edu.uuid} edu={edu} />)
             )}
           </CardContent>
         </Card>

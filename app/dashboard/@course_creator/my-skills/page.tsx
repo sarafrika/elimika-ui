@@ -116,7 +116,6 @@ const MySkillsPage = () => {
   });
   const [useMockData, setUseMockData] = useState(false);
   const apiSkills = data?.data?.content ?? [];
-  // const skills = useMockData ? mockSkills : apiSkills;
   const skills = apiSkills;
 
   // overall progress = average proficiency score
