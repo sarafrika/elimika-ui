@@ -121,9 +121,8 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
       filtered = filtered.filter(student => student?.active);
     }
 
-    // Category filter (assuming you have section data)
+    // Category filter
     if (selectedCategory !== 'All') {
-      // Implement section filtering based on your data structure
       // filtered = filtered.filter(student => student?.section === selectedCategory);
     }
 
@@ -131,11 +130,11 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
   }, [detailedStudents, searchQuery, selectedFilter, selectedCategory, starredStudents]);
 
   // Set first student as selected by default
-  useState(() => {
-    if (filteredStudents.length > 0 && !selectedStudent) {
+  useEffect(() => {
+    if (filteredStudents.length > 0) {
       setSelectedStudent(filteredStudents[0]);
     }
-  });
+  }, [filteredStudents]);
 
   const toggleStar = (studentUuid: string, e: React.MouseEvent) => {
     e.stopPropagation();

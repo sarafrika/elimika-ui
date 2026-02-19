@@ -1,11 +1,11 @@
 'use client';
 
-import { CatalogueWorkspace } from '@/app/dashboard/_components/catalogue-workspace';
+import CatalogueTableWorkspace from './_components/catalogue-tableview';
 
 export default function AdminCataloguePage() {
   return (
     <div className='p-4 lg:p-6'>
-      <CatalogueWorkspace scope='admin' />
+      <CatalogueTableWorkspace scope='admin' />
     </div>
   );
 }
