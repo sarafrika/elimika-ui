@@ -133,8 +133,6 @@ export function ProfilePage({
     );
   }
 
-  console.log(profile?.profile_image_url, 'profile here now?');
-
   const initials = profile.full_name
     .split(' ')
     .map(n => n[0])
