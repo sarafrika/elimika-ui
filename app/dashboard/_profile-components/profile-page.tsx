@@ -141,20 +141,20 @@ export function ProfilePage({
     .slice(0, 2);
 
   return (
-    <div className='space-y-0 p-6 font-sans'>
-      <div className='bg-card border-border rounded-2xl border p-7'>
+    <div className='space-y-0 font-sans'>
+      <div className='bg-card border-border rounded-2xl border p-4 sm:p-6 lg:p-7'>
         {/* Avatar + Info Row */}
-        <div className='mb-6 flex items-start gap-6'>
+        <div className='mb-4 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-start sm:gap-6'>
           {/* Avatar with Upload */}
-          <div className='relative shrink-0'>
+          <div className='relative shrink-0 self-center sm:self-auto'>
             <div className='group relative'>
-              <Avatar className='ring-border h-[90px] w-[90px] rounded-xl ring-2'>
+              <Avatar className='ring-border h-20 w-20 rounded-xl ring-2 sm:h-[90px] sm:w-[90px]'>
                 <AvatarImage
                   src={previewUrl || profile?.profile_image_url || profile?.avatar_url}
                   alt={profile?.full_name}
                   className='object-cover'
                 />
-                <AvatarFallback className='bg-primary/10 text-primary rounded-xl text-lg font-semibold'>
+                <AvatarFallback className='bg-primary/10 text-primary rounded-xl text-base font-semibold sm:text-lg'>
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -164,11 +164,12 @@ export function ProfilePage({
                 onClick={() => fileInputRef.current?.click()}
                 className='absolute inset-0 flex items-center justify-center rounded-xl bg-black/60 opacity-0 transition-opacity group-hover:opacity-100'
               >
-                <Camera className='h-6 w-6 text-white' />
+                <Camera className='h-5 w-5 text-white sm:h-6 sm:w-6' />
               </button>
 
+              {/* Online status indicator */}
               {profile.is_online && (
-                <span className='bg-success border-card absolute -top-1 right-10 h-5 w-5 rounded-full border-2' />
+                <span className='bg-success border-card absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full border-2 sm:-top-1 sm:right-10 sm:h-5 sm:w-5' />
               )}
             </div>
 
@@ -183,12 +184,12 @@ export function ProfilePage({
 
             {/* Upload/Cancel buttons */}
             {selectedImage && (
-              <div className='mt-3 flex gap-2'>
+              <div className='mt-2 flex gap-2 sm:mt-3'>
                 <Button
                   size='sm'
                   onClick={handleUpload}
                   disabled={uploadProfileImageMut.isPending}
-                  className='flex-1'
+                  className='flex-1 text-xs'
                 >
                   {uploadProfileImageMut.isPending ? (
                     <>
@@ -218,7 +219,7 @@ export function ProfilePage({
                 size='sm'
                 variant='outline'
                 onClick={() => fileInputRef.current?.click()}
-                className='mt-3 w-full'
+                className='mt-2 w-full text-xs sm:mt-3'
               >
                 <Camera className='mr-1.5 h-3 w-3' />
                 Change Photo
@@ -229,66 +230,68 @@ export function ProfilePage({
           {/* Name + Meta */}
           <div className='min-w-0 flex-1'>
             {/* Name row */}
-            <div className='mb-2 flex items-center justify-between gap-3'>
-              <h1 className='text-foreground truncate text-2xl font-bold tracking-tight'>
+            <div className='mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
+              <h1 className='text-foreground w-full truncate text-xl font-bold tracking-tight sm:text-2xl'>
                 {profile.full_name}
               </h1>
               {headerBadge && <div className='shrink-0'>{headerBadge}</div>}
             </div>
 
             {/* Secondary meta */}
-            <div className='mb-3 flex flex-wrap gap-x-5 gap-y-2'>
+            <div className='mb-2 flex flex-wrap gap-x-3 gap-y-1.5 sm:mb-3 sm:gap-x-5 sm:gap-y-2'>
               <MetaItem
-                icon={<Briefcase className='text-muted-foreground h-4 w-4' />}
+                icon={<Briefcase className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
                 value={profile.professional_headline}
               />
               <MetaItem
-                icon={<MapPin className='text-muted-foreground h-4 w-4' />}
+                icon={<MapPin className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
                 value={profile.address}
               />
             </div>
 
             {/* Contact info */}
-            <div className='mb-3 flex flex-wrap gap-x-5 gap-y-2'>
+            <div className='mb-2 flex flex-wrap gap-x-3 gap-y-1.5 sm:mb-3 sm:gap-x-5 sm:gap-y-2'>
               <MetaItem
-                icon={<Phone className='text-muted-foreground h-4 w-4' />}
+                icon={<Phone className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
                 value={profile.phone}
               />
               <MetaItem
-                icon={<Mail className='text-muted-foreground h-4 w-4' />}
+                icon={<Mail className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
                 value={profile.email}
               />
               {profile.website && (
                 <MetaItem
-                  icon={<Globe className='text-muted-foreground h-4 w-4' />}
+                  icon={<Globe className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
                   value={profile.website}
                 />
               )}
             </div>
 
             {/* ID badge */}
-            <span className='bg-muted text-muted-foreground inline-block rounded-md px-3 py-1 font-mono text-xs tracking-wider'>
+            <span className='bg-muted text-muted-foreground inline-block rounded-md px-2 py-0.5 font-mono text-[10px] tracking-wider sm:px-3 sm:py-1 sm:text-xs'>
               {profile.uuid}
             </span>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className='border-border flex flex-wrap gap-1 border-t pt-4'>
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTabId(tab.id)}
-              className={cn(
-                'cursor-pointer rounded-full px-5 py-2 text-sm font-medium transition-all duration-150',
-                activeTabId === tab.id
-                  ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Tabs - Horizontal scroll on mobile */}
+        <div className='border-border -mx-4 overflow-x-auto border-t px-4 pt-3 sm:-mx-6 sm:px-6 sm:pt-4 lg:-mx-7 lg:px-7'>
+          <div className='flex min-w-max gap-1 pb-1 sm:flex-wrap sm:pb-0'>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTabId(tab.id)}
+                className={cn(
+                  'cursor-pointer whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 sm:px-5 sm:py-2 sm:text-sm',
+                  activeTabId === tab.id
+                    ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

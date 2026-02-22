@@ -175,26 +175,26 @@ export default {
       url: '/dashboard/skills-fund',
       icon: Wallet,
     },
-    {
-      title: 'Opportunities',
-      url: '/dashboard/opportunities',
-      icon: Handshake,
-    },
-    {
-      title: 'Contacts',
-      url: '/dashboard/contacts',
-      icon: Users,
-    },
-    {
-      title: 'Communities',
-      url: '/dashboard/communities',
-      icon: Users,
-    },
-    {
-      title: 'Library',
-      url: '/dashboard/library',
-      icon: LucideBookUser,
-    },
+    // {
+    //   title: 'Opportunities',
+    //   url: '/dashboard/opportunities',
+    //   icon: Handshake,
+    // },
+    // {
+    //   title: 'Contacts',
+    //   url: '/dashboard/contacts',
+    //   icon: Users,
+    // },
+    // {
+    //   title: 'Communities',
+    //   url: '/dashboard/communities',
+    //   icon: Users,
+    // },
+    // {
+    //   title: 'Library',
+    //   url: '/dashboard/library',
+    //   icon: LucideBookUser,
+    // },
     {
       title: 'Notifications',
       url: '/dashboard/notifications',

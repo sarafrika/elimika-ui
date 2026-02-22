@@ -850,13 +850,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1915,10 +1915,6 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
@@ -1934,6 +1930,10 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
@@ -2822,6 +2822,10 @@ export type CommerceCatalogueItemUpsertRequest = {
    */
   class_definition_uuid?: string;
   /**
+   * Training program UUID to associate
+   */
+  program_uuid?: string;
+  /**
    * Internal commerce product code
    */
   product_code: string;
@@ -2868,6 +2872,10 @@ export type CommerceCatalogueItem = {
    * Associated class definition UUID if mapping is class specific
    */
   class_definition_uuid?: string;
+  /**
+   * Associated training program UUID when mapping is program scoped
+   */
+  program_uuid?: string;
   /**
    * Internal commerce product code
    */
@@ -4109,13 +4117,13 @@ export type Enrollment = {
    */
   readonly can_be_cancelled?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
-   */
-  readonly is_attendance_marked?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
+   */
+  readonly is_attendance_marked?: boolean;
   /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
@@ -5816,10 +5824,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -5831,6 +5835,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -22308,6 +22316,7 @@ export type ResolveByCourseOrClassData = {
   query?: {
     course_uuid?: string;
     class_uuid?: string;
+    program_uuid?: string;
   };
   url: '/api/v1/commerce/catalogue/resolve';
 };

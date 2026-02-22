@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { extractPage } from '@/lib/api-helpers';
@@ -47,18 +48,22 @@ import {
   Loader2,
   Mail,
   MapPin,
+  Menu,
   Phone,
   Search,
+  Send,
   Star,
   ThumbsDown,
   ThumbsUp,
   User,
+  UserCheck,
   Users,
+  UserX,
   X,
   XCircle,
 } from 'lucide-react';
 import { format } from 'path';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Label } from 'recharts';
 import { toast } from 'sonner';
 import {
@@ -76,6 +81,9 @@ const InstructorsApplicationPage = () => {
   const qc = useQueryClient();
   const { profile: courseCreator } = useCourseCreator();
 
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [isMobileDetailsOpen, setIsMobileDetailsOpen] = useState(false);
+
   const [statusFilter, setStatusFilter] = useState('');
   const [applicantTypeFilter, setApplicantTypeFilter] = useState('');
   const [page, setPage] = useState(0);
@@ -86,6 +94,13 @@ const InstructorsApplicationPage = () => {
   );
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revoke'>('approve');
+
+  const [instructorSearchQuery, setInstructorSearchQuery] = useState('');
+
+  const [instructorStatusFilter, setInstructorStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [verificationFilter, setVerificationFilter] = useState<'all' | 'approved' | 'pending'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
 
   const [selectedInstructorUuid, setSelectedInstructorUuid] = useState<string | null>(null);
 
@@ -155,6 +170,84 @@ const InstructorsApplicationPage = () => {
       setSelectedInstructorUuid(instructors[0].uuid);
     }
   }, [instructors, selectedInstructorUuid]);
+
+  // const instructorCategories = ['Music', 'Engineer', "Programming", "Java"]
+  const instructorCategories = useMemo(() => {
+    const categories = instructors
+      .map(instructorItem => instructorItem.data?.data?.professional_headline)
+      .filter(Boolean);
+
+    return [...new Set(categories)].sort();
+  }, [instructors]);
+
+
+  const filteredInstructors = useMemo(() => {
+    let filtered = instructors;
+
+    // Active / Inactive filter
+    // if (instructorStatusFilter !== 'all') {
+    //   filtered = filtered.filter(instructorItem => {
+    //     const instructorData = instructorItem.data?.data;
+    //     const isActive = instructorData?.active ?? true;
+    //     return instructorStatusFilter === 'active' ? isActive : !isActive;
+    //   });
+    // }
+
+    // Approved / Pending filter
+    if (verificationFilter !== 'all') {
+      filtered = filtered.filter(instructorItem => {
+        const instructorData = instructorItem.data?.data;
+        const isVerified = instructorData?.admin_verified ?? false;
+        return verificationFilter === 'approved' ? isVerified : !isVerified;
+      });
+    }
+
+    // Category filter
+    if (selectedCategory) {
+      const categoryLower = selectedCategory.toLowerCase();
+
+      filtered = filtered.filter(instructorItem => {
+        const instructorData = instructorItem.data?.data;
+        const headline = instructorData?.professional_headline || '';
+
+        return headline.toLowerCase().includes(categoryLower);
+      });
+    }
+
+    // Search filter
+    if (instructorSearchQuery) {
+      const searchLower = instructorSearchQuery.toLowerCase();
+      filtered = filtered.filter(instructorItem => {
+        const instructorData = instructorItem.data?.data;
+        const fullName = instructorData?.full_name || '';
+        const email = instructorData?.email || '';
+        const bio = instructorData?.bio || '';
+        const professionalHeadline = instructorData?.professional_headline || '';
+
+        return (
+          fullName.toLowerCase().includes(searchLower) ||
+          email.toLowerCase().includes(searchLower) ||
+          bio.toLowerCase().includes(searchLower) ||
+          professionalHeadline.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    return filtered;
+  }, [
+    instructors,
+    instructorSearchQuery,
+    instructorStatusFilter,
+    verificationFilter,
+    selectedCategory,
+  ]);
+
+  // Auto-select first instructor
+  useEffect(() => {
+    if (filteredInstructors.length > 0 && !selectedInstructorUuid) {
+      setSelectedInstructorUuid(filteredInstructors[0].uuid);
+    }
+  }, [filteredInstructors, selectedInstructorUuid]);
 
   // Get selected instructor data
   const selectedInstructor = useMemo(() => {
@@ -419,6 +512,7 @@ const InstructorsApplicationPage = () => {
     );
   };
 
+
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
       {/* Compact Header */}
@@ -433,78 +527,189 @@ const InstructorsApplicationPage = () => {
         </div>
       </section>
 
-      <main className='flex flex-col gap-4 lg:flex-row lg:gap-6'>
-        {/* Sidebar - Instructors List */}
-        <aside className='w-full lg:w-80 lg:flex-shrink-0'>
-          <Card className='p-3 md:p-4'>
-            <h2 className='mb-3 text-base font-semibold md:mb-4 md:text-lg'>All Instructors</h2>
-            <div className='max-h-[300px] space-y-2 overflow-y-auto md:max-h-[calc(100vh-250px)] md:space-y-3'>
-              {isLoadingInstructors ? (
-                // Loading skeletons
-                [...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className='border-border bg-muted/30 animate-pulse rounded-lg border p-3 md:rounded-xl md:p-4'
-                  >
-                    <div className='flex items-start gap-3 md:gap-4'>
-                      <Skeleton className='h-10 w-10 rounded-full md:h-12 md:w-12' />
-                      <div className='flex-1 space-y-2'>
-                        <Skeleton className='h-3 w-3/4 rounded md:h-4' />
-                        <Skeleton className='h-2.5 w-full rounded md:h-3' />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : instructors.length === 0 ? (
-                <p className='text-muted-foreground py-8 text-center text-xs md:py-10 md:text-sm'>
-                  No instructors found
-                </p>
-              ) : (
-                instructors.map(instructorItem => {
-                  const instructorData = instructorItem.data?.data;
-                  const fullName = instructorData?.full_name || 'Unknown Instructor';
-                  const bio =
-                    instructorData?.bio ||
-                    instructorData?.professional_headline ||
-                    'Experienced instructor';
-                  const initials =
-                    fullName
-                      .split(' ')
-                      .map(n => n[0])
-                      .join('')
-                      .toUpperCase() || 'IN';
+      <Card className='flex flex-col lg:flex-row p-2 gap-0'>
+        <aside className='hidden lg:flex w-56 flex-col border-r p-2'>
+          <div className='space-y-1'>
+            <button
+              onClick={() => setVerificationFilter('all')}
+              className={`w-full rounded px-3 py-2 text-sm text-left ${verificationFilter === 'all'
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-muted'
+                }`}
+            >
+              All Instructors
+            </button>
 
-                  return (
-                    <button
-                      key={instructorItem.uuid}
-                      onClick={() => setSelectedInstructorUuid(instructorItem.uuid)}
-                      className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left shadow-sm transition-all duration-150 md:gap-4 md:rounded-xl md:p-4 ${
-                        selectedInstructorUuid === instructorItem.uuid
-                          ? 'bg-primary/10 border-primary shadow-md'
-                          : 'bg-background hover:bg-muted border-border'
-                      }`}
-                    >
-                      <Avatar className='h-10 w-10 flex-shrink-0 md:h-12 md:w-12'>
-                        <AvatarImage src={instructorData?.profile_picture_url} />
-                        <AvatarFallback>{initials}</AvatarFallback>
-                      </Avatar>
-                      <div className='min-w-0 flex-1'>
-                        <p className='truncate text-xs font-semibold md:text-sm'>{fullName}</p>
-                        <p
-                          className='text-muted-foreground mt-1 line-clamp-2 text-[11px] md:text-xs'
-                          dangerouslySetInnerHTML={{ __html: bio }}
-                        />
-                      </div>
-                    </button>
-                  );
-                })
-              )}
+            <button
+              onClick={() => setVerificationFilter('approved')}
+              className={`w-full rounded px-3 py-2 text-sm text-left ${verificationFilter === 'approved'
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-muted'
+                }`}
+            >
+              Approved
+            </button>
+
+            <button
+              onClick={() => setVerificationFilter('pending')}
+              className={`w-full rounded px-3 py-2 text-sm text-left ${verificationFilter === 'pending'
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-muted'
+                }`}
+            >
+              Pending
+            </button>
+          </div>
+          <Separator className='my-4' />
+
+          <h3 className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+            Categories
+          </h3>
+
+          <div className='space-y-1 max-h-48 overflow-auto'>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`w-full rounded px-3 py-2 text-sm text-left ${!selectedCategory
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-muted'
+                }`}
+            >
+              All Categories
+            </button>
+
+            {instructorCategories.map(category => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`w-full rounded px-3 py-2 text-sm text-left ${selectedCategory === category
+                  ? 'bg-primary/10 text-primary'
+                  : 'hover:bg-muted'
+                  }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {/* <Separator className='my-4' /> */}
+
+          {/* <h3 className='mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+            Statistics
+          </h3>
+          <div className='space-y-2 text-sm'>
+            <div className='flex items-center justify-between'>
+              <span className='text-muted-foreground'>Total</span>
+              <span className='font-semibold'>{instructors.length}</span>
             </div>
-          </Card>
+            <div className='flex items-center justify-between'>
+              <span className='text-muted-foreground'>Showing</span>
+              <span className='font-semibold'>{filteredInstructors.length}</span>
+            </div>
+          </div> */}
         </aside>
 
+        {/* Sidebar - Instructors List */}
+        <div className='w-full lg:max-w-80 lg:border-r'>
+          {/* Mobile Filter Button */}
+          <div className='flex items-center gap-2 p-3 lg:hidden border-b'>
+            <button
+              onClick={() => setIsMobileFiltersOpen(true)}
+              className='p-2 hover:bg-muted rounded-lg'
+            >
+              <Menu size={20} />
+            </button>
+            <div className='relative flex-1'>
+              <Input
+                type="text"
+                placeholder="Search..."
+                value={instructorSearchQuery}
+                onChange={(e) => setInstructorSearchQuery(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* Desktop Search */}
+          <div className="hidden lg:block pb-3 px-3 mt-2 relative">
+            <Input
+              type="text"
+              placeholder="Search instructors..."
+              value={instructorSearchQuery}
+              onChange={(e) => setInstructorSearchQuery(e.target.value)}
+              className="w-full"
+            />
+          </div>
+
+          <div className='max-h-[300px] space-y-2 overflow-y-auto md:max-h-[calc(100vh-250px)] md:space-y-3'>
+            {isLoadingInstructors ? (
+              [...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className='border-border bg-muted/30 animate-pulse rounded-lg border p-3 md:rounded-xl md:p-4'
+                >
+                  <div className='flex items-start gap-3 md:gap-4'>
+                    <Skeleton className='h-10 w-10 rounded-full md:h-12 md:w-12' />
+                    <div className='flex-1 space-y-2'>
+                      <Skeleton className='h-3 w-3/4 rounded md:h-4' />
+                      <Skeleton className='h-2.5 w-full rounded md:h-3' />
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : filteredInstructors.length === 0 ? (
+              <p className='text-muted-foreground py-8 text-center text-xs md:py-10 md:text-sm'>
+                No instructors found
+              </p>
+            ) : (
+              filteredInstructors.map(instructorItem => {
+                const instructorData = instructorItem.data?.data;
+                const fullName = instructorData?.full_name || 'Unknown Instructor';
+                const bio =
+                  instructorData?.bio ||
+                  instructorData?.professional_headline ||
+                  'Experienced instructor';
+                const initials =
+                  fullName
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase() || 'IN';
+
+                return (
+                  <button
+                    key={instructorItem.uuid}
+                    onClick={() => {
+                      setSelectedInstructorUuid(instructorItem.uuid);
+                      // Open mobile details sheet on mobile
+                      if (window.innerWidth < 1024) {
+                        setIsMobileDetailsOpen(true);
+                      }
+                    }}
+                    className={`flex w-full items-start p-3 text-left transition-all duration-150 gap-2 md:p-4 ${selectedInstructorUuid === instructorItem.uuid
+                      ? 'border bg-primary/10 shadow-md'
+                      : 'bg-background'
+                      }`}
+                  >
+                    <Avatar className='h-10 w-10 flex-shrink-0 md:h-12 md:w-12'>
+                      <AvatarImage src={instructorData?.profile_picture_url} />
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className='min-w-0 flex-1'>
+                      <p className='truncate text-xs font-semibold md:text-sm'>{fullName}</p>
+                      <p
+                        className='text-muted-foreground mt-1 line-clamp-1 text-[11px] md:text-xs'
+                        dangerouslySetInnerHTML={{ __html: bio }}
+                      />
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+
         {/* Main View - Selected Instructor Details */}
-        <div className='flex-1'>
+        <div className='hidden lg:block flex-1 mt-4 px-4'>
           {!selectedInstructorUuid ? (
             <Card className='p-8 md:p-12'>
               <div className='text-muted-foreground text-center'>
@@ -517,33 +722,30 @@ const InstructorsApplicationPage = () => {
               <div className='border-muted-foreground/10 mb-4 flex gap-3 overflow-x-auto border-b md:mb-6 md:gap-6'>
                 <button
                   onClick={() => setTabs('profile')}
-                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
-                    tabs === 'profile'
-                      ? 'border-primary text-primary border-b-2 font-extrabold'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${tabs === 'profile'
+                    ? 'border-primary text-primary border-b-2 font-extrabold'
+                    : 'text-muted-foreground hover:text-foreground'
+                    }`}
                 >
                   Profile
                 </button>
 
                 <button
                   onClick={() => setTabs('course-application')}
-                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
-                    tabs === 'course-application'
-                      ? 'border-primary text-primary border-b-2 font-extrabold'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${tabs === 'course-application'
+                    ? 'border-primary text-primary border-b-2 font-extrabold'
+                    : 'text-muted-foreground hover:text-foreground'
+                    }`}
                 >
                   Courses ({stats.pending})
                 </button>
 
                 <button
                   onClick={() => setTabs('program-application')}
-                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
-                    tabs === 'program-application'
-                      ? 'border-primary text-primary border-b-2 font-extrabold'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${tabs === 'program-application'
+                    ? 'border-primary text-primary border-b-2 font-extrabold'
+                    : 'text-muted-foreground hover:text-foreground'
+                    }`}
                 >
                   Programs ({programStats.pending})
                 </button>
@@ -554,7 +756,7 @@ const InstructorsApplicationPage = () => {
                   {/* Header Card */}
                   <Card className='p-4 md:p-6'>
                     <div className='flex flex-col gap-4 md:flex-row md:items-start md:gap-6'>
-                      <Avatar className='h-20 w-20 md:h-24 md:w-24'>
+                      <Avatar className='h-18 w-18 md:h-20 md:w-20'>
                         <AvatarImage src={instructor?.profile_picture_url} />
                         <AvatarFallback className='text-xl md:text-2xl'>
                           {instructor?.full_name
@@ -572,6 +774,20 @@ const InstructorsApplicationPage = () => {
                             <p className='text-muted-foreground text-sm md:text-base'>
                               {instructor?.professional_headline || 'Instructor'}
                             </p>
+
+                            <a
+                              href={`/profile-user/${instructor?.user_uuid}?domain=${'instructor'}`}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              className='text-primary flex cursor-pointer items-start justify-start self-start rounded-md p-2 transition'
+                            >
+                              <div className='flex items-center gap-1 text-sm'>
+                                <Send size={16} className='text-primary' />
+                                <span className='truncate'>View full profile</span>
+                              </div>
+                            </a>
+
+
                           </div>
                           <Badge variant='secondary' className='self-start'>
                             {instructor?.status || 'Active'}
@@ -744,7 +960,7 @@ const InstructorsApplicationPage = () => {
                             <div className='mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
                               <div>
                                 <span className='text-muted-foreground text-xs font-bold md:text-sm'>
-                                  {review.reviewer_name ?? 'Reviewer name'}
+                                  {/* {review.reviewer_name ?? 'Reviewer name'} */}
                                 </span>
                                 <p className='text-[13px] font-semibold md:text-[14px]'>
                                   {review.headline}
@@ -755,11 +971,10 @@ const InstructorsApplicationPage = () => {
                                 {[...Array(5)].map((_, i) => (
                                   <Star
                                     key={i}
-                                    className={`h-3.5 w-3.5 md:h-4 md:w-4 ${
-                                      i < (review.rating || 0)
-                                        ? 'fill-yellow-400 text-yellow-400'
-                                        : 'text-gray-300'
-                                    }`}
+                                    className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < (review.rating || 0)
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-gray-300'
+                                      }`}
                                   />
                                 ))}
                               </div>
@@ -1230,7 +1445,805 @@ const InstructorsApplicationPage = () => {
             </div>
           )}
         </div>
-      </main>
+
+
+        {/* Mobile Filters Sheet */}
+        <Sheet open={isMobileFiltersOpen} onOpenChange={setIsMobileFiltersOpen}>
+          <SheetContent side="left" className='w-80'>
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+            </SheetHeader>
+            <div className='mt-6 px-4 mb-8'>
+              <div className='space-y-1'>
+                <button
+                  onClick={() => {
+                    setInstructorStatusFilter('all');
+                    setIsMobileFiltersOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm ${instructorStatusFilter === 'all' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                    }`}
+                >
+                  <User size={16} />
+                  All
+                </button>
+                <button
+                  onClick={() => {
+                    setInstructorStatusFilter('active');
+                    setIsMobileFiltersOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm ${instructorStatusFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                    }`}
+                >
+                  <UserCheck className='text-success/50' size={16} />
+                  Active
+                </button>
+                <button
+                  onClick={() => {
+                    setInstructorStatusFilter('inactive');
+                    setIsMobileFiltersOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm ${instructorStatusFilter === 'inactive' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                    }`}
+                >
+                  <UserX className='text-destructive/50' size={16} />
+                  Inactive
+                </button>
+              </div>
+              <Separator className='my-4' />
+              <h3 className='mb-3 text-xs font-semibold uppercase'>Statistics</h3>
+              <div className='space-y-2 text-sm'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-muted-foreground'>Total</span>
+                  <span className='font-semibold'>{instructors.length}</span>
+                </div>
+                <div className='flex items-center justify-between'>
+                  <span className='text-muted-foreground'>Showing</span>
+                  <span className='font-semibold'>{filteredInstructors.length}</span>
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Mobile Details Sheet */}
+        <Sheet open={isMobileDetailsOpen} onOpenChange={setIsMobileDetailsOpen}>
+          <SheetContent side="right" className='w-full sm:max-w-2xl overflow-y-auto'>
+            <SheetHeader>
+              <SheetTitle>Instructor Details</SheetTitle>
+            </SheetHeader>
+            <div className='mt-6 px-4 mb-8'>
+              {selectedInstructorUuid && (
+                <div>
+                  {/* Copy your entire tabs and content section here */}
+                  <div className='border-b mb-4 flex gap-3 overflow-x-auto'>
+                    <button
+                      onClick={() => setTabs('profile')}
+                      className={`px-2 pb-2 text-sm font-medium whitespace-nowrap ${tabs === 'profile'
+                        ? 'border-primary text-primary border-b-2 font-bold'
+                        : 'text-muted-foreground'
+                        }`}
+                    >
+                      Profile
+                    </button>
+
+                    <button
+                      onClick={() => setTabs('course-application')}
+                      className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${tabs === 'course-application'
+                        ? 'border-primary text-primary border-b-2 font-extrabold'
+                        : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                      Courses ({stats.pending})
+                    </button>
+
+                    <button
+                      onClick={() => setTabs('program-application')}
+                      className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${tabs === 'program-application'
+                        ? 'border-primary text-primary border-b-2 font-extrabold'
+                        : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                      Programs ({programStats.pending})
+                    </button>
+                  </div>
+
+                  {tabs === 'profile' && (
+                    <div className='space-y-4 md:space-y-6'>
+                      {/* Header Card */}
+                      <Card className='p-4 md:p-6'>
+                        <div className='flex flex-col gap-4 md:flex-row md:items-start md:gap-6'>
+                          <Avatar className='h-18 w-18 md:h-20 md:w-20'>
+                            <AvatarImage src={instructor?.profile_picture_url} />
+                            <AvatarFallback className='text-xl md:text-2xl'>
+                              {instructor?.full_name
+                                ?.split(' ')
+                                .map(n => n[0])
+                                .join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className='flex-1'>
+                            <div className='flex flex-col gap-2 md:flex-row md:items-start md:justify-between'>
+                              <div>
+                                <h2 className='text-xl font-bold md:text-2xl'>
+                                  {instructor?.full_name}
+                                </h2>
+                                <p className='text-muted-foreground text-sm md:text-base'>
+                                  {instructor?.professional_headline || 'Instructor'}
+                                </p>
+
+                                <a
+                                  href={`/profile-user/${instructor?.user_uuid}?domain=${'instructor'}`}
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='text-primary flex cursor-pointer items-start justify-start self-start rounded-md p-2 transition'
+                                >
+                                  <div className='flex items-center gap-1 text-sm'>
+                                    <Send size={16} className='text-primary' />
+                                    <span className='truncate'>View full profile</span>
+                                  </div>
+                                </a>
+
+
+                              </div>
+                              <Badge variant='secondary' className='self-start'>
+                                {instructor?.status || 'Active'}
+                              </Badge>
+                            </div>
+
+                            <div className='mt-3 grid grid-cols-1 gap-2 md:mt-4 md:grid-cols-2 md:gap-4'>
+                              {instructor?.email && (
+                                <div className='flex items-center gap-2 text-xs md:text-sm'>
+                                  <Mail className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
+                                  <span className='truncate'>{instructor.email}</span>
+                                </div>
+                              )}
+                              {instructor?.phone && (
+                                <div className='flex items-center gap-2 text-xs md:text-sm'>
+                                  <Phone className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
+                                  <span>{instructor.phone}</span>
+                                </div>
+                              )}
+                              {instructor?.location && (
+                                <div className='flex items-center gap-2 text-xs md:text-sm'>
+                                  <MapPin className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
+                                  <span className='truncate'>{instructor.location}</span>
+                                </div>
+                              )}
+                              {instructor?.organization && (
+                                <div className='flex items-center gap-2 text-xs md:text-sm'>
+                                  <Building className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
+                                  <span className='truncate'>{instructor.organization}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {instructor?.bio && (
+                          <>
+                            <Separator className='my-3 md:my-4' />
+                            <div>
+                              <h3 className='mb-2 text-sm font-semibold md:text-base'>About</h3>
+                              <p
+                                className='text-muted-foreground text-xs md:text-sm'
+                                dangerouslySetInnerHTML={{ __html: instructor.bio }}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </Card>
+
+                      {/* Skills */}
+                      <Card className='p-4 md:p-6'>
+                        <div className='mb-2 flex items-center gap-2'>
+                          <Award className='text-primary h-4 w-4 md:h-5 md:w-5' />
+                          <h3 className='text-base font-semibold md:text-lg'>Skills</h3>
+                        </div>
+                        {skills?.length === 0 ? (
+                          <EmptyStateCard message='No skill found' />
+                        ) : (
+                          <div className='flex flex-col flex-wrap gap-2'>
+                            {skills.map((skill: any) => {
+                              return (
+                                <div key={skill.uuid} className='flex flex-row items-center gap-2'>
+                                  <p className='text-sm md:text-base'>{skill.skill_name}</p>
+                                  <Badge variant={'secondary'} className='text-xs'>
+                                    ({skill.proficiency_level})
+                                  </Badge>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </Card>
+
+                      {/* Education */}
+                      <Card className='p-4 md:p-6'>
+                        <div className='mb-3 flex items-center gap-2 md:mb-4'>
+                          <GraduationCap className='text-primary h-4 w-4 md:h-5 md:w-5' />
+                          <h3 className='text-base font-semibold md:text-lg'>Education</h3>
+                        </div>
+                        {education?.length === 0 ? (
+                          <EmptyStateCard message='No education found' />
+                        ) : (
+                          <div className='space-y-3 md:space-y-4'>
+                            {education.map((edu: any) => (
+                              <div
+                                key={edu.uuid}
+                                className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4'
+                              >
+                                <div className='flex gap-3 md:gap-4'>
+                                  <div className='flex-shrink-0'>
+                                    <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full md:h-10 md:w-10'>
+                                      <GraduationCap className='text-primary h-4 w-4 md:h-5 md:w-5' />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <h4 className='text-sm font-medium md:text-base'>
+                                      {edu.qualification}
+                                    </h4>
+                                    <p className='text-muted-foreground text-xs md:text-sm'>
+                                      {edu.education_level}
+                                    </p>
+                                    <p className='text-muted-foreground text-xs md:text-sm'>
+                                      {edu.school_name}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className='flex flex-col self-start md:self-auto'>
+                                  <p className='text-muted-foreground mt-1 flex items-center gap-1 text-[11px] md:text-[13px]'>
+                                    {edu.years_since_completion} years
+                                  </p>
+                                  <p className='text-muted-foreground mt-1 flex items-center gap-1 text-[11px] md:text-[13px]'>
+                                    Completed {edu.year_completed}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </Card>
+
+                      {/* Documents */}
+                      <Card className='p-4 md:p-6'>
+                        <div className='mb-3 flex items-center gap-2 md:mb-4'>
+                          <FileText className='text-primary h-4 w-4 md:h-5 md:w-5' />
+                          <h3 className='text-base font-semibold md:text-lg'>Documents</h3>
+                        </div>
+
+                        {documents?.length === 0 ? (
+                          <EmptyStateCard message='No document found' />
+                        ) : (
+                          <div className='space-y-2'>
+                            {documents.map((doc: any) => (
+                              <div
+                                key={doc.uuid}
+                                className='flex items-center justify-between rounded-lg border p-2.5 md:p-3'
+                              >
+                                <div className='flex items-center gap-2 md:gap-3'>
+                                  <FileText className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
+                                  <div>
+                                    <p className='text-xs font-medium md:text-sm'>
+                                      {doc.document_name || doc.name}
+                                    </p>
+                                    <p className='text-muted-foreground text-[10px] md:text-xs'>
+                                      {doc.document_type || doc.type}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </Card>
+
+                      {/* Reviews */}
+                      <Card className='p-4 md:p-6'>
+                        <div className='mb-2 flex items-center gap-2'>
+                          <Star className='text-primary h-4 w-4 md:h-5 md:w-5' />
+                          <h3 className='text-base font-semibold md:text-lg'>Reviews</h3>
+                        </div>
+
+                        {reviews.length === 0 ? (
+                          <EmptyStateCard message='No review found' />
+                        ) : (
+                          <div className='space-y-3 md:space-y-4'>
+                            {reviews?.map((review: any) => (
+                              <div
+                                key={review.uuid}
+                                className='border-b pb-3 last:border-0 last:pb-0 md:pb-4'
+                              >
+                                <div className='mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
+                                  <div>
+                                    <span className='text-muted-foreground text-xs font-bold md:text-sm'>
+                                      {/* {review.reviewer_name ?? 'Reviewer name'} */}
+                                    </span>
+                                    <p className='text-[13px] font-semibold md:text-[14px]'>
+                                      {review.headline}
+                                    </p>
+                                    <p className='text-xs md:text-sm'>{review.comments}</p>
+                                  </div>
+                                  <div className='flex self-start'>
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < (review.rating || 0)
+                                          ? 'fill-yellow-400 text-yellow-400'
+                                          : 'text-gray-300'
+                                          }`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </Card>
+                    </div>
+                  )}
+
+                  {tabs === 'course-application' && (
+                    <div className='space-y-4 md:space-y-6'>
+                      <h3 className='text-md font-bold'>Instructor's Application to Train Courses</h3>
+
+                      <div className='grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4'>
+                        <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                          <div className='flex items-center gap-2 md:gap-3'>
+                            <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                              <FileText className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>Total</p>
+                              <p className='text-foreground text-base font-bold md:text-lg'>
+                                {stats.total}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                          <div className='flex items-center gap-2 md:gap-3'>
+                            <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                              <Clock className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>Pending</p>
+                              <p className='text-foreground text-base font-bold md:text-lg'>
+                                {stats.pending}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                          <div className='flex items-center gap-2 md:gap-3'>
+                            <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                              <CheckCircle2 className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>Approved</p>
+                              <p className='text-foreground text-base font-bold md:text-lg'>
+                                {stats.approved}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className='border-border bg-card col-span-2 flex flex-row items-center justify-between rounded-lg border p-2.5 md:p-3 lg:col-span-1'>
+                          <div className='flex items-center gap-2 md:gap-3'>
+                            <div className='bg-destructive/10 rounded-lg p-1.5 md:p-2'>
+                              <XCircle className='text-destructive h-3.5 w-3.5 md:h-4 md:w-4' />
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>Revoked</p>
+                              <p className='text-foreground text-base font-bold md:text-lg'>
+                                {stats.revoked}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className='text-muted-foreground'>|</div>
+
+                          <div className='flex items-center gap-2 md:gap-3'>
+                            <div className='bg-warning/10 rounded-lg p-1.5 md:p-2'>
+                              <AlertCircle className='text-warning/60 h-3.5 w-3.5 md:h-4 md:w-4' />
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>Rejected</p>
+                              <p className='text-foreground text-base font-bold md:text-lg'>
+                                {stats.rejected}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Filters and Search */}
+                      <section className='mb-4 md:mb-6'>
+                        <div className='flex flex-col gap-2 md:gap-3'>
+                          <div className='flex flex-wrap items-center gap-2 md:gap-3'>
+                            <Filter className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
+                            <select
+                              className='border-border bg-background rounded-md border px-2 py-1.5 text-xs md:px-3 md:py-2 md:text-sm'
+                              value={statusFilter}
+                              onChange={event => {
+                                setStatusFilter(event.target.value);
+                                setPage(0);
+                              }}
+                            >
+                              {statusOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            <select
+                              className='border-border bg-background rounded-md border px-2 py-1.5 text-xs md:px-3 md:py-2 md:text-sm'
+                              value={applicantTypeFilter}
+                              onChange={event => {
+                                setApplicantTypeFilter(event.target.value);
+                                setPage(0);
+                              }}
+                            >
+                              {applicantTypeOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            {(statusFilter || applicantTypeFilter) && (
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => {
+                                  setStatusFilter('');
+                                  setApplicantTypeFilter('');
+                                }}
+                                className='h-7 px-2 md:h-8 md:px-3'
+                              >
+                                <X className='h-3.5 w-3.5 md:h-4 md:w-4' />
+                              </Button>
+                            )}
+                          </div>
+                          <div className='relative'>
+                            <Search className='text-muted-foreground absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2 md:left-3 md:h-4 md:w-4' />
+                            <Input
+                              placeholder='Search by applicant name...'
+                              value={searchValue}
+                              onChange={event => setSearchValue(event.target.value)}
+                              className='w-full pl-8 text-xs md:pl-10 md:text-sm'
+                            />
+                            {searchValue && (
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => setSearchValue('')}
+                                className='absolute top-1/2 right-1 h-6 -translate-y-1/2 md:h-7'
+                              >
+                                <X className='h-3.5 w-3.5 md:h-4 md:w-4' />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* Applications Grid */}
+                      <section className={elimikaDesignSystem.spacing.content}>
+                        {applicationsQuery.isLoading ? (
+                          <div className='grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3'>
+                            {[...Array(6)].map((_, i) => (
+                              <Skeleton key={i} className='h-56 w-full md:h-64' />
+                            ))}
+                          </div>
+                        ) : filteredApplications.length === 0 ? (
+                          <div className={elimikaDesignSystem.components.emptyState.container}>
+                            <FileText className={elimikaDesignSystem.components.emptyState.icon} />
+                            <h3
+                              className={`${elimikaDesignSystem.components.emptyState.title} text-sm md:text-base`}
+                            >
+                              {searchValue || statusFilter || applicantTypeFilter
+                                ? 'No applications found'
+                                : 'No training applications yet'}
+                            </h3>
+                            <p
+                              className={`${elimikaDesignSystem.components.emptyState.description} text-xs md:text-sm`}
+                            >
+                              {searchValue || statusFilter || applicantTypeFilter
+                                ? 'Try adjusting your search or filter criteria'
+                                : 'Applications will appear here when instructors or organizations apply to train your courses'}
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className='grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3'>
+                              {filteredApplications.map(application => (
+                                <ApplicationCard
+                                  type='course'
+                                  key={application.uuid}
+                                  application={application}
+                                  onApprove={() => handleReview(application, 'approve')}
+                                  onReject={() => handleReview(application, 'reject')}
+                                  onRevoke={() => handleReview(application, 'revoke')}
+                                />
+                              ))}
+                            </div>
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                              <div className='mt-4 flex items-center justify-center gap-2 md:mt-6'>
+                                <Button
+                                  variant='outline'
+                                  size='sm'
+                                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                                  disabled={page === 0}
+                                  className='h-8 text-xs md:h-9 md:text-sm'
+                                >
+                                  Previous
+                                </Button>
+                                <span className='text-muted-foreground text-xs md:text-sm'>
+                                  Page {page + 1} of {totalPages}
+                                </span>
+                                <Button
+                                  variant='outline'
+                                  size='sm'
+                                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                                  disabled={page >= totalPages - 1}
+                                  className='h-8 text-xs md:h-9 md:text-sm'
+                                >
+                                  Next
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </section>
+
+                      {/* Review Dialog */}
+                      <ReviewDialog
+                        open={reviewDialogOpen}
+                        onOpenChange={setReviewDialogOpen}
+                        application={selectedApplication}
+                        action={reviewAction}
+                        onSubmit={handleSubmitReview}
+                        isLoading={decideMutation.isPending}
+                      />
+                    </div>
+                  )}
+
+                  {tabs === 'program-application' && (
+                    <div className='space-y-4 md:space-y-6'>
+                      <h3 className='text-md font-bold'>Instructor's Application to Train Programs</h3>
+
+                      <div className='grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4'>
+                        <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                          <div className='flex items-center gap-2 md:gap-3'>
+                            <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                              <FileText className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>Total</p>
+                              <p className='text-foreground text-base font-bold md:text-lg'>
+                                {programStats.total}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                          <div className='flex items-center gap-2 md:gap-3'>
+                            <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                              <Clock className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>Pending</p>
+                              <p className='text-foreground text-base font-bold md:text-lg'>
+                                {programStats.pending}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
+                          <div className='flex items-center gap-2 md:gap-3'>
+                            <div className='bg-muted rounded-lg p-1.5 md:p-2'>
+                              <CheckCircle2 className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>Approved</p>
+                              <p className='text-foreground text-base font-bold md:text-lg'>
+                                {programStats.approved}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className='border-border bg-card col-span-2 flex flex-row items-center justify-between rounded-lg border p-2.5 md:p-3 lg:col-span-1'>
+                          <div className='flex items-center gap-2 md:gap-3'>
+                            <div className='bg-destructive/10 rounded-lg p-1.5 md:p-2'>
+                              <XCircle className='text-destructive h-3.5 w-3.5 md:h-4 md:w-4' />
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>Revoked</p>
+                              <p className='text-foreground text-base font-bold md:text-lg'>
+                                {programStats.revoked}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className='text-muted-foreground'>|</div>
+
+                          <div className='flex items-center gap-2 md:gap-3'>
+                            <div className='bg-warning/10 rounded-lg p-1.5 md:p-2'>
+                              <AlertCircle className='text-warning/60 h-3.5 w-3.5 md:h-4 md:w-4' />
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>Rejected</p>
+                              <p className='text-foreground text-base font-bold md:text-lg'>
+                                {stats.rejected}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Filters and Search */}
+                      <section className='mb-4 md:mb-6'>
+                        <div className='flex flex-col gap-2 md:gap-3'>
+                          <div className='flex flex-wrap items-center gap-2 md:gap-3'>
+                            <Filter className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
+                            <select
+                              className='border-border bg-background rounded-md border px-2 py-1.5 text-xs md:px-3 md:py-2 md:text-sm'
+                              value={statusFilter}
+                              onChange={event => {
+                                setStatusFilter(event.target.value);
+                                setPage(0);
+                              }}
+                            >
+                              {statusOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            <select
+                              className='border-border bg-background rounded-md border px-2 py-1.5 text-xs md:px-3 md:py-2 md:text-sm'
+                              value={applicantTypeFilter}
+                              onChange={event => {
+                                setApplicantTypeFilter(event.target.value);
+                                setPage(0);
+                              }}
+                            >
+                              {applicantTypeOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            {(statusFilter || applicantTypeFilter) && (
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => {
+                                  setStatusFilter('');
+                                  setApplicantTypeFilter('');
+                                }}
+                                className='h-7 px-2 md:h-8 md:px-3'
+                              >
+                                <X className='h-3.5 w-3.5 md:h-4 md:w-4' />
+                              </Button>
+                            )}
+                          </div>
+                          <div className='relative'>
+                            <Search className='text-muted-foreground absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2 md:left-3 md:h-4 md:w-4' />
+                            <Input
+                              placeholder='Search by applicant name...'
+                              value={searchValue}
+                              onChange={event => setSearchValue(event.target.value)}
+                              className='w-full pl-8 text-xs md:pl-10 md:text-sm'
+                            />
+                            {searchValue && (
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => setSearchValue('')}
+                                className='absolute top-1/2 right-1 h-6 -translate-y-1/2 md:h-7'
+                              >
+                                <X className='h-3.5 w-3.5 md:h-4 md:w-4' />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* Applications Grid */}
+                      <section className={elimikaDesignSystem.spacing.content}>
+                        {programApplicationsQuery.isLoading ? (
+                          <div className='grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3'>
+                            {[...Array(6)].map((_, i) => (
+                              <Skeleton key={i} className='h-56 w-full md:h-64' />
+                            ))}
+                          </div>
+                        ) : filteredProgramApplications.length === 0 ? (
+                          <div className={elimikaDesignSystem.components.emptyState.container}>
+                            <FileText className={elimikaDesignSystem.components.emptyState.icon} />
+                            <h3
+                              className={`${elimikaDesignSystem.components.emptyState.title} text-sm md:text-base`}
+                            >
+                              {searchValue || statusFilter || applicantTypeFilter
+                                ? 'No applications found'
+                                : 'No training applications yet'}
+                            </h3>
+                            <p
+                              className={`${elimikaDesignSystem.components.emptyState.description} text-xs md:text-sm`}
+                            >
+                              {searchValue || statusFilter || applicantTypeFilter
+                                ? 'Try adjusting your search or filter criteria'
+                                : 'Applications will appear here when instructors or organizations apply to train your courses'}
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className='grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3'>
+                              {filteredProgramApplications.map((application: any) => (
+                                <ApplicationCard
+                                  type='program'
+                                  key={application.uuid}
+                                  application={application}
+                                  onApprove={() => handleReview(application, 'approve')}
+                                  onReject={() => handleReview(application, 'reject')}
+                                  onRevoke={() => handleReview(application, 'revoke')}
+                                />
+                              ))}
+                            </div>
+
+                            {/* Pagination */}
+                            {programTotalPages > 1 && (
+                              <div className='mt-4 flex items-center justify-center gap-2 md:mt-6'>
+                                <Button
+                                  variant='outline'
+                                  size='sm'
+                                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                                  disabled={page === 0}
+                                  className='h-8 text-xs md:h-9 md:text-sm'
+                                >
+                                  Previous
+                                </Button>
+                                <span className='text-muted-foreground text-xs md:text-sm'>
+                                  Page {page + 1} of {totalPages}
+                                </span>
+                                <Button
+                                  variant='outline'
+                                  size='sm'
+                                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                                  disabled={page >= totalPages - 1}
+                                  className='h-8 text-xs md:h-9 md:text-sm'
+                                >
+                                  Next
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </section>
+
+                      {/* Review Dialog */}
+                      <ReviewDialog
+                        open={reviewDialogOpen}
+                        onOpenChange={setReviewDialogOpen}
+                        application={selectedApplication}
+                        action={reviewAction}
+                        onSubmit={handleSubmitProgramReview}
+                        isLoading={decideProgramMutation.isPending}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </Card>
     </div>
   );
 };

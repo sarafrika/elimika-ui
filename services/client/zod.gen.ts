@@ -1234,14 +1234,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the points value.')
-      .readonly()
-      .optional(),
     question_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the points value.')
       .readonly()
       .optional(),
   })
@@ -3033,13 +3033,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
@@ -3058,6 +3051,13 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
+      .readonly()
+      .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
       .readonly()
       .optional(),
     total_duration_display: z
@@ -4206,6 +4206,7 @@ export const zCommerceCatalogueItemUpsertRequest = z
       .uuid()
       .describe('Class definition UUID to associate')
       .optional(),
+    program_uuid: z.string().uuid().describe('Training program UUID to associate').optional(),
     product_code: z.string().describe('Internal commerce product code'),
     variant_code: z.string().describe('Internal commerce variant code'),
     currency_code: z
@@ -4235,6 +4236,11 @@ export const zCommerceCatalogueItem = z
       .string()
       .uuid()
       .describe('Associated class definition UUID if mapping is class specific')
+      .optional(),
+    program_uuid: z
+      .string()
+      .uuid()
+      .describe('Associated training program UUID when mapping is program scoped')
       .optional(),
     product_code: z.string().describe('Internal commerce product code').optional(),
     variant_code: z.string().describe('Internal commerce variant code').optional(),
@@ -5749,14 +5755,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
     status_description: z
@@ -7438,11 +7444,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -7456,6 +7457,11 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -14775,6 +14781,7 @@ export const zResolveByCourseOrClassData = z.object({
     .object({
       course_uuid: z.string().uuid().optional(),
       class_uuid: z.string().uuid().optional(),
+      program_uuid: z.string().uuid().optional(),
     })
     .optional(),
 });
