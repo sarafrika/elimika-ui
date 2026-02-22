@@ -52,11 +52,12 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
     queries: students.map(student => ({
       ...getStudentScheduleOptions({
         path: { studentUuid: student.uuid as string },
-        query: { start: '2025-10-10' as any, end: '2026-12-19' as any },
+        query: { start: '2025-10-01' as any, end: '2030-12-31' as any },
       }),
       enabled: !!student.uuid,
     })),
   });
+
   const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data);
   const sortedEnrollments = detailedEnrollments.map(enrollments =>
     enrollments?.sort((a: any, b: any) => {
@@ -184,9 +185,8 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
           <div className='mb-6 space-y-2'>
             <button
               onClick={() => setSelectedFilter('all')}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                selectedFilter === 'all' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-              }`}
+              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${selectedFilter === 'all' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                }`}
             >
               <User size={16} />
               All
@@ -196,9 +196,8 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                 setSelectedFilter('active');
                 setIsMobileMenuOpen(false);
               }}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-              }`}
+              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                }`}
             >
               <UserCheck className='text-success/50' size={16} />
               Active
@@ -208,9 +207,8 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                 setSelectedFilter('inactive');
                 setIsMobileMenuOpen(false);
               }}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-              }`}
+              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                }`}
             >
               <UserX className='text-destructive/50' size={16} />
               Inactive
@@ -228,9 +226,8 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                    selectedCategory === category ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                  }`}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${selectedCategory === category ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                    }`}
                 >
                   <Building2 size={16} />
                   {category}
@@ -312,9 +309,8 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                     <div
                       key={student?.uuid}
                       onClick={() => handleStudentClick(student)}
-                      className={`group flex cursor-pointer items-center gap-3 p-4 transition-colors ${
-                        isSelected ? 'bg-muted' : 'hover:bg-muted/50'
-                      }`}
+                      className={`group flex cursor-pointer items-center gap-3 p-4 transition-colors ${isSelected ? 'bg-muted' : 'hover:bg-muted/50'
+                        }`}
                     >
                       <Avatar className='h-10 w-10'>
                         <AvatarImage src={student?.profile_image_url ?? ''} />
@@ -423,9 +419,8 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                   setSelectedFilter('all');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  selectedFilter === 'all' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                }`}
+                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${selectedFilter === 'all' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                  }`}
               >
                 <Mail size={16} />
                 All
@@ -435,9 +430,8 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                   setSelectedFilter('active');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                }`}
+                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                  }`}
               >
                 <UserCheck className='text-success/50' size={16} />
                 Active
@@ -447,9 +441,8 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                   setSelectedFilter('inactive');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                }`}
+                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                  }`}
               >
                 <UserX className='text-destructive/50' size={16} />
                 Inactive
@@ -469,11 +462,10 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                       setSelectedCategory(category);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                      selectedCategory === category
-                        ? 'bg-primary/10 text-primary'
-                        : 'hover:bg-muted'
-                    }`}
+                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${selectedCategory === category
+                      ? 'bg-primary/10 text-primary'
+                      : 'hover:bg-muted'
+                      }`}
                   >
                     <Building2 size={16} />
                     {category}
@@ -663,11 +655,10 @@ function StudentDetailsContent({
                           </p>
                         </div>
                         <div
-                          className={`rounded-full px-2 py-1 text-xs font-medium ${
-                            enrollment?.status === 'COMPLETED'
-                              ? 'text-success/70 bg-success/10'
-                              : 'text-primary/70 bg-primary/10'
-                          }`}
+                          className={`rounded-full px-2 py-1 text-xs font-medium ${enrollment?.status === 'COMPLETED'
+                            ? 'text-success/70 bg-success/10'
+                            : 'text-primary/70 bg-primary/10'
+                            }`}
                         >
                           {enrollment?.status || 'IN_PROGRESS'}
                         </div>

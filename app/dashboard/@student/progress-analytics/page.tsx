@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { useQuery } from '@tanstack/react-query';
 import React, { useMemo, useState } from 'react';
+import { useStudent } from '../../../../context/student-context';
+import { getStudentScheduleOptions } from '../../../../services/client/@tanstack/react-query.gen';
 
 type LessonProgress = {
   id: string;
@@ -23,66 +26,85 @@ type CourseProgress = {
 };
 
 const SAMPLE_COURSES: CourseProgress[] = [
-  {
-    id: 'course-001',
-    name: 'Course A',
-    lessons: [
-      {
-        id: 'l-001',
-        name: 'Lesson 1: Introduction',
-        completed: true,
-        score: 85,
-        timeMinutes: 25,
-        completedAt: '2026-01-05T09:00:00Z',
-      },
-      {
-        id: 'l-002',
-        name: 'Lesson 2: Advanced Topics',
-        completed: false,
-        score: null,
-        timeMinutes: 15,
-      },
-      {
-        id: 'l-003',
-        name: 'Lesson 3: Practice',
-        completed: true,
-        score: 92,
-        timeMinutes: 40,
-        completedAt: '2026-01-10T11:15:00Z',
-      },
-    ],
-  },
-  {
-    id: 'course-002',
-    name: 'Course B',
-    lessons: [
-      {
-        id: 'l-101',
-        name: 'Lesson 1: Setup',
-        completed: true,
-        score: 78,
-        timeMinutes: 20,
-        completedAt: '2026-02-01T10:00:00Z',
-      },
-      {
-        id: 'l-102',
-        name: 'Lesson 2: Basics',
-        completed: true,
-        score: 88,
-        timeMinutes: 30,
-        completedAt: '2026-02-03T08:30:00Z',
-      },
-      { id: 'l-103', name: 'Lesson 3: Project', completed: false, score: null, timeMinutes: 0 },
-    ],
-  },
+  // {
+  //   id: 'course-001',
+  //   name: 'Course A',
+  //   lessons: [
+  //     {
+  //       id: 'l-001',
+  //       name: 'Lesson 1: Introduction',
+  //       completed: true,
+  //       score: 85,
+  //       timeMinutes: 25,
+  //       completedAt: '2026-01-05T09:00:00Z',
+  //     },
+  //     {
+  //       id: 'l-002',
+  //       name: 'Lesson 2: Advanced Topics',
+  //       completed: false,
+  //       score: null,
+  //       timeMinutes: 15,
+  //     },
+  //     {
+  //       id: 'l-003',
+  //       name: 'Lesson 3: Practice',
+  //       completed: true,
+  //       score: 92,
+  //       timeMinutes: 40,
+  //       completedAt: '2026-01-10T11:15:00Z',
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: 'course-002',
+  //   name: 'Course B',
+  //   lessons: [
+  //     {
+  //       id: 'l-101',
+  //       name: 'Lesson 1: Setup',
+  //       completed: true,
+  //       score: 78,
+  //       timeMinutes: 20,
+  //       completedAt: '2026-02-01T10:00:00Z',
+  //     },
+  //     {
+  //       id: 'l-102',
+  //       name: 'Lesson 2: Basics',
+  //       completed: true,
+  //       score: 88,
+  //       timeMinutes: 30,
+  //       completedAt: '2026-02-03T08:30:00Z',
+  //     },
+  //     { id: 'l-103', name: 'Lesson 3: Project', completed: false, score: null, timeMinutes: 0 },
+  //   ],
+  // },
 ];
 
 const StudentProgressAnalytics: React.FC = () => {
+  const student = useStudent()
   const [courses] = useState<CourseProgress[]>(SAMPLE_COURSES);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('all');
   const [lessonQuery, setLessonQuery] = useState('');
   const [goal, setGoal] = useState('Complete all lessons by next month');
   const [goalInput, setGoalInput] = useState('');
+
+  const { data } = useQuery({
+    ...getStudentScheduleOptions({
+      path: { studentUuid: student?.uuid as string },
+      query: { start: '2025-10-01' as any, end: '2030-12-31' as any },
+    }),
+    enabled: !!student?.uuid,
+  });
+
+  const detailedEnrollments = data?.data ?? [];
+
+  const enrolledClasses = detailedEnrollments.filter(
+    (enrollment: any, index: number, self: any[]) =>
+      index ===
+      self.findIndex(
+        e => e.class_definition_uuid === enrollment.class_definition_uuid
+      )
+  );
 
   // flatten lessons when needed
   const allLessons = useMemo(
@@ -114,7 +136,7 @@ const StudentProgressAnalytics: React.FC = () => {
     const completionRate = totalLessons ? Math.round((completed / totalLessons) * 100) : 0;
     const avgScore = Math.round(
       sourceLessons.filter(l => l.score != null).reduce((s, l) => s + (l.score ?? 0), 0) /
-        Math.max(1, sourceLessons.filter(l => l.score != null).length) || 0
+      Math.max(1, sourceLessons.filter(l => l.score != null).length) || 0
     );
     return { totalLessons, completed, totalTime, avgTime, completionRate, avgScore };
   }, [allLessons, selectedCourseId]);

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { elimikaDesignSystem } from '@/lib/design-system';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import {
   ChevronDown,
   DollarSign,
@@ -36,6 +36,7 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import {
+  getCourseEnrollmentsOptions,
   getWalletOptions,
   listTransactionsOptions,
   transferMutation,
@@ -110,6 +111,19 @@ const RevenuePage = () => {
   };
 
   const courses = courseCreator?.courses;
+  const enrollmentQueries = useQueries({
+    queries: (courses || []).map(course =>
+      getCourseEnrollmentsOptions({
+        path: { courseUuid: course.uuid },
+        query: { pageable: {} },
+      })
+    ),
+  });
+
+  const coursesWithEnrollments = courses?.map((course, index) => ({
+    ...course,
+    enrollments: enrollmentQueries[index]?.data?.data?.content,
+  }));
 
   const { data: walletData } = useQuery({
     ...getWalletOptions({ path: { userUuid: userUuid as string } }),
@@ -656,13 +670,19 @@ const RevenuePage = () => {
               <h3 className='text-foreground text-lg font-semibold'>Revenue by Course</h3>
               <p className='text-muted-foreground mt-1 text-sm'>Top performing courses</p>
             </div>
+
             <div className='space-y-5 p-6'>
-              {courses.slice(0, 5).map((item, index) => (
+              {coursesWithEnrollments.slice(0, 5).map((item, index) => (
                 <div key={index}>
                   <div className='mb-2 flex items-center justify-between'>
-                    <span className='text-foreground max-w-[60%] truncate pr-2 text-sm font-medium'>
-                      {item.name}
-                    </span>
+                    <div className='flex flex-col w-full' >
+                      <span className='text-foreground max-w-[60%] truncate pr-2 text-sm font-medium'>
+                        {item.name}
+                      </span>
+                      <span className='text-foreground truncate pr-2 text-sm font-medium'>
+                        {item?.enrollments?.length} enrollments
+                      </span>
+                    </div>
                     <span className='text-foreground text-sm font-semibold'>
                       {/* KES {item.revenue.toLocaleString()} */}
                       KES {0}

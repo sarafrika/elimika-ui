@@ -20326,6 +20326,7 @@ export const searchCatalogueQueryKey = (options: Options<SearchCatalogueData>) =
  * **Examples:**
  * - `publiclyVisible=true&active=true` — public, active catalogue entries
  * - `courseUuid=<uuid>` — catalogue entries for a course
+ * - `programUuid=<uuid>` — catalogue entries for a training program
  * - `classDefinitionUuid=<uuid>&active=true` — active class-level entries
  * - `variantCode_like=starter` — variant codes containing `starter`
  *
@@ -20358,6 +20359,7 @@ export const searchCatalogueInfiniteQueryKey = (
  * **Examples:**
  * - `publiclyVisible=true&active=true` — public, active catalogue entries
  * - `courseUuid=<uuid>` — catalogue entries for a course
+ * - `programUuid=<uuid>` — catalogue entries for a training program
  * - `classDefinitionUuid=<uuid>&active=true` — active class-level entries
  * - `variantCode_like=starter` — variant codes containing `starter`
  *
@@ -20405,8 +20407,8 @@ export const resolveByCourseOrClassQueryKey = (options?: Options<ResolveByCourse
   createQueryKey('resolveByCourseOrClass', options);
 
 /**
- * Resolve catalogue mappings by course or class
- * Returns all catalogue entries for the provided course or class
+ * Resolve catalogue mappings by course, class, or program
+ * Returns all catalogue entries for the provided course, class, or training program
  */
 export const resolveByCourseOrClassOptions = (options?: Options<ResolveByCourseOrClassData>) => {
   return queryOptions({
