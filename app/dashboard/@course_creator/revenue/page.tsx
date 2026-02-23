@@ -23,7 +23,6 @@ import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import {
   ChevronDown,
   DollarSign,
-  Download,
   Eye,
   EyeOff,
   Landmark,
@@ -31,7 +30,7 @@ import {
   Send,
   ShoppingCart,
   TrendingUp,
-  Users,
+  Users
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useCourseCreator } from '../../../../context/course-creator-context';
@@ -360,10 +359,10 @@ const RevenuePage = () => {
               <option value='90days'>Last 90 days</option>
               <option value='year'>This year</option>
             </select>
-            <Button className='flex items-center gap-2'>
+            {/* <Button className='flex items-center gap-2'>
               <Download size={16} />
               Export
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>

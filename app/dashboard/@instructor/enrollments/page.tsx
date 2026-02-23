@@ -12,6 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { elimikaDesignSystem } from '@/lib/design-system';
@@ -22,12 +29,11 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import {
-  Award,
   BookOpen,
-  Filter,
+  ChevronRight,
+  ExternalLink,
   GraduationCap,
   Search,
-  Send,
   TrendingUp,
   Users,
   X
@@ -45,6 +51,10 @@ const EnrollmentsPage = () => {
   const [studentSearchQuery, setStudentSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'enrollments'>('name');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedStudentForSheet, setSelectedStudentForSheet] = useState<any>(null);
+  const [isStudentDetailsSheetOpen, setIsStudentDetailsSheetOpen] = useState(false);
+  const [isStudentsListSheetOpen, setIsStudentsListSheetOpen] = useState(false);
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
   // Fetch classes
   const { data: classesData, isLoading: isLoadingClasses } = useQuery({
@@ -98,13 +108,12 @@ const EnrollmentsPage = () => {
     );
 
     if (sortBy === 'enrollments') {
-      filtered.sort((a: any, b: any) =>
-        (enrollmentCountsByClass[b.uuid] || 0) - (enrollmentCountsByClass[a.uuid] || 0)
+      filtered.sort(
+        (a: any, b: any) =>
+          (enrollmentCountsByClass[b.uuid] || 0) - (enrollmentCountsByClass[a.uuid] || 0)
       );
     } else {
-      filtered.sort((a: any, b: any) =>
-        (a.title || '').localeCompare(b.title || '')
-      );
+      filtered.sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''));
     }
 
     return filtered;
@@ -154,32 +163,47 @@ const EnrollmentsPage = () => {
     router.push(`/dashboard/enrollments/${selectedClassId}?id=${studentUuid}`);
   };
 
+  // const handleStudentClick = (student: any) => {
+  //   setSelectedStudentForSheet(student);
+  //   setIsStudentDetailsSheetOpen(true);
+  // };
+  const handleStudentClick = (student: any) => {
+    setExpandedStudentId(prev =>
+      prev === student.uuid ? null : student.uuid
+    );
+  };
+
+
+  const handleClassSelect = (classUuid: string) => {
+    setSelectedClassId(classUuid);
+    setShowFilters(false);
+    // On mobile, open students sheet when class is selected
+    if (window.innerWidth < 1024) {
+      setIsStudentsListSheetOpen(true);
+    }
+  };
+
+  const getEnrollmentForStudent = (studentUuid: string) => {
+    return enrollmentsForSelectedClass.find((e: any) => e.student_uuid === studentUuid);
+  };
+
   return (
     <div className={`${elimikaDesignSystem.components.pageContainer} space-y-4 px-4 py-4 sm:px-6`}>
       {/* Header */}
       <section>
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='flex flex-col gap-2'>
           <div>
             <h1 className='text-foreground text-lg font-bold sm:text-xl'>Enrollments</h1>
             <p className='text-muted-foreground mt-0.5 text-xs sm:text-sm'>
               Manage and track student enrollments across all your classes
             </p>
           </div>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => setShowFilters(!showFilters)}
-            className='w-full sm:w-auto lg:hidden'
-          >
-            <Filter className='mr-1.5 h-3.5 w-3.5' />
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
         </div>
       </section>
 
       {/* KPI Cards */}
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
-        <Card className='p-0'>
+        <Card className='border-border/50 bg-gradient-to-br from-primary/5 to-transparent p-0 transition-shadow hover:shadow-md'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-primary/10 rounded-lg p-2'>
@@ -187,13 +211,13 @@ const EnrollmentsPage = () => {
               </div>
               <div className='min-w-0 flex-1'>
                 <p className='text-muted-foreground text-xs'>Total Students</p>
-                <h3 className='text-lg font-bold'>{totalStudents}</h3>
+                <h3 className='text-foreground text-lg font-bold'>{totalStudents}</h3>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className='p-0'>
+        <Card className='border-border/50 bg-gradient-to-br from-chart-1/5 to-transparent p-0 transition-shadow hover:shadow-md'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-chart-1/10 rounded-lg p-2'>
@@ -201,13 +225,13 @@ const EnrollmentsPage = () => {
               </div>
               <div className='min-w-0 flex-1'>
                 <p className='text-muted-foreground text-xs'>Active Classes</p>
-                <h3 className='text-lg font-bold'>{totalClasses}</h3>
+                <h3 className='text-foreground text-lg font-bold'>{totalClasses}</h3>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className='p-0'>
+        <Card className='border-border/50 bg-gradient-to-br from-chart-2/5 to-transparent p-0 transition-shadow hover:shadow-md'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-chart-2/10 rounded-lg p-2'>
@@ -215,13 +239,13 @@ const EnrollmentsPage = () => {
               </div>
               <div className='min-w-0 flex-1'>
                 <p className='text-muted-foreground text-xs'>Avg per Class</p>
-                <h3 className='text-lg font-bold'>{avgEnrollment.toFixed(0)}</h3>
+                <h3 className='text-foreground text-lg font-bold'>{avgEnrollment.toFixed(0)}</h3>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className='p-0'>
+        <Card className='border-border/50 bg-gradient-to-br from-chart-3/5 to-transparent p-0 transition-shadow hover:shadow-md'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-chart-3/10 rounded-lg p-2'>
@@ -229,7 +253,7 @@ const EnrollmentsPage = () => {
               </div>
               <div className='min-w-0 flex-1'>
                 <p className='text-muted-foreground text-xs'>Current Class</p>
-                <h3 className='text-lg font-bold'>
+                <h3 className='text-foreground text-lg font-bold'>
                   {enrollmentCountsByClass[selectedClassId || ''] || 0}
                 </h3>
               </div>
@@ -241,8 +265,8 @@ const EnrollmentsPage = () => {
       {/* Main Content */}
       <div className='grid gap-4 lg:grid-cols-12'>
         {/* Left Sidebar - Class List */}
-        <div className={`space-y-3 lg:col-span-4 ${!showFilters && 'hidden lg:block'}`}>
-          <Card className='p-3'>
+        <div className='space-y-3 lg:col-span-4'>
+          <Card className='border-border/50 p-3'>
             {/* Search and Sort */}
             <div className='space-y-2'>
               <div className='relative'>
@@ -250,13 +274,13 @@ const EnrollmentsPage = () => {
                 <Input
                   placeholder='Search classes...'
                   value={classSearchQuery}
-                  onChange={(e) => setClassSearchQuery(e.target.value)}
-                  className='h-8 pl-8 pr-8 text-sm'
+                  onChange={e => setClassSearchQuery(e.target.value)}
+                  className='h-8 border-border/50 pl-8 pr-8 text-sm focus-visible:ring-primary/20'
                 />
                 {classSearchQuery && (
                   <button
                     onClick={() => setClassSearchQuery('')}
-                    className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2'
+                    className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors'
                   >
                     <X className='h-3.5 w-3.5' />
                   </button>
@@ -264,7 +288,7 @@ const EnrollmentsPage = () => {
               </div>
 
               <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                <SelectTrigger className='h-8 text-sm'>
+                <SelectTrigger className='h-8 border-border/50 text-sm focus:ring-primary/20'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -275,7 +299,7 @@ const EnrollmentsPage = () => {
             </div>
 
             {/* Class List */}
-            <div className='max-h-[calc(100vh-420px)] space-y-1.5 overflow-y-auto no-scrollbar'>
+            <div className='no-scrollbar mt-3 max-h-[calc(100vh-420px)] space-y-1.5 overflow-y-auto'>
               {isLoadingClasses ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <Card key={i} className='p-2.5'>
@@ -297,18 +321,15 @@ const EnrollmentsPage = () => {
                   return (
                     <Card
                       key={classItem.uuid}
-                      onClick={() => {
-                        setSelectedClassId(classItem.uuid);
-                        setShowFilters(false);
-                      }}
-                      className={`cursor-pointer p-2.5 transition-all hover:shadow-md ${isSelected
-                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                        : 'hover:bg-muted/50'
+                      onClick={() => handleClassSelect(classItem.uuid)}
+                      className={`group cursor-pointer border-border/50 p-2.5 transition-all hover:shadow-md ${isSelected
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                        : 'hover:border-border hover:bg-accent/5'
                         }`}
                     >
                       <div className='flex items-start justify-between gap-2'>
                         <div className='min-w-0 flex-1'>
-                          <h4 className='truncate text-sm font-semibold'>
+                          <h4 className='text-foreground truncate text-sm font-semibold'>
                             {classItem.title || 'Unnamed Class'}
                           </h4>
                           <p className='text-muted-foreground mt-0.5 truncate text-xs'>
@@ -322,12 +343,6 @@ const EnrollmentsPage = () => {
                           {enrollmentCount}
                         </Badge>
                       </div>
-                      {isSelected && (
-                        <div className='mt-1.5 flex items-center gap-1'>
-                          <Award className='text-primary h-3 w-3' />
-                          <span className='text-primary text-xs font-medium'>Selected</span>
-                        </div>
-                      )}
                     </Card>
                   );
                 })
@@ -336,18 +351,19 @@ const EnrollmentsPage = () => {
           </Card>
         </div>
 
-        {/* Right Content - Student List */}
-        <div className='space-y-3 lg:col-span-8'>
+        {/* Right Content - Student List (Desktop Only) */}
+        <div className='hidden space-y-3 lg:col-span-8 lg:block'>
           {/* Student Search and Info */}
           {selectedClassId && (
-            <Card className='p-3'>
+            <Card className='border-border/50 p-3'>
               <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                 <div className='flex-1'>
-                  <h3 className='text-base font-semibold'>
+                  <h3 className='text-foreground text-base font-semibold'>
                     {selectedClass?.title || 'Class Details'}
                   </h3>
                   <p className='text-muted-foreground mt-0.5 text-xs'>
-                    {filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} enrolled
+                    {filteredStudents.length}{' '}
+                    {filteredStudents.length === 1 ? 'student' : 'students'} enrolled
                   </p>
                 </div>
 
@@ -356,13 +372,13 @@ const EnrollmentsPage = () => {
                   <Input
                     placeholder='Search students...'
                     value={studentSearchQuery}
-                    onChange={(e) => setStudentSearchQuery(e.target.value)}
-                    className='h-8 pl-8 pr-8 text-sm'
+                    onChange={e => setStudentSearchQuery(e.target.value)}
+                    className='h-8 border-border/50 pl-8 pr-8 text-sm focus-visible:ring-primary/20'
                   />
                   {studentSearchQuery && (
                     <button
                       onClick={() => setStudentSearchQuery('')}
-                      className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2'
+                      className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors'
                     >
                       <X className='h-3.5 w-3.5' />
                     </button>
@@ -372,24 +388,236 @@ const EnrollmentsPage = () => {
             </Card>
           )}
 
-          {/* Students Grid */}
-          <div className='overflow-hidden rounded-lg border bg-card'>
-            <ul className='divide-y'>
-              {filteredStudents.map((student: any) => {
-                const enrollment = enrollmentsForSelectedClass.find(
-                  (e: any) => e.student_uuid === student?.uuid
-                );
+          {/* Students List */}
+          {selectedClassId === null ? (
+            <Card className='border-border/50 p-8 text-center sm:p-10'>
+              <div className='bg-muted/50 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
+                <BookOpen className='text-muted-foreground h-6 w-6 sm:h-7 sm:w-7' />
+              </div>
+              <h3 className='text-foreground mb-1.5 text-base font-semibold'>Select a Class</h3>
+              <p className='text-muted-foreground mx-auto max-w-sm text-xs sm:text-sm'>
+                Choose a class from the sidebar to view its enrolled students
+              </p>
+            </Card>
+          ) : isLoadingEnrollments || isLoadingStudents ? (
+            <Card className='border-border/50 overflow-hidden'>
+              <ul className='divide-y divide-border/50'>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <li key={i} className='p-4'>
+                    <div className='flex items-center gap-3'>
+                      <Skeleton className='h-10 w-10 rounded-full' />
+                      <div className='flex-1 space-y-1.5'>
+                        <Skeleton className='h-3.5 w-32' />
+                        <Skeleton className='h-3 w-40' />
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : filteredStudents.length === 0 ? (
+            <Card className='border-border/50 p-8 text-center sm:p-10'>
+              <div className='bg-muted/50 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
+                <Users className='text-muted-foreground h-6 w-6 sm:h-7 sm:w-7' />
+              </div>
+              <h3 className='text-foreground mb-1.5 text-base font-semibold'>
+                {studentSearchQuery ? 'No Students Found' : 'No Enrollments Yet'}
+              </h3>
+              <p className='text-muted-foreground mx-auto max-w-sm text-xs sm:text-sm'>
+                {studentSearchQuery
+                  ? 'Try adjusting your search query'
+                  : 'Students will appear here once they enroll in this class'}
+              </p>
+            </Card>
+          ) : (
+            <Card className='border-border/50 overflow-hidden bg-card'>
+              <ul className='divide-y divide-border/50'>
+                {filteredStudents.map((student: any) => {
+                  const enrollment = getEnrollmentForStudent(student?.uuid);
+
+                  return (
+                    <li
+                      key={student?.uuid}
+                      className='group transition-colors hover:bg-accent/5'
+                    >
+                      <div className='flex items-center gap-3 p-3 sm:gap-4 sm:p-4'>
+                        {/* Avatar & Info */}
+                        <div className='flex min-w-0 flex-1 items-center gap-3'>
+                          <Avatar className='border-border h-10 w-10 border ring-2 ring-background'>
+                            <AvatarImage src={student?.avatar_url} />
+                            <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
+                              {student?.full_name
+                                ?.split(' ')
+                                .map((n: any) => n[0])
+                                .join('')
+                                .toUpperCase() || '??'}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className='min-w-0 flex-1'>
+                            <div className='flex items-center gap-2'>
+                              <h4 className='text-foreground truncate text-sm font-semibold'>
+                                {student?.full_name || 'Unknown Student'}
+                              </h4>
+                              <Badge
+                                variant='outline'
+                                className='border-success/30 bg-success/10 text-success hidden shrink-0 text-xs sm:inline-flex'
+                              >
+                                Active
+                              </Badge>
+                            </div>
+
+                            <p className='text-muted-foreground truncate text-xs'>
+                              ID: {student?.student_id || student?.uuid?.slice(0, 8)}
+                            </p>
+
+                            {student?.email && (
+                              <p className='text-muted-foreground hidden truncate text-xs sm:block'>
+                                {student.email}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Progress (Desktop) */}
+                        {enrollment?.progress_percentage !== undefined && (
+                          <div className='hidden w-32 shrink-0 lg:block'>
+                            <div className='mb-1 flex justify-between text-xs'>
+                              <span className='text-muted-foreground'>Progress</span>
+                              <span className='text-foreground font-medium'>
+                                {enrollment.progress_percentage}%
+                              </span>
+                            </div>
+                            <div className='bg-muted h-1.5 w-full overflow-hidden rounded-full'>
+                              <div
+                                className='bg-primary h-full rounded-full transition-all'
+                                style={{ width: `${enrollment.progress_percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className='hidden shrink-0 items-center gap-2 md:flex'>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => handleViewProfile(student?.uuid as string)}
+                            className='text-primary hover:bg-primary/10 hover:text-primary h-8 text-xs'
+                          >
+                            View Enrollment
+                          </Button>
+
+                          <a
+                            href={`/profile-user/${student?.user_uuid}?domain=${'student'}`}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='text-primary hover:bg-primary/10 hover:text-primary h-8 text-xs'
+                            >
+                              <ExternalLink className='mr-1.5 h-3 w-3' />
+                              Profile
+                            </Button>
+                          </a>
+                        </div>
+
+                        {/* Mobile: Show Sheet Button */}
+                        <button
+                          onClick={() => handleStudentClick(student)}
+                          className='text-muted-foreground hover:text-foreground shrink-0 transition-colors md:hidden'
+                        >
+                          <ChevronRight className='h-5 w-5' />
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Students List Sheet */}
+      <Sheet open={isStudentsListSheetOpen} onOpenChange={setIsStudentsListSheetOpen}>
+        <SheetContent side='right' className='w-full sm:max-w-md'>
+          <SheetHeader className='mb-4'>
+            <SheetTitle className='text-foreground'>
+              {selectedClass?.title || 'Students'}
+            </SheetTitle>
+            <SheetDescription className='text-muted-foreground'>
+              {filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} enrolled
+            </SheetDescription>
+          </SheetHeader>
+
+          {/* Student Search */}
+          <div className='mb-4 mx-4'>
+            <div className='relative'>
+              <Search className='text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2' />
+              <Input
+                placeholder='Search students...'
+                value={studentSearchQuery}
+                onChange={e => setStudentSearchQuery(e.target.value)}
+                className='h-8 border-border/50 pl-8 pr-8 text-sm focus-visible:ring-primary/20'
+              />
+              {studentSearchQuery && (
+                <button
+                  onClick={() => setStudentSearchQuery('')}
+                  className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors'
+                >
+                  <X className='h-3.5 w-3.5' />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Students List */}
+          <div className='space-y-2 mx-4'>
+            {isLoadingEnrollments || isLoadingStudents ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className='flex items-center gap-3 rounded-lg border border-border/50 p-3'>
+                  <Skeleton className='h-10 w-10 rounded-full' />
+                  <div className='flex-1 space-y-1.5'>
+                    <Skeleton className='h-3.5 w-32' />
+                    <Skeleton className='h-3 w-40' />
+                  </div>
+                </div>
+              ))
+            ) : filteredStudents.length === 0 ? (
+              <div className='border-border/50 rounded-lg border p-8 text-center'>
+                <div className='bg-muted/50 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full'>
+                  <Users className='text-muted-foreground h-6 w-6' />
+                </div>
+                <h3 className='text-foreground mb-1.5 text-sm font-semibold'>
+                  {studentSearchQuery ? 'No Students Found' : 'No Enrollments Yet'}
+                </h3>
+                <p className='text-muted-foreground text-xs'>
+                  {studentSearchQuery
+                    ? 'Try adjusting your search query'
+                    : 'Students will appear here once they enroll'}
+                </p>
+              </div>
+            ) : (
+              filteredStudents.map((student: any) => {
+                const enrollment = getEnrollmentForStudent(student?.uuid);
+                const isExpanded = expandedStudentId === student?.uuid;
 
                 return (
-                  <li
+                  <div
                     key={student?.uuid}
-                    className='flex items-center justify-between gap-4 p-4 hover:bg-muted/40 transition-colors'
+                    className='rounded-lg border border-border/50 transition-colors'
                   >
-                    {/* Left Section */}
-                    <div className='flex items-center gap-3 min-w-0 flex-1'>
-                      <Avatar className='h-10 w-10 border'>
+                    <div
+                      onClick={() => handleStudentClick(student)}
+                      className='group flex cursor-pointer items-center gap-3 p-3 hover:bg-accent/5'
+                    >
+                      <Avatar className='border-border h-10 w-10 border ring-2 ring-background'>
                         <AvatarImage src={student?.avatar_url} />
-                        <AvatarFallback className='text-xs font-semibold'>
+                        <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
                           {student?.full_name
                             ?.split(' ')
                             .map((n: any) => n[0])
@@ -400,10 +628,13 @@ const EnrollmentsPage = () => {
 
                       <div className='min-w-0 flex-1'>
                         <div className='flex items-center gap-2'>
-                          <h4 className='truncate text-sm font-semibold'>
+                          <h4 className='text-foreground truncate text-sm font-semibold'>
                             {student?.full_name || 'Unknown Student'}
                           </h4>
-                          <Badge variant='outline' className='text-xs'>
+                          <Badge
+                            variant='outline'
+                            className='border-success/30 bg-success/10 text-success shrink-0 text-xs sm:inline-flex'
+                          >
                             Active
                           </Badge>
                         </div>
@@ -411,61 +642,65 @@ const EnrollmentsPage = () => {
                         <p className='text-muted-foreground truncate text-xs'>
                           ID: {student?.student_id || student?.uuid?.slice(0, 8)}
                         </p>
-
-                        {student?.email && (
-                          <p className='text-muted-foreground truncate text-xs'>
-                            {student.email}
-                          </p>
-                        )}
                       </div>
+
+                      <ChevronRight
+                        className={`h-5 w-5 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''
+                          }`}
+                      />
                     </div>
 
-                    {/* Middle Section (Progress) */}
-                    {enrollment?.progress_percentage !== undefined && (
-                      <div className='hidden w-40 sm:block'>
-                        <div className='mb-1 flex justify-between text-xs'>
-                          <span className='text-muted-foreground'>Progress</span>
-                          <span className='font-medium'>
-                            {enrollment.progress_percentage}%
-                          </span>
-                        </div>
-                        <div className='bg-muted h-1.5 w-full rounded-full overflow-hidden'>
-                          <div
-                            className='bg-primary h-full transition-all'
-                            style={{ width: `${enrollment.progress_percentage}%` }}
-                          />
+                    {isExpanded && (
+                      <div className='space-y-4 border-t border-border/50 px-4 pb-4'>
+                        {/* Progress */}
+                        {enrollment?.progress_percentage !== undefined && (
+                          <div>
+                            <div className='flex justify-between text-xs mb-1'>
+                              <span>Progress</span>
+                              <span>{enrollment.progress_percentage}%</span>
+                            </div>
+                            <div className='bg-muted h-2 w-full rounded-full overflow-hidden'>
+                              <div
+                                className='bg-primary h-full'
+                                style={{ width: `${enrollment.progress_percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className='flex gap-2 pt-2'>
+                          <Button
+                            size='sm'
+                            className='flex-1 text-primary'
+                            variant="outline"
+                            onClick={() => handleViewProfile(student?.uuid)}
+                          >
+                            View Enrollment Info
+                          </Button>
+
+                          <a
+                            href={`/profile-user/${student?.user_uuid}?domain=student`}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='flex-1'
+                          >
+
+                            <Button size='sm' variant='outline' className='w-full text-primary'>
+                              <ExternalLink className='mr-1.5 h-3 w-3' />
+                              Profile
+                            </Button>
+                          </a>
                         </div>
                       </div>
                     )}
-
-                    {/* Right Section (Action) */}
-                    <Button
-                      size='sm'
-                      className='h-8 text-xs'
-                      onClick={() => handleViewProfile(student?.uuid as string)}
-                    >
-                      View
-                    </Button>
-
-                    <a
-                      href={`/profile-user/${student?.user_uuid}?domain=${'student'}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='text-primary flex cursor-pointer items-start justify-start self-start rounded-md p-2 transition hover:bg-gray-100'
-                    >
-                      <div className='flex items-center gap-1 text-sm'>
-                        <Send size={16} className='text-primary' />
-                        <span className='truncate'>View full profile</span>
-                      </div>
-                    </a>
-                  </li>
+                  </div>
                 );
-              })}
-            </ul>
+              })
+            )}
           </div>
-
-        </div>
-      </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

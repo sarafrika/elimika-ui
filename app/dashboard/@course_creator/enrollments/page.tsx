@@ -2,7 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,14 +18,12 @@ import {
   BookOpen,
   CheckCircle2,
   Clock,
-  Download,
-  Filter,
   GraduationCap,
   Mail,
   Search,
   Send,
   TrendingUp,
-  Users,
+  Users
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -106,6 +103,24 @@ const EnrollmentsPage = () => {
     };
   });
 
+  const [searchValue, setSearchValue] = useState("");
+  const filteredEnrollments = useMemo(() => {
+    if (!searchValue.trim()) return enrichedEnrollments;
+
+    const term = searchValue.toLowerCase();
+
+    return enrichedEnrollments.filter((enrollment) => {
+      return (
+        enrollment.first_name?.toLowerCase().includes(term) ||
+        enrollment.last_name?.toLowerCase().includes(term) ||
+        enrollment.email?.toLowerCase().includes(term) ||
+        enrollment.full_name?.toLowerCase().includes(term) ||
+        enrollment.display_name?.toString().includes(term)
+      );
+    });
+  }, [enrichedEnrollments, searchValue]);
+
+
   // Filter courses by search
   const filteredCourses = courses.filter(course =>
     course.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -135,10 +150,10 @@ const EnrollmentsPage = () => {
               Track and manage all student enrollments across your courses
             </p>
           </div>
-          <Button variant='outline' className='sm:mt-0' onClick={handleExportEnrollments}>
+          {/* <Button variant='outline' className='sm:mt-0' onClick={handleExportEnrollments}>
             <Download className='mr-2 h-4 w-4' />
             Export Data
-          </Button>
+          </Button> */}
         </div>
 
         {/* Stats Cards */}
@@ -223,11 +238,10 @@ const EnrollmentsPage = () => {
                       <button
                         key={course.uuid}
                         onClick={() => setSelectedCourseId(course.uuid)}
-                        className={`group flex w-full items-start gap-3 rounded-lg border p-4 text-left transition-all ${
-                          isSelected
-                            ? 'border-primary bg-primary/5 shadow-sm'
-                            : 'bg-muted/50 hover:border-border hover:bg-muted border-transparent hover:shadow-sm'
-                        }`}
+                        className={`group flex w-full items-start gap-3 rounded-lg border p-4 text-left transition-all ${isSelected
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'bg-muted/50 hover:border-border hover:bg-muted border-transparent hover:shadow-sm'
+                          }`}
                       >
                         <div
                           className={`mt-1 rounded-md p-2 ${isSelected ? 'bg-primary/10' : 'bg-background'}`}
@@ -279,12 +293,12 @@ const EnrollmentsPage = () => {
                     </p>
                   )}
                 </div>
-                {selectedCourseId && enrichedEnrollments.length > 0 && (
+                {/* {selectedCourseId && enrichedEnrollments.length > 0 && (
                   <Button variant='outline' size='sm'>
                     <Filter className='mr-2 h-4 w-4' />
                     Filter
                   </Button>
-                )}
+                )} */}
               </div>
             </CardHeader>
 
@@ -317,22 +331,29 @@ const EnrollmentsPage = () => {
                       </div>
                     ))}
                   </div>
-                ) : enrichedEnrollments.length === 0 ? (
-                  <div className='flex flex-col items-center justify-center px-4 py-16'>
-                    <div className='bg-muted mb-4 rounded-full p-6'>
-                      <Users className='text-muted-foreground h-12 w-12' />
-                    </div>
-                    <h3 className='text-foreground mb-2 text-lg font-semibold'>
-                      No Enrollments Yet
-                    </h3>
-                    <p className='text-muted-foreground max-w-sm text-center text-sm'>
-                      This course doesn't have any enrolled students yet. Students who enroll will
-                      appear here.
-                    </p>
-                  </div>
                 ) : (
                   <div className='divide-y'>
-                    {enrichedEnrollments.map((enrollment, index) => (
+                    <div className="mx-3 relative">
+                      <input
+                        type="text"
+                        placeholder="Search students..."
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        className="w-full border rounded-[8px] px-3 py-2 pr-10 mb-4 text-sm"
+                      />
+
+                      {searchValue && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchValue("")}
+                          className="absolute right-3 top-2 text-muted-foreground text-sm"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    {filteredEnrollments.map((enrollment, index) => (
                       <div
                         key={enrollment.uuid}
                         className='group hover:bg-muted/50 flex items-center gap-4 p-4 transition-colors'
@@ -388,6 +409,20 @@ const EnrollmentsPage = () => {
                         </a>
                       </div>
                     ))}
+
+                    {filteredEnrollments.length === 0 && (
+                      <div className='flex flex-col items-center justify-center px-4 py-16'>
+                        <div className='bg-muted mb-4 rounded-full p-6'>
+                          <Users className='text-muted-foreground h-12 w-12' />
+                        </div>
+                        <h3 className='text-foreground mb-2 text-lg font-semibold'>
+                          No Enrollments Yet
+                        </h3>
+                        <p className='text-muted-foreground max-w-sm text-center text-sm'>
+                          This course doesn't have any enrolled students yet. Students who enroll will
+                          appear here.
+                        </p>
+                      </div>)}
                   </div>
                 )}
               </div>
