@@ -131,15 +131,15 @@ export default function CourseBuilderPage() {
       // @ts-expect-error
       training_requirements: Array.isArray(c.training_requirements)
         ? c.training_requirements.map(req => ({
-            uuid: req.uuid,
-            requirement_type: req.requirement_type,
-            name: req.name,
-            description: req.description ?? '',
-            quantity: req.quantity ?? undefined,
-            unit: req.unit ?? '',
-            provided_by: req.provided_by ?? 'course_creator',
-            is_mandatory: !!req.is_mandatory,
-          }))
+          uuid: req.uuid,
+          requirement_type: req.requirement_type,
+          name: req.name,
+          description: req.description ?? '',
+          quantity: req.quantity ?? undefined,
+          unit: req.unit ?? '',
+          provided_by: req.provided_by ?? 'course_creator',
+          is_mandatory: !!req.is_mandatory,
+        }))
         : [],
     });
   }, [courseId, course]);
@@ -202,7 +202,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   if (creatorLoading) {
@@ -326,7 +326,7 @@ export default function CourseBuilderPage() {
             <StepperContent
               step={3}
               title='Course Assessment'
-              description='Create assessment rubrics to evaluate student performance'
+              description='Create assessments to evaluate student performance'
               showNavigation
               nextButtonText='Continue to Assessment Criteria'
               previousButtonText='Back to Lesson Content'

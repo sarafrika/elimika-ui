@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Star, Trophy, Users } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -25,9 +26,12 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useInstructor } from '../../../../context/instructor-context';
+import { getCoursesByInstructorOptions } from '../../../../services/client/@tanstack/react-query.gen';
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('30');
+  const instructor = useInstructor()
 
   const statsCards = [
     { title: 'Total Students', value: '1,234', change: '+12%', icon: Users },
@@ -86,6 +90,64 @@ export default function AnalyticsPage() {
     { name: 'Emma Davis', courses: 6, completion: 90, hours: 95 },
   ];
 
+  const { data: courses } = useQuery({
+    ...getCoursesByInstructorOptions({ path: { instructorUuid: instructor?.uuid as string }, query: { pageable: {} } }),
+    enabled: !!instructor?.uuid
+  })
+  const iCourses = [
+    {
+      "uuid": "c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl",
+      "name": "Advanced Java Programming",
+      "course_creator_uuid": "c1r2e3a4-5t6o-7r89-0abc-defghijklmno",
+      "category_uuids": [
+        "c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl",
+        "p1r2o3g4-5r6a-7m8m-9i10-abcdefghijkl"
+      ],
+      "difficulty_uuid": "d1i2f3f4-5i6c-7u8l-9t10-abcdefghijkl",
+      "description": "Comprehensive course covering advanced Java concepts and enterprise development",
+      "objectives": "Master advanced Java features, design patterns, and enterprise frameworks",
+      "prerequisites": "Basic Java knowledge and OOP concepts",
+      "duration_hours": 40,
+      "duration_minutes": 30,
+      "class_limit": 25,
+      "minimum_training_fee": 180,
+      "creator_share_percentage": 60,
+      "instructor_share_percentage": 40,
+      "revenue_share_notes": "Creator retains 60% to cover tooling; instructors earn 40% net.",
+      "age_lower_limit": 18,
+      "age_upper_limit": 65,
+      "thumbnail_url": "https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg",
+      "intro_video_url": "https://cdn.sarafrika.com/courses/java-advanced-intro.mp4",
+      "banner_url": "https://cdn.sarafrika.com/courses/java-advanced-banner.jpg",
+      "status": "PUBLISHED",
+      "active": true,
+      "admin_approved": true,
+      "training_requirements": [
+        {
+          "uuid": "5a8074cc-8893-497b-8d58-4b151c994a80",
+          "requirement_type": "equipment",
+          "name": "Dual-screen instructor workstation",
+          "quantity": 1,
+          "unit": "workstation",
+          "is_mandatory": true
+        }
+      ],
+      "created_date": "2024-04-01T12:00:00",
+      "created_by": "instructor@sarafrika.com",
+      "updated_date": "2024-04-15T15:30:00",
+      "updated_by": "instructor@sarafrika.com",
+      "category_names": [
+        "Programming",
+        "Advanced Java"
+      ],
+      "total_duration_display": "40 hours 30 minutes",
+      "is_free": false,
+      "is_published": true,
+      "is_draft": false
+    }
+  ]
+
+
   return (
     <div className='min-h-screen p-6'>
       <div className='mx-auto max-w-7xl space-y-6'>
@@ -122,11 +184,10 @@ export default function AnalyticsPage() {
         </div>
 
         <Tabs defaultValue='overview' className='space-y-6'>
-          <TabsList className='grid w-full grid-cols-4'>
+          <TabsList className='grid w-full grid-cols-3'>
             <TabsTrigger value='overview'>Overview</TabsTrigger>
             <TabsTrigger value='courses'>Courses</TabsTrigger>
             <TabsTrigger value='students'>Students</TabsTrigger>
-            <TabsTrigger value='revenue'>Revenue</TabsTrigger>
           </TabsList>
 
           {/* Overview */}
@@ -225,32 +286,6 @@ export default function AnalyticsPage() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-
-          {/* Revenue */}
-          <TabsContent value='revenue'>
-            <Card>
-              <CardHeader>
-                <CardTitle>Revenue Trend</CardTitle>
-                <CardDescription>Monthly earnings from courses</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width='100%' height={400}>
-                  <AreaChart data={revenueData}>
-                    <CartesianGrid strokeDasharray='3 3' />
-                    <XAxis dataKey='month' />
-                    <YAxis />
-                    <Tooltip />
-                    <Area
-                      dataKey='revenue'
-                      stroke='hsl(var(--primary))'
-                      fill='hsl(var(--primary))'
-                      fillOpacity={0.25}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>

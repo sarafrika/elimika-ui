@@ -317,15 +317,15 @@ const AssessmentCreationForm = ({
         type: q.question_type.toUpperCase() as QuestionType,
         points: q.points,
         options:
-          q.question_type === 'multiple_choice' || q.question_type === 'true_false'
+          q.question_type === 'multiple_choice' || q.question_type === 'true_false' || q.question_type === "essay" || q.question_type === "short_answer"
             ? options
             : undefined,
         pairs:
           q.question_type === 'matching'
             ? options.map((pair: any) => ({
-                left: pair.left_text,
-                right: pair.right_text,
-              }))
+              left: pair.left_text,
+              right: pair.right_text,
+            }))
             : undefined,
         answer: q.question_type === 'essay' || q.question_type === 'short_answer' ? '' : undefined,
       };
@@ -473,7 +473,7 @@ const AssessmentCreationForm = ({
 
         if (!questionChanged) {
           if (
-            (question.type === 'MULTIPLE_CHOICE' || question.type === 'TRUE_FALSE') &&
+            ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY'].includes(question.type) &&
             question.options?.length
           ) {
             const modifiedOptionsForQuestion = modifiedOptions.get(qIndex);
@@ -533,7 +533,7 @@ const AssessmentCreationForm = ({
           }
 
           if (
-            (question.type === 'MULTIPLE_CHOICE' || question.type === 'TRUE_FALSE') &&
+            ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY'].includes(question.type) &&
             question.options?.length
           ) {
             const modifiedOptionsForQuestion = modifiedOptions.get(qIndex);
@@ -591,7 +591,7 @@ const AssessmentCreationForm = ({
                     body: buildOptionPayload(option, oIndex, questionUuid, 'test@example.com'),
                   });
                 }
-              } catch (optionErr) {}
+              } catch (optionErr) { }
             }
 
             qc.invalidateQueries({
@@ -693,8 +693,24 @@ const AssessmentCreationForm = ({
             };
 
           case 'ESSAY':
+            return {
+              ...base,
+              options: [
+                { uuid: '', text: 'True', isCorrect: true },
+              ],
+              answer: '',
+              maxLength: 5000,
+            };
+
           case 'SHORT_ANSWER':
-            return base;
+            return {
+              ...base,
+              options: [
+                { uuid: '', text: 'True', isCorrect: true },
+              ],
+              answer: '',
+              maxLength: 255,
+            };
 
           case 'MATCHING':
             return {
@@ -989,11 +1005,10 @@ const AssessmentCreationForm = ({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
-              activeTab === tab
-                ? 'border-primary text-primary font-semibold'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
+              ? 'border-primary text-primary font-semibold'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
           >
             {tab}
           </button>
@@ -1069,8 +1084,8 @@ const AssessmentCreationForm = ({
               }}
               updateQuizForLesson={handleUpdateQuiz}
               deleteQuizForLesson={handleDeleteQuiz}
-              addQuizQuestion={async payload => {}}
-              addQuestionOption={async payload => {}}
+              addQuizQuestion={async payload => { }}
+              addQuestionOption={async payload => { }}
               isPending={createQuiz.isPending || updateQuiz.isPending}
             />
 
@@ -1089,9 +1104,9 @@ const AssessmentCreationForm = ({
               >
                 <Disc className='mr-2 h-4 w-4' />
                 {addQuizQuestion.isPending ||
-                addQuestionOption.isPending ||
-                updateQuizQuestion.isPending ||
-                updateQuestionOption.isPending
+                  addQuestionOption.isPending ||
+                  updateQuizQuestion.isPending ||
+                  updateQuestionOption.isPending
                   ? 'Saving...'
                   : 'Save Questions'}
               </Button>

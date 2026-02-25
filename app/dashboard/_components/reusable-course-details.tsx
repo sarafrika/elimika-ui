@@ -121,12 +121,12 @@ export default function ReusableCourseDetailsPage({
         {
           id: 'courses',
           title: 'Browse Courses',
-          url: '/dashboard/browse-courses',
+          url: '/dashboard/all-courses',
         },
         {
           id: 'course-details',
           title: courseData?.name,
-          url: `/dashboard/browse-courses/${courseData?.uuid}`,
+          url: `/dashboard/all-courses/${courseData?.uuid}`,
         },
       ]);
     }
@@ -299,7 +299,7 @@ export default function ReusableCourseDetailsPage({
                   {userRole === 'student' && (
                     <Button
                       onClick={() => {
-                        router.push(`/dashboard/browse-courses/instructor/${courseData?.uuid}`);
+                        router.push(`/dashboard/all-courses/instructor/${courseData?.uuid}`);
                       }}
                       className='w-full'
                       size='lg'

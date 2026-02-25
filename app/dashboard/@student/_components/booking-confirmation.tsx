@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Calendar, CheckCircle, Clock, Download, Mail, MapPin, Share2, Video } from 'lucide-react';
 import type React from 'react';
-import type { Booking, Instructor } from '../browse-courses/instructor/page';
+import type { Booking, Instructor } from '../all-courses/instructor/page';
 
 type Props = {
   booking: Booking;

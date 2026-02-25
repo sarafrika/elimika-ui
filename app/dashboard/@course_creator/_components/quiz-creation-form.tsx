@@ -6,12 +6,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import { Checkbox } from '../../../../components/ui/checkbox';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../../../../components/ui/dropdown-menu';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import { Separator } from '../../../../components/ui/separator';
@@ -138,23 +132,20 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
-                  opt.isCorrect
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
-                }`}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:border-primary/50'
+                  }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                  }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                    }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${
-                    opt.isCorrect ? 'text-primary' : 'text-foreground'
-                  }`}
+                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
+                    }`}
                 >
                   {opt.text}
                 </span>
@@ -166,23 +157,52 @@ const QuestionRow = ({
 
       case 'ESSAY':
         return (
-          <div className='space-y-2'>
-            <div className='bg-muted/30 rounded-lg border-2 border-dashed p-4'>
-              <p className='text-muted-foreground text-sm'>
-                Essay questions require manual grading. Students will provide a text response.
-              </p>
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">
+                Model Answer
+              </label>
+
+              <textarea
+                value={question.options?.[0]?.text || ''}
+                onChange={(e) =>
+                  updateOptionText(qIndex, 0, e.target.value)
+                }
+                placeholder="Enter the expected answer..."
+                rows={4}
+                className="border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2"
+              />
             </div>
+
+            <p className="text-muted-foreground text-xs">
+              Students will submit a long-form response. This answer will be used as the reference.
+            </p>
           </div>
         );
 
+
       case 'SHORT_ANSWER':
         return (
-          <div className='space-y-2'>
-            <div className='bg-muted/30 rounded-lg border-2 border-dashed p-4'>
-              <p className='text-muted-foreground mb-2 text-sm'>
-                Short answer questions require manual grading or keyword matching.
-              </p>
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">
+                Correct Answer
+              </label>
+
+              <input
+                type="text"
+                value={question.options?.[0]?.text || ''}
+                onChange={(e) =>
+                  updateOptionText(qIndex, 0, e.target.value)
+                }
+                placeholder="Enter the correct short answer..."
+                className="border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2"
+              />
             </div>
+
+            <p className="text-muted-foreground text-xs">
+              Students must match this exact answer (or apply keyword matching logic).
+            </p>
           </div>
         );
 
@@ -285,6 +305,14 @@ const QuestionRow = ({
     </tr>
   );
 };
+
+const QUESTION_TYPES = [
+  { label: 'MCQ', value: 'MULTIPLE_CHOICE' },
+  { label: 'True / False', value: 'TRUE_FALSE' },
+  { label: 'Essay', value: 'ESSAY' },
+  { label: 'Short Answer', value: 'SHORT_ANSWER' },
+  // { label: 'Matching', value: 'MATCHING' },
+]
 
 export const QuizCreationForm = ({
   lessons,
@@ -618,32 +646,23 @@ export const QuizCreationForm = ({
 
           {quizUuid && quizUuid !== '' && (
             <div className='mt-8 border-t pt-6'>
-              <div className='mb-6 flex items-center justify-between'>
-                <h4 className='text-foreground text-lg font-semibold'>Questions</h4>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size='sm'>
-                      <PlusCircle /> Question
+              <div className="mb-6">
+                <h4 className="text-foreground text-lg font-semibold mb-3">
+                  Questions
+                </h4>
+
+                <div className="flex flex-wrap gap-2">
+                  {QUESTION_TYPES.map((type) => (
+                    <Button
+                      key={type.value}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addQuestion(type.value)}
+                    >
+                      + {type.label}
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <DropdownMenuItem onClick={() => addQuestion('MULTIPLE_CHOICE')}>
-                      + MCQ
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addQuestion('TRUE_FALSE')}>
-                      + True / False
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addQuestion('ESSAY')}>
-                      + Essay
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addQuestion('SHORT_ANSWER')}>
-                      + Short Answer
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addQuestion('MATCHING')}>
-                      + Matching
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  ))}
+                </div>
               </div>
 
               <TooltipProvider>
