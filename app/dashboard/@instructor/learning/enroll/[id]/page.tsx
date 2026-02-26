@@ -73,9 +73,10 @@ const EnrollmentPage = () => {
             setOpenEnrollModal(false);
             toast.success(data?.message || 'Student enrolled successfully');
           },
-          onError: data => {
-            // @ts-expect-error
-            toast.error(data?.error as string);
+          onError: () => {
+            toast.error(
+              "Enrollment requires a student account. Please log in as a student, or create a student profile to continue."
+            );
             setOpenEnrollModal(false);
           },
         }

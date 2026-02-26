@@ -246,7 +246,7 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
   }
 
   return (
-    <div className=''>
+    <div className='max-w-6xl mx-auto mb-8'>
       <div className='mb-4 flex items-end justify-end md:mb-6'>
         <Button
           type='button'

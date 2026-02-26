@@ -7,11 +7,14 @@ import {
   getProgramCoursesOptions,
   getProgramEnrollmentsOptions,
   getTrainingProgramByUuidOptions,
+  publishProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
-import { Pen, Users } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Users } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import Spinner from '../../../../../../components/ui/spinner';
 
 const ProgramPreview = ({ onEdit }: any) => {
   const router = useRouter();
@@ -57,6 +60,17 @@ const ProgramPreview = ({ onEdit }: any) => {
     }),
     enabled: !!programUuid,
   });
+
+  const publishProgramMut = useMutation(publishProgramMutation())
+  const handlePublishProgram = () => {
+    publishProgramMut.mutate({ path: { uuid: programUuid as string } }, {
+      onSuccess: (data) => {
+        toast.success(data?.message)
+      }
+    })
+  }
+
+
 
   if (programLoading) {
     return (
@@ -132,12 +146,21 @@ const ProgramPreview = ({ onEdit }: any) => {
             <p className='text-muted-foreground text-sm md:text-base'>{program?.description}</p>
           </div>
 
-          <Button
+          {/* <Button
             onClick={() => onEdit(program)}
             className='bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-lg px-4 py-2 text-sm font-medium md:w-auto md:text-base'
           >
             <Pen /> Edit
-          </Button>
+          </Button> */}
+
+          {!program.published && <Button
+            size={'sm'}
+            variant={'ghost'}
+            onClick={handlePublishProgram}
+            className='border border-border min-w-[120px]'
+          >
+            {publishProgramMut.isPending ? <Spinner /> : "Pubish"}
+          </Button>}
         </div>
       </div>
 

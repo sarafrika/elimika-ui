@@ -114,6 +114,8 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
     });
   }, [programs, searchTerm, statusFilter]);
 
+  console.log(filteredPrograms, "FPP")
+
   const deleteProgramMut = useMutation(deleteTrainingProgramMutation());
   const handleDelete = (uuid: string) => {
     deleteProgramMut.mutate(

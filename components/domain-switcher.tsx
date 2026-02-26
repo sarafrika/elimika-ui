@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,15 +10,16 @@ import {
 import { useUserDomain } from '@/context/user-domain-context';
 import type { UserDomain } from '@/lib/types';
 import {
-  GraduationCap,
-  Users,
   BookOpen,
-  Shield,
   ChevronDown,
-  Sparkles,
+  GraduationCap,
   Loader2,
+  Shield,
+  Sparkles,
+  Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 const domainConfig = {
@@ -93,7 +93,8 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
       await new Promise(resolve => setTimeout(resolve, 300));
 
       // Navigate to overview page of new domain
-      router.push('/dashboard/overview');
+      // router.push('/dashboard/overview');
+      router.push('/dashboard/all-courses');
       router.refresh(); // Force a refresh to load new domain data
 
       toast.success(`Switched to ${domainConfig[nextDomain].title}`, { id: 'domain-switch' });
