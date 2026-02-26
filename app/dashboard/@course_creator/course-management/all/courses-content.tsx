@@ -82,7 +82,6 @@ export default function CourseCreatorCoursesContent() {
     return courses.filter(course => course.status === statusFilter);
   }, [courses, statusFilter]);
 
-
   type ViewMode = 'list' | 'create' | 'preview';
 
   const router = useRouter();
