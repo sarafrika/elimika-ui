@@ -17,11 +17,11 @@ const ProgramsPage = () => {
   };
 
   const handleEdit = (program: any) => {
-    router.push(`/dashboard/programs/create-new-program?id=${program?.uuid}`);
+    router.push(`/dashboard/course-management/create-new-program?id=${program?.uuid}`);
   };
 
   const handlePreview = (programUuid: string) => {
-    router.push(`/dashboard/programs/${programUuid}`);
+    router.push(`/dashboard/course-management/programs/${programUuid}`);
   };
 
   return (

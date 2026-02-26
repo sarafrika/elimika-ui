@@ -165,7 +165,7 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
 
         <div className='flex self-end'>
           {onCreate && (
-            <Button onClick={() => router.push('/dashboard/programs/create-new-program')}>
+            <Button onClick={() => router.push('/dashboard/course-management/create-new-program')}>
               <PlusCircle className='mr-2 h-4 w-4' />
               Create program
             </Button>

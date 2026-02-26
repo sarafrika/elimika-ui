@@ -12,7 +12,7 @@ export default function LoginButton() {
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   if (user?.email) {
-    return <Button onClick={() => router.push('/dashboard/overview')}>Go to Dashboard</Button>;
+    return <Button onClick={() => router.push('/dashboard/all-courses')}>Go to Dashboard</Button>;
   }
 
   // status === "unauthenticated"
@@ -22,7 +22,7 @@ export default function LoginButton() {
         evt.currentTarget.disabled = true;
         setIsSigningIn(true);
         await signIn('keycloak', {
-          redirectTo: `${window.location.origin}/dashboard/overview`,
+          redirectTo: `${window.location.origin}/dashboard/all-courses`,
         });
       }}
     >

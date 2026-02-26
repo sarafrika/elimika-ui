@@ -3,8 +3,8 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import type { GuardianComplianceNotice } from '@/services/guardian';
-import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
 
 interface GuardianEnrollmentNoticeProps {
   notice?: GuardianComplianceNotice | null;
@@ -51,7 +51,7 @@ export function GuardianEnrollmentNotice({ notice }: GuardianEnrollmentNoticePro
               className='bg-primary/10 text-primary hover:bg-primary/20'
             >
               <Link
-                href={`/dashboard/browse-courses?age=${notice.student_age ?? ''}`}
+                href={`/dashboard/all-courses?age=${notice.student_age ?? ''}`}
                 prefetch={false}
               >
                 Find age-appropriate courses

@@ -3,7 +3,6 @@ import {
   BadgeCheck,
   Bell,
   BoltIcon,
-  Book,
   BookAIcon,
   BookOpen,
   Building,
@@ -15,7 +14,6 @@ import {
   ClipboardList,
   DollarSign,
   FileCheck,
-  FileStack,
   FileStackIcon,
   FileText,
   GraduationCap,
@@ -39,7 +37,7 @@ import {
   UserPlus,
   Users,
   UsersIcon,
-  Wallet,
+  Wallet
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { UserDomain } from './types';
@@ -136,14 +134,14 @@ export default {
   ],
   student: [
     {
+      title: 'Home - All courses',
+      url: '/dashboard/all-courses',
+      icon: School,
+    },
+    {
       title: 'Overview',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
-    },
-    {
-      title: 'Browse Courses',
-      url: '/dashboard/browse-courses',
-      icon: Book,
     },
     {
       title: 'My Skills',
@@ -217,6 +215,11 @@ export default {
     },
   ],
   instructor: [
+    {
+      title: 'Home - All courses',
+      url: '/dashboard/all-courses',
+      icon: School
+    },
     {
       title: 'Overview',
       url: '/dashboard/overview',
@@ -321,20 +324,25 @@ export default {
   ],
   course_creator: [
     {
+      title: 'Home - All courses',
+      url: '/dashboard/all-courses',
+      icon: School
+    },
+    {
       title: 'Overview',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
     {
-      title: 'Courses',
+      title: 'My Courses',
       url: '/dashboard/course-management',
       icon: BookAIcon,
     },
-    {
-      title: 'Programs',
-      url: '/dashboard/programs',
-      icon: FileStack,
-    },
+    // {
+    //   title: 'My Programs',
+    //   url: '/dashboard/programs',
+    //   icon: FileStack,
+    // },
     {
       title: 'My Skills',
       url: '/dashboard/my-skills',
@@ -393,6 +401,11 @@ export default {
     },
   ],
   admin: [
+    {
+      title: 'Home - All courses',
+      url: '/dashboard/all-courses',
+      icon: School
+    },
     {
       title: 'Overview',
       url: '/dashboard/overview',
@@ -466,6 +479,11 @@ export default {
   ],
   organisation_user: [
     {
+      title: 'Home - All courses',
+      url: '/dashboard/all-courses',
+      icon: School
+    },
+    {
       title: 'Overview',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
@@ -531,6 +549,11 @@ export default {
     },
   ],
   parent: [
+    {
+      title: 'Home - All courses',
+      url: '/dashboard/all-courses',
+      icon: School
+    },
     {
       title: 'Overview',
       url: '/dashboard/overview',

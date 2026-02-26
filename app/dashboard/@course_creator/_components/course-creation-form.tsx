@@ -40,11 +40,13 @@ import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { createCategory, updateCourse } from '@/services/client';
 import {
+  addCourseTrainingRequirementMutation,
   createCourseMutation,
   getAllCategoriesOptions,
   getAllCategoriesQueryKey,
   getCourseByUuidQueryKey,
   searchCoursesQueryKey,
+  updateCourseTrainingRequirementMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -226,6 +228,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         updateCourse({ body, path: { uuid: uuid } }),
     });
 
+    const addTrainingReqMut = useMutation(addCourseTrainingRequirementMutation())
+    const updateTrainingReqMut = useMutation(updateCourseTrainingRequirementMutation())
+
     // GET COURSE CATEGORIES
     const { data: categories } = useQuery(
       getAllCategoriesOptions({
@@ -292,7 +297,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           unit: req.unit || undefined,
           provided_by: req.provided_by,
           is_mandatory: !!req.is_mandatory,
-          course_uuid: editingCourseId ?? '',
+          // course_uuid: editingCourseId ?? '',
         })) ?? [];
 
       if (editingCourseId) {
@@ -333,6 +338,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             onSuccess(data, _variables, _context) {
               const respObj = data?.data;
               const errorObj = data?.error;
+
+              updateTrainingReqMut.mutate({
+                body: trainingRequirementsPayload as any, path: { courseUuid: editingCourseId, requirementUuid: "" }
+              })
 
               if (respObj) {
                 toast.success(data?.data?.message);
@@ -409,6 +418,27 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             },
             onSuccess: data => {
               toast.success('Course created successfully');
+
+              const trainingPayload =
+                data?.training_requirements?.map(req => ({
+                  uuid: req.uuid,
+                  requirement_type: req.requirement_type,
+                  name: req.name,
+                  description: req.description || undefined,
+                  quantity:
+                    typeof req.quantity === 'number' && !Number.isNaN(req.quantity)
+                      ? req.quantity
+                      : undefined,
+                  unit: req.unit || undefined,
+                  provided_by: req.provided_by,
+                  is_mandatory: !!req.is_mandatory,
+                  course_uuid: data?.data?.uuuid ?? '',
+                })) ?? [];
+
+              addTrainingReqMut.mutate({
+                body: trainingPayload as any, path: { courseUuid: data?.data?.uuid as string }
+              })
+
               setActiveStep(1);
               queryClient.invalidateQueries({
                 queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),

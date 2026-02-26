@@ -1,20 +1,20 @@
 'use client';
 
+import { PublicTopNav } from '@/components/PublicTopNav';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PublicTopNav } from '@/components/PublicTopNav';
+import type { Course } from '@/services/client';
 import {
   getCourseCreatorByUuidOptions,
-  searchCatalogueOptions,
+  searchCatalogueOptions
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Course } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Clock, GraduationCap, CircleAlert, Layers } from 'lucide-react';
-import { useMemo } from 'react';
-import Link from 'next/link';
+import { BookOpen, CircleAlert, Clock, GraduationCap, Layers } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useMemo } from 'react';
 
 export default function PublicCoursesPage() {
   const coursesQuery = useQuery({
@@ -30,6 +30,10 @@ export default function PublicCoursesPage() {
     retry: 1,
   });
   const courses = useMemo(() => coursesQuery.data?.data?.content ?? [], [coursesQuery.data]);
+
+  // const {data} = useQuery({
+  //   ...getAllCoursesOptions({query: {pageable: {}}})
+  // })
 
   return (
     <div className='bg-background text-foreground min-h-screen'>

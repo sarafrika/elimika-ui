@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { AlertCircle, Calendar, Clock, DollarSign, MapPin, Video } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
-import type { Booking } from '../browse-courses/instructor/page';
+import type { Booking } from '../all-courses/instructor/page';
 import { BookingConfirmation } from './booking-confirmation';
 import { PaymentModal } from './payment-modal';
 

@@ -19,9 +19,9 @@ export const ClassInformationSection = ({
 
   const registrationUrl = origin
     ? data?.course_uuid
-      ? `${origin}/dashboard/browse-courses/available-classes/${data.course_uuid}/enroll?id=${data.uuid}`
+      ? `${origin}/dashboard/all-courses/available-classes/${data.course_uuid}/enroll?id=${data.uuid}`
       : data?.program_uuid
-        ? `${origin}/dashboard/browse-courses/available-classes/${data.program_uuid}/enroll?id=${data.uuid}`
+        ? `${origin}/dashboard/all-courses/available-classes/${data.program_uuid}/enroll?id=${data.uuid}`
         : ''
     : '';
 

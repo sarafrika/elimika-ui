@@ -109,7 +109,7 @@ export default function MyClassesPage() {
     <div className='min-h-screen space-y-6'>
       {/* Header */}
       <div className='flex max-w-fit items-end justify-end gap-4 self-end'>
-        <Button onClick={() => router.push('/dashboard/browse-courses')}>
+        <Button onClick={() => router.push('/dashboard/all-courses')}>
           <GraduationCap className='mr-2 h-4 w-4' />
           Browse More Classes
         </Button>
@@ -258,7 +258,7 @@ export default function MyClassesPage() {
                 Clear filters
               </Button>
             )}
-            <Button onClick={() => router.push('/dashboard/browse-courses')}>
+            <Button onClick={() => router.push('/dashboard/all-courses')}>
               <GraduationCap className='mr-2 h-4 w-4' />
               Browse Classes
             </Button>

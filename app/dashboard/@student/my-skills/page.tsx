@@ -133,7 +133,7 @@ const MySkillsPage = () => {
             </p>
           </div>
           <Button
-            onClick={() => router.push('/dashboard/browse-courses')}
+            onClick={() => router.push('/dashboard/all-courses')}
             size={'default'}
             className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2 font-medium shadow-sm transition-colors'
           >
@@ -300,13 +300,12 @@ const MySkillsPage = () => {
                       </div>
                       <div className='bg-background border-input h-2 w-full overflow-hidden rounded-full border'>
                         <div
-                          className={`h-2 rounded-full transition-all duration-500 ${
-                            course.status === 'complete' || course.status === 'passed'
+                          className={`h-2 rounded-full transition-all duration-500 ${course.status === 'complete' || course.status === 'passed'
                               ? 'bg-success'
                               : course.status === 'failed'
                                 ? 'bg-destructive'
                                 : 'bg-yellow-500'
-                          }`}
+                            }`}
                           style={{ width: `${course.progress}%` }}
                         />
                       </div>

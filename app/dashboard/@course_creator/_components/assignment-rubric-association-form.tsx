@@ -136,6 +136,10 @@ export const AssignmentRubricAssociationForm = ({
         </div>
       </div>
 
+      {!existingRubric && <div className='text-muted-foreground flex min-h-[300px] flex-col items-center justify-center gap-6 px-3 py-2 text-center text-sm'>
+        <p>No assignment rubric assigned yet</p>
+      </div>}
+
       {isLoading ? (
         <div className='flex items-center justify-center py-10'>
           <Spinner className='h-6 w-6' />

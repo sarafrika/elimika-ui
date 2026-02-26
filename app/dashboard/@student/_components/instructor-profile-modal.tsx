@@ -37,7 +37,7 @@ import {
   convertToCalendarEvents,
 } from '../../@instructor/availability/components/types';
 import { ReviewCard } from '../../@instructor/reviews/review-card';
-import type { Booking } from '../browse-courses/instructor/page';
+import type { Booking } from '../all-courses/instructor/page';
 import BookInstructorTimeTableManager from './book-instructor-schedule';
 
 type Props = {

@@ -46,7 +46,7 @@ export type AssignmentCreationFormProps = {
   isPending: boolean;
 };
 
-const SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
+const SUBMISSION_TYPES = ['DOCUMENT', 'AUDIO', 'TEXT'];
 
 export const AssignmentCreationForm = ({
   courseId,
@@ -90,7 +90,7 @@ export const AssignmentCreationForm = ({
     instructions: '',
     max_points: 0,
     rubric_uuid: '',
-    status: 'DRAFT',
+    is_published: false,
     active: false,
     due_date: '',
     assignment_category: '',
@@ -127,8 +127,8 @@ export const AssignmentCreationForm = ({
         instructions: selectedAssignment.instructions || '',
         max_points: selectedAssignment.max_points || 0,
         rubric_uuid: selectedAssignment.rubric_uuid || '',
-        status: selectedAssignment.status || 'DRAFT',
-        active: selectedAssignment.active || false,
+        is_published: selectedAssignment.is_published,
+        active: selectedAssignment?.active,
         due_date: selectedAssignment.due_date || '',
         assignment_category: selectedAssignment.assignment_category || '',
         submission_types: selectedAssignment.submission_types || [],
@@ -141,7 +141,7 @@ export const AssignmentCreationForm = ({
         instructions: '',
         max_points: 0,
         rubric_uuid: '',
-        status: 'DRAFT',
+        is_published: false,
         active: false,
         due_date: '',
         assignment_category: '',
@@ -194,7 +194,7 @@ export const AssignmentCreationForm = ({
         instructions: '',
         max_points: 0,
         rubric_uuid: '',
-        status: 'DRAFT',
+        is_published: false,
         active: false,
         due_date: '',
         assignment_category: '',
@@ -273,8 +273,9 @@ export const AssignmentCreationForm = ({
           },
         }
       );
-    } catch (error) {}
+    } catch (error) { }
   };
+
 
   return (
     <div className='grid grid-cols-4 gap-6'>
@@ -302,7 +303,7 @@ export const AssignmentCreationForm = ({
                       instructions: '',
                       max_points: 0,
                       rubric_uuid: '',
-                      status: 'DRAFT',
+                      is_published: false,
                       active: false,
                       due_date: '',
                       assignment_category: '',
@@ -537,11 +538,15 @@ export const AssignmentCreationForm = ({
               </div>
 
               <div className='flex flex-col gap-2'>
-                <Label className='text-foreground text-sm font-medium'>Status</Label>
+                <Label className='text-foreground text-sm font-medium'>
+                  Status
+                </Label>
 
                 <Select
-                  value={assignmentData.status}
-                  onValueChange={value => handleAssignmentInputChange('status', value)}
+                  value={assignmentData.is_published ? 'PUBLISHED' : 'DRAFT'}
+                  onValueChange={value =>
+                    handleAssignmentInputChange('is_published', value === 'PUBLISHED')
+                  }
                 >
                   <SelectTrigger className='w-full'>
                     <SelectValue placeholder='Select status' />
@@ -553,6 +558,7 @@ export const AssignmentCreationForm = ({
                   </SelectContent>
                 </Select>
               </div>
+
 
               <div className='flex items-center gap-3'>
                 <Switch
@@ -679,22 +685,24 @@ export const AssignmentCreationForm = ({
                     )}
                   </div>
 
-                  <Button
-                    type='button'
-                    variant='secondary'
-                    disabled={!mediaFile || uploadAssignmentMut.isPending}
-                    onClick={handleAttachmentUpload}
-                    className='w-full'
-                  >
-                    {uploadAssignmentMut.isPending ? (
-                      <>
-                        <Spinner className='mr-2 h-4 w-4' />
-                        Uploading...
-                      </>
-                    ) : (
-                      'Upload Assignment Attachment'
-                    )}
-                  </Button>
+                  <div className='self-center flex justify-center' >
+                    <Button
+                      type='button'
+                      variant='secondary'
+                      disabled={!mediaFile || uploadAssignmentMut.isPending}
+                      onClick={handleAttachmentUpload}
+                      className='w-full bg-primary text-white max-w-fit self-center'
+                    >
+                      {uploadAssignmentMut.isPending ? (
+                        <>
+                          <Spinner className='mr-2 h-4 w-4' />
+                          Uploading...
+                        </>
+                      ) : (
+                        'Upload Assignment Attachment'
+                      )}
+                    </Button>
+                  </div>
 
                   <p className='text-muted-foreground text-xs'>
                     Supported formats: PDF, Images (JPG, PNG), Audio (MP3, WAV), Video (MP4),
