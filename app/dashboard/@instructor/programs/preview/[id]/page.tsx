@@ -26,45 +26,6 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { AddProgramCourseDialog } from '../../../../@course_creator/_components/program-management-form';
 
-const _cls = {
-  uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
-  name: 'Advanced Java Programming - July Cohort',
-  description: 'A focused class for mastering enterprise Java patterns with hands-on support.',
-  instructor: {
-    name: 'Jane Doe',
-    title: 'Senior Java Instructor',
-  },
-  class_limit: 25,
-  duration_hours: 2,
-  duration_minutes: 0,
-  total_duration_display: '2 hours 0 minutes',
-  thumbnail_url: 'https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg',
-  banner_url: 'https://cdn.sarafrika.com/courses/java-advanced-banner.jpg',
-  intro_video_url: 'https://cdn.sarafrika.com/courses/java-advanced-intro.mp4',
-  objectives: [
-    'Understand Java design patterns and when to use them',
-    'Work with Spring Boot and Hibernate',
-    'Build RESTful APIs and deploy Java apps',
-  ],
-  lessons: [
-    {
-      title: 'Enterprise Java Basics',
-      duration_display: '2 hours',
-      description: 'Covers JDBC, DAO patterns, and Java EE intro',
-    },
-    {
-      title: 'Spring Boot Deep Dive',
-      duration_display: '3 hours',
-      description: 'Configuration, REST APIs, and Dependency Injection',
-    },
-    {
-      title: 'Working with Hibernate',
-      duration_display: '2.5 hours',
-      description: 'Entity mapping, lazy loading, and transactions',
-    },
-  ],
-};
-
 export default function ProgramPreviewPage() {
   const params = useParams();
   const programId = params?.id as string;
@@ -378,7 +339,7 @@ export default function ProgramPreviewPage() {
           isOpen={isAddClassCourseDialog}
           onOpenChange={setIsAddClassCourseDialog}
           programId={programId}
-          onSuccess={() => {}}
+          onSuccess={() => { }}
         />
 
         {/* Confirm Remove Program Course Modal */}

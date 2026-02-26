@@ -14,7 +14,6 @@ import {
   ClipboardList,
   DollarSign,
   FileCheck,
-  FileStack,
   FileStackIcon,
   FileText,
   GraduationCap,
@@ -339,11 +338,11 @@ export default {
       url: '/dashboard/course-management',
       icon: BookAIcon,
     },
-    {
-      title: 'My Programs',
-      url: '/dashboard/programs',
-      icon: FileStack,
-    },
+    // {
+    //   title: 'My Programs',
+    //   url: '/dashboard/programs',
+    //   icon: FileStack,
+    // },
     {
       title: 'My Skills',
       url: '/dashboard/my-skills',
