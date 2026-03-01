@@ -364,7 +364,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const getContentIcon = (type: string) => {
@@ -422,6 +422,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                   </div>
                 </div>
               ))}
+
+            {!lessons?.content?.length && <p className='text-muted-foreground rounded-lg border border-dashed py-6 text-center text-sm'>
+              Looks like you haven't added any lessons to this course yet.
+            </p>}
           </div>
         </ScrollArea>
       </aside>
@@ -473,11 +477,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                         )}
                       >
                         <div
-                          className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                            selectedContentId === content.uuid
-                              ? 'bg-primary/20 text-primary'
-                              : 'bg-background text-muted-foreground'
-                          }`}
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg ${selectedContentId === content.uuid
+                            ? 'bg-primary/20 text-primary'
+                            : 'bg-background text-muted-foreground'
+                            }`}
                         >
                           {getContentIcon(content.content_type_key)}
                         </div>

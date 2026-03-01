@@ -229,6 +229,14 @@ export function ProfilePage({
 
           {/* Name + Meta */}
           <div className='min-w-0 flex-1'>
+            {/* ID badge */}
+            <div className='flex items-center gap-4' >
+              <span className='text-[14px]' >User No:</span>
+              <span className='bg-muted text-muted-foreground inline-block rounded-md px-2 py-0.5 font-mono text-[12px] tracking-wider sm:px-3 sm:py-1 sm:text-xs'>
+                {profile.user_no}
+              </span>
+            </div>
+
             {/* Name row */}
             <div className='mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
               <h1 className='text-foreground w-full truncate text-xl font-bold tracking-tight sm:text-2xl'>
@@ -266,11 +274,6 @@ export function ProfilePage({
                 />
               )}
             </div>
-
-            {/* ID badge */}
-            <span className='bg-muted text-muted-foreground inline-block rounded-md px-2 py-0.5 font-mono text-[10px] tracking-wider sm:px-3 sm:py-1 sm:text-xs'>
-              {profile.uuid}
-            </span>
           </div>
         </div>
 
