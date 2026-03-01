@@ -1,6 +1,8 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
-import { BarChart3, Clock, ImageOff, Star, User } from 'lucide-react';
-import Image from 'next/image';
+import { BarChart3, BookOpen, Clock, Star, User } from 'lucide-react';
+import HTMLTextPreview from '../../../../../../components/editors/html-text-preview';
+
 
 interface ClassPageHeaderProps {
   thumbnailUrl?: string;
@@ -26,28 +28,26 @@ export function ClassPageHeader({
       <div className='mx-auto max-w-7xl px-4 py-4 sm:px-6'>
         <div className='flex flex-col items-start gap-4 sm:flex-row sm:gap-6'>
           {/* Thumbnail */}
-          <div className='relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-lg border sm:h-48 sm:w-48'>
-            {thumbnailUrl ? (
-              <Image
-                src={thumbnailUrl}
-                alt={`${title} thumbnail`}
-                fill
-                className='object-cover'
-                priority
-              />
-            ) : (
-              <div className='bg-muted flex h-full w-full items-center justify-center'>
-                <ImageOff className='text-muted-foreground h-8 w-8 sm:h-10 sm:w-10' />
-              </div>
-            )}
+          <div className="flex-shrink-0">
+            <Avatar className="h-32 w-32 rounded-lg border sm:h-48 sm:w-48">
+              {thumbnailUrl && (
+                <AvatarImage
+                  src={thumbnailUrl}
+                  alt="thumbnail"
+                  className="object-cover"
+                />
+              )}
+              <AvatarFallback>
+                <BookOpen className="text-muted-foreground h-12 w-12 sm:h-14 sm:w-14" />
+              </AvatarFallback>
+            </Avatar>
           </div>
 
           {/* Content */}
           <div className='w-full flex-1'>
             <h1 className='mb-2 text-2xl font-medium sm:text-3xl'>{title}</h1>
-            <p className='text-muted-foreground mb-4 line-clamp-2 text-sm sm:text-base'>
-              {description}
-            </p>
+
+            <HTMLTextPreview className='text-muted-foreground mb-4 line-clamp-2 text-sm sm:text-base' htmlContent={description} />
 
             {/* Meta Information */}
             <div className='text-muted-foreground flex flex-wrap items-center gap-3 text-xs sm:gap-6 sm:text-sm'>

@@ -800,7 +800,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           {/* Language */}
-          <FormSection title='Language' description='What languages can this course be taught in?'>
+          {/* <FormSection title='Language' description='What languages can this course be taught in?'>
             <FormField
               control={form.control}
               name='language'
@@ -818,7 +818,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 </FormItem>
               )}
             />
-          </FormSection>
+          </FormSection> */}
 
           {/* Prerequisites */}
           <FormSection

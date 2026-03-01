@@ -252,7 +252,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                 setActiveStep(6);
                 queryClient.invalidateQueries({
-                  queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
+                  queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
                 });
                 return;
               }
@@ -459,7 +459,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           {/* Coupon codes */}
-          <FormSection
+          {/* <FormSection
             title='Coupon Code'
             description='Enter a coupon code to apply a discount to your order.'
           >
@@ -475,10 +475,10 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 </FormItem>
               )}
             />
-          </FormSection>
+          </FormSection> */}
 
           {/* Access duration */}
-          <FormSection
+          {/* <FormSection
             title='Access Duration'
             description='Specify how long the user will have access to the product or content.'
           >
@@ -494,10 +494,10 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 </FormItem>
               )}
             />
-          </FormSection>
+          </FormSection> */}
 
           {/* Organizational access */}
-          <FormSection
+          {/* <FormSection
             title='Organizational Access'
             description='Select the organizations or groups that this access applies to.'
           >
@@ -572,7 +572,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 )}
               />
             </div>
-          </FormSection>
+          </FormSection> */}
 
           {showSubmitButton && (
             <div className='xxs:flex-col flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>

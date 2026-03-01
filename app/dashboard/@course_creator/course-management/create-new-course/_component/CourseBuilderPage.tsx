@@ -24,11 +24,10 @@ import {
   BookOpen,
   CheckCheck,
   CheckCircle,
-  ClipboardList,
   File,
   GraduationCap,
   Palette,
-  SlidersHorizontal,
+  SlidersHorizontal
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -38,7 +37,6 @@ import AssessmentCreationForm from '../../../_components/assessment-creation-for
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseComplianceForm } from '../../../_components/course-compliance-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
-import CourseLearningRulesForm from '../../../_components/course-learningrule-form';
 import { CoursePricingForm } from '../../../_components/course-pricing-form';
 import CriteriaCreationForm from '../../../_components/criteria-creation-form';
 import type { ICourse } from '../../../_components/instructor-type';
@@ -257,10 +255,10 @@ export default function CourseBuilderPage() {
 
             <StepperTrigger step={4} title='Assessment Criteria' icon={CheckCheck} />
 
-            <StepperTrigger step={5} title='Rules' icon={ClipboardList} />
-            <StepperTrigger step={6} title='Branding' icon={Palette} />
-            <StepperTrigger step={7} title='Pricing' icon={BadgeDollarSign} />
-            <StepperTrigger step={8} title='Compliance' icon={BadgeCheck} />
+            {/* <StepperTrigger step={5} title='Rules' icon={ClipboardList} /> */}
+            <StepperTrigger step={5} title='Branding' icon={Palette} />
+            <StepperTrigger step={6} title='Pricing' icon={BadgeDollarSign} />
+            <StepperTrigger step={7} title='Compliance' icon={BadgeCheck} />
 
             {/* <StepperTrigger step={7} title='Review' icon={Eye} /> */}
             {/* <StepperTrigger step={8} title='Quizzes' icon={FileQuestion} />
@@ -343,13 +341,13 @@ export default function CourseBuilderPage() {
               title='Assessment Criteria'
               description='Create assessment rubrics to evaluate student performance'
               showNavigation
-              nextButtonText='Continue to Rules'
+              nextButtonText='Continue to Branding'
               previousButtonText='Back to Assessment'
             >
               <CriteriaCreationForm course={course} />
             </StepperContent>
 
-            <StepperContent
+            {/* <StepperContent
               step={5}
               title='Course Learning Rules'
               description='Define the rules learners must follow to progress and complete the course.'
@@ -367,15 +365,17 @@ export default function CourseBuilderPage() {
                   setCreatedCourseId(data?.uuid);
                 }}
               />
-            </StepperContent>
+            </StepperContent> */}
 
             <StepperContent
-              step={6}
+              step={5}
               title='Branding'
               description='Add visual elements to make your course more appealing'
               showNavigation
               nextButtonText='Continue to Pricing'
-              previousButtonText='Back to Rules'
+              // previousButtonText='Back to Rules'
+              previousButtonText='Back to Assessment criteria'
+
             >
               <CourseBrandingForm
                 ref={formRef}
@@ -390,7 +390,7 @@ export default function CourseBuilderPage() {
             </StepperContent>
 
             <StepperContent
-              step={7}
+              step={6}
               title='Pricing'
               description='Set the price, discounts, and access options for your course.'
               showNavigation
@@ -410,7 +410,7 @@ export default function CourseBuilderPage() {
             </StepperContent>
 
             <StepperContent
-              step={8}
+              step={7}
               title='Course Compliance & Q?A'
               description='Confirm that all required compliance and quality checks have been completed.'
               // showNavigation
@@ -430,7 +430,7 @@ export default function CourseBuilderPage() {
             </StepperContent>
 
             <StepperContent
-              step={9}
+              step={8}
               title='Review Course'
               description='Review your course before publishing'
               showNavigation

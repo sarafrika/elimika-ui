@@ -3,7 +3,7 @@
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { getCourseByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { AlertCircle, Award, BookOpen, Clock, Play, Target, Users } from 'lucide-react';
+import { AlertCircle, Clock, Play, Target, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
@@ -117,11 +117,10 @@ export default function CustomCoursePreview() {
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
-                        activeTab === tab
-                          ? 'border-primary text-primary border-b-2'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
+                      className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${activeTab === tab
+                        ? 'border-primary text-primary border-b-2'
+                        : 'text-muted-foreground hover:text-foreground'
+                        }`}
                     >
                       {tab.charAt(0).toUpperCase() + tab.slice(1)}
                     </button>
@@ -253,9 +252,8 @@ export default function CustomCoursePreview() {
                   ) : (
                     <div>
                       <p className='text-foreground text-4xl font-bold'>
-                        {data?.data?.minimum_training_fee}
+                        KES {data?.data?.minimum_training_fee}
                       </p>
-                      <p className='text-muted-foreground text-sm'>one-time payment</p>
                     </div>
                   )}
                 </div>
@@ -265,18 +263,18 @@ export default function CustomCoursePreview() {
                 </button>
 
                 <div className='border-border text-muted-foreground space-y-3 border-t pt-4 text-sm'>
-                  <div className='flex items-center gap-3'>
+                  {/* <div className='flex items-center gap-3'>
                     <BookOpen className='text-primary h-5 w-5' />
                     <span>Full lifetime access</span>
-                  </div>
+                  </div> */}
                   <div className='flex items-center gap-3'>
                     <Users className='text-primary h-5 w-5' />
-                    <span>{data?.data?.class_limit} spots remaining</span>
+                    <span>{data?.data?.class_limit} seats available</span>
                   </div>
-                  <div className='flex items-center gap-3'>
+                  {/* <div className='flex items-center gap-3'>
                     <Award className='text-primary h-5 w-5' />
                     <span>Certificate included</span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
@@ -303,10 +301,10 @@ export default function CustomCoursePreview() {
             )}
 
             {/* Compliance Badges */}
-            <div className='border-border bg-card rounded-2xl border p-6 shadow-lg'>
+            {/* <div className='border-border bg-card rounded-2xl border p-6 shadow-lg'>
               <h3 className='text-foreground mb-4 text-lg font-semibold'>Compliance</h3>
               <div className='space-y-3'>
-                {/* {data?.data?.compliance.copyright_confirmed && (
+             {data?.data?.compliance.copyright_confirmed && (
                   <div className="flex items-center gap-2 text-sm text-green-700">
                     <CheckCircle className="w-5 h-5" />
                     <span>Copyright Verified</span>
@@ -317,9 +315,9 @@ export default function CustomCoursePreview() {
                     <CheckCircle className="w-5 h-5" />
                     <span>Accessibility Compliant</span>
                   </div>
-                )} */}
+                )} 
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
