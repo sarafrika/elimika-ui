@@ -49,7 +49,8 @@ const sampleOptions = [
 
 const randomItem = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
-const tabs = ['Quiz', 'Assignment', 'Project', 'Discussions'];
+// const tabs = ['Quiz', 'Assignment', 'Project', 'Discussions'];
+const tabs = ['Quiz', 'Assignment'];
 
 type AssessmentCreationFormProps = {
   course: any;

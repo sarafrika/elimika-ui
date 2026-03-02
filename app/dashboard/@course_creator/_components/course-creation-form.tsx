@@ -297,7 +297,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           unit: req.unit || undefined,
           provided_by: req.provided_by,
           is_mandatory: !!req.is_mandatory,
-          // course_uuid: editingCourseId ?? '',
+          course_uuid: editingCourseId ?? '',
         })) ?? [];
 
       if (editingCourseId) {
@@ -339,8 +339,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               const respObj = data?.data;
               const errorObj = data?.error;
 
-              updateTrainingReqMut.mutate({
-                body: trainingRequirementsPayload as any, path: { courseUuid: editingCourseId, requirementUuid: "" }
+              addTrainingReqMut.mutate({
+                body: trainingRequirementsPayload as any, path: { courseUuid: editingCourseId, }
               })
 
               if (respObj) {
@@ -432,11 +432,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   unit: req.unit || undefined,
                   provided_by: req.provided_by,
                   is_mandatory: !!req.is_mandatory,
-                  course_uuid: data?.data?.uuuid ?? '',
+                  course_uuid: editingCourseId || data?.data?.uuuid,
                 })) ?? [];
 
               addTrainingReqMut.mutate({
-                body: trainingPayload as any, path: { courseUuid: data?.data?.uuid as string }
+                body: trainingPayload as any, path: { courseUuid: editingCourseId || data?.data?.uuid as string }
               })
 
               setActiveStep(1);

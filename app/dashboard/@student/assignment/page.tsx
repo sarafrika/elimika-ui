@@ -70,7 +70,6 @@ function AssignmentsPage() {
   const { data: assignmentsData, isLoading } = useQuery({
     ...getAllAssignmentsOptions({ query: { pageable: {} } }),
   });
-
   const assignments = assignmentsData?.data?.content || [];
 
   // Submit assignment mutation

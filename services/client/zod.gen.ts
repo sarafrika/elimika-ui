@@ -970,11 +970,6 @@ export const zRubricScoring = z
       )
       .readonly()
       .optional(),
-    performance_expectation: z
-      .string()
-      .describe('**[READ-ONLY]** Classification of performance expectation level.')
-      .readonly()
-      .optional(),
     score_range: z
       .string()
       .describe('**[READ-ONLY]** Expected score range for this performance level.')
@@ -988,6 +983,11 @@ export const zRubricScoring = z
     feedback_category: z
       .string()
       .describe('**[READ-ONLY]** Feedback category for constructive assessment guidance.')
+      .readonly()
+      .optional(),
+    performance_expectation: z
+      .string()
+      .describe('**[READ-ONLY]** Classification of performance expectation level.')
       .readonly()
       .optional(),
   })
@@ -1234,14 +1234,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -3033,6 +3033,13 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
+      .readonly()
+      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
@@ -3051,13 +3058,6 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
-      .readonly()
-      .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
       .readonly()
       .optional(),
     total_duration_display: z
@@ -3186,10 +3186,6 @@ export const zCourseRequirement = z
       )
       .readonly()
       .optional(),
-    course_uuid: z
-      .string()
-      .uuid()
-      .describe('**[REQUIRED]** Reference to the course UUID that this requirement applies to.'),
     requirement_type: zRequirementTypeEnum,
     requirement_text: z
       .string()
@@ -4490,6 +4486,13 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    capacity_info: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
+      )
+      .readonly()
+      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe(
@@ -4500,13 +4503,6 @@ export const zClassDefinition = z
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
-    capacity_info: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
-      )
       .readonly()
       .optional(),
   })
@@ -4718,14 +4714,14 @@ export const zCertificate = z
       )
       .readonly()
       .optional(),
-    is_downloadable: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
-      .readonly()
-      .optional(),
     certificate_type: z
       .string()
       .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
+      .readonly()
+      .optional(),
+    is_downloadable: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
       .readonly()
       .optional(),
     grade_letter: z
@@ -4915,7 +4911,7 @@ export const zAssignment = z
     is_published: z
       .boolean()
       .describe(
-        '**[OPTIONAL]** Indicates if the assignment is actively available for students. Can only be true for published assignments.'
+        '**[OPTIONAL]** Indicates whether the assignment is published and visible to students.'
       )
       .optional(),
     source_assignment_uuid: z
@@ -7444,6 +7440,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -7457,11 +7458,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -7620,14 +7616,14 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -8085,6 +8081,37 @@ export const zApiResponseLong = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+/**
+ * Selectable document type metadata for instructor and course creator uploads
+ */
+export const zDocumentTypeOption = z
+  .object({
+    uuid: z.string().uuid().describe('Unique identifier of the document type').optional(),
+    name: z.string().describe('Document type code/name').optional(),
+    description: z.string().describe('Human-readable description of the document type').optional(),
+    max_file_size_mb: z
+      .number()
+      .int()
+      .describe('Maximum allowed file size for this type in MB')
+      .optional(),
+    allowed_extensions: z
+      .array(z.string())
+      .describe('Allowed file extensions for this document type')
+      .optional(),
+    is_required: z
+      .boolean()
+      .describe('Whether this document type is mandatory in onboarding flows')
+      .optional(),
+  })
+  .describe('Selectable document type metadata for instructor and course creator uploads');
+
+export const zApiResponseListDocumentTypeOption = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zDocumentTypeOption).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 export const zPagedDtoCurrency = z.object({
   content: z.array(zCurrency).optional(),
   metadata: zPageMetadata.optional(),
@@ -8278,14 +8305,14 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -14297,6 +14324,17 @@ export const zHasCapacityForEnrollmentData = z.object({
  * Capacity check completed
  */
 export const zHasCapacityForEnrollmentResponse = zApiResponseBoolean;
+
+export const zListDocumentTypesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListDocumentTypesResponse = zApiResponseListDocumentTypeOption;
 
 export const zListCurrenciesData = z.object({
   body: z.never().optional(),
