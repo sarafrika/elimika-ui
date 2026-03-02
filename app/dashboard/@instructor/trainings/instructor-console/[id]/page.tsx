@@ -1,23 +1,37 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassRoster } from '@/hooks/use-class-roster';
-import { markAttendanceMutation } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createAssignmentScheduleMutation, createQuizScheduleMutation, getAllAssignmentsOptions, getAllQuizzesOptions, getAssignmentSchedulesOptions, getQuizSchedulesOptions, markAttendanceMutation } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
   CheckCircle,
-  ChevronRight,
+  ClipboardList,
   Clock,
+  ExternalLink,
+  FileText,
   MapPin,
+  MoreVertical,
+  Plus,
   Search,
   TrendingUp,
+  UserCheck,
   Users,
-  XCircle,
+  Video,
+  XCircle
 } from 'lucide-react';
 import moment from 'moment';
 import { useParams } from 'next/navigation';
@@ -25,6 +39,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '../../../../../../components/ui/badge';
 import { Card, CardContent, CardHeader } from '../../../../../../components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../../../components/ui/dialog';
 import { Progress } from '../../../../../../components/ui/progress';
 import {
   Sheet,
@@ -42,10 +64,12 @@ import {
   TableHeader,
   TableRow,
 } from '../../../../../../components/ui/table';
+import { useInstructor } from '../../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
 
 export default function TrainingInterfacePage() {
   const qc = useQueryClient();
+  const instructor = useInstructor()
   const params = useParams();
   const classId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -78,10 +102,31 @@ export default function TrainingInterfacePage() {
 
   const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
   const [isAttendanceDrawerOpen, setIsAttendanceDrawerOpen] = useState(false);
+  const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
+  const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState<
     Record<string, Record<string, boolean>>
   >({});
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Assignment form state
+  const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState('');
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
+  const [visibleAt, setVisibleAt] = useState('');
+  const [assignmentDueDate, setAssignmentDueDate] = useState('');
+  const [gradingDueAt, setGradingDueAt] = useState('');
+  const [maxAttempts, setMaxAttempts] = useState('1');
+  const [assignmentNotes, setAssignmentNotes] = useState('');
+
+  // Quiz form state
+  const [selectedQuizUuid, setSelectedQuizUuid] = useState('');
+  const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
+  const [quizVisibleAt, setQuizVisibleAt] = useState('');
+  const [quizDueDate, setQuizDueDate] = useState('');
+  const [timeLimitOverride, setTimeLimitOverride] = useState(selectedQuiz?.time_limit_minutes);
+  const [attemptLimitOverride, setAttemptLimitOverride] = useState(selectedQuiz?.attempts_allowed);
+  const [passingScoreOverride, setPassingScoreOverride] = useState(selectedQuiz?.passing_score);
+  const [quizNotes, setQuizNotes] = useState('');
 
   // Get current week boundaries (Sunday to Saturday)
   const getCurrentWeekBoundaries = () => {
@@ -118,8 +163,9 @@ export default function TrainingInterfacePage() {
   }, [schedules]);
 
   const isScheduleEnabled = (schedule: any) => {
-    const scheduleDate = moment(schedule.start_time);
-    return scheduleDate.isBetween(startOfWeek, endOfWeek, null, '[]');
+    return true;
+    // const scheduleDate = moment(schedule.start_time);
+    // return scheduleDate.isBetween(startOfWeek, endOfWeek, null, '[]');
   };
 
   const isSchedulePast = (schedule: any) => {
@@ -213,8 +259,7 @@ export default function TrainingInterfacePage() {
             },
           }));
           toast.success(
-            `Marked ${isPresent ? 'Present' : 'Absent'} for ${
-              roster?.find((r: any) => r.user.uuid === studentId)?.user.full_name
+            `Marked ${isPresent ? 'Present' : 'Absent'} for ${roster?.find((r: any) => r.user.uuid === studentId)?.user.full_name
             }`
           );
         },
@@ -225,15 +270,112 @@ export default function TrainingInterfacePage() {
     );
   };
 
-  // Handle start class
-  const handlleMarkAttendance = (schedule: any) => {
+  // Handle actions
+  const handleMarkAttendanceAction = (schedule: any) => {
     setSelectedSchedule(schedule);
     setIsAttendanceDrawerOpen(true);
   };
 
   const handleLaunchClass = (schedule: any) => {
+    // Mock meeting link - replace with actual meeting URL from schedule data
+    const meetingLink = schedule.meeting_url || 'https://meet.google.com/abc-defg-hij';
+    window.open(meetingLink, '_blank');
+    toast.success('Opening class meeting...');
+  };
+
+
+  ///////// ADD ASSIGNMENT FOR CLASS SCHEDULES //////////
+  const { data: allAssignments } = useQuery({
+    ...getAllAssignmentsOptions({ query: { pageable: {} } })
+  })
+
+  const { data: allQuizzes } = useQuery({
+    ...getAllQuizzesOptions({ query: { pageable: {} } })
+  })
+
+  const addAssignmentScheduleMut = useMutation(createAssignmentScheduleMutation())
+  const { data: assignmentSchedule } = useQuery({
+    ...getAssignmentSchedulesOptions({ path: { classUuid: classId as string } })
+  })
+
+  const addQuizScheduleMut = useMutation(createQuizScheduleMutation())
+  const { data: quizSchedule } = useQuery({
+    ...getQuizSchedulesOptions({ path: { classUuid: classId as string } })
+  })
+  ///////// ADD ASSIGNMENT FOR CLASS SCHEDULES //////////
+
+  const handleAddAssignment = (schedule: any) => {
     setSelectedSchedule(schedule);
-    setIsAttendanceDrawerOpen(true);
+    setIsAssignmentDialogOpen(true);
+  };
+
+  const handleAddQuiz = (schedule: any) => {
+    setSelectedSchedule(schedule);
+    setIsQuizDialogOpen(true);
+  };
+
+
+  const handleCreateAssignment = () => {
+    const payload = {
+      class_definition_uuid: classId as string,
+      lesson_uuid: selectedAssignment?.lesson_uuid,
+      assignment_uuid: selectedAssignmentUuid,
+      class_lesson_plan_uuid: selectedSchedule?.uuid,
+      visible_at: visibleAt,
+      due_at: assignmentDueDate,
+      grading_due_at: gradingDueAt,
+      timezone: "Africa/Nairobi",
+      release_strategy: "CUSTOM",
+      max_attempts: Number(maxAttempts),
+      instructor_uuid: instructor?.uuid as string,
+      notes: assignmentNotes,
+    };
+
+    addAssignmentScheduleMut.mutate({ body: payload as any, path: { classUuid: classId as string } }, {
+      onSuccess: () => {
+        toast.success('Assignment created successfully!');
+        setIsAssignmentDialogOpen(false);
+        // setSelectedAssignmentUuid('');
+        // setVisibleAt('');
+        // setAssignmentDueDate('');
+        // setGradingDueAt('');
+        // setMaxAttempts('1');
+        // setAssignmentNotes('');
+      }
+    })
+  };
+
+  const handleCreateQuiz = () => {
+    const payload = {
+      class_definition_uuid: classId as string,
+      lesson_uuid: selectedQuiz?.lesson_uuid,
+      quiz_uuid: selectedQuizUuid,
+      class_lesson_plan_uuid: selectedSchedule?.uuid,
+      visible_at: quizVisibleAt,
+      due_at: quizDueDate,
+      timezone: "Africa/Nairobi",
+      release_strategy: "CUSTOM",
+      time_limit_override: timeLimitOverride ? Number(timeLimitOverride) : undefined,
+      attempt_limit_override: attemptLimitOverride ? Number(attemptLimitOverride) : undefined,
+      passing_score_override: passingScoreOverride ? Number(passingScoreOverride) : undefined,
+      instructor_uuid: instructor?.uuid as string,
+      notes: quizNotes,
+    };
+
+    addQuizScheduleMut.mutate({ body: payload as any, path: { classUuid: classId as string } }, {
+      onSuccess: () => {
+        toast.success('Quiz created successfully!');
+        setIsQuizDialogOpen(false);
+        // setSelectedQuizUuid('');
+        // setQuizVisibleAt('');
+        // setQuizDueDate('');
+        // setTimeLimitOverride('');
+        // setAttemptLimitOverride('');
+        // setPassingScoreOverride('');
+        // setQuizNotes('');
+      }
+    });
+
   };
 
   // Filter students
@@ -275,7 +417,7 @@ export default function TrainingInterfacePage() {
                 <div className='flex items-center gap-2'>
                   <Users className='text-muted-foreground h-4 w-4' />
                   <span className='text-muted-foreground'>
-                    {classData?.max_participants - roster?.length} Seats availabe
+                    {classData?.max_participants - roster?.length} Seats available
                   </span>
                 </div>
                 <div className='flex items-center gap-2'>
@@ -339,7 +481,7 @@ export default function TrainingInterfacePage() {
                       <TableHead>Date & Time</TableHead>
                       <TableHead>Duration</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className='text-right'>Action</TableHead>
+                      <TableHead className='w-[80px] text-right'>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -388,40 +530,45 @@ export default function TrainingInterfacePage() {
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell className='flex flex-row justify-end gap-2 self-end text-right'>
-                            <Button
-                              onClick={() => handlleMarkAttendance(schedule)}
-                              disabled={!isEnabled}
-                              size='sm'
-                              variant={isEnabled ? 'default' : 'outline'}
-                              className='gap-2'
-                            >
-                              {isEnabled ? (
-                                <>
-                                  Mark Attendance
-                                  <ChevronRight className='h-4 w-4' />
-                                </>
-                              ) : (
-                                'Attendance'
-                              )}
-                            </Button>
-
-                            <Button
-                              onClick={() => handleLaunchClass(schedule)}
-                              disabled={!isEnabled}
-                              size='sm'
-                              variant={isEnabled ? 'default' : 'outline'}
-                              className='gap-2'
-                            >
-                              {isEnabled ? (
-                                <>
+                          <TableCell className='text-right'>
+                            <DropdownMenu>
+                              <div className='flex flex-row items-center gap-4'>
+                                <div className='flex flex-row items-center cursor-pointer bg-primary/20 px-3 py-1 rounded-xl'
+                                  onClick={() => handleLaunchClass(schedule)}>
+                                  <Video className='mr-2 h-4 w-4' />
                                   Launch Class
-                                  <ChevronRight className='h-4 w-4' />
-                                </>
-                              ) : (
-                                'Start Class'
-                              )}
-                            </Button>
+                                  <ExternalLink className='ml-auto h-3 w-3' />
+                                </div>
+
+                                <div className='flex flex-row items-center cursor-pointer bg-primary/20 px-3 py-1 rounded-xl' onClick={() => handleMarkAttendanceAction(schedule)}>
+                                  <UserCheck className='mr-2 h-4 w-4' />
+                                  Mark Attendance
+                                </div>
+
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant='ghost'
+                                    size='sm'
+                                    className='h-8 w-8 p-0'
+                                    disabled={!isEnabled}
+                                  >
+                                    <MoreVertical className='h-4 w-4' />
+                                    <span className='sr-only'>Open menu</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                              </div>
+
+                              <DropdownMenuContent align='end' className='w-48'>
+                                <DropdownMenuItem onClick={() => handleAddAssignment(schedule)}>
+                                  <FileText className='mr-2 h-4 w-4' />
+                                  Add Assignment
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleAddQuiz(schedule)}>
+                                  <ClipboardList className='mr-2 h-4 w-4' />
+                                  Add Quiz
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       );
@@ -434,7 +581,7 @@ export default function TrainingInterfacePage() {
         })}
       </div>
 
-      {/* Attendance Drawer */}
+      {/* Attendance Drawer - keeping original */}
       <Sheet open={isAttendanceDrawerOpen} onOpenChange={setIsAttendanceDrawerOpen}>
         <SheetContent className='w-[500px] px-6 sm:max-w-[500px]'>
           <SheetHeader>
@@ -455,9 +602,8 @@ export default function TrainingInterfacePage() {
           </SheetHeader>
 
           <div className='space-y-4'>
-            {/* Search */}
             <div className='relative'>
-              <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+              <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
               <Input
                 type='text'
                 placeholder='Search students...'
@@ -469,7 +615,6 @@ export default function TrainingInterfacePage() {
 
             <Separator />
 
-            {/* Students List */}
             <ScrollArea className='h-[calc(100vh-280px)]'>
               <div className='space-y-2'>
                 {studentsForThisSchedule
@@ -480,18 +625,13 @@ export default function TrainingInterfacePage() {
                     const studentId = entry.user.uuid;
                     const name = entry.user.full_name;
                     const attendance = calculateStudentAttendance(studentId);
-                    const currentEnrollment = enrollmentsByStudent[studentId]?.find(
-                      e => e.scheduled_instance_uuid === selectedSchedule?.uuid
-                    );
                     const currentStatus = entry?.enrollment?.did_attend;
-                    const isMarked = entry?.enrollment?.is_attendance_marked;
                     const enrollmentUuid = entry?.enrollment?.uuid;
 
                     return (
                       <Card key={studentId} className='border-border overflow-hidden'>
                         <CardContent className='p-4'>
                           <div className='space-y-3'>
-                            {/* Student Info */}
                             <div className='flex items-center justify-between'>
                               <div className='flex items-center gap-3'>
                                 <div className='bg-primary/15 text-primary flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold'>
@@ -517,10 +657,8 @@ export default function TrainingInterfacePage() {
                               </div>
                             </div>
 
-                            {/* Progress Bar */}
                             <Progress value={attendance.percentage} className='h-1.5' />
 
-                            {/* Action Buttons */}
                             <div className='flex gap-2'>
                               <Button
                                 onClick={() =>
@@ -535,7 +673,7 @@ export default function TrainingInterfacePage() {
                                 }
                               >
                                 {loadingEnrollmentUuid === enrollmentUuid &&
-                                markAttendanceMut.isPending ? (
+                                  markAttendanceMut.isPending ? (
                                   <span className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                                 ) : (
                                   <CheckCircle className='mr-1 h-4 w-4' />
@@ -556,7 +694,7 @@ export default function TrainingInterfacePage() {
                                 }
                               >
                                 {loadingEnrollmentUuid === enrollmentUuid &&
-                                markAttendanceMut.isPending ? (
+                                  markAttendanceMut.isPending ? (
                                   <span className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                                 ) : (
                                   <XCircle className='mr-1 h-4 w-4' />
@@ -579,7 +717,6 @@ export default function TrainingInterfacePage() {
               </div>
             </ScrollArea>
 
-            {/* Footer Actions */}
             <div className='border-t pt-4'>
               <Button onClick={() => setIsAttendanceDrawerOpen(false)} className='w-full'>
                 Done
@@ -588,6 +725,218 @@ export default function TrainingInterfacePage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Add Assignment Dialog - keeping original */}
+      <Dialog open={isAssignmentDialogOpen} onOpenChange={setIsAssignmentDialogOpen}>
+        <DialogContent className='sm:max-w-[500px]'>
+          <DialogHeader>
+            <DialogTitle>Add Assignment</DialogTitle>
+            <DialogDescription>
+              Create a new assignment for {selectedSchedule && moment(selectedSchedule.start_time).format('MMM D, YYYY')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='space-y-4 py-4'>
+            <div className='space-y-2'>
+              <Label>Assignment</Label>
+              <select
+                className='w-full border rounded-md p-2'
+                value={selectedAssignmentUuid}
+                onChange={(e) => {
+                  const uuid = e.target.value;
+                  setSelectedAssignmentUuid(uuid);
+
+                  const assignment = allAssignments?.data?.content?.find(
+                    (item: any) => item.uuid === uuid
+                  );
+
+                  setSelectedAssignment(assignment || null);
+                }}
+              >
+                <option value=''>Select assignment</option>
+                {allAssignments?.data?.content?.map((assignment: any) => (
+                  <option key={assignment.uuid} value={assignment.uuid}>
+                    {assignment.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label>Visible At</Label>
+                <Input
+                  type='datetime-local'
+                  value={visibleAt}
+                  onChange={(e) => setVisibleAt(e.target.value)}
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label>Due Date</Label>
+                <Input
+                  type='datetime-local'
+                  value={assignmentDueDate}
+                  onChange={(e) => setAssignmentDueDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className='space-y-2'>
+              <Label>Grading Due At</Label>
+              <Input
+                type='datetime-local'
+                value={gradingDueAt}
+                onChange={(e) => setGradingDueAt(e.target.value)}
+              />
+            </div>
+
+            <div className='space-y-2'>
+              <Label>Max Attempts</Label>
+              <Input
+                type='number'
+                min='1'
+                value={maxAttempts}
+                onChange={(e) => setMaxAttempts(e.target.value)}
+              />
+            </div>
+
+            <div className='space-y-2'>
+              <Label>Notes</Label>
+              <Textarea
+                rows={2}
+                value={assignmentNotes}
+                onChange={(e) => setAssignmentNotes(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setIsAssignmentDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateAssignment} disabled={!selectedAssignmentUuid}>
+              <Plus className='mr-2 h-4 w-4' />
+              Create Assignment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Quiz Dialog - UPDATED */}
+      <Dialog open={isQuizDialogOpen} onOpenChange={setIsQuizDialogOpen}>
+        <DialogContent className='sm:max-w-[500px]'>
+          <DialogHeader>
+            <DialogTitle>Add Quiz</DialogTitle>
+            <DialogDescription>
+              Create a new quiz for {selectedSchedule && moment(selectedSchedule.start_time).format('MMM D, YYYY')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='space-y-4 py-4'>
+            {/* Quiz Select */}
+            <div className='space-y-2'>
+              <Label>Quiz</Label>
+              <select
+                className='w-full border rounded-md p-2'
+                value={selectedQuizUuid}
+                onChange={(e) => {
+                  const uuid = e.target.value;
+                  setSelectedQuizUuid(uuid);
+
+                  const quiz = allQuizzes?.data?.content?.find(
+                    (item: any) => item.uuid === uuid
+                  );
+
+                  setSelectedQuiz(quiz || null);
+                }}
+              >
+                <option value=''>Select quiz</option>
+                {allQuizzes?.data?.content?.map((quiz: any) => (
+                  <option key={quiz.uuid} value={quiz.uuid}>
+                    {quiz.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Dates */}
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label>Visible At</Label>
+                <Input
+                  type='datetime-local'
+                  value={quizVisibleAt}
+                  onChange={(e) => setQuizVisibleAt(e.target.value)}
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label>Due Date</Label>
+                <Input
+                  type='datetime-local'
+                  value={quizDueDate}
+                  onChange={(e) => setQuizDueDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Override Settings */}
+            <div className='grid grid-cols-3 gap-4'>
+              <div className='space-y-2'>
+                <Label>Time Limit (min)</Label>
+                <Input
+                  type='number'
+                  placeholder='Optional'
+                  value={timeLimitOverride}
+                  onChange={(e) => setTimeLimitOverride(e.target.value)}
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label>Max Attempts</Label>
+                <Input
+                  type='number'
+                  placeholder='Optional'
+                  value={attemptLimitOverride}
+                  onChange={(e) => setAttemptLimitOverride(e.target.value)}
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label>Passing Score</Label>
+                <Input
+                  type='number'
+                  step='0.1'
+                  placeholder='Optional'
+                  value={passingScoreOverride}
+                  onChange={(e) => setPassingScoreOverride(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className='space-y-2'>
+              <Label>Notes</Label>
+              <Textarea
+                rows={2}
+                placeholder='Optional notes or instructions...'
+                value={quizNotes}
+                onChange={(e) => setQuizNotes(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setIsQuizDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateQuiz} disabled={!selectedQuizUuid}>
+              <Plus className='mr-2 h-4 w-4' />
+              Create Quiz
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

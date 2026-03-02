@@ -376,6 +376,7 @@ import {
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
+  listDocumentTypes,
   listCurrencies,
   getDefaultCurrency,
   getStatusTransitions,
@@ -1430,6 +1431,7 @@ import type {
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
+  ListDocumentTypesData,
   ListCurrenciesData,
   ListCurrenciesError,
   ListCurrenciesResponse,
@@ -12853,7 +12855,7 @@ export const createAssignmentQueryKey = (options: Options<CreateAssignmentData>)
 
 /**
  * Create a new assignment
- * Creates a new assignment with default DRAFT status and inactive state.
+ * Creates a new assignment with unpublished state by default.
  */
 export const createAssignmentOptions = (options: Options<CreateAssignmentData>) => {
   return queryOptions({
@@ -12872,7 +12874,7 @@ export const createAssignmentOptions = (options: Options<CreateAssignmentData>) 
 
 /**
  * Create a new assignment
- * Creates a new assignment with default DRAFT status and inactive state.
+ * Creates a new assignment with unpublished state by default.
  */
 export const createAssignmentMutation = (
   options?: Partial<Options<CreateAssignmentData>>
@@ -18449,6 +18451,27 @@ export const hasCapacityForEnrollmentOptions = (options: Options<HasCapacityForE
   });
 };
 
+export const listDocumentTypesQueryKey = (options?: Options<ListDocumentTypesData>) =>
+  createQueryKey('listDocumentTypes', options);
+
+/**
+ * List available document types
+ */
+export const listDocumentTypesOptions = (options?: Options<ListDocumentTypesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listDocumentTypes({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listDocumentTypesQueryKey(options),
+  });
+};
+
 export const listCurrenciesQueryKey = (options: Options<ListCurrenciesData>) =>
   createQueryKey('listCurrencies', options);
 
@@ -21284,8 +21307,7 @@ export const searchAssignmentsQueryKey = (options: Options<SearchAssignmentsData
  * **Common Assignment Search Examples:**
  * - `title_like=essay` - Assignments with "essay" in title
  * - `lessonUuid=uuid` - Assignments for specific lesson
- * - `status=PUBLISHED` - Only published assignments
- * - `active=true` - Only active assignments
+ * - `is_published=true` - Only published assignments
  * - `dueDate_gte=2024-12-01T00:00:00` - Assignments due from Dec 1, 2024
  * - `maxPoints_gte=50` - Assignments worth 50+ points
  *
@@ -21316,8 +21338,7 @@ export const searchAssignmentsInfiniteQueryKey = (
  * **Common Assignment Search Examples:**
  * - `title_like=essay` - Assignments with "essay" in title
  * - `lessonUuid=uuid` - Assignments for specific lesson
- * - `status=PUBLISHED` - Only published assignments
- * - `active=true` - Only active assignments
+ * - `is_published=true` - Only published assignments
  * - `dueDate_gte=2024-12-01T00:00:00` - Assignments due from Dec 1, 2024
  * - `maxPoints_gte=50` - Assignments worth 50+ points
  *

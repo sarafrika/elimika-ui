@@ -12,6 +12,7 @@ import {
   getAllContentTypesOptions,
   getCourseByUuidOptions,
   getCourseLessonsOptions,
+  getCourseTrainingRequirementsOptions,
   getLessonContentOptions,
   getLessonContentQueryKey,
   publishCourseMutation,
@@ -90,19 +91,24 @@ export default function CourseBuilderPage() {
     enabled: !!resolveId,
   });
 
+  const { data: trainingRequirements } = useQuery({
+    ...getCourseTrainingRequirementsOptions({ path: { courseUuid: resolveId }, query: { pageable: {} } }),
+    enabled: !!resolveId,
+  });
+
   const [courseInitialValues, setCourseInitialValues] = useState<ICourse | undefined>(undefined);
 
   useEffect(() => {
     if (!courseId || !course?.data) return;
+
     const c = course.data;
+    const tReq = trainingRequirements?.data?.content ?? [];
 
     setCourseInitialValues({
       name: c.name || '',
       description: c.description || '',
       instructor: c.course_creator_uuid || '',
       price: c.price ?? 0,
-      // sale_price: c.sale_price ?? c.price ?? 0,
-      // currency: c.currency || 'KES',
       objectives: c.objectives || [],
       categories: c.category_uuids || [],
       difficulty: c.difficulty_uuid || '',
@@ -126,12 +132,12 @@ export default function CourseBuilderPage() {
       creator_share_percentage: c.creator_share_percentage ?? 0,
       instructor_share_percentage: c.instructor_share_percentage ?? 0,
       revenue_share_notes: c.revenue_share_notes ?? '',
-      // @ts-expect-error
-      training_requirements: Array.isArray(c.training_requirements)
-        ? c.training_requirements.map(req => ({
+      training_requirements: Array.isArray(tReq)
+        ? tReq.map(req => ({
           uuid: req.uuid,
           requirement_type: req.requirement_type,
           name: req.name,
+          course_uuid: c?.uuid,
           description: req.description ?? '',
           quantity: req.quantity ?? undefined,
           unit: req.unit ?? '',
@@ -140,7 +146,9 @@ export default function CourseBuilderPage() {
         }))
         : [],
     });
-  }, [courseId, course]);
+
+  }, [courseId, course, trainingRequirements]);
+
 
   // GET COURSE LESSONS
   const { data: courseLessons, isLoading: lessonsIsLoading } = useQuery({
