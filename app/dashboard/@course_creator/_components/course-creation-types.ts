@@ -42,19 +42,16 @@ export const courseCreationSchema = z.object({
     .min(0, 'Instructor share must be at least 0%')
     .max(100, 'Instructor share cannot exceed 100%'),
   revenue_share_notes: z.string().max(500).optional(),
-  training_requirements: z
-    .array(
-      z.object({
-        uuid: z.string().optional(),
-        requirement_type: z.enum(requirementTypes),
-        name: z.string().min(1, 'Requirement name is required'),
-        description: z.string().optional(),
-        quantity: z.coerce.number().optional(),
-        unit: z.string().optional(),
-        provided_by: z.enum(providedByOptions),
-        is_mandatory: z.boolean().default(false),
-      })
-    )
+  training_requirement: z.object({
+    uuid: z.string().optional(),
+    requirement_type: z.enum(requirementTypes),
+    name: z.string().min(1, 'Requirement name is required'),
+    description: z.string().optional(),
+    quantity: z.coerce.number().optional(),
+    unit: z.string().optional(),
+    provided_by: z.enum(providedByOptions),
+    is_mandatory: z.boolean().default(false),
+  })
     .optional(),
   welcome_message: z.string().max(300).optional(),
   theme_color: z.string().optional(),
@@ -93,6 +90,18 @@ export const courseCreationSchema = z.object({
     }),
   language: z.string().optional(),
 });
+
+export const emptyRequirement = {
+  uuid: '',
+  requirement_type: requirementTypes[0] || '',
+  name: '',
+  description: '',
+  quantity: 0,
+  unit: '',
+  provided_by: providedByOptions[0] || '',
+  is_mandatory: false,
+};
+
 
 export type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & {
   [key: string]: any;

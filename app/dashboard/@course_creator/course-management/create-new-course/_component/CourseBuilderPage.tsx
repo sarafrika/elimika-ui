@@ -12,11 +12,10 @@ import {
   getAllContentTypesOptions,
   getCourseByUuidOptions,
   getCourseLessonsOptions,
-  getCourseTrainingRequirementsOptions,
   getLessonContentOptions,
   getLessonContentQueryKey,
   publishCourseMutation,
-  publishCourseQueryKey,
+  publishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -91,18 +90,12 @@ export default function CourseBuilderPage() {
     enabled: !!resolveId,
   });
 
-  const { data: trainingRequirements } = useQuery({
-    ...getCourseTrainingRequirementsOptions({ path: { courseUuid: resolveId }, query: { pageable: {} } }),
-    enabled: !!resolveId,
-  });
-
   const [courseInitialValues, setCourseInitialValues] = useState<ICourse | undefined>(undefined);
 
   useEffect(() => {
     if (!courseId || !course?.data) return;
 
     const c = course.data;
-    const tReq = trainingRequirements?.data?.content ?? [];
 
     setCourseInitialValues({
       name: c.name || '',
@@ -132,22 +125,10 @@ export default function CourseBuilderPage() {
       creator_share_percentage: c.creator_share_percentage ?? 0,
       instructor_share_percentage: c.instructor_share_percentage ?? 0,
       revenue_share_notes: c.revenue_share_notes ?? '',
-      training_requirements: Array.isArray(tReq)
-        ? tReq.map(req => ({
-          uuid: req.uuid,
-          requirement_type: req.requirement_type,
-          name: req.name,
-          course_uuid: c?.uuid,
-          description: req.description ?? '',
-          quantity: req.quantity ?? undefined,
-          unit: req.unit ?? '',
-          provided_by: req.provided_by ?? 'course_creator',
-          is_mandatory: !!req.is_mandatory,
-        }))
-        : [],
+      training_requirements: {}
     });
 
-  }, [courseId, course, trainingRequirements]);
+  }, [courseId, course]);
 
 
   // GET COURSE LESSONS

@@ -18,6 +18,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { Badge } from '../../../../components/ui/badge';
 import { Card } from '../../../../components/ui/card';
+import { useInstructor } from '../../../../context/instructor-context';
 import useAmdinClassesWithDetails from '../../../../hooks/use-admin-classes';
 import { useStudentsMap } from '../../../../hooks/use-studentsMap';
 import { getEnrollmentsForInstanceOptions } from '../../../../services/client/@tanstack/react-query.gen';
@@ -653,7 +654,7 @@ const StudentEnrollmentTable: React.FC<{ students: StudentEnrollment[] }> = ({ s
   );
 };
 
-export default function AdminClassPage() {
+export default function InstructorClassPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -663,14 +664,21 @@ export default function AdminClassPage() {
     classes: true,
     instructors: false,
   });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const instructor = useInstructor();
+
   const {
-    classes: classesWithCourseAndInstructor,
+    classes: classData,
     loading,
     isPending,
   } = useAmdinClassesWithDetails();
+
+  const classesWithCourseAndInstructor = classData?.filter(
+    (cls) => cls?.default_instructor_uuid === instructor?.uuid
+  );
 
   const allEvents = useMemo<CalendarEvent[]>(() => {
     if (!classesWithCourseAndInstructor) return [];
@@ -698,6 +706,24 @@ export default function AdminClassPage() {
     return events;
   }, [classesWithCourseAndInstructor]);
 
+
+  const filteredEvents = useMemo(() => {
+    let events = allEvents;
+    if (selectedClassId !== 'all') {
+      events = events.filter(event => event.classDefinitionId === selectedClassId);
+    }
+    if (selectedInstructorId) {
+      const selectedClass = classesWithCourseAndInstructor?.find(
+        (c: ClassDefinition) => c.instructor?.uuid === selectedInstructorId
+      );
+      if (selectedClass) {
+        events = events.filter(event => event.classDefinitionId === selectedClass.uuid);
+      }
+    }
+    return events;
+  }, [allEvents, selectedClassId, selectedInstructorId, classesWithCourseAndInstructor]);
+
+
   const uniqueClasses = useMemo(() => {
     if (!classesWithCourseAndInstructor) return [];
 
@@ -716,45 +742,6 @@ export default function AdminClassPage() {
       cls.name.toLowerCase().includes(query)
     );
   }, [classesWithCourseAndInstructor, searchQuery]);
-
-  const uniqueInstructors = useMemo(() => {
-    if (!classesWithCourseAndInstructor) return [];
-    const instructorMap = new Map();
-    classesWithCourseAndInstructor.forEach((classDef: ClassDefinition) => {
-      if (classDef.instructor?.uuid) {
-        instructorMap.set(classDef.instructor.uuid, {
-          id: classDef.instructor.uuid,
-          name: classDef.instructor.full_name || 'Unknown Instructor',
-        });
-      }
-    });
-    return Array.from(instructorMap.values());
-  }, [classesWithCourseAndInstructor]);
-
-  const filteredEvents = useMemo(() => {
-    let events = allEvents;
-
-    if (selectedClassId !== 'all') {
-      events = events.filter(
-        (event) => event.classDefinitionId === selectedClassId
-      );
-    }
-
-    if (selectedInstructorId) {
-      const instructor = uniqueInstructors.find(
-        (inst) => inst.id === selectedInstructorId
-      );
-
-      if (instructor) {
-        events = events.filter(
-          (event) => event.instructor === instructor.name
-        );
-      }
-    }
-
-    return events;
-  }, [allEvents, selectedClassId, selectedInstructorId, uniqueInstructors]);
-
 
   useEffect(() => {
     if (selectedClassId && selectedClassId !== 'all') {
@@ -967,21 +954,6 @@ export default function AdminClassPage() {
                     setIsMobileMenuOpen(false);
                   }}
                   selectedId={selectedClassId}
-                />
-
-                <Dropdown
-                  label='Instructors'
-                  count={uniqueInstructors.length}
-                  isOpen={openDropdowns.instructors}
-                  onToggle={() =>
-                    setOpenDropdowns(prev => ({ ...prev, instructors: !prev.instructors }))
-                  }
-                  items={uniqueInstructors}
-                  onItemClick={id => {
-                    setSelectedInstructorId(selectedInstructorId === id ? null : id);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  selectedId={selectedInstructorId}
                 />
               </div>
             </div>
