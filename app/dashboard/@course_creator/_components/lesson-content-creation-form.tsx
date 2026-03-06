@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import {
+  Eye,
   FileText,
   FileUp,
   Headphones,
@@ -44,6 +45,10 @@ import {
   updateLessonContentMutation,
   uploadLessonMediaMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import { ContentItem } from '../../@instructor/trainings/overview/[id]/page';
+import { AudioPlayer } from '../../@student/schedule/classes/[id]/AudioPlayer';
+import { ReadingMode } from '../../@student/schedule/classes/[id]/ReadingMode';
+import { VideoPlayer } from '../../@student/schedule/classes/[id]/VideoPlayer';
 
 type LessonCreationFormProps = {
   course: any;
@@ -123,6 +128,25 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   const [contentType, setContentType] = useState<ContentType>('TEXT');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isReading, setIsReading] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
+  const [contentTypeName, setContentTypeName] = useState<string>('');
+
+  const handleViewContent = (content: ContentItem, contentType: string) => {
+    setSelectedLesson(content);
+    setContentTypeName(contentType);
+
+    if (contentType === 'video') {
+      setIsPlaying(true);
+    } else if (contentType === 'pdf' || contentType === 'text') {
+      setIsReading(true);
+    } else if (contentType === 'audio') {
+      setIsAudioPlaying(true);
+    }
+  };
 
   // GET COURSE CONTENT TYPES
   const contentTypeUuid = contentForm.watch('content_type_uuid');
@@ -501,20 +525,35 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                             </span>
                           </div>
                         </div>
-                        <div
-                          className='px-2'
-                          onClick={() => {
-                            handleDeleteContent(
-                              course?.data?.uuid as string,
-                              activeLessonId,
-                              content?.uuid
-                            );
-                          }}
-                        >
-                          <Trash2
-                            size={16}
-                            className='text-destructive hover:text-destructive/80 transition-colors'
-                          />
+
+                        <div className='flex flex-row items-center gap-4'>
+                          <Button
+                            onClick={() => {
+                              handleViewContent(content, content.content_type_key?.toLowerCase());
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                          >
+                            <Eye className='h-3 w-3' />
+                            View
+                          </Button>
+
+                          <div
+                            className='px-2'
+                            onClick={() => {
+                              handleDeleteContent(
+                                course?.data?.uuid as string,
+                                activeLessonId,
+                                content?.uuid
+                              );
+                            }}
+                          >
+                            <Trash2
+                              size={16}
+                              className='text-destructive hover:text-destructive/80 transition-colors'
+                            />
+                          </div>
                         </div>
                       </div>
                     )
@@ -829,6 +868,30 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           </CardContent>
         </div>
       </main>
+
+      <VideoPlayer
+        isOpen={isPlaying && contentTypeName === 'video'}
+        onClose={() => setIsPlaying(false)}
+        videoUrl={selectedLesson?.content_text || ''}
+        title={selectedLesson?.title}
+      />
+
+      <ReadingMode
+        isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
+        onClose={() => setIsReading(false)}
+        title={selectedLesson?.title || ''}
+        description={selectedLesson?.description}
+        content={selectedLesson?.content_text || ''}
+        contentType={contentTypeName as 'text' | 'pdf'}
+      />
+
+      <AudioPlayer
+        isOpen={isAudioPlaying && contentTypeName === 'audio'}
+        onClose={() => setIsAudioPlaying(false)}
+        audioUrl={selectedLesson?.content_text || ''}
+        title={selectedLesson?.title}
+        description={selectedLesson?.description}
+      />
     </div>
   );
 };

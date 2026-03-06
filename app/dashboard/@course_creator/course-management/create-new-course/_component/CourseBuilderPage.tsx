@@ -35,7 +35,6 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
-import { CourseComplianceForm } from '../../../_components/course-compliance-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
 import { CoursePricingForm } from '../../../_components/course-pricing-form';
 import CriteriaCreationForm from '../../../_components/criteria-creation-form';
@@ -247,7 +246,7 @@ export default function CourseBuilderPage() {
             {/* <StepperTrigger step={5} title='Rules' icon={ClipboardList} /> */}
             <StepperTrigger step={5} title='Branding' icon={Palette} />
             <StepperTrigger step={6} title='Pricing' icon={BadgeDollarSign} />
-            <StepperTrigger step={7} title='Compliance' icon={BadgeCheck} />
+            {/* <StepperTrigger step={7} title='Compliance' icon={BadgeCheck} /> */}
 
             {/* <StepperTrigger step={7} title='Review' icon={Eye} /> */}
             {/* <StepperTrigger step={8} title='Quizzes' icon={FileQuestion} />
@@ -398,7 +397,7 @@ export default function CourseBuilderPage() {
               />
             </StepperContent>
 
-            <StepperContent
+            {/* <StepperContent
               step={7}
               title='Course Compliance & Q?A'
               description='Confirm that all required compliance and quality checks have been completed.'
@@ -416,7 +415,7 @@ export default function CourseBuilderPage() {
                   setCreatedCourseId(data?.uuid);
                 }}
               />
-            </StepperContent>
+            </StepperContent> */}
 
             <StepperContent
               step={8}
