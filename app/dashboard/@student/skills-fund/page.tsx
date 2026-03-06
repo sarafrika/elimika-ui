@@ -47,133 +47,133 @@ import {
 import { sampleWallet, SkillsFundWalletCard } from '../../_components/skill-fund-wallet';
 
 const skillsFundApplications: any[] = [
-  {
-    id: 'app-001',
-    applicantId: 'student_001',
-    applicantName: 'Alice Kimani',
-    applicantType: 'student',
-    fundType: 'scholarship',
-    program: 'Full Stack Development Bootcamp',
-    reason: 'I want to upskill in web development to become job-ready.',
-    amount: 45000,
-    currency: 'KES',
-    documents: [
-      {
-        id: 'doc-001',
-        name: 'National ID',
-        type: 'identification',
-        url: '/uploads/app-001/national-id.pdf',
-      },
-      {
-        id: 'doc-002',
-        name: 'Motivation Letter',
-        type: 'letter',
-        url: '/uploads/app-001/motivation-letter.pdf',
-      },
-    ],
-    status: 'under-review',
-    submittedAt: new Date('2025-10-01T10:00:00'),
-    reviewedAt: new Date('2025-10-05T15:00:00'),
-    reviewedBy: 'admin_002',
-  },
+  // {
+  //   id: 'app-001',
+  //   applicantId: 'student_001',
+  //   applicantName: 'Alice Kimani',
+  //   applicantType: 'student',
+  //   fundType: 'scholarship',
+  //   program: 'Full Stack Development Bootcamp',
+  //   reason: 'I want to upskill in web development to become job-ready.',
+  //   amount: 45000,
+  //   currency: 'KES',
+  //   documents: [
+  //     {
+  //       id: 'doc-001',
+  //       name: 'National ID',
+  //       type: 'identification',
+  //       url: '/uploads/app-001/national-id.pdf',
+  //     },
+  //     {
+  //       id: 'doc-002',
+  //       name: 'Motivation Letter',
+  //       type: 'letter',
+  //       url: '/uploads/app-001/motivation-letter.pdf',
+  //     },
+  //   ],
+  //   status: 'under-review',
+  //   submittedAt: new Date('2025-10-01T10:00:00'),
+  //   reviewedAt: new Date('2025-10-05T15:00:00'),
+  //   reviewedBy: 'admin_002',
+  // },
 
-  {
-    id: 'app-002',
-    applicantId: 'instructor_001',
-    applicantName: 'Brian Otieno',
-    applicantType: 'instructor',
-    fundType: 'training-support',
-    program: 'Instructional Design Workshop',
-    reason: 'To improve my course creation and student engagement techniques.',
-    amount: 20000,
-    currency: 'KES',
-    documents: [
-      {
-        id: 'doc-003',
-        name: 'Workshop Registration',
-        type: 'receipt',
-        url: '/uploads/app-002/registration.pdf',
-      },
-    ],
-    status: 'approved',
-    submittedAt: new Date('2025-09-15T09:30:00'),
-    reviewedAt: new Date('2025-09-18T11:00:00'),
-    reviewedBy: 'admin_001',
-    disbursedAt: new Date('2025-09-20T10:00:00'),
-    linkedCourseId: 'course_099',
-  },
+  // {
+  //   id: 'app-002',
+  //   applicantId: 'instructor_001',
+  //   applicantName: 'Brian Otieno',
+  //   applicantType: 'instructor',
+  //   fundType: 'training-support',
+  //   program: 'Instructional Design Workshop',
+  //   reason: 'To improve my course creation and student engagement techniques.',
+  //   amount: 20000,
+  //   currency: 'KES',
+  //   documents: [
+  //     {
+  //       id: 'doc-003',
+  //       name: 'Workshop Registration',
+  //       type: 'receipt',
+  //       url: '/uploads/app-002/registration.pdf',
+  //     },
+  //   ],
+  //   status: 'approved',
+  //   submittedAt: new Date('2025-09-15T09:30:00'),
+  //   reviewedAt: new Date('2025-09-18T11:00:00'),
+  //   reviewedBy: 'admin_001',
+  //   disbursedAt: new Date('2025-09-20T10:00:00'),
+  //   linkedCourseId: 'course_099',
+  // },
 
-  {
-    id: 'app-003',
-    applicantId: 'student_002',
-    applicantName: 'David Wanjala',
-    applicantType: 'student',
-    fundType: 'loan',
-    program: 'Data Analytics Professional Certificate',
-    reason:
-      'I need financial support to complete my training and access better career opportunities.',
-    amount: 60000,
-    currency: 'KES',
-    documents: [],
-    status: 'draft',
-  },
+  // {
+  //   id: 'app-003',
+  //   applicantId: 'student_002',
+  //   applicantName: 'David Wanjala',
+  //   applicantType: 'student',
+  //   fundType: 'loan',
+  //   program: 'Data Analytics Professional Certificate',
+  //   reason:
+  //     'I need financial support to complete my training and access better career opportunities.',
+  //   amount: 60000,
+  //   currency: 'KES',
+  //   documents: [],
+  //   status: 'draft',
+  // },
 
-  {
-    id: 'app-004',
-    applicantId: 'student_003',
-    applicantName: 'Carol Wanjiru',
-    applicantType: 'student',
-    fundType: 'grant',
-    program: 'UI/UX Design Certification',
-    reason: 'I aim to transition into product design but cannot afford the full tuition.',
-    amount: 35000,
-    currency: 'KES',
-    documents: [
-      {
-        id: 'doc-004',
-        name: 'Statement of Purpose',
-        type: 'letter',
-        url: '/uploads/app-004/sop.pdf',
-      },
-    ],
-    status: 'rejected',
-    submittedAt: new Date('2025-09-10T08:45:00'),
-    reviewedAt: new Date('2025-09-12T14:00:00'),
-    reviewedBy: 'admin_003',
-    rejectionReason: 'Incomplete documentation and unclear learning goals.',
-  },
+  // {
+  //   id: 'app-004',
+  //   applicantId: 'student_003',
+  //   applicantName: 'Carol Wanjiru',
+  //   applicantType: 'student',
+  //   fundType: 'grant',
+  //   program: 'UI/UX Design Certification',
+  //   reason: 'I aim to transition into product design but cannot afford the full tuition.',
+  //   amount: 35000,
+  //   currency: 'KES',
+  //   documents: [
+  //     {
+  //       id: 'doc-004',
+  //       name: 'Statement of Purpose',
+  //       type: 'letter',
+  //       url: '/uploads/app-004/sop.pdf',
+  //     },
+  //   ],
+  //   status: 'rejected',
+  //   submittedAt: new Date('2025-09-10T08:45:00'),
+  //   reviewedAt: new Date('2025-09-12T14:00:00'),
+  //   reviewedBy: 'admin_003',
+  //   rejectionReason: 'Incomplete documentation and unclear learning goals.',
+  // },
 
-  {
-    id: 'app-005',
-    applicantId: 'instructor_002',
-    applicantName: 'Dr. Mercy Nduta',
-    applicantType: 'instructor',
-    fundType: 'grant',
-    program: 'Advanced AI Mentorship Program',
-    reason: 'To mentor students and contribute to the AI research community.',
-    amount: 75000,
-    currency: 'KES',
-    documents: [
-      {
-        id: 'doc-005',
-        name: 'Proposal',
-        type: 'project-proposal',
-        url: '/uploads/app-005/proposal.pdf',
-      },
-      {
-        id: 'doc-006',
-        name: 'Curriculum Vitae',
-        type: 'cv',
-        url: '/uploads/app-005/cv.pdf',
-      },
-    ],
-    status: 'disbursed',
-    submittedAt: new Date('2025-08-20T10:00:00'),
-    reviewedAt: new Date('2025-08-22T16:30:00'),
-    reviewedBy: 'admin_004',
-    disbursedAt: new Date('2025-08-25T09:00:00'),
-    linkedCourseId: 'course_120',
-  },
+  // {
+  //   id: 'app-005',
+  //   applicantId: 'instructor_002',
+  //   applicantName: 'Dr. Mercy Nduta',
+  //   applicantType: 'instructor',
+  //   fundType: 'grant',
+  //   program: 'Advanced AI Mentorship Program',
+  //   reason: 'To mentor students and contribute to the AI research community.',
+  //   amount: 75000,
+  //   currency: 'KES',
+  //   documents: [
+  //     {
+  //       id: 'doc-005',
+  //       name: 'Proposal',
+  //       type: 'project-proposal',
+  //       url: '/uploads/app-005/proposal.pdf',
+  //     },
+  //     {
+  //       id: 'doc-006',
+  //       name: 'Curriculum Vitae',
+  //       type: 'cv',
+  //       url: '/uploads/app-005/cv.pdf',
+  //     },
+  //   ],
+  //   status: 'disbursed',
+  //   submittedAt: new Date('2025-08-20T10:00:00'),
+  //   reviewedAt: new Date('2025-08-22T16:30:00'),
+  //   reviewedBy: 'admin_004',
+  //   disbursedAt: new Date('2025-08-25T09:00:00'),
+  //   linkedCourseId: 'course_120',
+  // },
 ];
 
 type Props = {
@@ -203,11 +203,11 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
 
   const studentApplications = skillsFundApplications;
   const classes = [
-    { id: 'class-1', classTitle: 'Full Stack Development Bootcamp' },
-    { id: 'class-2', classTitle: 'Data Science with Python' },
-    { id: 'class-3', classTitle: 'Digital Marketing Essentials' },
-    { id: 'class-4', classTitle: 'Cybersecurity Fundamentals' },
-    { id: 'class-5', classTitle: 'Cloud Computing with AWS' },
+    // { id: 'class-1', classTitle: 'Full Stack Development Bootcamp' },
+    // { id: 'class-2', classTitle: 'Data Science with Python' },
+    // { id: 'class-3', classTitle: 'Digital Marketing Essentials' },
+    // { id: 'class-4', classTitle: 'Cybersecurity Fundamentals' },
+    // { id: 'class-5', classTitle: 'Cloud Computing with AWS' },
   ];
 
   const [showApplicationModal, setShowApplicationModal] = useState(false);
@@ -218,33 +218,33 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
   });
 
   const availableFunds = [
-    {
-      id: 'fund-1',
-      type: 'scholarship',
-      name: 'Skills Development Scholarship',
-      description: 'Full or partial tuition coverage for accredited courses',
-      maxAmount: 5000,
-      eligibility: ['Students', 'Beginners'],
-      deadline: new Date(2025, 11, 31),
-    },
-    {
-      id: 'fund-2',
-      type: 'grant',
-      name: 'Tech Skills Grant',
-      description: 'Support for technology and programming courses',
-      maxAmount: 3000,
-      eligibility: ['Students', 'Career Changers'],
-      deadline: new Date(2025, 10, 30),
-    },
-    {
-      id: 'fund-3',
-      type: 'loan',
-      name: 'Education Microloan',
-      description: 'Low-interest loans for skills training',
-      maxAmount: 2000,
-      eligibility: ['Students', 'Professionals'],
-      deadline: new Date(2026, 0, 15),
-    },
+    // {
+    //   id: 'fund-1',
+    //   type: 'scholarship',
+    //   name: 'Skills Development Scholarship',
+    //   description: 'Full or partial tuition coverage for accredited courses',
+    //   maxAmount: 5000,
+    //   eligibility: ['Students', 'Beginners'],
+    //   deadline: new Date(2025, 11, 31),
+    // },
+    // {
+    //   id: 'fund-2',
+    //   type: 'grant',
+    //   name: 'Tech Skills Grant',
+    //   description: 'Support for technology and programming courses',
+    //   maxAmount: 3000,
+    //   eligibility: ['Students', 'Career Changers'],
+    //   deadline: new Date(2025, 10, 30),
+    // },
+    // {
+    //   id: 'fund-3',
+    //   type: 'loan',
+    //   name: 'Education Microloan',
+    //   description: 'Low-interest loans for skills training',
+    //   maxAmount: 2000,
+    //   eligibility: ['Students', 'Professionals'],
+    //   deadline: new Date(2026, 0, 15),
+    // },
   ];
 
   const handleSubmitApplication = () => {
@@ -387,7 +387,16 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
           <Button onClick={() => setShowApplicationModal(true)}>Apply for Funding</Button>
         </div>
 
+        <div>
+          {availableFunds.length === 0 && <div className='py-12 text-center'>
+            <FileText className='text-muted-foreground mx-auto mb-4 h-16 w-16' />
+            <p className='text-muted-foreground'>No available funding options</p>
+          </div>}
+        </div>
+
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+
+
           {availableFunds.map(fund => (
             <Card key={fund.id} className='hover:border-primary border-2 p-4 transition-colors'>
               <div className='space-y-3'>

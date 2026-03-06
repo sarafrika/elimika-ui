@@ -12,11 +12,10 @@ import {
   getAllContentTypesOptions,
   getCourseByUuidOptions,
   getCourseLessonsOptions,
-  getCourseTrainingRequirementsOptions,
   getLessonContentOptions,
   getLessonContentQueryKey,
   publishCourseMutation,
-  publishCourseQueryKey,
+  publishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -36,7 +35,6 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
-import { CourseComplianceForm } from '../../../_components/course-compliance-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
 import { CoursePricingForm } from '../../../_components/course-pricing-form';
 import CriteriaCreationForm from '../../../_components/criteria-creation-form';
@@ -91,18 +89,12 @@ export default function CourseBuilderPage() {
     enabled: !!resolveId,
   });
 
-  const { data: trainingRequirements } = useQuery({
-    ...getCourseTrainingRequirementsOptions({ path: { courseUuid: resolveId }, query: { pageable: {} } }),
-    enabled: !!resolveId,
-  });
-
   const [courseInitialValues, setCourseInitialValues] = useState<ICourse | undefined>(undefined);
 
   useEffect(() => {
     if (!courseId || !course?.data) return;
 
     const c = course.data;
-    const tReq = trainingRequirements?.data?.content ?? [];
 
     setCourseInitialValues({
       name: c.name || '',
@@ -132,22 +124,10 @@ export default function CourseBuilderPage() {
       creator_share_percentage: c.creator_share_percentage ?? 0,
       instructor_share_percentage: c.instructor_share_percentage ?? 0,
       revenue_share_notes: c.revenue_share_notes ?? '',
-      training_requirements: Array.isArray(tReq)
-        ? tReq.map(req => ({
-          uuid: req.uuid,
-          requirement_type: req.requirement_type,
-          name: req.name,
-          course_uuid: c?.uuid,
-          description: req.description ?? '',
-          quantity: req.quantity ?? undefined,
-          unit: req.unit ?? '',
-          provided_by: req.provided_by ?? 'course_creator',
-          is_mandatory: !!req.is_mandatory,
-        }))
-        : [],
+      training_requirements: {}
     });
 
-  }, [courseId, course, trainingRequirements]);
+  }, [courseId, course]);
 
 
   // GET COURSE LESSONS
@@ -266,7 +246,7 @@ export default function CourseBuilderPage() {
             {/* <StepperTrigger step={5} title='Rules' icon={ClipboardList} /> */}
             <StepperTrigger step={5} title='Branding' icon={Palette} />
             <StepperTrigger step={6} title='Pricing' icon={BadgeDollarSign} />
-            <StepperTrigger step={7} title='Compliance' icon={BadgeCheck} />
+            {/* <StepperTrigger step={7} title='Compliance' icon={BadgeCheck} /> */}
 
             {/* <StepperTrigger step={7} title='Review' icon={Eye} /> */}
             {/* <StepperTrigger step={8} title='Quizzes' icon={FileQuestion} />
@@ -417,7 +397,7 @@ export default function CourseBuilderPage() {
               />
             </StepperContent>
 
-            <StepperContent
+            {/* <StepperContent
               step={7}
               title='Course Compliance & Q?A'
               description='Confirm that all required compliance and quality checks have been completed.'
@@ -435,7 +415,7 @@ export default function CourseBuilderPage() {
                   setCreatedCourseId(data?.uuid);
                 }}
               />
-            </StepperContent>
+            </StepperContent> */}
 
             <StepperContent
               step={8}

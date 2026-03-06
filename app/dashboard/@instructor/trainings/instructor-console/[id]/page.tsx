@@ -9,8 +9,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassRoster } from '@/hooks/use-class-roster';
@@ -581,146 +579,217 @@ export default function TrainingInterfacePage() {
         })}
       </div>
 
-      {/* Attendance Drawer - keeping original */}
+      {/* Attendance Drawer - Table Layout */}
       <Sheet open={isAttendanceDrawerOpen} onOpenChange={setIsAttendanceDrawerOpen}>
-        <SheetContent className='w-[500px] px-6 sm:max-w-[500px]'>
-          <SheetHeader>
-            <SheetTitle>Mark Attendance</SheetTitle>
-            <SheetDescription>
-              {selectedSchedule && (
-                <div className='space-y-1 pt-2'>
-                  <div className='text-foreground font-medium'>
-                    {moment(selectedSchedule.start_time).format('dddd, MMM D, YYYY')}
-                  </div>
-                  <div className='text-muted-foreground text-sm'>
-                    {moment(selectedSchedule.start_time).format('h:mm A')} -{' '}
-                    {moment(selectedSchedule.end_time).format('h:mm A')}
-                  </div>
-                </div>
-              )}
-            </SheetDescription>
-          </SheetHeader>
+        <SheetContent className='w-full p-0 sm:max-w-full lg:max-w-[90vw] xl:max-w-[70vw]'>
+          <div className='flex h-full flex-col'>
+            {/* Header */}
+            <div className='border-b px-6 py-4'>
+              <SheetHeader>
+                <SheetTitle className='text-xl'>Mark Attendance</SheetTitle>
+                <SheetDescription>
+                  {selectedSchedule && (
+                    <div className='mt-2 flex flex-wrap items-center gap-4 text-sm'>
+                      <div className='flex items-center gap-2'>
+                        <Calendar className='h-4 w-4' />
+                        <span className='text-foreground font-medium'>
+                          {moment(selectedSchedule.start_time).format('dddd, MMM D, YYYY')}
+                        </span>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Clock className='h-4 w-4' />
+                        <span>
+                          {moment(selectedSchedule.start_time).format('h:mm A')} -{' '}
+                          {moment(selectedSchedule.end_time).format('h:mm A')}
+                        </span>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Users className='h-4 w-4' />
+                        <span>{studentsForThisSchedule.length} Students</span>
+                      </div>
+                    </div>
+                  )}
+                </SheetDescription>
+              </SheetHeader>
 
-          <div className='space-y-4'>
-            <div className='relative'>
-              <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
-              <Input
-                type='text'
-                placeholder='Search students...'
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className='pl-10'
-              />
+              {/* Search */}
+              <div className='relative mt-4'>
+                <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
+                <Input
+                  type='text'
+                  placeholder='Search students by name...'
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className='pl-10'
+                />
+              </div>
             </div>
 
-            <Separator />
+            {/* Table */}
+            <div className='flex-1 overflow-auto px-6 py-4'>
+              {studentsForThisSchedule.filter(entry =>
+                entry.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+              ).length === 0 ? (
+                <div className='flex h-full flex-col items-center justify-center py-12 text-center'>
+                  <Users className='text-muted-foreground mb-3 h-12 w-12 opacity-40' />
+                  <h3 className='text-foreground mb-1 text-lg font-semibold'>No students found</h3>
+                  <p className='text-muted-foreground text-sm'>
+                    {searchQuery ? 'Try adjusting your search query' : 'No students enrolled in this session'}
+                  </p>
+                </div>
+              ) : (
+                <div className='rounded-lg border'>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className='w-[50px]'>#</TableHead>
+                        <TableHead>Student</TableHead>
+                        <TableHead className='hidden md:table-cell'>Overall Attendance</TableHead>
+                        <TableHead className='hidden lg:table-cell'>Progress</TableHead>
+                        <TableHead className='text-right'>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {studentsForThisSchedule
+                        .filter(entry =>
+                          entry.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        .map((entry: any, index: number) => {
+                          const studentId = entry.user.uuid;
+                          const name = entry.user.full_name;
+                          const attendance = calculateStudentAttendance(studentId);
+                          const currentStatus = entry?.enrollment?.did_attend;
+                          const enrollmentUuid = entry?.enrollment?.uuid;
 
-            <ScrollArea className='h-[calc(100vh-280px)]'>
-              <div className='space-y-2'>
-                {studentsForThisSchedule
-                  .filter(entry =>
-                    entry.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-                  )
-                  .map((entry: any) => {
-                    const studentId = entry.user.uuid;
-                    const name = entry.user.full_name;
-                    const attendance = calculateStudentAttendance(studentId);
-                    const currentStatus = entry?.enrollment?.did_attend;
-                    const enrollmentUuid = entry?.enrollment?.uuid;
+                          return (
+                            <TableRow key={studentId}>
+                              {/* Index */}
+                              <TableCell className='font-medium'>{index + 1}</TableCell>
 
-                    return (
-                      <Card key={studentId} className='border-border overflow-hidden'>
-                        <CardContent className='p-4'>
-                          <div className='space-y-3'>
-                            <div className='flex items-center justify-between'>
-                              <div className='flex items-center gap-3'>
-                                <div className='bg-primary/15 text-primary flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold'>
-                                  {name
-                                    .split(' ')
-                                    .map((n: string) => n?.[0])
-                                    .slice(0, 2)
-                                    .join('')}
-                                </div>
-                                <div>
-                                  <div className='text-foreground font-medium'>{name}</div>
-                                  <div className='text-muted-foreground text-xs'>
-                                    {attendance.presentCount} / {attendance.totalSessions} sessions
-                                    marked
+                              {/* Student Info */}
+                              <TableCell>
+                                <div className='flex items-center gap-3'>
+                                  <div className='bg-primary/15 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold'>
+                                    {name
+                                      .split(' ')
+                                      .map((n: string) => n?.[0])
+                                      .slice(0, 2)
+                                      .join('')}
+                                  </div>
+                                  <div className='min-w-0'>
+                                    <div className='text-foreground truncate font-medium'>{name}</div>
+                                    <div className='text-muted-foreground truncate text-xs'>
+                                      {attendance.presentCount} / {attendance.totalSessions} sessions present
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                              <div className='text-right'>
-                                <div className='text-foreground text-sm font-semibold'>
-                                  {attendance.percentage.toFixed(0)}%
+                              </TableCell>
+
+                              {/* Overall Attendance Percentage */}
+                              <TableCell className='hidden md:table-cell'>
+                                <div className='flex items-center gap-2'>
+                                  <div className='text-foreground text-sm font-semibold'>
+                                    {attendance.percentage.toFixed(0)}%
+                                  </div>
+                                  <Badge
+                                    variant={
+                                      attendance.percentage >= 80
+                                        ? 'default'
+                                        : attendance.percentage >= 60
+                                          ? 'secondary'
+                                          : 'destructive'
+                                    }
+                                    className='text-xs'
+                                  >
+                                    {attendance.percentage >= 80
+                                      ? 'Excellent'
+                                      : attendance.percentage >= 60
+                                        ? 'Good'
+                                        : 'Poor'}
+                                  </Badge>
                                 </div>
-                                <div className='text-muted-foreground text-xs'>Attendance</div>
-                              </div>
-                            </div>
+                              </TableCell>
 
-                            <Progress value={attendance.percentage} className='h-1.5' />
+                              {/* Progress Bar */}
+                              <TableCell className='hidden lg:table-cell'>
+                                <div className='w-32'>
+                                  <Progress value={attendance.percentage} className='h-2' />
+                                </div>
+                              </TableCell>
 
-                            <div className='flex gap-2'>
-                              <Button
-                                onClick={() =>
-                                  handleMarkAttendance(studentId, enrollmentUuid, true)
-                                }
-                                variant={currentStatus === true ? 'success' : 'outline'}
-                                size='sm'
-                                className='flex-1 gap-1.5'
-                                disabled={
-                                  loadingEnrollmentUuid === enrollmentUuid &&
-                                  markAttendanceMut.isPending
-                                }
-                              >
-                                {loadingEnrollmentUuid === enrollmentUuid &&
-                                  markAttendanceMut.isPending ? (
-                                  <span className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
-                                ) : (
-                                  <CheckCircle className='mr-1 h-4 w-4' />
-                                )}
-                                Present
-                              </Button>
+                              {/* Action Buttons */}
+                              <TableCell className='text-right'>
+                                <div className='flex justify-end gap-2'>
+                                  <Button
+                                    onClick={() =>
+                                      handleMarkAttendance(studentId, enrollmentUuid, true)
+                                    }
+                                    variant={currentStatus === true ? 'default' : 'outline'}
+                                    size='sm'
+                                    className='gap-1.5'
+                                    disabled={
+                                      loadingEnrollmentUuid === enrollmentUuid &&
+                                      markAttendanceMut.isPending
+                                    }
+                                  >
+                                    {loadingEnrollmentUuid === enrollmentUuid &&
+                                      markAttendanceMut.isPending ? (
+                                      <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                                    ) : (
+                                      <CheckCircle className='h-4 w-4' />
+                                    )}
+                                    <span className='hidden sm:inline'>Present</span>
+                                  </Button>
 
-                              <Button
-                                onClick={() =>
-                                  handleMarkAttendance(studentId, enrollmentUuid, false)
-                                }
-                                variant={currentStatus === false ? 'destructive' : 'outline'}
-                                size='sm'
-                                className='flex-1 gap-1.5'
-                                disabled={
-                                  loadingEnrollmentUuid === enrollmentUuid &&
-                                  markAttendanceMut.isPending
-                                }
-                              >
-                                {loadingEnrollmentUuid === enrollmentUuid &&
-                                  markAttendanceMut.isPending ? (
-                                  <span className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
-                                ) : (
-                                  <XCircle className='mr-1 h-4 w-4' />
-                                )}
-                                Absent
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                                  <Button
+                                    onClick={() =>
+                                      handleMarkAttendance(studentId, enrollmentUuid, false)
+                                    }
+                                    variant={currentStatus === false ? 'destructive' : 'outline'}
+                                    size='sm'
+                                    className='gap-1.5'
+                                    disabled={
+                                      loadingEnrollmentUuid === enrollmentUuid &&
+                                      markAttendanceMut.isPending
+                                    }
+                                  >
+                                    {loadingEnrollmentUuid === enrollmentUuid &&
+                                      markAttendanceMut.isPending ? (
+                                      <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                                    ) : (
+                                      <XCircle className='h-4 w-4' />
+                                    )}
+                                    <span className='hidden sm:inline'>Absent</span>
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
 
-                {filteredRoster?.length === 0 && (
-                  <div className='flex flex-col items-center justify-center py-12 text-center'>
-                    <Users className='text-muted-foreground mb-3 h-12 w-12 opacity-40' />
-                    <p className='text-muted-foreground text-sm'>No students found</p>
-                  </div>
-                )}
+            {/* Footer */}
+            <div className='border-t px-6 py-4'>
+              <div className='flex items-center justify-between'>
+                <div className='text-muted-foreground text-sm'>
+                  {studentsForThisSchedule.filter(entry =>
+                    entry.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).length}{' '}
+                  {studentsForThisSchedule.filter(entry =>
+                    entry.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).length === 1
+                    ? 'student'
+                    : 'students'}{' '}
+                  {searchQuery && 'matching search'}
+                </div>
+                <Button onClick={() => setIsAttendanceDrawerOpen(false)}>
+                  Done
+                </Button>
               </div>
-            </ScrollArea>
-
-            <div className='border-t pt-4'>
-              <Button onClick={() => setIsAttendanceDrawerOpen(false)} className='w-full'>
-                Done
-              </Button>
             </div>
           </div>
         </SheetContent>

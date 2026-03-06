@@ -42,9 +42,12 @@ import { createCategory, updateCourse } from '@/services/client';
 import {
   addCourseTrainingRequirementMutation,
   createCourseMutation,
+  deleteCourseTrainingRequirementMutation,
   getAllCategoriesOptions,
   getAllCategoriesQueryKey,
   getCourseByUuidQueryKey,
+  getCourseTrainingRequirementsOptions,
+  getCourseTrainingRequirementsQueryKey,
   searchCoursesQueryKey,
   updateCourseTrainingRequirementMutation
 } from '@/services/client/@tanstack/react-query.gen';
@@ -61,9 +64,11 @@ import {
 } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { Card, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import {
   type CourseCreationFormValues,
   courseCreationSchema,
+  emptyRequirement,
   providedByOptions,
   requirementTypes,
 } from './course-creation-types';
@@ -105,6 +110,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     { showSubmitButton, initialValues, editingCourseId, courseId, successResponse },
     ref
   ) {
+    const qc = useQueryClient()
     const dialogCloseRef = useRef<HTMLButtonElement>(null);
 
     const form = useForm<CourseCreationFormValues>({
@@ -134,7 +140,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           drip_schedule_enabled: false,
           prerequisites_required: false,
         },
-        training_requirements: [],
+        training_requirement: emptyRequirement,
         ...initialValues,
       },
       mode: 'onChange',
@@ -158,30 +164,20 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       name: 'categories',
     });
 
-    const {
-      fields: trainingRequirementFields,
-      append: appendTrainingRequirement,
-      remove: removeTrainingRequirement,
-    } = useFieldArray({
-      control: form.control,
-      name: 'training_requirements',
+
+    const [showRequirementForm, setShowRequirementForm] = useState(false);
+    const [existingRequirements, setExistingRequirements] = useState<any>([]);
+
+    const { data: trainingRequirements } = useQuery({
+      ...getCourseTrainingRequirementsOptions({ path: { courseUuid: courseId || editingCourseId }, query: { pageable: {} } }),
+      enabled: !!courseId || !!editingCourseId,
     });
 
-    const trainingRequirements = form.watch('training_requirements');
-
-    const hasIncompleteTrainingRequirements =
-      Array.isArray(trainingRequirements) &&
-      trainingRequirements.some(req => {
-        if (!req) return true;
-
-        return (
-          !req.name?.trim() ||
-          !req.requirement_type ||
-          !req.provided_by ||
-          !req.quantity ||
-          !req.unit
-        );
-      });
+    useEffect(() => {
+      if (trainingRequirements?.data?.content) {
+        setExistingRequirements(trainingRequirements.data.content);
+      }
+    }, [trainingRequirements]);
 
     const queryClient = useQueryClient();
     const instructor = useInstructor();
@@ -230,6 +226,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     const addTrainingReqMut = useMutation(addCourseTrainingRequirementMutation())
     const updateTrainingReqMut = useMutation(updateCourseTrainingRequirementMutation())
+    const deleteTrainingReqMut = useMutation(deleteCourseTrainingRequirementMutation())
 
     // GET COURSE CATEGORIES
     const { data: categories } = useQuery(
@@ -267,6 +264,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     }, [creatorShare, form]);
 
+
     const onSubmit = (data: CourseCreationFormValues) => {
       const resolvedCourseCreatorUuid = authorUuid;
 
@@ -284,21 +282,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         return;
       }
 
-      const trainingRequirementsPayload =
-        data?.training_requirements?.map(req => ({
-          uuid: req.uuid,
-          requirement_type: req.requirement_type,
-          name: req.name,
-          description: req.description || undefined,
-          quantity:
-            typeof req.quantity === 'number' && !Number.isNaN(req.quantity)
-              ? req.quantity
-              : undefined,
-          unit: req.unit || undefined,
-          provided_by: req.provided_by,
-          is_mandatory: !!req.is_mandatory,
-          course_uuid: editingCourseId ?? '',
-        })) ?? [];
+      const trainingRequirementPayload = {
+        ...data.training_requirement,
+        course_uuid: editingCourseId ?? '',
+      };
 
       if (editingCourseId) {
         const editBody = {
@@ -322,7 +309,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           creator_share_percentage: data?.creator_share_percentage,
           instructor_share_percentage: data?.instructor_share_percentage,
           revenue_share_notes: data?.revenue_share_notes,
-          training_requirements: trainingRequirementsPayload,
           status: 'draft',
           active: false,
           is_free: data?.is_free,
@@ -340,7 +326,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               const errorObj = data?.error;
 
               addTrainingReqMut.mutate({
-                body: trainingRequirementsPayload as any, path: { courseUuid: editingCourseId, }
+                body: trainingRequirementPayload as any, path: { courseUuid: editingCourseId, }
+              }, {
+                onSuccess: () => {
+                  qc.invalidateQueries({ queryKey: getCourseTrainingRequirementsQueryKey({ path: { courseUuid: editingCourseId as string }, query: { pageable: {} } }) })
+                }
               })
 
               if (respObj) {
@@ -350,7 +340,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 //   successResponse(data?.data)
                 // }
 
-                setActiveStep(1);
+                // setActiveStep(1);
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
                 });
@@ -399,7 +389,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               creator_share_percentage: data?.creator_share_percentage,
               instructor_share_percentage: data?.instructor_share_percentage,
               revenue_share_notes: data?.revenue_share_notes,
-              training_requirements: trainingRequirementsPayload,
               thumbnail_url: '',
               banner_url: '',
               intro_video_url: '',
@@ -419,24 +408,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             onSuccess: data => {
               toast.success('Course created successfully');
 
-              const trainingPayload =
-                data?.training_requirements?.map(req => ({
-                  uuid: req.uuid,
-                  requirement_type: req.requirement_type,
-                  name: req.name,
-                  description: req.description || undefined,
-                  quantity:
-                    typeof req.quantity === 'number' && !Number.isNaN(req.quantity)
-                      ? req.quantity
-                      : undefined,
-                  unit: req.unit || undefined,
-                  provided_by: req.provided_by,
-                  is_mandatory: !!req.is_mandatory,
-                  course_uuid: editingCourseId || data?.data?.uuuid,
-                })) ?? [];
-
               addTrainingReqMut.mutate({
-                body: trainingPayload as any, path: { courseUuid: editingCourseId || data?.data?.uuid as string }
+                body: trainingRequirementPayload as any, path: { courseUuid: editingCourseId || data?.data?.uuid as string, }
+              }, {
+                onSuccess: () => {
+                  qc.invalidateQueries({ queryKey: getCourseTrainingRequirementsQueryKey({ path: { courseUuid: editingCourseId as string }, query: { pageable: {} } }) })
+                }
               })
 
               setActiveStep(1);
@@ -840,143 +817,132 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           <FormSection
-            title='Training Requirements'
-            description='List the resources or facilities that must be available before this course can be delivered.'
+            title="Training Requirements"
+            description="Add required resources or facilities for this course."
           >
-            <div className='space-y-4'>
-              {trainingRequirementFields.map((field, index) => (
-                <div key={field.id} className='space-y-4 rounded-lg border p-4'>
-                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                    <FormField
-                      control={form.control}
-                      name={`training_requirements.${index}.name` as const}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Requirement Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder='e.g., 3D printers, VR headsets' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`training_requirements.${index}.requirement_type` as const}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select type' />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {requirementTypes.map(type => (
-                                <SelectItem key={type} value={type}>
-                                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                    <FormField
-                      control={form.control}
-                      name={`training_requirements.${index}.quantity` as const}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quantity</FormLabel>
-                          <FormControl>
-                            <Input type='number' min='0' step='1' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`training_requirements.${index}.unit` as const}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Unit</FormLabel>
-                          <FormControl>
-                            <Input placeholder='e.g., sets, seats' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                    <FormField
-                      control={form.control}
-                      name={`training_requirements.${index}.provided_by` as const}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Provided By</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select owner' />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {providedByOptions.map(option => {
-                                const label = option
-                                  .split('_')
-                                  .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-                                  .join(' ');
-                                return (
-                                  <SelectItem key={option} value={option}>
-                                    {label}
-                                  </SelectItem>
+            {existingRequirements.length > 0 && (
+              <div className="space-y-4 mb-4">
+                {existingRequirements.map((req) => (
+                  <Card key={req.uuid} className="py-0 border border-border bg-muted shadow-sm">
+                    <CardHeader className="flex items-start justify-between gap-4 p-4">
+                      <div>
+                        <CardTitle className="text-base">{req.name}</CardTitle>
+                        {req.description && (
+                          <CardDescription className="text-sm text-muted-foreground">
+                            {req.description}
+                          </CardDescription>
+                        )}
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          {req.quantity ? `${req.quantity} ${req.unit}` : ''} - {req.requirement_type}
+                        </div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          Provided by: {req.provided_by}
+                        </div>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className='min-w-[100px]'
+                        onClick={() => {
+                          deleteTrainingReqMut.mutate(
+                            { path: { courseUuid: editingCourseId, requirementUuid: req.uuid } },
+                            {
+                              onSuccess: () => {
+                                qc.invalidateQueries({
+                                  queryKey: getCourseTrainingRequirementsQueryKey({
+                                    path: { courseUuid: editingCourseId as string },
+                                    query: { pageable: {} },
+                                  }),
+                                });
+                                setExistingRequirements((prev) =>
+                                  prev.filter((r) => r.uuid !== req.uuid)
                                 );
-                              })}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                              },
+                            }
+                          );
+                        }}
+                      >
+                        {deleteTrainingReqMut.isPending ? <Spinner /> : "Remove"}
+                      </Button>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            )}
 
-                    <FormField
-                      control={form.control}
-                      name={`training_requirements.${index}.is_mandatory` as const}
-                      render={({ field }) => (
-                        <FormItem className='flex flex-row items-start space-y-0 space-x-3 rounded-md border p-3'>
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                          <div className='space-y-1 leading-none'>
-                            <FormLabel>Mandatory requirement</FormLabel>
-                            <FormDescription>Mark as required before scheduling.</FormDescription>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+            {!showRequirementForm && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowRequirementForm(true)}
+              >
+                Add New Requirement
+              </Button>
+            )}
+
+            {showRequirementForm && (
+              <div className="mt-6 space-y-6 rounded-lg border p-6">
+                {/* NAME + TYPE */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="training_requirement.name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Requirement Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., 3D printers" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
-                    name={`training_requirements.${index}.description` as const}
+                    name="training_requirement.requirement_type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel>Type</FormLabel>
+                        <Select
+                          value={field.value || requirementTypes[0]}
+                          onValueChange={v => form.setValue("training_requirement.requirement_type", v)}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {requirementTypes.map(type => (
+                              <SelectItem key={type} value={type}>
+                                {type.charAt(0).toUpperCase() + type.slice(1)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* QUANTITY + UNIT */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="training_requirement.quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity</FormLabel>
                         <FormControl>
-                          <Textarea
-                            rows={2}
-                            placeholder='Provide any supporting detail'
+                          <Input
+                            type="number"
+                            min="0"
                             {...field}
+                            onChange={e =>
+                              field.onChange(e.target.value ? Number(e.target.value) : 0)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -984,44 +950,114 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                     )}
                   />
 
-                  <div className='flex justify-end'>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => removeTrainingRequirement(index)}
-                    >
-                      Remove requirement
-                    </Button>
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="training_requirement.unit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unit</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., sets, seats" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              ))}
 
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() =>
-                  appendTrainingRequirement({
-                    requirement_type: 'material',
-                    name: '',
-                    description: '',
-                    quantity: undefined,
-                    unit: '',
-                    provided_by: 'course_creator',
-                    is_mandatory: false,
-                  })
-                }
-              >
-                Add training requirement
-              </Button>
-            </div>
+                {/* PROVIDED BY + MANDATORY */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="training_requirement.provided_by"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Provided By</FormLabel>
+                        <Select
+                          value={field.value || providedByOptions[0]}
+                          onValueChange={v => form.setValue("training_requirement.provided_by", v)}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select owner" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {providedByOptions.map(option => {
+                              const label = option
+                                .split("_")
+                                .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+                                .join(" ");
+                              return (
+                                <SelectItem key={option} value={option}>
+                                  {label}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="training_requirement.is_mandatory"
+                    render={({ field }) => (
+                      <FormItem className="flex items-start space-x-3 rounded-md border p-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={!!field.value}
+                            onCheckedChange={checked => field.onChange(!!checked)}
+                          />
+                        </FormControl>
+                        <div>
+                          <FormLabel>Mandatory requirement</FormLabel>
+                          <FormDescription>Required before scheduling.</FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* DESCRIPTION */}
+                <FormField
+                  control={form.control}
+                  name="training_requirement.description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea rows={3} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* ACTION BUTTONS */}
+                <div className="flex justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowRequirementForm(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </FormSection>
 
-          {hasIncompleteTrainingRequirements && (
+          {/* 
+          {hasIncompleteTrainingRequirement && (
             <p className='text-destructive text-end text-sm'>
               Please complete or remove all training requirements before saving.
             </p>
-          )}
+          )} */}
 
           {showSubmitButton && (
             <div className='xxs:flex-col flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>
@@ -1030,8 +1066,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 className='min-w-32'
                 disabled={
                   createCourseIsPending ||
-                  updateCourseIsPending ||
-                  hasIncompleteTrainingRequirements
+                  updateCourseIsPending
+
                 }
               >
                 {createCourseIsPending || updateCourseIsPending ? <Spinner /> : 'Save Course'}
