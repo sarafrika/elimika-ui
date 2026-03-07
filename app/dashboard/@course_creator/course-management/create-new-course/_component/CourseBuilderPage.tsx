@@ -19,7 +19,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  BadgeCheck,
   BadgeDollarSign,
   BookOpen,
   CheckCheck,
@@ -241,7 +240,7 @@ export default function CourseBuilderPage() {
             <StepperTrigger step={2} title='Lesson Contents' icon={File} />
             <StepperTrigger step={3} title='Assessment' icon={SlidersHorizontal} />
 
-            <StepperTrigger step={4} title='Assessment Criteria' icon={CheckCheck} />
+            <StepperTrigger step={4} title='Evaluation Criteria' icon={CheckCheck} />
 
             {/* <StepperTrigger step={5} title='Rules' icon={ClipboardList} /> */}
             <StepperTrigger step={5} title='Branding' icon={Palette} />
@@ -326,7 +325,7 @@ export default function CourseBuilderPage() {
 
             <StepperContent
               step={4}
-              title='Assessment Criteria'
+              title='Evaluation Criteria'
               description='Create assessment rubrics to evaluate student performance'
               showNavigation
               nextButtonText='Continue to Branding'
@@ -341,7 +340,7 @@ export default function CourseBuilderPage() {
               description='Define the rules learners must follow to progress and complete the course.'
               showNavigation
               nextButtonText='Continue to Branding'
-              previousButtonText='Back to Assessment Criteria'
+              previousButtonText='Back to Evaluation Criteria'
             >
               <CourseLearningRulesForm
                 ref={formRef}

@@ -2,10 +2,11 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { CourseAssessmentStructure } from './assesment-structure-form';
 import { AssignmentRubricAssociationForm } from './assignment-rubric-association-form';
 import { AttendanceRubricAssociationForm } from './attendance-rubric-association-form';
 
-const tabs = ['Assignment Rubric', 'Attendance Rubric'];
+const tabs = ['Assessment Structure', 'Assignment Rubric', 'Attendance Rubric'];
 
 type CriteriaCreationFormProps = {
   course: any;
@@ -13,7 +14,7 @@ type CriteriaCreationFormProps = {
 
 const CriteriaCreationForm = ({ course }: CriteriaCreationFormProps) => {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState('Assignment Rubric')
+  const [activeTab, setActiveTab] = useState('Assessment Structure')
 
   return (
     <div className='mb-10 w-full'>
@@ -33,6 +34,14 @@ const CriteriaCreationForm = ({ course }: CriteriaCreationFormProps) => {
       </div>
 
       <div>
+        {activeTab === 'Assessment Structure' && (
+          <div>
+            <CourseAssessmentStructure
+              courseUuid={course?.data?.uuid as string} createdBy={''} />
+          </div>
+        )}
+
+
         {activeTab === 'Assignment Rubric' && (
           <div>
             <AssignmentRubricAssociationForm

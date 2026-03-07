@@ -700,7 +700,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           {/* Course Duration */}
-          <div className='hidden'>
+          <div className=''>
             <FormSection
               title='Course Duration'
               description='Set the time duration for your course'
