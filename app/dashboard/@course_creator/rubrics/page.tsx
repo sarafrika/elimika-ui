@@ -1,6 +1,5 @@
-import RubricManager from './new/page';
+import RubricManager from './rubric-manager';
 
 export default function RubricContentPage() {
-  // return <RubricsCreationPage />;
   return <RubricManager />;
 }
