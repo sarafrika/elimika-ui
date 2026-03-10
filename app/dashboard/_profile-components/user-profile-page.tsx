@@ -48,7 +48,7 @@ function normaliseProfile(
         admin_verified: p.admin_verified,
         is_profile_complete: p.is_profile_complete,
         gender: user?.gender,
-        user_no: user?.user_no
+        user_no: user?.user_no,
       };
     }
 
@@ -75,7 +75,7 @@ function normaliseProfile(
         is_profile_complete: p.is_profile_complete,
         gender: user?.gender,
         student_profile: p,
-        user_no: user?.user_no
+        user_no: user?.user_no,
       };
     }
 
@@ -98,7 +98,7 @@ function normaliseProfile(
         admin_verified: p.admin_verified,
         is_profile_complete: p.is_profile_complete,
         gender: user?.gender,
-        user_no: user?.user_no
+        user_no: user?.user_no,
       };
     }
 
@@ -124,7 +124,7 @@ function normaliseProfile(
         is_profile_complete: p.is_profile_complete,
         is_online: true,
         gender: user?.gender,
-        user_no: user?.user_no
+        user_no: user?.user_no,
       };
     }
 
@@ -142,7 +142,7 @@ function normaliseProfile(
         avatar_url: user?.avatar_url,
         address: p.formatted_location || '',
         gender: user?.gender,
-        user_no: user?.user_no
+        user_no: user?.user_no,
       };
     }
   }

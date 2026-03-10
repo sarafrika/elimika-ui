@@ -15,7 +15,7 @@ import {
   getLessonContentOptions,
   getLessonContentQueryKey,
   publishCourseMutation,
-  publishCourseQueryKey
+  publishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -26,7 +26,7 @@ import {
   File,
   GraduationCap,
   Palette,
-  SlidersHorizontal
+  SlidersHorizontal,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -123,11 +123,9 @@ export default function CourseBuilderPage() {
       creator_share_percentage: c.creator_share_percentage ?? 0,
       instructor_share_percentage: c.instructor_share_percentage ?? 0,
       revenue_share_notes: c.revenue_share_notes ?? '',
-      training_requirements: {}
+      training_requirements: {},
     });
-
   }, [courseId, course]);
-
 
   // GET COURSE LESSONS
   const { data: courseLessons, isLoading: lessonsIsLoading } = useQuery({
@@ -187,7 +185,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   if (creatorLoading) {
@@ -238,7 +236,7 @@ export default function CourseBuilderPage() {
             <StepperTrigger step={0} title='Course Set Up' icon={BookOpen} />
             <StepperTrigger step={1} title='Course Lessons' icon={GraduationCap} />
             <StepperTrigger step={2} title='Lesson Contents' icon={File} />
-            <StepperTrigger step={3} title='Assessment' icon={SlidersHorizontal} />
+            <StepperTrigger step={3} title='Assessment Tasks' icon={SlidersHorizontal} />
 
             <StepperTrigger step={4} title='Evaluation Criteria' icon={CheckCheck} />
 
@@ -276,7 +274,7 @@ export default function CourseBuilderPage() {
 
             <StepperContent
               step={1}
-              title='Course Lessonss'
+              title='Course Lessons'
               description='Add skills and learning materials for your course'
               showNavigation
               nextButtonText='Continue to Lesson Contents'
@@ -293,10 +291,12 @@ export default function CourseBuilderPage() {
 
             <StepperContent
               step={2}
-              title='Course Lessons Content'
-              description='Add skills and learning materials for your course'
+              // title='Course Lessons Content'
+              // description='Add skills and learning materials for your course'
+              title=''
+              description=''
               showNavigation
-              nextButtonText='Continue to Assessment'
+              nextButtonText='Continue to Assessment Tasks'
               previousButtonText='Back to Lessons'
             >
               <div className='space-y-4 p-0'>
@@ -313,8 +313,8 @@ export default function CourseBuilderPage() {
               title='Course Assessment'
               description='Create assessments to evaluate student performance'
               showNavigation
-              nextButtonText='Continue to Assessment Criteria'
-              previousButtonText='Back to Lesson Content'
+              nextButtonText='Continue to Evaluation Criteria'
+              previousButtonText='Back to Lesson Contents'
             >
               <AssessmentCreationForm
                 course={course}
@@ -329,7 +329,7 @@ export default function CourseBuilderPage() {
               description='Create assessment rubrics to evaluate student performance'
               showNavigation
               nextButtonText='Continue to Branding'
-              previousButtonText='Back to Assessment'
+              previousButtonText='Back to Assessment Tasks'
             >
               <CriteriaCreationForm course={course} />
             </StepperContent>
@@ -362,7 +362,6 @@ export default function CourseBuilderPage() {
               nextButtonText='Continue to Pricing'
               // previousButtonText='Back to Rules'
               previousButtonText='Back to Assessment criteria'
-
             >
               <CourseBrandingForm
                 ref={formRef}

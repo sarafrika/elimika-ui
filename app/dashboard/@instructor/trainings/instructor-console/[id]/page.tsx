@@ -5,14 +5,29 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassRoster } from '@/hooks/use-class-roster';
-import { createAssignmentScheduleMutation, createQuizScheduleMutation, deleteAssignmentScheduleMutation, deleteQuizScheduleMutation, getAllAssignmentsOptions, getAllQuizzesOptions, getAssignmentAttachmentsOptions, getAssignmentByUuidOptions, getAssignmentSchedulesOptions, getAssignmentSchedulesQueryKey, getQuizByUuidOptions, getQuizSchedulesOptions, getQuizSchedulesQueryKey, markAttendanceMutation } from '@/services/client/@tanstack/react-query.gen';
+import {
+  createAssignmentScheduleMutation,
+  createQuizScheduleMutation,
+  deleteAssignmentScheduleMutation,
+  deleteQuizScheduleMutation,
+  getAllAssignmentsOptions,
+  getAllQuizzesOptions,
+  getAssignmentAttachmentsOptions,
+  getAssignmentByUuidOptions,
+  getAssignmentSchedulesOptions,
+  getAssignmentSchedulesQueryKey,
+  getQuizByUuidOptions,
+  getQuizSchedulesOptions,
+  getQuizSchedulesQueryKey,
+  markAttendanceMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Award,
@@ -22,6 +37,7 @@ import {
   ChevronUp,
   ClipboardList,
   Clock,
+  Download,
   ExternalLink,
   File,
   FileText,
@@ -35,7 +51,7 @@ import {
   UserCheck,
   Users,
   Video,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 import moment from 'moment';
 import { useParams } from 'next/navigation';
@@ -70,20 +86,25 @@ import {
 } from '../../../../../../components/ui/table';
 import { useInstructor } from '../../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
+import { downloadFile } from '../../../../@student/assignment/page';
 import { QuizzesSheet } from './quiz-sheet';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 function getFileIcon(filename: string) {
   const ext = filename?.split('.').pop()?.toLowerCase();
   switch (ext) {
-    case 'pdf': return { icon: FileText, color: 'text-red-500' };
+    case 'pdf':
+      return { icon: FileText, color: 'text-red-500' };
     case 'doc':
-    case 'docx': return { icon: FileText, color: 'text-blue-500' };
+    case 'docx':
+      return { icon: FileText, color: 'text-blue-500' };
     case 'jpg':
     case 'jpeg':
     case 'png':
-    case 'gif': return { icon: File, color: 'text-green-500' };
-    default: return { icon: File, color: 'text-muted-foreground' };
+    case 'gif':
+      return { icon: File, color: 'text-green-500' };
+    default:
+      return { icon: File, color: 'text-muted-foreground' };
   }
 }
 
@@ -99,7 +120,12 @@ export default function TrainingInterfacePage() {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
       { id: 'trainings', title: 'Training Classes', url: '/dashboard/trainings' },
-      { id: 'instructor-console', title: 'Training Dashboard', url: `/dashboard/trainings/instructor-console/${classId}`, isLast: true },
+      {
+        id: 'instructor-console',
+        title: 'Training Dashboard',
+        url: `/dashboard/trainings/instructor-console/${classId}`,
+        isLast: true,
+      },
     ]);
   }, [replaceBreadcrumbs, classId]);
 
@@ -115,7 +141,9 @@ export default function TrainingInterfacePage() {
   const [isAttendanceDrawerOpen, setIsAttendanceDrawerOpen] = useState(false);
   const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
-  const [attendanceRecords, setAttendanceRecords] = useState<Record<string, Record<string, boolean>>>({});
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
   const [searchQuery, setSearchQuery] = useState('');
 
   /** Full-screen sheets for viewing class assignments / quizzes */
@@ -218,7 +246,11 @@ export default function TrainingInterfacePage() {
   const markAttendanceMut = useMutation(markAttendanceMutation());
   const [loadingEnrollmentUuid, setLoadingEnrollmentUuid] = useState<string | null>(null);
 
-  const handleMarkAttendance = async (studentId: string, enrollmentUuid: string, isPresent: boolean) => {
+  const handleMarkAttendance = async (
+    studentId: string,
+    enrollmentUuid: string,
+    isPresent: boolean
+  ) => {
     if (!selectedSchedule) return;
     setLoadingEnrollmentUuid(enrollmentUuid);
     markAttendanceMut.mutate(
@@ -227,16 +259,24 @@ export default function TrainingInterfacePage() {
         onSuccess: () => {
           setAttendanceRecords(prev => ({
             ...prev,
-            [selectedSchedule.uuid]: { ...prev[selectedSchedule.uuid], [enrollmentUuid]: isPresent },
+            [selectedSchedule.uuid]: {
+              ...prev[selectedSchedule.uuid],
+              [enrollmentUuid]: isPresent,
+            },
           }));
-          toast.success(`Marked ${isPresent ? 'Present' : 'Absent'} for ${roster?.find((r: any) => r.user.uuid === studentId)?.user.full_name}`);
+          toast.success(
+            `Marked ${isPresent ? 'Present' : 'Absent'} for ${roster?.find((r: any) => r.user.uuid === studentId)?.user.full_name}`
+          );
         },
         onSettled: () => setLoadingEnrollmentUuid(null),
       }
     );
   };
 
-  const handleMarkAttendanceAction = (schedule: any) => { setSelectedSchedule(schedule); setIsAttendanceDrawerOpen(true); };
+  const handleMarkAttendanceAction = (schedule: any) => {
+    setSelectedSchedule(schedule);
+    setIsAttendanceDrawerOpen(true);
+  };
   const handleLaunchClass = (schedule: any) => {
     const link = schedule.meeting_url || 'https://meet.google.com/abc-defg-hij';
     window.open(link, '_blank');
@@ -244,8 +284,12 @@ export default function TrainingInterfacePage() {
   };
 
   // ── Assignments data ─────────────────────────────────────────────────────────
-  const { data: allAssignments } = useQuery({ ...getAllAssignmentsOptions({ query: { pageable: {} } }) });
-  const { data: allQuizzes } = useQuery({ ...getAllQuizzesOptions({ query: { pageable: { size: 100 } } }) });
+  const { data: allAssignments } = useQuery({
+    ...getAllAssignmentsOptions({ query: { pageable: {} } }),
+  });
+  const { data: allQuizzes } = useQuery({
+    ...getAllQuizzesOptions({ query: { pageable: { size: 100 } } }),
+  });
 
   const addAssignmentScheduleMut = useMutation(createAssignmentScheduleMutation());
   const deleteAssignmentScheduleMut = useMutation(deleteAssignmentScheduleMutation());
@@ -274,13 +318,19 @@ export default function TrainingInterfacePage() {
 
   const assignmentDetailsMap = useMemo(() => {
     const map: Record<string, any> = {};
-    assignmentDetailQueries.forEach(q => { const d = q.data?.data; if (d?.uuid) map[d.uuid] = d; });
+    assignmentDetailQueries.forEach(q => {
+      const d = q.data?.data;
+      if (d?.uuid) map[d.uuid] = d;
+    });
     return map;
   }, [assignmentDetailQueries]);
 
   const assignmentAttachmentsMap = useMemo(() => {
     const map: Record<string, any[]> = {};
-    assignmentAttachmentQueries.forEach((q, i) => { const uuid = assignmentUuids[i]; if (uuid) map[uuid] = q.data?.data ?? []; });
+    assignmentAttachmentQueries.forEach((q, i) => {
+      const uuid = assignmentUuids[i];
+      if (uuid) map[uuid] = q.data?.data ?? [];
+    });
     return map;
   }, [assignmentAttachmentQueries, assignmentUuids]);
 
@@ -315,7 +365,10 @@ export default function TrainingInterfacePage() {
 
   const quizDetailsMap = useMemo(() => {
     const map: Record<string, any> = {};
-    quizDetailQueries.forEach(q => { const d = q.data?.data; if (d?.uuid) map[d.uuid] = d; });
+    quizDetailQueries.forEach(q => {
+      const d = q.data?.data;
+      if (d?.uuid) map[d.uuid] = d;
+    });
     return map;
   }, [quizDetailQueries]);
 
@@ -325,8 +378,18 @@ export default function TrainingInterfacePage() {
       .filter((item: any) => !!item.quiz);
   }, [quizSchedules, quizDetailsMap]);
   // ── Add / remove handlers ────────────────────────────────────────────────────
-  const handleAddAssignment = (schedule: any) => { setSelectedSchedule(schedule); setIsAssignmentDialogOpen(true); };
-  const handleAddQuiz = (schedule: any) => { setSelectedSchedule(schedule); setIsQuizDialogOpen(true); };
+  const handleAddAssignment = (schedule: any) => {
+    setSelectedSchedule(schedule);
+    setIsAssignmentDialogOpen(true);
+  };
+
+  // console.log(schedules, "schedules")
+  // console.log(selectedSchedule, "SEL SCHED")
+
+  const handleAddQuiz = (schedule: any) => {
+    setSelectedSchedule(schedule);
+    setIsQuizDialogOpen(true);
+  };
 
   const handleCreateAssignment = () => {
     const payload = {
@@ -343,13 +406,18 @@ export default function TrainingInterfacePage() {
       instructor_uuid: instructor?.uuid as string,
       notes: assignmentNotes,
     };
-    addAssignmentScheduleMut.mutate({ body: payload as any, path: { classUuid: classId as string } }, {
-      onSuccess: () => {
-        toast.success('Assignment created successfully!');
-        setIsAssignmentDialogOpen(false);
-        qc.invalidateQueries({ queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: classId } }) });
-      },
-    });
+    addAssignmentScheduleMut.mutate(
+      { body: payload as any, path: { classUuid: classId as string } },
+      {
+        onSuccess: () => {
+          toast.success('Assignment created successfully!');
+          setIsAssignmentDialogOpen(false);
+          qc.invalidateQueries({
+            queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: classId } }),
+          });
+        },
+      }
+    );
   };
 
   const handleCreateQuiz = () => {
@@ -368,13 +436,18 @@ export default function TrainingInterfacePage() {
       instructor_uuid: instructor?.uuid as string,
       notes: quizNotes,
     };
-    addQuizScheduleMut.mutate({ body: payload as any, path: { classUuid: classId as string } }, {
-      onSuccess: () => {
-        toast.success('Quiz created successfully!');
-        setIsQuizDialogOpen(false);
-        qc.invalidateQueries({ queryKey: getQuizSchedulesQueryKey({ path: { classUuid: classId } }) });
-      },
-    });
+    addQuizScheduleMut.mutate(
+      { body: payload as any, path: { classUuid: classId as string } },
+      {
+        onSuccess: () => {
+          toast.success('Quiz created successfully!');
+          setIsQuizDialogOpen(false);
+          qc.invalidateQueries({
+            queryKey: getQuizSchedulesQueryKey({ path: { classUuid: classId } }),
+          });
+        },
+      }
+    );
   };
 
   const handleRemoveAssignment = (scheduleUuid: string) => {
@@ -383,7 +456,9 @@ export default function TrainingInterfacePage() {
       {
         onSuccess: () => {
           toast.success('Assignment removed from class.');
-          qc.invalidateQueries({ queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: classId } }) });
+          qc.invalidateQueries({
+            queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: classId } }),
+          });
         },
       }
     );
@@ -395,7 +470,9 @@ export default function TrainingInterfacePage() {
       {
         onSuccess: () => {
           toast.success('Quiz removed from class.');
-          qc.invalidateQueries({ queryKey: getQuizSchedulesQueryKey({ path: { classUuid: classId } }) });
+          qc.invalidateQueries({
+            queryKey: getQuizSchedulesQueryKey({ path: { classUuid: classId } }),
+          });
         },
       }
     );
@@ -420,14 +497,9 @@ export default function TrainingInterfacePage() {
 
   return (
     <div className='bg-background min-h-screen p-0 sm:p-6'>
-
       {/* ── Top-right: Assignments & Quizzes buttons ── */}
       <div className='mb-4 flex justify-end gap-3'>
-        <Button
-          variant='outline'
-          className='gap-2'
-          onClick={() => setIsAssignmentsSheetOpen(true)}
-        >
+        <Button variant='outline' className='gap-2' onClick={() => setIsAssignmentsSheetOpen(true)}>
           <FileText className='h-4 w-4' />
           Class Assignments
           {mergedAssignments?.length > 0 && (
@@ -437,11 +509,7 @@ export default function TrainingInterfacePage() {
           )}
         </Button>
 
-        <Button
-          variant='outline'
-          className='gap-2'
-          onClick={() => setIsQuizzesSheetOpen(true)}
-        >
+        <Button variant='outline' className='gap-2' onClick={() => setIsQuizzesSheetOpen(true)}>
           <ClipboardList className='h-4 w-4' />
           Class Quizzes
           {mergedQuizzes?.length > 0 && (
@@ -461,7 +529,9 @@ export default function TrainingInterfacePage() {
               <div className='flex flex-wrap gap-4 text-sm'>
                 <div className='flex items-center gap-2'>
                   <MapPin className='text-muted-foreground h-4 w-4' />
-                  <span className='text-muted-foreground'>{classData?.location_type} - {classData?.location_name}</span>
+                  <span className='text-muted-foreground'>
+                    {classData?.location_type} - {classData?.location_name}
+                  </span>
                 </div>
                 <div className='flex items-center gap-2'>
                   <Users className='text-muted-foreground h-4 w-4' />
@@ -469,11 +539,15 @@ export default function TrainingInterfacePage() {
                 </div>
                 <div className='flex items-center gap-2'>
                   <Users className='text-muted-foreground h-4 w-4' />
-                  <span className='text-muted-foreground'>{classData?.max_participants - roster?.length} Seats available</span>
+                  <span className='text-muted-foreground'>
+                    {classData?.max_participants - roster?.length} Seats available
+                  </span>
                 </div>
                 <div className='flex items-center gap-2'>
                   <Calendar className='text-muted-foreground h-4 w-4' />
-                  <span className='text-muted-foreground'>{schedules.length} Sessions Scheduled</span>
+                  <span className='text-muted-foreground'>
+                    {schedules.length} Sessions Scheduled
+                  </span>
                 </div>
               </div>
             </div>
@@ -486,8 +560,12 @@ export default function TrainingInterfacePage() {
                 </div>
                 <Progress value={progress.percentage} className='h-2' />
                 <div className='flex items-center justify-between text-xs'>
-                  <span className='text-muted-foreground'>{progress.completed} of {progress.total} sessions</span>
-                  <span className='text-primary font-semibold'>{progress.percentage.toFixed(0)}%</span>
+                  <span className='text-muted-foreground'>
+                    {progress.completed} of {progress.total} sessions
+                  </span>
+                  <span className='text-primary font-semibold'>
+                    {progress.percentage.toFixed(0)}%
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -510,7 +588,8 @@ export default function TrainingInterfacePage() {
                   </h2>
                   {isCurrentWeek && (
                     <Badge variant='default' className='gap-1'>
-                      <Clock className='h-3 w-3' />Current Week
+                      <Clock className='h-3 w-3' />
+                      Current Week
                     </Badge>
                   )}
                 </div>
@@ -554,15 +633,30 @@ export default function TrainingInterfacePage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {isPast && <Badge variant='secondary' className='gap-1'><CheckCircle className='h-3 w-3' />Completed</Badge>}
-                            {!isPast && isEnabled && <Badge variant='default' className='gap-1'><Clock className='h-3 w-3' />Active</Badge>}
-                            {isFuture && <Badge variant='outline' className='gap-1'><Calendar className='h-3 w-3' />Upcoming</Badge>}
+                            {isPast && (
+                              <Badge variant='secondary' className='gap-1'>
+                                <CheckCircle className='h-3 w-3' />
+                                Completed
+                              </Badge>
+                            )}
+                            {!isPast && isEnabled && (
+                              <Badge variant='default' className='gap-1'>
+                                <Clock className='h-3 w-3' />
+                                Active
+                              </Badge>
+                            )}
+                            {isFuture && (
+                              <Badge variant='outline' className='gap-1'>
+                                <Calendar className='h-3 w-3' />
+                                Upcoming
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className='text-right'>
                             <DropdownMenu>
                               <div className='flex flex-row items-center gap-4'>
                                 <div
-                                  className='flex flex-row items-center cursor-pointer bg-primary/20 px-3 py-1 rounded-xl'
+                                  className='bg-primary/20 flex cursor-pointer flex-row items-center rounded-xl px-3 py-1'
                                   onClick={() => handleLaunchClass(schedule)}
                                 >
                                   <Video className='mr-2 h-4 w-4' />
@@ -570,14 +664,19 @@ export default function TrainingInterfacePage() {
                                   <ExternalLink className='ml-auto h-3 w-3' />
                                 </div>
                                 <div
-                                  className='flex flex-row items-center cursor-pointer bg-primary/20 px-3 py-1 rounded-xl'
+                                  className='bg-primary/20 flex cursor-pointer flex-row items-center rounded-xl px-3 py-1'
                                   onClick={() => handleMarkAttendanceAction(schedule)}
                                 >
                                   <UserCheck className='mr-2 h-4 w-4' />
                                   Mark Attendance
                                 </div>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant='ghost' size='sm' className='h-8 w-8 p-0' disabled={!isEnabled}>
+                                  <Button
+                                    variant='ghost'
+                                    size='sm'
+                                    className='h-8 w-8 p-0'
+                                    disabled={!isEnabled}
+                                  >
                                     <MoreVertical className='h-4 w-4' />
                                     <span className='sr-only'>Open menu</span>
                                   </Button>
@@ -585,10 +684,12 @@ export default function TrainingInterfacePage() {
                               </div>
                               <DropdownMenuContent align='end' className='w-48'>
                                 <DropdownMenuItem onClick={() => handleAddAssignment(schedule)}>
-                                  <FileText className='mr-2 h-4 w-4' />Add Assignment
+                                  <FileText className='mr-2 h-4 w-4' />
+                                  Add Assignment
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleAddQuiz(schedule)}>
-                                  <ClipboardList className='mr-2 h-4 w-4' />Add Quiz
+                                  <ClipboardList className='mr-2 h-4 w-4' />
+                                  Add Quiz
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -618,7 +719,8 @@ export default function TrainingInterfacePage() {
                   Class Assignments
                 </SheetTitle>
                 <SheetDescription>
-                  All assignments scheduled for this class — view details, attachments, and remove as needed.
+                  All assignments scheduled for this class — view details, attachments, and remove
+                  as needed.
                 </SheetDescription>
               </SheetHeader>
             </div>
@@ -634,13 +736,22 @@ export default function TrainingInterfacePage() {
                   </p>
                 </div>
               ) : (
-                <div className='space-y-4 scrollbar-hidden'>
+                <div className='scrollbar-hidden space-y-4'>
                   {mergedAssignments.map((item: any) => {
-                    const { assignment, attachments, due_at, max_attempts, uuid: scheduleUuid } = item;
+                    const {
+                      assignment,
+                      attachments,
+                      due_at,
+                      max_attempts,
+                      uuid: scheduleUuid,
+                    } = item;
                     const isExpanded = expandedAssignmentUuid === scheduleUuid;
 
                     return (
-                      <Card key={scheduleUuid} className='border-border/50 overflow-hidden scrollbar-hidden'>
+                      <Card
+                        key={scheduleUuid}
+                        className='border-border/50 scrollbar-hidden overflow-hidden'
+                      >
                         <CardContent className='p-5'>
                           {/* ── Row: info + actions ── */}
                           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
@@ -657,12 +768,17 @@ export default function TrainingInterfacePage() {
                                 <div className='flex items-center gap-1.5'>
                                   <Calendar className='text-muted-foreground h-4 w-4' />
                                   <span className='text-muted-foreground'>
-                                    Due: {new Date(due_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                                    Due:{' '}
+                                    {new Date(due_at).toLocaleDateString(undefined, {
+                                      dateStyle: 'medium',
+                                    })}
                                   </span>
                                 </div>
                                 <div className='flex items-center gap-1.5'>
                                   <Award className='text-muted-foreground h-4 w-4' />
-                                  <span className='text-muted-foreground'>{assignment.max_points} pts</span>
+                                  <span className='text-muted-foreground'>
+                                    {assignment.max_points} pts
+                                  </span>
                                 </div>
                                 {max_attempts && (
                                   <div className='flex items-center gap-1.5'>
@@ -672,12 +788,16 @@ export default function TrainingInterfacePage() {
                                     </span>
                                   </div>
                                 )}
-                                <Badge variant='outline' className='text-xs'>{assignment.assignment_category}</Badge>
+                                <Badge variant='outline' className='text-xs'>
+                                  {assignment.assignment_category}
+                                </Badge>
                                 {assignment.submission_types?.map((t: string) => (
-                                  <Badge key={t} variant='secondary' className='text-xs'>{t}</Badge>
+                                  <Badge key={t} variant='secondary' className='text-xs'>
+                                    {t}
+                                  </Badge>
                                 ))}
                                 {attachments.length > 0 && (
-                                  <span className='flex items-center gap-1 text-xs text-muted-foreground'>
+                                  <span className='text-muted-foreground flex items-center gap-1 text-xs'>
                                     <Paperclip className='h-3.5 w-3.5' />
                                     {attachments.length} file{attachments.length !== 1 ? 's' : ''}
                                   </span>
@@ -688,9 +808,9 @@ export default function TrainingInterfacePage() {
                             {/* Right: actions */}
                             <div className='flex shrink-0 items-center gap-2 sm:ml-4'>
                               <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-muted-foreground"
+                                variant='ghost'
+                                size='sm'
+                                className='text-muted-foreground'
                                 onClick={() =>
                                   setExpandedAssignmentUuid(prev =>
                                     prev === scheduleUuid ? null : scheduleUuid
@@ -698,9 +818,9 @@ export default function TrainingInterfacePage() {
                                 }
                               >
                                 {isExpanded ? (
-                                  <ChevronUp className="h-6 w-6" />
+                                  <ChevronUp className='h-6 w-6' />
                                 ) : (
-                                  <ChevronDown className="h-6 w-6" />
+                                  <ChevronDown className='h-6 w-6' />
                                 )}
                               </Button>
                               <Button
@@ -718,12 +838,14 @@ export default function TrainingInterfacePage() {
 
                           {/* ── Collapsible detail panel ── */}
                           {isExpanded && (
-                            <div className='mt-4 space-y-4 border-t border-border/50 pt-4'>
+                            <div className='border-border/50 mt-4 space-y-4 border-t pt-4'>
                               {assignment.instructions && (
                                 <div>
-                                  <h4 className='text-foreground mb-1.5 text-sm font-semibold'>Instructions</h4>
+                                  <h4 className='text-foreground mb-1.5 text-sm font-semibold'>
+                                    Instructions
+                                  </h4>
                                   <div
-                                    className='text-muted-foreground rounded-lg bg-muted/30 p-3 text-sm leading-relaxed'
+                                    className='text-muted-foreground bg-muted/30 rounded-lg p-3 text-sm leading-relaxed'
                                     dangerouslySetInnerHTML={{ __html: assignment.instructions }}
                                   />
                                 </div>
@@ -739,30 +861,65 @@ export default function TrainingInterfacePage() {
                                 </h4>
 
                                 {attachments.length === 0 ? (
-                                  <p className='text-muted-foreground text-sm italic'>No attachments.</p>
+                                  <p className='text-muted-foreground text-sm italic'>
+                                    No attachments for this assignment.
+                                  </p>
                                 ) : (
-                                  <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3'>
-                                    {attachments.map((att: any) => {
-                                      const { icon: FileIcon, color } = getFileIcon(att.original_filename);
+                                  <div className='grid gap-2 sm:grid-cols-2'>
+                                    {attachments.map((attachment: any) => {
+                                      const { icon: FileIcon, color } = getFileIcon(
+                                        attachment.original_filename
+                                      );
+
                                       return (
-                                        <a
-                                          key={att.uuid}
-                                          href={att.file_url}
-                                          target='_blank'
-                                          rel='noopener noreferrer'
-                                          className='group/file flex items-center gap-3 rounded-lg border border-border/50 bg-muted/20 p-3 transition-all hover:border-primary/40 hover:bg-muted/50 hover:shadow-sm'
+                                        <div
+                                          key={attachment.uuid}
+                                          className='group/file border-border/50 bg-muted/20 hover:bg-muted/50 hover:border-primary/40 flex items-center gap-3 rounded-lg border p-3 transition-all hover:shadow-sm'
                                         >
-                                          <div className='shrink-0 rounded-md border border-border/30 bg-background p-2 shadow-sm'>
+                                          {/* File icon */}
+                                          <div className='border-border/30 bg-background shrink-0 rounded-md border p-2 shadow-sm'>
                                             <FileIcon className={`h-5 w-5 ${color}`} />
                                           </div>
+
+                                          {/* Filename */}
                                           <div className='min-w-0 flex-1'>
                                             <p className='text-foreground truncate text-sm font-medium'>
-                                              {att.original_filename}
+                                              {attachment.original_filename}
                                             </p>
-                                            <p className='text-muted-foreground mt-0.5 text-xs'>Click to open</p>
+                                            <p className='text-muted-foreground mt-0.5 text-xs'>
+                                              Open or download
+                                            </p>
                                           </div>
-                                          <ExternalLink className='h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover/file:text-primary' />
-                                        </a>
+
+                                          {/* Actions */}
+                                          <div className='flex items-center gap-4'>
+                                            {/* Open in new tab */}
+                                            <a
+                                              href={attachment.file_url}
+                                              target='_blank'
+                                              rel='noopener noreferrer'
+                                              className='hover:bg-muted rounded p-2'
+                                              title='Open file'
+                                            >
+                                              <ExternalLink className='text-muted-foreground hover:text-primary h-5 w-5' />
+                                            </a>
+
+                                            {/* Download */}
+                                            <button
+                                              onClick={e => {
+                                                e.stopPropagation();
+                                                downloadFile(
+                                                  attachment.file_url,
+                                                  attachment.original_filename
+                                                );
+                                              }}
+                                              className='hover:bg-muted rounded p-2'
+                                              title='Download file'
+                                            >
+                                              <Download className='text-muted-foreground hover:text-primary h-5 w-5' />
+                                            </button>
+                                          </div>
+                                        </div>
                                       );
                                     })}
                                   </div>
@@ -782,7 +939,8 @@ export default function TrainingInterfacePage() {
             <div className='border-t px-6 py-4'>
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-sm'>
-                  {mergedAssignments?.length ?? 0} assignment{mergedAssignments?.length !== 1 ? 's' : ''} scheduled
+                  {mergedAssignments?.length ?? 0} assignment
+                  {mergedAssignments?.length !== 1 ? 's' : ''} scheduled
                 </span>
                 <Button onClick={() => setIsAssignmentsSheetOpen(false)}>Done</Button>
               </div>
@@ -834,7 +992,7 @@ export default function TrainingInterfacePage() {
                 </SheetDescription>
               </SheetHeader>
               <div className='relative mt-4'>
-                <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
+                <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                 <Input
                   type='text'
                   placeholder='Search students by name...'
@@ -853,7 +1011,9 @@ export default function TrainingInterfacePage() {
                   <Users className='text-muted-foreground mb-3 h-12 w-12 opacity-40' />
                   <h3 className='text-foreground mb-1 text-lg font-semibold'>No students found</h3>
                   <p className='text-muted-foreground text-sm'>
-                    {searchQuery ? 'Try adjusting your search query' : 'No students enrolled in this session'}
+                    {searchQuery
+                      ? 'Try adjusting your search query'
+                      : 'No students enrolled in this session'}
                   </p>
                 </div>
               ) : (
@@ -870,7 +1030,9 @@ export default function TrainingInterfacePage() {
                     </TableHeader>
                     <TableBody>
                       {studentsForThisSchedule
-                        .filter(entry => entry.user.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .filter(entry =>
+                          entry.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
                         .map((entry: any, index: number) => {
                           const studentId = entry.user.uuid;
                           const name = entry.user.full_name;
@@ -884,12 +1046,19 @@ export default function TrainingInterfacePage() {
                               <TableCell>
                                 <div className='flex items-center gap-3'>
                                   <div className='bg-primary/15 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold'>
-                                    {name.split(' ').map((n: string) => n?.[0]).slice(0, 2).join('')}
+                                    {name
+                                      .split(' ')
+                                      .map((n: string) => n?.[0])
+                                      .slice(0, 2)
+                                      .join('')}
                                   </div>
                                   <div className='min-w-0'>
-                                    <div className='text-foreground truncate font-medium'>{name}</div>
+                                    <div className='text-foreground truncate font-medium'>
+                                      {name}
+                                    </div>
                                     <div className='text-muted-foreground truncate text-xs'>
-                                      {attendance.presentCount} / {attendance.totalSessions} sessions present
+                                      {attendance.presentCount} / {attendance.totalSessions}{' '}
+                                      sessions present
                                     </div>
                                   </div>
                                 </div>
@@ -900,10 +1069,20 @@ export default function TrainingInterfacePage() {
                                     {attendance.percentage.toFixed(0)}%
                                   </div>
                                   <Badge
-                                    variant={attendance.percentage >= 80 ? 'default' : attendance.percentage >= 60 ? 'secondary' : 'destructive'}
+                                    variant={
+                                      attendance.percentage >= 80
+                                        ? 'default'
+                                        : attendance.percentage >= 60
+                                          ? 'secondary'
+                                          : 'destructive'
+                                    }
                                     className='text-xs'
                                   >
-                                    {attendance.percentage >= 80 ? 'Excellent' : attendance.percentage >= 60 ? 'Good' : 'Poor'}
+                                    {attendance.percentage >= 80
+                                      ? 'Excellent'
+                                      : attendance.percentage >= 60
+                                        ? 'Good'
+                                        : 'Poor'}
                                   </Badge>
                                 </div>
                               </TableCell>
@@ -915,27 +1094,43 @@ export default function TrainingInterfacePage() {
                               <TableCell className='text-right'>
                                 <div className='flex justify-end gap-2'>
                                   <Button
-                                    onClick={() => handleMarkAttendance(studentId, enrollmentUuid, true)}
+                                    onClick={() =>
+                                      handleMarkAttendance(studentId, enrollmentUuid, true)
+                                    }
                                     variant={currentStatus === true ? 'default' : 'outline'}
                                     size='sm'
                                     className='gap-1.5'
-                                    disabled={loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending}
+                                    disabled={
+                                      loadingEnrollmentUuid === enrollmentUuid &&
+                                      markAttendanceMut.isPending
+                                    }
                                   >
-                                    {loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending
-                                      ? <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
-                                      : <CheckCircle className='h-4 w-4' />}
+                                    {loadingEnrollmentUuid === enrollmentUuid &&
+                                    markAttendanceMut.isPending ? (
+                                      <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                                    ) : (
+                                      <CheckCircle className='h-4 w-4' />
+                                    )}
                                     <span className='hidden sm:inline'>Present</span>
                                   </Button>
                                   <Button
-                                    onClick={() => handleMarkAttendance(studentId, enrollmentUuid, false)}
+                                    onClick={() =>
+                                      handleMarkAttendance(studentId, enrollmentUuid, false)
+                                    }
                                     variant={currentStatus === false ? 'destructive' : 'outline'}
                                     size='sm'
                                     className='gap-1.5'
-                                    disabled={loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending}
+                                    disabled={
+                                      loadingEnrollmentUuid === enrollmentUuid &&
+                                      markAttendanceMut.isPending
+                                    }
                                   >
-                                    {loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending
-                                      ? <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
-                                      : <XCircle className='h-4 w-4' />}
+                                    {loadingEnrollmentUuid === enrollmentUuid &&
+                                    markAttendanceMut.isPending ? (
+                                      <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                                    ) : (
+                                      <XCircle className='h-4 w-4' />
+                                    )}
                                     <span className='hidden sm:inline'>Absent</span>
                                   </Button>
                                 </div>
@@ -952,8 +1147,17 @@ export default function TrainingInterfacePage() {
             <div className='border-t px-6 py-4'>
               <div className='flex items-center justify-between'>
                 <div className='text-muted-foreground text-sm'>
-                  {studentsForThisSchedule.filter(e => e.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())).length}{' '}
-                  student{studentsForThisSchedule.filter(e => e.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())).length === 1 ? '' : 's'}
+                  {
+                    studentsForThisSchedule.filter(e =>
+                      e.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+                    ).length
+                  }{' '}
+                  student
+                  {studentsForThisSchedule.filter(e =>
+                    e.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).length === 1
+                    ? ''
+                    : 's'}
                   {searchQuery && ' matching search'}
                 </div>
                 <Button onClick={() => setIsAttendanceDrawerOpen(false)}>Done</Button>
@@ -969,55 +1173,83 @@ export default function TrainingInterfacePage() {
           <DialogHeader>
             <DialogTitle>Add Assignment</DialogTitle>
             <DialogDescription>
-              Create a new assignment for {selectedSchedule && moment(selectedSchedule.start_time).format('MMM D, YYYY')}
+              Create a new assignment for{' '}
+              {selectedSchedule && moment(selectedSchedule.start_time).format('MMM D, YYYY')}
             </DialogDescription>
           </DialogHeader>
           <div className='space-y-4 py-4'>
             <div className='space-y-2'>
               <Label>Assignment</Label>
               <select
-                className='w-full border rounded-md p-2'
+                className='w-full rounded-md border p-2'
                 value={selectedAssignmentUuid}
-                onChange={(e) => {
+                onChange={e => {
                   const uuid = e.target.value;
                   setSelectedAssignmentUuid(uuid);
-                  setSelectedAssignment(allAssignments?.data?.content?.find((item: any) => item.uuid === uuid) || null);
+                  setSelectedAssignment(
+                    allAssignments?.data?.content?.find((item: any) => item.uuid === uuid) || null
+                  );
                 }}
               >
                 <option value=''>Select assignment</option>
                 {allAssignments?.data?.content?.map((a: any) => (
-                  <option key={a.uuid} value={a.uuid}>{a.title}</option>
+                  <option key={a.uuid} value={a.uuid}>
+                    {a.title}
+                  </option>
                 ))}
               </select>
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
                 <Label>Visible At</Label>
-                <Input type='datetime-local' value={visibleAt} onChange={e => setVisibleAt(e.target.value)} />
+                <Input
+                  type='datetime-local'
+                  value={visibleAt}
+                  onChange={e => setVisibleAt(e.target.value)}
+                />
               </div>
               <div className='space-y-2'>
                 <Label>Due Date</Label>
-                <Input type='datetime-local' value={assignmentDueDate} onChange={e => setAssignmentDueDate(e.target.value)} />
+                <Input
+                  type='datetime-local'
+                  value={assignmentDueDate}
+                  onChange={e => setAssignmentDueDate(e.target.value)}
+                />
               </div>
             </div>
             <div className='space-y-2'>
               <Label>Grading Due At</Label>
-              <Input type='datetime-local' value={gradingDueAt} onChange={e => setGradingDueAt(e.target.value)} />
+              <Input
+                type='datetime-local'
+                value={gradingDueAt}
+                onChange={e => setGradingDueAt(e.target.value)}
+              />
             </div>
             <div className='space-y-2'>
               <Label>Max Attempts</Label>
-              <Input type='number' min='1' value={maxAttempts} onChange={e => setMaxAttempts(e.target.value)} />
+              <Input
+                type='number'
+                min='1'
+                value={maxAttempts}
+                onChange={e => setMaxAttempts(e.target.value)}
+              />
             </div>
             <div className='space-y-2'>
               <Label>Notes</Label>
-              <Textarea rows={2} value={assignmentNotes} onChange={e => setAssignmentNotes(e.target.value)} />
+              <Textarea
+                rows={2}
+                value={assignmentNotes}
+                onChange={e => setAssignmentNotes(e.target.value)}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setIsAssignmentDialogOpen(false)}>Cancel</Button>
+            <Button variant='outline' onClick={() => setIsAssignmentDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleCreateAssignment} disabled={!selectedAssignmentUuid}>
               <Plus className='mr-2 h-4 w-4' />
-              {addAssignmentScheduleMut.isPending ? "Creating..." : "Create Assignment"}
+              {addAssignmentScheduleMut.isPending ? 'Creating...' : 'Create Assignment'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1029,61 +1261,97 @@ export default function TrainingInterfacePage() {
           <DialogHeader>
             <DialogTitle>Add Quiz</DialogTitle>
             <DialogDescription>
-              Create a new quiz for {selectedSchedule && moment(selectedSchedule.start_time).format('MMM D, YYYY')}
+              Create a new quiz for{' '}
+              {selectedSchedule && moment(selectedSchedule.start_time).format('MMM D, YYYY')}
             </DialogDescription>
           </DialogHeader>
           <div className='space-y-4 py-4'>
             <div className='space-y-2'>
               <Label>Quiz</Label>
               <select
-                className='w-full border rounded-md p-2'
+                className='w-full rounded-md border p-2'
                 value={selectedQuizUuid}
-                onChange={(e) => {
+                onChange={e => {
                   const uuid = e.target.value;
                   setSelectedQuizUuid(uuid);
-                  setSelectedQuiz(allQuizzes?.data?.content?.find((item: any) => item.uuid === uuid) || null);
+                  setSelectedQuiz(
+                    allQuizzes?.data?.content?.find((item: any) => item.uuid === uuid) || null
+                  );
                 }}
               >
                 <option value=''>Select quiz</option>
                 {allQuizzes?.data?.content?.map((q: any) => (
-                  <option key={q.uuid} value={q.uuid}>{q.title}</option>
+                  <option key={q.uuid} value={q.uuid}>
+                    {q.title}
+                  </option>
                 ))}
               </select>
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
                 <Label>Visible At</Label>
-                <Input type='datetime-local' value={quizVisibleAt} onChange={e => setQuizVisibleAt(e.target.value)} />
+                <Input
+                  type='datetime-local'
+                  value={quizVisibleAt}
+                  onChange={e => setQuizVisibleAt(e.target.value)}
+                />
               </div>
               <div className='space-y-2'>
                 <Label>Due Date</Label>
-                <Input type='datetime-local' value={quizDueDate} onChange={e => setQuizDueDate(e.target.value)} />
+                <Input
+                  type='datetime-local'
+                  value={quizDueDate}
+                  onChange={e => setQuizDueDate(e.target.value)}
+                />
               </div>
             </div>
             <div className='grid grid-cols-3 gap-4'>
               <div className='space-y-2'>
                 <Label>Time Limit (min)</Label>
-                <Input type='number' placeholder='Optional' value={timeLimitOverride} onChange={e => setTimeLimitOverride(e.target.value)} />
+                <Input
+                  type='number'
+                  placeholder='Optional'
+                  value={timeLimitOverride}
+                  onChange={e => setTimeLimitOverride(e.target.value)}
+                />
               </div>
               <div className='space-y-2'>
                 <Label>Max Attempts</Label>
-                <Input type='number' placeholder='Optional' value={attemptLimitOverride} onChange={e => setAttemptLimitOverride(e.target.value)} />
+                <Input
+                  type='number'
+                  placeholder='Optional'
+                  value={attemptLimitOverride}
+                  onChange={e => setAttemptLimitOverride(e.target.value)}
+                />
               </div>
               <div className='space-y-2'>
                 <Label>Passing Score</Label>
-                <Input type='number' step='0.1' placeholder='Optional' value={passingScoreOverride} onChange={e => setPassingScoreOverride(e.target.value)} />
+                <Input
+                  type='number'
+                  step='0.1'
+                  placeholder='Optional'
+                  value={passingScoreOverride}
+                  onChange={e => setPassingScoreOverride(e.target.value)}
+                />
               </div>
             </div>
             <div className='space-y-2'>
               <Label>Notes</Label>
-              <Textarea rows={2} placeholder='Optional notes...' value={quizNotes} onChange={e => setQuizNotes(e.target.value)} />
+              <Textarea
+                rows={2}
+                placeholder='Optional notes...'
+                value={quizNotes}
+                onChange={e => setQuizNotes(e.target.value)}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setIsQuizDialogOpen(false)}>Cancel</Button>
+            <Button variant='outline' onClick={() => setIsQuizDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleCreateQuiz} disabled={!selectedQuizUuid}>
               <Plus className='mr-2 h-4 w-4' />
-              {addQuizScheduleMut.isPending ? "Creating..." : "Create Quiz"}
+              {addQuizScheduleMut.isPending ? 'Creating...' : 'Create Quiz'}
             </Button>
           </DialogFooter>
         </DialogContent>

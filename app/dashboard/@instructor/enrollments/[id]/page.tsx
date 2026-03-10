@@ -127,7 +127,10 @@ const EnrollmentDetails = () => {
 
   return (
     <div className={`${elimikaDesignSystem.components.pageContainer} px-4 sm:px-6`}>
-      <Link className='flex flex-row items-center gap-4 max-w-fit py-1.5' href={'/dashboard/enrollments'}>
+      <Link
+        className='flex max-w-fit flex-row items-center gap-4 py-1.5'
+        href={'/dashboard/enrollments'}
+      >
         <MoveLeft /> Back
       </Link>
 

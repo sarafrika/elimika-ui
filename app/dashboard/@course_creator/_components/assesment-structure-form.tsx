@@ -21,7 +21,7 @@ import {
   deleteCourseAssessmentMutation,
   getAllAssessmentRubricsOptions,
   getCourseAssessmentsOptions,
-  updateCourseAssessmentMutation
+  updateCourseAssessmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -85,21 +85,23 @@ const DEFAULT_FORM: AssessmentFormValues = {
 // ─── Badge helper ─────────────────────────────────────────────────────────────
 
 const TYPE_COLORS: Record<string, string> = {
-  'Attendance': 'bg-muted text-muted-foreground',
+  Attendance: 'bg-muted text-muted-foreground',
   'Diagnostic/Entry': 'bg-secondary text-secondary-foreground',
   'Continuous Diagnostic': 'bg-accent text-accent-foreground',
   'Formative (theory)': 'bg-primary/10 text-primary',
   'Formative (practical)': 'bg-primary/20 text-primary',
-  'Summative': 'bg-destructive/10 text-destructive',
-  'Project': 'bg-accent/60 text-accent-foreground',
-  'Exam': 'bg-destructive/20 text-destructive',
-  'Other': 'bg-muted text-muted-foreground',
+  Summative: 'bg-destructive/10 text-destructive',
+  Project: 'bg-accent/60 text-accent-foreground',
+  Exam: 'bg-destructive/20 text-destructive',
+  Other: 'bg-muted text-muted-foreground',
 };
 
 function TypeBadge({ type }: { type: string }) {
   const cls = TYPE_COLORS[type] ?? TYPE_COLORS['Other'];
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}
+    >
       {type}
     </span>
   );
@@ -129,14 +131,14 @@ function AssessmentModal({
   const [form, setForm] = useState<AssessmentFormValues>(() =>
     initial
       ? {
-        title: initial.title,
-        description: initial.description ?? '',
-        rubric_uuid: initial.rubric_uuid ?? '',
-        weight_percentage: initial.weight_percentage,
-        is_required: initial.is_required,
-        assessment_type: initial.assessment_type,
-        is_major_assessment: initial.is_major_assessment,
-      }
+          title: initial.title,
+          description: initial.description ?? '',
+          rubric_uuid: initial.rubric_uuid ?? '',
+          weight_percentage: initial.weight_percentage,
+          is_required: initial.is_required,
+          assessment_type: initial.assessment_type,
+          is_major_assessment: initial.is_major_assessment,
+        }
       : DEFAULT_FORM
   );
 
@@ -146,7 +148,7 @@ function AssessmentModal({
     getAllAssessmentRubricsOptions({ query: { pageable: {} } })
   );
   const rubrics: any[] = allRubrics?.data?.content ?? [];
-  const selectedRubric = rubrics.find((r: any) => r.uuid === form.rubric_uuid)
+  const selectedRubric = rubrics.find((r: any) => r.uuid === form.rubric_uuid);
 
   const createMut = useMutation(addCourseAssessmentMutation());
   const updateMut = useMutation(updateCourseAssessmentMutation());
@@ -154,15 +156,19 @@ function AssessmentModal({
   const isSaving = createMut.isPending || updateMut.isPending;
 
   function set<K extends keyof AssessmentFormValues>(key: K, value: AssessmentFormValues[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    setErrors((prev) => ({ ...prev, [key]: undefined }));
+    setForm(prev => ({ ...prev, [key]: value }));
+    setErrors(prev => ({ ...prev, [key]: undefined }));
   }
 
   function validate(): boolean {
     const newErrors: typeof errors = {};
     if (!form.title.trim()) newErrors.title = 'Title is required';
     if (!form.assessment_type) newErrors.assessment_type = 'Assessment type is required';
-    if (form.weight_percentage === '' || Number(form.weight_percentage) < 0 || Number(form.weight_percentage) > 100) {
+    if (
+      form.weight_percentage === '' ||
+      Number(form.weight_percentage) < 0 ||
+      Number(form.weight_percentage) > 100
+    ) {
       newErrors.weight_percentage = 'Weight must be between 0 and 100';
     }
     setErrors(newErrors);
@@ -225,13 +231,10 @@ function AssessmentModal({
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
       {/* Backdrop */}
-      <div
-        className='absolute inset-0 bg-black/50 backdrop-blur-sm'
-        onClick={onClose}
-      />
+      <div className='absolute inset-0 bg-black/50 backdrop-blur-sm' onClick={onClose} />
 
       {/* Panel */}
-      <div className='relative z-10 w-full max-w-lg rounded-2xl border bg-card shadow-2xl'>
+      <div className='bg-card relative z-10 w-full max-w-lg rounded-2xl border shadow-2xl'>
         {/* Header */}
         <div className='flex items-center justify-between border-b px-6 py-4'>
           <div>
@@ -246,7 +249,7 @@ function AssessmentModal({
           </div>
           <button
             onClick={onClose}
-            className='text-muted-foreground hover:text-foreground rounded-lg p-1.5 transition-colors hover:bg-muted'
+            className='text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg p-1.5 transition-colors'
           >
             <X size={18} />
           </button>
@@ -262,7 +265,7 @@ function AssessmentModal({
             <Input
               placeholder='e.g. Weekly Quizzes'
               value={form.title}
-              onChange={(e) => set('title', e.target.value)}
+              onChange={e => set('title', e.target.value)}
               className={errors.title ? 'border-destructive' : ''}
             />
             {errors.title && <p className='text-destructive text-xs'>{errors.title}</p>}
@@ -274,9 +277,9 @@ function AssessmentModal({
             <textarea
               placeholder='Brief description of the assessment component...'
               value={form.description}
-              onChange={(e) => set('description', e.target.value)}
+              onChange={e => set('description', e.target.value)}
               rows={3}
-              className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 resize-none'
+              className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full resize-none rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none'
             />
           </div>
 
@@ -285,12 +288,12 @@ function AssessmentModal({
             <Label className='text-sm font-medium'>
               Assessment Type <span className='text-destructive'>*</span>
             </Label>
-            <Select value={form.assessment_type} onValueChange={(v) => set('assessment_type', v)}>
+            <Select value={form.assessment_type} onValueChange={v => set('assessment_type', v)}>
               <SelectTrigger className={errors.assessment_type ? 'border-destructive' : ''}>
                 <SelectValue placeholder='Select assessment type' />
               </SelectTrigger>
               <SelectContent>
-                {ASSESSMENT_TYPES.map((t) => (
+                {ASSESSMENT_TYPES.map(t => (
                   <SelectItem key={t} value={t}>
                     {t}
                   </SelectItem>
@@ -313,11 +316,8 @@ function AssessmentModal({
               max={100}
               placeholder='e.g. 25'
               value={form.weight_percentage}
-              onChange={(e) =>
-                set(
-                  'weight_percentage',
-                  e.target.value === '' ? '' : Number(e.target.value)
-                )
+              onChange={e =>
+                set('weight_percentage', e.target.value === '' ? '' : Number(e.target.value))
               }
               className={errors.weight_percentage ? 'border-destructive' : ''}
             />
@@ -340,26 +340,26 @@ function AssessmentModal({
             ) : (
               <Select
                 value={form.rubric_uuid || '__none__'}
-                onValueChange={(v) => set('rubric_uuid', v === '__none__' ? '' : v)}
+                onValueChange={v => set('rubric_uuid', v === '__none__' ? '' : v)}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a rubric (optional)">
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder='Select a rubric (optional)'>
                     {selectedRubric?.title}
                   </SelectValue>
                 </SelectTrigger>
 
                 <SelectContent>
-                  <SelectItem value="__none__">
-                    <span className="text-muted-foreground">None</span>
+                  <SelectItem value='__none__'>
+                    <span className='text-muted-foreground'>None</span>
                   </SelectItem>
 
                   {rubrics.length > 0 ? (
                     rubrics.map((r: any) => (
                       <SelectItem key={r.uuid} value={r.uuid}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{r.title}</span>
+                        <div className='flex flex-col'>
+                          <span className='font-medium'>{r.title}</span>
                           {r.description && (
-                            <span className="text-muted-foreground text-xs line-clamp-1">
+                            <span className='text-muted-foreground line-clamp-1 text-xs'>
                               {r.description}
                             </span>
                           )}
@@ -367,30 +367,30 @@ function AssessmentModal({
                       </SelectItem>
                     ))
                   ) : (
-                    <div className="text-muted-foreground px-3 py-2 text-center text-xs">
+                    <div className='text-muted-foreground px-3 py-2 text-center text-xs'>
                       No rubrics available
                     </div>
                   )}
                 </SelectContent>
               </Select>
-
             )}
             {/* Selected rubric detail chip */}
             {selectedRubric && (
               <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
                 <div className='min-w-0'>
-                  <p className='text-foreground truncate text-xs font-semibold'>{selectedRubric.title}</p>
+                  <p className='text-foreground truncate text-xs font-semibold'>
+                    {selectedRubric.title}
+                  </p>
                   {selectedRubric.description && (
                     <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
                       {selectedRubric.description}
                     </p>
                   )}
-
                 </div>
                 <button
                   type='button'
                   onClick={() => set('rubric_uuid', '')}
-                  className='text-muted-foreground hover:text-foreground mt-0.5 shrink-0 rounded p-0.5 transition-colors hover:bg-muted'
+                  className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
                   title='Clear rubric'
                 >
                   <X size={13} />
@@ -404,21 +404,20 @@ function AssessmentModal({
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-foreground text-sm font-medium'>Required Assessment</p>
-                <p className='text-muted-foreground text-xs'>Students must complete this assessment</p>
+                <p className='text-muted-foreground text-xs'>
+                  Students must complete this assessment
+                </p>
               </div>
-              <Switch
-                checked={form.is_required}
-                onCheckedChange={(v) => set('is_required', v)}
-              />
+              <Switch checked={form.is_required} onCheckedChange={v => set('is_required', v)} />
             </div>
-            <div className='border-t pt-4 flex items-center justify-between'>
+            <div className='flex items-center justify-between border-t pt-4'>
               <div>
                 <p className='text-foreground text-sm font-medium'>Major Assessment</p>
                 <p className='text-muted-foreground text-xs'>Mark as a high-stakes assessment</p>
               </div>
               <Switch
                 checked={form.is_major_assessment}
-                onCheckedChange={(v) => set('is_major_assessment', v)}
+                onCheckedChange={v => set('is_major_assessment', v)}
               />
             </div>
           </div>
@@ -461,25 +460,22 @@ function DeleteConfirmModal({ assessment, courseUuid, onClose, onSuccess }: Dele
   const deleteMut = useMutation(deleteCourseAssessmentMutation());
 
   function handleDelete() {
-    deleteMut.mutate(
-      { path: { courseUuid, assessmentUuid: assessment.uuid } } as any,
-      {
-        onSuccess: () => {
-          toast.success('Assessment deleted successfully');
-          onSuccess();
-        },
-        onError: (err: any) => {
-          toast.error(err?.message || 'Failed to delete assessment');
-        },
-      }
-    );
+    deleteMut.mutate({ path: { courseUuid, assessmentUuid: assessment.uuid } } as any, {
+      onSuccess: () => {
+        toast.success('Assessment deleted successfully');
+        onSuccess();
+      },
+      onError: (err: any) => {
+        toast.error(err?.message || 'Failed to delete assessment');
+      },
+    });
   }
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
       <div className='absolute inset-0 bg-black/50 backdrop-blur-sm' onClick={onClose} />
-      <div className='relative z-10 w-full max-w-sm rounded-2xl border bg-card p-6 shadow-2xl'>
-        <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10'>
+      <div className='bg-card relative z-10 w-full max-w-sm rounded-2xl border p-6 shadow-2xl'>
+        <div className='bg-destructive/10 mb-4 flex h-12 w-12 items-center justify-center rounded-full'>
           <AlertTriangle size={22} className='text-destructive' />
         </div>
         <h3 className='text-foreground mb-1 text-base font-bold'>Delete Assessment</h3>
@@ -489,7 +485,12 @@ function DeleteConfirmModal({ assessment, courseUuid, onClose, onSuccess }: Dele
           cannot be undone.
         </p>
         <div className='flex gap-3'>
-          <Button variant='outline' className='flex-1' onClick={onClose} disabled={deleteMut.isPending}>
+          <Button
+            variant='outline'
+            className='flex-1'
+            onClick={onClose}
+            disabled={deleteMut.isPending}
+          >
             Cancel
           </Button>
           <Button
@@ -605,32 +606,32 @@ export const CourseAssessmentStructure = ({
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead>
-                <tr className='border-b bg-muted/40'>
-                  <th className='px-6 py-3 text-left font-semibold text-foreground'>
+                <tr className='bg-muted/40 border-b'>
+                  <th className='text-foreground px-6 py-3 text-left font-semibold'>
                     Component Title
                   </th>
-                  <th className='px-4 py-3 text-left font-semibold text-foreground'>Type</th>
-                  <th className='px-4 py-3 text-right font-semibold text-foreground'>Weight</th>
-                  <th className='px-4 py-3 text-right font-semibold text-foreground'>
+                  <th className='text-foreground px-4 py-3 text-left font-semibold'>Type</th>
+                  <th className='text-foreground px-4 py-3 text-right font-semibold'>Weight</th>
+                  <th className='text-foreground px-4 py-3 text-right font-semibold'>
                     Score Range
                   </th>
-                  <th className='px-4 py-3 text-center font-semibold text-foreground'>Required</th>
-                  <th className='px-4 py-3 text-right font-semibold text-foreground'>Actions</th>
+                  <th className='text-foreground px-4 py-3 text-center font-semibold'>Required</th>
+                  <th className='text-foreground px-4 py-3 text-right font-semibold'>Actions</th>
                 </tr>
               </thead>
               <tbody className='divide-y'>
-                {assessments.map((a) => (
+                {assessments.map(a => (
                   <tr key={a.uuid} className='hover:bg-muted/30 transition-colors'>
                     <td className='px-6 py-4'>
                       <div>
                         <p className='text-foreground font-medium'>{a.title}</p>
                         {a.description && (
-                          <p className='text-muted-foreground mt-0.5 text-xs line-clamp-1'>
+                          <p className='text-muted-foreground mt-0.5 line-clamp-1 text-xs'>
                             {a.description}
                           </p>
                         )}
                         {a.is_major_assessment && (
-                          <span className="mt-1 inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                          <span className='bg-primary/15 text-primary mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold'>
                             Major
                           </span>
                         )}
@@ -639,18 +640,19 @@ export const CourseAssessmentStructure = ({
                     <td className='px-4 py-4'>
                       <TypeBadge type={a.assessment_type} />
                     </td>
-                    <td className='px-4 py-4 text-right font-semibold text-foreground'>
+                    <td className='text-foreground px-4 py-4 text-right font-semibold'>
                       {a.weight_percentage}%
                     </td>
-                    <td className='px-4 py-4 text-right font-semibold text-foreground'>
+                    <td className='text-foreground px-4 py-4 text-right font-semibold'>
                       0–{a.weight_percentage}
                     </td>
                     <td className='px-4 py-4 text-center'>
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
-                          ? 'bg-success/10 text-success/70'
-                          : 'bg-muted-foreground/10 text-muted-foreground'
-                          }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          a.is_required
+                            ? 'bg-success/10 text-success/70'
+                            : 'bg-muted-foreground/10 text-muted-foreground'
+                        }`}
                       >
                         {a.is_required ? 'Yes' : 'No'}
                       </span>
@@ -678,22 +680,21 @@ export const CourseAssessmentStructure = ({
               </tbody>
               {/* Total row */}
               <tfoot>
-                <tr className='border-t bg-muted/40'>
-                  <td className='px-6 py-3 font-bold text-foreground'>Total</td>
+                <tr className='bg-muted/40 border-t'>
+                  <td className='text-foreground px-6 py-3 font-bold'>Total</td>
                   <td className='px-4 py-3' />
                   <td
-                    className={`px-4 py-3 text-right font-bold ${totalWeight === 100
-                      ? 'text-green-600'
-                      : totalWeight > 100
-                        ? 'text-destructive'
-                        : 'text-amber-600'
-                      }`}
+                    className={`px-4 py-3 text-right font-bold ${
+                      totalWeight === 100
+                        ? 'text-green-600'
+                        : totalWeight > 100
+                          ? 'text-destructive'
+                          : 'text-amber-600'
+                    }`}
                   >
                     {totalWeight}%
                   </td>
-                  <td className='px-4 py-3 text-right font-bold text-foreground'>
-                    {totalWeight}
-                  </td>
+                  <td className='text-foreground px-4 py-3 text-right font-bold'>{totalWeight}</td>
                   <td className='px-4 py-3' />
                   <td className='px-4 py-3' />
                 </tr>
@@ -705,10 +706,9 @@ export const CourseAssessmentStructure = ({
         {/* Weight warning */}
         {!isLoading && assessments.length > 0 && totalWeight !== 100 && (
           <div
-            className={`flex items-center gap-2 border-t px-6 py-3 text-sm font-medium ${totalWeight > 100
-              ? 'bg-destructive/5 text-destructive'
-              : 'bg-primary/15 text-primary'
-              }`}
+            className={`flex items-center gap-2 border-t px-6 py-3 text-sm font-medium ${
+              totalWeight > 100 ? 'bg-destructive/5 text-destructive' : 'bg-primary/15 text-primary'
+            }`}
           >
             <AlertTriangle size={14} />
             {totalWeight > 100

@@ -169,7 +169,7 @@ export function ProfilePage({
 
               {/* Online status indicator */}
               {profile.is_online && (
-                <span className='bg-success border-card absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full border-2 sm:-top-1 sm:right-10 sm:h-5 sm:w-5' />
+                <span className='bg-success border-card absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full border-2 sm:-top-1 sm:right-10 sm:h-5 sm:w-5' />
               )}
             </div>
 
@@ -230,8 +230,8 @@ export function ProfilePage({
           {/* Name + Meta */}
           <div className='min-w-0 flex-1'>
             {/* ID badge */}
-            <div className='flex items-center gap-4' >
-              <span className='text-[14px]' >User No:</span>
+            <div className='flex items-center gap-4'>
+              <span className='text-[14px]'>User No:</span>
               <span className='bg-muted text-muted-foreground inline-block rounded-md px-2 py-0.5 font-mono text-[12px] tracking-wider sm:px-3 sm:py-1 sm:text-xs'>
                 {profile.user_no}
               </span>
@@ -285,7 +285,7 @@ export function ProfilePage({
                 key={tab.id}
                 onClick={() => setActiveTabId(tab.id)}
                 className={cn(
-                  'cursor-pointer whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 sm:px-5 sm:py-2 sm:text-sm',
+                  'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-150 sm:px-5 sm:py-2 sm:text-sm',
                   activeTabId === tab.id
                     ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'

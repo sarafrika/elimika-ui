@@ -21,7 +21,7 @@ import {
   Search,
   ShoppingCart,
   TrendingUp,
-  Users
+  Users,
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useInstructor } from '../../../../context/instructor-context';

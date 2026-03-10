@@ -150,10 +150,11 @@ export default function CourseDetailsPage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`border-b-2 px-1 py-3 font-medium ${activeTab === tab
+              className={`border-b-2 px-1 py-3 font-medium ${
+                activeTab === tab
                   ? 'border-primary text-primary'
                   : 'text-muted-foreground hover:text-foreground border-transparent'
-                }`}
+              }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === 'courses' && ` (${courses.length})`}

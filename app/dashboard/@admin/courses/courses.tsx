@@ -859,7 +859,7 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
                   <div className='flex flex-col space-y-2'>
                     <h3 className='text-muted-foreground text-sm font-medium'>Total Revenue</h3>
                     <p className='text-primary text-2xl font-bold tracking-tight sm:text-3xl'>
-                      KES {10000}
+                      KES {0}
                     </p>
                   </div>
                 </div>

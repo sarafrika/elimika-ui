@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { Course } from '@/services/client';
 import {
   getCourseCreatorByUuidOptions,
-  searchCatalogueOptions
+  searchCatalogueOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, CircleAlert, Clock, GraduationCap, Layers } from 'lucide-react';

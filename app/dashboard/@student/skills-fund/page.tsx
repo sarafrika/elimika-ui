@@ -76,7 +76,6 @@ const skillsFundApplications: any[] = [
   //   reviewedAt: new Date('2025-10-05T15:00:00'),
   //   reviewedBy: 'admin_002',
   // },
-
   // {
   //   id: 'app-002',
   //   applicantId: 'instructor_001',
@@ -102,7 +101,6 @@ const skillsFundApplications: any[] = [
   //   disbursedAt: new Date('2025-09-20T10:00:00'),
   //   linkedCourseId: 'course_099',
   // },
-
   // {
   //   id: 'app-003',
   //   applicantId: 'student_002',
@@ -117,7 +115,6 @@ const skillsFundApplications: any[] = [
   //   documents: [],
   //   status: 'draft',
   // },
-
   // {
   //   id: 'app-004',
   //   applicantId: 'student_003',
@@ -142,7 +139,6 @@ const skillsFundApplications: any[] = [
   //   reviewedBy: 'admin_003',
   //   rejectionReason: 'Incomplete documentation and unclear learning goals.',
   // },
-
   // {
   //   id: 'app-005',
   //   applicantId: 'instructor_002',
@@ -388,15 +384,15 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
         </div>
 
         <div>
-          {availableFunds.length === 0 && <div className='py-12 text-center'>
-            <FileText className='text-muted-foreground mx-auto mb-4 h-16 w-16' />
-            <p className='text-muted-foreground'>No available funding options</p>
-          </div>}
+          {availableFunds.length === 0 && (
+            <div className='py-12 text-center'>
+              <FileText className='text-muted-foreground mx-auto mb-4 h-16 w-16' />
+              <p className='text-muted-foreground'>No available funding options</p>
+            </div>
+          )}
         </div>
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-
-
           {availableFunds.map(fund => (
             <Card key={fund.id} className='hover:border-primary border-2 p-4 transition-colors'>
               <div className='space-y-3'>

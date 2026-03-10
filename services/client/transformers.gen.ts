@@ -61,8 +61,6 @@ import type {
   UpdateCatalogItemResponse,
   GetClassDefinitionResponse,
   UpdateClassDefinitionResponse,
-  GetLessonPlanResponse,
-  SaveLessonPlanResponse,
   GetCertificateByUuidResponse,
   UpdateCertificateResponse,
   UpdateCertificateTemplateResponse,
@@ -1575,45 +1573,6 @@ export const updateClassDefinitionResponseTransformer = async (
   data: any
 ): Promise<UpdateClassDefinitionResponse> => {
   data = apiResponseClassDefinitionResponseSchemaResponseTransformer(data);
-  return data;
-};
-
-const classLessonPlanSchemaResponseTransformer = (data: any) => {
-  if (data.scheduled_start) {
-    data.scheduled_start = new Date(data.scheduled_start);
-  }
-  if (data.scheduled_end) {
-    data.scheduled_end = new Date(data.scheduled_end);
-  }
-  if (data.created_date) {
-    data.created_date = new Date(data.created_date);
-  }
-  if (data.updated_date) {
-    data.updated_date = new Date(data.updated_date);
-  }
-  return data;
-};
-
-const apiResponseListClassLessonPlanSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = data.data.map((item: any) => {
-      return classLessonPlanSchemaResponseTransformer(item);
-    });
-  }
-  return data;
-};
-
-export const getLessonPlanResponseTransformer = async (
-  data: any
-): Promise<GetLessonPlanResponse> => {
-  data = apiResponseListClassLessonPlanSchemaResponseTransformer(data);
-  return data;
-};
-
-export const saveLessonPlanResponseTransformer = async (
-  data: any
-): Promise<SaveLessonPlanResponse> => {
-  data = apiResponseListClassLessonPlanSchemaResponseTransformer(data);
   return data;
 };
 

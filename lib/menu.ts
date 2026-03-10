@@ -35,7 +35,7 @@ import {
   UserPlus,
   Users,
   UsersIcon,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { UserDomain } from './types';
@@ -132,7 +132,7 @@ export default {
   ],
   student: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
       icon: School,
     },
@@ -214,9 +214,9 @@ export default {
   ],
   instructor: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
-      icon: School
+      icon: School,
     },
     {
       title: 'Overview',
@@ -327,9 +327,9 @@ export default {
   ],
   course_creator: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
-      icon: School
+      icon: School,
     },
     {
       title: 'Overview',
@@ -405,9 +405,9 @@ export default {
   ],
   admin: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
-      icon: School
+      icon: School,
     },
     {
       title: 'Overview',
@@ -482,9 +482,9 @@ export default {
   ],
   organisation_user: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
-      icon: School
+      icon: School,
     },
     {
       title: 'Overview',
@@ -553,9 +553,9 @@ export default {
   ],
   parent: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
-      icon: School
+      icon: School,
     },
     {
       title: 'Overview',

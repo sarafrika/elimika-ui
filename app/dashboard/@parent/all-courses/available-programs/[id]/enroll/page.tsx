@@ -9,9 +9,7 @@ const Page = () => {
   const programId = params?.id as string;
   const classId = searchParams.get('id');
 
-  return (
-    <ProgramClassEnrollmentPage classId={classId as string} programId={programId as string} />
-  )
-}
+  return <ProgramClassEnrollmentPage classId={classId as string} programId={programId as string} />;
+};
 
-export default Page
+export default Page;

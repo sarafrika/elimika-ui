@@ -246,10 +246,11 @@ const NotificationsPage = () => {
                 return (
                   <Card
                     key={notification.id}
-                    className={`p-4 transition-colors ${notification.status === 'unread'
-                      ? 'bg-primary/5 border-l-primary border-l-4'
-                      : ''
-                      }`}
+                    className={`p-4 transition-colors ${
+                      notification.status === 'unread'
+                        ? 'bg-primary/5 border-l-primary border-l-4'
+                        : ''
+                    }`}
                   >
                     <div className='flex gap-4'>
                       {/* Icon */}

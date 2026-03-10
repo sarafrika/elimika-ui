@@ -241,20 +241,19 @@ export function TrainingClassList({
                   <div className='relative h-48 overflow-hidden'>
                     <div className='bg-primary/10 absolute inset-0 z-10' />
 
-                    <div className="h-full w-full flex items-center justify-center bg-muted-foreground/10">
+                    <div className='bg-muted-foreground/10 flex h-full w-full items-center justify-center'>
                       {cls?.course?.banner_url ? (
                         <Image
                           src={cls.course.banner_url}
-                          alt={cls?.title || "banner"}
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          alt={cls?.title || 'banner'}
+                          className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
                           width={400}
                           height={208}
                         />
                       ) : (
-                        <BookOpen className="h-12 w-12 text-muted-foreground/90" />
+                        <BookOpen className='text-muted-foreground/90 h-12 w-12' />
                       )}
                     </div>
-
 
                     {/* Overlays */}
                     <div className='absolute top-3 left-3 z-20 flex flex-wrap gap-2'>
@@ -395,8 +394,9 @@ export function TrainingClassList({
                       </div>
                       <div className='bg-primary/10 h-2 overflow-hidden rounded-full'>
                         <div
-                          className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
-                            }`}
+                          className={`h-full transition-all duration-500 ${
+                            enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                          }`}
                           style={{ width: `${enrolledPercentage}%` }}
                         />
                       </div>

@@ -677,6 +677,10 @@ export type RubricScoring = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Classification of performance expectation level.
+   */
+  readonly performance_expectation?: string;
+  /**
    * **[READ-ONLY]** Expected score range for this performance level.
    */
   readonly score_range?: string;
@@ -688,10 +692,6 @@ export type RubricScoring = {
    * **[READ-ONLY]** Feedback category for constructive assessment guidance.
    */
   readonly feedback_category?: string;
-  /**
-   * **[READ-ONLY]** Classification of performance expectation level.
-   */
-  readonly performance_expectation?: string;
 };
 
 export type ApiResponseRubricScoring = {
@@ -1629,10 +1629,6 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1640,6 +1636,10 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
@@ -2966,6 +2966,10 @@ export type ClassDefinition = {
    */
   location_longitude?: number;
   /**
+   * **[OPTIONAL]** Virtual meeting URL for online participation (e.g., Zoom, Google Meet, Teams).
+   */
+  meeting_link?: string;
+  /**
    * **[OPTIONAL]** Maximum number of participants allowed in the class.
    */
   max_participants?: number;
@@ -3007,10 +3011,6 @@ export type ClassDefinition = {
    */
   readonly is_standalone?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
-  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
@@ -3018,6 +3018,10 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
 };
 
 /**
@@ -3083,69 +3087,6 @@ export type ClassDefinitionResponse = {
    * Persisted class definition
    */
   class_definition?: ClassDefinition;
-};
-
-/**
- * Lesson scheduling metadata scoped to a class definition
- */
-export type ClassLessonPlan = {
-  /**
-   * **[READ-ONLY]** Unique identifier for this class lesson plan entry.
-   */
-  readonly uuid?: string;
-  /**
-   * **[REQUIRED]** Class definition that owns this plan entry.
-   */
-  class_definition_uuid?: string;
-  /**
-   * **[REQUIRED]** Lesson the plan entry references.
-   */
-  lesson_uuid?: string;
-  /**
-   * **[OPTIONAL]** Planned start timestamp in UTC.
-   */
-  scheduled_start?: Date;
-  /**
-   * **[OPTIONAL]** Planned end timestamp in UTC.
-   */
-  scheduled_end?: Date;
-  /**
-   * **[OPTIONAL]** Reference to a concrete scheduled instance created by timetabling.
-   */
-  scheduled_instance_uuid?: string;
-  /**
-   * **[OPTIONAL]** Instructor assigned to deliver this lesson.
-   */
-  instructor_uuid?: string;
-  /**
-   * **[OPTIONAL]** Trainer notes or reminders for the lesson.
-   */
-  notes?: string;
-  /**
-   * **[READ-ONLY]** Timestamp when this plan entry was created.
-   */
-  readonly created_date?: Date;
-  /**
-   * **[READ-ONLY]** User identifier who created the plan entry.
-   */
-  readonly created_by?: string;
-  /**
-   * **[READ-ONLY]** Timestamp when the plan entry was last updated.
-   */
-  readonly updated_date?: Date;
-  /**
-   * **[READ-ONLY]** User identifier who last updated the plan entry.
-   */
-  readonly updated_by?: string;
-};
-
-export type ApiResponseListClassLessonPlan = {
-  success?: boolean;
-  data?: Array<ClassLessonPlan>;
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
 };
 
 /**
@@ -3221,13 +3162,13 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Type of certificate based on completion achievement.
-   */
-  readonly certificate_type?: string;
-  /**
    * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
    */
   readonly is_downloadable?: boolean;
+  /**
+   * **[READ-ONLY]** Type of certificate based on completion achievement.
+   */
+  readonly certificate_type?: string;
   /**
    * **[READ-ONLY]** Letter grade representation of the final grade.
    */
@@ -3374,13 +3315,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
-   */
-  readonly assignment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
+   */
+  readonly assignment_category?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -4109,13 +4050,13 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
   /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
@@ -4557,10 +4498,6 @@ export type ClassQuizSchedule = {
    */
   quiz_uuid?: string;
   /**
-   * **[OPTIONAL]** Linked lesson plan entry for ordering context.
-   */
-  class_lesson_plan_uuid?: string;
-  /**
    * **[OPTIONAL]** When the quiz is visible to students (UTC).
    */
   visible_at?: Date;
@@ -4640,10 +4577,6 @@ export type ClassAssignmentSchedule = {
    * **[REQUIRED]** Assignment template or clone that the schedule references.
    */
   assignment_uuid?: string;
-  /**
-   * **[OPTIONAL]** Lesson plan entry this schedule ties to.
-   */
-  class_lesson_plan_uuid?: string;
   /**
    * **[OPTIONAL]** When the assignment becomes visible to students (UTC).
    */
@@ -5421,9 +5354,9 @@ export type Page = {
 export type PageableObject = {
   offset?: bigint;
   sort?: SortObject;
-  paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
+  paged?: boolean;
   unpaged?: boolean;
 };
 
@@ -5820,10 +5753,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -5835,6 +5764,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -5966,13 +5899,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the program.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the program.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -6640,13 +6573,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the course.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the course.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -11518,74 +11451,6 @@ export type UpdateClassDefinitionResponses = {
 
 export type UpdateClassDefinitionResponse =
   UpdateClassDefinitionResponses[keyof UpdateClassDefinitionResponses];
-
-export type GetLessonPlanData = {
-  body?: never;
-  path: {
-    /**
-     * Class definition UUID
-     */
-    classUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/classes/{classUuid}/lesson-plan';
-};
-
-export type GetLessonPlanErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetLessonPlanError = GetLessonPlanErrors[keyof GetLessonPlanErrors];
-
-export type GetLessonPlanResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseListClassLessonPlan;
-};
-
-export type GetLessonPlanResponse = GetLessonPlanResponses[keyof GetLessonPlanResponses];
-
-export type SaveLessonPlanData = {
-  body: Array<ClassLessonPlan>;
-  path: {
-    /**
-     * Class definition UUID
-     */
-    classUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/classes/{classUuid}/lesson-plan';
-};
-
-export type SaveLessonPlanErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SaveLessonPlanError = SaveLessonPlanErrors[keyof SaveLessonPlanErrors];
-
-export type SaveLessonPlanResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseListClassLessonPlan;
-};
-
-export type SaveLessonPlanResponse = SaveLessonPlanResponses[keyof SaveLessonPlanResponses];
 
 export type DeleteCertificateData = {
   body?: never;

@@ -1410,6 +1410,12 @@ export const RubricScoringSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    performance_expectation: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of performance expectation level.',
+      example: 'Exceptional Performance',
+      readOnly: true,
+    },
     score_range: {
       type: 'string',
       description: '**[READ-ONLY]** Expected score range for this performance level.',
@@ -1427,12 +1433,6 @@ export const RubricScoringSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Feedback category for constructive assessment guidance.',
       example: 'Excellence',
-      readOnly: true,
-    },
-    performance_expectation: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of performance expectation level.',
-      example: 'Exceptional Performance',
       readOnly: true,
     },
   },
@@ -3348,13 +3348,6 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     is_recent_qualification: {
       type: 'boolean',
       description:
@@ -3366,6 +3359,13 @@ export const InstructorEducationSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
       example: 2020,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+      example: true,
       readOnly: true,
     },
     years_since_completion: {
@@ -6133,6 +6133,7 @@ export const ClassDefinitionSchema = {
     location_name: 'Nairobi HQ – Room 101',
     location_latitude: -1.292066,
     location_longitude: 36.821945,
+    meeting_link: 'https://meet.google.com/abc-defg-hij',
     max_participants: 25,
     allow_waitlist: true,
     session_templates: [
@@ -6255,6 +6256,14 @@ export const ClassDefinitionSchema = {
         '**[OPTIONAL]** Longitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.',
       example: 36.821945,
     },
+    meeting_link: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Virtual meeting URL for online participation (e.g., Zoom, Google Meet, Teams).',
+      example: 'https://meet.google.com/abc-defg-hij',
+      maxLength: 1000,
+      minLength: 0,
+    },
     max_participants: {
       type: 'integer',
       format: 'int32',
@@ -6325,13 +6334,6 @@ conflict_resolution per template:
       example: false,
       readOnly: true,
     },
-    capacity_info: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
-      example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -6344,6 +6346,13 @@ conflict_resolution per template:
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
       example: '1h 30m',
+      readOnly: true,
+    },
+    capacity_info: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
+      example: 'Max 25 participants (waitlist enabled)',
       readOnly: true,
     },
   },
@@ -6452,123 +6461,6 @@ export const ClassDefinitionResponseSchema = {
     class_definition: {
       $ref: '#/components/schemas/ClassDefinition',
       description: 'Persisted class definition',
-    },
-  },
-} as const;
-
-export const ClassLessonPlanSchema = {
-  type: 'object',
-  description: 'Lesson scheduling metadata scoped to a class definition',
-  example: {
-    uuid: 'clp-1234-5678-90ab-cdef12345678',
-    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
-    lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
-    scheduled_start: '2024-05-10T09:00:00',
-    scheduled_end: '2024-05-10T10:30:00',
-    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
-    instructor_uuid: 'inst1234-5678-90ab-cdef123456789abc',
-    notes: 'Cover prerequisite concepts from the bootcamp cohort.',
-    created_date: '2024-04-01T12:00:00',
-    created_by: 'instructor@sarafrika.com',
-    updated_date: '2024-04-02T08:30:00',
-    updated_by: 'instructor@sarafrika.com',
-  },
-  properties: {
-    uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[READ-ONLY]** Unique identifier for this class lesson plan entry.',
-      example: 'clp-1234-5678-90ab-cdef12345678',
-      readOnly: true,
-    },
-    class_definition_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[REQUIRED]** Class definition that owns this plan entry.',
-      example: 'cd123456-7890-abcd-ef01-234567890abc',
-    },
-    lesson_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[REQUIRED]** Lesson the plan entry references.',
-      example: 'lesson-1234-5678-90ab-cdef12345678',
-    },
-    scheduled_start: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[OPTIONAL]** Planned start timestamp in UTC.',
-      example: '2024-05-10T09:00:00',
-    },
-    scheduled_end: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[OPTIONAL]** Planned end timestamp in UTC.',
-      example: '2024-05-10T10:30:00',
-    },
-    scheduled_instance_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[OPTIONAL]** Reference to a concrete scheduled instance created by timetabling.',
-      example: 'si123456-7890-abcd-ef01-234567890abc',
-    },
-    instructor_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[OPTIONAL]** Instructor assigned to deliver this lesson.',
-      example: 'inst1234-5678-90ab-cdef123456789abc',
-    },
-    notes: {
-      type: 'string',
-      description: '**[OPTIONAL]** Trainer notes or reminders for the lesson.',
-      example: 'Cover prerequisite concepts from the bootcamp cohort.',
-    },
-    created_date: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[READ-ONLY]** Timestamp when this plan entry was created.',
-      example: '2024-04-01T12:00:00',
-      readOnly: true,
-    },
-    created_by: {
-      type: 'string',
-      description: '**[READ-ONLY]** User identifier who created the plan entry.',
-      example: 'instructor@sarafrika.com',
-      readOnly: true,
-    },
-    updated_date: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[READ-ONLY]** Timestamp when the plan entry was last updated.',
-      example: '2024-04-02T08:30:00',
-      readOnly: true,
-    },
-    updated_by: {
-      type: 'string',
-      description: '**[READ-ONLY]** User identifier who last updated the plan entry.',
-      example: 'instructor@sarafrika.com',
-      readOnly: true,
-    },
-  },
-} as const;
-
-export const ApiResponseListClassLessonPlanSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/ClassLessonPlan',
-      },
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
     },
   },
 } as const;
@@ -6718,16 +6610,16 @@ export const CertificateSchema = {
       example: 'system',
       readOnly: true,
     },
-    certificate_type: {
-      type: 'string',
-      description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
-      example: 'Course Completion',
-      readOnly: true,
-    },
     is_downloadable: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
       example: true,
+      readOnly: true,
+    },
+    certificate_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
+      example: 'Course Completion',
       readOnly: true,
     },
     grade_letter: {
@@ -7037,17 +6929,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: 100,
+      readOnly: true,
+    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
-      readOnly: true,
-    },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: 100,
       readOnly: true,
     },
     assignment_scope: {
@@ -8331,16 +8223,16 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
       example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
     is_attendance_marked: {
@@ -9008,7 +8900,6 @@ export const ClassQuizScheduleSchema = {
     class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
     lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
     quiz_uuid: 'quiz-1234-5678-90ab-cdef12345678',
-    class_lesson_plan_uuid: 'clp-1234-5678-90ab-cdef12345678',
     visible_at: '2024-05-09T07:00:00',
     due_at: '2024-05-09T23:59:00',
     timezone: 'Africa/Nairobi',
@@ -9048,12 +8939,6 @@ export const ClassQuizScheduleSchema = {
       format: 'uuid',
       description: '**[REQUIRED]** Quiz template or clone referenced by this schedule.',
       example: 'quiz-1234-5678-90ab-cdef12345678',
-    },
-    class_lesson_plan_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[OPTIONAL]** Linked lesson plan entry for ordering context.',
-      example: 'clp-1234-5678-90ab-cdef12345678',
     },
     visible_at: {
       type: 'string',
@@ -9158,7 +9043,6 @@ export const ClassAssignmentScheduleSchema = {
     class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
     lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
     assignment_uuid: 'assign-1234-5678-90ab-cdef12345678',
-    class_lesson_plan_uuid: 'clp-1234-5678-90ab-cdef12345678',
     visible_at: '2024-05-08T07:00:00',
     due_at: '2024-05-12T23:59:00',
     grading_due_at: '2024-05-15T17:00:00',
@@ -9197,12 +9081,6 @@ export const ClassAssignmentScheduleSchema = {
       format: 'uuid',
       description: '**[REQUIRED]** Assignment template or clone that the schedule references.',
       example: 'assign-1234-5678-90ab-cdef12345678',
-    },
-    class_lesson_plan_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[OPTIONAL]** Lesson plan entry this schedule ties to.',
-      example: 'clp-1234-5678-90ab-cdef12345678',
     },
     visible_at: {
       type: 'string',
@@ -10623,9 +10501,6 @@ export const PageableObjectSchema = {
     sort: {
       $ref: '#/components/schemas/SortObject',
     },
-    paged: {
-      type: 'boolean',
-    },
     pageNumber: {
       type: 'integer',
       format: 'int32',
@@ -10633,6 +10508,9 @@ export const PageableObjectSchema = {
     pageSize: {
       type: 'integer',
       format: 'int32',
+    },
+    paged: {
+      type: 'boolean',
     },
     unpaged: {
       type: 'boolean',
@@ -11607,12 +11485,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
-      readOnly: true,
-    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -11629,6 +11501,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
       readOnly: true,
     },
   },
@@ -11925,16 +11803,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
       example: 'Completed Program Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
+      example: '100.00% Complete',
       readOnly: true,
     },
     enrollment_duration: {
@@ -13396,16 +13274,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
       example: 'Completed Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
+      example: '100.00% Complete',
       readOnly: true,
     },
     enrollment_duration: {

@@ -6,7 +6,8 @@ import { CourseAssessmentStructure } from './assesment-structure-form';
 import { AssignmentRubricAssociationForm } from './assignment-rubric-association-form';
 import { AttendanceRubricAssociationForm } from './attendance-rubric-association-form';
 
-const tabs = ['Assessment Structure', 'Assignment Rubric', 'Attendance Rubric'];
+// const tabs = ['Assessment Structure', 'Assignment Rubric', 'Attendance Rubric'];
+const tabs = ['Assessment Structure'];
 
 type CriteriaCreationFormProps = {
   course: any;
@@ -14,7 +15,7 @@ type CriteriaCreationFormProps = {
 
 const CriteriaCreationForm = ({ course }: CriteriaCreationFormProps) => {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState('Assessment Structure')
+  const [activeTab, setActiveTab] = useState('Assessment Structure');
 
   return (
     <div className='mb-10 w-full'>
@@ -23,10 +24,11 @@ const CriteriaCreationForm = ({ course }: CriteriaCreationFormProps) => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
-              ? 'border-primary text-primary font-semibold'
-              : 'text-muted-foreground hover:text-foreground'
-              }`}
+            className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
+              activeTab === tab
+                ? 'border-primary text-primary font-semibold'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
           >
             {tab}
           </button>
@@ -36,11 +38,9 @@ const CriteriaCreationForm = ({ course }: CriteriaCreationFormProps) => {
       <div>
         {activeTab === 'Assessment Structure' && (
           <div>
-            <CourseAssessmentStructure
-              courseUuid={course?.data?.uuid as string} createdBy={''} />
+            <CourseAssessmentStructure courseUuid={course?.data?.uuid as string} createdBy={''} />
           </div>
         )}
-
 
         {activeTab === 'Assignment Rubric' && (
           <div>
