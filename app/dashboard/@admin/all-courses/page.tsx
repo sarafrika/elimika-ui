@@ -1,9 +1,7 @@
-import MyCoursesPage from '../../_home-components/MyCoursesPage'
+import MyCoursesPage from '../../_home-components/MyCoursesPage';
 
 const Page = () => {
-  return (
-    <MyCoursesPage />
-  )
-}
+  return <MyCoursesPage />;
+};
 
-export default Page
+export default Page;

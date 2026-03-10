@@ -133,14 +133,14 @@ export default function EnrollCourseCard({
           {cls?.course?.banner_url ? (
             <Image
               src={cls.course.banner_url}
-              alt={cls?.title || "banner"}
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+              alt={cls?.title || 'banner'}
+              className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
               width={400}
               height={208}
             />
           ) : (
-            <div className="flex h-[208px] w-full items-center justify-center bg-primary/30">
-              <BookOpen className="h-14 w-14 text-white opacity-90" />
+            <div className='bg-primary/30 flex h-[208px] w-full items-center justify-center'>
+              <BookOpen className='h-14 w-14 text-white opacity-90' />
             </div>
           )}
 
@@ -247,10 +247,11 @@ export default function EnrollCourseCard({
                 <div className='space-y-2'>
                   <div className='flex items-end gap-1'>
                     <span
-                      className={`text-2xl font-bold ${enrolledPercentage >= 80
-                        ? 'text-amber-600 dark:text-amber-500'
-                        : 'text-primary'
-                        }`}
+                      className={`text-2xl font-bold ${
+                        enrolledPercentage >= 80
+                          ? 'text-amber-600 dark:text-amber-500'
+                          : 'text-primary'
+                      }`}
                     >
                       {enrolledPercentage?.toFixed(0)}
                     </span>
@@ -258,8 +259,9 @@ export default function EnrollCourseCard({
                   </div>
                   <div className='bg-muted h-1.5 overflow-hidden rounded-full'>
                     <div
-                      className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-amber-600 dark:bg-amber-500' : 'bg-primary'
-                        }`}
+                      className={`h-full transition-all duration-500 ${
+                        enrolledPercentage >= 80 ? 'bg-amber-600 dark:bg-amber-500' : 'bg-primary'
+                      }`}
                       style={{ width: `${enrolledPercentage}%` }}
                     />
                   </div>
@@ -300,10 +302,11 @@ export default function EnrollCourseCard({
                 handleEnroll(cls);
               }}
               disabled={disableEnroll}
-              className={`w-full rounded-xl font-semibold shadow-lg transition-all duration-300 ${disableEnroll
-                ? 'bg-success text-success-foreground hover:bg-success/90'
-                : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02] hover:shadow-xl'
-                }`}
+              className={`w-full rounded-xl font-semibold shadow-lg transition-all duration-300 ${
+                disableEnroll
+                  ? 'bg-success text-success-foreground hover:bg-success/90'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02] hover:shadow-xl'
+              }`}
             >
               {disableEnroll ? (
                 <div className='flex items-center gap-2'>

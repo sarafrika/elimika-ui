@@ -101,8 +101,6 @@ import {
   deactivateClassDefinition,
   getClassDefinition,
   updateClassDefinition,
-  getLessonPlan,
-  saveLessonPlan,
   deleteCertificate,
   getCertificateByUuid,
   updateCertificate,
@@ -713,10 +711,6 @@ import type {
   UpdateClassDefinitionData,
   UpdateClassDefinitionError,
   UpdateClassDefinitionResponse,
-  GetLessonPlanData,
-  SaveLessonPlanData,
-  SaveLessonPlanError,
-  SaveLessonPlanResponse,
   DeleteCertificateData,
   DeleteCertificateError,
   DeleteCertificateResponse,
@@ -4260,50 +4254,6 @@ export const updateClassDefinitionMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateClassDefinition({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getLessonPlanQueryKey = (options: Options<GetLessonPlanData>) =>
-  createQueryKey('getLessonPlan', options);
-
-/**
- * Get the lesson plan for a class definition
- */
-export const getLessonPlanOptions = (options: Options<GetLessonPlanData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getLessonPlan({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getLessonPlanQueryKey(options),
-  });
-};
-
-/**
- * Replace the lesson plan for a class definition
- */
-export const saveLessonPlanMutation = (
-  options?: Partial<Options<SaveLessonPlanData>>
-): UseMutationOptions<SaveLessonPlanResponse, SaveLessonPlanError, Options<SaveLessonPlanData>> => {
-  const mutationOptions: UseMutationOptions<
-    SaveLessonPlanResponse,
-    SaveLessonPlanError,
-    Options<SaveLessonPlanData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await saveLessonPlan({
         ...options,
         ...localOptions,
         throwOnError: true,

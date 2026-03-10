@@ -273,9 +273,8 @@ export const AssignmentCreationForm = ({
           },
         }
       );
-    } catch (error) { }
+    } catch (error) {}
   };
-
 
   return (
     <div className='grid grid-cols-4 gap-6'>
@@ -312,13 +311,13 @@ export const AssignmentCreationForm = ({
                     });
                   }}
                   className={cn(
-                    'flex cursor-pointer flex-row items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                    'flex cursor-pointer flex-col items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     selectedLessonId === lesson.uuid
                       ? 'bg-primary/10 border-primary text-primary border-2 shadow-sm'
                       : 'hover:bg-muted text-foreground border-2 border-transparent'
                   )}
                 >
-                  <p>{lesson.lesson_number}.</p>
+                  <p className='text-xs'>LESSON {lesson.lesson_number}.</p>
                   <p className='truncate'>{lesson.title}</p>
                 </li>
               ))}
@@ -538,9 +537,7 @@ export const AssignmentCreationForm = ({
               </div>
 
               <div className='flex flex-col gap-2'>
-                <Label className='text-foreground text-sm font-medium'>
-                  Status
-                </Label>
+                <Label className='text-foreground text-sm font-medium'>Status</Label>
 
                 <Select
                   value={assignmentData.is_published ? 'PUBLISHED' : 'DRAFT'}
@@ -558,7 +555,6 @@ export const AssignmentCreationForm = ({
                   </SelectContent>
                 </Select>
               </div>
-
 
               <div className='flex items-center gap-3'>
                 <Switch
@@ -685,13 +681,13 @@ export const AssignmentCreationForm = ({
                     )}
                   </div>
 
-                  <div className='self-center flex justify-center' >
+                  <div className='flex justify-center self-center'>
                     <Button
                       type='button'
                       variant='secondary'
                       disabled={!mediaFile || uploadAssignmentMut.isPending}
                       onClick={handleAttachmentUpload}
-                      className='w-full bg-primary text-white max-w-fit self-center'
+                      className='bg-primary w-full max-w-fit self-center text-white'
                     >
                       {uploadAssignmentMut.isPending ? (
                         <>

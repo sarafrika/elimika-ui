@@ -132,10 +132,11 @@ const Dropdown: React.FC<{
         {items.map(item => (
           <div
             key={item.id}
-            className={`flex cursor-pointer items-center justify-between rounded px-2.5 py-1.5 text-xs transition-colors md:text-sm ${selectedId === item.id
-              ? 'bg-primary/10 text-primary font-medium'
-              : 'text-muted-foreground hover:bg-primary/5'
-              }`}
+            className={`flex cursor-pointer items-center justify-between rounded px-2.5 py-1.5 text-xs transition-colors md:text-sm ${
+              selectedId === item.id
+                ? 'bg-primary/10 text-primary font-medium'
+                : 'text-muted-foreground hover:bg-primary/5'
+            }`}
             onClick={() => onItemClick?.(item.id)}
           >
             <span className='truncate'>{item.name}</span>
@@ -195,10 +196,11 @@ const CalendarHeader: React.FC<{
               <button
                 key={view}
                 onClick={() => onViewChange(view)}
-                className={`rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all md:px-3.5 md:text-sm ${viewMode === view
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all md:px-3.5 md:text-sm ${
+                  viewMode === view
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
                 {view.charAt(0).toUpperCase() + view.slice(1)}
               </button>
@@ -310,8 +312,9 @@ const WeekView: React.FC<{
                         return (
                           <div
                             key={event.id}
-                            className={`absolute cursor-pointer overflow-hidden rounded-lg p-1.5 transition-all hover:shadow-lg md:p-2 ${selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
-                              }`}
+                            className={`absolute cursor-pointer overflow-hidden rounded-lg p-1.5 transition-all hover:shadow-lg md:p-2 ${
+                              selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
+                            }`}
                             style={{
                               backgroundColor: event.color,
                               height: `${getEventHeight(event)}px`,
@@ -391,8 +394,9 @@ const DayView: React.FC<{
                 {hourEvents.map((event, idx) => (
                   <div
                     key={event.id}
-                    className={`absolute cursor-pointer rounded-lg p-2 transition-all hover:shadow-lg md:p-3 ${selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
-                      }`}
+                    className={`absolute cursor-pointer rounded-lg p-2 transition-all hover:shadow-lg md:p-3 ${
+                      selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
+                    }`}
                     style={{
                       backgroundColor: event.color,
                       height: `${getEventHeight(event)}px`,
@@ -564,10 +568,11 @@ const YearView: React.FC<{
                   return (
                     <div
                       key={i}
-                      className={`rounded p-0.5 text-center text-[10px] md:text-xs ${hasEvent
-                        ? 'bg-primary/10 text-primary font-semibold'
-                        : 'text-muted-foreground hover:bg-primary/5'
-                        }`}
+                      className={`rounded p-0.5 text-center text-[10px] md:text-xs ${
+                        hasEvent
+                          ? 'bg-primary/10 text-primary font-semibold'
+                          : 'text-muted-foreground hover:bg-primary/5'
+                      }`}
                     >
                       {dayNumber}
                     </div>
@@ -712,9 +717,7 @@ export default function AdminClassPage() {
 
     const query = searchQuery.toLowerCase();
 
-    return allClasses.filter((cls) =>
-      cls.name.toLowerCase().includes(query)
-    );
+    return allClasses.filter(cls => cls.name.toLowerCase().includes(query));
   }, [classesWithCourseAndInstructor, searchQuery]);
 
   const uniqueInstructors = useMemo(() => {
@@ -735,26 +738,19 @@ export default function AdminClassPage() {
     let events = allEvents;
 
     if (selectedClassId !== 'all') {
-      events = events.filter(
-        (event) => event.classDefinitionId === selectedClassId
-      );
+      events = events.filter(event => event.classDefinitionId === selectedClassId);
     }
 
     if (selectedInstructorId) {
-      const instructor = uniqueInstructors.find(
-        (inst) => inst.id === selectedInstructorId
-      );
+      const instructor = uniqueInstructors.find(inst => inst.id === selectedInstructorId);
 
       if (instructor) {
-        events = events.filter(
-          (event) => event.instructor === instructor.name
-        );
+        events = events.filter(event => event.instructor === instructor.name);
       }
     }
 
     return events;
   }, [allEvents, selectedClassId, selectedInstructorId, uniqueInstructors]);
-
 
   useEffect(() => {
     if (selectedClassId && selectedClassId !== 'all') {
@@ -927,7 +923,7 @@ export default function AdminClassPage() {
                     type='text'
                     placeholder='Search classes...'
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={e => setSearchQuery(e.target.value)}
                     className='border-input focus:ring-ring bg-background text-foreground w-full rounded-lg border py-1.5 pr-3 pl-9 text-sm focus:border-transparent focus:ring-2 focus:outline-none'
                   />
                 </div>

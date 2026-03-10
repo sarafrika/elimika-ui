@@ -81,7 +81,7 @@ const SAMPLE_COURSES: CourseProgress[] = [
 ];
 
 const StudentProgressAnalytics: React.FC = () => {
-  const student = useStudent()
+  const student = useStudent();
   const [courses] = useState<CourseProgress[]>(SAMPLE_COURSES);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('all');
   const [lessonQuery, setLessonQuery] = useState('');
@@ -100,10 +100,7 @@ const StudentProgressAnalytics: React.FC = () => {
 
   const enrolledClasses = detailedEnrollments.filter(
     (enrollment: any, index: number, self: any[]) =>
-      index ===
-      self.findIndex(
-        e => e.class_definition_uuid === enrollment.class_definition_uuid
-      )
+      index === self.findIndex(e => e.class_definition_uuid === enrollment.class_definition_uuid)
   );
 
   // flatten lessons when needed
@@ -136,7 +133,7 @@ const StudentProgressAnalytics: React.FC = () => {
     const completionRate = totalLessons ? Math.round((completed / totalLessons) * 100) : 0;
     const avgScore = Math.round(
       sourceLessons.filter(l => l.score != null).reduce((s, l) => s + (l.score ?? 0), 0) /
-      Math.max(1, sourceLessons.filter(l => l.score != null).length) || 0
+        Math.max(1, sourceLessons.filter(l => l.score != null).length) || 0
     );
     return { totalLessons, completed, totalTime, avgTime, completionRate, avgScore };
   }, [allLessons, selectedCourseId]);

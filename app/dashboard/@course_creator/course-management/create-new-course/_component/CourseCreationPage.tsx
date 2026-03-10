@@ -54,7 +54,7 @@ const CourseCreationPage = () => {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   return (

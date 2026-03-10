@@ -53,13 +53,13 @@ export function NavUser({ items }: NavUserProps) {
               size='lg'
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground transition-colors'
             >
-              <Avatar className="bg-background h-8 w-8 rounded-md border overflow-hidden">
+              <Avatar className='bg-background h-8 w-8 overflow-hidden rounded-md border'>
                 <AvatarImage
-                  src={user?.profile_image_url ?? ""}
-                  alt={user?.full_name ?? ""}
-                  className="h-full w-full object-cover"
+                  src={user?.profile_image_url ?? ''}
+                  alt={user?.full_name ?? ''}
+                  className='h-full w-full object-cover'
                 />
-                <AvatarFallback className="rounded-md text-xs font-medium">
+                <AvatarFallback className='rounded-md text-xs font-medium'>
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
@@ -89,13 +89,13 @@ export function NavUser({ items }: NavUserProps) {
             <div className='flex flex-col'>
               {/* User Info */}
               <div className='mb-4 flex items-center gap-3'>
-                <Avatar className="bg-background h-10 w-10 rounded-md border overflow-hidden">
+                <Avatar className='bg-background h-10 w-10 overflow-hidden rounded-md border'>
                   <AvatarImage
-                    src={user?.profile_image_url ?? ""}
-                    alt={user?.full_name ?? ""}
-                    className="h-full w-full object-cover"
+                    src={user?.profile_image_url ?? ''}
+                    alt={user?.full_name ?? ''}
+                    className='h-full w-full object-cover'
                   />
-                  <AvatarFallback className="rounded-md text-sm font-medium">
+                  <AvatarFallback className='rounded-md text-sm font-medium'>
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>

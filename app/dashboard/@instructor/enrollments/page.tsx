@@ -36,7 +36,7 @@ import {
   Search,
   TrendingUp,
   Users,
-  X
+  X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -168,11 +168,8 @@ const EnrollmentsPage = () => {
   //   setIsStudentDetailsSheetOpen(true);
   // };
   const handleStudentClick = (student: any) => {
-    setExpandedStudentId(prev =>
-      prev === student.uuid ? null : student.uuid
-    );
+    setExpandedStudentId(prev => (prev === student.uuid ? null : student.uuid));
   };
-
 
   const handleClassSelect = (classUuid: string) => {
     setSelectedClassId(classUuid);
@@ -203,7 +200,7 @@ const EnrollmentsPage = () => {
 
       {/* KPI Cards */}
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
-        <Card className='border-border/50 bg-gradient-to-br from-primary/5 to-transparent p-0 transition-shadow hover:shadow-md'>
+        <Card className='border-border/50 from-primary/5 bg-gradient-to-br to-transparent p-0 transition-shadow hover:shadow-md'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-primary/10 rounded-lg p-2'>
@@ -217,7 +214,7 @@ const EnrollmentsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className='border-border/50 bg-gradient-to-br from-chart-1/5 to-transparent p-0 transition-shadow hover:shadow-md'>
+        <Card className='border-border/50 from-chart-1/5 bg-gradient-to-br to-transparent p-0 transition-shadow hover:shadow-md'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-chart-1/10 rounded-lg p-2'>
@@ -231,7 +228,7 @@ const EnrollmentsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className='border-border/50 bg-gradient-to-br from-chart-2/5 to-transparent p-0 transition-shadow hover:shadow-md'>
+        <Card className='border-border/50 from-chart-2/5 bg-gradient-to-br to-transparent p-0 transition-shadow hover:shadow-md'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-chart-2/10 rounded-lg p-2'>
@@ -245,7 +242,7 @@ const EnrollmentsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className='border-border/50 bg-gradient-to-br from-chart-3/5 to-transparent p-0 transition-shadow hover:shadow-md'>
+        <Card className='border-border/50 from-chart-3/5 bg-gradient-to-br to-transparent p-0 transition-shadow hover:shadow-md'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-chart-3/10 rounded-lg p-2'>
@@ -270,17 +267,17 @@ const EnrollmentsPage = () => {
             {/* Search and Sort */}
             <div className='space-y-2'>
               <div className='relative'>
-                <Search className='text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2' />
+                <Search className='text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2' />
                 <Input
                   placeholder='Search classes...'
                   value={classSearchQuery}
                   onChange={e => setClassSearchQuery(e.target.value)}
-                  className='h-8 border-border/50 pl-8 pr-8 text-sm focus-visible:ring-primary/20'
+                  className='border-border/50 focus-visible:ring-primary/20 h-8 pr-8 pl-8 text-sm'
                 />
                 {classSearchQuery && (
                   <button
                     onClick={() => setClassSearchQuery('')}
-                    className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors'
+                    className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 transition-colors'
                   >
                     <X className='h-3.5 w-3.5' />
                   </button>
@@ -288,7 +285,7 @@ const EnrollmentsPage = () => {
               </div>
 
               <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                <SelectTrigger className='h-8 border-border/50 text-sm focus:ring-primary/20'>
+                <SelectTrigger className='border-border/50 focus:ring-primary/20 h-8 text-sm'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -322,10 +319,11 @@ const EnrollmentsPage = () => {
                     <Card
                       key={classItem.uuid}
                       onClick={() => handleClassSelect(classItem.uuid)}
-                      className={`group cursor-pointer border-border/50 p-2.5 transition-all hover:shadow-md ${isSelected
-                        ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
-                        : 'hover:border-border hover:bg-accent/5'
-                        }`}
+                      className={`group border-border/50 cursor-pointer p-2.5 transition-all hover:shadow-md ${
+                        isSelected
+                          ? 'border-primary bg-primary/5 ring-primary/30 ring-1'
+                          : 'hover:border-border hover:bg-accent/5'
+                      }`}
                     >
                       <div className='flex items-start justify-between gap-2'>
                         <div className='min-w-0 flex-1'>
@@ -368,17 +366,17 @@ const EnrollmentsPage = () => {
                 </div>
 
                 <div className='relative w-full sm:w-56'>
-                  <Search className='text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2' />
+                  <Search className='text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2' />
                   <Input
                     placeholder='Search students...'
                     value={studentSearchQuery}
                     onChange={e => setStudentSearchQuery(e.target.value)}
-                    className='h-8 border-border/50 pl-8 pr-8 text-sm focus-visible:ring-primary/20'
+                    className='border-border/50 focus-visible:ring-primary/20 h-8 pr-8 pl-8 text-sm'
                   />
                   {studentSearchQuery && (
                     <button
                       onClick={() => setStudentSearchQuery('')}
-                      className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors'
+                      className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 transition-colors'
                     >
                       <X className='h-3.5 w-3.5' />
                     </button>
@@ -401,7 +399,7 @@ const EnrollmentsPage = () => {
             </Card>
           ) : isLoadingEnrollments || isLoadingStudents ? (
             <Card className='border-border/50 overflow-hidden'>
-              <ul className='divide-y divide-border/50'>
+              <ul className='divide-border/50 divide-y'>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <li key={i} className='p-4'>
                     <div className='flex items-center gap-3'>
@@ -430,20 +428,17 @@ const EnrollmentsPage = () => {
               </p>
             </Card>
           ) : (
-            <Card className='border-border/50 overflow-hidden bg-card'>
-              <ul className='divide-y divide-border/50'>
+            <Card className='border-border/50 bg-card overflow-hidden'>
+              <ul className='divide-border/50 divide-y'>
                 {filteredStudents.map((student: any) => {
                   const enrollment = getEnrollmentForStudent(student?.uuid);
 
                   return (
-                    <li
-                      key={student?.uuid}
-                      className='group transition-colors hover:bg-accent/5'
-                    >
+                    <li key={student?.uuid} className='group hover:bg-accent/5 transition-colors'>
                       <div className='flex items-center gap-3 p-3 sm:gap-4 sm:p-4'>
                         {/* Avatar & Info */}
                         <div className='flex min-w-0 flex-1 items-center gap-3'>
-                          <Avatar className='border-border h-10 w-10 border ring-2 ring-background'>
+                          <Avatar className='border-border ring-background h-10 w-10 border ring-2'>
                             <AvatarImage src={student?.avatar_url} />
                             <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
                               {student?.full_name
@@ -550,24 +545,25 @@ const EnrollmentsPage = () => {
               {selectedClass?.title || 'Students'}
             </SheetTitle>
             <SheetDescription className='text-muted-foreground'>
-              {filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} enrolled
+              {filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'}{' '}
+              enrolled
             </SheetDescription>
           </SheetHeader>
 
           {/* Student Search */}
-          <div className='mb-4 mx-4'>
+          <div className='mx-4 mb-4'>
             <div className='relative'>
-              <Search className='text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2' />
+              <Search className='text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2' />
               <Input
                 placeholder='Search students...'
                 value={studentSearchQuery}
                 onChange={e => setStudentSearchQuery(e.target.value)}
-                className='h-8 border-border/50 pl-8 pr-8 text-sm focus-visible:ring-primary/20'
+                className='border-border/50 focus-visible:ring-primary/20 h-8 pr-8 pl-8 text-sm'
               />
               {studentSearchQuery && (
                 <button
                   onClick={() => setStudentSearchQuery('')}
-                  className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors'
+                  className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 transition-colors'
                 >
                   <X className='h-3.5 w-3.5' />
                 </button>
@@ -576,10 +572,13 @@ const EnrollmentsPage = () => {
           </div>
 
           {/* Students List */}
-          <div className='space-y-2 mx-4'>
+          <div className='mx-4 space-y-2'>
             {isLoadingEnrollments || isLoadingStudents ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className='flex items-center gap-3 rounded-lg border border-border/50 p-3'>
+                <div
+                  key={i}
+                  className='border-border/50 flex items-center gap-3 rounded-lg border p-3'
+                >
                   <Skeleton className='h-10 w-10 rounded-full' />
                   <div className='flex-1 space-y-1.5'>
                     <Skeleton className='h-3.5 w-32' />
@@ -609,13 +608,13 @@ const EnrollmentsPage = () => {
                 return (
                   <div
                     key={student?.uuid}
-                    className='rounded-lg border border-border/50 transition-colors'
+                    className='border-border/50 rounded-lg border transition-colors'
                   >
                     <div
                       onClick={() => handleStudentClick(student)}
-                      className='group flex cursor-pointer items-center gap-3 p-3 hover:bg-accent/5'
+                      className='group hover:bg-accent/5 flex cursor-pointer items-center gap-3 p-3'
                     >
-                      <Avatar className='border-border h-10 w-10 border ring-2 ring-background'>
+                      <Avatar className='border-border ring-background h-10 w-10 border ring-2'>
                         <AvatarImage src={student?.avatar_url} />
                         <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
                           {student?.full_name
@@ -645,21 +644,22 @@ const EnrollmentsPage = () => {
                       </div>
 
                       <ChevronRight
-                        className={`h-5 w-5 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''
-                          }`}
+                        className={`h-5 w-5 shrink-0 transition-transform ${
+                          isExpanded ? 'rotate-90' : ''
+                        }`}
                       />
                     </div>
 
                     {isExpanded && (
-                      <div className='space-y-4 border-t border-border/50 px-4 pb-4'>
+                      <div className='border-border/50 space-y-4 border-t px-4 pb-4'>
                         {/* Progress */}
                         {enrollment?.progress_percentage !== undefined && (
                           <div>
-                            <div className='flex justify-between text-xs mb-1'>
+                            <div className='mb-1 flex justify-between text-xs'>
                               <span>Progress</span>
                               <span>{enrollment.progress_percentage}%</span>
                             </div>
-                            <div className='bg-muted h-2 w-full rounded-full overflow-hidden'>
+                            <div className='bg-muted h-2 w-full overflow-hidden rounded-full'>
                               <div
                                 className='bg-primary h-full'
                                 style={{ width: `${enrollment.progress_percentage}%` }}
@@ -672,8 +672,8 @@ const EnrollmentsPage = () => {
                         <div className='flex gap-2 pt-2'>
                           <Button
                             size='sm'
-                            className='flex-1 text-primary'
-                            variant="outline"
+                            className='text-primary flex-1'
+                            variant='outline'
                             onClick={() => handleViewProfile(student?.uuid)}
                           >
                             View Enrollment Info
@@ -685,8 +685,7 @@ const EnrollmentsPage = () => {
                             rel='noopener noreferrer'
                             className='flex-1'
                           >
-
-                            <Button size='sm' variant='outline' className='w-full text-primary'>
+                            <Button size='sm' variant='outline' className='text-primary w-full'>
                               <ExternalLink className='mr-1.5 h-3 w-3' />
                               Profile
                             </Button>

@@ -29,8 +29,6 @@ export default function AssignmentListPage() {
   const qc = useQueryClient();
   const _instructor = useInstructor();
 
-
-
   // const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery({
   //   ...getCoursesByInstructorOptions({
   //     path: { instructorUuid: instructor?.uuid as string },
@@ -48,7 +46,7 @@ export default function AssignmentListPage() {
   const [editingAssignmetId, setEditingAssignmentId] = useState();
   const [editingAssignmentData, setEditingAssignmentData] = useState();
 
-  const instructor = useInstructor()
+  const instructor = useInstructor();
   const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
     instructor?.uuid as string
   );

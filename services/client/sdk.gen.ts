@@ -304,12 +304,6 @@ import type {
   UpdateClassDefinitionData,
   UpdateClassDefinitionResponses,
   UpdateClassDefinitionErrors,
-  GetLessonPlanData,
-  GetLessonPlanResponses,
-  GetLessonPlanErrors,
-  SaveLessonPlanData,
-  SaveLessonPlanResponses,
-  SaveLessonPlanErrors,
   DeleteCertificateData,
   DeleteCertificateResponses,
   DeleteCertificateErrors,
@@ -1456,8 +1450,6 @@ import {
   updateCatalogItemResponseTransformer,
   getClassDefinitionResponseTransformer,
   updateClassDefinitionResponseTransformer,
-  getLessonPlanResponseTransformer,
-  saveLessonPlanResponseTransformer,
   getCertificateByUuidResponseTransformer,
   updateCertificateResponseTransformer,
   updateCertificateTemplateResponseTransformer,
@@ -4684,64 +4676,6 @@ export const updateClassDefinition = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/{uuid}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Get the lesson plan for a class definition
- */
-export const getLessonPlan = <ThrowOnError extends boolean = false>(
-  options: Options<GetLessonPlanData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetLessonPlanResponses,
-    GetLessonPlanErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getLessonPlanResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/{classUuid}/lesson-plan',
-    ...options,
-  });
-};
-
-/**
- * Replace the lesson plan for a class definition
- */
-export const saveLessonPlan = <ThrowOnError extends boolean = false>(
-  options: Options<SaveLessonPlanData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).put<
-    SaveLessonPlanResponses,
-    SaveLessonPlanErrors,
-    ThrowOnError
-  >({
-    responseTransformer: saveLessonPlanResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/{classUuid}/lesson-plan',
     ...options,
     headers: {
       'Content-Type': 'application/json',
