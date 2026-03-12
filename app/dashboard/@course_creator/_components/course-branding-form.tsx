@@ -16,7 +16,6 @@ import * as z from 'zod';
 import { Button } from '../../../../components/ui/button';
 import Spinner from '../../../../components/ui/spinner';
 import { useStepper } from '../../../../components/ui/stepper';
-import { Textarea } from '../../../../components/ui/textarea';
 import {
   getCourseByUuidQueryKey,
   updateCourseMutation,
@@ -231,7 +230,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
           {/* Welcome Message */}
-          <FormSection
+          {/* <FormSection
             title='Welcome message'
             description='Write a short message to welcome learners and set expectations for this course.'
           >
@@ -252,10 +251,10 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 </FormItem>
               )}
             />
-          </FormSection>
+          </FormSection> */}
 
           {/* Theme Color */}
-          <FormSection title='Theme Color' description='Choose a theme color for your course.'>
+          {/* <FormSection title='Theme Color' description='Choose a theme color for your course.'>
             <FormField
               control={form.control}
               name='theme_color'
@@ -268,7 +267,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 </FormItem>
               )}
             />
-          </FormSection>
+          </FormSection> */}
 
           {/* Intro Video Upload */}
           <FormSection

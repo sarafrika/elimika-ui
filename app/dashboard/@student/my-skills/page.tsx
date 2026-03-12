@@ -1,9 +1,30 @@
 'use client';
 
-import { BookOpen, CheckCircle, Clock, PlusCircle, Star, TrendingUp, XCircle } from 'lucide-react';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import {
+  Award,
+  BookOpen,
+  CheckCircle,
+  Clock,
+  Download,
+  PlusCircle,
+  Star,
+  TrendingUp,
+  XCircle,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo } from 'react';
+import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
+import { Card, CardContent } from '../../../../components/ui/card';
+import { Skeleton } from '../../../../components/ui/skeleton';
+import { useStudent } from '../../../../context/student-context';
+import {
+  getCourseByUuidOptions,
+  getStudentCertificatesOptions,
+  getStudentScheduleOptions,
+  getTrainingProgramByUuidOptions,
+} from '../../../../services/client/@tanstack/react-query.gen';
 
 const elimikaDesignSystem = {
   components: {
@@ -13,73 +34,194 @@ const elimikaDesignSystem = {
 
 const MySkillsPage = () => {
   const router = useRouter();
-  // Mock data - replace with actual data from your backend
-  const [overallProgress] = useState(65);
-  const [topSkills] = useState([
-    { name: 'Web Development', level: 'Advanced', icon: '💻', color: 'bg-blue-500' },
-    { name: 'Data Analysis', level: 'Intermediate', icon: '📊', color: 'bg-green-500' },
-    { name: 'UI/UX Design', level: 'Intermediate', icon: '🎨', color: 'bg-purple-500' },
-  ]);
+  const student = useStudent();
 
-  const [courses] = useState([
-    {
-      id: 1,
-      title: 'Full Stack Web Development',
-      status: 'complete',
-      progress: 100,
-      grade: 'A',
-      completedDate: '2024-01-15',
-      category: 'Development',
-    },
-    {
-      id: 2,
-      title: 'Advanced React & Next.js',
-      status: 'incomplete',
-      progress: 68,
-      grade: null,
-      completedDate: null,
-      category: 'Development',
-    },
-    {
-      id: 3,
-      title: 'Python for Data Science',
-      status: 'passed',
-      progress: 100,
-      grade: 'B+',
-      completedDate: '2024-02-20',
-      category: 'Data Science',
-    },
-    {
-      id: 4,
-      title: 'Introduction to Machine Learning',
-      status: 'incomplete',
-      progress: 45,
-      grade: null,
-      completedDate: null,
-      category: 'Data Science',
-    },
-    {
-      id: 5,
-      title: 'Digital Marketing Fundamentals',
-      status: 'failed',
-      progress: 100,
-      grade: 'F',
-      completedDate: '2024-03-10',
-      category: 'Marketing',
-    },
-    {
-      id: 6,
-      title: 'UI/UX Design Principles',
-      status: 'incomplete',
-      progress: 30,
-      grade: null,
-      completedDate: null,
-      category: 'Design',
-    },
-  ]);
+  // Fetch certificates
+  const { data: certificatesData, isLoading: isLoadingCertificates } = useQuery({
+    ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
+    enabled: !!student?.uuid,
+  });
 
-  const getStatusBadge = (status: any) => {
-    const badges = {
+  const certificates = certificatesData?.data || [];
+
+  // Fetch enrollments
+  const { data: enrollmentsData, isLoading: isLoadingEnrollments } = useQuery({
+    ...getStudentScheduleOptions({
+      path: { studentUuid: student?.uuid as string },
+      query: { start: '2026-01-01', end: '2027-12-31' },
+    }),
+    enabled: !!student?.uuid,
+  });
+
+  // Get unique enrollments (by class_definition_uuid)
+  const uniqueEnrollments = useMemo(() => {
+    if (!enrollmentsData?.data) return [];
+
+    const map = new Map();
+    enrollmentsData.data.forEach((item: any) => {
+      if (!map.has(item.class_definition_uuid)) {
+        map.set(item.class_definition_uuid, item);
+      }
+    });
+
+    return Array.from(map.values());
+  }, [enrollmentsData?.data]);
+
+  // Extract unique course/program UUIDs from certificates and enrollments
+  const { courseUuids, programUuids } = useMemo(() => {
+    const courses = new Set<string>();
+    const programs = new Set<string>();
+
+    // From certificates
+    certificates.forEach((cert: any) => {
+      if (cert.course_uuid) courses.add(cert.course_uuid);
+      if (cert.program_uuid) programs.add(cert.program_uuid);
+    });
+
+    // From enrollments
+    uniqueEnrollments.forEach((enroll: any) => {
+      if (enroll.course_uuid) courses.add(enroll.course_uuid);
+      if (enroll.program_uuid) programs.add(enroll.program_uuid);
+    });
+
+    return {
+      courseUuids: Array.from(courses),
+      programUuids: Array.from(programs),
+    };
+  }, [certificates, uniqueEnrollments]);
+
+  // Fetch all courses
+  const courseQueries = useQueries({
+    queries: courseUuids.map((uuid: string) => ({
+      ...getCourseByUuidOptions({ path: { uuid } }),
+      enabled: !!uuid,
+    })),
+  });
+
+  // Fetch all programs
+  const programQueries = useQueries({
+    queries: programUuids.map((uuid: string) => ({
+      ...getTrainingProgramByUuidOptions({ path: { uuid } }),
+      enabled: !!uuid,
+    })),
+  });
+
+  // Create maps of courses and programs
+  const coursesMap = useMemo(() => {
+    const map = new Map();
+    courseQueries.forEach((query, index) => {
+      if (query.data?.data) {
+        map.set(courseUuids[index], query.data.data);
+      }
+    });
+    return map;
+  }, [courseQueries, courseUuids]);
+
+  const programsMap = useMemo(() => {
+    const map = new Map();
+    programQueries.forEach((query, index) => {
+      if (query.data?.data) {
+        map.set(programUuids[index], query.data.data);
+      }
+    });
+    return map;
+  }, [programQueries, programUuids]);
+
+  // Calculate skills from certificates
+  const skills = useMemo(() => {
+    return certificates
+      .filter((cert: any) => cert.is_valid)
+      .map((cert: any) => {
+        const courseOrProgram = cert.course_uuid
+          ? coursesMap.get(cert.course_uuid)
+          : programsMap.get(cert.program_uuid);
+
+        return {
+          uuid: cert.uuid,
+          name: courseOrProgram?.name || courseOrProgram?.title || 'Unknown Skill',
+          type: cert.course_uuid ? 'Course' : 'Program',
+          grade: cert.grade_letter,
+          finalGrade: cert.final_grade,
+          completedDate: cert.completion_date,
+          certificateUrl: cert.certificate_url,
+          isDownloadable: cert.is_downloadable,
+          certificateType: cert.certificate_type,
+          level:
+            cert.final_grade >= 90
+              ? 'Advanced'
+              : cert.final_grade >= 75
+                ? 'Intermediate'
+                : 'Beginner',
+        };
+      });
+  }, [certificates, coursesMap, programsMap]);
+
+  // Get top 3 skills (highest grades)
+  const topSkills = useMemo(() => {
+    return [...skills]
+      .sort((a, b) => (b.finalGrade || 0) - (a.finalGrade || 0))
+      .slice(0, 3)
+      .map((skill, index) => ({
+        name: skill.name,
+        level: skill.level,
+        icon: index === 0 ? '🏆' : index === 1 ? '🥈' : '🥉',
+        color: index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-500',
+        grade: skill.grade,
+      }));
+  }, [skills]);
+
+  // Calculate overall progress
+  const overallProgress = useMemo(() => {
+    if (skills.length === 0) return 0;
+    const totalGrades = skills.reduce((sum, skill) => sum + (skill.finalGrade || 0), 0);
+    return Math.round(totalGrades / skills.length);
+  }, [skills]);
+
+  // Process enrollments into course cards
+  const enrolledCourses = useMemo(() => {
+    return uniqueEnrollments.map((enroll: any) => {
+      const courseOrProgram = enroll.course_uuid
+        ? coursesMap.get(enroll.course_uuid)
+        : programsMap.get(enroll.program_uuid);
+
+      // Find matching certificate
+      const certificate = certificates.find(
+        (cert: any) =>
+          (cert.course_uuid && cert.course_uuid === enroll.course_uuid) ||
+          (cert.program_uuid && cert.program_uuid === enroll.program_uuid)
+      );
+
+      let status = 'incomplete';
+      let progress = 0; // Default for in-progress
+
+      if (certificate) {
+        if (certificate.is_valid) {
+          status = certificate.final_grade >= 50 ? 'passed' : 'failed';
+          progress = 100;
+        }
+      } else if (enroll.enrollment_status === 'COMPLETED') {
+        status = 'complete';
+        progress = 100;
+      }
+
+      return {
+        id: enroll.enrollment_uuid,
+        title: courseOrProgram?.name || courseOrProgram?.title || enroll.title || 'Unknown Course',
+        status,
+        progress,
+        grade: certificate?.grade_letter || null,
+        completedDate: certificate?.completion_date || null,
+        category: Array.isArray(courseOrProgram?.category_names)
+          ? courseOrProgram.category_names[0]
+          : courseOrProgram?.category_names || 'General',
+        type: enroll.course_uuid ? 'Course' : 'Program',
+        enrollmentStatus: enroll.enrollment_status,
+      };
+    });
+  }, [uniqueEnrollments, coursesMap, programsMap, certificates]);
+
+  const getStatusBadge = (status: string) => {
+    const badges: any = {
       complete: {
         text: 'Completed',
         bg: 'bg-blue-100',
@@ -92,7 +234,12 @@ const MySkillsPage = () => {
         text_color: 'text-green-800',
         icon: CheckCircle,
       },
-      failed: { text: 'Failed', bg: 'bg-red-100', text_color: 'text-destructive', icon: XCircle },
+      failed: {
+        text: 'Failed',
+        bg: 'bg-red-100',
+        text_color: 'text-destructive',
+        icon: XCircle,
+      },
       incomplete: {
         text: 'In Progress',
         bg: 'bg-yellow-100',
@@ -100,11 +247,10 @@ const MySkillsPage = () => {
         icon: Clock,
       },
     };
-    // @ts-ignore
     return badges[status] || badges.incomplete;
   };
 
-  const getGradeColor = (grade: any) => {
+  const getGradeColor = (grade: string) => {
     if (!grade) return 'text-muted-foreground';
     if (grade.startsWith('A')) return 'text-green-600';
     if (grade.startsWith('B')) return 'text-blue-600';
@@ -113,12 +259,44 @@ const MySkillsPage = () => {
     return 'text-destructive';
   };
 
-  const stats = {
-    total: courses.length,
-    completed: courses.filter(c => c.status === 'complete' || c.status === 'passed').length,
-    inProgress: courses.filter(c => c.status === 'incomplete').length,
-    failed: courses.filter(c => c.status === 'failed').length,
-  };
+  const stats = useMemo(() => {
+    const completed = enrolledCourses.filter(
+      c => c.status === 'complete' || c.status === 'passed'
+    ).length;
+    const inProgress = enrolledCourses.filter(c => c.status === 'incomplete').length;
+    const failed = enrolledCourses.filter(c => c.status === 'failed').length;
+
+    return {
+      total: enrolledCourses.length,
+      completed,
+      inProgress,
+      failed,
+      skillsEarned: skills.length,
+    };
+  }, [enrolledCourses, skills]);
+
+  const isLoading =
+    isLoadingCertificates ||
+    isLoadingEnrollments ||
+    courseQueries.some(q => q.isLoading) ||
+    programQueries.some(q => q.isLoading);
+
+  if (isLoading) {
+    return (
+      <div className={elimikaDesignSystem.components.pageContainer}>
+        <div className='space-y-6'>
+          <Skeleton className='h-12 w-64' />
+          <Skeleton className='h-48 w-full' />
+          <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className='h-24 w-full' />
+            ))}
+          </div>
+          <Skeleton className='h-96 w-full' />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
@@ -128,113 +306,128 @@ const MySkillsPage = () => {
           <div>
             <h1 className='text-foreground text-2xl font-bold'>My Skills</h1>
             <p className='text-muted-foreground text-sm'>
-              Review, track, and develop your skills. Add new competencies, monitor your progress,
-              and showcase your expertise.
+              Review, track, and develop your skills earned through course certificates
             </p>
           </div>
           <Button
             onClick={() => router.push('/dashboard/all-courses')}
-            size={'default'}
-            className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2 font-medium shadow-sm transition-colors'
+            size='default'
+            className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2'
           >
             <PlusCircle className='h-5 w-5' />
-            Add New Skill
+            Browse Courses
           </Button>
         </div>
       </section>
 
-      <div className='my-6 flex flex-col gap-2 rounded-md border-l-4 border-yellow-500 bg-yellow-100 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-          <p className='font-medium'>🚧 This page is under construction.</p>
-          <p className='text-sm text-yellow-900'>Mock data is being used for this template</p>
-        </div>
-      </div>
-
       {/* Hero Section - Skills Snapshot */}
       <section className='mb-8'>
-        <div className='bg-muted border-input rounded-xl border p-6 shadow-sm'>
-          <div className='mb-4 flex items-center gap-2'>
-            <TrendingUp className='text-primary h-6 w-6' />
-            <h2 className='text-foreground text-xl font-bold'>My Skills Snapshot</h2>
-          </div>
-
-          {/* Overall Progress */}
-          <div className='mb-6'>
-            <div className='mb-2 flex items-center justify-between'>
-              <span className='text-foreground text-sm font-medium'>Overall Skills Progress</span>
-              <span className='text-primary text-2xl font-bold'>{overallProgress}%</span>
+        <Card className='border-border/50'>
+          <CardContent className='p-6'>
+            <div className='mb-4 flex items-center gap-2'>
+              <TrendingUp className='text-primary h-6 w-6' />
+              <h2 className='text-foreground text-xl font-bold'>My Skills Snapshot</h2>
             </div>
-            <div className='bg-background border-input h-3 w-full overflow-hidden rounded-full border'>
-              <div
-                className='bg-primary h-3 rounded-full transition-all duration-500'
-                style={{ width: `${overallProgress}%` }}
-              />
-            </div>
-            <p className='text-muted-foreground mt-1 text-xs'>Skills Verified</p>
-          </div>
 
-          {/* Top 3 Skills Badges */}
-          <div>
-            <h3 className='text-foreground mb-3 flex items-center gap-2 text-sm font-semibold'>
-              <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
-              Top Skills
-            </h3>
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-              {topSkills.map((skill, index) => (
+            {/* Overall Progress */}
+            <div className='mb-6'>
+              <div className='mb-2 flex items-center justify-between'>
+                <span className='text-foreground text-sm font-medium'>
+                  Average Skills Performance
+                </span>
+                <span className='text-primary text-2xl font-bold'>{overallProgress}%</span>
+              </div>
+              <div className='bg-muted h-3 w-full overflow-hidden rounded-full'>
                 <div
-                  key={index}
-                  className='bg-card border-input rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md'
-                >
-                  <div className='mb-2 flex items-start justify-between'>
-                    <div
-                      className={`${skill.color} flex h-12 w-12 items-center justify-center rounded-full text-2xl shadow-sm`}
-                    >
-                      {skill.icon}
-                    </div>
-                    <span className='bg-muted text-muted-foreground rounded-full px-2 py-1 text-xs font-medium'>
-                      #{index + 1}
-                    </span>
-                  </div>
-                  <h4 className='text-foreground mb-1 text-sm font-semibold'>{skill.name}</h4>
-                  <p className='text-muted-foreground text-xs'>{skill.level}</p>
-                </div>
-              ))}
+                  className='bg-primary h-3 rounded-full transition-all duration-500'
+                  style={{ width: `${overallProgress}%` }}
+                />
+              </div>
+              <p className='text-muted-foreground mt-1 text-xs'>
+                Based on {skills.length} verified skill{skills.length !== 1 ? 's' : ''}
+              </p>
             </div>
-          </div>
-        </div>
+
+            {/* Top 3 Skills Badges */}
+            {topSkills.length > 0 ? (
+              <div>
+                <h3 className='text-foreground mb-3 flex items-center gap-2 text-sm font-semibold'>
+                  <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
+                  Top Skills
+                </h3>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+                  {topSkills.map((skill, index) => (
+                    <div
+                      key={index}
+                      className='bg-card border-border/50 rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md'
+                    >
+                      <div className='mb-2 flex items-start justify-between'>
+                        <div
+                          className={`${skill.color} flex h-12 w-12 items-center justify-center rounded-full text-2xl shadow-sm`}
+                        >
+                          {skill.icon}
+                        </div>
+                        <Badge variant='secondary' className='text-xs'>
+                          Grade: {skill.grade}
+                        </Badge>
+                      </div>
+                      <h4 className='text-foreground mb-1 text-sm font-semibold'>{skill.name}</h4>
+                      <p className='text-muted-foreground text-xs'>{skill.level}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className='text-muted-foreground text-center text-sm'>
+                Complete courses and earn certificates to see your top skills here
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </section>
 
       {/* Quick Stats */}
       <section className='mb-6'>
         <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
-          <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
-            <div className='mb-1 flex items-center gap-2'>
-              <BookOpen className='text-muted-foreground h-4 w-4' />
-              <p className='text-muted-foreground text-xs'>Total Courses</p>
-            </div>
-            <p className='text-foreground text-2xl font-bold'>{stats.total}</p>
-          </div>
-          <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
-            <div className='mb-1 flex items-center gap-2'>
-              <CheckCircle className='h-4 w-4 text-green-500' />
-              <p className='text-muted-foreground text-xs'>Completed</p>
-            </div>
-            <p className='text-2xl font-bold text-green-600'>{stats.completed}</p>
-          </div>
-          <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
-            <div className='mb-1 flex items-center gap-2'>
-              <Clock className='h-4 w-4 text-yellow-500' />
-              <p className='text-muted-foreground text-xs'>In Progress</p>
-            </div>
-            <p className='text-2xl font-bold text-yellow-600'>{stats.inProgress}</p>
-          </div>
-          <div className='bg-card border-input rounded-lg border p-4 shadow-sm'>
-            <div className='mb-1 flex items-center gap-2'>
-              <XCircle className='text-destructive h-4 w-4' />
-              <p className='text-muted-foreground text-xs'>Failed</p>
-            </div>
-            <p className='text-destructive text-2xl font-bold'>{stats.failed}</p>
-          </div>
+          <Card className='border-border/50'>
+            <CardContent className='p-4'>
+              <div className='mb-1 flex items-center gap-2'>
+                <Award className='text-primary h-4 w-4' />
+                <p className='text-muted-foreground text-xs'>Skills Earned</p>
+              </div>
+              <p className='text-foreground text-2xl font-bold'>{stats.skillsEarned}</p>
+            </CardContent>
+          </Card>
+
+          <Card className='border-border/50'>
+            <CardContent className='p-4'>
+              <div className='mb-1 flex items-center gap-2'>
+                <BookOpen className='text-muted-foreground h-4 w-4' />
+                <p className='text-muted-foreground text-xs'>Total Enrolled</p>
+              </div>
+              <p className='text-foreground text-2xl font-bold'>{stats.total}</p>
+            </CardContent>
+          </Card>
+
+          <Card className='border-border/50'>
+            <CardContent className='p-4'>
+              <div className='mb-1 flex items-center gap-2'>
+                <CheckCircle className='h-4 w-4 text-green-500' />
+                <p className='text-muted-foreground text-xs'>Completed</p>
+              </div>
+              <p className='text-2xl font-bold text-green-600'>{stats.completed}</p>
+            </CardContent>
+          </Card>
+
+          <Card className='border-border/50'>
+            <CardContent className='p-4'>
+              <div className='mb-1 flex items-center gap-2'>
+                <Clock className='h-4 w-4 text-yellow-500' />
+                <p className='text-muted-foreground text-xs'>In Progress</p>
+              </div>
+              <p className='text-2xl font-bold text-yellow-600'>{stats.inProgress}</p>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
@@ -243,99 +436,177 @@ const MySkillsPage = () => {
         <div className='mb-4 flex items-center justify-between'>
           <h2 className='text-foreground flex items-center gap-2 text-xl font-bold'>
             <BookOpen className='h-5 w-5' />
-            Enrolled Courses
+            My Enrolled Courses
           </h2>
         </div>
 
-        <div className='space-y-4'>
-          {courses.map(course => {
-            const statusInfo = getStatusBadge(course.status);
-            const StatusIcon = statusInfo.icon;
+        {enrolledCourses.length > 0 ? (
+          <div className='space-y-4'>
+            {enrolledCourses.map(course => {
+              const statusInfo = getStatusBadge(course.status);
+              const StatusIcon = statusInfo.icon;
 
-            return (
-              <div
-                key={course.id}
-                className='bg-card border-input rounded-lg border p-5 shadow-sm transition-shadow hover:shadow-md'
-              >
-                <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
-                  <div className='flex-1'>
-                    <div className='mb-2 flex items-start gap-3'>
-                      <div className='mt-1'>
-                        <StatusIcon className={`h-5 w-5 ${statusInfo.text_color}`} />
-                      </div>
+              return (
+                <Card
+                  key={course.id}
+                  className='border-border/50 transition-shadow hover:shadow-md'
+                >
+                  <CardContent className='p-5'>
+                    <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
                       <div className='flex-1'>
-                        <h3 className='text-foreground mb-1 font-semibold'>{course.title}</h3>
-                        <div className='flex flex-wrap items-center gap-2'>
-                          <span
-                            className={`rounded-full px-2 py-1 text-xs ${statusInfo.bg} ${statusInfo.text_color} font-medium`}
-                          >
-                            {statusInfo.text}
-                          </span>
-                          <span className='bg-muted text-muted-foreground rounded-full px-2 py-1 text-xs'>
-                            {course.category}
-                          </span>
-                          {course.grade && (
-                            <span
-                              className={`bg-muted rounded-full px-2 py-1 text-xs font-semibold ${getGradeColor(course.grade)}`}
-                            >
-                              Grade: {course.grade}
+                        <div className='mb-2 flex items-start gap-3'>
+                          <div className='mt-1'>
+                            <StatusIcon className={`h-5 w-5 ${statusInfo.text_color}`} />
+                          </div>
+                          <div className='flex-1'>
+                            <h3 className='text-foreground mb-1 font-semibold'>{course.title}</h3>
+                            <div className='flex flex-wrap items-center gap-2'>
+                              <Badge className={`${statusInfo.bg} ${statusInfo.text_color}`}>
+                                {statusInfo.text}
+                              </Badge>
+                              <Badge variant='outline' className='text-xs'>
+                                {course.type}
+                              </Badge>
+                              <Badge variant='secondary' className='text-xs'>
+                                {course.category}
+                              </Badge>
+                              {course.grade && (
+                                <Badge
+                                  variant='outline'
+                                  className={`text-xs font-semibold ${getGradeColor(course.grade)}`}
+                                >
+                                  Grade: {course.grade}
+                                </Badge>
+                              )}
+                              {course.completedDate && (
+                                <span className='text-muted-foreground text-xs'>
+                                  Completed: {new Date(course.completedDate).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className='mt-3'>
+                          <div className='mb-1 flex items-center justify-between'>
+                            <span className='text-muted-foreground text-xs'>Progress</span>
+                            <span className='text-foreground text-xs font-semibold'>
+                              {course.progress}%
                             </span>
-                          )}
-                          {course.completedDate && (
-                            <span className='text-muted-foreground text-xs'>
-                              Completed: {new Date(course.completedDate).toLocaleDateString()}
-                            </span>
-                          )}
+                          </div>
+                          <div className='bg-muted h-2 w-full overflow-hidden rounded-full'>
+                            <div
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                course.status === 'complete' || course.status === 'passed'
+                                  ? 'bg-success'
+                                  : course.status === 'failed'
+                                    ? 'bg-destructive'
+                                    : 'bg-yellow-500'
+                              }`}
+                              style={{ width: `${course.progress}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Progress Bar */}
-                    <div className='mt-3'>
-                      <div className='mb-1 flex items-center justify-between'>
-                        <span className='text-muted-foreground text-xs'>Progress</span>
-                        <span className='text-foreground text-xs font-semibold'>
-                          {course.progress}%
-                        </span>
-                      </div>
-                      <div className='bg-background border-input h-2 w-full overflow-hidden rounded-full border'>
-                        <div
-                          className={`h-2 rounded-full transition-all duration-500 ${course.status === 'complete' || course.status === 'passed'
-                              ? 'bg-success'
-                              : course.status === 'failed'
-                                ? 'bg-destructive'
-                                : 'bg-yellow-500'
-                            }`}
-                          style={{ width: `${course.progress}%` }}
-                        />
+                      <div className='flex gap-2 sm:ml-4 sm:flex-col'>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          className='flex-1 sm:flex-none'
+                          onClick={() => router.push(`/dashboard/courses/${course.id}`)}
+                        >
+                          View Course
+                        </Button>
                       </div>
                     </div>
-                  </div>
-
-                  <div className='sm:ml-4'>
-                    <button className='bg-muted text-foreground hover:bg-muted/80 border-input w-full rounded-lg border px-4 py-2 text-sm font-medium transition-colors sm:w-auto'>
-                      View Course
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {courses.length === 0 && (
-          <div className='bg-muted border-input rounded-lg border p-8 text-center'>
-            <BookOpen className='text-muted-foreground mx-auto mb-3 h-12 w-12' />
-            <h3 className='text-foreground mb-2 text-lg font-semibold'>No courses enrolled yet</h3>
-            <p className='text-muted-foreground mb-4'>
-              Start your learning journey by enrolling in a course
-            </p>
-            <button className='bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2 font-medium transition-colors'>
-              Browse Courses
-            </button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
+        ) : (
+          <Card className='border-border/50'>
+            <CardContent className='p-8 text-center'>
+              <BookOpen className='text-muted-foreground mx-auto mb-3 h-12 w-12' />
+              <h3 className='text-foreground mb-2 text-lg font-semibold'>
+                No courses enrolled yet
+              </h3>
+              <p className='text-muted-foreground mb-4'>
+                Start your learning journey by enrolling in a course
+              </p>
+              <Button
+                onClick={() => router.push('/dashboard/all-courses')}
+                className='bg-primary text-primary-foreground hover:bg-primary/90'
+              >
+                Browse Courses
+              </Button>
+            </CardContent>
+          </Card>
         )}
       </section>
+
+      {/* Earned Skills/Certificates Section */}
+      {skills.length > 0 && (
+        <section className='mt-8'>
+          <div className='mb-4 flex items-center justify-between'>
+            <h2 className='text-foreground flex items-center gap-2 text-xl font-bold'>
+              <Award className='h-5 w-5' />
+              Earned Skills & Certificates
+            </h2>
+          </div>
+
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            {skills.map(skill => (
+              <Card key={skill.uuid} className='border-border/50 transition-shadow hover:shadow-md'>
+                <CardContent className='p-4'>
+                  <div className='mb-3 flex items-start justify-between'>
+                    <div className='flex-1'>
+                      <h4 className='text-foreground mb-1 font-semibold'>{skill.name}</h4>
+                      <p className='text-muted-foreground text-xs'>{skill.certificateType}</p>
+                    </div>
+                    <Badge className={`shrink-0 ${getGradeColor(skill.grade)}`}>
+                      {skill.grade}
+                    </Badge>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <div className='flex items-center justify-between text-xs'>
+                      <span className='text-muted-foreground'>Score</span>
+                      <span className='text-foreground font-semibold'>{skill.finalGrade}%</span>
+                    </div>
+                    <div className='flex items-center justify-between text-xs'>
+                      <span className='text-muted-foreground'>Level</span>
+                      <Badge variant='secondary' className='text-xs'>
+                        {skill.level}
+                      </Badge>
+                    </div>
+                    <div className='flex items-center justify-between text-xs'>
+                      <span className='text-muted-foreground'>Completed</span>
+                      <span className='text-foreground'>
+                        {new Date(skill.completedDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {skill.isDownloadable && skill.certificateUrl && (
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      className='mt-3 w-full'
+                      onClick={() => window.open(skill.certificateUrl, '_blank')}
+                    >
+                      <Download className='mr-2 h-3 w-3' />
+                      Download Certificate
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className='mb-20' />
     </div>

@@ -57,7 +57,7 @@ const EnrolledClassCard = ({
   const progress = calculateProgress();
 
   return (
-    <Card className='group flex h-full flex-col overflow-hidden transition-all hover:shadow-lg'>
+    <Card className='group flex h-full flex-col overflow-hidden pt-0 transition-all hover:shadow-lg'>
       {/* Header with image/gradient */}
       <div className='from-primary/20 via-primary/10 to-background relative h-32 bg-gradient-to-br'>
         <div className='absolute inset-0 flex items-center justify-center'>

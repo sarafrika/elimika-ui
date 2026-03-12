@@ -665,9 +665,10 @@ export default function AdminClassPage() {
   const [selectedClassId, setSelectedClassId] = useState<string | 'all'>('all');
   const [selectedInstructorId, setSelectedInstructorId] = useState<string | null>(null);
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({
-    classes: false,
+    classes: true,
     instructors: false,
   });
+  const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const {
@@ -702,30 +703,22 @@ export default function AdminClassPage() {
     return events;
   }, [classesWithCourseAndInstructor]);
 
-  const filteredEvents = useMemo(() => {
-    let events = allEvents;
-    if (selectedClassId !== 'all') {
-      events = events.filter(event => event.classDefinitionId === selectedClassId);
-    }
-    if (selectedInstructorId) {
-      const selectedClass = classesWithCourseAndInstructor?.find(
-        (c: ClassDefinition) => c.instructor?.uuid === selectedInstructorId
-      );
-      if (selectedClass) {
-        events = events.filter(event => event.classDefinitionId === selectedClass.uuid);
-      }
-    }
-    return events;
-  }, [allEvents, selectedClassId, selectedInstructorId, classesWithCourseAndInstructor]);
-
   const uniqueClasses = useMemo(() => {
     if (!classesWithCourseAndInstructor) return [];
+
     const classes = classesWithCourseAndInstructor.map((classDef: ClassDefinition) => ({
       id: classDef.uuid,
       name: `${classDef.title} - ${classDef.course?.name || 'Unknown'}`,
     }));
-    return [{ id: 'all', name: 'All Classes' }, ...classes];
-  }, [classesWithCourseAndInstructor]);
+
+    const allClasses = [{ id: 'all', name: 'All Classes' }, ...classes];
+
+    if (!searchQuery) return allClasses;
+
+    const query = searchQuery.toLowerCase();
+
+    return allClasses.filter(cls => cls.name.toLowerCase().includes(query));
+  }, [classesWithCourseAndInstructor, searchQuery]);
 
   const uniqueInstructors = useMemo(() => {
     if (!classesWithCourseAndInstructor) return [];
@@ -740,6 +733,24 @@ export default function AdminClassPage() {
     });
     return Array.from(instructorMap.values());
   }, [classesWithCourseAndInstructor]);
+
+  const filteredEvents = useMemo(() => {
+    let events = allEvents;
+
+    if (selectedClassId !== 'all') {
+      events = events.filter(event => event.classDefinitionId === selectedClassId);
+    }
+
+    if (selectedInstructorId) {
+      const instructor = uniqueInstructors.find(inst => inst.id === selectedInstructorId);
+
+      if (instructor) {
+        events = events.filter(event => event.instructor === instructor.name);
+      }
+    }
+
+    return events;
+  }, [allEvents, selectedClassId, selectedInstructorId, uniqueInstructors]);
 
   useEffect(() => {
     if (selectedClassId && selectedClassId !== 'all') {
@@ -911,6 +922,8 @@ export default function AdminClassPage() {
                   <input
                     type='text'
                     placeholder='Search classes...'
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
                     className='border-input focus:ring-ring bg-background text-foreground w-full rounded-lg border py-1.5 pr-3 pl-9 text-sm focus:border-transparent focus:ring-2 focus:outline-none'
                   />
                 </div>

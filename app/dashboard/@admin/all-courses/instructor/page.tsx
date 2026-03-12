@@ -148,12 +148,12 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       {
         id: 'courses',
         title: 'Browse Courses',
-        url: `/dashboard/browse-courses`,
+        url: `/dashboard/all-courses`,
       },
       {
         id: 'book-instructor',
         title: `Book Instructor`,
-        url: `/dashboard/browse-courses/instructor`,
+        url: `/dashboard/all-courses/instructor`,
       },
     ]);
   }, [replaceBreadcrumbs]);
@@ -195,8 +195,8 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-success/10 p-2'>
-              <BookOpen className='h-5 w-5 text-success/60' />
+            <div className='bg-success/10 rounded-lg p-2'>
+              <BookOpen className='text-success/60 h-5 w-5' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Total Bookings</p>

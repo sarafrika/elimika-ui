@@ -19,7 +19,8 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, MoveLeft, XCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
@@ -126,6 +127,13 @@ const EnrollmentDetails = () => {
 
   return (
     <div className={`${elimikaDesignSystem.components.pageContainer} px-4 sm:px-6`}>
+      <Link
+        className='flex max-w-fit flex-row items-center gap-4 py-1.5'
+        href={'/dashboard/enrollments'}
+      >
+        <MoveLeft /> Back
+      </Link>
+
       <section className='mb-6'>
         <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div>

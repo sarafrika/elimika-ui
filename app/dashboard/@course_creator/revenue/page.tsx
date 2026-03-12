@@ -30,7 +30,7 @@ import {
   Send,
   ShoppingCart,
   TrendingUp,
-  Users
+  Users,
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useCourseCreator } from '../../../../context/course-creator-context';
@@ -674,7 +674,7 @@ const RevenuePage = () => {
               {coursesWithEnrollments.slice(0, 5).map((item, index) => (
                 <div key={index}>
                   <div className='mb-2 flex items-center justify-between'>
-                    <div className='flex flex-col w-full' >
+                    <div className='flex w-full flex-col'>
                       <span className='text-foreground max-w-[60%] truncate pr-2 text-sm font-medium'>
                         {item.name}
                       </span>

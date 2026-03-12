@@ -304,12 +304,6 @@ import type {
   UpdateClassDefinitionData,
   UpdateClassDefinitionResponses,
   UpdateClassDefinitionErrors,
-  GetLessonPlanData,
-  GetLessonPlanResponses,
-  GetLessonPlanErrors,
-  SaveLessonPlanData,
-  SaveLessonPlanResponses,
-  SaveLessonPlanErrors,
   DeleteCertificateData,
   DeleteCertificateResponses,
   DeleteCertificateErrors,
@@ -1129,6 +1123,9 @@ import type {
   HasCapacityForEnrollmentData,
   HasCapacityForEnrollmentResponses,
   HasCapacityForEnrollmentErrors,
+  ListDocumentTypesData,
+  ListDocumentTypesResponses,
+  ListDocumentTypesErrors,
   ListCurrenciesData,
   ListCurrenciesResponses,
   ListCurrenciesErrors,
@@ -1453,8 +1450,6 @@ import {
   updateCatalogItemResponseTransformer,
   getClassDefinitionResponseTransformer,
   updateClassDefinitionResponseTransformer,
-  getLessonPlanResponseTransformer,
-  saveLessonPlanResponseTransformer,
   getCertificateByUuidResponseTransformer,
   updateCertificateResponseTransformer,
   updateCertificateTemplateResponseTransformer,
@@ -4681,64 +4676,6 @@ export const updateClassDefinition = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/{uuid}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Get the lesson plan for a class definition
- */
-export const getLessonPlan = <ThrowOnError extends boolean = false>(
-  options: Options<GetLessonPlanData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetLessonPlanResponses,
-    GetLessonPlanErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getLessonPlanResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/{classUuid}/lesson-plan',
-    ...options,
-  });
-};
-
-/**
- * Replace the lesson plan for a class definition
- */
-export const saveLessonPlan = <ThrowOnError extends boolean = false>(
-  options: Options<SaveLessonPlanData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).put<
-    SaveLessonPlanResponses,
-    SaveLessonPlanErrors,
-    ThrowOnError
-  >({
-    responseTransformer: saveLessonPlanResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/{classUuid}/lesson-plan',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -9761,7 +9698,7 @@ export const getAllAssignments = <ThrowOnError extends boolean = false>(
 
 /**
  * Create a new assignment
- * Creates a new assignment with default DRAFT status and inactive state.
+ * Creates a new assignment with unpublished state by default.
  */
 export const createAssignment = <ThrowOnError extends boolean = false>(
   options: Options<CreateAssignmentData, ThrowOnError>
@@ -13007,6 +12944,32 @@ export const hasCapacityForEnrollment = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List available document types
+ */
+export const listDocumentTypes = <ThrowOnError extends boolean = false>(
+  options?: Options<ListDocumentTypesData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListDocumentTypesResponses,
+    ListDocumentTypesErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/document-types',
+    ...options,
+  });
+};
+
+/**
  * List platform currencies (paginated)
  */
 export const listCurrencies = <ThrowOnError extends boolean = false>(
@@ -14803,8 +14766,7 @@ export const searchSubmissions = <ThrowOnError extends boolean = false>(
  * **Common Assignment Search Examples:**
  * - `title_like=essay` - Assignments with "essay" in title
  * - `lessonUuid=uuid` - Assignments for specific lesson
- * - `status=PUBLISHED` - Only published assignments
- * - `active=true` - Only active assignments
+ * - `is_published=true` - Only published assignments
  * - `dueDate_gte=2024-12-01T00:00:00` - Assignments due from Dec 1, 2024
  * - `maxPoints_gte=50` - Assignments worth 50+ points
  *

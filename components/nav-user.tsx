@@ -3,6 +3,7 @@
 
 import { ChevronsUpDown, LogOut, UserPlus } from 'lucide-react';
 
+import { DomainSwitcher } from '@/components/domain-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -17,12 +18,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useUserDomain } from '@/context/user-domain-context';
 import type { MenuItem } from '@/lib/menu';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '../context/profile-context';
-import { DomainSwitcher } from '@/components/domain-switcher';
-import { useUserDomain } from '@/context/user-domain-context';
 
 type NavUserProps = {
   items: MenuItem[];
@@ -53,12 +53,17 @@ export function NavUser({ items }: NavUserProps) {
               size='lg'
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground transition-colors'
             >
-              <Avatar className='bg-background h-8 w-8 rounded-md border'>
-                <AvatarImage src={user?.profile_image_url ?? ''} alt={user?.full_name ?? ''} />
+              <Avatar className='bg-background h-8 w-8 overflow-hidden rounded-md border'>
+                <AvatarImage
+                  src={user?.profile_image_url ?? ''}
+                  alt={user?.full_name ?? ''}
+                  className='h-full w-full object-cover'
+                />
                 <AvatarFallback className='rounded-md text-xs font-medium'>
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
+
               <div className='grid flex-1 text-left text-sm leading-tight'>
                 <div className='flex items-center gap-2'>
                   <span className='truncate font-medium'>{user?.first_name}</span>
@@ -84,8 +89,12 @@ export function NavUser({ items }: NavUserProps) {
             <div className='flex flex-col'>
               {/* User Info */}
               <div className='mb-4 flex items-center gap-3'>
-                <Avatar className='bg-background h-10 w-10 rounded-md border'>
-                  <AvatarImage src={user?.profile_image_url ?? ''} alt={user?.full_name ?? ''} />
+                <Avatar className='bg-background h-10 w-10 overflow-hidden rounded-md border'>
+                  <AvatarImage
+                    src={user?.profile_image_url ?? ''}
+                    alt={user?.full_name ?? ''}
+                    className='h-full w-full object-cover'
+                  />
                   <AvatarFallback className='rounded-md text-sm font-medium'>
                     {userInitials}
                   </AvatarFallback>

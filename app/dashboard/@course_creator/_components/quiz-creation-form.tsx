@@ -132,20 +132,23 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border hover:border-primary/50'
-                  }`}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
+                  opt.isCorrect
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                    }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                  }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
-                    }`}
+                  className={`text-sm font-medium ${
+                    opt.isCorrect ? 'text-primary' : 'text-foreground'
+                  }`}
                 >
                   {opt.text}
                 </span>
@@ -157,50 +160,41 @@ const QuestionRow = ({
 
       case 'ESSAY':
         return (
-          <div className="space-y-2">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Model Answer
-              </label>
+          <div className='space-y-2'>
+            <div className='space-y-1'>
+              <label className='text-sm font-medium'>Model Answer</label>
 
               <textarea
                 value={question.options?.[0]?.text || ''}
-                onChange={(e) =>
-                  updateOptionText(qIndex, 0, e.target.value)
-                }
-                placeholder="Enter the expected answer..."
+                onChange={e => updateOptionText(qIndex, 0, e.target.value)}
+                placeholder='Enter the expected answer...'
                 rows={4}
-                className="border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2"
+                className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2'
               />
             </div>
 
-            <p className="text-muted-foreground text-xs">
+            <p className='text-muted-foreground text-xs'>
               Students will submit a long-form response. This answer will be used as the reference.
             </p>
           </div>
         );
 
-
       case 'SHORT_ANSWER':
         return (
-          <div className="space-y-2">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Correct Answer
-              </label>
+          <div className='space-y-2'>
+            <div className='space-y-1'>
+              <label className='text-sm font-medium'>Correct Answer</label>
 
               <input
-                type="text"
+                type='text'
                 value={question.options?.[0]?.text || ''}
-                onChange={(e) =>
-                  updateOptionText(qIndex, 0, e.target.value)
-                }
-                placeholder="Enter the correct short answer..."
-                className="border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2"
+                onChange={e => updateOptionText(qIndex, 0, e.target.value)}
+                placeholder='Enter the correct short answer...'
+                className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2'
               />
             </div>
 
-            <p className="text-muted-foreground text-xs">
+            <p className='text-muted-foreground text-xs'>
               Students must match this exact answer (or apply keyword matching logic).
             </p>
           </div>
@@ -312,7 +306,7 @@ const QUESTION_TYPES = [
   { label: 'Essay', value: 'ESSAY' },
   { label: 'Short Answer', value: 'SHORT_ANSWER' },
   // { label: 'Matching', value: 'MATCHING' },
-]
+];
 
 export const QuizCreationForm = ({
   lessons,
@@ -478,13 +472,13 @@ export const QuizCreationForm = ({
                   key={`lesson-${lesson.uuid}`}
                   onClick={() => handleLessonSelect(lesson)}
                   className={cn(
-                    'flex cursor-pointer flex-row items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                    'flex cursor-pointer flex-col items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     selectedLessonId === lesson.uuid
                       ? 'bg-primary/10 border-primary text-primary border-2 shadow-sm'
                       : 'hover:bg-muted text-foreground border-2 border-transparent'
                   )}
                 >
-                  <p>{lesson.lesson_number}.</p>
+                  <p className='text-xs'>LESSON {lesson.lesson_number}.</p>
                   <p>{lesson.title}</p>
                 </li>
               ))
@@ -646,17 +640,15 @@ export const QuizCreationForm = ({
 
           {quizUuid && quizUuid !== '' && (
             <div className='mt-8 border-t pt-6'>
-              <div className="mb-6">
-                <h4 className="text-foreground text-lg font-semibold mb-3">
-                  Questions
-                </h4>
+              <div className='mb-6'>
+                <h4 className='text-foreground mb-3 text-lg font-semibold'>Questions</h4>
 
-                <div className="flex flex-wrap gap-2">
-                  {QUESTION_TYPES.map((type) => (
+                <div className='flex flex-wrap gap-2'>
+                  {QUESTION_TYPES.map(type => (
                     <Button
                       key={type.value}
-                      size="sm"
-                      variant="outline"
+                      size='sm'
+                      variant='outline'
                       onClick={() => addQuestion(type.value)}
                     >
                       + {type.label}

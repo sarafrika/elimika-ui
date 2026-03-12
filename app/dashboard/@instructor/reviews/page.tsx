@@ -35,16 +35,17 @@ export default function ReviewsPage() {
   return (
     <div className='space-y-6'>
       {isLoading ? (
-        <div className="space-y-4">
+        <div className='space-y-4'>
           {Array.from({ length: 3 }).map((_, i) => (
             <ReviewCardSkeleton key={i} />
           ))}
-        </div>) : reviews.length === 0 ? (
-          <div className='text-muted-foreground mt-10 text-center'>
-            <p className='text-lg'>No reviews yet</p>
-            <p className='text-sm'>Once students start leaving feedback, you&apos;ll see it here.</p>
-          </div>
-        ) : (
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className='text-muted-foreground mt-10 text-center'>
+          <p className='text-lg'>No reviews yet</p>
+          <p className='text-sm'>Once students start leaving feedback, you&apos;ll see it here.</p>
+        </div>
+      ) : (
         <div className='space-y-4'>
           {reviews.map(review => (
             <ReviewCard key={review.uuid} review={review} />

@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import {
+  Eye,
   FileText,
   FileUp,
   Headphones,
@@ -44,6 +45,10 @@ import {
   updateLessonContentMutation,
   uploadLessonMediaMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import { ContentItem } from '../../@instructor/trainings/overview/[id]/page';
+import { AudioPlayer } from '../../@student/schedule/classes/[id]/AudioPlayer';
+import { ReadingMode } from '../../@student/schedule/classes/[id]/ReadingMode';
+import { VideoPlayer } from '../../@student/schedule/classes/[id]/VideoPlayer';
 
 type LessonCreationFormProps = {
   course: any;
@@ -59,6 +64,7 @@ type Lesson = {
 };
 
 type ContentType = 'TEXT' | 'VIDEO' | 'AUDIO' | 'PDF' | 'IMAGE';
+const tabs = ['Lesson Content', 'Practice Activities'];
 
 const lessonFormSchema = z.object({
   title: z.string().min(1),
@@ -89,6 +95,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   lessons,
 }) => {
   const qc = useQueryClient();
+  const [activeTab, setActiveTab] = useState('Lesson Content');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<LessonFormValues>({
@@ -123,6 +131,25 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   const [contentType, setContentType] = useState<ContentType>('TEXT');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isReading, setIsReading] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
+  const [contentTypeName, setContentTypeName] = useState<string>('');
+
+  const handleViewContent = (content: ContentItem, contentType: string) => {
+    setSelectedLesson(content);
+    setContentTypeName(contentType);
+
+    if (contentType === 'video') {
+      setIsPlaying(true);
+    } else if (contentType === 'pdf' || contentType === 'text') {
+      setIsReading(true);
+    } else if (contentType === 'audio') {
+      setIsAudioPlaying(true);
+    }
+  };
 
   // GET COURSE CONTENT TYPES
   const contentTypeUuid = contentForm.watch('content_type_uuid');
@@ -385,447 +412,575 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   };
 
   return (
-    <div className='mb-10 flex h-auto'>
-      <aside className='border-border w-1/4 border-r px-2 py-4'>
-        <ScrollArea className='h-auto max-h-[70vh]'>
-          <div className='space-y-2'>
-            {lessons?.content
-              ?.slice()
-              ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
-              ?.map((lesson: any) => (
-                <div
-                  key={lesson.uuid}
-                  className={cn(
-                    'group relative rounded-lg px-4 py-3 transition-all duration-200',
-                    lesson.uuid === activeLessonId
-                      ? 'bg-primary/10 border-primary border-2 shadow-sm'
-                      : 'hover:bg-muted border-2 border-transparent'
-                  )}
-                >
+    <div>
+      <div className='mb-10 flex h-auto'>
+        <aside className='border-border w-1/4 border-r px-2 pb-4'>
+          <div className='mb-4'>
+            <p className='font-bold'>Course Lesson Content</p>
+            <p className='text-xs'>Add skills and learning materials for your course</p>
+          </div>
+
+          <ScrollArea className='h-auto max-h-[70vh]'>
+            <div className='space-y-2'>
+              {lessons?.content
+                ?.slice()
+                ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
+                ?.map((lesson: any) => (
                   <div
-                    onClick={() => {
-                      setActiveLessonId(lesson.uuid);
-                      setShowContentForm(false);
-                      setSelectedContentId(null);
-                    }}
-                    className='flex cursor-pointer flex-col'
+                    key={lesson.uuid}
+                    className={cn(
+                      'group relative rounded-lg px-4 py-3 transition-all duration-200',
+                      lesson.uuid === activeLessonId
+                        ? 'bg-primary/10 border-primary border-2 shadow-sm'
+                        : 'hover:bg-muted border-2 border-transparent'
+                    )}
                   >
-                    <p
-                      className={cn(
-                        'mb-1 shrink-0 text-xs font-semibold',
-                        lesson.uuid === activeLessonId ? 'text-primary' : 'text-muted-foreground'
-                      )}
+                    <div
+                      onClick={() => {
+                        setActiveLessonId(lesson.uuid);
+                        setShowContentForm(false);
+                        setSelectedContentId(null);
+                      }}
+                      className='flex cursor-pointer flex-col'
                     >
-                      LESSON {lesson.lesson_number}
-                    </p>
-                    <p className='text-foreground text-sm font-semibold'> {lesson.title} </p>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </ScrollArea>
-      </aside>
-
-      <main className='w-3/4 space-y-6 overflow-y-auto pb-20'>
-        <div className='px-2'>
-          <div className='border-border flex flex-row items-center justify-between border-b p-6'>
-            <div>
-              <CardTitle className='text-foreground text-xl font-semibold'>
-                Lesson Content
-              </CardTitle>
-              <p className='text-muted-foreground mt-1 text-sm'>
-                Add and manage content blocks for this lesson
-              </p>
-            </div>
-            {activeLessonId && (
-              <Button
-                size='sm'
-                variant='outline'
-                onClick={() => {
-                  resetContentForm();
-                  setShowContentForm(true);
-                }}
-              >
-                <PlusCircle /> Add New Content
-              </Button>
-            )}
-          </div>
-
-          <CardContent className='space-y-4 pt-6'>
-            {!activeLessonId ? (
-              <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 py-12 text-center'>
-                <p className='text-foreground font-medium'>
-                  You need to save the lesson first to add content.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className='space-y-3'>
-                  {(enrichedLessonContentsMap.get(activeLessonId) || []).map(
-                    (content: any, idx: number) => (
-                      <div
-                        key={content.uuid || idx}
+                      <p
                         className={cn(
-                          'flex w-full cursor-pointer flex-row items-center justify-between gap-4 rounded-lg px-4 py-3 text-left transition-all duration-200',
-                          selectedContentId === content.uuid
-                            ? 'border-primary border-2 shadow-sm'
-                            : 'bg-muted hover:bg-muted/80 border-2 border-transparent'
+                          'mb-1 shrink-0 text-xs font-semibold',
+                          lesson.uuid === activeLessonId ? 'text-primary' : 'text-muted-foreground'
                         )}
                       >
-                        <div
-                          className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                            selectedContentId === content.uuid
-                              ? 'bg-primary/20 text-primary'
-                              : 'bg-background text-muted-foreground'
-                          }`}
-                        >
-                          {getContentIcon(content.content_type_key)}
-                        </div>
+                        LESSON {lesson.lesson_number}
+                      </p>
+                      <p className='text-foreground text-sm font-semibold'> {lesson.title} </p>
+                    </div>
+                  </div>
+                ))}
 
-                        <div
-                          className='flex-1 flex-row items-center gap-4'
-                          onClick={() => handleEditContent(content)}
-                        >
-                          <div className='flex-1'>
-                            <div className='flex items-center gap-2'>
-                              <span className='text-muted-foreground text-xs font-semibold'>
-                                {idx + 1}.
-                              </span>
-                              <span className='text-foreground font-medium'>{content.title}</span>
-                            </div>
-                            <span className='text-muted-foreground mt-0.5 block text-xs'>
-                              {content.content_type_key}
-                            </span>
-                          </div>
-                        </div>
-                        <div
-                          className='px-2'
-                          onClick={() => {
-                            handleDeleteContent(
-                              course?.data?.uuid as string,
-                              activeLessonId,
-                              content?.uuid
-                            );
-                          }}
-                        >
-                          <Trash2
-                            size={16}
-                            className='text-destructive hover:text-destructive/80 transition-colors'
-                          />
-                        </div>
-                      </div>
-                    )
-                  )}
+              {!lessons?.content?.length && (
+                <p className='text-muted-foreground rounded-lg border border-dashed py-6 text-center text-sm'>
+                  Looks like you haven't added any lessons to this course yet.
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </aside>
 
-                  {(enrichedLessonContentsMap.get(activeLessonId)?.length ?? 0) === 0 &&
-                    !showContentForm && (
-                      <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 py-16 text-center'>
-                        <p className='text-foreground font-medium'>No lesson content yet</p>
-                        <p className='text-muted-foreground mt-1 text-sm'>
-                          Click <span className='font-semibold'>"Add New Content"</span> to get
-                          started.
-                        </p>
-                      </div>
-                    )}
+        <main className='w-3/4 space-y-6 overflow-y-auto px-2 pb-20'>
+          <div className='border-border mb-4 flex border-b'>
+            {tabs.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
+                  activeTab === tab
+                    ? 'border-primary text-primary font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'Lesson Content' && (
+            <div className='px-2'>
+              <div className='border-border flex flex-row items-center justify-between border-b p-2'>
+                <div>
+                  <p className='text-muted-foreground mt-1 text-sm'>
+                    Add and manage content blocks for this lesson
+                  </p>
                 </div>
+                {activeLessonId && (
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    onClick={() => {
+                      resetContentForm();
+                      setShowContentForm(true);
+                    }}
+                  >
+                    <PlusCircle /> Add New Content
+                  </Button>
+                )}
+              </div>
 
-                {/* ---------- Add/Edit Content Form (Only shown when showContentForm is true) ---------- */}
-                {showContentForm && (
-                  <Card className='border-primary/20 mt-6 border-2'>
-                    <CardHeader className='border-border flex flex-row items-center justify-between border-b'>
-                      <CardTitle className='text-foreground text-lg'>
-                        {contentForm.getValues('uuid') ? 'Edit Content' : 'Add New Content'}
-                      </CardTitle>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={resetContentForm}
-                        className='hover:bg-muted'
-                      >
-                        <X className='h-4 w-4' />
-                      </Button>
-                    </CardHeader>
-
-                    <CardContent className='pt-6'>
-                      <Form {...contentForm}>
-                        <div className='space-y-6'>
-                          {/* Content Type */}
-                          <FormField
-                            control={contentForm.control}
-                            name='content_type'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
-                                  Content Type (Select a content type to add)
-                                </FormLabel>
-
-                                <RadioGroup
-                                  value={field.value}
-                                  onValueChange={(value: ContentType) => {
-                                    field.onChange(value);
-                                    setContentType(value);
-
-                                    const typeObj = contentTypeData.find(
-                                      item => item.name?.toUpperCase() === value
-                                    );
-
-                                    if (typeObj) {
-                                      contentForm.setValue('content_type_uuid', typeObj.uuid);
-                                    }
-                                  }}
-                                  className='flex gap-3'
-                                >
-                                  {(
-                                    ['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'PDF'] as ContentType[]
-                                  ).map(type => {
-                                    const selected = field.value === type;
-
-                                    return (
-                                      <FormItem key={type} className='space-y-0'>
-                                        <FormControl>
-                                          <RadioGroupItem value={type} className='sr-only' />
-                                        </FormControl>
-
-                                        <FormLabel
-                                          className={cn(
-                                            'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition',
-                                            'hover:bg-muted',
-                                            selected
-                                              ? 'border-primary bg-primary/10 text-primary'
-                                              : 'border-border'
-                                          )}
-                                        >
-                                          {getContentIcon(type)}
-                                          <span className='capitalize'>{type.toLowerCase()}</span>
-                                        </FormLabel>
-                                      </FormItem>
-                                    );
-                                  })}
-                                </RadioGroup>
-
-                                <FormMessage />
-                              </FormItem>
+              <CardContent className='space-y-4 pt-6'>
+                {!activeLessonId ? (
+                  <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 py-12 text-center'>
+                    <p className='text-foreground font-medium'>
+                      You need to save the lesson first to add content.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className='space-y-3'>
+                      {(enrichedLessonContentsMap.get(activeLessonId) || []).map(
+                        (content: any, idx: number) => (
+                          <div
+                            key={content.uuid || idx}
+                            className={cn(
+                              'flex w-full cursor-pointer flex-row items-center justify-between gap-4 rounded-lg px-4 py-3 text-left transition-all duration-200',
+                              selectedContentId === content.uuid
+                                ? 'border-primary border-2 shadow-sm'
+                                : 'bg-muted hover:bg-muted/80 border-2 border-transparent'
                             )}
-                          />
+                          >
+                            <div
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                                selectedContentId === content.uuid
+                                  ? 'bg-primary/20 text-primary'
+                                  : 'bg-background text-muted-foreground'
+                              }`}
+                            >
+                              {getContentIcon(content.content_type_key)}
+                            </div>
 
-                          {/* Title */}
-                          <FormField
-                            control={contentForm.control}
-                            name='title'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
-                                  Title
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    placeholder='Enter content title'
-                                    className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                            <div
+                              className='flex-1 flex-row items-center gap-4'
+                              onClick={() => handleEditContent(content)}
+                            >
+                              <div className='flex-1'>
+                                <div className='flex items-center gap-2'>
+                                  <span className='text-muted-foreground text-xs font-semibold'>
+                                    {idx + 1}.
+                                  </span>
+                                  <span className='text-foreground font-medium'>
+                                    {content.title}
+                                  </span>
+                                </div>
+                                <span className='text-muted-foreground mt-0.5 block text-xs'>
+                                  {content.content_type_key}
+                                </span>
+                              </div>
+                            </div>
 
-                          {/* Content Input */}
-                          {contentType === 'TEXT' && (
-                            <FormField
-                              control={contentForm.control}
-                              name='content_text'
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
-                                    Content
-                                  </FormLabel>
-                                  <SimpleEditor
-                                    value={field.value || ''}
-                                    onChange={field.onChange}
-                                  />
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          )}
+                            <div className='flex flex-row items-center gap-4'>
+                              <Button
+                                onClick={() => {
+                                  handleViewContent(
+                                    content,
+                                    content.content_type_key?.toLowerCase()
+                                  );
+                                }}
+                                variant='outline'
+                                size='sm'
+                                className='gap-2'
+                              >
+                                <Eye className='h-3 w-3' />
+                                View
+                              </Button>
 
-                          {['LINK', 'YOUTUBE'].includes(contentType) && (
-                            <FormField
-                              control={contentForm.control}
-                              name='value'
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
-                                    URL (enter media URL or upload media)
-                                  </FormLabel>
-                                  <Input
-                                    {...field}
-                                    placeholder='Enter URL'
-                                    onChange={e => {
-                                      field.onChange(e);
-                                      contentForm.setValue('file_url', e.target.value);
-                                    }}
-                                    className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
-                                  />
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          )}
+                              <div
+                                className='px-2'
+                                onClick={() => {
+                                  handleDeleteContent(
+                                    course?.data?.uuid as string,
+                                    activeLessonId,
+                                    content?.uuid
+                                  );
+                                }}
+                              >
+                                <Trash2
+                                  size={16}
+                                  className='text-destructive hover:text-destructive/80 transition-colors'
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      )}
 
-                          {['VIDEO', 'AUDIO', 'PDF', 'IMAGE'].includes(contentType) && (
-                            <div className='flex flex-col gap-4'>
+                      {(enrichedLessonContentsMap.get(activeLessonId)?.length ?? 0) === 0 &&
+                        !showContentForm && (
+                          <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 py-16 text-center'>
+                            <p className='text-foreground font-medium'>No lesson content yet</p>
+                            <p className='text-muted-foreground mt-1 text-sm'>
+                              Click <span className='font-semibold'>"Add New Content"</span> to get
+                              started.
+                            </p>
+                          </div>
+                        )}
+                    </div>
+
+                    {/* ---------- Add/Edit Content Form (Only shown when showContentForm is true) ---------- */}
+                    {showContentForm && (
+                      <Card className='border-primary/20 mt-6 border-2'>
+                        <CardHeader className='border-border flex flex-row items-center justify-between border-b'>
+                          <CardTitle className='text-foreground text-lg'>
+                            {contentForm.getValues('uuid') ? 'Edit Content' : 'Add New Content'}
+                          </CardTitle>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={resetContentForm}
+                            className='hover:bg-muted'
+                          >
+                            <X className='h-4 w-4' />
+                          </Button>
+                        </CardHeader>
+
+                        <CardContent className='pt-6'>
+                          <Form {...contentForm}>
+                            <div className='space-y-6'>
+                              {/* Content Type */}
                               <FormField
                                 control={contentForm.control}
-                                name='value'
+                                name='content_type'
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
-                                      URL (enter media URL or upload media)
+                                      Content Type (Select a content type to add)
                                     </FormLabel>
-                                    <Input
-                                      {...field}
-                                      placeholder='Enter URL'
-                                      onChange={e => {
-                                        field.onChange(e);
-                                        contentForm.setValue('file_url', e.target.value);
+
+                                    <RadioGroup
+                                      value={field.value}
+                                      onValueChange={(value: ContentType) => {
+                                        field.onChange(value);
+                                        setContentType(value);
+
+                                        const typeObj = contentTypeData.find(
+                                          item => item.name?.toUpperCase() === value
+                                        );
+
+                                        if (typeObj) {
+                                          contentForm.setValue('content_type_uuid', typeObj.uuid);
+                                        }
                                       }}
-                                      className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
-                                    />
+                                      className='flex gap-3'
+                                    >
+                                      {(
+                                        ['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'PDF'] as ContentType[]
+                                      ).map(type => {
+                                        const selected = field.value === type;
+
+                                        return (
+                                          <FormItem key={type} className='space-y-0'>
+                                            <FormControl>
+                                              <RadioGroupItem value={type} className='sr-only' />
+                                            </FormControl>
+
+                                            <FormLabel
+                                              className={cn(
+                                                'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition',
+                                                'hover:bg-muted',
+                                                selected
+                                                  ? 'border-primary bg-primary/10 text-primary'
+                                                  : 'border-border'
+                                              )}
+                                            >
+                                              {getContentIcon(type)}
+                                              <span className='capitalize'>
+                                                {type.toLowerCase()}
+                                              </span>
+                                            </FormLabel>
+                                          </FormItem>
+                                        );
+                                      })}
+                                    </RadioGroup>
+
                                     <FormMessage />
                                   </FormItem>
                                 )}
                               />
-                              <div
-                                className={cn(
-                                  'space-y-4 rounded-lg border-2 border-dashed p-8 transition-all',
-                                  isDragging
-                                    ? 'border-primary bg-primary/5'
-                                    : 'border-border bg-background'
+
+                              {/* Title */}
+                              <FormField
+                                control={contentForm.control}
+                                name='title'
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
+                                      Title
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        {...field}
+                                        placeholder='Enter content title'
+                                        className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
                                 )}
-                                onDragOver={e => {
-                                  e.preventDefault();
-                                  setIsDragging(true);
-                                }}
-                                onDragLeave={() => setIsDragging(false)}
-                                onDrop={e => {
-                                  e.preventDefault();
-                                  setIsDragging(false);
-                                  setMediaFile(e.dataTransfer.files?.[0] || null);
-                                }}
-                              >
-                                <Input
-                                  ref={fileInputRef}
-                                  type='file'
-                                  className='hidden'
-                                  onChange={e => setMediaFile(e.target.files?.[0] || null)}
+                              />
+
+                              {/* Content Input */}
+                              {contentType === 'TEXT' && (
+                                <FormField
+                                  control={contentForm.control}
+                                  name='content_text'
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
+                                        Content
+                                      </FormLabel>
+                                      <SimpleEditor
+                                        value={field.value || ''}
+                                        onChange={field.onChange}
+                                      />
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
                                 />
+                              )}
 
-                                <div
-                                  onClick={() => fileInputRef.current?.click()}
-                                  className='flex cursor-pointer flex-col items-center justify-center gap-2 text-center'
-                                >
-                                  <UploadCloud className='text-muted-foreground h-10 w-10' />
+                              {['LINK', 'YOUTUBE'].includes(contentType) && (
+                                <FormField
+                                  control={contentForm.control}
+                                  name='value'
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
+                                        URL (enter media URL or upload media)
+                                      </FormLabel>
+                                      <Input
+                                        {...field}
+                                        placeholder='Enter URL'
+                                        onChange={e => {
+                                          field.onChange(e);
+                                          contentForm.setValue('file_url', e.target.value);
+                                        }}
+                                        className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
+                                      />
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              )}
 
-                                  <p className='text-foreground font-medium'>
-                                    {mediaFile
-                                      ? mediaFile.name
-                                      : contentForm.getValues('file_url')
-                                        ? 'File uploaded — click to replace'
-                                        : 'Click to upload or drag & drop'}
-                                  </p>
-
-                                  <p className='text-muted-foreground text-sm'>
-                                    Supports {contentType.toLowerCase()} files
-                                  </p>
-                                </div>
-
-                                {mediaFile && (
-                                  <Button
-                                    type='button'
-                                    disabled={!mediaFile || uploadLessonMedia.isPending}
-                                    onClick={() => {
-                                      if (!mediaFile) return;
-                                      uploadLessonMedia.mutate(
-                                        {
-                                          body: { file: mediaFile },
-                                          path: {
-                                            courseUuid: course?.data?.uuid,
-                                            lessonUuid: activeLessonId,
-                                          },
-                                          query: {
-                                            content_type_uuid:
-                                              contentForm.getValues('content_type_uuid'),
-                                            title: contentForm.getValues('title') || 'Untitled',
-                                            is_required: false,
-                                            description: 'N/A',
-                                          },
-                                        },
-                                        {
-                                          onSuccess: () => {
-                                            toast.success('Media uploaded');
-                                            setMediaFile(null);
-                                            qc.invalidateQueries({
-                                              queryKey: getLessonContentQueryKey({
-                                                path: {
-                                                  courseUuid: course?.data?.uuid,
-                                                  lessonUuid: activeLessonId,
-                                                },
-                                              }),
-                                            });
-                                            resetContentForm();
-                                          },
-                                        }
-                                      );
+                              {['VIDEO', 'AUDIO', 'PDF', 'IMAGE'].includes(contentType) && (
+                                <div className='flex flex-col gap-4'>
+                                  <FormField
+                                    control={contentForm.control}
+                                    name='value'
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
+                                          URL (enter media URL or upload media)
+                                        </FormLabel>
+                                        <Input
+                                          {...field}
+                                          placeholder='Enter URL'
+                                          onChange={e => {
+                                            field.onChange(e);
+                                            contentForm.setValue('file_url', e.target.value);
+                                          }}
+                                          className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
+                                        />
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <div
+                                    className={cn(
+                                      'space-y-4 rounded-lg border-2 border-dashed p-8 transition-all',
+                                      isDragging
+                                        ? 'border-primary bg-primary/5'
+                                        : 'border-border bg-background'
+                                    )}
+                                    onDragOver={e => {
+                                      e.preventDefault();
+                                      setIsDragging(true);
                                     }}
-                                    className='bg-primary w-full'
+                                    onDragLeave={() => setIsDragging(false)}
+                                    onDrop={e => {
+                                      e.preventDefault();
+                                      setIsDragging(false);
+                                      setMediaFile(e.dataTransfer.files?.[0] || null);
+                                    }}
                                   >
-                                    {uploadLessonMedia.isPending ? 'Uploading...' : 'Upload Media'}
-                                  </Button>
-                                )}
+                                    <Input
+                                      ref={fileInputRef}
+                                      type='file'
+                                      className='hidden'
+                                      onChange={e => setMediaFile(e.target.files?.[0] || null)}
+                                    />
+
+                                    <div
+                                      onClick={() => fileInputRef.current?.click()}
+                                      className='flex cursor-pointer flex-col items-center justify-center gap-2 text-center'
+                                    >
+                                      <UploadCloud className='text-muted-foreground h-10 w-10' />
+
+                                      <p className='text-foreground font-medium'>
+                                        {mediaFile
+                                          ? mediaFile.name
+                                          : contentForm.getValues('file_url')
+                                            ? 'File uploaded — click to replace'
+                                            : 'Click to upload or drag & drop'}
+                                      </p>
+
+                                      <p className='text-muted-foreground text-sm'>
+                                        Supports {contentType.toLowerCase()} files
+                                      </p>
+                                    </div>
+
+                                    {mediaFile && (
+                                      <Button
+                                        type='button'
+                                        disabled={!mediaFile || uploadLessonMedia.isPending}
+                                        onClick={() => {
+                                          if (!mediaFile) return;
+                                          uploadLessonMedia.mutate(
+                                            {
+                                              body: { file: mediaFile },
+                                              path: {
+                                                courseUuid: course?.data?.uuid,
+                                                lessonUuid: activeLessonId,
+                                              },
+                                              query: {
+                                                content_type_uuid:
+                                                  contentForm.getValues('content_type_uuid'),
+                                                title: contentForm.getValues('title') || 'Untitled',
+                                                is_required: false,
+                                                description: 'N/A',
+                                              },
+                                            },
+                                            {
+                                              onSuccess: () => {
+                                                toast.success('Media uploaded');
+                                                setMediaFile(null);
+                                                qc.invalidateQueries({
+                                                  queryKey: getLessonContentQueryKey({
+                                                    path: {
+                                                      courseUuid: course?.data?.uuid,
+                                                      lessonUuid: activeLessonId,
+                                                    },
+                                                  }),
+                                                });
+                                                resetContentForm();
+                                              },
+                                            }
+                                          );
+                                        }}
+                                        className='bg-primary w-full'
+                                      >
+                                        {uploadLessonMedia.isPending
+                                          ? 'Uploading...'
+                                          : 'Upload Media'}
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Save Content Button */}
+                              <div className='flex justify-end space-x-2 pt-4'>
+                                <Button type='button' variant='outline' onClick={resetContentForm}>
+                                  Cancel
+                                </Button>
+                                <Button
+                                  type='button'
+                                  onClick={() => {
+                                    try {
+                                      const data = contentForm.getValues();
+                                      lessonContentSchema.parse(data);
+                                      handleSaveLessonContent(data);
+                                    } catch (err) {
+                                      if (err instanceof z.ZodError) {
+                                        toast.error('Please fix validation errors');
+                                      }
+                                    }
+                                  }}
+                                  disabled={
+                                    createLessonContent.isPending || updateLessonContent.isPending
+                                  }
+                                >
+                                  {createLessonContent.isPending || updateLessonContent.isPending
+                                    ? 'Saving...'
+                                    : contentForm.getValues('uuid')
+                                      ? 'Update Content'
+                                      : 'Save Content'}
+                                </Button>
                               </div>
                             </div>
-                          )}
-
-                          {/* Save Content Button */}
-                          <div className='flex justify-end space-x-2 pt-4'>
-                            <Button type='button' variant='outline' onClick={resetContentForm}>
-                              Cancel
-                            </Button>
-                            <Button
-                              type='button'
-                              onClick={() => {
-                                try {
-                                  const data = contentForm.getValues();
-                                  lessonContentSchema.parse(data);
-                                  handleSaveLessonContent(data);
-                                } catch (err) {
-                                  if (err instanceof z.ZodError) {
-                                    toast.error('Please fix validation errors');
-                                  }
-                                }
-                              }}
-                              disabled={
-                                createLessonContent.isPending || updateLessonContent.isPending
-                              }
-                            >
-                              {createLessonContent.isPending || updateLessonContent.isPending
-                                ? 'Saving...'
-                                : contentForm.getValues('uuid')
-                                  ? 'Update Content'
-                                  : 'Save Content'}
-                            </Button>
-                          </div>
-                        </div>
-                      </Form>
-                    </CardContent>
-                  </Card>
+                          </Form>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </CardContent>
+              </CardContent>
+            </div>
+          )}
+
+          {activeTab === 'Practice Activities' && (
+            <div className='px-2'>
+              <div className='border-border flex flex-row items-center justify-between border-b p-2'>
+                <div>
+                  <p className='text-muted-foreground mt-1 text-sm'>
+                    Add class activities for this lesson
+                  </p>
+                </div>
+
+                {activeLessonId && (
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    onClick={() => {
+                      resetContentForm();
+                      setShowContentForm(true);
+                    }}
+                  >
+                    <PlusCircle /> Add Practice Activity
+                  </Button>
+                )}
+              </div>
+
+              <CardContent className='space-y-4 pt-6'>
+                {!activeLessonId ? (
+                  <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 py-12 text-center'>
+                    <p className='text-foreground font-medium'>
+                      You need to save the lesson first to add practice activities.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 py-16 text-center'>
+                      <p className='text-foreground font-medium'>No lesson activity added yet</p>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </div>
+          )}
+        </main>
+
+        <VideoPlayer
+          isOpen={isPlaying && contentTypeName === 'video'}
+          onClose={() => setIsPlaying(false)}
+          videoUrl={selectedLesson?.content_text || ''}
+          title={selectedLesson?.title}
+        />
+
+        <ReadingMode
+          isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
+          onClose={() => setIsReading(false)}
+          title={selectedLesson?.title || ''}
+          description={selectedLesson?.description}
+          content={selectedLesson?.content_text || ''}
+          contentType={contentTypeName as 'text' | 'pdf'}
+        />
+
+        <AudioPlayer
+          isOpen={isAudioPlaying && contentTypeName === 'audio'}
+          onClose={() => setIsAudioPlaying(false)}
+          audioUrl={selectedLesson?.content_text || ''}
+          title={selectedLesson?.title}
+          description={selectedLesson?.description}
+        />
+      </div>
+      {/* {activeTab === "Lesson Content" &&
+       
+        } */}
+
+      {/* {activeTab === "Practice Activities" &&
+        <div className='mb-10 flex h-auto'>
+          Practice Activities
         </div>
-      </main>
+      }
+
+      {activeTab === "Assessment Tasks" && <div>Assessment tasks</div>} */}
     </div>
   );
 };

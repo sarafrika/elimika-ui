@@ -101,8 +101,6 @@ import {
   deactivateClassDefinition,
   getClassDefinition,
   updateClassDefinition,
-  getLessonPlan,
-  saveLessonPlan,
   deleteCertificate,
   getCertificateByUuid,
   updateCertificate,
@@ -376,6 +374,7 @@ import {
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
+  listDocumentTypes,
   listCurrencies,
   getDefaultCurrency,
   getStatusTransitions,
@@ -712,10 +711,6 @@ import type {
   UpdateClassDefinitionData,
   UpdateClassDefinitionError,
   UpdateClassDefinitionResponse,
-  GetLessonPlanData,
-  SaveLessonPlanData,
-  SaveLessonPlanError,
-  SaveLessonPlanResponse,
   DeleteCertificateData,
   DeleteCertificateError,
   DeleteCertificateResponse,
@@ -1430,6 +1425,7 @@ import type {
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
+  ListDocumentTypesData,
   ListCurrenciesData,
   ListCurrenciesError,
   ListCurrenciesResponse,
@@ -4258,50 +4254,6 @@ export const updateClassDefinitionMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateClassDefinition({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getLessonPlanQueryKey = (options: Options<GetLessonPlanData>) =>
-  createQueryKey('getLessonPlan', options);
-
-/**
- * Get the lesson plan for a class definition
- */
-export const getLessonPlanOptions = (options: Options<GetLessonPlanData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getLessonPlan({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getLessonPlanQueryKey(options),
-  });
-};
-
-/**
- * Replace the lesson plan for a class definition
- */
-export const saveLessonPlanMutation = (
-  options?: Partial<Options<SaveLessonPlanData>>
-): UseMutationOptions<SaveLessonPlanResponse, SaveLessonPlanError, Options<SaveLessonPlanData>> => {
-  const mutationOptions: UseMutationOptions<
-    SaveLessonPlanResponse,
-    SaveLessonPlanError,
-    Options<SaveLessonPlanData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await saveLessonPlan({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -12853,7 +12805,7 @@ export const createAssignmentQueryKey = (options: Options<CreateAssignmentData>)
 
 /**
  * Create a new assignment
- * Creates a new assignment with default DRAFT status and inactive state.
+ * Creates a new assignment with unpublished state by default.
  */
 export const createAssignmentOptions = (options: Options<CreateAssignmentData>) => {
   return queryOptions({
@@ -12872,7 +12824,7 @@ export const createAssignmentOptions = (options: Options<CreateAssignmentData>) 
 
 /**
  * Create a new assignment
- * Creates a new assignment with default DRAFT status and inactive state.
+ * Creates a new assignment with unpublished state by default.
  */
 export const createAssignmentMutation = (
   options?: Partial<Options<CreateAssignmentData>>
@@ -18449,6 +18401,27 @@ export const hasCapacityForEnrollmentOptions = (options: Options<HasCapacityForE
   });
 };
 
+export const listDocumentTypesQueryKey = (options?: Options<ListDocumentTypesData>) =>
+  createQueryKey('listDocumentTypes', options);
+
+/**
+ * List available document types
+ */
+export const listDocumentTypesOptions = (options?: Options<ListDocumentTypesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listDocumentTypes({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listDocumentTypesQueryKey(options),
+  });
+};
+
 export const listCurrenciesQueryKey = (options: Options<ListCurrenciesData>) =>
   createQueryKey('listCurrencies', options);
 
@@ -21284,8 +21257,7 @@ export const searchAssignmentsQueryKey = (options: Options<SearchAssignmentsData
  * **Common Assignment Search Examples:**
  * - `title_like=essay` - Assignments with "essay" in title
  * - `lessonUuid=uuid` - Assignments for specific lesson
- * - `status=PUBLISHED` - Only published assignments
- * - `active=true` - Only active assignments
+ * - `is_published=true` - Only published assignments
  * - `dueDate_gte=2024-12-01T00:00:00` - Assignments due from Dec 1, 2024
  * - `maxPoints_gte=50` - Assignments worth 50+ points
  *
@@ -21316,8 +21288,7 @@ export const searchAssignmentsInfiniteQueryKey = (
  * **Common Assignment Search Examples:**
  * - `title_like=essay` - Assignments with "essay" in title
  * - `lessonUuid=uuid` - Assignments for specific lesson
- * - `status=PUBLISHED` - Only published assignments
- * - `active=true` - Only active assignments
+ * - `is_published=true` - Only published assignments
  * - `dueDate_gte=2024-12-01T00:00:00` - Assignments due from Dec 1, 2024
  * - `maxPoints_gte=50` - Assignments worth 50+ points
  *

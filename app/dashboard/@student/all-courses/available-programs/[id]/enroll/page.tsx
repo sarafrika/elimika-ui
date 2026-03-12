@@ -191,7 +191,8 @@ const EnrollClassPage = () => {
   // Enrollment mutation
   const enrollStudent = useMutation(enrollStudentMutation());
   const handleEnrollStudent = () => {
-    if (!student?.uuid) return toast.error('Student not found, log into your student profile or create a new one');
+    if (!student?.uuid)
+      return toast.error('Student not found, log into your student profile or create a new one');
     if (!classId) return toast.error('Class not found');
 
     enrollStudent.mutate(

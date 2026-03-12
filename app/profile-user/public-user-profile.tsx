@@ -41,6 +41,7 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
     gender: user.gender,
     active: user.active,
     username: user.username,
+    user_no: user.user_no,
   };
 
   switch (domain) {

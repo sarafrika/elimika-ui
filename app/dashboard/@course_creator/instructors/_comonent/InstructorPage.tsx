@@ -97,10 +97,13 @@ const InstructorsApplicationPage = () => {
 
   const [instructorSearchQuery, setInstructorSearchQuery] = useState('');
 
-  const [instructorStatusFilter, setInstructorStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [verificationFilter, setVerificationFilter] = useState<'all' | 'approved' | 'pending'>('all');
+  const [instructorStatusFilter, setInstructorStatusFilter] = useState<
+    'all' | 'active' | 'inactive'
+  >('all');
+  const [verificationFilter, setVerificationFilter] = useState<'all' | 'approved' | 'pending'>(
+    'all'
+  );
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
 
   const [selectedInstructorUuid, setSelectedInstructorUuid] = useState<string | null>(null);
 
@@ -179,7 +182,6 @@ const InstructorsApplicationPage = () => {
 
     return [...new Set(categories)].sort();
   }, [instructors]);
-
 
   const filteredInstructors = useMemo(() => {
     let filtered = instructors;
@@ -512,7 +514,6 @@ const InstructorsApplicationPage = () => {
     );
   };
 
-
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
       {/* Compact Header */}
@@ -527,52 +528,48 @@ const InstructorsApplicationPage = () => {
         </div>
       </section>
 
-      <Card className='flex flex-col lg:flex-row p-2 gap-0'>
-        <aside className='hidden lg:flex w-56 flex-col border-r p-2'>
+      <Card className='flex flex-col gap-0 p-2 lg:flex-row'>
+        <aside className='hidden w-56 flex-col border-r p-2 lg:flex'>
           <div className='space-y-1'>
             <button
               onClick={() => setVerificationFilter('all')}
-              className={`w-full rounded px-3 py-2 text-sm text-left ${verificationFilter === 'all'
-                ? 'bg-primary/10 text-primary'
-                : 'hover:bg-muted'
-                }`}
+              className={`w-full rounded px-3 py-2 text-left text-sm ${
+                verificationFilter === 'all' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+              }`}
             >
               All Instructors
             </button>
 
             <button
               onClick={() => setVerificationFilter('approved')}
-              className={`w-full rounded px-3 py-2 text-sm text-left ${verificationFilter === 'approved'
-                ? 'bg-primary/10 text-primary'
-                : 'hover:bg-muted'
-                }`}
+              className={`w-full rounded px-3 py-2 text-left text-sm ${
+                verificationFilter === 'approved' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+              }`}
             >
               Approved
             </button>
 
             <button
               onClick={() => setVerificationFilter('pending')}
-              className={`w-full rounded px-3 py-2 text-sm text-left ${verificationFilter === 'pending'
-                ? 'bg-primary/10 text-primary'
-                : 'hover:bg-muted'
-                }`}
+              className={`w-full rounded px-3 py-2 text-left text-sm ${
+                verificationFilter === 'pending' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+              }`}
             >
               Pending
             </button>
           </div>
           <Separator className='my-4' />
 
-          <h3 className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+          <h3 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>
             Categories
           </h3>
 
-          <div className='space-y-1 max-h-48 overflow-auto'>
+          <div className='max-h-48 space-y-1 overflow-auto'>
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`w-full rounded px-3 py-2 text-sm text-left ${!selectedCategory
-                ? 'bg-primary/10 text-primary'
-                : 'hover:bg-muted'
-                }`}
+              className={`w-full rounded px-3 py-2 text-left text-sm ${
+                !selectedCategory ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+              }`}
             >
               All Categories
             </button>
@@ -581,10 +578,9 @@ const InstructorsApplicationPage = () => {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`w-full rounded px-3 py-2 text-sm text-left ${selectedCategory === category
-                  ? 'bg-primary/10 text-primary'
-                  : 'hover:bg-muted'
-                  }`}
+                className={`w-full rounded px-3 py-2 text-left text-sm ${
+                  selectedCategory === category ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                }`}
               >
                 {category}
               </button>
@@ -611,32 +607,32 @@ const InstructorsApplicationPage = () => {
         {/* Sidebar - Instructors List */}
         <div className='w-full lg:max-w-80 lg:border-r'>
           {/* Mobile Filter Button */}
-          <div className='flex items-center gap-2 p-3 lg:hidden border-b'>
+          <div className='flex items-center gap-2 border-b p-3 lg:hidden'>
             <button
               onClick={() => setIsMobileFiltersOpen(true)}
-              className='p-2 hover:bg-muted rounded-lg'
+              className='hover:bg-muted rounded-lg p-2'
             >
               <Menu size={20} />
             </button>
             <div className='relative flex-1'>
               <Input
-                type="text"
-                placeholder="Search..."
+                type='text'
+                placeholder='Search...'
                 value={instructorSearchQuery}
-                onChange={(e) => setInstructorSearchQuery(e.target.value)}
-                className="w-full"
+                onChange={e => setInstructorSearchQuery(e.target.value)}
+                className='w-full'
               />
             </div>
           </div>
 
           {/* Desktop Search */}
-          <div className="hidden lg:block pb-3 px-3 mt-2 relative">
+          <div className='relative mt-2 hidden px-3 pb-3 lg:block'>
             <Input
-              type="text"
-              placeholder="Search instructors..."
+              type='text'
+              placeholder='Search instructors...'
               value={instructorSearchQuery}
-              onChange={(e) => setInstructorSearchQuery(e.target.value)}
-              className="w-full"
+              onChange={e => setInstructorSearchQuery(e.target.value)}
+              className='w-full'
             />
           </div>
 
@@ -685,10 +681,11 @@ const InstructorsApplicationPage = () => {
                         setIsMobileDetailsOpen(true);
                       }
                     }}
-                    className={`flex w-full items-start p-3 text-left transition-all duration-150 gap-2 md:p-4 ${selectedInstructorUuid === instructorItem.uuid
-                      ? 'border bg-primary/10 shadow-md'
-                      : 'bg-background'
-                      }`}
+                    className={`flex w-full items-start gap-2 p-3 text-left transition-all duration-150 md:p-4 ${
+                      selectedInstructorUuid === instructorItem.uuid
+                        ? 'bg-primary/10 border shadow-md'
+                        : 'bg-background'
+                    }`}
                   >
                     <Avatar className='h-10 w-10 flex-shrink-0 md:h-12 md:w-12'>
                       <AvatarImage src={instructorData?.profile_picture_url} />
@@ -709,7 +706,7 @@ const InstructorsApplicationPage = () => {
         </div>
 
         {/* Main View - Selected Instructor Details */}
-        <div className='hidden lg:block flex-1 mt-4 px-4'>
+        <div className='mt-4 hidden flex-1 px-4 lg:block'>
           {!selectedInstructorUuid ? (
             <Card className='p-8 md:p-12'>
               <div className='text-muted-foreground text-center'>
@@ -722,30 +719,33 @@ const InstructorsApplicationPage = () => {
               <div className='border-muted-foreground/10 mb-4 flex gap-3 overflow-x-auto border-b md:mb-6 md:gap-6'>
                 <button
                   onClick={() => setTabs('profile')}
-                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${tabs === 'profile'
-                    ? 'border-primary text-primary border-b-2 font-extrabold'
-                    : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
+                    tabs === 'profile'
+                      ? 'border-primary text-primary border-b-2 font-extrabold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
                   Profile
                 </button>
 
                 <button
                   onClick={() => setTabs('course-application')}
-                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${tabs === 'course-application'
-                    ? 'border-primary text-primary border-b-2 font-extrabold'
-                    : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
+                    tabs === 'course-application'
+                      ? 'border-primary text-primary border-b-2 font-extrabold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
                   Courses ({stats.pending})
                 </button>
 
                 <button
                   onClick={() => setTabs('program-application')}
-                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${tabs === 'program-application'
-                    ? 'border-primary text-primary border-b-2 font-extrabold'
-                    : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                  className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
+                    tabs === 'program-application'
+                      ? 'border-primary text-primary border-b-2 font-extrabold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
                   Programs ({programStats.pending})
                 </button>
@@ -786,8 +786,6 @@ const InstructorsApplicationPage = () => {
                                 <span className='truncate'>View full profile</span>
                               </div>
                             </a>
-
-
                           </div>
                           <Badge variant='secondary' className='self-start'>
                             {instructor?.status || 'Active'}
@@ -971,10 +969,11 @@ const InstructorsApplicationPage = () => {
                                 {[...Array(5)].map((_, i) => (
                                   <Star
                                     key={i}
-                                    className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < (review.rating || 0)
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
-                                      }`}
+                                    className={`h-3.5 w-3.5 md:h-4 md:w-4 ${
+                                      i < (review.rating || 0)
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
                                   />
                                 ))}
                               </div>
@@ -1446,22 +1445,24 @@ const InstructorsApplicationPage = () => {
           )}
         </div>
 
-
         {/* Mobile Filters Sheet */}
         <Sheet open={isMobileFiltersOpen} onOpenChange={setIsMobileFiltersOpen}>
-          <SheetContent side="left" className='w-80'>
+          <SheetContent side='left' className='w-80'>
             <SheetHeader>
               <SheetTitle>Filters</SheetTitle>
             </SheetHeader>
-            <div className='mt-6 px-4 mb-8'>
+            <div className='mt-6 mb-8 px-4'>
               <div className='space-y-1'>
                 <button
                   onClick={() => {
                     setInstructorStatusFilter('all');
                     setIsMobileFiltersOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm ${instructorStatusFilter === 'all' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                    }`}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                    instructorStatusFilter === 'all'
+                      ? 'bg-primary/10 text-primary'
+                      : 'hover:bg-muted'
+                  }`}
                 >
                   <User size={16} />
                   All
@@ -1471,8 +1472,11 @@ const InstructorsApplicationPage = () => {
                     setInstructorStatusFilter('active');
                     setIsMobileFiltersOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm ${instructorStatusFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                    }`}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                    instructorStatusFilter === 'active'
+                      ? 'bg-primary/10 text-primary'
+                      : 'hover:bg-muted'
+                  }`}
                 >
                   <UserCheck className='text-success/50' size={16} />
                   Active
@@ -1482,8 +1486,11 @@ const InstructorsApplicationPage = () => {
                     setInstructorStatusFilter('inactive');
                     setIsMobileFiltersOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm ${instructorStatusFilter === 'inactive' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                    }`}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                    instructorStatusFilter === 'inactive'
+                      ? 'bg-primary/10 text-primary'
+                      : 'hover:bg-muted'
+                  }`}
                 >
                   <UserX className='text-destructive/50' size={16} />
                   Inactive
@@ -1507,41 +1514,44 @@ const InstructorsApplicationPage = () => {
 
         {/* Mobile Details Sheet */}
         <Sheet open={isMobileDetailsOpen} onOpenChange={setIsMobileDetailsOpen}>
-          <SheetContent side="right" className='w-full sm:max-w-2xl overflow-y-auto'>
+          <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-2xl'>
             <SheetHeader>
               <SheetTitle>Instructor Details</SheetTitle>
             </SheetHeader>
-            <div className='mt-6 px-4 mb-8'>
+            <div className='mt-6 mb-8 px-4'>
               {selectedInstructorUuid && (
                 <div>
                   {/* Copy your entire tabs and content section here */}
-                  <div className='border-b mb-4 flex gap-3 overflow-x-auto'>
+                  <div className='mb-4 flex gap-3 overflow-x-auto border-b'>
                     <button
                       onClick={() => setTabs('profile')}
-                      className={`px-2 pb-2 text-sm font-medium whitespace-nowrap ${tabs === 'profile'
-                        ? 'border-primary text-primary border-b-2 font-bold'
-                        : 'text-muted-foreground'
-                        }`}
+                      className={`px-2 pb-2 text-sm font-medium whitespace-nowrap ${
+                        tabs === 'profile'
+                          ? 'border-primary text-primary border-b-2 font-bold'
+                          : 'text-muted-foreground'
+                      }`}
                     >
                       Profile
                     </button>
 
                     <button
                       onClick={() => setTabs('course-application')}
-                      className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${tabs === 'course-application'
-                        ? 'border-primary text-primary border-b-2 font-extrabold'
-                        : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                      className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
+                        tabs === 'course-application'
+                          ? 'border-primary text-primary border-b-2 font-extrabold'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
                     >
                       Courses ({stats.pending})
                     </button>
 
                     <button
                       onClick={() => setTabs('program-application')}
-                      className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${tabs === 'program-application'
-                        ? 'border-primary text-primary border-b-2 font-extrabold'
-                        : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                      className={`px-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors md:text-[15px] ${
+                        tabs === 'program-application'
+                          ? 'border-primary text-primary border-b-2 font-extrabold'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
                     >
                       Programs ({programStats.pending})
                     </button>
@@ -1582,8 +1592,6 @@ const InstructorsApplicationPage = () => {
                                     <span className='truncate'>View full profile</span>
                                   </div>
                                 </a>
-
-
                               </div>
                               <Badge variant='secondary' className='self-start'>
                                 {instructor?.status || 'Active'}
@@ -1767,10 +1775,11 @@ const InstructorsApplicationPage = () => {
                                     {[...Array(5)].map((_, i) => (
                                       <Star
                                         key={i}
-                                        className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < (review.rating || 0)
-                                          ? 'fill-yellow-400 text-yellow-400'
-                                          : 'text-gray-300'
-                                          }`}
+                                        className={`h-3.5 w-3.5 md:h-4 md:w-4 ${
+                                          i < (review.rating || 0)
+                                            ? 'fill-yellow-400 text-yellow-400'
+                                            : 'text-gray-300'
+                                        }`}
                                       />
                                     ))}
                                   </div>
@@ -1785,7 +1794,9 @@ const InstructorsApplicationPage = () => {
 
                   {tabs === 'course-application' && (
                     <div className='space-y-4 md:space-y-6'>
-                      <h3 className='text-md font-bold'>Instructor's Application to Train Courses</h3>
+                      <h3 className='text-md font-bold'>
+                        Instructor's Application to Train Courses
+                      </h3>
 
                       <div className='grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4'>
                         <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
@@ -1808,7 +1819,9 @@ const InstructorsApplicationPage = () => {
                               <Clock className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
                             </div>
                             <div>
-                              <p className='text-muted-foreground text-[10px] md:text-xs'>Pending</p>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>
+                                Pending
+                              </p>
                               <p className='text-foreground text-base font-bold md:text-lg'>
                                 {stats.pending}
                               </p>
@@ -1822,7 +1835,9 @@ const InstructorsApplicationPage = () => {
                               <CheckCircle2 className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
                             </div>
                             <div>
-                              <p className='text-muted-foreground text-[10px] md:text-xs'>Approved</p>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>
+                                Approved
+                              </p>
                               <p className='text-foreground text-base font-bold md:text-lg'>
                                 {stats.approved}
                               </p>
@@ -1836,7 +1851,9 @@ const InstructorsApplicationPage = () => {
                               <XCircle className='text-destructive h-3.5 w-3.5 md:h-4 md:w-4' />
                             </div>
                             <div>
-                              <p className='text-muted-foreground text-[10px] md:text-xs'>Revoked</p>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>
+                                Revoked
+                              </p>
                               <p className='text-foreground text-base font-bold md:text-lg'>
                                 {stats.revoked}
                               </p>
@@ -1850,7 +1867,9 @@ const InstructorsApplicationPage = () => {
                               <AlertCircle className='text-warning/60 h-3.5 w-3.5 md:h-4 md:w-4' />
                             </div>
                             <div>
-                              <p className='text-muted-foreground text-[10px] md:text-xs'>Rejected</p>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>
+                                Rejected
+                              </p>
                               <p className='text-foreground text-base font-bold md:text-lg'>
                                 {stats.rejected}
                               </p>
@@ -2013,7 +2032,9 @@ const InstructorsApplicationPage = () => {
 
                   {tabs === 'program-application' && (
                     <div className='space-y-4 md:space-y-6'>
-                      <h3 className='text-md font-bold'>Instructor's Application to Train Programs</h3>
+                      <h3 className='text-md font-bold'>
+                        Instructor's Application to Train Programs
+                      </h3>
 
                       <div className='grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4'>
                         <div className='border-border bg-card rounded-lg border p-2.5 md:p-3'>
@@ -2036,7 +2057,9 @@ const InstructorsApplicationPage = () => {
                               <Clock className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
                             </div>
                             <div>
-                              <p className='text-muted-foreground text-[10px] md:text-xs'>Pending</p>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>
+                                Pending
+                              </p>
                               <p className='text-foreground text-base font-bold md:text-lg'>
                                 {programStats.pending}
                               </p>
@@ -2050,7 +2073,9 @@ const InstructorsApplicationPage = () => {
                               <CheckCircle2 className='text-primary h-3.5 w-3.5 md:h-4 md:w-4' />
                             </div>
                             <div>
-                              <p className='text-muted-foreground text-[10px] md:text-xs'>Approved</p>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>
+                                Approved
+                              </p>
                               <p className='text-foreground text-base font-bold md:text-lg'>
                                 {programStats.approved}
                               </p>
@@ -2064,7 +2089,9 @@ const InstructorsApplicationPage = () => {
                               <XCircle className='text-destructive h-3.5 w-3.5 md:h-4 md:w-4' />
                             </div>
                             <div>
-                              <p className='text-muted-foreground text-[10px] md:text-xs'>Revoked</p>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>
+                                Revoked
+                              </p>
                               <p className='text-foreground text-base font-bold md:text-lg'>
                                 {programStats.revoked}
                               </p>
@@ -2078,7 +2105,9 @@ const InstructorsApplicationPage = () => {
                               <AlertCircle className='text-warning/60 h-3.5 w-3.5 md:h-4 md:w-4' />
                             </div>
                             <div>
-                              <p className='text-muted-foreground text-[10px] md:text-xs'>Rejected</p>
+                              <p className='text-muted-foreground text-[10px] md:text-xs'>
+                                Rejected
+                              </p>
                               <p className='text-foreground text-base font-bold md:text-lg'>
                                 {stats.rejected}
                               </p>

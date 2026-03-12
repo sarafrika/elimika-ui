@@ -1234,14 +1234,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -2467,11 +2467,6 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
-      .readonly()
-      .optional(),
     is_recent_qualification: z
       .boolean()
       .describe(
@@ -2482,6 +2477,11 @@ export const zInstructorEducation = z
     formatted_completion: z
       .string()
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
     years_since_completion: z
@@ -3033,6 +3033,13 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
+      .readonly()
+      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
@@ -3051,13 +3058,6 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
-      .readonly()
-      .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
       .readonly()
       .optional(),
     total_duration_display: z
@@ -3186,10 +3186,6 @@ export const zCourseRequirement = z
       )
       .readonly()
       .optional(),
-    course_uuid: z
-      .string()
-      .uuid()
-      .describe('**[REQUIRED]** Reference to the course UUID that this requirement applies to.'),
     requirement_type: zRequirementTypeEnum,
     requirement_text: z
       .string()
@@ -4431,6 +4427,14 @@ export const zClassDefinition = z
         '**[OPTIONAL]** Longitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.'
       )
       .optional(),
+    meeting_link: z
+      .string()
+      .min(0)
+      .max(1000)
+      .describe(
+        '**[OPTIONAL]** Virtual meeting URL for online participation (e.g., Zoom, Google Meet, Teams).'
+      )
+      .optional(),
     max_participants: z
       .number()
       .int()
@@ -4524,83 +4528,6 @@ export const zClassDefinitionResponse = z
 export const zApiResponseClassDefinitionResponse = z.object({
   success: z.boolean().optional(),
   data: zClassDefinitionResponse.optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
-
-/**
- * Lesson scheduling metadata scoped to a class definition
- */
-export const zClassLessonPlan = z
-  .object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** Unique identifier for this class lesson plan entry.')
-      .readonly()
-      .optional(),
-    class_definition_uuid: z
-      .string()
-      .uuid()
-      .describe('**[REQUIRED]** Class definition that owns this plan entry.')
-      .optional(),
-    lesson_uuid: z
-      .string()
-      .uuid()
-      .describe('**[REQUIRED]** Lesson the plan entry references.')
-      .optional(),
-    scheduled_start: z
-      .string()
-      .datetime()
-      .describe('**[OPTIONAL]** Planned start timestamp in UTC.')
-      .optional(),
-    scheduled_end: z
-      .string()
-      .datetime()
-      .describe('**[OPTIONAL]** Planned end timestamp in UTC.')
-      .optional(),
-    scheduled_instance_uuid: z
-      .string()
-      .uuid()
-      .describe('**[OPTIONAL]** Reference to a concrete scheduled instance created by timetabling.')
-      .optional(),
-    instructor_uuid: z
-      .string()
-      .uuid()
-      .describe('**[OPTIONAL]** Instructor assigned to deliver this lesson.')
-      .optional(),
-    notes: z
-      .string()
-      .describe('**[OPTIONAL]** Trainer notes or reminders for the lesson.')
-      .optional(),
-    created_date: z
-      .string()
-      .datetime()
-      .describe('**[READ-ONLY]** Timestamp when this plan entry was created.')
-      .readonly()
-      .optional(),
-    created_by: z
-      .string()
-      .describe('**[READ-ONLY]** User identifier who created the plan entry.')
-      .readonly()
-      .optional(),
-    updated_date: z
-      .string()
-      .datetime()
-      .describe('**[READ-ONLY]** Timestamp when the plan entry was last updated.')
-      .readonly()
-      .optional(),
-    updated_by: z
-      .string()
-      .describe('**[READ-ONLY]** User identifier who last updated the plan entry.')
-      .readonly()
-      .optional(),
-  })
-  .describe('Lesson scheduling metadata scoped to a class definition');
-
-export const zApiResponseListClassLessonPlan = z.object({
-  success: z.boolean().optional(),
-  data: z.array(zClassLessonPlan).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -4915,7 +4842,7 @@ export const zAssignment = z
     is_published: z
       .boolean()
       .describe(
-        '**[OPTIONAL]** Indicates if the assignment is actively available for students. Can only be true for published assignments.'
+        '**[OPTIONAL]** Indicates whether the assignment is published and visible to students.'
       )
       .optional(),
     source_assignment_uuid: z
@@ -4956,16 +4883,16 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
+      .readonly()
+      .optional(),
     assignment_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.'
       )
-      .readonly()
-      .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
     assignment_scope: z
@@ -5750,14 +5677,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
     is_attendance_marked: z
@@ -6145,11 +6072,6 @@ export const zClassQuizSchedule = z
       .uuid()
       .describe('**[REQUIRED]** Quiz template or clone referenced by this schedule.')
       .optional(),
-    class_lesson_plan_uuid: z
-      .string()
-      .uuid()
-      .describe('**[OPTIONAL]** Linked lesson plan entry for ordering context.')
-      .optional(),
     visible_at: z
       .string()
       .datetime()
@@ -6245,11 +6167,6 @@ export const zClassAssignmentSchedule = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Assignment template or clone that the schedule references.')
-      .optional(),
-    class_lesson_plan_uuid: z
-      .string()
-      .uuid()
-      .describe('**[OPTIONAL]** Lesson plan entry this schedule ties to.')
       .optional(),
     visible_at: z
       .string()
@@ -7050,9 +6967,9 @@ export const zSortObject = z.object({
 export const zPageableObject = z.object({
   offset: z.coerce.bigint().optional(),
   sort: zSortObject.optional(),
-  paged: z.boolean().optional(),
   pageNumber: z.number().int().optional(),
   pageSize: z.number().int().optional(),
+  paged: z.boolean().optional(),
   unpaged: z.boolean().optional(),
 });
 
@@ -8081,6 +7998,37 @@ export const zApiResponsePagedDtoEnrollment = z.object({
 export const zApiResponseLong = z.object({
   success: z.boolean().optional(),
   data: z.coerce.bigint().optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Selectable document type metadata for instructor and course creator uploads
+ */
+export const zDocumentTypeOption = z
+  .object({
+    uuid: z.string().uuid().describe('Unique identifier of the document type').optional(),
+    name: z.string().describe('Document type code/name').optional(),
+    description: z.string().describe('Human-readable description of the document type').optional(),
+    max_file_size_mb: z
+      .number()
+      .int()
+      .describe('Maximum allowed file size for this type in MB')
+      .optional(),
+    allowed_extensions: z
+      .array(z.string())
+      .describe('Allowed file extensions for this document type')
+      .optional(),
+    is_required: z
+      .boolean()
+      .describe('Whether this document type is mandatory in onboarding flows')
+      .optional(),
+  })
+  .describe('Selectable document type metadata for instructor and course creator uploads');
+
+export const zApiResponseListDocumentTypeOption = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zDocumentTypeOption).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -10367,32 +10315,6 @@ export const zUpdateClassDefinitionData = z.object({
  * Class definition updated successfully
  */
 export const zUpdateClassDefinitionResponse = zApiResponseClassDefinitionResponse;
-
-export const zGetLessonPlanData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    classUuid: z.string().uuid().describe('Class definition UUID'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * OK
- */
-export const zGetLessonPlanResponse = zApiResponseListClassLessonPlan;
-
-export const zSaveLessonPlanData = z.object({
-  body: z.array(zClassLessonPlan),
-  path: z.object({
-    classUuid: z.string().uuid().describe('Class definition UUID'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * OK
- */
-export const zSaveLessonPlanResponse = zApiResponseListClassLessonPlan;
 
 export const zDeleteCertificateData = z.object({
   body: z.never().optional(),
@@ -14297,6 +14219,17 @@ export const zHasCapacityForEnrollmentData = z.object({
  * Capacity check completed
  */
 export const zHasCapacityForEnrollmentResponse = zApiResponseBoolean;
+
+export const zListDocumentTypesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListDocumentTypesResponse = zApiResponseListDocumentTypeOption;
 
 export const zListCurrenciesData = z.object({
   body: z.never().optional(),

@@ -47,6 +47,7 @@ export const AttendanceRubricAssociationForm = ({
       path: { courseUuid },
       query: { pageable: {} },
     }),
+    enabled: !!courseUuid,
   });
 
   const [selectedRubricUuid, setSelectedRubricUuid] = useState<string>('');
@@ -137,11 +138,11 @@ export const AttendanceRubricAssociationForm = ({
           </p>
         </div>
       </div>
-
+      {/* 
       {!existingRubric &&
         <div className='text-muted-foreground flex min-h-[300px] flex-col items-center justify-center gap-6 px-3 py-2 text-center text-sm'>
           <p>No attendance rubric assigned yet</p>
-        </div>}
+        </div>} */}
 
       {isLoading ? (
         <div className='flex items-center justify-center py-10'>

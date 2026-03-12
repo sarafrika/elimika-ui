@@ -17,12 +17,10 @@ import {
   FileStackIcon,
   FileText,
   GraduationCap,
-  Handshake,
   Layers,
   Layers2,
   LayoutDashboard,
   LibraryIcon,
-  LucideBookUser,
   LucideLandmark,
   PlusCircle,
   School,
@@ -31,13 +29,14 @@ import {
   ShoppingBag,
   Sparkles,
   Star,
+  Tags,
   TrendingUp,
   UserCircle,
   UserIcon,
   UserPlus,
   Users,
   UsersIcon,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { UserDomain } from './types';
@@ -134,7 +133,7 @@ export default {
   ],
   student: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
       icon: School,
     },
@@ -216,9 +215,9 @@ export default {
   ],
   instructor: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
-      icon: School
+      icon: School,
     },
     {
       title: 'Overview',
@@ -234,6 +233,11 @@ export default {
       title: 'My Skills',
       url: '/dashboard/my-skills',
       icon: BadgeCheck,
+    },
+    {
+      title: 'Classes',
+      url: '/dashboard/classes',
+      icon: FileStackIcon,
     },
     {
       title: 'Schedule',
@@ -255,26 +259,26 @@ export default {
       url: '/dashboard/waiting-list',
       icon: GraduationCap,
     },
-    {
-      title: 'Opportunities',
-      url: '/dashboard/opportunities',
-      icon: Handshake,
-    },
+    // {
+    //   title: 'Opportunities',
+    //   url: '/dashboard/opportunities',
+    //   icon: Handshake,
+    // },
     {
       title: 'Skills Fund',
       url: '/dashboard/skills-fund',
       icon: Wallet,
     },
-    {
-      title: 'Communities',
-      url: '/dashboard/communities',
-      icon: Users,
-    },
-    {
-      title: 'Library',
-      url: '/dashboard/library',
-      icon: LucideBookUser,
-    },
+    // {
+    //   title: 'Communities',
+    //   url: '/dashboard/communities',
+    //   icon: Users,
+    // },
+    // {
+    //   title: 'Library',
+    //   url: '/dashboard/library',
+    //   icon: LucideBookUser,
+    // },
     {
       title: 'Revenue',
       url: '/dashboard/revenue',
@@ -324,9 +328,9 @@ export default {
   ],
   course_creator: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
-      icon: School
+      icon: School,
     },
     {
       title: 'Overview',
@@ -402,9 +406,9 @@ export default {
   ],
   admin: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
-      icon: School
+      icon: School,
     },
     {
       title: 'Overview',
@@ -462,6 +466,11 @@ export default {
       icon: DollarSign,
     },
     {
+      title: 'Categories',
+      url: '/dashboard/categories',
+      icon: Tags,
+    },
+    {
       title: 'Administrators',
       url: '/dashboard/administrators',
       icon: ShieldCheck,
@@ -479,9 +488,9 @@ export default {
   ],
   organisation_user: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
-      icon: School
+      icon: School,
     },
     {
       title: 'Overview',
@@ -550,9 +559,9 @@ export default {
   ],
   parent: [
     {
-      title: 'Home - All courses',
+      title: 'Courses',
       url: '/dashboard/all-courses',
-      icon: School
+      icon: School,
     },
     {
       title: 'Overview',

@@ -19,12 +19,10 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  BadgeCheck,
   BadgeDollarSign,
   BookOpen,
   CheckCheck,
   CheckCircle,
-  ClipboardList,
   File,
   GraduationCap,
   Palette,
@@ -36,9 +34,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
-import { CourseComplianceForm } from '../../../_components/course-compliance-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
-import CourseLearningRulesForm from '../../../_components/course-learningrule-form';
 import { CoursePricingForm } from '../../../_components/course-pricing-form';
 import CriteriaCreationForm from '../../../_components/criteria-creation-form';
 import type { ICourse } from '../../../_components/instructor-type';
@@ -96,6 +92,7 @@ export default function CourseBuilderPage() {
 
   useEffect(() => {
     if (!courseId || !course?.data) return;
+
     const c = course.data;
 
     setCourseInitialValues({
@@ -103,8 +100,6 @@ export default function CourseBuilderPage() {
       description: c.description || '',
       instructor: c.course_creator_uuid || '',
       price: c.price ?? 0,
-      // sale_price: c.sale_price ?? c.price ?? 0,
-      // currency: c.currency || 'KES',
       objectives: c.objectives || [],
       categories: c.category_uuids || [],
       difficulty: c.difficulty_uuid || '',
@@ -128,19 +123,7 @@ export default function CourseBuilderPage() {
       creator_share_percentage: c.creator_share_percentage ?? 0,
       instructor_share_percentage: c.instructor_share_percentage ?? 0,
       revenue_share_notes: c.revenue_share_notes ?? '',
-      // @ts-expect-error
-      training_requirements: Array.isArray(c.training_requirements)
-        ? c.training_requirements.map(req => ({
-          uuid: req.uuid,
-          requirement_type: req.requirement_type,
-          name: req.name,
-          description: req.description ?? '',
-          quantity: req.quantity ?? undefined,
-          unit: req.unit ?? '',
-          provided_by: req.provided_by ?? 'course_creator',
-          is_mandatory: !!req.is_mandatory,
-        }))
-        : [],
+      training_requirements: {},
     });
   }, [courseId, course]);
 
@@ -202,7 +185,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   if (creatorLoading) {
@@ -253,14 +236,14 @@ export default function CourseBuilderPage() {
             <StepperTrigger step={0} title='Course Set Up' icon={BookOpen} />
             <StepperTrigger step={1} title='Course Lessons' icon={GraduationCap} />
             <StepperTrigger step={2} title='Lesson Contents' icon={File} />
-            <StepperTrigger step={3} title='Assessment' icon={SlidersHorizontal} />
+            <StepperTrigger step={3} title='Assessment Tasks' icon={SlidersHorizontal} />
 
-            <StepperTrigger step={4} title='Assessment Criteria' icon={CheckCheck} />
+            <StepperTrigger step={4} title='Evaluation Criteria' icon={CheckCheck} />
 
-            <StepperTrigger step={5} title='Rules' icon={ClipboardList} />
-            <StepperTrigger step={6} title='Branding' icon={Palette} />
-            <StepperTrigger step={7} title='Pricing' icon={BadgeDollarSign} />
-            <StepperTrigger step={8} title='Compliance' icon={BadgeCheck} />
+            {/* <StepperTrigger step={5} title='Rules' icon={ClipboardList} /> */}
+            <StepperTrigger step={5} title='Branding' icon={Palette} />
+            <StepperTrigger step={6} title='Pricing' icon={BadgeDollarSign} />
+            {/* <StepperTrigger step={7} title='Compliance' icon={BadgeCheck} /> */}
 
             {/* <StepperTrigger step={7} title='Review' icon={Eye} /> */}
             {/* <StepperTrigger step={8} title='Quizzes' icon={FileQuestion} />
@@ -291,7 +274,7 @@ export default function CourseBuilderPage() {
 
             <StepperContent
               step={1}
-              title='Course Lessonss'
+              title='Course Lessons'
               description='Add skills and learning materials for your course'
               showNavigation
               nextButtonText='Continue to Lesson Contents'
@@ -308,10 +291,12 @@ export default function CourseBuilderPage() {
 
             <StepperContent
               step={2}
-              title='Course Lessons Content'
-              description='Add skills and learning materials for your course'
+              // title='Course Lessons Content'
+              // description='Add skills and learning materials for your course'
+              title=''
+              description=''
               showNavigation
-              nextButtonText='Continue to Assessment'
+              nextButtonText='Continue to Assessment Tasks'
               previousButtonText='Back to Lessons'
             >
               <div className='space-y-4 p-0'>
@@ -328,8 +313,8 @@ export default function CourseBuilderPage() {
               title='Course Assessment'
               description='Create assessments to evaluate student performance'
               showNavigation
-              nextButtonText='Continue to Assessment Criteria'
-              previousButtonText='Back to Lesson Content'
+              nextButtonText='Continue to Evaluation Criteria'
+              previousButtonText='Back to Lesson Contents'
             >
               <AssessmentCreationForm
                 course={course}
@@ -340,22 +325,22 @@ export default function CourseBuilderPage() {
 
             <StepperContent
               step={4}
-              title='Assessment Criteria'
+              title='Evaluation Criteria'
               description='Create assessment rubrics to evaluate student performance'
               showNavigation
-              nextButtonText='Continue to Rules'
-              previousButtonText='Back to Assessment'
+              nextButtonText='Continue to Branding'
+              previousButtonText='Back to Assessment Tasks'
             >
               <CriteriaCreationForm course={course} />
             </StepperContent>
 
-            <StepperContent
+            {/* <StepperContent
               step={5}
               title='Course Learning Rules'
               description='Define the rules learners must follow to progress and complete the course.'
               showNavigation
               nextButtonText='Continue to Branding'
-              previousButtonText='Back to Assessment Criteria'
+              previousButtonText='Back to Evaluation Criteria'
             >
               <CourseLearningRulesForm
                 ref={formRef}
@@ -367,15 +352,16 @@ export default function CourseBuilderPage() {
                   setCreatedCourseId(data?.uuid);
                 }}
               />
-            </StepperContent>
+            </StepperContent> */}
 
             <StepperContent
-              step={6}
+              step={5}
               title='Branding'
               description='Add visual elements to make your course more appealing'
               showNavigation
               nextButtonText='Continue to Pricing'
-              previousButtonText='Back to Rules'
+              // previousButtonText='Back to Rules'
+              previousButtonText='Back to Assessment criteria'
             >
               <CourseBrandingForm
                 ref={formRef}
@@ -390,7 +376,7 @@ export default function CourseBuilderPage() {
             </StepperContent>
 
             <StepperContent
-              step={7}
+              step={6}
               title='Pricing'
               description='Set the price, discounts, and access options for your course.'
               showNavigation
@@ -409,8 +395,8 @@ export default function CourseBuilderPage() {
               />
             </StepperContent>
 
-            <StepperContent
-              step={8}
+            {/* <StepperContent
+              step={7}
               title='Course Compliance & Q?A'
               description='Confirm that all required compliance and quality checks have been completed.'
               // showNavigation
@@ -427,10 +413,10 @@ export default function CourseBuilderPage() {
                   setCreatedCourseId(data?.uuid);
                 }}
               />
-            </StepperContent>
+            </StepperContent> */}
 
             <StepperContent
-              step={9}
+              step={8}
               title='Review Course'
               description='Review your course before publishing'
               showNavigation
