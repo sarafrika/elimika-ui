@@ -12,6 +12,21 @@ export const providedByOptions = [
   'student',
 ] as const;
 
+export const trainingRequirementSchema = z.object({
+  name: z.string().min(1, "Requirement name is required"),
+  requirement_type: z.string().min(1, "Requirement type is required"),
+  quantity: z
+    .number({
+      required_error: "Quantity is required",
+      invalid_type_error: "Quantity must be a number",
+    })
+    .min(1, "Quantity must be at least 1"),
+  unit: z.string().min(1, "Unit is required"),
+  provided_by: z.string().min(1, "Provided by is required"),
+  is_mandatory: z.boolean(),
+  description: z.string().min(1, "Description is required"),
+});
+
 export const courseCreationSchema = z.object({
   name: z.string().min(1, 'Course name is required'),
   description: z.string().min(10, 'Course description is required'),
@@ -42,18 +57,15 @@ export const courseCreationSchema = z.object({
     .min(0, 'Instructor share must be at least 0%')
     .max(100, 'Instructor share cannot exceed 100%'),
   revenue_share_notes: z.string().max(500).optional(),
-  training_requirement: z
-    .object({
-      uuid: z.string().optional(),
-      requirement_type: z.enum(requirementTypes),
-      name: z.string().min(1, 'Requirement name is required'),
-      description: z.string().optional(),
-      quantity: z.coerce.number().optional(),
-      unit: z.string().optional(),
-      provided_by: z.enum(providedByOptions),
-      is_mandatory: z.boolean().default(false),
-    })
-    .optional(),
+  training_requirement: z.object({
+    name: z.string().optional(),
+    description: z.string().optional(),
+    requirement_type: z.string().optional(),
+    quantity: z.number().optional(),
+    unit: z.string().optional(),
+    provided_by: z.string().optional(),
+    is_mandatory: z.boolean().optional(),
+  }).optional(),
   welcome_message: z.string().max(300).optional(),
   theme_color: z.string().optional(),
   coupon_code: z.string().optional(),
