@@ -117,11 +117,10 @@ export default function CustomCoursePreview() {
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
-                        activeTab === tab
-                          ? 'border-primary text-primary border-b-2'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
+                      className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${activeTab === tab
+                        ? 'border-primary text-primary border-b-2'
+                        : 'text-muted-foreground hover:text-foreground'
+                        }`}
                     >
                       {tab.charAt(0).toUpperCase() + tab.slice(1)}
                     </button>
@@ -180,7 +179,7 @@ export default function CustomCoursePreview() {
                       <div className='bg-muted/50 rounded-lg p-4'>
                         <p className='text-muted-foreground text-sm'>Price</p>
                         <p className='text-foreground text-lg font-semibold'>
-                          {data?.data?.is_free ? 'Free' : `${data?.data?.minimum_training_fee}`}
+                          {data?.data?.is_free ? 'Free' : `KES ${data?.data?.minimum_training_fee}`}
                         </p>
                       </div>
                       <div className='bg-muted/50 rounded-lg p-4'>
@@ -198,9 +197,9 @@ export default function CustomCoursePreview() {
                     </div>
 
                     <div className='border-border border-t pt-6'>
-                      <h3 className='text-foreground mb-4 text-lg font-semibold'>
+                      {/* <h3 className='text-foreground mb-4 text-lg font-semibold'>
                         Learning Features
-                      </h3>
+                      </h3> */}
                       {/* <div className="space-y-3">
                         <div className="flex items-center gap-3">
                           {data?.data?.learning_rules?.completion_rules_enabled ? (

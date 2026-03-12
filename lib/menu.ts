@@ -29,6 +29,7 @@ import {
   ShoppingBag,
   Sparkles,
   Star,
+  Tags,
   TrendingUp,
   UserCircle,
   UserIcon,
@@ -463,6 +464,11 @@ export default {
       title: 'Currencies',
       url: '/dashboard/currencies',
       icon: DollarSign,
+    },
+    {
+      title: 'Categories',
+      url: '/dashboard/categories',
+      icon: Tags,
     },
     {
       title: 'Administrators',
