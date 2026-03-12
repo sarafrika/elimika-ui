@@ -633,7 +633,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
           {/* Learning Objectives */}
           <FormSection
-            title='Learning Objectives'
+            title='Learning Outcomes'
             description='List what students will learn from your course'
           >
             <FormField
