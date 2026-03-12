@@ -119,21 +119,32 @@ export default function MyCoursesPage() {
       <div className='container mx-auto py-2'>
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
-          <TabsList className='mb-2 grid w-full max-w-md grid-cols-2'>
-            <TabsTrigger value='courses' className='flex items-center gap-2'>
-              <BookOpen className='h-4 w-4' />
+          <TabsList className="mb-2 grid w-full max-w-md grid-cols-2 bg-muted dark:bg-gray-800">
+            <TabsTrigger
+              value="courses"
+              className="flex items-center gap-2
+      data-[state=active]:bg-white data-[state=active]:text-black
+      dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white"
+            >
+              <BookOpen className="h-4 w-4" />
               Courses
               {filteredCourses.length > 0 && (
-                <Badge variant='secondary' className='ml-1'>
+                <Badge variant="secondary" className="ml-1">
                   {filteredCourses.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value='programs' className='flex items-center gap-2'>
-              <Layers className='h-4 w-4' />
+
+            <TabsTrigger
+              value="programs"
+              className="flex items-center gap-2
+      data-[state=active]:bg-white data-[state=active]:text-black
+      dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white"
+            >
+              <Layers className="h-4 w-4" />
               Programs
               {filteredPrograms.length > 0 && (
-                <Badge variant='secondary' className='ml-1'>
+                <Badge variant="secondary" className="ml-1">
                   {filteredPrograms.length}
                 </Badge>
               )}
@@ -171,7 +182,12 @@ export default function MyCoursesPage() {
                     <TabsTrigger
                       key={category.name}
                       value={category.name}
-                      className='flex flex-shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 hover:text-black data-[state=active]:bg-white data-[state=active]:text-black dark:hover:bg-gray-700 dark:hover:text-white dark:data-[state=active]:text-white'
+                      className="flex flex-shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 
+  hover:bg-gray-100 hover:text-black
+  data-[state=active]:bg-white data-[state=active]:text-black
+  
+  dark:hover:bg-gray-700 dark:hover:text-white
+  dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white"
                     >
                       {category.name}
                     </TabsTrigger>

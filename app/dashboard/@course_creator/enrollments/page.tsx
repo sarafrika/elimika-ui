@@ -156,7 +156,36 @@ const EnrollmentsPage = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className='grid gap-4 md:grid-cols-3'>
+        <div className="grid grid-cols-3 gap-2 md:hidden">
+          <Card className='p-2'>
+            <CardContent className="flex flex-col items-center gap-1 p-2 text-center">
+              <Users className="text-primary h-4 w-4" />
+              <p className="text-xs text-muted-foreground">Total Enrollments</p>
+              <p className="text-sm font-semibold">{totalEnrollments}</p>
+            </CardContent>
+          </Card>
+
+          <Card className='p-2'>
+            <CardContent className="flex flex-col items-center gap-1 p-2 text-center">
+              <BookOpen className="text-primary h-4 w-4" />
+              <p className="text-xs text-muted-foreground">Active Courses</p>
+              <p className="text-sm font-semibold">{courses.length}</p>
+            </CardContent>
+          </Card>
+
+          <Card className='p-2'>
+            <CardContent className="flex flex-col items-center gap-1 p-2 text-center">
+              <TrendingUp className="text-success h-4 w-4" />
+              <p className="text-xs text-muted-foreground">Avg. per Course</p>
+              <p>
+                {courses.length > 0 ? Math.round(totalEnrollments / courses.length) : 0}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+
+        <div className='gap-4 hidden md:flex md:grid-cols-3'>
           <Card className='p-0'>
             <CardContent className='flex items-center gap-4 p-6'>
               <div className='bg-primary/10 rounded-full p-3'>

@@ -369,7 +369,7 @@ const RevenuePage = () => {
 
       <section className='mx-auto max-w-7xl space-y-6'>
         {/* Wallet Card */}
-        <div className='border-border bg-card max-w-[300px] rounded-xl border p-6 shadow-sm sm:max-w-2/5'>
+        <div className='border-border bg-card w-full max-w-[400px] rounded-xl border p-6 shadow-sm sm:max-w-[400px]'>
           <div className='flex items-start justify-between'>
             <div>
               <p className='text-muted-foreground text-sm font-medium'>Available Balance</p>
