@@ -27,16 +27,16 @@ export default function MyCoursesPage() {
 
   const { data, isLoading } = useQuery({
     ...getPublishedCoursesOptions({ query: { pageable: { page, size } } }),
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
+    // refetchOnWindowFocus: false,
+    // refetchOnMount: false,
+    // refetchOnReconnect: false,
   });
 
   const { data: programsData } = useQuery({
     ...getAllTrainingProgramsOptions({ query: { pageable: {} } }),
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
+    // refetchOnWindowFocus: false,
+    // refetchOnMount: false,
+    // refetchOnReconnect: false,
   });
 
   const courses = data?.data?.content || [];
@@ -47,9 +47,9 @@ export default function MyCoursesPage() {
 
   const { data: apiCat } = useQuery({
     ...getAllCategoriesOptions({ query: { pageable: {} } }),
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
+    // refetchOnWindowFocus: false,
+    // refetchOnMount: false,
+    // refetchOnReconnect: false,
   });
 
   const apiCategories = apiCat?.data?.content || [];
