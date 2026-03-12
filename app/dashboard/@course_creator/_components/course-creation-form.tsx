@@ -164,7 +164,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       name: 'categories',
     });
 
-    const [showRequirementForm, setShowRequirementForm] = useState(false);
+    const [showRequirementForm, setShowRequirementForm] = useState(true);
     const [existingRequirements, setExistingRequirements] = useState<any>([]);
 
     const { data: trainingRequirements } = useQuery({
@@ -457,8 +457,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     };
 
-    const onError = (error: any) => {
-      toast.error(error);
+
+    const onError = (errors: any) => {
+      if (Object.keys(errors).length > 0) {
+        toast.error('Please fill in all required fields.');
+      }
     };
 
     useImperativeHandle(ref, () => ({
