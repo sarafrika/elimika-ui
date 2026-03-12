@@ -148,12 +148,12 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       {
         id: 'courses',
         title: 'Browse Courses',
-        url: `/dashboard/browse-courses`,
+        url: `/dashboard/all-courses`,
       },
       {
         id: 'book-instructor',
         title: `Book Instructor`,
-        url: `/dashboard/browse-courses/instructor`,
+        url: `/dashboard/all-courses/instructor`,
       },
     ]);
   }, [replaceBreadcrumbs]);

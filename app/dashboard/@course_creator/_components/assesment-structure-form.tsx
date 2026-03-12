@@ -564,8 +564,6 @@ export const CourseAssessmentStructure = ({
   const qc = useQueryClient();
   const creator = useCourseCreator()
 
-
-
   const { data: assessmentsData, isLoading } = useQuery({
     ...getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } }),
     enabled: !!courseUuid,

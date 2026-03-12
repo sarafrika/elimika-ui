@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import {
   AlertTriangle,
   Edit2,
@@ -32,9 +32,6 @@ import {
   deleteRubricCriterionMutation,
   deleteRubricScoringMutation,
   deleteScoringLevelMutation,
-  getRubricCriteriaQueryKey,
-  getScoringLevelsByRubricQueryKey,
-  searchAssessmentRubricsQueryKey,
   updateAssessmentRubricMutation,
   updateRubricCriterionMutation,
   updateRubricScoringMutation,
@@ -49,7 +46,7 @@ import {
 } from './rubric-chaining';
 
 // const DEFAULT_LEVEL_NAMES = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
-const DEFAULT_LEVEL_NAMES = ['Good', 'Needs Improvement'];
+const DEFAULT_LEVEL_NAMES = ['Good', 'Fair'];
 
 const createEmptyRubric = (): Rubric => ({
   uuid: '',
@@ -70,7 +67,7 @@ const createEmptyRubric = (): Rubric => ({
   max_score: 100,
   min_passing_score: 50,
   scoringLevels: DEFAULT_LEVEL_NAMES.map((name, idx) => ({
-    description: '',
+    description: name,
     rubric_uuid: '',
     feedback_category: '',
     performance_expectation: '',
@@ -98,7 +95,7 @@ const createEmptyRubric = (): Rubric => ({
       scoring: DEFAULT_LEVEL_NAMES.map((name, idx) => ({
         rubric_scoring_level_uuid: '',
         criteria_uuid: '',
-        description: name,
+        description: '',
         performance_expectation: '',
         feedback_category: '',
         score_range: String((4 - idx) * 25),
@@ -203,13 +200,12 @@ function DeleteConfirmModal({
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 const RubricManager: React.FC = () => {
-  const qc = useQueryClient();
   const creator = useCourseCreator();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
 
-  const { rubrics, isLoading, isError, isFetched } = useRubricsData(
+  const { rubrics, isLoading, isError, isFetched, refetchAll } = useRubricsData(
     creator?.data?.profile?.uuid as string
   );
 
@@ -236,7 +232,7 @@ const RubricManager: React.FC = () => {
   const updateScoring = useMutation(updateRubricScoringMutation());
   const deleteScoringApi = useMutation(deleteRubricScoringMutation());
 
-  // ── CRUD Handlers (unchanged) ───────────────────────────────────────────────
+  // ── CRUD Handlers ───────────────────────────────────────────────────────────
 
   const handleAddNewRubric = () => {
     const newRubric = createEmptyRubric();
@@ -272,22 +268,9 @@ const RubricManager: React.FC = () => {
     deleteRubric.mutate(
       { path: { uuid } },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           toast.success('Rubric deleted successfully');
-          qc.invalidateQueries({
-            queryKey: searchAssessmentRubricsQueryKey({
-              query: {
-                pageable: {},
-                searchParams: { course_creator_uuid_eq: creator?.data?.profile?.uuid as string },
-              },
-            }),
-          });
-          qc.invalidateQueries({
-            queryKey: getRubricCriteriaQueryKey({
-              path: { rubricUuid: uuid },
-              query: { pageable: {} },
-            }),
-          });
+          await refetchAll();
           setDeletingUuid(null);
         },
         onError: () => toast.error('Failed to delete rubric'),
@@ -391,26 +374,7 @@ const RubricManager: React.FC = () => {
 
         await Promise.all(linkingPromises);
 
-        qc.invalidateQueries({
-          queryKey: searchAssessmentRubricsQueryKey({
-            query: {
-              pageable: {},
-              searchParams: { course_creator_uuid_eq: creator?.data?.profile?.uuid as string },
-            },
-          }),
-        });
-        qc.invalidateQueries({
-          queryKey: getRubricCriteriaQueryKey({
-            path: { rubricUuid: newRubricUuid },
-            query: { pageable: {} },
-          }),
-        });
-        qc.invalidateQueries({
-          queryKey: getScoringLevelsByRubricQueryKey({
-            path: { rubricUuid: currentRubric.uuid },
-            query: { pageable: {} },
-          }),
-        });
+        await refetchAll();
 
         setIsEditing(false);
         setCurrentRubric(null);
@@ -458,8 +422,17 @@ const RubricManager: React.FC = () => {
         ]);
 
         const uniqueScoringLevels = currentRubric.scoringLevels || [];
+        const existingLevelsCount = uniqueScoringLevels.filter(l => !!l.uuid).length;
         const scoringLevelResponses = await Promise.all(
           uniqueScoringLevels.map((level, idx) => {
+            // For existing levels use their stored level_order; for new ones calculate
+            // based on how many new levels precede this one + existing count
+            const newLevelPosition =
+              uniqueScoringLevels.slice(0, idx).filter(l => !l.uuid).length + 1;
+            const resolvedLevelOrder = level.uuid
+              ? level.level_order || idx + 1
+              : existingLevelsCount + newLevelPosition;
+
             const payload = {
               rubric_uuid: currentRubric.uuid,
               description: level.description,
@@ -468,7 +441,7 @@ const RubricManager: React.FC = () => {
               is_passing_level: level.is_passing_level,
               performance_expectation: level.performance_expectation || '',
               feedback_category: level.feedback_category || '',
-              level_order: level.level_order,
+              level_order: resolvedLevelOrder,
               name: level.description,
               is_passing: level.is_passing_level || true,
             };
@@ -514,23 +487,33 @@ const RubricManager: React.FC = () => {
           criteriaUuids.flatMap((criteriaUuid, criteriaIndex) => {
             const criterion = currentRubric.criteria[criteriaIndex];
             if (!criterion) return [];
-            return scoringLevelResponses.map(scoringResponse => {
+            return scoringLevelResponses.map((scoringResponse, scoringLevelIndex) => {
               const scoringLevelUuid = scoringResponse.data?.uuid;
               if (!scoringLevelUuid) return Promise.resolve();
-              const scoringEntry = criterion.scoring.find(
-                s => s.rubric_scoring_level_uuid === scoringLevelUuid
-              );
+
+              const originalLevel = currentRubric.scoringLevels?.[scoringLevelIndex];
+              const isNewLevel = !originalLevel?.uuid; // level had no UUID before save
+
+              // For existing levels: match by rubric_scoring_level_uuid
+              // For new levels: match by position (UUID was '' so find() would never match)
+              const scoringEntry = isNewLevel
+                ? criterion.scoring[scoringLevelIndex]
+                : criterion.scoring.find(s => s.rubric_scoring_level_uuid === scoringLevelUuid);
+
               const linkPayload = {
                 criteria_uuid: criteriaUuid,
                 rubric_scoring_level_uuid: scoringLevelUuid,
                 performance_expectation: scoringEntry?.performance_expectation || '',
                 description: scoringEntry?.description || '',
               };
+
+              // New scoring link — no existing uuid to update
               if (!scoringEntry?.uuid)
                 return addScoring.mutateAsync({
                   body: linkPayload as any,
                   path: { rubricUuid: currentRubric.uuid, criteriaUuid },
                 });
+
               return updateScoring.mutateAsync({
                 path: {
                   scoringUuid: scoringEntry.uuid,
@@ -543,27 +526,8 @@ const RubricManager: React.FC = () => {
           })
         );
 
-        qc.invalidateQueries({
-          queryKey: searchAssessmentRubricsQueryKey({
-            query: {
-              pageable: {},
-              searchParams: { course_creator_uuid_eq: creator?.data?.profile?.uuid as string },
-            },
-          }),
-        });
-        qc.invalidateQueries({
-          queryKey: getRubricCriteriaQueryKey({
-            path: { rubricUuid: currentRubric.uuid },
-            query: { pageable: {} },
-          }),
-        });
-        qc.invalidateQueries({
-          queryKey: getScoringLevelsByRubricQueryKey({
-            path: { rubricUuid: currentRubric.uuid },
-            query: { pageable: {} },
-          }),
-        });
-        qc.invalidateQueries({ queryKey: ['getRubricScoring'] });
+        // Refetch every layer in sequence so UI shows fresh data immediately
+        await refetchAll();
 
         setIsEditing(false);
         setCurrentRubric(null);
@@ -585,7 +549,7 @@ const RubricManager: React.FC = () => {
     setDeletedScoringLevels([]);
   };
 
-  // ── Update Helpers (unchanged) ─────────────────────────────────────────────
+  // ── Update Helpers ─────────────────────────────────────────────────────────
 
   const updateRubricField = (field: keyof Omit<Rubric, 'criteria'>, value: string | number) => {
     if (!currentRubric) return;
@@ -629,17 +593,14 @@ const RubricManager: React.FC = () => {
     setCurrentRubric({ ...currentRubric, scoringLevels, criteria });
   };
 
+  // FIX 1: Only update the scoring level header name — never touch individual cell descriptions
   const updateScoringLevelName = (levelIndex: number, value: string) => {
     if (!currentRubric) return;
     const scoringLevels =
       currentRubric.scoringLevels?.map((sl, i) =>
         i === levelIndex ? { ...sl, description: value } : sl
       ) || [];
-    const criteria = currentRubric.criteria.map(c => ({
-      ...c,
-      scoring: c.scoring.map((s, i) => (i === levelIndex ? { ...s, description: value } : s)),
-    }));
-    setCurrentRubric({ ...currentRubric, scoringLevels, criteria });
+    setCurrentRubric({ ...currentRubric, scoringLevels });
   };
 
   const addCriterion = () => {
@@ -658,7 +619,7 @@ const RubricManager: React.FC = () => {
       scoring: currentRubric?.criteria[0]?.scoring.map(s => ({
         rubric_scoring_level_uuid: s.rubric_scoring_level_uuid,
         criteria_uuid: '',
-        description: s.description,
+        description: '',
         performance_expectation: '',
         feedback_category: '',
         score_range: s.score_range,
@@ -718,6 +679,35 @@ const RubricManager: React.FC = () => {
     setCurrentRubric({ ...currentRubric, scoringLevels, criteria });
   };
 
+  // FIX 2: Remove a scoring level column and all associated scoring cells
+  const removeLevel = (levelIndex: number) => {
+    if (!currentRubric) return;
+    if ((currentRubric.scoringLevels || []).length <= 1) {
+      toast.error('Cannot delete the last scoring level');
+      return;
+    }
+    const levelToRemove = currentRubric.scoringLevels?.[levelIndex];
+
+    // Track for API deletion on save (if the level has a real UUID)
+    if (levelToRemove?.uuid) {
+      setDeletedScoringLevels(prev => [...prev, levelToRemove.uuid]);
+      // Also track all scoring cells linked to this level
+      currentRubric.criteria.forEach(c => {
+        const cell = c.scoring.find(s => s.rubric_scoring_level_uuid === levelToRemove.uuid);
+        if (cell?.uuid) {
+          setDeletedScoring(prev => [...prev, cell.uuid]);
+        }
+      });
+    }
+
+    const scoringLevels = (currentRubric.scoringLevels || []).filter((_, i) => i !== levelIndex);
+    const criteria = currentRubric.criteria.map(c => ({
+      ...c,
+      scoring: c.scoring.filter((_, i) => i !== levelIndex),
+    }));
+    setCurrentRubric({ ...currentRubric, scoringLevels, criteria });
+  };
+
   const deleteCriteriaRow = (index: number) => {
     if (!currentRubric || currentRubric.criteria.length <= 1) {
       toast.error('Cannot delete the last criterion');
@@ -733,21 +723,8 @@ const RubricManager: React.FC = () => {
           },
         },
         {
-          onSuccess: () => {
-            qc.invalidateQueries({
-              queryKey: searchAssessmentRubricsQueryKey({
-                query: {
-                  pageable: {},
-                  searchParams: { course_creator_uuid_eq: creator?.data?.profile?.uuid as string },
-                },
-              }),
-            });
-            qc.invalidateQueries({
-              queryKey: getRubricCriteriaQueryKey({
-                path: { rubricUuid: currentRubric?.uuid },
-                query: { pageable: {} },
-              }),
-            });
+          onSuccess: async () => {
+            await refetchAll();
             toast.success('Criteria deleted successfully');
             setCurrentRubric({
               ...currentRubric,
@@ -929,12 +906,23 @@ const RubricManager: React.FC = () => {
                       {(currentRubric.scoringLevels || []).map((level, idx) => (
                         <th key={idx} className='min-w-[170px] border-l px-3 py-3'>
                           <div className='flex flex-col gap-2'>
-                            <input
-                              className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-2 py-1.5 text-xs font-medium shadow-sm focus-visible:ring-1 focus-visible:outline-none'
-                              value={level.description}
-                              onChange={e => updateScoringLevelName(idx, e.target.value)}
-                              placeholder='Level name'
-                            />
+                            <div className='flex items-center gap-1'>
+                              <input
+                                className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-w-0 flex-1 rounded-md border px-2 py-1.5 text-xs font-medium shadow-sm focus-visible:ring-1 focus-visible:outline-none'
+                                value={level.description}
+                                onChange={e => updateScoringLevelName(idx, e.target.value)}
+                                placeholder='Level name'
+                              />
+                              {/* FIX 2: Remove level button */}
+                              <button
+                                onClick={() => removeLevel(idx)}
+                                disabled={(currentRubric.scoringLevels || []).length <= 1}
+                                className='text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 rounded-md p-1 transition-colors disabled:pointer-events-none disabled:opacity-30'
+                                title='Remove this level'
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                             <input
                               type='text'
                               className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-2 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:outline-none'
@@ -966,8 +954,8 @@ const RubricManager: React.FC = () => {
                           const matchingScoring =
                             (scoringLevel.uuid
                               ? c.scoring.find(
-                                  s => s.rubric_scoring_level_uuid === scoringLevel.uuid
-                                )
+                                s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                              )
                               : undefined) ?? c.scoring[slIdx];
 
                           const scoringEntry = matchingScoring || {
@@ -982,8 +970,8 @@ const RubricManager: React.FC = () => {
                           // - Otherwise fall back to position index (slIdx)
                           const actualIdx = scoringLevel.uuid
                             ? c.scoring.findIndex(
-                                s => s.rubric_scoring_level_uuid === scoringLevel.uuid
-                              )
+                              s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                            )
                             : slIdx;
 
                           const resolvedIdx = actualIdx !== -1 ? actualIdx : slIdx;
