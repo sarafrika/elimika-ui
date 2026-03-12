@@ -1,7 +1,5 @@
 'use client';
 
-'use client';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useMemo, useRef, useState } from 'react';
@@ -45,13 +43,6 @@ type LessonCreationFormProps = {
   lessonContentsMap: any;
 };
 
-type Lesson = {
-  id: string;
-  isDraft?: boolean;
-  title: string;
-  description?: string;
-};
-
 type ContentType = 'TEXT' | 'VIDEO' | 'AUDIO' | 'PDF' | 'IMAGE';
 
 const lessonFormSchema = z.object({
@@ -77,6 +68,8 @@ const lessonContentSchema = z.object({
 });
 type LessonContentValues = z.infer<typeof lessonContentSchema>;
 
+const BLANK_LESSON: LessonFormValues = { title: '', description: '', lesson_number: '' };
+
 export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
   course,
   lessonContentsMap,
@@ -85,9 +78,14 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
   const qc = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // When true, the activeLesson effect must NOT repopulate the form.
+  // We set this after a successful create so the blank form stays blank
+  // until the user explicitly clicks a lesson in the sidebar.
+  const suppressFormSyncRef = useRef(false);
+
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
-    defaultValues: { title: '', description: '' },
+    defaultValues: BLANK_LESSON,
   });
 
   const contentForm = useForm<LessonContentValues>({
@@ -110,13 +108,12 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [lessonContents, setLessonContents] = useState<LessonContentValues[]>([]);
-
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
   const [showContentForm, setShowContentForm] = useState(false);
-
   const [contentType, setContentType] = useState<ContentType>('TEXT');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [creatingDraft, setCreatingDraft] = useState(false);
 
   // GET COURSE CONTENT TYPES
   const contentTypeUuid = contentForm.watch('content_type_uuid');
@@ -148,9 +145,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
 
   React.useEffect(() => {
     if (!activeLessonId) return;
-
     const existingContents = lessonContentsMap.get(activeLessonId) || [];
-
     setLessonContents(
       existingContents.map((content: any) => ({
         uuid: content.uuid,
@@ -169,31 +164,20 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
 
   React.useEffect(() => {
     if (!watchedType || !contentTypeData.length) return;
-
     const typeObj = contentTypeData.find(item => item.name?.toUpperCase() === watchedType);
-
-    if (typeObj) {
-      contentForm.setValue('content_type_uuid', typeObj.uuid);
-    }
+    if (typeObj) contentForm.setValue('content_type_uuid', typeObj.uuid);
   }, [watchedType, contentTypeData]);
 
   const enrichedLessonContentsMap = useMemo(() => {
     const map = new Map();
-
     lessons?.content?.forEach((lesson: any) => {
       const contents = lessonContentsMap.get(lesson.uuid) || [];
-
       const enriched = contents.map((content: any) => {
         const type = contentTypeData.find(item => item.uuid === content.content_type_uuid);
-        return {
-          ...content,
-          content_type_key: type?.name?.toUpperCase() || undefined,
-        };
+        return { ...content, content_type_key: type?.name?.toUpperCase() || undefined };
       });
-
       map.set(lesson.uuid, enriched);
     });
-
     return map;
   }, [lessons, lessonContentsMap, contentTypeData]);
 
@@ -210,19 +194,15 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
   const addLessonMutation = useMutation(addCourseLessonMutation());
   const updateLessonMutation = useMutation(updateCourseLessonMutation());
   const deleteLesson = useMutation(deleteCourseLessonMutation());
-
   const uploadLessonMedia = useMutation(uploadLessonMediaMutation());
-
   const createLessonContent = useMutation(addLessonContentMutation());
   const updateLessonContent = useMutation(updateLessonContentMutation());
   const deleteLessonContent = useMutation(deleteLessonContentMutation());
 
-  const [creatingDraft, setCreatingDraft] = useState(false);
-
+  // ── "New lesson" button: blank the form and enter draft mode ──────────────
   const addLessonDraft = () => {
-    const draftId = `draft-${crypto.randomUUID()}`;
-
-    form.reset({ title: '', description: '' });
+    suppressFormSyncRef.current = true; // prevent activeLesson effect from refilling form
+    form.reset(BLANK_LESSON);
     setActiveLessonId(null);
     setCreatingDraft(true);
     setShowContentForm(false);
@@ -237,6 +217,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
     [lessons, activeLessonId]
   );
 
+  // Auto-select the last lesson on first load — but only when not in draft mode
   React.useEffect(() => {
     if (!activeLessonId && !creatingDraft && lessons?.content?.length) {
       const lastLesson = lessons.content[lessons.content.length - 1];
@@ -244,7 +225,14 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
     }
   }, [lessons, activeLessonId, creatingDraft]);
 
+  // Sync form when the user picks a lesson from the sidebar.
+  // Suppressed right after a successful create so the blank form isn't overwritten.
   React.useEffect(() => {
+    if (suppressFormSyncRef.current) {
+      // consume the suppression flag — next render is fine
+      suppressFormSyncRef.current = false;
+      return;
+    }
     if (activeLesson) {
       form.reset({
         title: activeLesson.title || '',
@@ -252,7 +240,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
         lesson_number: activeLesson.lesson_number,
       });
     }
-  }, [activeLesson, form]);
+  }, [activeLesson]);
 
   const saveLesson = () => {
     if (!course?.data?.uuid) return;
@@ -272,6 +260,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
     };
 
     if (activeLessonId === null) {
+      // ── CREATE ───────────────────────────────────────────────────────────
       addLessonMutation.mutate(
         { body: createLessonBody, path: { courseUuid: course?.data?.uuid as string } },
         {
@@ -283,21 +272,24 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
               }),
             });
             toast.success(data?.message);
+
+            // Flag the sync effect to skip ONE cycle so the blank form persists.
+            suppressFormSyncRef.current = true;
+            form.reset(BLANK_LESSON);
+
             setCreatingDraft(false);
+            // Point the sidebar highlight at the new lesson without refilling the form
             setActiveLessonId(data?.data?.uuid as string);
           },
           onError: (data: any) => {
             const error = data?.error;
-
             if (error?.lesson_number) {
               if (error.lesson_number.toLowerCase().includes('duplicate')) {
                 toast.error('Duplicate lesson number found.');
               } else {
                 toast.error(error.lesson_number);
               }
-              // return;
             }
-
             toast.error(
               `${data?.message ?? 'An error occurred.'}. Check for duplicate lesson numbers.`
             );
@@ -305,6 +297,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
         }
       );
     } else {
+      // ── UPDATE ───────────────────────────────────────────────────────────
       updateLessonMutation.mutate(
         {
           body: createLessonBody as any,
@@ -321,7 +314,6 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
                 query: { pageable: {} },
               }),
             });
-
             qc.invalidateQueries({
               queryKey: getCourseLessonQueryKey({
                 path: {
@@ -330,7 +322,6 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
                 },
               }),
             });
-
             toast.success(data?.message);
           },
         }
@@ -360,8 +351,8 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
         {
           body: contentBody as any,
           path: {
-            courseUuid: courseId as string,
-            lessonUuid: activeLessonId as string,
+            courseUuid: courseId,
+            lessonUuid: activeLessonId,
             contentUuid: data.uuid as string,
           },
         },
@@ -369,7 +360,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
           onSuccess: response => {
             qc.invalidateQueries({
               queryKey: getLessonContentQueryKey({
-                path: { courseUuid: courseId as string, lessonUuid: activeLessonId as string },
+                path: { courseUuid: courseId, lessonUuid: activeLessonId },
               }),
             });
             toast.success(response?.message || 'Content updated successfully');
@@ -381,13 +372,13 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
       createLessonContent.mutate(
         {
           body: contentBody as any,
-          path: { courseUuid: courseId as string, lessonUuid: activeLessonId as string },
+          path: { courseUuid: courseId, lessonUuid: activeLessonId },
         },
         {
           onSuccess: response => {
             qc.invalidateQueries({
               queryKey: getLessonContentQueryKey({
-                path: { courseUuid: courseId as string, lessonUuid: activeLessonId as string },
+                path: { courseUuid: courseId, lessonUuid: activeLessonId },
               }),
             });
             toast.success(response?.message || 'Content created successfully');
@@ -400,7 +391,6 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
 
   const resetContentForm = () => {
     const textTypeObj = contentTypeData.find(item => item.name?.toUpperCase() === 'TEXT');
-
     contentForm.reset({
       content_type: 'TEXT',
       content_type_uuid: textTypeObj?.uuid || '',
@@ -420,7 +410,6 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
   const handleEditContent = (content: any) => {
     const contentTypeKey = content.content_type_key || content.content_type;
     const typeObj = contentTypeData.find(item => item.name?.toUpperCase() === contentTypeKey);
-
     contentForm.reset({
       content_type: contentTypeKey as ContentType,
       content_type_uuid: typeObj?.uuid || content.content_type_uuid,
@@ -431,7 +420,6 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
       display_order: content.display_order || 1,
       uuid: content.uuid,
     });
-
     setContentType(contentTypeKey as ContentType);
     setSelectedContentId(content.uuid);
     setShowContentForm(true);
@@ -440,12 +428,9 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
 
   const handleDeleteLesson = async (lessonId: string) => {
     if (!course?.data?.uuid) return;
-
     try {
       await deleteLesson.mutateAsync(
-        {
-          path: { courseUuid: course?.data?.uuid as string, lessonUuid: lessonId },
-        },
+        { path: { courseUuid: course?.data?.uuid as string, lessonUuid: lessonId } },
         {
           onSuccess: () => {
             toast.success('Lesson deleted successfully');
@@ -458,12 +443,11 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const handleDeleteContent = async (resolvedId: any, lessonId: any, contentId: any) => {
     if (!course?.data?.uuid) return;
-
     try {
       await deleteLessonContent.mutateAsync(
         {
@@ -484,23 +468,17 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const getContentIcon = (type: string) => {
     switch (type) {
-      case 'TEXT':
-        return <FileText className='h-4 w-4' />;
-      case 'IMAGE':
-        return <ImageIcon className='h-4 w-4' />;
-      case 'VIDEO':
-        return <Video className='h-4 w-4' />;
-      case 'AUDIO':
-        return <Headphones className='h-4 w-4' />;
-      case 'PDF':
-        return <FileUp className='h-4 w-4' />;
-      default:
-        return <FileText className='h-4 w-4' />;
+      case 'TEXT': return <FileText className='h-4 w-4' />;
+      case 'IMAGE': return <ImageIcon className='h-4 w-4' />;
+      case 'VIDEO': return <Video className='h-4 w-4' />;
+      case 'AUDIO': return <Headphones className='h-4 w-4' />;
+      case 'PDF': return <FileUp className='h-4 w-4' />;
+      default: return <FileText className='h-4 w-4' />;
     }
   };
 
@@ -528,7 +506,10 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
                 >
                   <div
                     onClick={() => {
+                      // Clicking a sidebar lesson always loads its data
+                      suppressFormSyncRef.current = false;
                       setActiveLessonId(lesson.uuid);
+                      setCreatingDraft(false);
                       setShowContentForm(false);
                       setSelectedContentId(null);
                     }}
@@ -542,7 +523,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
                     >
                       LESSON {lesson.lesson_number}
                     </p>
-                    <p className='text-foreground text-sm font-semibold'> {lesson.title} </p>
+                    <p className='text-foreground text-sm font-semibold'>{lesson.title}</p>
                   </div>
 
                   <div
@@ -565,10 +546,12 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
           <CardHeader className='border-border flex flex-row items-center justify-between border-b pb-4'>
             <div>
               <CardTitle className='text-foreground text-xl font-semibold'>
-                Lesson Details
+                {creatingDraft ? 'New Lesson' : 'Lesson Details'}
               </CardTitle>
               <p className='text-muted-foreground mt-1 text-sm'>
-                Configure the basic information for this lesson
+                {creatingDraft
+                  ? 'Fill in the details below and save to add this lesson.'
+                  : 'Configure the basic information for this lesson'}
               </p>
             </div>
           </CardHeader>
@@ -641,10 +624,14 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
                   <Button
                     type='button'
                     onClick={saveLesson}
-                    disabled={addLessonMutation.isPending}
+                    disabled={addLessonMutation.isPending || updateLessonMutation.isPending}
                     className='px-6'
                   >
-                    {addLessonMutation.isPending ? 'Saving...' : 'Save Lesson'}
+                    {addLessonMutation.isPending || updateLessonMutation.isPending
+                      ? 'Saving…'
+                      : activeLessonId && !creatingDraft
+                        ? 'Update Lesson'
+                        : 'Save Lesson'}
                   </Button>
                 </div>
               </div>
