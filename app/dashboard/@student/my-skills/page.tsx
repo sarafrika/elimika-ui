@@ -497,13 +497,12 @@ const MySkillsPage = () => {
                           </div>
                           <div className='bg-muted h-2 w-full overflow-hidden rounded-full'>
                             <div
-                              className={`h-2 rounded-full transition-all duration-500 ${
-                                course.status === 'complete' || course.status === 'passed'
+                              className={`h-2 rounded-full transition-all duration-500 ${course.status === 'complete' || course.status === 'passed'
                                   ? 'bg-success'
                                   : course.status === 'failed'
                                     ? 'bg-destructive'
                                     : 'bg-yellow-500'
-                              }`}
+                                }`}
                               style={{ width: `${course.progress}%` }}
                             />
                           </div>

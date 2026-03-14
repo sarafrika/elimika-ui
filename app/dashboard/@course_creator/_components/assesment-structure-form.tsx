@@ -15,6 +15,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../../components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '../../../../components/ui/sheet';
 import Spinner from '../../../../components/ui/spinner';
 import { Switch } from '../../../../components/ui/switch';
 import { useCourseCreator } from '../../../../context/course-creator-context';
@@ -23,7 +31,7 @@ import {
   deleteCourseAssessmentMutation,
   getCourseAssessmentsOptions,
   searchAssessmentRubricsOptions,
-  updateCourseAssessmentMutation
+  updateCourseAssessmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import { useRubricsData } from '../rubrics/rubric-chaining';
 
@@ -110,11 +118,12 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
-// ─── Modal ────────────────────────────────────────────────────────────────────
+// ─── Assessment Sheet ─────────────────────────────────────────────────────────
 
 type ModalMode = 'add' | 'edit';
 
-type AssessmentModalProps = {
+type AssessmentSheetProps = {
+  open: boolean;
   mode: ModalMode;
   initial?: Assessment;
   courseUuid: string;
@@ -123,14 +132,15 @@ type AssessmentModalProps = {
   onSuccess: () => void;
 };
 
-function AssessmentModal({
+function AssessmentSheet({
+  open,
   mode,
   initial,
   courseUuid,
   createdBy,
   onClose,
   onSuccess,
-}: AssessmentModalProps) {
+}: AssessmentSheetProps) {
   const [form, setForm] = useState<AssessmentFormValues>(() =>
     initial
       ? {
@@ -145,19 +155,39 @@ function AssessmentModal({
       : DEFAULT_FORM
   );
 
+  // Re-sync form when `initial` changes (e.g. switching between edit targets)
+  const [prevInitial, setPrevInitial] = useState(initial);
+  if (initial !== prevInitial) {
+    setPrevInitial(initial);
+    setForm(
+      initial
+        ? {
+          title: initial.title,
+          description: initial.description ?? '',
+          rubric_uuid: initial.rubric_uuid ?? '',
+          weight_percentage: initial.weight_percentage,
+          is_required: initial.is_required,
+          assessment_type: initial.assessment_type,
+          is_major_assessment: initial.is_major_assessment,
+        }
+        : DEFAULT_FORM
+    );
+  }
+
   const [errors, setErrors] = useState<Partial<Record<keyof AssessmentFormValues, string>>>({});
 
-  const creator = useCourseCreator()
+  const creator = useCourseCreator();
 
-  // const { data: allRubrics, isLoading: isLoadingRubrics } = useQuery(
-  //   getAllAssessmentRubricsOptions({ query: { pageable: {} } })
-  // );
   const { data: searchRubs, isLoading: isLoadingRubrics } = useQuery({
-    ...searchAssessmentRubricsOptions({ query: { pageable: {}, searchParams: { course_creator_uuid_eq: creator?.profile?.uuid as string } } }),
-    enabled: !!creator?.profile?.uuid
-  })
+    ...searchAssessmentRubricsOptions({
+      query: {
+        pageable: {},
+        searchParams: { course_creator_uuid_eq: creator?.profile?.uuid as string },
+      },
+    }),
+    enabled: !!creator?.profile?.uuid,
+  });
 
-  // const rubrics: any[] = allRubrics?.data?.content ?? [];
   const rubrics: any[] = searchRubs?.data?.content ?? [];
   const selectedRubric = rubrics.find((r: any) => r.uuid === form.rubric_uuid);
 
@@ -186,7 +216,7 @@ function AssessmentModal({
     return Object.keys(newErrors).length === 0;
   }
 
-  async function handleSubmit() {
+  function handleSubmit() {
     if (!validate()) return;
 
     const body = {
@@ -240,232 +270,214 @@ function AssessmentModal({
   }
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
-      {/* Backdrop */}
-      <div className='absolute inset-0 bg-black/50 backdrop-blur-sm' onClick={onClose} />
-
-      {/* Panel */}
-      <div className='bg-card relative z-10 w-full max-w-lg rounded-2xl border shadow-2xl'>
+    <Sheet open={open} onOpenChange={isOpen => !isOpen && onClose()}>
+      <SheetContent className='flex w-full flex-col gap-0 p-0 sm:max-w-[650px]' side='right'>
         {/* Header */}
-        <div className='flex items-center justify-between border-b px-6 py-4'>
-          <div>
-            <h2 className='text-foreground text-lg font-bold'>
-              {mode === 'add' ? 'Add Assessment' : 'Edit Assessment'}
-            </h2>
-            <p className='text-muted-foreground mt-0.5 text-xs'>
-              {mode === 'add'
-                ? 'Define a new assessment component for this course'
-                : 'Update the assessment component details'}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className='text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg p-1.5 transition-colors'
-          >
-            <X size={18} />
-          </button>
-        </div>
+        <SheetHeader className='border-b px-6 py-5'>
+          <SheetTitle>
+            {mode === 'add' ? 'Add Assessment' : 'Edit Assessment'}
+          </SheetTitle>
+          <SheetDescription>
+            {mode === 'add'
+              ? 'Define a new assessment component for this course'
+              : 'Update the assessment component details'}
+          </SheetDescription>
+        </SheetHeader>
 
-        {/* Body */}
-        <div className='flex flex-col gap-5 overflow-y-auto p-6' style={{ maxHeight: '70vh' }}>
-          {/* Title */}
-          <div className='flex flex-col gap-1.5'>
-            <Label className='text-sm font-medium'>
-              Title <span className='text-destructive'>*</span>
-            </Label>
-            <Input
-              placeholder='e.g. Weekly Quizzes'
-              value={form.title}
-              onChange={e => set('title', e.target.value)}
-              className={errors.title ? 'border-destructive' : ''}
-            />
-            {errors.title && <p className='text-destructive text-xs'>{errors.title}</p>}
-          </div>
-
-          {/* Description */}
-          <div className='flex flex-col gap-1.5'>
-            <Label className='text-sm font-medium'>Description</Label>
-            <textarea
-              placeholder='Brief description of the assessment component...'
-              value={form.description}
-              onChange={e => set('description', e.target.value)}
-              rows={3}
-              className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full resize-none rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none'
-            />
-          </div>
-
-          <div className="flex gap-4">
-            {/* Assessment Type */}
-            <div className="flex-1 flex flex-col gap-1.5">
-              <Label className="text-sm font-medium">
-                Assessment Type <span className="text-destructive">*</span>
-              </Label>
-              <Select value={form.assessment_type} onValueChange={v => set("assessment_type", v)}>
-                <SelectTrigger className={errors.assessment_type ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select assessment type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ASSESSMENT_TYPES.map(t => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.assessment_type && (
-                <p className="text-destructive text-xs">{errors.assessment_type}</p>
-              )}
-            </div>
-
-            {/* Weight */}
-            <div className="flex-1 flex flex-col gap-1.5">
-              <Label className="text-sm font-medium">
-                Weight Percentage (%) <span className="text-destructive">*</span>
+        {/* Scrollable body */}
+        <div className='flex-1 overflow-y-auto px-6 py-6'>
+          <div className='flex flex-col gap-5'>
+            {/* Title */}
+            <div className='flex flex-col gap-1.5'>
+              <Label className='text-sm font-medium'>
+                Title <span className='text-destructive'>*</span>
               </Label>
               <Input
-                type="number"
-                min={0}
-                max={100}
-                placeholder="e.g. 25"
-                value={form.weight_percentage}
-                onChange={e =>
-                  set("weight_percentage", e.target.value === "" ? "" : Number(e.target.value))
-                }
-                className={errors.weight_percentage ? "border-destructive" : ""}
+                placeholder='e.g. Weekly Quizzes'
+                value={form.title}
+                onChange={e => set('title', e.target.value)}
+                className={errors.title ? 'border-destructive' : ''}
               />
-              {errors.weight_percentage && (
-                <p className="text-destructive text-xs">{errors.weight_percentage}</p>
-              )}
+              {errors.title && <p className='text-destructive text-xs'>{errors.title}</p>}
             </div>
-          </div>
 
-          {/* Rubric (optional) */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium">Rubric (optional)</Label>
-            <p className="text-muted-foreground text-xs">
-              Associate a grading rubric with this assessment
-            </p>
+            {/* Description */}
+            <div className='flex flex-col gap-1.5'>
+              <Label className='text-sm font-medium'>Description</Label>
+              <textarea
+                placeholder='Brief description of the assessment component...'
+                value={form.description}
+                onChange={e => set('description', e.target.value)}
+                rows={3}
+                className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full resize-none rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none'
+              />
+            </div>
 
-            {isLoadingRubrics ? (
-              <div className="flex items-center gap-2 py-2">
-                <Spinner className="h-4 w-4" />
-                <span className="text-muted-foreground text-xs">Loading rubrics...</span>
-              </div>
-            ) : (
-              <>
-                {/* Dropdown */}
+            {/* Type + Weight */}
+            <div className='flex gap-4'>
+              <div className='flex flex-1 flex-col gap-1.5'>
+                <Label className='text-sm font-medium'>
+                  Assessment Type <span className='text-destructive'>*</span>
+                </Label>
                 <Select
-                  value={form.rubric_uuid || "__none__"}
-                  onValueChange={(v) => set("rubric_uuid", v === "__none__" ? "" : v)}
+                  value={form.assessment_type}
+                  onValueChange={v => set('assessment_type', v)}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a rubric (optional)" />
+                  <SelectTrigger className={errors.assessment_type ? 'border-destructive' : ''}>
+                    <SelectValue placeholder='Select type' />
                   </SelectTrigger>
-
                   <SelectContent>
-                    <SelectItem value="__none__">
-                      <span className="text-muted-foreground">None</span>
-                    </SelectItem>
-
-                    {rubrics.map((r: any) => (
-                      <SelectItem key={r.uuid} value={r.uuid}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{r.title}</span>
-                          {r.description && (
-                            <span className="text-muted-foreground line-clamp-1 text-xs">
-                              {r.description}
-                            </span>
-                          )}
-                        </div>
+                    {ASSESSMENT_TYPES.map(t => (
+                      <SelectItem key={t} value={t}>
+                        {t}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-
-                {/* If rubric selected → show chip */}
-                {selectedRubric ? (
-                  <div className="bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2">
-                    <div className="min-w-0">
-                      <p className="text-foreground truncate text-xs font-semibold">
-                        {selectedRubric.title}
-                      </p>
-
-                      {selectedRubric.description && (
-                        <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
-                          {selectedRubric.description}
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => set("rubric_uuid", "")}
-                      className="text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors"
-                      title="Clear rubric"
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-                ) : (
-                  /* No rubric selected → helper message + create button */
-                  <div className="bg-warning/20 border border-warning/40 rounded-lg p-4 flex flex-col gap-3">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="text-warning-foreground mt-0.5 h-4 w-4 shrink-0" />
-
-                      <div className="text-sm">
-                        <p className="font-medium text-warning-foreground">
-                          No rubric selected
-                        </p>
-                        <p className="text-warning-foreground/80 text-xs">
-                          If none of the available rubrics fit this assessment, you can
-                          create a new one tailored to this grading component.
-                        </p>
-                      </div>
-                    </div>
-
-                    <Link href="/dashboard/rubrics" target="_blank">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="w-fit self-center border-warning text-warning-foreground  hover:bg-warning/100"
-                        onClick={() => onClose()}
-                      >
-                        Create New Rubric
-                      </Button>
-                    </Link>
-                  </div>
+                {errors.assessment_type && (
+                  <p className='text-destructive text-xs'>{errors.assessment_type}</p>
                 )}
-              </>
-            )}
-          </div>
+              </div>
 
-          {/* Toggles */}
-          <div className='bg-muted/40 flex flex-col gap-4 rounded-xl border p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-foreground text-sm font-medium'>Required Assessment</p>
-                <p className='text-muted-foreground text-xs'>
-                  Students must complete this assessment
-                </p>
+              <div className='flex flex-1 flex-col gap-1.5'>
+                <Label className='text-sm font-medium'>
+                  Weight (%) <span className='text-destructive'>*</span>
+                </Label>
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  placeholder='e.g. 25'
+                  value={form.weight_percentage}
+                  onChange={e =>
+                    set('weight_percentage', e.target.value === '' ? '' : Number(e.target.value))
+                  }
+                  className={errors.weight_percentage ? 'border-destructive' : ''}
+                />
+                {errors.weight_percentage && (
+                  <p className='text-destructive text-xs'>{errors.weight_percentage}</p>
+                )}
               </div>
-              <Switch checked={form.is_required} onCheckedChange={v => set('is_required', v)} />
             </div>
-            <div className='flex items-center justify-between border-t pt-4'>
-              <div>
-                <p className='text-foreground text-sm font-medium'>Major Assessment</p>
-                <p className='text-muted-foreground text-xs'>Mark as a high-stakes assessment</p>
+
+            {/* Rubric */}
+            <div className='flex flex-col gap-1.5'>
+              <Label className='text-sm font-medium'>Rubric (optional)</Label>
+              <p className='text-muted-foreground text-xs'>
+                Associate a grading rubric with this assessment
+              </p>
+
+              {isLoadingRubrics ? (
+                <div className='flex items-center gap-2 py-2'>
+                  <Spinner className='h-4 w-4' />
+                  <span className='text-muted-foreground text-xs'>Loading rubrics...</span>
+                </div>
+              ) : (
+                <>
+                  <Select
+                    value={form.rubric_uuid || '__none__'}
+                    onValueChange={v => set('rubric_uuid', v === '__none__' ? '' : v)}
+                  >
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder='Select a rubric (optional)' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='__none__'>
+                        <span className='text-muted-foreground'>None</span>
+                      </SelectItem>
+                      {rubrics.map((r: any) => (
+                        <SelectItem key={r.uuid} value={r.uuid}>
+                          <div className='flex flex-col'>
+                            <span className='font-medium'>{r.title}</span>
+                            {r.description && (
+                              <span className='text-muted-foreground line-clamp-1 text-xs'>
+                                {r.description}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {selectedRubric ? (
+                    <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
+                      <div className='min-w-0'>
+                        <p className='text-foreground truncate text-xs font-semibold'>
+                          {selectedRubric.title}
+                        </p>
+                        {selectedRubric.description && (
+                          <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
+                            {selectedRubric.description}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type='button'
+                        onClick={() => set('rubric_uuid', '')}
+                        className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
+                        title='Clear rubric'
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
+                      <div className='flex items-start gap-2'>
+                        <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
+                        <div className='text-sm'>
+                          <p className='text-warning-foreground font-medium'>No rubric selected</p>
+                          <p className='text-warning-foreground/80 text-xs'>
+                            If none of the available rubrics fit, you can create a new one.
+                          </p>
+                        </div>
+                      </div>
+                      <Link href='/dashboard/rubrics' target='_blank'>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='border-warning text-warning-foreground hover:bg-warning/100 w-fit self-center'
+                          onClick={onClose}
+                        >
+                          Create New Rubric
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Toggles */}
+            <div className='bg-muted/40 flex flex-col gap-4 rounded-xl border p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-foreground text-sm font-medium'>Required Assessment</p>
+                  <p className='text-muted-foreground text-xs'>
+                    Students must complete this assessment
+                  </p>
+                </div>
+                <Switch checked={form.is_required} onCheckedChange={v => set('is_required', v)} />
               </div>
-              <Switch
-                checked={form.is_major_assessment}
-                onCheckedChange={v => set('is_major_assessment', v)}
-              />
+              <div className='flex items-center justify-between border-t pt-4'>
+                <div>
+                  <p className='text-foreground text-sm font-medium'>Major Assessment</p>
+                  <p className='text-muted-foreground text-xs'>
+                    Mark as a high-stakes assessment
+                  </p>
+                </div>
+                <Switch
+                  checked={form.is_major_assessment}
+                  onCheckedChange={v => set('is_major_assessment', v)}
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className='flex items-center justify-end gap-3 border-t px-6 py-4'>
+        <SheetFooter className='border-t px-6 py-4'>
           <Button variant='outline' onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
@@ -482,25 +494,33 @@ function AssessmentModal({
               </>
             )}
           </Button>
-        </div>
-      </div>
-    </div>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
-// ─── Delete Confirm Modal ─────────────────────────────────────────────────────
+// ─── Delete Confirm Sheet ─────────────────────────────────────────────────────
 
-type DeleteConfirmProps = {
-  assessment: Assessment;
+type DeleteConfirmSheetProps = {
+  open: boolean;
+  assessment: Assessment | undefined;
   courseUuid: string;
   onClose: () => void;
   onSuccess: () => void;
 };
 
-function DeleteConfirmModal({ assessment, courseUuid, onClose, onSuccess }: DeleteConfirmProps) {
+function DeleteConfirmSheet({
+  open,
+  assessment,
+  courseUuid,
+  onClose,
+  onSuccess,
+}: DeleteConfirmSheetProps) {
   const deleteMut = useMutation(deleteCourseAssessmentMutation());
 
   function handleDelete() {
+    if (!assessment) return;
     deleteMut.mutate({ path: { courseUuid, assessmentUuid: assessment.uuid } } as any, {
       onSuccess: () => {
         toast.success('Assessment deleted successfully');
@@ -513,32 +533,33 @@ function DeleteConfirmModal({ assessment, courseUuid, onClose, onSuccess }: Dele
   }
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
-      <div className='absolute inset-0 bg-black/50 backdrop-blur-sm' onClick={onClose} />
-      <div className='bg-card relative z-10 w-full max-w-sm rounded-2xl border p-6 shadow-2xl'>
-        <div className='bg-destructive/10 mb-4 flex h-12 w-12 items-center justify-center rounded-full'>
-          <AlertTriangle size={22} className='text-destructive' />
+    <Sheet open={open} onOpenChange={isOpen => !isOpen && onClose()}>
+      <SheetContent className='flex w-full flex-col gap-0 p-0 sm:max-w-sm' side='right'>
+        <SheetHeader className='border-b px-6 py-5'>
+          <SheetTitle>Delete Assessment</SheetTitle>
+          <SheetDescription>This action cannot be undone.</SheetDescription>
+        </SheetHeader>
+
+        <div className='flex flex-1 flex-col items-start gap-4 px-6 py-6'>
+          <div className='bg-destructive/10 flex h-12 w-12 items-center justify-center rounded-full'>
+            <AlertTriangle size={22} className='text-destructive' />
+          </div>
+          <p className='text-muted-foreground text-sm'>
+            Are you sure you want to delete{' '}
+            <span className='text-foreground font-semibold'>{assessment?.title}</span>? This
+            cannot be undone.
+          </p>
         </div>
-        <h3 className='text-foreground mb-1 text-base font-bold'>Delete Assessment</h3>
-        <p className='text-muted-foreground mb-6 text-sm'>
-          Are you sure you want to delete{' '}
-          <span className='text-foreground font-semibold'>{assessment.title}</span>? This action
-          cannot be undone.
-        </p>
-        <div className='flex gap-3'>
-          <Button
-            variant='outline'
-            className='flex-1'
-            onClick={onClose}
-            disabled={deleteMut.isPending}
-          >
+
+        <SheetFooter className='border-t px-6 py-4'>
+          <Button variant='outline' onClick={onClose} disabled={deleteMut.isPending}>
             Cancel
           </Button>
           <Button
             variant='destructive'
-            className='flex-1'
             onClick={handleDelete}
             disabled={deleteMut.isPending}
+            className='min-w-[100px]'
           >
             {deleteMut.isPending ? (
               <>
@@ -549,20 +570,19 @@ function DeleteConfirmModal({ assessment, courseUuid, onClose, onSuccess }: Dele
               'Delete'
             )}
           </Button>
-        </div>
-      </div>
-    </div>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-
 export const CourseAssessmentStructure = ({
   courseUuid,
   createdBy,
 }: CourseAssessmentStructureProps) => {
   const qc = useQueryClient();
-  const creator = useCourseCreator()
+  const creator = useCourseCreator();
 
   const { data: assessmentsData, isLoading } = useQuery({
     ...getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } }),
@@ -573,13 +593,13 @@ export const CourseAssessmentStructure = ({
   const { rubrics, isLoading: rubricIsLoading, isError, isFetched } = useRubricsData(
     creator?.data?.profile?.uuid as string
   );
-  const filteredRubrics = rubrics.filter((rubric) =>
-    assessments.some((assessment) => assessment.rubric_uuid === rubric.uuid)
+  const filteredRubrics = rubrics.filter(rubric =>
+    assessments.some(assessment => assessment.rubric_uuid === rubric.uuid)
   );
 
   const totalWeight = assessments.reduce((sum, a) => sum + (a.weight_percentage ?? 0), 0);
 
-  // Modal state
+  // Sheet state
   const [modalMode, setModalMode] = useState<ModalMode | null>(null);
   const [editingAssessment, setEditingAssessment] = useState<Assessment | undefined>(undefined);
   const [deletingAssessment, setDeletingAssessment] = useState<Assessment | undefined>(undefined);
@@ -611,6 +631,41 @@ export const CourseAssessmentStructure = ({
     closeModal();
     setDeletingAssessment(undefined);
   }
+
+  // mock
+  const mockTasks = [
+    { id: 'task-assignment-1', title: 'Essay Assignment' },
+    { id: 'task-quiz-1', title: 'Module 1 Quiz' },
+    { id: 'task-quiz-2', title: 'Midterm Quiz' },
+    { id: 'task-project-1', title: 'Final Project' },
+    { id: 'task-discussion-1', title: 'Discussion Participation' },
+    { id: 'task-lab-1', title: 'Lab Exercise' },
+    { id: 'task-presentation-1', title: 'Group Presentation' },
+    { id: 'task-reflection-1', title: 'Weekly Reflection' },
+  ];
+
+  const [assessmentTasks, setAssessmentTasks] = useState<Record<string, string[]>>({});
+
+  const addTaskToAssessment = (assessmentId: string, taskId: string) => {
+    setAssessmentTasks(prev => {
+      const existing = prev[assessmentId] || [];
+
+      if (existing.includes(taskId)) return prev;
+
+      return {
+        ...prev,
+        [assessmentId]: [...existing, taskId],
+      };
+    });
+  };
+
+  const removeTask = (assessmentId: string, taskId: string) => {
+    setAssessmentTasks(prev => ({
+      ...prev,
+      [assessmentId]: (prev[assessmentId] || []).filter(t => t !== taskId),
+    }));
+  };
+
 
   return (
     <>
@@ -658,26 +713,44 @@ export const CourseAssessmentStructure = ({
                   <th className='text-foreground px-6 py-3 text-left font-semibold'>
                     Component Title
                   </th>
-                  <th className='text-foreground px-4 py-3 text-left font-semibold'>Type</th>
-                  <th className='text-foreground px-4 py-3 text-right font-semibold'>Weight</th>
-                  <th className='text-foreground px-4 py-3 text-right font-semibold'>
-                    Score Range
+
+                  <th className='text-foreground px-4 py-3 text-left font-semibold'>
+                    Weight (Score Range)
                   </th>
-                  <th className='text-foreground px-4 py-3 text-center font-semibold'>Required</th>
-                  <th className='text-foreground px-4 py-3 text-right font-semibold'>Actions</th>
+
+                  <th className='text-foreground px-4 py-3 text-left font-semibold'>
+                    Linked Tasks
+                  </th>
+
+                  <th className='text-foreground px-4 py-3 text-left font-semibold'>
+                    Type
+                  </th>
+
+                  <th className='text-foreground px-4 py-3 text-center font-semibold'>
+                    Required
+                  </th>
+
+                  <th className='text-foreground px-4 py-3 text-right font-semibold'>
+                    Actions
+                  </th>
                 </tr>
               </thead>
+
               <tbody className='divide-y'>
                 {assessments.map(a => (
                   <tr key={a.uuid} className='hover:bg-muted/30 transition-colors'>
+
+                    {/* Component */}
                     <td className='px-6 py-4'>
                       <div>
                         <p className='text-foreground font-medium'>{a.title}</p>
+
                         {a.description && (
                           <p className='text-muted-foreground mt-0.5 line-clamp-1 text-xs'>
                             {a.description}
                           </p>
                         )}
+
                         {a.is_major_assessment && (
                           <span className='bg-primary/15 text-primary mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold'>
                             Major
@@ -685,32 +758,84 @@ export const CourseAssessmentStructure = ({
                         )}
                       </div>
                     </td>
-                    <td className='px-4 py-4 flex flex-col gap-1 items-start'>
-                      <TypeBadge type={a.assessment_type} />
-                      <div>
+
+                    {/* Weight */}
+                    <td className='text-foreground px-4 py-4 text-left font-semibold'>
+                      {a.weight_percentage}% (0–{a.weight_percentage})
+                    </td>
+
+                    {/* Linked tasks */}
+                    <td className='px-4 py-4'>
+                      <div className='flex flex-col gap-1'>
+
+                        {/* Selected tasks */}
+                        {(assessmentTasks[a.uuid] || []).map(taskId => {
+                          const task = mockTasks.find(t => t.id === taskId);
+
+                          return (
+                            <span
+                              key={taskId}
+                              className='bg-primary/10 text-primary flex items-center gap-1 rounded-full px-2 py-0.5 text-xs w-max'
+                            >
+                              {task?.title}
+                              <button
+                                onClick={() => removeTask(a.uuid, taskId)}
+                                className='text-primary/70 hover:text-primary'
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          );
+                        })}
+
+                        {/* ShadCN Select dropdown */}
+                        <Select
+                          onValueChange={value => {
+                            if (!value) return;
+                            addTaskToAssessment(a.uuid, value);
+                          }}
+                          defaultValue=''
+                        >
+                          <SelectTrigger className='w-full border-input bg-background text-foreground rounded-md border px-2 py-1 text-[13px]'>
+                            <span className='text-xs text-muted-foreground'>
+                              Select task
+                            </span>
+                          </SelectTrigger>
+
+                          <SelectContent>
+                            {mockTasks.map(task => (
+                              <SelectItem key={task.id} value={task.id}>
+                                {task.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </td>
+
+                    {/* Type */}
+                    <td className='px-4 py-4'>
+                      <div className='flex flex-col items-start gap-1'>
+                        <TypeBadge type={a.assessment_type} />
+
                         {a.rubric_uuid === null && (
-                          <div className="flex items-center gap-2">
-                            <span className="bg-destructive/10 text-destructive rounded-md px-2 py-0.5 text-xs font-medium">
+                          <div className='flex items-center gap-2'>
+                            <span className='bg-destructive/10 text-destructive rounded-md px-2 py-0.5 text-xs font-medium'>
                               No rubric
                             </span>
 
                             <button
                               onClick={() => openEdit(a)}
-                              className="text-destructive hover:text-destructive/80 text-xs font-medium underline underline-offset-2 transition-colors"
+                              className='text-destructive hover:text-destructive/80 text-xs font-medium underline underline-offset-2 transition-colors'
                             >
                               Add rubric
                             </button>
                           </div>
                         )}
                       </div>
+                    </td>
 
-                    </td>
-                    <td className='text-foreground px-4 py-4 text-right font-semibold'>
-                      {a.weight_percentage}%
-                    </td>
-                    <td className='text-foreground px-4 py-4 text-right font-semibold'>
-                      0–{a.weight_percentage}
-                    </td>
+                    {/* Required */}
                     <td className='px-4 py-4 text-center'>
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
@@ -721,6 +846,8 @@ export const CourseAssessmentStructure = ({
                         {a.is_required ? 'Yes' : 'No'}
                       </span>
                     </td>
+
+                    {/* Actions */}
                     <td className='px-4 py-4'>
                       <div className='flex items-center justify-end gap-1'>
                         <button
@@ -730,6 +857,7 @@ export const CourseAssessmentStructure = ({
                         >
                           <Pencil size={15} />
                         </button>
+
                         <button
                           onClick={() => openDelete(a)}
                           className='text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg p-1.5 transition-colors'
@@ -739,16 +867,21 @@ export const CourseAssessmentStructure = ({
                         </button>
                       </div>
                     </td>
+
                   </tr>
                 ))}
               </tbody>
-              {/* Total row */}
+
+              {/* Footer */}
               <tfoot>
                 <tr className='bg-muted/40 border-t'>
-                  <td className='text-foreground px-6 py-3 font-bold'>Total</td>
-                  <td className='px-4 py-3' />
+                  <td className='text-foreground px-6 py-3 font-bold'>
+                    Total
+                  </td>
+
+                  {/* Weight total */}
                   <td
-                    className={`px-4 py-3 text-right font-bold ${totalWeight === 100
+                    className={`px-4 py-3 text-left font-bold ${totalWeight === 100
                       ? 'text-green-600'
                       : totalWeight > 100
                         ? 'text-destructive'
@@ -757,7 +890,9 @@ export const CourseAssessmentStructure = ({
                   >
                     {totalWeight}%
                   </td>
-                  <td className='text-foreground px-4 py-3 text-right font-bold'>{totalWeight}</td>
+
+                  <td className='px-4 py-3' />
+                  <td className='px-4 py-3' />
                   <td className='px-4 py-3' />
                   <td className='px-4 py-3' />
                 </tr>
@@ -766,7 +901,6 @@ export const CourseAssessmentStructure = ({
           </div>
         )}
 
-        {/* Weight warning */}
         {!isLoading && assessments.length > 0 && totalWeight !== 100 && (
           <div
             className={`flex items-center gap-2 border-t px-6 py-3 text-sm font-medium ${totalWeight > 100 ? 'bg-destructive/5 text-destructive' : 'bg-primary/15 text-primary'
@@ -780,17 +914,17 @@ export const CourseAssessmentStructure = ({
         )}
       </div>
 
-      <div className='bg-card shadow-sm mt-10'>
-        {/* Header */}
-        <div className='flex flex-col gap-1 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>
-          <div>
-            <h3 className='text-foreground text-lg font-bold'>
-              Evaluation Structure (Added Rubrics)
-            </h3>
+      {/* Evaluation Structure */}
+      <div className='bg-card mt-10 '>
+        <div className='flex flex-col'>
+          <div className='flex flex-col gap-1 px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
+            <div>
+              <h3 className='text-foreground text-lg font-bold'>
+                Course Rubrics
+              </h3>
+            </div>
           </div>
-        </div>
 
-        <div className='flex flex-col divide-y'>
           {filteredRubrics.map(rubric => {
             const sortedLevels = [...(rubric.scoringLevels ?? [])].sort(
               (a: any, b: any) => (a.level_order ?? 0) - (b.level_order ?? 0)
@@ -799,7 +933,6 @@ export const CourseAssessmentStructure = ({
               (a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0)
             );
 
-            // Build matrix lookup: criteriaUuid_levelUuid → scoring cell
             const matrixCells: Record<string, any> = {};
             sortedCriteria.forEach((crit: any) => {
               (crit.scoring ?? []).forEach((cell: any) => {
@@ -812,10 +945,8 @@ export const CourseAssessmentStructure = ({
                 key={rubric.uuid}
                 className='bg-card mx-2 my-4 overflow-hidden rounded-xl border pb-3 shadow-sm'
               >
-                {/* ── Card header ── */}
                 <div className='px-6 py-5'>
                   <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-                    {/* Left: title + meta */}
                     <div className='flex flex-col gap-1.5'>
                       <h4 className='text-foreground text-base font-bold'>
                         {rubric.title || 'Untitled Rubric'}
@@ -830,9 +961,7 @@ export const CourseAssessmentStructure = ({
                           <span className='flex items-center gap-1'>
                             <span className='h-2 w-2 rounded-full bg-green-500' />
                             Type:{' '}
-                            <span className='text-foreground font-medium'>
-                              {rubric.rubric_type}
-                            </span>
+                            <span className='text-foreground font-medium'>{rubric.rubric_type}</span>
                           </span>
                         )}
                         {rubric.rubric_category && (
@@ -859,9 +988,7 @@ export const CourseAssessmentStructure = ({
                         {rubric.total_weight != null && (
                           <span>
                             Weight:{' '}
-                            <span className='text-foreground font-medium'>
-                              {rubric.total_weight}
-                            </span>
+                            <span className='text-foreground font-medium'>{rubric.total_weight}</span>
                           </span>
                         )}
                         {rubric.min_passing_score != null && (
@@ -874,16 +1001,9 @@ export const CourseAssessmentStructure = ({
                         )}
                       </div>
                     </div>
-
-                    {/* Right: action buttons */}
                     <div className='flex shrink-0 items-center gap-2'>
-                      <Link href="/dashboard/rubrics" target="_blank">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="w-fit self-center"
-                        >
+                      <Link href='/dashboard/rubrics' target='_blank'>
+                        <Button type='button' variant='outline' size='sm' className='w-fit self-center'>
                           <Edit2 size={13} /> Edit
                         </Button>
                       </Link>
@@ -891,7 +1011,6 @@ export const CourseAssessmentStructure = ({
                   </div>
                 </div>
 
-                {/* ── Criteria matrix ── */}
                 {sortedCriteria.length === 0 ? (
                   <div className='text-muted-foreground border-t px-6 py-4 text-xs italic'>
                     No criteria added yet.
@@ -927,18 +1046,16 @@ export const CourseAssessmentStructure = ({
                       <tbody className='divide-y'>
                         {sortedCriteria.map((crit: any) => (
                           <tr key={crit.uuid} className='hover:bg-muted/20 transition-colors'>
-                            {/* Criterion name */}
                             <td className='px-4 py-3 align-top'>
                               <p className='text-foreground text-xs font-medium'>
                                 {crit.component_name}
                               </p>
                               {crit.description && (
-                                <p className='text-muted-foreground mt-0.5 text-xs whitespace-pre-wrap'>
+                                <p className='text-muted-foreground mt-0.5 whitespace-pre-wrap text-xs'>
                                   {crit.description}
                                 </p>
                               )}
                             </td>
-                            {/* Scoring cells */}
                             {sortedLevels.map((level: any) => {
                               const cell = matrixCells[`${crit.uuid}_${level.uuid}`] ?? null;
                               return (
@@ -975,27 +1092,25 @@ export const CourseAssessmentStructure = ({
         </div>
       </div>
 
-      {/* Add / Edit Modal */}
-      {modalMode && (
-        <AssessmentModal
-          mode={modalMode}
-          initial={editingAssessment}
-          courseUuid={courseUuid}
-          createdBy={createdBy}
-          onClose={closeModal}
-          onSuccess={onMutationSuccess}
-        />
-      )}
+      {/* Assessment Sheet (add / edit) */}
+      <AssessmentSheet
+        open={!!modalMode}
+        mode={modalMode ?? 'add'}
+        initial={editingAssessment}
+        courseUuid={courseUuid}
+        createdBy={createdBy}
+        onClose={closeModal}
+        onSuccess={onMutationSuccess}
+      />
 
-      {/* Delete Confirm Modal */}
-      {deletingAssessment && (
-        <DeleteConfirmModal
-          assessment={deletingAssessment}
-          courseUuid={courseUuid}
-          onClose={() => setDeletingAssessment(undefined)}
-          onSuccess={onMutationSuccess}
-        />
-      )}
+      {/* Delete Confirm Sheet */}
+      <DeleteConfirmSheet
+        open={!!deletingAssessment}
+        assessment={deletingAssessment}
+        courseUuid={courseUuid}
+        onClose={() => setDeletingAssessment(undefined)}
+        onSuccess={onMutationSuccess}
+      />
     </>
   );
 };
