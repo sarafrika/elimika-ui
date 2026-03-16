@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { elimikaDesignSystem } from '@/lib/design-system';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   ArrowUpRight,
   ChevronDown,
@@ -30,7 +30,9 @@ import {
   getRevenueDashboardOptions,
   getWalletOptions,
   listTransactionsOptions,
+  transferMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import { TransferFundsSheet } from '../../_components/transfer-funds-sheet';
 
 // Status badge color map with semantic tokens
 const STATUS_BADGE_MAP = {
@@ -56,6 +58,53 @@ const RevenuePage = () => {
   const [size, setSize] = useState(10);
   const [sortBy, setSortBy] = useState('created_date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const [isTransferSheetOpen, setIsTransferSheetOpen] = useState(false);
+  const [targetUserUuid, setTargetUserUuid] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferCurrency, setTransferCurrency] = useState('KES');
+  const [transferReference, setTransferReference] = useState('');
+  const [transferDescription, setTransferDescription] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+
+  const transferFundsMut = useMutation({
+    ...transferMutation(),
+    onSuccess: () => {
+      setTargetUserUuid('');
+      setTransferAmount('');
+      setTransferCurrency('KES');
+      setTransferReference('');
+      setTransferDescription('');
+      setUserSearchQuery('');
+      setIsTransferSheetOpen(false);
+    },
+  });
+
+  const handleTransferFunds = () => {
+    if (!targetUserUuid || !transferAmount || !transferCurrency) return;
+
+    transferFundsMut.mutate({
+      body: {
+        target_user_uuid: targetUserUuid,
+        amount: parseFloat(transferAmount),
+        currency_code: transferCurrency,
+        reference:
+          transferReference ||
+          `TRANSFER-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+        description: transferDescription || 'Fund transfer',
+      },
+      path: { userUuid: targetUserUuid },
+    });
+  };
+
+  const resetTransferForm = () => {
+    setTargetUserUuid('');
+    setTransferAmount('');
+    setTransferCurrency('KES');
+    setTransferReference('');
+    setTransferDescription('');
+    setUserSearchQuery('');
+  };
 
   const { data } = useQuery({
     ...getClassDefinitionsForInstructorOptions({
@@ -287,6 +336,9 @@ const RevenuePage = () => {
     return filteredTransactions.slice(start, start + size);
   }, [filteredTransactions, page, size]);
 
+  const isInsufficientBalance =
+    !!transferAmount && parseFloat(transferAmount) > analyticsData.netRevenue;
+
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
       {/* Header */}
@@ -335,7 +387,9 @@ const RevenuePage = () => {
               <Landmark className='text-primary' size={24} />
             </div>
           </div>
-          <Button className='mt-6 w-full'>Withdraw Funds</Button>
+          <Button
+            onClick={() => setIsTransferSheetOpen(true)}
+            className='mt-6 w-full'>Withdraw Funds</Button>
         </div>
 
         {/* View Stats Button */}
@@ -638,6 +692,46 @@ const RevenuePage = () => {
           </div>
         </div>
       </section>
+
+
+      {/* ── Transfer Funds Sheet ───────────────────────────────────────────── */}
+      <TransferFundsSheet
+        open={isTransferSheetOpen}
+        onOpenChange={(open) => {
+          setIsTransferSheetOpen(open);
+          if (!open) resetTransferForm();
+        }}
+        balance={analyticsData.netRevenue}
+        isInsufficientBalance={isInsufficientBalance}
+
+        targetUserUuid={targetUserUuid}
+        setTargetUserUuid={setTargetUserUuid}
+
+        transferAmount={transferAmount}
+        setTransferAmount={setTransferAmount}
+
+        transferCurrency={transferCurrency}
+        setTransferCurrency={setTransferCurrency}
+
+        transferReference={transferReference}
+        setTransferReference={setTransferReference}
+
+        transferDescription={transferDescription}
+        setTransferDescription={setTransferDescription}
+
+        userSearchQuery={userSearchQuery}
+        setUserSearchQuery={setUserSearchQuery}
+
+        isPending={transferFundsMut.isPending}
+        isError={transferFundsMut.isError}
+        isSuccess={transferFundsMut.isSuccess}
+
+        onSubmit={handleTransferFunds}
+        onCancel={() => {
+          setIsTransferSheetOpen(false);
+          resetTransferForm();
+        }}
+      />
     </div>
   );
 };

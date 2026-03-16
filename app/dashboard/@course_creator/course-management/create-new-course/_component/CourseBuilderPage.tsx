@@ -185,7 +185,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   if (creatorLoading) {
@@ -238,7 +238,7 @@ export default function CourseBuilderPage() {
             <StepperTrigger step={2} title='Lesson Contents' icon={File} />
             <StepperTrigger step={3} title='Assessment Tasks' icon={SlidersHorizontal} />
 
-            <StepperTrigger step={4} title='Evaluation Criteria' icon={CheckCheck} />
+            <StepperTrigger step={4} title='Assessment Structure' icon={CheckCheck} />
 
             {/* <StepperTrigger step={5} title='Rules' icon={ClipboardList} /> */}
             <StepperTrigger step={5} title='Branding' icon={Palette} />
@@ -313,7 +313,7 @@ export default function CourseBuilderPage() {
               title='Course Assessment'
               description='Create assessments to evaluate student performance'
               showNavigation
-              nextButtonText='Continue to Evaluation Criteria'
+              nextButtonText='Continue to Assessment Structure'
               previousButtonText='Back to Lesson Contents'
             >
               <AssessmentCreationForm
@@ -325,7 +325,7 @@ export default function CourseBuilderPage() {
 
             <StepperContent
               step={4}
-              title='Evaluation Criteria'
+              title='Assessment Structure'
               description='Create assessment rubrics to evaluate student performance'
               showNavigation
               nextButtonText='Continue to Branding'
@@ -361,7 +361,7 @@ export default function CourseBuilderPage() {
               showNavigation
               nextButtonText='Continue to Pricing'
               // previousButtonText='Back to Rules'
-              previousButtonText='Back to Assessment criteria'
+              previousButtonText='Back to Assessment Structure'
             >
               <CourseBrandingForm
                 ref={formRef}

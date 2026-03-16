@@ -65,7 +65,7 @@ export default function CourseCreatorOverviewContent() {
         <>
           <MetricsGrid metrics={metrics} />
           <MonetizationCard monetization={monetization} />
-          <TrainingRequirementsCard trainingRequirements={trainingRequirements} />
+          {/* <TrainingRequirementsCard trainingRequirements={trainingRequirements} /> */}
           <PurchasableCatalogue scope='course_creator' />
         </>
       }
@@ -264,7 +264,7 @@ function QuickActionsCard() {
           title='Share assets'
           description='Upload brand kits and curriculum collateral.'
           href='#'
-          // href='/dashboard/libraries'
+        // href='/dashboard/libraries'
         />
         <ActionTile
           title='Create syllabus'

@@ -3,7 +3,6 @@
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogClose,
@@ -17,11 +16,10 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,7 +32,6 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { useStepper } from '@/components/ui/stepper';
-import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
@@ -47,13 +44,12 @@ import {
   getAllCategoriesQueryKey,
   getCourseByUuidQueryKey,
   getCourseTrainingRequirementsOptions,
-  getCourseTrainingRequirementsQueryKey,
   searchCoursesQueryKey,
-  updateCourseTrainingRequirementMutation,
+  updateCourseTrainingRequirementMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Loader2, Pencil, Plus, XIcon } from 'lucide-react';
+import { CheckCircle2, Loader2, Plus, XIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   forwardRef,
@@ -65,14 +61,12 @@ import {
 } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Card, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
 import {
   type CourseCreationFormValues,
   courseCreationSchema,
-  emptyRequirement,
-  providedByOptions,
-  requirementTypes,
+  emptyRequirement
 } from './course-creation-types';
+import { TrainingRequirementsSection } from './training-requirement-section';
 
 export type FormSectionProps = {
   title: string;
@@ -322,114 +316,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     }, [creatorShare, form]);
 
-    // ── Helpers for the inline requirement form ───────────────────────────────
-
-    /** Open the form to add a brand-new requirement */
-    const openAddRequirementForm = () => {
-      form.setValue('training_requirement', emptyRequirement);
-      setEditingRequirementId(null);
-      setShowRequirementForm(true);
-    };
-
-    /** Open the form pre-filled with an existing requirement's data */
-    const openEditRequirementForm = (req: any) => {
-      form.setValue('training_requirement', {
-        name: req.name ?? '',
-        description: req.description ?? '',
-        requirement_type: req.requirement_type ?? requirementTypes[0],
-        quantity: req.quantity ?? 0,
-        unit: req.unit ?? '',
-        provided_by: req.provided_by ?? providedByOptions[0],
-        is_mandatory: req.is_mandatory ?? false,
-      });
-      setEditingRequirementId(req.uuid);
-      setShowRequirementForm(true);
-    };
-
-    /** Close and reset the requirement form without saving */
-    const closeRequirementForm = () => {
-      setShowRequirementForm(false);
-      setEditingRequirementId(null);
-      form.setValue('training_requirement', emptyRequirement);
-      // Clear any validation errors on the requirement sub-fields
-      form.clearErrors('training_requirement');
-    };
-
-    /** Save (add or update) the requirement that's currently in the form */
-    const saveRequirement = () => {
-      const req = form.getValues('training_requirement');
-
-      if (!req.name?.trim()) {
-        form.setError('training_requirement.name', { message: 'Requirement name is required.' });
-        return;
-      }
-
-      const targetCourseUuid = editingCourseId ?? courseId;
-
-      if (!targetCourseUuid) {
-        toast.error('Save the course first before managing requirements.');
-        return;
-      }
-
-      if (requirementMode === 'edit' && editingRequirementId) {
-        // ── UPDATE existing requirement ──
-        updateTrainingReqMut.mutate(
-          {
-            body: { ...req, course_uuid: targetCourseUuid } as any,
-            path: {
-              courseUuid: targetCourseUuid,
-              requirementUuid: editingRequirementId,
-            },
-          },
-          {
-            onSuccess: () => {
-              qc.invalidateQueries({
-                queryKey: getCourseTrainingRequirementsQueryKey({
-                  path: { courseUuid: targetCourseUuid },
-                  query: { pageable: {} },
-                }),
-              });
-              // Optimistically update local list
-              setExistingRequirements((prev: any[]) =>
-                prev.map(r =>
-                  r.uuid === editingRequirementId ? { ...r, ...req } : r
-                )
-              );
-              toast.success('Requirement updated.');
-              closeRequirementForm();
-            },
-            onError: () => toast.error('Failed to update requirement.'),
-          }
-        );
-      } else {
-        // ── ADD new requirement ──
-        addTrainingReqMut.mutate(
-          {
-            body: { ...req, course_uuid: targetCourseUuid } as any,
-            path: { courseUuid: targetCourseUuid },
-          },
-          {
-            onSuccess: (res: any) => {
-              qc.invalidateQueries({
-                queryKey: getCourseTrainingRequirementsQueryKey({
-                  path: { courseUuid: targetCourseUuid },
-                  query: { pageable: {} },
-                }),
-              });
-              // Optimistically append
-              if (res?.data) {
-                setExistingRequirements((prev: any[]) => [...prev, res.data]);
-              }
-              toast.success('Requirement added.');
-              closeRequirementForm();
-            },
-            onError: () => toast.error('Failed to add requirement.'),
-          }
-        );
-      }
-    };
-
-    // ─────────────────────────────────────────────────────────────────────────
 
     const onSubmit = (data: CourseCreationFormValues) => {
       const resolvedCourseCreatorUuid = authorUuid;
@@ -931,294 +817,22 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               />
             </FormSection>
 
-            {/* ── Training Requirements ────────────────────────────────────────── */}
             <FormSection
               title='Training Requirements'
-              description='Add required resources or facilities for this course.'
+              description='Add required resources or facilities for this course, grouped by who provides them.'
             >
-              {/* List of saved requirements */}
-              {existingRequirements.length > 0 && (
-                <div className='mb-4 space-y-4'>
-                  {existingRequirements.map((req: any) => (
-                    <Card key={req.uuid} className='border-border bg-muted border py-0 shadow-sm'>
-                      <CardHeader className='flex items-start justify-between gap-4 p-4'>
-                        <div className='flex-1'>
-                          <CardTitle className='text-base'>{req.name}</CardTitle>
-                          {req.description && (
-                            <CardDescription className='text-muted-foreground text-sm'>
-                              {req.description}
-                            </CardDescription>
-                          )}
-                          <div className='text-muted-foreground mt-1 text-sm'>
-                            {req.quantity ? `${req.quantity} ${req.unit}` : ''} -{' '}
-                            {req.requirement_type}
-                          </div>
-                          <div className='text-muted-foreground mt-1 text-sm'>
-                            Provided by: {req.provided_by}
-                          </div>
-                        </div>
-
-                        <div className='flex shrink-0 gap-2'>
-                          {/* Edit button */}
-                          <Button
-                            type='button'
-                            variant='outline'
-                            size='sm'
-                            className='min-w-[80px]'
-                            disabled={
-                              deletingId === req.uuid ||
-                              (showRequirementForm && editingRequirementId === req.uuid)
-                            }
-                            onClick={() => openEditRequirementForm(req)}
-                          >
-                            <Pencil className='mr-1 h-3 w-3' />
-                            Edit
-                          </Button>
-
-                          {/* Delete button */}
-                          <Button
-                            type='button'
-                            variant='destructive'
-                            size='sm'
-                            className='min-w-[90px]'
-                            disabled={deletingId === req.uuid}
-                            onClick={() => {
-                              setDeletingId(req.uuid);
-                              deleteTrainingReqMut.mutate(
-                                {
-                                  path: {
-                                    courseUuid: editingCourseId,
-                                    requirementUuid: req.uuid,
-                                  },
-                                },
-                                {
-                                  onSuccess: () => {
-                                    qc.invalidateQueries({
-                                      queryKey: getCourseTrainingRequirementsQueryKey({
-                                        path: { courseUuid: editingCourseId as string },
-                                        query: { pageable: {} },
-                                      }),
-                                    });
-                                    setExistingRequirements((prev: any[]) =>
-                                      prev.filter(r => r.uuid !== req.uuid)
-                                    );
-                                    setDeletingId(null);
-                                    // Close form if we just deleted what was being edited
-                                    if (editingRequirementId === req.uuid) {
-                                      closeRequirementForm();
-                                    }
-                                  },
-                                  onError: () => setDeletingId(null),
-                                }
-                              );
-                            }}
-                          >
-                            {deletingId === req.uuid ? <Spinner /> : 'Remove'}
-                          </Button>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  ))}
-                </div>
-              )}
-
-              {/* "Add new" trigger — only shown when form is hidden */}
-              {!showRequirementForm && (
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={openAddRequirementForm}
-                >
-                  <Plus className='mr-1 h-4 w-4' />
-                  Add Requirement
-                </Button>
-              )}
-
-              {/* Inline requirement form (add OR edit) */}
-              {showRequirementForm && (
-                <div className='mt-4 space-y-6 rounded-lg border p-6'>
-                  <p className='text-foreground text-sm font-medium'>
-                    {requirementMode === 'edit' ? 'Edit Requirement' : 'New Requirement'}
-                  </p>
-
-                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                    <FormField
-                      control={form.control}
-                      name='training_requirement.name'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Requirement Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder='e.g., 3D printers' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name='training_requirement.requirement_type'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type</FormLabel>
-                          <Select
-                            value={field.value || requirementTypes[0]}
-                            onValueChange={v =>
-                              form.setValue('training_requirement.requirement_type', v)
-                            }
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select type' />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {requirementTypes.map(type => (
-                                <SelectItem key={type} value={type}>
-                                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                    <FormField
-                      control={form.control}
-                      name='training_requirement.quantity'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quantity</FormLabel>
-                          <FormControl>
-                            <Input
-                              type='number'
-                              min='0'
-                              {...field}
-                              onChange={e =>
-                                field.onChange(e.target.value ? Number(e.target.value) : 0)
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name='training_requirement.unit'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Unit</FormLabel>
-                          <FormControl>
-                            <Input placeholder='e.g., sets, seats' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                    <FormField
-                      control={form.control}
-                      name='training_requirement.provided_by'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Provided By</FormLabel>
-                          <Select
-                            value={field.value || providedByOptions[0]}
-                            onValueChange={v =>
-                              form.setValue('training_requirement.provided_by', v)
-                            }
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select owner' />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {providedByOptions.map(option => {
-                                const label = option
-                                  .split('_')
-                                  .map((p: string) => p.charAt(0).toUpperCase() + p.slice(1))
-                                  .join(' ');
-                                return (
-                                  <SelectItem key={option} value={option}>
-                                    {label}
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name='training_requirement.is_mandatory'
-                      render={({ field }) => (
-                        <FormItem className='flex items-start space-x-3 rounded-md border p-3'>
-                          <FormControl>
-                            <Checkbox
-                              checked={!!field.value}
-                              onCheckedChange={checked => field.onChange(!!checked)}
-                            />
-                          </FormControl>
-                          <div>
-                            <FormLabel>Mandatory requirement</FormLabel>
-                            <FormDescription>Required before scheduling.</FormDescription>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name='training_requirement.description'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea rows={3} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className='flex justify-end gap-3'>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      onClick={closeRequirementForm}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type='button'
-                      disabled={isRequirementSaving}
-                      onClick={saveRequirement}
-                    >
-                      {isRequirementSaving ? (
-                        <span className='flex items-center gap-2'>
-                          <Loader2 className='h-4 w-4 animate-spin' />
-                          Saving…
-                        </span>
-                      ) : requirementMode === 'edit' ? (
-                        'Update Requirement'
-                      ) : (
-                        'Save Requirement'
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <TrainingRequirementsSection
+                existingRequirements={existingRequirements}
+                setExistingRequirements={setExistingRequirements}
+                editingCourseId={editingCourseId}
+                courseId={courseId}
+                addTrainingReqMut={addTrainingReqMut}
+                updateTrainingReqMut={updateTrainingReqMut}
+                deleteTrainingReqMut={deleteTrainingReqMut}
+                deletingId={deletingId}
+                setDeletingId={setDeletingId}
+                qc={qc}
+              />
             </FormSection>
 
             {showSubmitButton && (

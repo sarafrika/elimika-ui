@@ -281,6 +281,17 @@ const RubricManager: React.FC = () => {
   const handleSaveRubric = async () => {
     if (!currentRubric) return;
 
+    // Validation
+    if (!currentRubric.title?.trim()) {
+      toast.error('Rubric title is required');
+      return;
+    }
+
+    if (!currentRubric.rubric_type?.trim()) {
+      toast.error('Rubric type is required');
+      return;
+    }
+
     const existingRubric = rubrics.find(r => r.uuid === currentRubric.uuid);
     const isNewRubric = !existingRubric;
 
@@ -827,29 +838,37 @@ const RubricManager: React.FC = () => {
                     key: 'rubric_type',
                     label: 'Rubric Type',
                     placeholder: 'e.g. Assessment, Grading',
+                    required: true,
                   },
                   {
                     key: 'rubric_category',
                     label: 'Rubric Category',
                     placeholder: 'e.g. Skills, Knowledge',
+                    required: false,
                   },
                   {
                     key: 'assessment_scope',
                     label: 'Assessment Scope',
                     placeholder: 'e.g. Course, Module',
+                    required: false,
                   },
                 ] as const
-              ).map(({ key, label, placeholder }) => (
+              ).map(({ key, label, placeholder, required }) => (
                 <div key={key} className='flex flex-col gap-1.5'>
-                  <Label className='text-sm font-medium'>{label}</Label>
+                  <Label className='text-sm font-medium'>
+                    {label}
+                    {required && <span className='text-destructive ml-1'>*</span>}
+                  </Label>
                   <input
                     className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none'
                     value={currentRubric[key] as string}
                     onChange={e => updateRubricField(key, e.target.value)}
                     placeholder={placeholder}
+                    required={required}
                   />
                 </div>
               ))}
+
               <div className='flex flex-col gap-1.5'>
                 <Label className='text-sm font-medium'>Total Weight</Label>
                 <input
@@ -897,7 +916,7 @@ const RubricManager: React.FC = () => {
               </div>
             ) : (
               <div className='mt-4 overflow-x-auto rounded-xl border'>
-                <table className='w-full text-sm'>
+                <table className='w-full text-[15px]'>
                   <thead>
                     <tr className='bg-muted/40 border-b'>
                       <th className='text-foreground min-w-[180px] px-4 py-3 text-left font-semibold'>
@@ -982,7 +1001,7 @@ const RubricManager: React.FC = () => {
                               className='border-l px-3 py-3 align-top'
                             >
                               <textarea
-                                className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full resize-none rounded-md border px-2 py-1.5 text-xs shadow-sm focus-visible:ring-1 focus-visible:outline-none'
+                                className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full resize-none rounded-md border px-2 py-1.5 text-[13px] shadow-sm focus-visible:ring-1 focus-visible:outline-none'
                                 rows={3}
                                 value={scoringEntry.description || ''}
                                 onChange={e =>
