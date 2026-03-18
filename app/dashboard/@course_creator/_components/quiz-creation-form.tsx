@@ -1,14 +1,23 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Check, Plus, PlusCircle, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, Plus, PlusCircle, Trash2, X } from 'lucide-react';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import { Checkbox } from '../../../../components/ui/checkbox';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../../components/ui/select';
 import { Separator } from '../../../../components/ui/separator';
+import Spinner from '../../../../components/ui/spinner';
 import { Textarea } from '../../../../components/ui/textarea';
 import {
   Tooltip,
@@ -16,8 +25,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
+import { useCourseCreator } from '../../../../context/course-creator-context';
 import { cn } from '../../../../lib/utils';
-import { searchQuizzesOptions } from '../../../../services/client/@tanstack/react-query.gen';
+import {
+  searchAssessmentRubricsOptions,
+  searchQuizzesOptions,
+} from '../../../../services/client/@tanstack/react-query.gen';
 import { Question, QuestionType } from './assessment-creation-form';
 
 export type QuizCreationFormProps = {
@@ -54,7 +67,8 @@ export type QuizCreationFormProps = {
   isPending: boolean;
 };
 
-// Question Row Component - defined outside to prevent recreation
+// ── Question Row ──────────────────────────────────────────────────────────────
+
 const QuestionRow = ({
   question,
   qIndex,
@@ -132,23 +146,20 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
-                  opt.isCorrect
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
-                }`}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:border-primary/50'
+                  }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                  }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                    }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${
-                    opt.isCorrect ? 'text-primary' : 'text-foreground'
-                  }`}
+                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
+                    }`}
                 >
                   {opt.text}
                 </span>
@@ -163,7 +174,6 @@ const QuestionRow = ({
           <div className='space-y-2'>
             <div className='space-y-1'>
               <label className='text-sm font-medium'>Model Answer</label>
-
               <textarea
                 value={question.options?.[0]?.text || ''}
                 onChange={e => updateOptionText(qIndex, 0, e.target.value)}
@@ -172,7 +182,6 @@ const QuestionRow = ({
                 className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2'
               />
             </div>
-
             <p className='text-muted-foreground text-xs'>
               Students will submit a long-form response. This answer will be used as the reference.
             </p>
@@ -184,7 +193,6 @@ const QuestionRow = ({
           <div className='space-y-2'>
             <div className='space-y-1'>
               <label className='text-sm font-medium'>Correct Answer</label>
-
               <input
                 type='text'
                 value={question.options?.[0]?.text || ''}
@@ -193,7 +201,6 @@ const QuestionRow = ({
                 className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2'
               />
             </div>
-
             <p className='text-muted-foreground text-xs'>
               Students must match this exact answer (or apply keyword matching logic).
             </p>
@@ -300,6 +307,8 @@ const QuestionRow = ({
   );
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 const QUESTION_TYPES = [
   { label: 'MCQ', value: 'MULTIPLE_CHOICE' },
   { label: 'True / False', value: 'TRUE_FALSE' },
@@ -307,6 +316,17 @@ const QUESTION_TYPES = [
   { label: 'Short Answer', value: 'SHORT_ANSWER' },
   // { label: 'Matching', value: 'MATCHING' },
 ];
+
+const EMPTY_QUIZ = {
+  title: '',
+  instructions: '',
+  time_limit_minutes: 0,
+  attempts_allowed: 1,
+  passing_score: 0,
+  active: false,
+  status: 'PUBLISHED',
+  rubric_uuid: '',
+};
 
 export const QuizCreationForm = ({
   lessons,
@@ -334,6 +354,25 @@ export const QuizCreationForm = ({
   deleteQuizForLesson,
   isPending,
 }: QuizCreationFormProps) => {
+  const creator = useCourseCreator();
+
+  // ── Rubrics ───────────────────────────────────────────────────────────────
+  const { data: searchRubs, isLoading: isLoadingRubrics } = useQuery({
+    ...searchAssessmentRubricsOptions({
+      query: {
+        pageable: {},
+        searchParams: { course_creator_uuid_eq: creator?.profile?.uuid as string },
+      },
+    }),
+    enabled: !!creator?.profile?.uuid,
+  });
+  const rubrics: any[] = searchRubs?.data?.content ?? [];
+
+  // ── Quiz state ────────────────────────────────────────────────────────────
+  const [localQuizData, setLocalQuizData] = useState({ ...EMPTY_QUIZ });
+
+  const selectedRubric = rubrics.find((r: any) => r.uuid === localQuizData.rubric_uuid);
+
   const { data: quizzes } = useQuery({
     ...searchQuizzesOptions({
       query: { searchParams: { lesson_uuid_eq: selectedLessonId }, pageable: {} },
@@ -343,47 +382,19 @@ export const QuizCreationForm = ({
 
   const quizUuid = quizId;
 
-  const [localQuizData, setLocalQuizData] = useState({
-    title: '',
-    instructions: '',
-    time_limit_minutes: 0,
-    attempts_allowed: 1,
-    passing_score: 0,
-    active: false,
-    status: 'PUBLISHED',
-    rubric_uuid: '',
-  });
-
-  const selectedQuizData = useMemo(() => {
-    // Always use localQuizData for editing
-    return {
-      ...localQuizData,
-      lesson_uuid: selectedLessonId as string,
-    };
-  }, [selectedLessonId, localQuizData]);
+  const selectedQuizData = useMemo(
+    () => ({ ...localQuizData, lesson_uuid: selectedLessonId as string }),
+    [selectedLessonId, localQuizData]
+  );
 
   const handleQuizInputChange = useCallback((field: string, value: any) => {
-    setLocalQuizData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+    setLocalQuizData(prev => ({ ...prev, [field]: value }));
   }, []);
 
   useEffect(() => {
     if (!quizUuid || quizUuid === '') {
-      // Reset for new quiz
-      setLocalQuizData({
-        title: '',
-        instructions: '',
-        time_limit_minutes: 0,
-        attempts_allowed: 1,
-        passing_score: 0,
-        active: false,
-        status: 'PUBLISHED',
-        rubric_uuid: '',
-      });
+      setLocalQuizData({ ...EMPTY_QUIZ });
     } else {
-      // Load existing quiz data into local state
       const selected = quizzes?.data?.content?.find((q: any) => q.uuid === quizUuid);
       if (selected) {
         setLocalQuizData({
@@ -436,10 +447,8 @@ export const QuizCreationForm = ({
 
   const handleDeleteQuiz = useCallback(async () => {
     if (!quizUuid) return;
-
-    if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
+    if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.'))
       return;
-    }
 
     try {
       await deleteQuizForLesson(quizUuid);
@@ -460,7 +469,7 @@ export const QuizCreationForm = ({
 
   return (
     <div className='grid grid-cols-4 gap-6'>
-      {/* Lessons */}
+      {/* Lessons sidebar */}
       <div className='bg-card rounded-xl border p-4 shadow-sm'>
         <h3 className='text-foreground mb-4 text-lg font-semibold'>Lessons</h3>
         <ul className='flex flex-col gap-2 space-y-2'>
@@ -490,7 +499,7 @@ export const QuizCreationForm = ({
         </ul>
       </div>
 
-      {/* Quiz creation form */}
+      {/* Quiz form */}
       {!selectedLessonId ? (
         <div className='border-border bg-muted col-span-3 flex min-h-[50vh] items-center justify-center rounded-xl border-2 border-dashed'>
           <div className='text-center'>
@@ -502,17 +511,18 @@ export const QuizCreationForm = ({
         </div>
       ) : (
         <div className='bg-card col-span-3 space-y-6 rounded-xl border p-6 shadow-sm'>
+          {/* Header */}
           <div className='flex items-center justify-between gap-4 border-b pb-4'>
             <h3 className='text-foreground max-w-[70%] truncate text-lg font-bold uppercase'>
               QUIZ: {selectedLesson?.title || 'Select a lesson'}
             </h3>
-
             <Button size='sm' className='shrink-0' onClick={() => handleQuizSelect('')}>
               <PlusCircle size={16} className='mr-1' />
               Create Quiz
             </Button>
           </div>
 
+          {/* Existing quizzes */}
           <div className='flex flex-col gap-2'>
             <div className='flex flex-col space-y-3'>
               <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
@@ -526,7 +536,7 @@ export const QuizCreationForm = ({
 
               <ul className='flex flex-col space-y-2'>
                 {quizzes?.data?.content?.length ? (
-                  quizzes.data.content.map((quiz: any, idx) => (
+                  quizzes.data.content.map((quiz: any, idx: number) => (
                     <li
                       key={`quiz-${quiz.uuid}`}
                       onClick={() => handleQuizSelect(quiz.uuid)}
@@ -551,19 +561,20 @@ export const QuizCreationForm = ({
             </div>
           </div>
 
+          {/* Quiz fields */}
           <div className='flex flex-col gap-6'>
             <Separator />
             <div className='-my-4 flex items-center justify-between'>
               <h2 className='text-foreground text-lg font-bold tracking-tight'>
                 {quizUuid && quizUuid !== '' ? 'Edit Quiz' : 'Create New Quiz'}
               </h2>
-
               <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
                 {quizUuid && quizUuid !== '' ? 'Editing' : 'New'}
               </span>
             </div>
             <Separator />
 
+            {/* Title */}
             <div className='flex flex-col gap-2'>
               <Label>Quiz Title</Label>
               <Input
@@ -573,6 +584,7 @@ export const QuizCreationForm = ({
               />
             </div>
 
+            {/* Instructions */}
             <div className='flex flex-col gap-2'>
               <Label>Instructions (optional)</Label>
               <Textarea
@@ -583,6 +595,7 @@ export const QuizCreationForm = ({
               />
             </div>
 
+            {/* Numeric settings */}
             <div className='grid grid-cols-3 gap-4'>
               <div className='flex flex-col gap-2'>
                 <Label>Time Limit (minutes)</Label>
@@ -594,7 +607,6 @@ export const QuizCreationForm = ({
                   }
                 />
               </div>
-
               <div className='flex flex-col gap-2'>
                 <Label>Attempts Allowed</Label>
                 <Input
@@ -603,7 +615,6 @@ export const QuizCreationForm = ({
                   onChange={e => handleQuizInputChange('attempts_allowed', Number(e.target.value))}
                 />
               </div>
-
               <div className='flex flex-col gap-2'>
                 <Label>Passing Score (%)</Label>
                 <Input
@@ -614,6 +625,97 @@ export const QuizCreationForm = ({
               </div>
             </div>
 
+            {/* ── Rubric ──────────────────────────────────────────────────── */}
+            <div className='flex flex-col gap-1.5'>
+              <Label className='text-sm font-medium'>Rubric (optional)</Label>
+              <p className='text-muted-foreground text-xs'>
+                Associate a grading rubric with this quiz
+              </p>
+
+              {isLoadingRubrics ? (
+                <div className='flex items-center gap-2 py-2'>
+                  <Spinner className='h-4 w-4' />
+                  <span className='text-muted-foreground text-xs'>Loading rubrics...</span>
+                </div>
+              ) : (
+                <>
+                  <Select
+                    value={localQuizData.rubric_uuid || '__none__'}
+                    onValueChange={v =>
+                      handleQuizInputChange('rubric_uuid', v === '__none__' ? '' : v)
+                    }
+                  >
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder='Select a rubric (optional)' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='__none__'>
+                        <span className='text-muted-foreground'>None</span>
+                      </SelectItem>
+                      {rubrics.map((r: any) => (
+                        <SelectItem key={r.uuid} value={r.uuid}>
+                          <div className='flex flex-col'>
+                            <span className='font-medium'>{r.title}</span>
+                            {r.description && (
+                              <span className='text-muted-foreground line-clamp-1 text-xs'>
+                                {r.description}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {selectedRubric ? (
+                    <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
+                      <div className='min-w-0'>
+                        <p className='text-foreground truncate text-xs font-semibold'>
+                          {selectedRubric.title}
+                        </p>
+                        {selectedRubric.description && (
+                          <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
+                            {selectedRubric.description}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type='button'
+                        onClick={() => handleQuizInputChange('rubric_uuid', '')}
+                        className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
+                        title='Clear rubric'
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
+                      <div className='flex items-start gap-2'>
+                        <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
+                        <div className='text-sm'>
+                          <p className='text-warning-foreground font-medium'>No rubric selected</p>
+                          <p className='text-warning-foreground/80 text-xs'>
+                            If none of the available rubrics fit, you can create a new one.
+                          </p>
+                        </div>
+                      </div>
+                      <Link href='/dashboard/rubrics' target='_blank'>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='border-warning text-warning-foreground hover:bg-warning/100 w-fit self-center'
+                        >
+                          Create New Rubric
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Active toggle */}
             <Label className='flex cursor-pointer items-center gap-3'>
               <Checkbox
                 checked={selectedQuizData.active}
@@ -622,6 +724,7 @@ export const QuizCreationForm = ({
               <span>Active</span>
             </Label>
 
+            {/* Save / delete */}
             <div className='flex flex-row items-end justify-end gap-6 pt-2'>
               {quizUuid && quizUuid !== '' && (
                 <Button size='sm' variant='destructive' onClick={handleDeleteQuiz}>
@@ -638,11 +741,11 @@ export const QuizCreationForm = ({
             </div>
           </div>
 
+          {/* Questions section */}
           {quizUuid && quizUuid !== '' && (
             <div className='mt-8 border-t pt-6'>
               <div className='mb-6'>
                 <h4 className='text-foreground mb-3 text-lg font-semibold'>Questions</h4>
-
                 <div className='flex flex-wrap gap-2'>
                   {QUESTION_TYPES.map(type => (
                     <Button

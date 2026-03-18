@@ -2041,13 +2041,6 @@ export const zApiResponseInstructorSkill = z.object({
 });
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const zMembershipStatusEnum = z
-  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
-  .describe('**[READ-ONLY]** Current status of the membership.');
-
-/**
  * **[READ-ONLY]** Classification of organization type based on name keywords.
  */
 export const zOrganizationTypeEnum = z
@@ -2060,6 +2053,13 @@ export const zOrganizationTypeEnum = z
     'OTHER',
   ])
   .describe('**[READ-ONLY]** Classification of organization type based on name keywords.');
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const zMembershipStatusEnum = z
+  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
+  .describe('**[READ-ONLY]** Current status of the membership.');
 
 /**
  * Professional membership record for instructors including associations, industry bodies, and certification organizations
@@ -2161,7 +2161,6 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
       .readonly()
       .optional(),
-    membership_status: zMembershipStatusEnum.optional(),
     membership_period: z
       .string()
       .describe('**[READ-ONLY]** Formatted membership period showing start and end dates.')
@@ -2196,6 +2195,7 @@ export const zInstructorProfessionalMembership = z
       )
       .readonly()
       .optional(),
+    membership_status: zMembershipStatusEnum.optional(),
   })
   .describe(
     'Professional membership record for instructors including associations, industry bodies, and certification organizations'
@@ -2467,6 +2467,11 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .readonly()
+      .optional(),
     is_recent_qualification: z
       .boolean()
       .describe(
@@ -2477,11 +2482,6 @@ export const zInstructorEducation = z
     formatted_completion: z
       .string()
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
     years_since_completion: z
@@ -3033,13 +3033,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
@@ -3058,6 +3051,13 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
+      .readonly()
+      .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
       .readonly()
       .optional(),
     total_duration_display: z
@@ -3464,6 +3464,15 @@ export const zApiResponseLessonContent = z.object({
 });
 
 /**
+ * **[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.
+ */
+export const zAggregationStrategyEnum = z
+  .enum(['points_sum', 'weighted_average'])
+  .describe(
+    '**[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.'
+  );
+
+/**
  * Course-level assessment component with weighting for final grade calculation
  */
 export const zCourseAssessment = z
@@ -3505,10 +3514,17 @@ export const zCourseAssessment = z
       .describe(
         '**[REQUIRED]** Percentage weight of this assessment in the final grade calculation.'
       ),
+    aggregation_strategy: zAggregationStrategyEnum.optional(),
     rubric_uuid: z
       .string()
       .uuid()
       .describe('**[OPTIONAL]** Reference to assessment rubric UUID for detailed grading criteria.')
+      .optional(),
+    sync_class_attendance: z
+      .boolean()
+      .describe(
+        '**[OPTIONAL]** Indicates that this component should auto-sync attendance marks from class sessions under the course.'
+      )
       .optional(),
     is_required: z
       .boolean()
@@ -3544,6 +3560,18 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    contribution_level: z
+      .string()
+      .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
+      .readonly()
+      .optional(),
+    aggregation_strategy_display: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
+      )
+      .readonly()
+      .optional(),
     assessment_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment type.')
@@ -3559,17 +3587,136 @@ export const zCourseAssessment = z
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
       .readonly()
       .optional(),
-    contribution_level: z
-      .string()
-      .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
-      .readonly()
-      .optional(),
   })
   .describe('Course-level assessment component with weighting for final grade calculation');
 
 export const zApiResponseCourseAssessment = z.object({
   success: z.boolean().optional(),
   data: zCourseAssessment.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zItemTypeEnum = z.enum([
+  'assignment',
+  'quiz',
+  'attendance',
+  'project',
+  'discussion',
+  'exam',
+  'practical',
+  'performance',
+  'participation',
+  'manual',
+]);
+
+/**
+ * Gradebook line item nested under a weighted course assessment component
+ */
+export const zCourseAssessmentLineItem = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    course_assessment_uuid: z.string().uuid().optional(),
+    title: z.string().min(0).max(255),
+    description: z.string().min(0).max(1000).optional(),
+    item_type: zItemTypeEnum,
+    assignment_uuid: z.string().uuid().optional(),
+    quiz_uuid: z.string().uuid().optional(),
+    rubric_uuid: z.string().uuid().optional(),
+    scheduled_instance_uuid: z.string().uuid().optional(),
+    max_score: z.number().gte(0.01).optional(),
+    weight_percentage: z.number().gte(0.01).lte(100).optional(),
+    display_order: z.number().int().optional(),
+    active: z.boolean().optional(),
+    due_at: z.string().datetime().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+    item_type_display: z.string().readonly().optional(),
+  })
+  .describe('Gradebook line item nested under a weighted course assessment component');
+
+export const zApiResponseCourseAssessmentLineItem = z.object({
+  success: z.boolean().optional(),
+  data: zCourseAssessmentLineItem.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Learner score stored against a gradebook line item
+ */
+export const zCourseAssessmentLineItemScore = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    line_item_uuid: z.string().uuid().optional(),
+    enrollment_uuid: z.string().uuid().optional(),
+    score: z.number().gte(0).optional(),
+    max_score: z.number().gte(0.01).optional(),
+    percentage: z.number().gte(0).lte(100).optional(),
+    comments: z.string().min(0).max(5000).optional(),
+    graded_at: z.string().datetime().optional(),
+    graded_by_uuid: z.string().uuid().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+    grade_display: z.string().readonly().optional(),
+  })
+  .describe('Learner score stored against a gradebook line item');
+
+export const zApiResponseCourseAssessmentLineItemScore = z.object({
+  success: z.boolean().optional(),
+  data: zCourseAssessmentLineItemScore.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zStatusEnum3 = z.enum(['pending', 'completed']);
+
+/**
+ * Selected rubric scoring level for one criterion in a line-item evaluation
+ */
+export const zCourseAssessmentLineItemRubricEvaluationRow = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    criteria_uuid: z.string().uuid(),
+    scoring_level_uuid: z.string().uuid(),
+    points: z.number().readonly().optional(),
+    comments: z.string().min(0).max(5000).optional(),
+    criteria_name: z.string().readonly().optional(),
+    scoring_level_name: z.string().readonly().optional(),
+  })
+  .describe('Selected rubric scoring level for one criterion in a line-item evaluation');
+
+export const zAttendanceStatusEnum = z.enum(['attended', 'absent']);
+
+/**
+ * Stored rubric evaluation for a learner against a gradebook line item
+ */
+export const zCourseAssessmentLineItemRubricEvaluation = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    line_item_uuid: z.string().uuid().optional(),
+    enrollment_uuid: z.string().uuid().optional(),
+    status: zStatusEnum3.optional(),
+    score: z.number().readonly().optional(),
+    percentage: z.number().readonly().optional(),
+    comments: z.string().min(0).max(5000).optional(),
+    graded_at: z.string().datetime().optional(),
+    graded_by_uuid: z.string().uuid().optional(),
+    criteria_selections: z.array(zCourseAssessmentLineItemRubricEvaluationRow).optional(),
+    rubric_uuid: z.string().uuid().readonly().optional(),
+    attendance_status: zAttendanceStatusEnum.optional(),
+    max_score: z.number().readonly().optional(),
+    evaluation_display: z.string().readonly().optional(),
+  })
+  .describe('Stored rubric evaluation for a learner against a gradebook line item');
+
+export const zApiResponseCourseAssessmentLineItemRubricEvaluation = z.object({
+  success: z.boolean().optional(),
+  data: zCourseAssessmentLineItemRubricEvaluation.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -4883,16 +5030,16 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
-      .readonly()
-      .optional(),
     assignment_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.'
       )
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
     assignment_scope: z
@@ -5121,7 +5268,7 @@ export const zApiResponseBoolean = z.object({
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export const zStatusEnum3 = z
+export const zStatusEnum4 = z
   .enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'])
   .describe('**[OPTIONAL]** Current status of the scheduled instance.');
 
@@ -5186,7 +5333,7 @@ export const zScheduledInstance = z
         '**[OPTIONAL]** Maximum number of participants for this session (cached from class definition).'
       )
       .optional(),
-    status: zStatusEnum3.optional(),
+    status: zStatusEnum4.optional(),
     cancellation_reason: z
       .string()
       .describe('**[OPTIONAL]** Reason for cancellation if status is CANCELLED.')
@@ -5367,7 +5514,7 @@ export const zProgramTrainingApplicationRequest = z
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const zStatusEnum4 = z
+export const zStatusEnum5 = z
   .enum(['pending', 'approved', 'rejected', 'revoked'])
   .describe('**[READ-ONLY]** Current status of the application.');
 
@@ -5382,7 +5529,7 @@ export const zProgramTrainingApplication = z
       .describe('**[READ-ONLY]** Unique identifier for this application.')
       .readonly()
       .optional(),
-    status: zStatusEnum4.optional(),
+    status: zStatusEnum5.optional(),
     application_notes: z
       .string()
       .describe('Submission notes provided by the applicant.')
@@ -5554,7 +5701,7 @@ export const zRelationshipTypeEnum = z.enum(['PARENT', 'GUARDIAN', 'SPONSOR']);
 
 export const zShareScopeEnum = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
 
-export const zStatusEnum5 = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
+export const zStatusEnum6 = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
 
 /**
  * Represents a guardian's access rights to a learner profile.
@@ -5568,7 +5715,7 @@ export const zGuardianStudentLink = z
     guardianDisplayName: z.string().optional(),
     relationshipType: zRelationshipTypeEnum.optional(),
     shareScope: zShareScopeEnum.optional(),
-    status: zStatusEnum5.optional(),
+    status: zStatusEnum6.optional(),
     primaryGuardian: z.boolean().optional(),
     linkedDate: z.string().datetime().optional(),
     revokedDate: z.string().datetime().optional(),
@@ -5613,7 +5760,7 @@ export const zEnrollmentRequest = z
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const zStatusEnum6 = z
+export const zStatusEnum7 = z
   .enum(['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
   .describe('**[OPTIONAL]** Current enrollment and attendance status.');
 
@@ -5640,7 +5787,7 @@ export const zEnrollment = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Reference to the student UUID who is enrolling.'),
-    status: zStatusEnum6.optional(),
+    status: zStatusEnum7.optional(),
     attendance_marked_at: z
       .string()
       .datetime()
@@ -5677,11 +5824,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     can_be_cancelled: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
@@ -5690,6 +5832,11 @@ export const zEnrollment = z
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
     status_description: z
@@ -5737,7 +5884,7 @@ export const zCourseTrainingApplicationRequest = z
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const zStatusEnum7 = z
+export const zStatusEnum8 = z
   .enum(['pending', 'approved', 'rejected'])
   .describe('**[READ-ONLY]** Current status of the application.');
 
@@ -5752,7 +5899,7 @@ export const zCourseTrainingApplication = z
       .describe('**[READ-ONLY]** Unique identifier for this application.')
       .readonly()
       .optional(),
-    status: zStatusEnum7.optional(),
+    status: zStatusEnum8.optional(),
     application_notes: z
       .string()
       .describe('Submission notes provided by the applicant.')
@@ -6264,7 +6411,7 @@ export const zCreateBookingRequest = z
 /**
  * Current status of the booking
  */
-export const zStatusEnum8 = z
+export const zStatusEnum9 = z
   .enum([
     'payment_required',
     'confirmed',
@@ -6288,7 +6435,7 @@ export const zBookingResponse = z
     instructor_uuid: z.string().uuid().describe('UUID of the instructor for the session'),
     start_time: z.string().datetime().describe('Start time for the session'),
     end_time: z.string().datetime().describe('End time for the session'),
-    status: zStatusEnum8,
+    status: zStatusEnum9,
     price_amount: z.number().describe('Price amount agreed for the booking').optional(),
     currency: z.string().describe('ISO currency code for the booking price').optional(),
     payment_session_id: z
@@ -6387,7 +6534,7 @@ export const zBookingPaymentUpdateRequest = z
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const zStatusEnum9 = z
+export const zStatusEnum10 = z
   .enum(['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'])
   .describe('**[REQUIRED]** Current status of the submission in the grading workflow.');
 
@@ -6429,7 +6576,7 @@ export const zAssignmentSubmission = z
       .datetime()
       .describe('**[OPTIONAL]** Timestamp when the submission was made by the student.')
       .optional(),
-    status: zStatusEnum9,
+    status: zStatusEnum10,
     score: z
       .number()
       .gte(0)
@@ -6967,9 +7114,9 @@ export const zSortObject = z.object({
 export const zPageableObject = z.object({
   offset: z.coerce.bigint().optional(),
   sort: zSortObject.optional(),
+  paged: z.boolean().optional(),
   pageNumber: z.number().int().optional(),
   pageSize: z.number().int().optional(),
-  paged: z.boolean().optional(),
   unpaged: z.boolean().optional(),
 });
 
@@ -7252,7 +7399,7 @@ export const zApiResponsePagedDtoQuizQuestionOption = z.object({
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const zStatusEnum10 = z
+export const zStatusEnum11 = z
   .enum(['IN_PROGRESS', 'SUBMITTED', 'GRADED'])
   .describe('**[REQUIRED]** Current status of the quiz attempt.');
 
@@ -7323,7 +7470,7 @@ export const zQuizAttempt = z
         '**[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.'
       )
       .optional(),
-    status: zStatusEnum10,
+    status: zStatusEnum11,
     created_date: z
       .string()
       .datetime()
@@ -7361,6 +7508,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -7374,11 +7526,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -7452,7 +7599,7 @@ export const zApiResponsePagedDtoProgramRequirement = z.object({
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const zStatusEnum11 = z
+export const zStatusEnum12 = z
   .enum(['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'])
   .describe("**[REQUIRED]** Current status of the student's enrollment in the program.");
 
@@ -7489,7 +7636,7 @@ export const zProgramEnrollment = z
         '**[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.'
       )
       .optional(),
-    status: zStatusEnum11,
+    status: zStatusEnum12,
     progress_percentage: z
       .number()
       .gte(0)
@@ -7753,7 +7900,7 @@ export const zAvailabilityTypeEnum = z
 /**
  * Scheduled instance status when applicable
  */
-export const zStatusEnum12 = z
+export const zStatusEnum13 = z
   .enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'])
   .describe('Scheduled instance status when applicable');
 
@@ -7779,7 +7926,7 @@ export const zInstructorCalendarEntry = z
         'Flag indicating availability; false represents blocked time or scheduled instances occupying the slot'
       )
       .optional(),
-    status: zStatusEnum12.optional(),
+    status: zStatusEnum13.optional(),
     title: z.string().describe('Optional title (for scheduled instances)').optional(),
     class_definition_uuid: z
       .string()
@@ -7846,7 +7993,7 @@ export const zGuardianStudentDashboardDto = z.object({
   studentUuid: z.string().uuid().optional(),
   studentName: z.string().optional(),
   shareScope: zShareScopeEnum.optional(),
-  status: zStatusEnum5.optional(),
+  status: zStatusEnum6.optional(),
   courseProgress: z.array(zLearnerCourseProgressView).optional(),
   programProgress: z.array(zLearnerProgramProgressView).optional(),
 });
@@ -7857,7 +8004,7 @@ export const zGuardianStudentSummaryDto = z.object({
   studentName: z.string().optional(),
   relationshipType: zRelationshipTypeEnum.optional(),
   shareScope: zShareScopeEnum.optional(),
-  status: zStatusEnum5.optional(),
+  status: zStatusEnum6.optional(),
   primaryGuardian: z.boolean().optional(),
 });
 
@@ -7949,7 +8096,7 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Longitude coordinate for the scheduled class location.')
       .readonly()
       .optional(),
-    scheduling_status: zStatusEnum3.optional(),
+    scheduling_status: zStatusEnum4.optional(),
     enrollment_status: zEnrollmentStatusEnum.optional(),
     attendance_marked_at: z
       .string()
@@ -8146,6 +8293,156 @@ export const zApiResponseListLessonContent = z.object({
 });
 
 /**
+ * Course assessment score with grading information and instructor feedback
+ */
+export const zCourseAssessmentScore = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** Unique system identifier for the assessment score record. Auto-generated by the system.'
+      )
+      .readonly()
+      .optional(),
+    enrollment_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Reference to the enrollment UUID of the student being assessed.'),
+    assessment_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Reference to the assessment UUID being scored.'),
+    score: z
+      .number()
+      .gte(0)
+      .describe('**[OPTIONAL]** Score achieved by the student on this assessment.')
+      .optional(),
+    max_score: z
+      .number()
+      .gte(0)
+      .describe('**[OPTIONAL]** Maximum possible score for this assessment.')
+      .optional(),
+    percentage: z
+      .number()
+      .gte(0)
+      .lte(100)
+      .describe('**[OPTIONAL]** Percentage score calculated from score and max_score.')
+      .optional(),
+    graded_at: z
+      .string()
+      .datetime()
+      .describe('**[OPTIONAL]** Timestamp when the assessment was graded by the instructor.')
+      .optional(),
+    graded_by_uuid: z
+      .string()
+      .uuid()
+      .describe('**[OPTIONAL]** Reference to the instructor UUID who graded this assessment.')
+      .optional(),
+    comments: z
+      .string()
+      .min(0)
+      .max(5000)
+      .describe("**[OPTIONAL]** Instructor's comments and feedback on the assessment performance.")
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe(
+        '**[READ-ONLY]** Timestamp when the score record was created. Automatically set by the system.'
+      )
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Email or username of the user who created this score record. Used for audit trails.'
+      )
+      .readonly()
+      .optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe(
+        '**[READ-ONLY]** Timestamp when the score record was last modified. Automatically updated by the system.'
+      )
+      .readonly()
+      .optional(),
+    updated_by: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Email or username of the user who last modified this score record. Used for audit trails.'
+      )
+      .readonly()
+      .optional(),
+    is_passing: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
+    score_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
+      .readonly()
+      .optional(),
+    performance_level: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Performance level classification based on the achieved percentage.'
+      )
+      .readonly()
+      .optional(),
+    feedback_summary: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.'
+      )
+      .readonly()
+      .optional(),
+  })
+  .describe('Course assessment score with grading information and instructor feedback');
+
+export const zLineItemEntryDto = z.object({
+  line_item: zCourseAssessmentLineItem.optional(),
+  score: zCourseAssessmentLineItemScore.optional(),
+});
+
+export const zComponentDto = z.object({
+  assessment: zCourseAssessment.optional(),
+  aggregate_score: zCourseAssessmentScore.optional(),
+  configured_line_item_weight_percentage: z.number().optional(),
+  line_items: z.array(zLineItemEntryDto).optional(),
+});
+
+/**
+ * Enrollment-gradebook view showing weighted components, line items, and aggregate grade
+ */
+export const zCourseGradeBook = z
+  .object({
+    course_uuid: z.string().uuid().optional(),
+    enrollment_uuid: z.string().uuid().optional(),
+    final_grade: z.number().optional(),
+    graded_weight_percentage: z.number().optional(),
+    configured_weight_percentage: z.number().optional(),
+    components: z.array(zComponentDto).optional(),
+  })
+  .describe(
+    'Enrollment-gradebook view showing weighted components, line items, and aggregate grade'
+  );
+
+export const zApiResponseCourseGradeBook = z.object({
+  success: z.boolean().optional(),
+  data: zCourseGradeBook.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
  * Student enrollment in a course with progress tracking and completion details
  */
 export const zCourseEnrollment = z
@@ -8178,7 +8475,7 @@ export const zCourseEnrollment = z
         '**[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.'
       )
       .optional(),
-    status: zStatusEnum11,
+    status: zStatusEnum12,
     progress_percentage: z
       .number()
       .gte(0)
@@ -8362,6 +8659,13 @@ export const zPagedDtoCourseAssessment = z.object({
 export const zApiResponsePagedDtoCourseAssessment = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCourseAssessment.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseListCourseAssessmentLineItem = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zCourseAssessmentLineItem).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -9971,6 +10275,81 @@ export const zUpdateCourseAssessmentData = z.object({
  * OK
  */
 export const zUpdateCourseAssessmentResponse = zApiResponseCourseAssessment;
+
+export const zDeleteLineItemData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    assessmentUuid: z.string().uuid(),
+    lineItemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateLineItemData = z.object({
+  body: zCourseAssessmentLineItem,
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    assessmentUuid: z.string().uuid(),
+    lineItemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateLineItemResponse = zApiResponseCourseAssessmentLineItem;
+
+export const zUpsertLineItemScoreData = z.object({
+  body: zCourseAssessmentLineItemScore,
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    assessmentUuid: z.string().uuid(),
+    lineItemUuid: z.string().uuid(),
+    enrollmentUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpsertLineItemScoreResponse = zApiResponseCourseAssessmentLineItemScore;
+
+export const zGetLineItemRubricEvaluationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    assessmentUuid: z.string().uuid(),
+    lineItemUuid: z.string().uuid(),
+    enrollmentUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetLineItemRubricEvaluationResponse =
+  zApiResponseCourseAssessmentLineItemRubricEvaluation;
+
+export const zUpsertLineItemRubricEvaluationData = z.object({
+  body: zCourseAssessmentLineItemRubricEvaluation,
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    assessmentUuid: z.string().uuid(),
+    lineItemUuid: z.string().uuid(),
+    enrollmentUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpsertLineItemRubricEvaluationResponse =
+  zApiResponseCourseAssessmentLineItemRubricEvaluation;
 
 export const zDeleteCourseCreatorData = z.object({
   body: z.never().optional(),
@@ -11804,6 +12183,34 @@ export const zAddCourseAssessmentData = z.object({
  * OK
  */
 export const zAddCourseAssessmentResponse = zApiResponseCourseAssessment;
+
+export const zGetLineItemsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    assessmentUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetLineItemsResponse = zApiResponseListCourseAssessmentLineItem;
+
+export const zCreateLineItemData = z.object({
+  body: zCourseAssessmentLineItem,
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    assessmentUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateLineItemResponse = zApiResponseCourseAssessmentLineItem;
 
 export const zGetAllCourseCreatorsData = z.object({
   body: z.never().optional(),
@@ -14310,6 +14717,20 @@ export const zGetRubricsByContextData = z.object({
  * OK
  */
 export const zGetRubricsByContextResponse = zApiResponsePagedDtoCourseRubricAssociation;
+
+export const zGetEnrollmentGradeBookData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    enrollmentUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetEnrollmentGradeBookResponse = zApiResponseCourseGradeBook;
 
 export const zGetCourseEnrollmentsData = z.object({
   body: z.never().optional(),

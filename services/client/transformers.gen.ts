@@ -45,6 +45,10 @@ import type {
   UpdateCourseLessonResponse,
   UpdateLessonContentResponse,
   UpdateCourseAssessmentResponse,
+  UpdateLineItemResponse,
+  UpsertLineItemScoreResponse,
+  GetLineItemRubricEvaluationResponse,
+  UpsertLineItemRubricEvaluationResponse,
   GetCourseCreatorByUuidResponse,
   UpdateCourseCreatorResponse,
   UpdateCourseCreatorSkillResponse,
@@ -154,6 +158,8 @@ import type {
   UploadLessonMediaResponse,
   GetCourseAssessmentsResponse,
   AddCourseAssessmentResponse,
+  GetLineItemsResponse,
+  CreateLineItemResponse,
   GetAllCourseCreatorsResponse,
   CreateCourseCreatorResponse,
   VerifyCourseCreatorResponse,
@@ -297,6 +303,7 @@ import type {
   ListCurrenciesResponse,
   GetPrimaryRubricResponse,
   GetRubricsByContextResponse,
+  GetEnrollmentGradeBookResponse,
   GetCourseEnrollmentsResponse,
   GetCourseCategoriesResponse,
   SearchTrainingApplicationsResponse,
@@ -1192,6 +1199,90 @@ export const updateCourseAssessmentResponseTransformer = async (
   data: any
 ): Promise<UpdateCourseAssessmentResponse> => {
   data = apiResponseCourseAssessmentSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseAssessmentLineItemSchemaResponseTransformer = (data: any) => {
+  if (data.due_at) {
+    data.due_at = new Date(data.due_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseAssessmentLineItemSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseAssessmentLineItemSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateLineItemResponseTransformer = async (
+  data: any
+): Promise<UpdateLineItemResponse> => {
+  data = apiResponseCourseAssessmentLineItemSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseAssessmentLineItemScoreSchemaResponseTransformer = (data: any) => {
+  if (data.graded_at) {
+    data.graded_at = new Date(data.graded_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseAssessmentLineItemScoreSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseAssessmentLineItemScoreSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const upsertLineItemScoreResponseTransformer = async (
+  data: any
+): Promise<UpsertLineItemScoreResponse> => {
+  data = apiResponseCourseAssessmentLineItemScoreSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseAssessmentLineItemRubricEvaluationSchemaResponseTransformer = (data: any) => {
+  if (data.graded_at) {
+    data.graded_at = new Date(data.graded_at);
+  }
+  return data;
+};
+
+const apiResponseCourseAssessmentLineItemRubricEvaluationSchemaResponseTransformer = (
+  data: any
+) => {
+  if (data.data) {
+    data.data = courseAssessmentLineItemRubricEvaluationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getLineItemRubricEvaluationResponseTransformer = async (
+  data: any
+): Promise<GetLineItemRubricEvaluationResponse> => {
+  data = apiResponseCourseAssessmentLineItemRubricEvaluationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const upsertLineItemRubricEvaluationResponseTransformer = async (
+  data: any
+): Promise<UpsertLineItemRubricEvaluationResponse> => {
+  data = apiResponseCourseAssessmentLineItemRubricEvaluationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2966,6 +3057,27 @@ export const addCourseAssessmentResponseTransformer = async (
   data: any
 ): Promise<AddCourseAssessmentResponse> => {
   data = apiResponseCourseAssessmentSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseListCourseAssessmentLineItemSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return courseAssessmentLineItemSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getLineItemsResponseTransformer = async (data: any): Promise<GetLineItemsResponse> => {
+  data = apiResponseListCourseAssessmentLineItemSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createLineItemResponseTransformer = async (
+  data: any
+): Promise<CreateLineItemResponse> => {
+  data = apiResponseCourseAssessmentLineItemSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4944,6 +5056,67 @@ export const getRubricsByContextResponseTransformer = async (
   data: any
 ): Promise<GetRubricsByContextResponse> => {
   data = apiResponsePagedDtoCourseRubricAssociationSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseAssessmentScoreSchemaResponseTransformer = (data: any) => {
+  if (data.graded_at) {
+    data.graded_at = new Date(data.graded_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const lineItemEntryDtoSchemaResponseTransformer = (data: any) => {
+  if (data.line_item) {
+    data.line_item = courseAssessmentLineItemSchemaResponseTransformer(data.line_item);
+  }
+  if (data.score) {
+    data.score = courseAssessmentLineItemScoreSchemaResponseTransformer(data.score);
+  }
+  return data;
+};
+
+const componentDtoSchemaResponseTransformer = (data: any) => {
+  if (data.assessment) {
+    data.assessment = courseAssessmentSchemaResponseTransformer(data.assessment);
+  }
+  if (data.aggregate_score) {
+    data.aggregate_score = courseAssessmentScoreSchemaResponseTransformer(data.aggregate_score);
+  }
+  if (data.line_items) {
+    data.line_items = data.line_items.map((item: any) => {
+      return lineItemEntryDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const courseGradeBookSchemaResponseTransformer = (data: any) => {
+  if (data.components) {
+    data.components = data.components.map((item: any) => {
+      return componentDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseCourseGradeBookSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseGradeBookSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getEnrollmentGradeBookResponseTransformer = async (
+  data: any
+): Promise<GetEnrollmentGradeBookResponse> => {
+  data = apiResponseCourseGradeBookSchemaResponseTransformer(data);
   return data;
 };
 
