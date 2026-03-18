@@ -220,6 +220,21 @@ import type {
   UpdateCourseAssessmentData,
   UpdateCourseAssessmentResponses,
   UpdateCourseAssessmentErrors,
+  DeleteLineItemData,
+  DeleteLineItemResponses,
+  DeleteLineItemErrors,
+  UpdateLineItemData,
+  UpdateLineItemResponses,
+  UpdateLineItemErrors,
+  UpsertLineItemScoreData,
+  UpsertLineItemScoreResponses,
+  UpsertLineItemScoreErrors,
+  GetLineItemRubricEvaluationData,
+  GetLineItemRubricEvaluationResponses,
+  GetLineItemRubricEvaluationErrors,
+  UpsertLineItemRubricEvaluationData,
+  UpsertLineItemRubricEvaluationResponses,
+  UpsertLineItemRubricEvaluationErrors,
   DeleteCourseCreatorData,
   DeleteCourseCreatorResponses,
   DeleteCourseCreatorErrors,
@@ -616,6 +631,12 @@ import type {
   AddCourseAssessmentData,
   AddCourseAssessmentResponses,
   AddCourseAssessmentErrors,
+  GetLineItemsData,
+  GetLineItemsResponses,
+  GetLineItemsErrors,
+  CreateLineItemData,
+  CreateLineItemResponses,
+  CreateLineItemErrors,
   GetAllCourseCreatorsData,
   GetAllCourseCreatorsResponses,
   GetAllCourseCreatorsErrors,
@@ -1144,6 +1165,9 @@ import type {
   GetRubricsByContextData,
   GetRubricsByContextResponses,
   GetRubricsByContextErrors,
+  GetEnrollmentGradeBookData,
+  GetEnrollmentGradeBookResponses,
+  GetEnrollmentGradeBookErrors,
   GetCourseEnrollmentsData,
   GetCourseEnrollmentsResponses,
   GetCourseEnrollmentsErrors,
@@ -1434,6 +1458,10 @@ import {
   updateCourseLessonResponseTransformer,
   updateLessonContentResponseTransformer,
   updateCourseAssessmentResponseTransformer,
+  updateLineItemResponseTransformer,
+  upsertLineItemScoreResponseTransformer,
+  getLineItemRubricEvaluationResponseTransformer,
+  upsertLineItemRubricEvaluationResponseTransformer,
   getCourseCreatorByUuidResponseTransformer,
   updateCourseCreatorResponseTransformer,
   updateCourseCreatorSkillResponseTransformer,
@@ -1543,6 +1571,8 @@ import {
   uploadLessonMediaResponseTransformer,
   getCourseAssessmentsResponseTransformer,
   addCourseAssessmentResponseTransformer,
+  getLineItemsResponseTransformer,
+  createLineItemResponseTransformer,
   getAllCourseCreatorsResponseTransformer,
   createCourseCreatorResponseTransformer,
   verifyCourseCreatorResponseTransformer,
@@ -1686,6 +1716,7 @@ import {
   listCurrenciesResponseTransformer,
   getPrimaryRubricResponseTransformer,
   getRubricsByContextResponseTransformer,
+  getEnrollmentGradeBookResponseTransformer,
   getCourseEnrollmentsResponseTransformer,
   getCourseCategoriesResponseTransformer,
   searchTrainingApplicationsResponseTransformer,
@@ -3855,6 +3886,157 @@ export const updateCourseAssessment = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete gradebook line item
+ * Removes a linked task from a weighted course assessment component.
+ */
+export const deleteLineItem = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteLineItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteLineItemResponses,
+    DeleteLineItemErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update gradebook line item
+ * Updates a linked task inside a weighted course assessment component.
+ */
+export const updateLineItem = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateLineItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateLineItemResponses,
+    UpdateLineItemErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateLineItemResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Upsert line item score
+ * Records or updates a learner score for a linked gradebook task.
+ */
+export const upsertLineItemScore = <ThrowOnError extends boolean = false>(
+  options: Options<UpsertLineItemScoreData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpsertLineItemScoreResponses,
+    UpsertLineItemScoreErrors,
+    ThrowOnError
+  >({
+    responseTransformer: upsertLineItemScoreResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}/scores/{enrollmentUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get line item rubric evaluation
+ * Returns the rubric evaluation for a learner against a rubric-backed gradebook line item.
+ */
+export const getLineItemRubricEvaluation = <ThrowOnError extends boolean = false>(
+  options: Options<GetLineItemRubricEvaluationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetLineItemRubricEvaluationResponses,
+    GetLineItemRubricEvaluationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getLineItemRubricEvaluationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}/rubric-evaluations/{enrollmentUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Upsert line item rubric evaluation
+ * Completes or updates the rubric evaluation for a learner against a rubric-backed gradebook line item.
+ */
+export const upsertLineItemRubricEvaluation = <ThrowOnError extends boolean = false>(
+  options: Options<UpsertLineItemRubricEvaluationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpsertLineItemRubricEvaluationResponses,
+    UpsertLineItemRubricEvaluationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: upsertLineItemRubricEvaluationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}/rubric-evaluations/{enrollmentUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7927,6 +8109,66 @@ export const addCourseAssessment = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/assessments',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List gradebook line items
+ * Returns linked tasks configured under a weighted course assessment component.
+ */
+export const getLineItems = <ThrowOnError extends boolean = false>(
+  options: Options<GetLineItemsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetLineItemsResponses,
+    GetLineItemsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getLineItemsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items',
+    ...options,
+  });
+};
+
+/**
+ * Create gradebook line item
+ * Adds a linked task under a weighted course assessment component.
+ */
+export const createLineItem = <ThrowOnError extends boolean = false>(
+  options: Options<CreateLineItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateLineItemResponses,
+    CreateLineItemErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createLineItemResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -13135,6 +13377,34 @@ export const getRubricsByContext = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/rubrics/context/{context}',
+    ...options,
+  });
+};
+
+/**
+ * Get enrollment gradebook
+ * Returns the weighted gradebook view for a learner in a course.
+ */
+export const getEnrollmentGradeBook = <ThrowOnError extends boolean = false>(
+  options: Options<GetEnrollmentGradeBookData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetEnrollmentGradeBookResponses,
+    GetEnrollmentGradeBookErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getEnrollmentGradeBookResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/gradebook/enrollments/{enrollmentUuid}',
     ...options,
   });
 };

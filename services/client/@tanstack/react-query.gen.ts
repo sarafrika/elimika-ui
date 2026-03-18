@@ -73,6 +73,11 @@ import {
   updateLessonContent,
   deleteCourseAssessment,
   updateCourseAssessment,
+  deleteLineItem,
+  updateLineItem,
+  upsertLineItemScore,
+  getLineItemRubricEvaluation,
+  upsertLineItemRubricEvaluation,
   deleteCourseCreator,
   getCourseCreatorByUuid,
   updateCourseCreator,
@@ -205,6 +210,8 @@ import {
   reorderLessonContent,
   getCourseAssessments,
   addCourseAssessment,
+  getLineItems,
+  createLineItem,
   getAllCourseCreators,
   createCourseCreator,
   verifyCourseCreator,
@@ -381,6 +388,7 @@ import {
   checkRubricAssociation,
   getPrimaryRubric,
   getRubricsByContext,
+  getEnrollmentGradeBook,
   getCourseEnrollments,
   getCourseCompletionRate,
   removeAllCategoriesFromCourse,
@@ -640,6 +648,18 @@ import type {
   UpdateCourseAssessmentData,
   UpdateCourseAssessmentError,
   UpdateCourseAssessmentResponse,
+  DeleteLineItemData,
+  DeleteLineItemError,
+  UpdateLineItemData,
+  UpdateLineItemError,
+  UpdateLineItemResponse,
+  UpsertLineItemScoreData,
+  UpsertLineItemScoreError,
+  UpsertLineItemScoreResponse,
+  GetLineItemRubricEvaluationData,
+  UpsertLineItemRubricEvaluationData,
+  UpsertLineItemRubricEvaluationError,
+  UpsertLineItemRubricEvaluationResponse,
   DeleteCourseCreatorData,
   DeleteCourseCreatorError,
   DeleteCourseCreatorResponse,
@@ -1000,6 +1020,10 @@ import type {
   AddCourseAssessmentData,
   AddCourseAssessmentError,
   AddCourseAssessmentResponse,
+  GetLineItemsData,
+  CreateLineItemData,
+  CreateLineItemError,
+  CreateLineItemResponse,
   GetAllCourseCreatorsData,
   GetAllCourseCreatorsError,
   GetAllCourseCreatorsResponse,
@@ -1436,6 +1460,7 @@ import type {
   GetRubricsByContextData,
   GetRubricsByContextError,
   GetRubricsByContextResponse,
+  GetEnrollmentGradeBookData,
   GetCourseEnrollmentsData,
   GetCourseEnrollmentsError,
   GetCourseEnrollmentsResponse,
@@ -3503,6 +3528,135 @@ export const updateCourseAssessmentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCourseAssessment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete gradebook line item
+ * Removes a linked task from a weighted course assessment component.
+ */
+export const deleteLineItemMutation = (
+  options?: Partial<Options<DeleteLineItemData>>
+): UseMutationOptions<unknown, DeleteLineItemError, Options<DeleteLineItemData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteLineItemError,
+    Options<DeleteLineItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteLineItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update gradebook line item
+ * Updates a linked task inside a weighted course assessment component.
+ */
+export const updateLineItemMutation = (
+  options?: Partial<Options<UpdateLineItemData>>
+): UseMutationOptions<UpdateLineItemResponse, UpdateLineItemError, Options<UpdateLineItemData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateLineItemResponse,
+    UpdateLineItemError,
+    Options<UpdateLineItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateLineItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Upsert line item score
+ * Records or updates a learner score for a linked gradebook task.
+ */
+export const upsertLineItemScoreMutation = (
+  options?: Partial<Options<UpsertLineItemScoreData>>
+): UseMutationOptions<
+  UpsertLineItemScoreResponse,
+  UpsertLineItemScoreError,
+  Options<UpsertLineItemScoreData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpsertLineItemScoreResponse,
+    UpsertLineItemScoreError,
+    Options<UpsertLineItemScoreData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await upsertLineItemScore({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getLineItemRubricEvaluationQueryKey = (
+  options: Options<GetLineItemRubricEvaluationData>
+) => createQueryKey('getLineItemRubricEvaluation', options);
+
+/**
+ * Get line item rubric evaluation
+ * Returns the rubric evaluation for a learner against a rubric-backed gradebook line item.
+ */
+export const getLineItemRubricEvaluationOptions = (
+  options: Options<GetLineItemRubricEvaluationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getLineItemRubricEvaluation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getLineItemRubricEvaluationQueryKey(options),
+  });
+};
+
+/**
+ * Upsert line item rubric evaluation
+ * Completes or updates the rubric evaluation for a learner against a rubric-backed gradebook line item.
+ */
+export const upsertLineItemRubricEvaluationMutation = (
+  options?: Partial<Options<UpsertLineItemRubricEvaluationData>>
+): UseMutationOptions<
+  UpsertLineItemRubricEvaluationResponse,
+  UpsertLineItemRubricEvaluationError,
+  Options<UpsertLineItemRubricEvaluationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpsertLineItemRubricEvaluationResponse,
+    UpsertLineItemRubricEvaluationError,
+    Options<UpsertLineItemRubricEvaluationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await upsertLineItemRubricEvaluation({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9725,6 +9879,74 @@ export const addCourseAssessmentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await addCourseAssessment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getLineItemsQueryKey = (options: Options<GetLineItemsData>) =>
+  createQueryKey('getLineItems', options);
+
+/**
+ * List gradebook line items
+ * Returns linked tasks configured under a weighted course assessment component.
+ */
+export const getLineItemsOptions = (options: Options<GetLineItemsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getLineItems({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getLineItemsQueryKey(options),
+  });
+};
+
+export const createLineItemQueryKey = (options: Options<CreateLineItemData>) =>
+  createQueryKey('createLineItem', options);
+
+/**
+ * Create gradebook line item
+ * Adds a linked task under a weighted course assessment component.
+ */
+export const createLineItemOptions = (options: Options<CreateLineItemData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createLineItem({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createLineItemQueryKey(options),
+  });
+};
+
+/**
+ * Create gradebook line item
+ * Adds a linked task under a weighted course assessment component.
+ */
+export const createLineItemMutation = (
+  options?: Partial<Options<CreateLineItemData>>
+): UseMutationOptions<CreateLineItemResponse, CreateLineItemError, Options<CreateLineItemData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateLineItemResponse,
+    CreateLineItemError,
+    Options<CreateLineItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createLineItem({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -18648,6 +18870,28 @@ export const getRubricsByContextInfiniteOptions = (options: Options<GetRubricsBy
       queryKey: getRubricsByContextInfiniteQueryKey(options),
     }
   );
+};
+
+export const getEnrollmentGradeBookQueryKey = (options: Options<GetEnrollmentGradeBookData>) =>
+  createQueryKey('getEnrollmentGradeBook', options);
+
+/**
+ * Get enrollment gradebook
+ * Returns the weighted gradebook view for a learner in a course.
+ */
+export const getEnrollmentGradeBookOptions = (options: Options<GetEnrollmentGradeBookData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrollmentGradeBook({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrollmentGradeBookQueryKey(options),
+  });
 };
 
 export const getCourseEnrollmentsQueryKey = (options: Options<GetCourseEnrollmentsData>) =>

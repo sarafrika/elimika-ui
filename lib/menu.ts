@@ -225,7 +225,7 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Courses',
+      title: 'Apply to train',
       url: '/dashboard/courses',
       icon: BookOpen,
     },

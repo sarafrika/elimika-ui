@@ -1435,7 +1435,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
-  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -1461,6 +1460,7 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
+  membership_status?: MembershipStatusEnum;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1629,6 +1629,10 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1636,10 +1640,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
@@ -1915,10 +1915,6 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
@@ -1934,6 +1930,10 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
@@ -2304,10 +2304,15 @@ export type CourseAssessment = {
    * **[REQUIRED]** Percentage weight of this assessment in the final grade calculation.
    */
   weight_percentage: number;
+  aggregation_strategy?: AggregationStrategyEnum;
   /**
    * **[OPTIONAL]** Reference to assessment rubric UUID for detailed grading criteria.
    */
   rubric_uuid?: string;
+  /**
+   * **[OPTIONAL]** Indicates that this component should auto-sync attendance marks from class sessions under the course.
+   */
+  sync_class_attendance?: boolean;
   /**
    * **[OPTIONAL]** Indicates if this assessment is required for course completion.
    */
@@ -2329,6 +2334,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Level of contribution to final grade based on weight.
+   */
+  readonly contribution_level?: string;
+  /**
+   * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
+   */
+  readonly aggregation_strategy_display?: string;
+  /**
    * **[READ-ONLY]** Category classification of the assessment type.
    */
   readonly assessment_category?: string;
@@ -2340,15 +2353,116 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
-  /**
-   * **[READ-ONLY]** Level of contribution to final grade based on weight.
-   */
-  readonly contribution_level?: string;
 };
 
 export type ApiResponseCourseAssessment = {
   success?: boolean;
   data?: CourseAssessment;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Gradebook line item nested under a weighted course assessment component
+ */
+export type CourseAssessmentLineItem = {
+  readonly uuid?: string;
+  course_assessment_uuid?: string;
+  title: string;
+  description?: string;
+  item_type: ItemTypeEnum;
+  assignment_uuid?: string;
+  quiz_uuid?: string;
+  rubric_uuid?: string;
+  scheduled_instance_uuid?: string;
+  max_score?: number;
+  weight_percentage?: number;
+  display_order?: number;
+  active?: boolean;
+  due_at?: Date;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+  readonly item_type_display?: string;
+};
+
+export type ApiResponseCourseAssessmentLineItem = {
+  success?: boolean;
+  data?: CourseAssessmentLineItem;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Learner score stored against a gradebook line item
+ */
+export type CourseAssessmentLineItemScore = {
+  readonly uuid?: string;
+  line_item_uuid?: string;
+  enrollment_uuid?: string;
+  score?: number;
+  max_score?: number;
+  percentage?: number;
+  comments?: string;
+  graded_at?: Date;
+  graded_by_uuid?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+  readonly grade_display?: string;
+};
+
+export type ApiResponseCourseAssessmentLineItemScore = {
+  success?: boolean;
+  data?: CourseAssessmentLineItemScore;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Stored rubric evaluation for a learner against a gradebook line item
+ */
+export type CourseAssessmentLineItemRubricEvaluation = {
+  readonly uuid?: string;
+  line_item_uuid?: string;
+  enrollment_uuid?: string;
+  status?: StatusEnum3;
+  readonly score?: number;
+  readonly percentage?: number;
+  comments?: string;
+  graded_at?: Date;
+  graded_by_uuid?: string;
+  criteria_selections?: Array<CourseAssessmentLineItemRubricEvaluationRow>;
+  readonly rubric_uuid?: string;
+  attendance_status?: AttendanceStatusEnum;
+  readonly max_score?: number;
+  readonly evaluation_display?: string;
+};
+
+/**
+ * Selected rubric scoring level for one criterion in a line-item evaluation
+ */
+export type CourseAssessmentLineItemRubricEvaluationRow = {
+  readonly uuid?: string;
+  criteria_uuid: string;
+  scoring_level_uuid: string;
+  readonly points?: number;
+  comments?: string;
+  readonly criteria_name?: string;
+  readonly scoring_level_name?: string;
+};
+
+export type ApiResponseCourseAssessmentLineItemRubricEvaluation = {
+  success?: boolean;
+  data?: CourseAssessmentLineItemRubricEvaluation;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -3315,13 +3429,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
    */
   readonly assignment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -3622,7 +3736,7 @@ export type ScheduledInstance = {
    * **[OPTIONAL]** Maximum number of participants for this session (cached from class definition).
    */
   max_participants?: number;
-  status?: StatusEnum3;
+  status?: StatusEnum4;
   /**
    * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
    */
@@ -3790,7 +3904,7 @@ export type ProgramTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum4;
+  status?: StatusEnum5;
   /**
    * Submission notes provided by the applicant.
    */
@@ -3954,7 +4068,7 @@ export type GuardianStudentLink = {
   guardianDisplayName?: string;
   relationshipType?: RelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum5;
+  status?: StatusEnum6;
   primaryGuardian?: boolean;
   linkedDate?: Date;
   revokedDate?: Date;
@@ -4024,7 +4138,7 @@ export type Enrollment = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum6;
+  status?: StatusEnum7;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -4050,10 +4164,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
@@ -4061,6 +4171,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
   /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
@@ -4114,7 +4228,7 @@ export type CourseTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum7;
+  status?: StatusEnum8;
   /**
    * Submission notes provided by the applicant.
    */
@@ -4708,7 +4822,7 @@ export type BookingResponse = {
    * End time for the session
    */
   end_time: Date;
-  status: StatusEnum8;
+  status: StatusEnum9;
   /**
    * Price amount agreed for the booking
    */
@@ -4856,7 +4970,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum9;
+  status: StatusEnum10;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -5354,9 +5468,9 @@ export type Page = {
 export type PageableObject = {
   offset?: bigint;
   sort?: SortObject;
+  paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
-  paged?: boolean;
   unpaged?: boolean;
 };
 
@@ -5731,7 +5845,7 @@ export type QuizAttempt = {
    * **[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.
    */
   is_passed?: boolean;
-  status: StatusEnum10;
+  status: StatusEnum11;
   /**
    * **[READ-ONLY]** Timestamp when the attempt was created. Automatically set by the system.
    */
@@ -5753,6 +5867,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -5764,10 +5882,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -5869,7 +5983,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum11;
+  status: StatusEnum12;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -6133,7 +6247,7 @@ export type InstructorCalendarEntry = {
    * Flag indicating availability; false represents blocked time or scheduled instances occupying the slot
    */
   is_available?: boolean;
-  status?: StatusEnum12;
+  status?: StatusEnum13;
   /**
    * Optional title (for scheduled instances)
    */
@@ -6186,7 +6300,7 @@ export type GuardianStudentDashboardDto = {
   studentUuid?: string;
   studentName?: string;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum5;
+  status?: StatusEnum6;
   courseProgress?: Array<LearnerCourseProgressView>;
   programProgress?: Array<LearnerProgramProgressView>;
 };
@@ -6224,7 +6338,7 @@ export type GuardianStudentSummaryDto = {
   studentName?: string;
   relationshipType?: RelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum5;
+  status?: StatusEnum6;
   primaryGuardian?: boolean;
 };
 
@@ -6295,7 +6409,7 @@ export type StudentSchedule = {
    * **[READ-ONLY]** Longitude coordinate for the scheduled class location.
    */
   readonly location_longitude?: number;
-  scheduling_status?: StatusEnum3;
+  scheduling_status?: StatusEnum4;
   enrollment_status?: EnrollmentStatusEnum;
   /**
    * **[READ-ONLY]** Timestamp when attendance was marked (if applicable).
@@ -6510,6 +6624,117 @@ export type ApiResponseListLessonContent = {
   };
 };
 
+export type ApiResponseCourseGradeBook = {
+  success?: boolean;
+  data?: CourseGradeBook;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type ComponentDto = {
+  assessment?: CourseAssessment;
+  aggregate_score?: CourseAssessmentScore;
+  configured_line_item_weight_percentage?: number;
+  line_items?: Array<LineItemEntryDto>;
+};
+
+/**
+ * Course assessment score with grading information and instructor feedback
+ */
+export type CourseAssessmentScore = {
+  /**
+   * **[READ-ONLY]** Unique system identifier for the assessment score record. Auto-generated by the system.
+   */
+  readonly uuid?: string;
+  /**
+   * **[REQUIRED]** Reference to the enrollment UUID of the student being assessed.
+   */
+  enrollment_uuid: string;
+  /**
+   * **[REQUIRED]** Reference to the assessment UUID being scored.
+   */
+  assessment_uuid: string;
+  /**
+   * **[OPTIONAL]** Score achieved by the student on this assessment.
+   */
+  score?: number;
+  /**
+   * **[OPTIONAL]** Maximum possible score for this assessment.
+   */
+  max_score?: number;
+  /**
+   * **[OPTIONAL]** Percentage score calculated from score and max_score.
+   */
+  percentage?: number;
+  /**
+   * **[OPTIONAL]** Timestamp when the assessment was graded by the instructor.
+   */
+  graded_at?: Date;
+  /**
+   * **[OPTIONAL]** Reference to the instructor UUID who graded this assessment.
+   */
+  graded_by_uuid?: string;
+  /**
+   * **[OPTIONAL]** Instructor's comments and feedback on the assessment performance.
+   */
+  comments?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the score record was created. Automatically set by the system.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Email or username of the user who created this score record. Used for audit trails.
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the score record was last modified. Automatically updated by the system.
+   */
+  readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** Email or username of the user who last modified this score record. Used for audit trails.
+   */
+  readonly updated_by?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).
+   */
+  readonly is_passing?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the score based on performance level.
+   */
+  readonly score_category?: string;
+  /**
+   * **[READ-ONLY]** Performance level classification based on the achieved percentage.
+   */
+  readonly performance_level?: string;
+  /**
+   * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
+   */
+  readonly feedback_summary?: string;
+};
+
+/**
+ * Enrollment-gradebook view showing weighted components, line items, and aggregate grade
+ */
+export type CourseGradeBook = {
+  course_uuid?: string;
+  enrollment_uuid?: string;
+  final_grade?: number;
+  graded_weight_percentage?: number;
+  configured_weight_percentage?: number;
+  components?: Array<ComponentDto>;
+};
+
+export type LineItemEntryDto = {
+  line_item?: CourseAssessmentLineItem;
+  score?: CourseAssessmentLineItemScore;
+};
+
 export type ApiResponsePagedDtoCourseEnrollment = {
   success?: boolean;
   data?: PagedDtoCourseEnrollment;
@@ -6543,7 +6768,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum11;
+  status: StatusEnum12;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -6668,6 +6893,15 @@ export type PagedDtoCourseAssessment = {
   content?: Array<CourseAssessment>;
   metadata?: PageMetadata;
   links?: PageLinks;
+};
+
+export type ApiResponseListCourseAssessmentLineItem = {
+  success?: boolean;
+  data?: Array<CourseAssessmentLineItem>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
 };
 
 export type ApiResponsePagedDtoCourseCreator = {
@@ -7600,21 +7834,6 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
-
-/**
  * **[READ-ONLY]** Classification of organization type based on name keywords.
  */
 export const OrganizationTypeEnum = {
@@ -7630,6 +7849,21 @@ export const OrganizationTypeEnum = {
  * **[READ-ONLY]** Classification of organization type based on name keywords.
  */
 export type OrganizationTypeEnum = (typeof OrganizationTypeEnum)[keyof typeof OrganizationTypeEnum];
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -7725,6 +7959,49 @@ export const ProvidedByEnum = {
  * **[OPTIONAL]** Party responsible for providing this requirement.
  */
 export type ProvidedByEnum = (typeof ProvidedByEnum)[keyof typeof ProvidedByEnum];
+
+/**
+ * **[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.
+ */
+export const AggregationStrategyEnum = {
+  POINTS_SUM: 'points_sum',
+  WEIGHTED_AVERAGE: 'weighted_average',
+} as const;
+
+/**
+ * **[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.
+ */
+export type AggregationStrategyEnum =
+  (typeof AggregationStrategyEnum)[keyof typeof AggregationStrategyEnum];
+
+export const ItemTypeEnum = {
+  ASSIGNMENT: 'assignment',
+  QUIZ: 'quiz',
+  ATTENDANCE: 'attendance',
+  PROJECT: 'project',
+  DISCUSSION: 'discussion',
+  EXAM: 'exam',
+  PRACTICAL: 'practical',
+  PERFORMANCE: 'performance',
+  PARTICIPATION: 'participation',
+  MANUAL: 'manual',
+} as const;
+
+export type ItemTypeEnum = (typeof ItemTypeEnum)[keyof typeof ItemTypeEnum];
+
+export const StatusEnum3 = {
+  PENDING: 'pending',
+  COMPLETED: 'completed',
+} as const;
+
+export type StatusEnum3 = (typeof StatusEnum3)[keyof typeof StatusEnum3];
+
+export const AttendanceStatusEnum = {
+  ATTENDED: 'attended',
+  ABSENT: 'absent',
+} as const;
+
+export type AttendanceStatusEnum = (typeof AttendanceStatusEnum)[keyof typeof AttendanceStatusEnum];
 
 export const ProficiencyLevelEnum2 = {
   BEGINNER: 'beginner',
@@ -7840,7 +8117,7 @@ export type SubmissionTypesEnum = (typeof SubmissionTypesEnum)[keyof typeof Subm
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export const StatusEnum3 = {
+export const StatusEnum4 = {
   SCHEDULED: 'SCHEDULED',
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',
@@ -7850,7 +8127,7 @@ export const StatusEnum3 = {
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export type StatusEnum3 = (typeof StatusEnum3)[keyof typeof StatusEnum3];
+export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
 
 /**
  * **[REQUIRED]** Applicant type initiating the request.
@@ -7868,7 +8145,7 @@ export type ApplicantTypeEnum = (typeof ApplicantTypeEnum)[keyof typeof Applican
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum4 = {
+export const StatusEnum5 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -7878,7 +8155,7 @@ export const StatusEnum4 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
+export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
 
 export const RelationshipTypeEnum = {
   PARENT: 'PARENT',
@@ -7896,18 +8173,18 @@ export const ShareScopeEnum = {
 
 export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
 
-export const StatusEnum5 = {
+export const StatusEnum6 = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   REVOKED: 'REVOKED',
 } as const;
 
-export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum6 = {
+export const StatusEnum7 = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -7918,12 +8195,12 @@ export const StatusEnum6 = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
 
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum7 = {
+export const StatusEnum8 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -7932,7 +8209,7 @@ export const StatusEnum7 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
 
 /**
  * How the platform fee was configured
@@ -7964,7 +8241,7 @@ export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof Rele
 /**
  * Current status of the booking
  */
-export const StatusEnum8 = {
+export const StatusEnum9 = {
   PAYMENT_REQUIRED: 'payment_required',
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
@@ -7978,7 +8255,7 @@ export const StatusEnum8 = {
 /**
  * Current status of the booking
  */
-export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 /**
  * Payment status reported by the engine
@@ -7996,7 +8273,7 @@ export type PaymentStatusEnum = (typeof PaymentStatusEnum)[keyof typeof PaymentS
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum9 = {
+export const StatusEnum10 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -8007,7 +8284,7 @@ export const StatusEnum9 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
 
 /**
  * Type of assignment - global or organization-specific
@@ -8056,7 +8333,7 @@ export type TransactionTypeEnum = (typeof TransactionTypeEnum)[keyof typeof Tran
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const StatusEnum10 = {
+export const StatusEnum11 = {
   IN_PROGRESS: 'IN_PROGRESS',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
@@ -8065,12 +8342,12 @@ export const StatusEnum10 = {
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
+export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum11 = {
+export const StatusEnum12 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -8080,7 +8357,7 @@ export const StatusEnum11 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
+export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
 
 /**
  * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
@@ -8114,7 +8391,7 @@ export type AvailabilityTypeEnum = (typeof AvailabilityTypeEnum)[keyof typeof Av
 /**
  * Scheduled instance status when applicable
  */
-export const StatusEnum12 = {
+export const StatusEnum13 = {
   SCHEDULED: 'SCHEDULED',
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',
@@ -8125,7 +8402,7 @@ export const StatusEnum12 = {
 /**
  * Scheduled instance status when applicable
  */
-export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
+export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
 
 /**
  * **[READ-ONLY]** Current enrollment status for the student.
@@ -10536,6 +10813,177 @@ export type UpdateCourseAssessmentResponses = {
 
 export type UpdateCourseAssessmentResponse =
   UpdateCourseAssessmentResponses[keyof UpdateCourseAssessmentResponses];
+
+export type DeleteLineItemData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+    assessmentUuid: string;
+    lineItemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}';
+};
+
+export type DeleteLineItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteLineItemError = DeleteLineItemErrors[keyof DeleteLineItemErrors];
+
+export type DeleteLineItemResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateLineItemData = {
+  body: CourseAssessmentLineItem;
+  path: {
+    courseUuid: string;
+    assessmentUuid: string;
+    lineItemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}';
+};
+
+export type UpdateLineItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateLineItemError = UpdateLineItemErrors[keyof UpdateLineItemErrors];
+
+export type UpdateLineItemResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseAssessmentLineItem;
+};
+
+export type UpdateLineItemResponse = UpdateLineItemResponses[keyof UpdateLineItemResponses];
+
+export type UpsertLineItemScoreData = {
+  body: CourseAssessmentLineItemScore;
+  path: {
+    courseUuid: string;
+    assessmentUuid: string;
+    lineItemUuid: string;
+    enrollmentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}/scores/{enrollmentUuid}';
+};
+
+export type UpsertLineItemScoreErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpsertLineItemScoreError = UpsertLineItemScoreErrors[keyof UpsertLineItemScoreErrors];
+
+export type UpsertLineItemScoreResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseAssessmentLineItemScore;
+};
+
+export type UpsertLineItemScoreResponse =
+  UpsertLineItemScoreResponses[keyof UpsertLineItemScoreResponses];
+
+export type GetLineItemRubricEvaluationData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+    assessmentUuid: string;
+    lineItemUuid: string;
+    enrollmentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}/rubric-evaluations/{enrollmentUuid}';
+};
+
+export type GetLineItemRubricEvaluationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetLineItemRubricEvaluationError =
+  GetLineItemRubricEvaluationErrors[keyof GetLineItemRubricEvaluationErrors];
+
+export type GetLineItemRubricEvaluationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseAssessmentLineItemRubricEvaluation;
+};
+
+export type GetLineItemRubricEvaluationResponse =
+  GetLineItemRubricEvaluationResponses[keyof GetLineItemRubricEvaluationResponses];
+
+export type UpsertLineItemRubricEvaluationData = {
+  body: CourseAssessmentLineItemRubricEvaluation;
+  path: {
+    courseUuid: string;
+    assessmentUuid: string;
+    lineItemUuid: string;
+    enrollmentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}/rubric-evaluations/{enrollmentUuid}';
+};
+
+export type UpsertLineItemRubricEvaluationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpsertLineItemRubricEvaluationError =
+  UpsertLineItemRubricEvaluationErrors[keyof UpsertLineItemRubricEvaluationErrors];
+
+export type UpsertLineItemRubricEvaluationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseAssessmentLineItemRubricEvaluation;
+};
+
+export type UpsertLineItemRubricEvaluationResponse =
+  UpsertLineItemRubricEvaluationResponses[keyof UpsertLineItemRubricEvaluationResponses];
 
 export type DeleteCourseCreatorData = {
   body?: never;
@@ -15010,6 +15458,70 @@ export type AddCourseAssessmentResponses = {
 
 export type AddCourseAssessmentResponse =
   AddCourseAssessmentResponses[keyof AddCourseAssessmentResponses];
+
+export type GetLineItemsData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+    assessmentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items';
+};
+
+export type GetLineItemsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetLineItemsError = GetLineItemsErrors[keyof GetLineItemsErrors];
+
+export type GetLineItemsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCourseAssessmentLineItem;
+};
+
+export type GetLineItemsResponse = GetLineItemsResponses[keyof GetLineItemsResponses];
+
+export type CreateLineItemData = {
+  body: CourseAssessmentLineItem;
+  path: {
+    courseUuid: string;
+    assessmentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items';
+};
+
+export type CreateLineItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateLineItemError = CreateLineItemErrors[keyof CreateLineItemErrors];
+
+export type CreateLineItemResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseAssessmentLineItem;
+};
+
+export type CreateLineItemResponse = CreateLineItemResponses[keyof CreateLineItemResponses];
 
 export type GetAllCourseCreatorsData = {
   body?: never;
@@ -21247,6 +21759,40 @@ export type GetRubricsByContextResponses = {
 
 export type GetRubricsByContextResponse =
   GetRubricsByContextResponses[keyof GetRubricsByContextResponses];
+
+export type GetEnrollmentGradeBookData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+    enrollmentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/gradebook/enrollments/{enrollmentUuid}';
+};
+
+export type GetEnrollmentGradeBookErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetEnrollmentGradeBookError =
+  GetEnrollmentGradeBookErrors[keyof GetEnrollmentGradeBookErrors];
+
+export type GetEnrollmentGradeBookResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseGradeBook;
+};
+
+export type GetEnrollmentGradeBookResponse =
+  GetEnrollmentGradeBookResponses[keyof GetEnrollmentGradeBookResponses];
 
 export type GetCourseEnrollmentsData = {
   body?: never;

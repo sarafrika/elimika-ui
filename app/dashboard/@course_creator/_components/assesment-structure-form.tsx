@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Edit2, Globe, LockIcon, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -29,11 +29,15 @@ import { useCourseCreator } from '../../../../context/course-creator-context';
 import {
   addCourseAssessmentMutation,
   deleteCourseAssessmentMutation,
+  deleteLineItemMutation,
   getCourseAssessmentsOptions,
+  getLineItemsOptions,
+  getLineItemsQueryKey,
   searchAssessmentRubricsOptions,
   updateCourseAssessmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import { useRubricsData } from '../rubrics/rubric-chaining';
+import { CATEGORY_META, LinkItemsModal, TaskItemType } from './assesment-link-items';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -110,11 +114,88 @@ const TYPE_COLORS: Record<string, string> = {
 function TypeBadge({ type }: { type: string }) {
   const cls = TYPE_COLORS[type] ?? TYPE_COLORS['Other'];
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}
-    >
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
       {type}
     </span>
+  );
+}
+
+// ─── Per-row line items component ─────────────────────────────────────────────
+// Each assessment row fetches its own line items independently so the list
+// updates live after link / unlink actions without any parent state.
+
+function AssessmentLineItems({
+  courseUuid,
+  assessmentUuid,
+}: {
+  courseUuid: string;
+  assessmentUuid: string;
+}) {
+  const qc = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    ...getLineItemsOptions({ path: { courseUuid, assessmentUuid } }),
+    enabled: !!assessmentUuid,
+  });
+
+  // Handle both { data: { content: [] } } and { data: [] } response shapes
+  const lineItems: any[] = data?.data?.content ?? (Array.isArray(data?.data) ? data.data : []);
+
+  const deleteLineItemMut = useMutation(deleteLineItemMutation());
+
+  function handleRemove(lineItemUuid: string) {
+    deleteLineItemMut.mutate(
+      { path: { courseUuid, assessmentUuid, lineItemUuid } },
+      {
+        onSuccess: () => {
+          toast.success('Item removed.');
+          qc.invalidateQueries({
+            queryKey: getLineItemsQueryKey({ path: { courseUuid, assessmentUuid } }),
+          });
+        },
+        onError: (err: any) => toast.error(err?.message || 'Failed to remove item.'),
+      }
+    );
+  }
+
+  if (isLoading) {
+    return <Spinner className='h-3 w-3' />;
+  }
+
+  if (lineItems.length === 0) return null;
+
+  return (
+    <>
+      {lineItems.map((li: any) => {
+        const itemType = (li.item_type?.toLowerCase() ?? 'assignment') as TaskItemType;
+        const meta = CATEGORY_META[itemType] ?? CATEGORY_META['assignment'];
+        const Icon = meta.icon;
+
+        return (
+          <span
+            key={li.uuid}
+            className={`group flex w-max max-w-[200px] items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.color}`}
+          >
+            <Icon size={11} className='shrink-0' />
+            <span className='truncate'>{li.title}</span>
+            {/* ×  remove button — visible on hover */}
+            <button
+              type='button'
+              title='Remove this item'
+              disabled={deleteLineItemMut.isPending}
+              onClick={() => handleRemove(li.uuid)}
+              className='hover:text-destructive ml-0.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 disabled:cursor-not-allowed'
+            >
+              {deleteLineItemMut.isPending ? (
+                <Spinner className='h-2.5 w-2.5' />
+              ) : (
+                <X size={10} />
+              )}
+            </button>
+          </span>
+        );
+      })}
+    </>
   );
 }
 
@@ -155,7 +236,6 @@ function AssessmentSheet({
       : DEFAULT_FORM
   );
 
-  // Re-sync form when `initial` changes (e.g. switching between edit targets)
   const [prevInitial, setPrevInitial] = useState(initial);
   if (initial !== prevInitial) {
     setPrevInitial(initial);
@@ -175,7 +255,6 @@ function AssessmentSheet({
   }
 
   const [errors, setErrors] = useState<Partial<Record<keyof AssessmentFormValues, string>>>({});
-
   const creator = useCourseCreator();
 
   const { data: searchRubs, isLoading: isLoadingRubrics } = useQuery({
@@ -193,7 +272,6 @@ function AssessmentSheet({
 
   const createMut = useMutation(addCourseAssessmentMutation());
   const updateMut = useMutation(updateCourseAssessmentMutation());
-
   const isSaving = createMut.isPending || updateMut.isPending;
 
   function set<K extends keyof AssessmentFormValues>(key: K, value: AssessmentFormValues[K]) {
@@ -231,39 +309,21 @@ function AssessmentSheet({
 
     if (mode === 'add') {
       createMut.mutate(
+        { path: { courseUuid }, body: { ...body, course_uuid: courseUuid, created_by: createdBy } as any },
         {
-          path: { courseUuid },
-          body: { ...body, course_uuid: courseUuid, created_by: createdBy } as any,
-        },
-        {
-          onSuccess: () => {
-            toast.success('Assessment created successfully!');
-            onSuccess();
-          },
-          onError: (err: any) => {
-            toast.error(err?.message || 'Failed to create assessment');
-          },
+          onSuccess: () => { toast.success('Assessment created successfully!'); onSuccess(); },
+          onError: (err: any) => toast.error(err?.message || 'Failed to create assessment'),
         }
       );
     } else if (initial) {
       updateMut.mutate(
         {
           path: { courseUuid, assessmentUuid: initial.uuid },
-          body: {
-            ...body,
-            uuid: initial.uuid,
-            course_uuid: courseUuid,
-            updated_by: createdBy,
-          } as any,
+          body: { ...body, uuid: initial.uuid, course_uuid: courseUuid, updated_by: createdBy } as any,
         },
         {
-          onSuccess: () => {
-            toast.success('Assessment updated successfully!');
-            onSuccess();
-          },
-          onError: (err: any) => {
-            toast.error(err?.message || 'Failed to update assessment');
-          },
+          onSuccess: () => { toast.success('Assessment updated successfully!'); onSuccess(); },
+          onError: (err: any) => toast.error(err?.message || 'Failed to update assessment'),
         }
       );
     }
@@ -272,11 +332,8 @@ function AssessmentSheet({
   return (
     <Sheet open={open} onOpenChange={isOpen => !isOpen && onClose()}>
       <SheetContent className='flex w-full flex-col gap-0 p-0 sm:max-w-[650px]' side='right'>
-        {/* Header */}
         <SheetHeader className='border-b px-6 py-5'>
-          <SheetTitle>
-            {mode === 'add' ? 'Add Assessment' : 'Edit Assessment'}
-          </SheetTitle>
+          <SheetTitle>{mode === 'add' ? 'Add Assessment' : 'Edit Assessment'}</SheetTitle>
           <SheetDescription>
             {mode === 'add'
               ? 'Define a new assessment component for this course'
@@ -284,7 +341,6 @@ function AssessmentSheet({
           </SheetDescription>
         </SheetHeader>
 
-        {/* Scrollable body */}
         <div className='flex-1 overflow-y-auto px-6 py-6'>
           <div className='flex flex-col gap-5'>
             {/* Title */}
@@ -319,18 +375,13 @@ function AssessmentSheet({
                 <Label className='text-sm font-medium'>
                   Assessment Type <span className='text-destructive'>*</span>
                 </Label>
-                <Select
-                  value={form.assessment_type}
-                  onValueChange={v => set('assessment_type', v)}
-                >
+                <Select value={form.assessment_type} onValueChange={v => set('assessment_type', v)}>
                   <SelectTrigger className={errors.assessment_type ? 'border-destructive' : ''}>
                     <SelectValue placeholder='Select type' />
                   </SelectTrigger>
                   <SelectContent>
                     {ASSESSMENT_TYPES.map(t => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -366,7 +417,6 @@ function AssessmentSheet({
               <p className='text-muted-foreground text-xs'>
                 Associate a grading rubric with this assessment
               </p>
-
               {isLoadingRubrics ? (
                 <div className='flex items-center gap-2 py-2'>
                   <Spinner className='h-4 w-4' />
@@ -454,18 +504,14 @@ function AssessmentSheet({
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-foreground text-sm font-medium'>Required Assessment</p>
-                  <p className='text-muted-foreground text-xs'>
-                    Students must complete this assessment
-                  </p>
+                  <p className='text-muted-foreground text-xs'>Students must complete this assessment</p>
                 </div>
                 <Switch checked={form.is_required} onCheckedChange={v => set('is_required', v)} />
               </div>
               <div className='flex items-center justify-between border-t pt-4'>
                 <div>
                   <p className='text-foreground text-sm font-medium'>Major Assessment</p>
-                  <p className='text-muted-foreground text-xs'>
-                    Mark as a high-stakes assessment
-                  </p>
+                  <p className='text-muted-foreground text-xs'>Mark as a high-stakes assessment</p>
                 </div>
                 <Switch
                   checked={form.is_major_assessment}
@@ -476,22 +522,13 @@ function AssessmentSheet({
           </div>
         </div>
 
-        {/* Footer */}
         <SheetFooter className='border-t px-6 py-4'>
-          <Button variant='outline' onClick={onClose} disabled={isSaving}>
-            Cancel
-          </Button>
+          <Button variant='outline' onClick={onClose} disabled={isSaving}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isSaving} className='min-w-[120px]'>
             {isSaving ? (
-              <>
-                <Spinner className='mr-2 h-4 w-4' />
-                Saving...
-              </>
+              <><Spinner className='mr-2 h-4 w-4' />Saving...</>
             ) : (
-              <>
-                <Save size={15} className='mr-2' />
-                {mode === 'add' ? 'Add Assessment' : 'Save Changes'}
-              </>
+              <><Save size={15} className='mr-2' />{mode === 'add' ? 'Add Assessment' : 'Save Changes'}</>
             )}
           </Button>
         </SheetFooter>
@@ -510,25 +547,14 @@ type DeleteConfirmSheetProps = {
   onSuccess: () => void;
 };
 
-function DeleteConfirmSheet({
-  open,
-  assessment,
-  courseUuid,
-  onClose,
-  onSuccess,
-}: DeleteConfirmSheetProps) {
+function DeleteConfirmSheet({ open, assessment, courseUuid, onClose, onSuccess }: DeleteConfirmSheetProps) {
   const deleteMut = useMutation(deleteCourseAssessmentMutation());
 
   function handleDelete() {
     if (!assessment) return;
     deleteMut.mutate({ path: { courseUuid, assessmentUuid: assessment.uuid } } as any, {
-      onSuccess: () => {
-        toast.success('Assessment deleted successfully');
-        onSuccess();
-      },
-      onError: (err: any) => {
-        toast.error(err?.message || 'Failed to delete assessment');
-      },
+      onSuccess: () => { toast.success('Assessment deleted successfully'); onSuccess(); },
+      onError: (err: any) => toast.error(err?.message || 'Failed to delete assessment'),
     });
   }
 
@@ -539,36 +565,19 @@ function DeleteConfirmSheet({
           <SheetTitle>Delete Assessment</SheetTitle>
           <SheetDescription>This action cannot be undone.</SheetDescription>
         </SheetHeader>
-
         <div className='flex flex-1 flex-col items-start gap-4 px-6 py-6'>
           <div className='bg-destructive/10 flex h-12 w-12 items-center justify-center rounded-full'>
             <AlertTriangle size={22} className='text-destructive' />
           </div>
           <p className='text-muted-foreground text-sm'>
             Are you sure you want to delete{' '}
-            <span className='text-foreground font-semibold'>{assessment?.title}</span>? This
-            cannot be undone.
+            <span className='text-foreground font-semibold'>{assessment?.title}</span>? This cannot be undone.
           </p>
         </div>
-
         <SheetFooter className='border-t px-6 py-4'>
-          <Button variant='outline' onClick={onClose} disabled={deleteMut.isPending}>
-            Cancel
-          </Button>
-          <Button
-            variant='destructive'
-            onClick={handleDelete}
-            disabled={deleteMut.isPending}
-            className='min-w-[100px]'
-          >
-            {deleteMut.isPending ? (
-              <>
-                <Spinner className='mr-2 h-4 w-4' />
-                Deleting...
-              </>
-            ) : (
-              'Delete'
-            )}
+          <Button variant='outline' onClick={onClose} disabled={deleteMut.isPending}>Cancel</Button>
+          <Button variant='destructive' onClick={handleDelete} disabled={deleteMut.isPending} className='min-w-[100px]'>
+            {deleteMut.isPending ? <><Spinner className='mr-2 h-4 w-4' />Deleting...</> : 'Delete'}
           </Button>
         </SheetFooter>
       </SheetContent>
@@ -577,10 +586,8 @@ function DeleteConfirmSheet({
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export const CourseAssessmentStructure = ({
-  courseUuid,
-  createdBy,
-}: CourseAssessmentStructureProps) => {
+
+export const CourseAssessmentStructure = ({ courseUuid, createdBy }: CourseAssessmentStructureProps) => {
   const qc = useQueryClient();
   const creator = useCourseCreator();
 
@@ -590,82 +597,29 @@ export const CourseAssessmentStructure = ({
   });
   const assessments: Assessment[] = assessmentsData?.data?.content ?? [];
 
-  const { rubrics, isLoading: rubricIsLoading, isError, isFetched } = useRubricsData(
-    creator?.data?.profile?.uuid as string
-  );
+  const { rubrics } = useRubricsData(creator?.data?.profile?.uuid as string);
   const filteredRubrics = rubrics.filter(rubric =>
-    assessments.some(assessment => assessment.rubric_uuid === rubric.uuid)
+    assessments.some(a => a.rubric_uuid === rubric.uuid)
   );
 
   const totalWeight = assessments.reduce((sum, a) => sum + (a.weight_percentage ?? 0), 0);
 
-  // Sheet state
   const [modalMode, setModalMode] = useState<ModalMode | null>(null);
   const [editingAssessment, setEditingAssessment] = useState<Assessment | undefined>(undefined);
   const [deletingAssessment, setDeletingAssessment] = useState<Assessment | undefined>(undefined);
+  const [linkModalTarget, setLinkModalTarget] = useState<Assessment | null>(null);
 
-  function openAdd() {
-    setEditingAssessment(undefined);
-    setModalMode('add');
-  }
-
-  function openEdit(a: Assessment) {
-    setEditingAssessment(a);
-    setModalMode('edit');
-  }
-
-  function openDelete(a: Assessment) {
-    setDeletingAssessment(a);
-  }
-
-  function closeModal() {
-    setModalMode(null);
-    setEditingAssessment(undefined);
-  }
+  function openAdd() { setEditingAssessment(undefined); setModalMode('add'); }
+  function openEdit(a: Assessment) { setEditingAssessment(a); setModalMode('edit'); }
+  function closeModal() { setModalMode(null); setEditingAssessment(undefined); }
 
   function onMutationSuccess() {
     qc.invalidateQueries({
-      queryKey: getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } })
-        .queryKey,
+      queryKey: getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } }).queryKey,
     });
     closeModal();
     setDeletingAssessment(undefined);
   }
-
-  // mock
-  const mockTasks = [
-    { id: 'task-assignment-1', title: 'Essay Assignment' },
-    { id: 'task-quiz-1', title: 'Module 1 Quiz' },
-    { id: 'task-quiz-2', title: 'Midterm Quiz' },
-    { id: 'task-project-1', title: 'Final Project' },
-    { id: 'task-discussion-1', title: 'Discussion Participation' },
-    { id: 'task-lab-1', title: 'Lab Exercise' },
-    { id: 'task-presentation-1', title: 'Group Presentation' },
-    { id: 'task-reflection-1', title: 'Weekly Reflection' },
-  ];
-
-  const [assessmentTasks, setAssessmentTasks] = useState<Record<string, string[]>>({});
-
-  const addTaskToAssessment = (assessmentId: string, taskId: string) => {
-    setAssessmentTasks(prev => {
-      const existing = prev[assessmentId] || [];
-
-      if (existing.includes(taskId)) return prev;
-
-      return {
-        ...prev,
-        [assessmentId]: [...existing, taskId],
-      };
-    });
-  };
-
-  const removeTask = (assessmentId: string, taskId: string) => {
-    setAssessmentTasks(prev => ({
-      ...prev,
-      [assessmentId]: (prev[assessmentId] || []).filter(t => t !== taskId),
-    }));
-  };
-
 
   return (
     <>
@@ -673,36 +627,28 @@ export const CourseAssessmentStructure = ({
         {/* Header */}
         <div className='flex flex-col gap-1 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>
           <div>
-            <h3 className='text-foreground text-lg font-bold'>
-              Overall Course Assessment Structure
-            </h3>
+            <h3 className='text-foreground text-lg font-bold'>Overall Course Assessment Structure</h3>
             <p className='text-muted-foreground mt-0.5 text-sm'>
               Define the assessment components and their weights (total: 100%)
             </p>
           </div>
           <Button onClick={openAdd} size='sm' className='mt-3 gap-2 sm:mt-0'>
-            <Plus size={15} />
-            Add Assessment
+            <Plus size={15} />Add Assessment
           </Button>
         </div>
 
         {/* Table */}
         {isLoading ? (
-          <div className='flex items-center justify-center py-16'>
-            <Spinner className='h-6 w-6' />
-          </div>
+          <div className='flex items-center justify-center py-16'><Spinner className='h-6 w-6' /></div>
         ) : assessments.length === 0 ? (
           <div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
-            <div className='bg-muted rounded-full p-4'>
-              <Plus size={24} className='text-muted-foreground' />
-            </div>
+            <div className='bg-muted rounded-full p-4'><Plus size={24} className='text-muted-foreground' /></div>
             <p className='text-foreground font-medium'>No assessments yet</p>
             <p className='text-muted-foreground max-w-xs text-sm'>
               Add assessment components to define the grading structure for this course.
             </p>
             <Button onClick={openAdd} size='sm' variant='outline' className='mt-1 gap-2'>
-              <Plus size={14} />
-              Add First Assessment
+              <Plus size={14} />Add First Assessment
             </Button>
           </div>
         ) : (
@@ -710,120 +656,71 @@ export const CourseAssessmentStructure = ({
             <table className='w-full text-sm'>
               <thead>
                 <tr className='bg-muted/40 border-b'>
-                  <th className='text-foreground px-6 py-3 text-left font-semibold'>
-                    Component Title
-                  </th>
-
-                  <th className='text-foreground px-4 py-3 text-left font-semibold'>
-                    Weight (Score Range)
-                  </th>
-
-                  <th className='text-foreground px-4 py-3 text-left font-semibold'>
-                    Linked Tasks
-                  </th>
-
-                  <th className='text-foreground px-4 py-3 text-left font-semibold'>
-                    Type
-                  </th>
-
-                  <th className='text-foreground px-4 py-3 text-center font-semibold'>
-                    Required
-                  </th>
-
-                  <th className='text-foreground px-4 py-3 text-right font-semibold'>
-                    Actions
-                  </th>
+                  <th className='text-foreground px-6 py-3 text-left font-semibold'>Component Title</th>
+                  <th className='text-foreground px-4 py-3 text-left font-semibold'>Weight (Score Range)</th>
+                  <th className='text-foreground px-4 py-3 text-left font-semibold'>Linked Tasks</th>
+                  {/* <th className='text-foreground px-4 py-3 text-left font-semibold'>Type</th> */}
+                  <th className='text-foreground px-4 py-3 text-right font-semibold'>Actions</th>
                 </tr>
               </thead>
 
               <tbody className='divide-y'>
                 {assessments.map(a => (
                   <tr key={a.uuid} className='hover:bg-muted/30 transition-colors'>
-
-                    {/* Component */}
+                    {/* Title */}
                     <td className='px-6 py-4'>
-                      <div>
-                        <p className='text-foreground font-medium'>{a.title}</p>
-
-                        {a.description && (
-                          <p className='text-muted-foreground mt-0.5 line-clamp-1 text-xs'>
-                            {a.description}
-                          </p>
-                        )}
-
-                        {a.is_major_assessment && (
-                          <span className='bg-primary/15 text-primary mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold'>
-                            Major
-                          </span>
-                        )}
-                      </div>
+                      <p className='text-foreground font-medium'>{a.title}</p>
+                      {a.description && (
+                        <p className='text-muted-foreground mt-0.5 line-clamp-1 text-xs'>{a.description}</p>
+                      )}
+                      {a.is_major_assessment && (
+                        <span className='bg-primary/15 text-primary mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold'>
+                          Major
+                        </span>
+                      )}
                     </td>
 
                     {/* Weight */}
-                    <td className='text-foreground px-4 py-4 text-left font-semibold'>
-                      {a.weight_percentage}% (0–{a.weight_percentage})
-                    </td>
-
-                    {/* Linked tasks */}
                     <td className='px-4 py-4'>
                       <div className='flex flex-col gap-1'>
-
-                        {/* Selected tasks */}
-                        {(assessmentTasks[a.uuid] || []).map(taskId => {
-                          const task = mockTasks.find(t => t.id === taskId);
-
-                          return (
-                            <span
-                              key={taskId}
-                              className='bg-primary/10 text-primary flex items-center gap-1 rounded-full px-2 py-0.5 text-xs w-max'
-                            >
-                              {task?.title}
-                              <button
-                                onClick={() => removeTask(a.uuid, taskId)}
-                                className='text-primary/70 hover:text-primary'
-                              >
-                                ✕
-                              </button>
-                            </span>
-                          );
-                        })}
-
-                        {/* ShadCN Select dropdown */}
-                        <Select
-                          onValueChange={value => {
-                            if (!value) return;
-                            addTaskToAssessment(a.uuid, value);
-                          }}
-                          defaultValue=''
+                        <span className='text-foreground font-semibold'>
+                          {a.weight_percentage}% (0–{a.weight_percentage})
+                        </span>
+                        <span
+                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
+                            ? 'bg-success/10 text-success/70'
+                            : 'bg-muted-foreground/10 text-muted-foreground'
+                            }`}
                         >
-                          <SelectTrigger className='w-full border-input bg-background text-foreground rounded-md border px-2 py-1 text-[13px]'>
-                            <span className='text-xs text-muted-foreground'>
-                              Select task
-                            </span>
-                          </SelectTrigger>
+                          {a.is_required ? 'Required' : 'Not required'}
+                        </span>
+                      </div>
+                    </td>
 
-                          <SelectContent>
-                            {mockTasks.map(task => (
-                              <SelectItem key={task.id} value={task.id}>
-                                {task.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    {/* Linked tasks — self-fetching per row */}
+                    <td className='px-4 py-4'>
+                      <div className='flex flex-col gap-1.5'>
+                        <AssessmentLineItems courseUuid={courseUuid} assessmentUuid={a.uuid} />
+                        <button
+                          type='button'
+                          onClick={() => setLinkModalTarget(a)}
+                          className='text-muted-foreground hover:text-foreground hover:bg-muted flex w-max items-center gap-1.5 rounded-full border border-dashed px-2.5 py-1 text-xs transition-colors'
+                        >
+                          <Plus size={11} />
+                          Link items
+                        </button>
                       </div>
                     </td>
 
                     {/* Type */}
-                    <td className='px-4 py-4'>
+                    {/* <td className='px-4 py-4'>
                       <div className='flex flex-col items-start gap-1'>
                         <TypeBadge type={a.assessment_type} />
-
                         {a.rubric_uuid === null && (
                           <div className='flex items-center gap-2'>
                             <span className='bg-destructive/10 text-destructive rounded-md px-2 py-0.5 text-xs font-medium'>
                               No rubric
                             </span>
-
                             <button
                               onClick={() => openEdit(a)}
                               className='text-destructive hover:text-destructive/80 text-xs font-medium underline underline-offset-2 transition-colors'
@@ -833,19 +730,7 @@ export const CourseAssessmentStructure = ({
                           </div>
                         )}
                       </div>
-                    </td>
-
-                    {/* Required */}
-                    <td className='px-4 py-4 text-center'>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
-                          ? 'bg-success/10 text-success/70'
-                          : 'bg-muted-foreground/10 text-muted-foreground'
-                          }`}
-                      >
-                        {a.is_required ? 'Yes' : 'No'}
-                      </span>
-                    </td>
+                    </td> */}
 
                     {/* Actions */}
                     <td className='px-4 py-4'>
@@ -857,9 +742,8 @@ export const CourseAssessmentStructure = ({
                         >
                           <Pencil size={15} />
                         </button>
-
                         <button
-                          onClick={() => openDelete(a)}
+                          onClick={() => setDeletingAssessment(a)}
                           className='text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg p-1.5 transition-colors'
                           title='Delete assessment'
                         >
@@ -867,31 +751,18 @@ export const CourseAssessmentStructure = ({
                         </button>
                       </div>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
 
-              {/* Footer */}
               <tfoot>
                 <tr className='bg-muted/40 border-t'>
-                  <td className='text-foreground px-6 py-3 font-bold'>
-                    Total
-                  </td>
-
-                  {/* Weight total */}
+                  <td className='text-foreground px-6 py-3 font-bold'>Total</td>
                   <td
-                    className={`px-4 py-3 text-left font-bold ${totalWeight === 100
-                      ? 'text-green-600'
-                      : totalWeight > 100
-                        ? 'text-destructive'
-                        : 'text-amber-600'
-                      }`}
+                    className={`px-4 py-3 text-left font-bold ${totalWeight === 100 ? 'text-success' : totalWeight > 100 ? 'text-destructive' : 'text-warning'}`}
                   >
                     {totalWeight}%
                   </td>
-
-                  <td className='px-4 py-3' />
                   <td className='px-4 py-3' />
                   <td className='px-4 py-3' />
                   <td className='px-4 py-3' />
@@ -903,8 +774,7 @@ export const CourseAssessmentStructure = ({
 
         {!isLoading && assessments.length > 0 && totalWeight !== 100 && (
           <div
-            className={`flex items-center gap-2 border-t px-6 py-3 text-sm font-medium ${totalWeight > 100 ? 'bg-destructive/5 text-destructive' : 'bg-primary/15 text-primary'
-              }`}
+            className={`flex items-center gap-2 border-t px-6 py-3 text-sm font-medium ${totalWeight > 100 ? 'bg-destructive/5 text-destructive' : 'bg-primary/15 text-primary'}`}
           >
             <AlertTriangle size={14} />
             {totalWeight > 100
@@ -914,17 +784,25 @@ export const CourseAssessmentStructure = ({
         )}
       </div>
 
-      {/* Evaluation Structure */}
-      <div className='bg-card mt-10 '>
-        <div className='flex flex-col'>
-          <div className='flex flex-col gap-1 px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
-            <div>
-              <h3 className='text-foreground text-lg font-bold'>
-                Course Rubrics
-              </h3>
-            </div>
-          </div>
+      {/* Link items modal */}
+      {linkModalTarget && (
+        <LinkItemsModal
+          open={!!linkModalTarget}
+          onClose={() => setLinkModalTarget(null)}
+          courseUuid={courseUuid}
+          assessmentUuid={linkModalTarget.uuid}
+          linkedItems={[]}
+          onSuccess={() => setLinkModalTarget(null)}
+        />
+      )}
 
+      {/* Course Rubrics */}
+      {/* <div className='bg-card mt-10'>
+        <div className='flex flex-col gap-1 px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
+          <h3 className='text-foreground text-lg font-bold'>Course Rubrics</h3>
+        </div>
+
+        <div className='flex flex-col'>
           {filteredRubrics.map(rubric => {
             const sortedLevels = [...(rubric.scoringLevels ?? [])].sort(
               (a: any, b: any) => (a.level_order ?? 0) - (b.level_order ?? 0)
@@ -932,7 +810,6 @@ export const CourseAssessmentStructure = ({
             const sortedCriteria = [...(rubric.criteria ?? [])].sort(
               (a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0)
             );
-
             const matrixCells: Record<string, any> = {};
             sortedCriteria.forEach((crit: any) => {
               (crit.scoring ?? []).forEach((cell: any) => {
@@ -941,63 +818,36 @@ export const CourseAssessmentStructure = ({
             });
 
             return (
-              <div
-                key={rubric.uuid}
-                className='bg-card mx-2 my-4 overflow-hidden rounded-xl border pb-3 shadow-sm'
-              >
+              <div key={rubric.uuid} className='bg-card mx-2 my-4 overflow-hidden rounded-xl border pb-3 shadow-sm'>
                 <div className='px-6 py-5'>
                   <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
                     <div className='flex flex-col gap-1.5'>
-                      <h4 className='text-foreground text-base font-bold'>
-                        {rubric.title || 'Untitled Rubric'}
-                      </h4>
+                      <h4 className='text-foreground text-base font-bold'>{rubric.title || 'Untitled Rubric'}</h4>
                       {rubric.description && (
-                        <p className='text-muted-foreground line-clamp-2 max-w-2xl text-sm'>
-                          {rubric.description}
-                        </p>
+                        <p className='text-muted-foreground line-clamp-2 max-w-2xl text-sm'>{rubric.description}</p>
                       )}
                       <div className='text-muted-foreground mt-1 flex flex-wrap items-center gap-3 text-xs'>
                         {rubric.rubric_type && (
                           <span className='flex items-center gap-1'>
-                            <span className='h-2 w-2 rounded-full bg-green-500' />
-                            Type:{' '}
-                            <span className='text-foreground font-medium'>{rubric.rubric_type}</span>
+                            <span className='bg-success h-2 w-2 rounded-full' />
+                            Type: <span className='text-foreground font-medium'>{rubric.rubric_type}</span>
                           </span>
                         )}
                         {rubric.rubric_category && (
                           <span className='flex items-center gap-1'>
-                            Category:{' '}
-                            <span className='text-foreground font-medium'>
-                              {rubric.rubric_category}
-                            </span>
+                            Category: <span className='text-foreground font-medium'>{rubric.rubric_category}</span>
                           </span>
                         )}
                         <span className='flex items-center gap-1'>
-                          {rubric.is_public ? (
-                            <>
-                              <Globe size={12} />{' '}
-                              <span className='text-foreground font-medium'>Public</span>
-                            </>
-                          ) : (
-                            <>
-                              <LockIcon size={12} />{' '}
-                              <span className='text-foreground font-medium'>Private</span>
-                            </>
-                          )}
+                          {rubric.is_public
+                            ? <><Globe size={12} /><span className='text-foreground font-medium'>Public</span></>
+                            : <><LockIcon size={12} /><span className='text-foreground font-medium'>Private</span></>}
                         </span>
                         {rubric.total_weight != null && (
-                          <span>
-                            Weight:{' '}
-                            <span className='text-foreground font-medium'>{rubric.total_weight}</span>
-                          </span>
+                          <span>Weight: <span className='text-foreground font-medium'>{rubric.total_weight}</span></span>
                         )}
                         {rubric.min_passing_score != null && (
-                          <span>
-                            Min pass:{' '}
-                            <span className='text-foreground font-medium'>
-                              {rubric.min_passing_score}
-                            </span>
-                          </span>
+                          <span>Min pass: <span className='text-foreground font-medium'>{rubric.min_passing_score}</span></span>
                         )}
                       </div>
                     </div>
@@ -1012,32 +862,22 @@ export const CourseAssessmentStructure = ({
                 </div>
 
                 {sortedCriteria.length === 0 ? (
-                  <div className='text-muted-foreground border-t px-6 py-4 text-xs italic'>
-                    No criteria added yet.
-                  </div>
+                  <div className='text-muted-foreground border-t px-6 py-4 text-xs italic'>No criteria added yet.</div>
                 ) : (
                   <div className='overflow-x-auto border-t'>
                     <table className='w-full text-sm'>
                       <thead>
                         <tr className='bg-muted/40 border-b'>
-                          <th className='text-foreground min-w-[200px] px-4 py-2.5 text-left text-xs font-semibold'>
-                            Criteria
-                          </th>
+                          <th className='text-foreground min-w-[200px] px-4 py-2.5 text-left text-xs font-semibold'>Criteria</th>
                           {sortedLevels.map((level: any) => (
                             <th
                               key={level.uuid}
                               className='text-foreground min-w-[130px] border-l px-3 py-2.5 text-center text-xs font-semibold'
-                              style={
-                                level.color_code
-                                  ? { backgroundColor: level.color_code + '22' }
-                                  : undefined
-                              }
+                              style={level.color_code ? { backgroundColor: level.color_code + '22' } : undefined}
                             >
-                              <span>{level.name || level.description}</span>
+                              {level.name || level.description}
                               {level.points != null && (
-                                <span className='text-muted-foreground ml-1 font-normal'>
-                                  ({level.points} pts)
-                                </span>
+                                <span className='text-muted-foreground ml-1 font-normal'>({level.points} pts)</span>
                               )}
                             </th>
                           ))}
@@ -1047,31 +887,20 @@ export const CourseAssessmentStructure = ({
                         {sortedCriteria.map((crit: any) => (
                           <tr key={crit.uuid} className='hover:bg-muted/20 transition-colors'>
                             <td className='px-4 py-3 align-top'>
-                              <p className='text-foreground text-xs font-medium'>
-                                {crit.component_name}
-                              </p>
+                              <p className='text-foreground text-xs font-medium'>{crit.component_name}</p>
                               {crit.description && (
-                                <p className='text-muted-foreground mt-0.5 whitespace-pre-wrap text-xs'>
-                                  {crit.description}
-                                </p>
+                                <p className='text-muted-foreground mt-0.5 whitespace-pre-wrap text-xs'>{crit.description}</p>
                               )}
                             </td>
                             {sortedLevels.map((level: any) => {
                               const cell = matrixCells[`${crit.uuid}_${level.uuid}`] ?? null;
                               return (
-                                <td
-                                  key={level.uuid}
-                                  className='border-l px-3 py-3 align-top text-xs'
-                                >
+                                <td key={level.uuid} className='border-l px-3 py-3 align-top text-xs'>
                                   {cell ? (
                                     <div className='text-muted-foreground whitespace-pre-wrap'>
-                                      {cell.description || (
-                                        <span className='italic'>No description</span>
-                                      )}
+                                      {cell.description || <span className='italic'>No description</span>}
                                       {cell.points != null && (
-                                        <p className='text-foreground mt-1 font-medium'>
-                                          {cell.points} pts
-                                        </p>
+                                        <p className='text-foreground mt-1 font-medium'>{cell.points} pts</p>
                                       )}
                                     </div>
                                   ) : (
@@ -1090,9 +919,8 @@ export const CourseAssessmentStructure = ({
             );
           })}
         </div>
-      </div>
+      </div> */}
 
-      {/* Assessment Sheet (add / edit) */}
       <AssessmentSheet
         open={!!modalMode}
         mode={modalMode ?? 'add'}
@@ -1103,7 +931,6 @@ export const CourseAssessmentStructure = ({
         onSuccess={onMutationSuccess}
       />
 
-      {/* Delete Confirm Sheet */}
       <DeleteConfirmSheet
         open={!!deletingAssessment}
         assessment={deletingAssessment}

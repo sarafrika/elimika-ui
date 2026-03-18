@@ -380,7 +380,8 @@ export default function CourseBuilderPage() {
               title='Pricing'
               description='Set the price, discounts, and access options for your course.'
               showNavigation
-              nextButtonText='Continue to Compliance'
+              // nextButtonText='Continue to Compliance'
+              hideNextButton={true}
               previousButtonText='Back to Branding'
             >
               <CoursePricingForm

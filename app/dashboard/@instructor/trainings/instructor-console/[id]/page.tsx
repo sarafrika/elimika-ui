@@ -383,8 +383,6 @@ export default function TrainingInterfacePage() {
     setIsAssignmentDialogOpen(true);
   };
 
-  // console.log(schedules, "schedules")
-  // console.log(selectedSchedule, "SEL SCHED")
 
   const handleAddQuiz = (schedule: any) => {
     setSelectedSchedule(schedule);
@@ -1097,36 +1095,45 @@ export default function TrainingInterfacePage() {
                                     onClick={() =>
                                       handleMarkAttendance(studentId, enrollmentUuid, true)
                                     }
-                                    variant={currentStatus === true ? 'default' : 'outline'}
-                                    size='sm'
-                                    className='gap-1.5'
+                                    variant="outline"
+                                    size="sm"
+                                    className={`gap-1.5 disabled:cursor-not-allowed disabled:opacity-50 ${currentStatus === true
+                                      ? 'bg-success text-white hover:bg-success/90'
+                                      : 'bg-white'
+                                      }`}
                                     disabled={
-                                      loadingEnrollmentUuid === enrollmentUuid &&
-                                      markAttendanceMut.isPending
+                                      currentStatus === false ||
+                                      (loadingEnrollmentUuid === enrollmentUuid &&
+                                        markAttendanceMut.isPending)
                                     }
                                   >
                                     {loadingEnrollmentUuid === enrollmentUuid &&
-                                    markAttendanceMut.isPending ? (
+                                      markAttendanceMut.isPending ? (
                                       <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                                     ) : (
                                       <CheckCircle className='h-4 w-4' />
                                     )}
                                     <span className='hidden sm:inline'>Present</span>
                                   </Button>
+
                                   <Button
                                     onClick={() =>
                                       handleMarkAttendance(studentId, enrollmentUuid, false)
                                     }
-                                    variant={currentStatus === false ? 'destructive' : 'outline'}
-                                    size='sm'
-                                    className='gap-1.5'
+                                    variant="outline"
+                                    size="sm"
+                                    className={`gap-1.5 disabled:cursor-not-allowed disabled:opacity-50 ${currentStatus === false
+                                      ? 'bg-destructive text-white hover:bg-destructive/90'
+                                      : 'bg-white'
+                                      }`}
                                     disabled={
-                                      loadingEnrollmentUuid === enrollmentUuid &&
-                                      markAttendanceMut.isPending
+                                      currentStatus === true ||
+                                      (loadingEnrollmentUuid === enrollmentUuid &&
+                                        markAttendanceMut.isPending)
                                     }
                                   >
                                     {loadingEnrollmentUuid === enrollmentUuid &&
-                                    markAttendanceMut.isPending ? (
+                                      markAttendanceMut.isPending ? (
                                       <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                                     ) : (
                                       <XCircle className='h-4 w-4' />

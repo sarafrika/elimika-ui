@@ -39,7 +39,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { deleteCourseMutation, searchCoursesOptions, searchCoursesQueryKey } from '../../../../../services/client/@tanstack/react-query.gen';
+import { deleteCourseMutation, getCourseTrainingRequirementsOptions, searchCoursesOptions, searchCoursesQueryKey } from '../../../../../services/client/@tanstack/react-query.gen';
 import { CatalogueWorkspace } from '../../../@admin/catalogue/_components/catalogue-workspace';
 import ProgramsList from '../../programs/_components/ProgramList';
 
@@ -248,6 +248,11 @@ function CourseRow({ course }: { course: Course }) {
   const qc = useQueryClient();
   const creator = useCourseCreator();
 
+  const { data: tReq } = useQuery({
+    ...getCourseTrainingRequirementsOptions({ path: { courseUuid: course?.uuid as string }, query: { pageable: {} } }),
+    enabled: !!course?.uuid
+  })
+
   const deleteCourse = useMutation(deleteCourseMutation());
 
   const statusMeta = STATUS_BADGE[course.status] ?? {
@@ -255,7 +260,7 @@ function CourseRow({ course }: { course: Course }) {
     variant: "secondary",
   };
 
-  const requirementsCount = course.training_requirements?.length ?? 0;
+  const requirementsCount = tReq?.data?.metadata?.totalElements ?? 0;
 
   const handleDeleteCourse = async (uuid: string) => {
     if (!uuid) return;
