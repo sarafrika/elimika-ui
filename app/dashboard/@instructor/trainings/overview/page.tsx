@@ -74,16 +74,11 @@ export default function TrainingsPage({
 
   return (
     <div className='mb-20 space-y-6'>
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <div>
-          <h1 className='text-xl font-semibold'>Your Classes</h1>
-          <p className='text-muted-foreground'>Manage your classes and schedules</p>
-        </div>
-
+      <div className='flex flex-col self-end'>
         <Button
           onClick={() => router.push(`/dashboard/trainings/create-new`)}
           size='lg'
-          className='w-full gap-2 sm:w-auto'
+          className='w-full gap-2 max-w-fit self-end '
         >
           <PlusIcon className='h-5 w-5' />
           Create New Class

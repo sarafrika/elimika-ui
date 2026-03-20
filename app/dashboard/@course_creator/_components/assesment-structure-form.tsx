@@ -2,19 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
-import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../../components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -230,7 +222,7 @@ function AssessmentSheet({
         rubric_uuid: initial.rubric_uuid ?? '',
         weight_percentage: initial.weight_percentage,
         is_required: initial.is_required,
-        assessment_type: initial.assessment_type,
+        assessment_type: '',
         is_major_assessment: initial.is_major_assessment,
       }
       : DEFAULT_FORM
@@ -247,7 +239,7 @@ function AssessmentSheet({
           rubric_uuid: initial.rubric_uuid ?? '',
           weight_percentage: initial.weight_percentage,
           is_required: initial.is_required,
-          assessment_type: initial.assessment_type,
+          assessment_type: '',
           is_major_assessment: initial.is_major_assessment,
         }
         : DEFAULT_FORM
@@ -303,7 +295,7 @@ function AssessmentSheet({
       rubric_uuid: form.rubric_uuid || undefined,
       weight_percentage: Number(form.weight_percentage),
       is_required: form.is_required,
-      assessment_type: form.assessment_type,
+      assessment_type: '',
       is_major_assessment: form.is_major_assessment,
     };
 
@@ -346,7 +338,7 @@ function AssessmentSheet({
             {/* Title */}
             <div className='flex flex-col gap-1.5'>
               <Label className='text-sm font-medium'>
-                Title <span className='text-destructive'>*</span>
+                Component Title <span className='text-destructive'>*</span>
               </Label>
               <Input
                 placeholder='e.g. Weekly Quizzes'
@@ -370,8 +362,8 @@ function AssessmentSheet({
             </div>
 
             {/* Type + Weight */}
-            <div className='flex gap-4'>
-              <div className='flex flex-1 flex-col gap-1.5'>
+            <div className='flex'>
+              {/* <div className='flex flex-1 flex-col gap-1.5'>
                 <Label className='text-sm font-medium'>
                   Assessment Type <span className='text-destructive'>*</span>
                 </Label>
@@ -388,7 +380,7 @@ function AssessmentSheet({
                 {errors.assessment_type && (
                   <p className='text-destructive text-xs'>{errors.assessment_type}</p>
                 )}
-              </div>
+              </div> */}
 
               <div className='flex flex-1 flex-col gap-1.5'>
                 <Label className='text-sm font-medium'>
@@ -412,7 +404,7 @@ function AssessmentSheet({
             </div>
 
             {/* Rubric */}
-            <div className='flex flex-col gap-1.5'>
+            {/* <div className='flex flex-col gap-1.5'>
               <Label className='text-sm font-medium'>Rubric (optional)</Label>
               <p className='text-muted-foreground text-xs'>
                 Associate a grading rubric with this assessment
@@ -497,7 +489,7 @@ function AssessmentSheet({
                   )}
                 </>
               )}
-            </div>
+            </div> */}
 
             {/* Toggles */}
             <div className='bg-muted/40 flex flex-col gap-4 rounded-xl border p-4'>
