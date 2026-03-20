@@ -133,7 +133,7 @@ export default {
   ],
   student: [
     {
-      title: 'Courses',
+      title: 'Home',
       url: '/dashboard/all-courses',
       icon: School,
     },
@@ -215,7 +215,7 @@ export default {
   ],
   instructor: [
     {
-      title: 'Courses',
+      title: 'Home',
       url: '/dashboard/all-courses',
       icon: School,
     },
@@ -235,12 +235,12 @@ export default {
       icon: BadgeCheck,
     },
     {
-      title: 'Classes',
-      url: '/dashboard/classes',
+      title: 'Schedules',
+      url: '/dashboard/schedules',
       icon: FileStackIcon,
     },
     {
-      title: 'Schedule',
+      title: 'Classes',
       url: '/dashboard/trainings',
       icon: ClipboardList,
     },
@@ -250,14 +250,19 @@ export default {
       icon: Layers,
     },
     {
-      title: 'Enrollments',
+      title: 'Students',
       url: '/dashboard/enrollments',
-      icon: BookOpen,
+      icon: Users,
     },
     {
       title: 'Waiting List',
       url: '/dashboard/waiting-list',
       icon: GraduationCap,
+    },
+    {
+      title: 'Bookings',
+      url: '/dashboard/bookings',
+      icon: Calendar,
     },
     // {
     //   title: 'Opportunities',
@@ -328,7 +333,7 @@ export default {
   ],
   course_creator: [
     {
-      title: 'Courses',
+      title: 'Home',
       url: '/dashboard/all-courses',
       icon: School,
     },
@@ -406,7 +411,7 @@ export default {
   ],
   admin: [
     {
-      title: 'Courses',
+      title: 'Home',
       url: '/dashboard/all-courses',
       icon: School,
     },
@@ -488,7 +493,7 @@ export default {
   ],
   organisation_user: [
     {
-      title: 'Courses',
+      title: 'Home',
       url: '/dashboard/all-courses',
       icon: School,
     },
@@ -559,7 +564,7 @@ export default {
   ],
   parent: [
     {
-      title: 'Courses',
+      title: 'Home',
       url: '/dashboard/all-courses',
       icon: School,
     },

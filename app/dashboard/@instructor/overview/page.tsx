@@ -66,7 +66,7 @@ export default function InstructorOverviewPage() {
           </p>
         </div>
         <Button asChild className='w-full'>
-          <Link prefetch href='/dashboard/profile/general'>
+          <Link prefetch href='/dashboard/profile'>
             {isProfileComplete ? 'View profile' : 'Complete profile'}
             <ArrowRight className='ml-2 h-4 w-4' />
           </Link>
@@ -120,13 +120,12 @@ export default function InstructorOverviewPage() {
               className='border-border/70 flex items-start gap-3 rounded-2xl border p-3 text-sm'
             >
               <div
-                className={`mt-0.5 flex size-8 items-center justify-center rounded-full border ${
-                  isCompleted
-                    ? 'border-success bg-success text-success-foreground'
-                    : isCurrent
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-muted text-muted-foreground'
-                }`}
+                className={`mt-0.5 flex size-8 items-center justify-center rounded-full border ${isCompleted
+                  ? 'border-success bg-success text-success-foreground'
+                  : isCurrent
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-muted text-muted-foreground'
+                  }`}
               >
                 {isCompleted ? <CheckCircle2 className='h-4 w-4' /> : index + 1}
               </div>

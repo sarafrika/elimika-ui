@@ -2,16 +2,8 @@
 
 import { elimikaDesignSystem } from '@/lib/design-system';
 import { Users } from 'lucide-react';
-import { useState } from 'react';
-import BookingsPage from '../bookings/page';
 
 const WaitingListPage = () => {
-  const [activeTab, setActiveTab] = useState('waiting-list');
-
-  const tabs = [
-    { id: 'waiting-list', label: 'Waiting Lists', icon: '⏳' },
-    { id: 'bookings', label: 'Bookings', icon: '📋' },
-  ];
 
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
@@ -28,62 +20,22 @@ const WaitingListPage = () => {
         </div>
       </section>
 
-      {/* Tabs */}
-      <section className='mb-8'>
-        <div className='border-border relative overflow-x-auto border-b'>
-          <div className='flex min-w-max gap-1'>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`text-md hover:text-foreground focus:ring-ring relative rounded-t-lg px-4 py-2 font-medium transition-all duration-300 ease-in-out focus:ring-2 focus:ring-offset-2 focus:outline-none sm:px-6 sm:py-3 ${activeTab === tab.id ? 'text-primary' : 'text-muted-foreground hover:bg-muted'} `}
-              >
-                <span className='flex items-center gap-2'>
-                  <span className='text-md'>{tab.label}</span>
-                </span>
+      <div className='bg-card border-border rounded-lg border p-4 shadow-sm sm:p-6'>
+        <h2 className='text-foreground mb-4 text-xl font-semibold'>Waiting List</h2>
 
-                {/* Active indicator */}
-                {activeTab === tab.id && (
-                  <span className='absolute right-0 bottom-0 left-0 h-0.5 transform rounded-full transition-all duration-300' />
-                )}
+        <div className='flex flex-col items-center justify-center rounded-md p-8 text-center'>
+          <Users className='text-muted-foreground mb-3 h-8 w-8' />
 
-                {/* Hover effect background */}
-                <span
-                  className={`absolute inset-0 transition-opacity duration-300 ${activeTab === tab.id ? 'opacity-100' : 'bg-transparent opacity-0 hover:opacity-100'} -z-10`}
-                />
-              </button>
-            ))}
-          </div>
+          <p className='text-foreground text-sm font-medium sm:text-base'>
+            No students in the waiting list
+          </p>
+
+          <p className='text-muted-foreground mt-1 max-w-sm text-xs sm:text-sm'>
+            Students who request to join your class but haven’t been enrolled yet will appear
+            here.
+          </p>
         </div>
-      </section>
-
-      {/* Tab Content */}
-      <section className='animate-fadeIn'>
-        {activeTab === 'waiting-list' && (
-          <div className='bg-card border-border rounded-lg border p-4 shadow-sm sm:p-6'>
-            <h2 className='text-foreground mb-4 text-xl font-semibold'>Waiting List</h2>
-
-            <div className='flex flex-col items-center justify-center rounded-md p-8 text-center'>
-              <Users className='text-muted-foreground mb-3 h-8 w-8' />
-
-              <p className='text-foreground text-sm font-medium sm:text-base'>
-                No students in the waiting list
-              </p>
-
-              <p className='text-muted-foreground mt-1 max-w-sm text-xs sm:text-sm'>
-                Students who request to join your class but haven’t been enrolled yet will appear
-                here.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'bookings' && (
-          <div className='transition-all duration-300'>
-            <BookingsPage />
-          </div>
-        )}
-      </section>
+      </div>
 
       <style jsx>{`
         @keyframes fadeIn {

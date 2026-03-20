@@ -27,7 +27,6 @@ import { AssignmentDialog } from '../../../@course_creator/_components/assignmen
 
 export default function AssignmentListPage() {
   const qc = useQueryClient();
-  const _instructor = useInstructor();
 
   // const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery({
   //   ...getCoursesByInstructorOptions({

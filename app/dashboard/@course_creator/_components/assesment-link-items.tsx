@@ -55,6 +55,8 @@ export type TaskItem = {
     max_score?: number;
     rubric_uuid?: string;
     display_order?: number;
+    /** lesson this task belongs to — used for sub-grouping */
+    lesson_uuid: string;
 };
 
 export type LinkedLineItem = {
@@ -166,7 +168,6 @@ function TaskCard({
     task: TaskItem;
     selected: boolean;
     alreadyLinked: boolean;
-    /** The line-item uuid for this task if it's already linked — needed to unlink */
     lineItemUuid?: string;
     onToggle: () => void;
     onUnlink?: (lineItemUuid: string) => void;
@@ -202,14 +203,17 @@ function TaskCard({
                 )}
             </div>
 
-            {/* Icon + badge */}
+            {/* Icon + type chip */}
             <div className='flex items-center gap-2'>
                 <span className={`inline-flex rounded-lg p-1.5 ${meta.color}`}>
                     <Icon size={14} />
                 </span>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${meta.color}`}>
+                    {meta.label}
+                </span>
                 {alreadyLinked && (
                     <span className='text-muted-foreground text-[10px] font-medium tracking-wide uppercase'>
-                        Already linked
+                        · Linked
                     </span>
                 )}
             </div>
@@ -217,7 +221,7 @@ function TaskCard({
             {/* Title */}
             <p className='text-foreground pr-6 text-sm font-semibold leading-snug'>{task.title}</p>
 
-            {/* Footer row: score + optional unlink */}
+            {/* Footer: score + unlink */}
             <div className='flex items-center justify-between gap-2'>
                 {task.max_score != null && (
                     <span className='text-muted-foreground text-xs'>{task.max_score} pts</span>
@@ -226,7 +230,7 @@ function TaskCard({
                     <button
                         type='button'
                         onClick={e => {
-                            e.stopPropagation(); // don't fire the card's disabled onClick
+                            e.stopPropagation();
                             onUnlink(lineItemUuid);
                         }}
                         className='text-destructive hover:bg-destructive/10 z-10 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors'
@@ -255,33 +259,24 @@ export function LinkItemsModal({
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
 
-    // ── Live line-items from API ──────────────────────────────────────────────
+    // ── Live line-items ───────────────────────────────────────────────────────
     const { data: lineItemsData } = useQuery({
         ...getLineItemsOptions({ path: { courseUuid, assessmentUuid } }),
     });
-    const lineItems: any[] = lineItemsData?.data?.content ?? lineItemsData?.data ?? [];
+    const lineItems: any[] = lineItemsData?.data?.content ?? (Array.isArray(lineItemsData?.data) ? lineItemsData.data : []);
 
-    // Map source-uuid (assignment_uuid / quiz_uuid / …) → line-item uuid
-    // so we can (a) mark cards as already-linked and (b) pass the right uuid to delete
     const taskUuidToLineItemUuid = useMemo(() => {
         const map = new Map<string, string>();
         for (const li of lineItems) {
             const sourceUuid =
-                li.assignment_uuid ??
-                li.quiz_uuid ??
-                li.project_uuid ??
-                li.attendance_uuid ??
-                li.discussion_uuid ??
-                li.lab_uuid ??
-                li.presentation_uuid ??
-                li.reflection_uuid ??
-                null;
+                li.assignment_uuid ?? li.quiz_uuid ?? li.project_uuid ??
+                li.attendance_uuid ?? li.discussion_uuid ?? li.lab_uuid ??
+                li.presentation_uuid ?? li.reflection_uuid ?? null;
             if (sourceUuid) map.set(sourceUuid, li.uuid);
         }
         return map;
     }, [lineItems]);
 
-    // Prefer live API data; fall back to the prop on first render before query resolves
     const linkedUuids = useMemo(() => {
         if (lineItems.length > 0) return new Set(taskUuidToLineItemUuid.keys());
         return new Set(linkedItems.map(li => li.task_uuid));
@@ -292,11 +287,27 @@ export function LinkItemsModal({
             queryKey: getLineItemsQueryKey({ path: { courseUuid, assessmentUuid } }),
         });
 
-    // ── Course lessons → per-lesson assignments & quizzes ────────────────────
+    // ── Lessons + per-lesson tasks ────────────────────────────────────────────
     const { data: cLessons } = useQuery({
         ...getCourseLessonsOptions({ path: { courseUuid }, query: { pageable: {} } }),
     });
-    const lessonUUIDs: string[] = cLessons?.data?.content?.map((l: any) => l.uuid) ?? [];
+
+    // Sorted lessons so numbering is stable
+    const lessons: any[] = useMemo(
+        () =>
+            [...(cLessons?.data?.content ?? [])].sort(
+                (a, b) => (a.lesson_number ?? 0) - (b.lesson_number ?? 0)
+            ),
+        [cLessons]
+    );
+    const lessonUUIDs = lessons.map(l => l.uuid);
+
+    // Build a lookup: uuid → lesson object (for labels)
+    const lessonMap = useMemo(() => {
+        const m = new Map<string, any>();
+        lessons.forEach(l => m.set(l.uuid, l));
+        return m;
+    }, [lessons]);
 
     const assignmentQueries = useQueries({
         queries: lessonUUIDs.map(uuid => ({
@@ -321,7 +332,7 @@ export function LinkItemsModal({
         assignmentQueries.some(q => q.isLoading) ||
         quizQueries.some(q => q.isLoading);
 
-    // ── Map raw API responses → TaskItem[] ───────────────────────────────────
+    // ── Map API → TaskItem[] (preserving lesson_uuid) ─────────────────────────
     const availableTasks: TaskItem[] = useMemo(() => {
         const assignments: TaskItem[] = assignmentQueries
             .flatMap(q => q.data?.data?.content ?? [])
@@ -332,6 +343,7 @@ export function LinkItemsModal({
                 item_type: 'assignment' as const,
                 max_score: a.max_points ?? undefined,
                 rubric_uuid: a.rubric_uuid ?? undefined,
+                lesson_uuid: a.lesson_uuid,
             }));
 
         const quizzes: TaskItem[] = quizQueries
@@ -341,15 +353,16 @@ export function LinkItemsModal({
                 title: q.title,
                 description: q.description ?? undefined,
                 item_type: 'quiz' as const,
-                // quizzes have no dedicated max_score; use passing_score as a display hint
                 max_score: q.passing_score ?? undefined,
                 rubric_uuid: q.rubric_uuid ?? undefined,
+                lesson_uuid: q.lesson_uuid,
             }));
 
         return [...assignments, ...quizzes];
     }, [assignmentQueries, quizQueries]);
 
-    // ── Group & filter ────────────────────────────────────────────────────────
+    // ── Grouped: type → lesson → tasks ───────────────────────────────────────
+    // Structure: { assignment: { lessonUuid: TaskItem[] }, quiz: { ... }, ... }
     const grouped = useMemo(() => {
         const q = search.trim().toLowerCase();
         const filtered = availableTasks.filter(t => {
@@ -358,15 +371,20 @@ export function LinkItemsModal({
             return matchesSearch && matchesFilter;
         });
 
-        const map: Partial<Record<TaskItemType, TaskItem[]>> = {};
+        const byType: Partial<Record<TaskItemType, Map<string, TaskItem[]>>> = {};
+
         for (const task of filtered) {
-            if (!map[task.item_type]) map[task.item_type] = [];
-            map[task.item_type]!.push(task);
+            if (!byType[task.item_type]) byType[task.item_type] = new Map();
+            const byLesson = byType[task.item_type]!;
+            if (!byLesson.has(task.lesson_uuid)) byLesson.set(task.lesson_uuid, []);
+            byLesson.get(task.lesson_uuid)!.push(task);
         }
-        return map;
+
+        return byType;
     }, [availableTasks, search, activeFilter]);
 
-    const categoriesPresent = CATEGORY_ORDER.filter(c => grouped[c]?.length);
+    // Only show type sections that have at least one task after filtering
+    const typesPresent = CATEGORY_ORDER.filter(c => grouped[c]?.size);
 
     function toggle(uuid: string) {
         if (linkedUuids.has(uuid)) return;
@@ -382,7 +400,6 @@ export function LinkItemsModal({
     const deleteLineItemMut = useMutation(deleteLineItemMutation());
     const updateLineItemMut = useMutation(updateLineItemMutation());
 
-    /** Unlink a single already-linked card */
     function handleUnlink(lineItemUuid: string) {
         deleteLineItemMut.mutate(
             { path: { courseUuid, assessmentUuid, lineItemUuid } },
@@ -397,7 +414,6 @@ export function LinkItemsModal({
         );
     }
 
-    /** Link all selected tasks — fires one mutation per task, waits for all */
     async function handleConfirm() {
         if (selected.size === 0) return;
         setIsSaving(true);
@@ -412,7 +428,7 @@ export function LinkItemsModal({
                             path: { courseUuid, assessmentUuid },
                             body: buildLineItemBody(task, assessmentUuid, i) as any,
                         },
-                        { onSuccess: () => resolve(), onError: (err) => reject(err) }
+                        { onSuccess: () => resolve(), onError: err => reject(err) }
                     );
                 })
             )
@@ -421,10 +437,8 @@ export function LinkItemsModal({
         const failed = results.filter(r => r.status === 'rejected').length;
         const succeeded = results.length - failed;
 
-        if (succeeded > 0)
-            toast.success(`${succeeded} item${succeeded > 1 ? 's' : ''} linked successfully.`);
-        if (failed > 0)
-            toast.error(`${failed} item${failed > 1 ? 's' : ''} failed to link.`);
+        if (succeeded > 0) toast.success(`${succeeded} item${succeeded > 1 ? 's' : ''} linked successfully.`);
+        if (failed > 0) toast.error(`${failed} item${failed > 1 ? 's' : ''} failed to link.`);
 
         invalidateLineItems();
         setIsSaving(false);
@@ -448,23 +462,18 @@ export function LinkItemsModal({
             <DialogContent className='flex h-[90vh] max-h-[720px] w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl'>
                 {/* ── Header ── */}
                 <DialogHeader className='shrink-0 border-b px-6 py-5'>
-                    <div className='flex items-start justify-between'>
-                        <div>
-                            <DialogTitle className='text-foreground text-lg font-bold'>
-                                Link Items to Assessment
-                            </DialogTitle>
-                            <p className='text-muted-foreground mt-0.5 text-xs'>
-                                Select tasks to attach as graded line items
-                            </p>
-                        </div>
+                    <div>
+                        <DialogTitle className='text-foreground text-lg font-bold'>
+                            Link Items to Assessment
+                        </DialogTitle>
+                        <p className='text-muted-foreground mt-0.5 text-xs'>
+                            Select tasks to attach as graded line items
+                        </p>
                     </div>
 
                     {/* Search */}
                     <div className='relative mt-4'>
-                        <Search
-                            size={14}
-                            className='text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2'
-                        />
+                        <Search size={14} className='text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2' />
                         <Input
                             placeholder='Search tasks…'
                             value={search}
@@ -473,7 +482,7 @@ export function LinkItemsModal({
                         />
                     </div>
 
-                    {/* Category filter pills */}
+                    {/* Type filter pills — only show types with real data */}
                     <div className='mt-3 flex flex-wrap gap-1.5'>
                         <button
                             onClick={() => setActiveFilter('all')}
@@ -511,56 +520,85 @@ export function LinkItemsModal({
                     </div>
                 </DialogHeader>
 
-                {/* ── Scrollable content ── */}
+                {/* ── Scrollable body ── */}
                 <div className='flex-1 overflow-y-auto px-6 py-5'>
                     {isLoadingTasks ? (
                         <div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
                             <Loader2 size={22} className='text-muted-foreground animate-spin' />
                             <p className='text-muted-foreground text-sm'>Loading tasks…</p>
                         </div>
-                    ) : categoriesPresent.length === 0 ? (
+                    ) : typesPresent.length === 0 ? (
                         <div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
                             <div className='bg-muted rounded-full p-4'>
                                 <Search size={22} className='text-muted-foreground' />
                             </div>
                             <p className='text-foreground font-medium'>No tasks found</p>
-                            <p className='text-muted-foreground text-sm'>
-                                Try a different search or filter.
-                            </p>
+                            <p className='text-muted-foreground text-sm'>Try a different search or filter.</p>
                         </div>
                     ) : (
                         <div className='flex flex-col gap-8'>
-                            {categoriesPresent.map(type => {
-                                const meta = CATEGORY_META[type];
-                                const Icon = meta.icon;
-                                const tasks = grouped[type] ?? [];
+                            {typesPresent.map(type => {
+                                const typeMeta = CATEGORY_META[type];
+                                const TypeIcon = typeMeta.icon;
+                                const byLesson = grouped[type]!;
+
+                                // Preserve lesson sort order from the API
+                                const lessonIdsForType = lessonUUIDs.filter(id => byLesson.has(id));
+                                const totalForType = [...byLesson.values()].reduce((s, arr) => s + arr.length, 0);
 
                                 return (
                                     <section key={type}>
-                                        <div className='mb-3 flex items-center gap-2'>
-                                            <span className={`inline-flex rounded-lg p-1.5 ${meta.color}`}>
-                                                <Icon size={13} />
+                                        {/* ── Type heading ── */}
+                                        <div className='mb-4 flex items-center gap-2'>
+                                            <span className={`inline-flex rounded-lg p-1.5 ${typeMeta.color}`}>
+                                                <TypeIcon size={13} />
                                             </span>
-                                            <h4 className='text-foreground text-sm font-semibold'>
-                                                {meta.label}
-                                            </h4>
+                                            <h4 className='text-foreground text-sm font-bold'>{typeMeta.label}</h4>
                                             <span className='text-muted-foreground text-xs'>
-                                                {tasks.length} item{tasks.length !== 1 ? 's' : ''}
+                                                {totalForType} item{totalForType !== 1 ? 's' : ''}
                                             </span>
                                         </div>
 
-                                        <div className='grid grid-cols-1 gap-2.5 sm:grid-cols-2'>
-                                            {tasks.map(task => (
-                                                <TaskCard
-                                                    key={task.uuid}
-                                                    task={task}
-                                                    selected={selected.has(task.uuid)}
-                                                    alreadyLinked={linkedUuids.has(task.uuid)}
-                                                    lineItemUuid={taskUuidToLineItemUuid.get(task.uuid)}
-                                                    onToggle={() => toggle(task.uuid)}
-                                                    onUnlink={handleUnlink}
-                                                />
-                                            ))}
+                                        {/* ── Lesson sub-groups ── */}
+                                        <div className='flex flex-col gap-5'>
+                                            {lessonIdsForType.map(lessonId => {
+                                                const lesson = lessonMap.get(lessonId);
+                                                const tasks = byLesson.get(lessonId) ?? [];
+                                                const lessonLabel = lesson
+                                                    ? `Lesson ${lesson.lesson_number ?? ''}${lesson.title ? ` — ${lesson.title}` : ''}`
+                                                    : 'Unknown Lesson';
+
+                                                return (
+                                                    <div key={lessonId}>
+                                                        {/* Lesson label row */}
+                                                        <div className='mb-2 flex items-center gap-2'>
+                                                            <div className='bg-border h-px flex-1' />
+                                                            <span className='text-muted-foreground shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-medium'>
+                                                                {lessonLabel}
+                                                                <span className='ml-1.5 opacity-60'>
+                                                                    · {tasks.length} item{tasks.length !== 1 ? 's' : ''}
+                                                                </span>
+                                                            </span>
+                                                            <div className='bg-border h-px flex-1' />
+                                                        </div>
+
+                                                        {/* Task cards */}
+                                                        <div className='grid grid-cols-1 gap-2.5 sm:grid-cols-2'>
+                                                            {tasks.map(task => (
+                                                                <TaskCard
+                                                                    key={task.uuid}
+                                                                    task={task}
+                                                                    selected={selected.has(task.uuid)}
+                                                                    alreadyLinked={linkedUuids.has(task.uuid)}
+                                                                    lineItemUuid={taskUuidToLineItemUuid.get(task.uuid)}
+                                                                    onToggle={() => toggle(task.uuid)}
+                                                                    onUnlink={handleUnlink}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </section>
                                 );
@@ -587,19 +625,12 @@ export function LinkItemsModal({
                                     </button>
                                 </>
                             ) : (
-                                <p className='text-muted-foreground text-xs'>
-                                    Select items above to link them
-                                </p>
+                                <p className='text-muted-foreground text-xs'>Select items above to link them</p>
                             )}
                         </div>
 
                         <div className='flex items-center gap-3'>
-                            <Button
-                                variant='outline'
-                                size='sm'
-                                onClick={handleClose}
-                                disabled={isSaving}
-                            >
+                            <Button variant='outline' size='sm' onClick={handleClose} disabled={isSaving}>
                                 Cancel
                             </Button>
                             <Button
@@ -609,10 +640,7 @@ export function LinkItemsModal({
                                 className='min-w-[120px]'
                             >
                                 {isSaving ? (
-                                    <>
-                                        <Loader2 size={14} className='mr-2 animate-spin' />
-                                        Linking…
-                                    </>
+                                    <><Loader2 size={14} className='mr-2 animate-spin' />Linking…</>
                                 ) : (
                                     `Link ${selectedCount > 0 ? selectedCount : ''} Item${selectedCount !== 1 ? 's' : ''}`
                                 )}
