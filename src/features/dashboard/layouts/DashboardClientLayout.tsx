@@ -2,7 +2,6 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo } from 'react';
-import { AppSidebar } from '@/components/app-sidebar';
 import CustomLoader from '@/components/custom-loader';
 import { type DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -11,6 +10,7 @@ import { useUserProfile } from '@/context/profile-context';
 import { DashboardProviders } from '@/context/profile-providers';
 import { useUserDomain } from '@/context/user-domain-context';
 import type { DashboardChildrenTypes, UserDomain } from '@/lib/types';
+import { AppSidebar } from '@/src/features/dashboard/components/app-sidebar';
 import DashboardMainContent from '@/src/features/dashboard/components/dashboard-main-content';
 import { DomainSelection } from '@/src/features/dashboard/components/domain-selection';
 import {
