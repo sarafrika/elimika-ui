@@ -11,10 +11,12 @@ const normalizedApiBaseUrl = apiBaseUrl.replace(/\/$/, '');
 export default defineConfig({
   input: {
     path: `${normalizedApiBaseUrl}/v3/api-docs`,
-    headers: {
-      accept: 'application/json',
+    fetch: {
+      headers: {
+        accept: 'application/json',
+      },
     },
-    watch: true,
+    watch: false,
   },
   output: {
     format: 'prettier',

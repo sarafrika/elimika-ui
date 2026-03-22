@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "openapi-ts": "openapi-ts",
+    "openapi-ts": "openapi-ts && node post-generation-fix.mjs",
     "start": "next start",
     "lint": "biome lint . && node scripts/check-brand-colors.mjs",
     "lint:palette": "node scripts/check-brand-colors.mjs",

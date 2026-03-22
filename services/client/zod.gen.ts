@@ -303,7 +303,7 @@ export const zSystemRuleRequest = z.object({
     .int()
     .describe('Priority used when multiple rules match')
     .optional()
-    .default('0'),
+    .default(0),
   status: zSchemaEnum2.optional(),
   valueType: zValueTypeEnum.optional(),
   valuePayload: zJsonNode,
@@ -5737,7 +5737,7 @@ export const zGuardianStudentLinkRequest = z
       .boolean()
       .describe('Marks this guardian as the primary contact')
       .optional()
-      .default('false'),
+      .default(false),
     notes: z.string().describe('Optional note shown in audits or invitation emails').optional(),
   })
   .describe('Request payload to link a guardian/parent to a learner profile.');
@@ -6894,17 +6894,17 @@ export const zCurrencyCreateRequest = z
       .gte(0)
       .lte(6)
       .describe('Number of fractional decimal places')
-      .default('2'),
+      .default(2),
     active: z
       .boolean()
       .describe('Whether the currency is active immediately')
       .optional()
-      .default('true'),
+      .default(true),
     default_currency: z
       .boolean()
       .describe('Whether to set this currency as the platform default')
       .optional()
-      .default('false'),
+      .default(false),
   })
   .describe('Admin payload to register an additional platform currency');
 
