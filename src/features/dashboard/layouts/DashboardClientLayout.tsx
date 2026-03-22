@@ -3,7 +3,6 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo } from 'react';
 import CustomLoader from '@/components/custom-loader';
-import { type DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { DashboardProviders } from '@/context/profile-providers';
@@ -16,6 +15,10 @@ import {
   domainToSlotKeyMap,
   type KnownDomain,
 } from '@/src/features/dashboard/config/workspaces';
+import {
+  type DashboardView,
+  DashboardViewProvider,
+} from '@/src/features/dashboard/context/dashboard-view-context';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
