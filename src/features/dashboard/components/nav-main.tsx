@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
 import { type MenuItem, markActiveMenuItem } from '@/src/features/dashboard/config/menu';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 export function NavMain({
   items,
@@ -25,7 +26,12 @@ export function NavMain({
         .filter(item => (item.requiresAdmin ? isAdmin : true))
         .map((item, index) =>
           item.domain && item.domain !== activeDomain ? null : (
-            <MenuItemWithAccordion key={index} item={item} isAdmin={isAdmin} />
+            <MenuItemWithAccordion
+              key={index}
+              item={item}
+              isAdmin={isAdmin}
+              activeDomain={activeDomain}
+            />
           )
         )}
     </SidebarMenu>
@@ -33,7 +39,15 @@ export function NavMain({
 }
 
 // Recursive Accordion MenuItem
-function MenuItemWithAccordion({ item, isAdmin }: { item: MenuItem; isAdmin: boolean }) {
+function MenuItemWithAccordion({
+  item,
+  isAdmin,
+  activeDomain,
+}: {
+  item: MenuItem;
+  isAdmin: boolean;
+  activeDomain: UserDomain | null;
+}) {
   const [isOpen, setIsOpen] = useState(true); // set initial accordion open state t true
   // const [isOpen, setIsOpen] = useState(item.isActive ?? false);
 
@@ -55,14 +69,19 @@ function MenuItemWithAccordion({ item, isAdmin }: { item: MenuItem; isAdmin: boo
               {item.items
                 ?.filter(child => (child.requiresAdmin ? isAdmin : true))
                 .map((child, index) => (
-                  <MenuItemWithAccordion key={index} item={child} isAdmin={isAdmin} />
+                  <MenuItemWithAccordion
+                    key={index}
+                    item={child}
+                    isAdmin={isAdmin}
+                    activeDomain={activeDomain}
+                  />
                 ))}
             </SidebarMenu>
           )}
         </>
       ) : (
         <SidebarMenuButton isActive={item.isActive} asChild>
-          <Link href={item.url!}>
+          <Link href={buildWorkspaceAliasPath(activeDomain, item.url!)}>
             {item.icon && <item.icon />}
             <span>{item.title}</span>
           </Link>

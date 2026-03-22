@@ -62,3 +62,18 @@ export function buildDashboardSwitchPath(domain: UserDomain, nextPath = '/dashbo
   const searchParams = new URLSearchParams({ next: nextPath });
   return `/dashboard/switch/${domain}?${searchParams.toString()}`;
 }
+
+export function isInternalDashboardPath(path?: string | null) {
+  return Boolean(path?.startsWith('/dashboard'));
+}
+
+export function buildWorkspaceAliasPath(domain: UserDomain | null, path = '/dashboard/overview') {
+  if (!domain || !isInternalDashboardPath(path)) {
+    return path;
+  }
+
+  const normalizedPath = path.replace(/^\/dashboard/, '').replace(/^\//, '');
+  return normalizedPath
+    ? `/dashboard/workspace/${domain}/${normalizedPath}`
+    : `/dashboard/workspace/${domain}`;
+}

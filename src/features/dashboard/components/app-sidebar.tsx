@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
 import menu from '@/src/features/dashboard/config/menu';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { NavMain } from './nav-main';
@@ -54,7 +55,7 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size='lg' asChild>
-              <Link prefetch href={`/dashboard/overview`}>
+              <Link prefetch href={buildWorkspaceAliasPath(activeDomain, '/dashboard/overview')}>
                 <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
                   <Image
                     alt='Elimika logo in white'

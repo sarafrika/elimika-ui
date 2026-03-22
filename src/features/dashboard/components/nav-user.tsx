@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import type { MenuItem } from '@/src/features/dashboard/config/menu';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { DomainSwitcher } from './domain-switcher';
 
@@ -125,7 +126,10 @@ export function NavUser({ items }: NavUserProps) {
                 {items.map(item => (
                   <div
                     key={item.title}
-                    onClick={() => item.url && router.push(item.url)}
+                    onClick={() =>
+                      item.url &&
+                      router.push(buildWorkspaceAliasPath(activeDomain || null, item.url))
+                    }
                     className='hover:bg-muted text-foreground flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
                   >
                     {item.icon && <item.icon className='size-4' />}
@@ -135,7 +139,11 @@ export function NavUser({ items }: NavUserProps) {
 
                 {/* Add Profile Option */}
                 <div
-                  onClick={() => router.push('/dashboard/add-profile')}
+                  onClick={() =>
+                    router.push(
+                      buildWorkspaceAliasPath(activeDomain || null, '/dashboard/add-profile')
+                    )
+                  }
                   className='text-primary hover:bg-secondary/70 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
                 >
                   <UserPlus className='size-4' />
