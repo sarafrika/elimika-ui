@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 import CustomLoader from '@/components/custom-loader';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
-import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +34,10 @@ import {
   normalizeCoordinateValue,
   organisationProfileSchema,
 } from '@/src/features/organisation/forms/shared/organisation-profile';
+import {
+  ProfileFormSection,
+  ProfileFormShell,
+} from '@/src/features/profile/components/profile-form-layout';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
 

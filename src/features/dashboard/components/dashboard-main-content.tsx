@@ -1,7 +1,7 @@
 'use client';
 import type { ReactNode } from 'react';
-import DomainAccessGate from '@/components/profile/domain-access-gate';
 import { useDashboardView } from '@/src/features/dashboard/context/dashboard-view-context';
+import DomainAccessGate from '@/src/features/profile/components/domain-access-gate';
 import DashboardTopBar from './dashboard-top-bar';
 
 export default function DashboardMainContent({ children }: { children: ReactNode }) {

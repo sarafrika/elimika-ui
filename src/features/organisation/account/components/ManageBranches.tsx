@@ -7,7 +7,6 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import LocationInput from '@/components/locationInput';
-import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -25,6 +24,10 @@ import { type ApiResponse, createTrainingBranch, updateTrainingBranch } from '@/
 import { zTrainingBranch } from '@/services/client/zod.gen';
 import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
+import {
+  ProfileFormSection,
+  ProfileFormShell,
+} from '@/src/features/profile/components/profile-form-layout';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
 

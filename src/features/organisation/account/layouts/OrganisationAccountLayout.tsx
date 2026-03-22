@@ -1,9 +1,9 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { ProfileSectionNav } from '@/components/profile/profile-section-nav';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { ProfileSectionNav } from '@/src/features/profile/components/profile-section-nav';
 
 const sections = [
   { label: 'Training centre', href: '/dashboard/account/training-center', exact: true },
