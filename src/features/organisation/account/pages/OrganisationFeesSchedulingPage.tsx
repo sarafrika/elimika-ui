@@ -2,14 +2,13 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 
 const feesSchedulingSchema = z.object({
   rateCard: z.array(
@@ -65,19 +64,11 @@ const scheduleHeaders: {
 ];
 
 export default function FeesSchedulingPage() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
-
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'account', title: 'Account', url: '/dashboard/account' },
-      {
-        id: 'fees-scheduling',
-        title: 'Fees & Scheduling',
-        url: '/dashboard/account/fees-scheduling',
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs]);
+  useOrganisationAccountBreadcrumb(
+    'fees-scheduling',
+    'Fees & Scheduling',
+    '/dashboard/account/fees-scheduling'
+  );
 
   const form = useForm<FeesSchedulingFormValues>({
     resolver: zodResolver(feesSchedulingSchema),

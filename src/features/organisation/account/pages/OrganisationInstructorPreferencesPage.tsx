@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 
 const instructorPrefsSchema = z.object({
   revenueSplit: z
@@ -68,19 +67,11 @@ const preferenceHeaders: {
 ];
 
 export default function InstructorPreferencesPage() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
-
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'account', title: 'Account', url: '/dashboard/account' },
-      {
-        id: 'instructor-preferences',
-        title: 'Instructor Preferences',
-        url: '/dashboard/account/instructor-preferences',
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs]);
+  useOrganisationAccountBreadcrumb(
+    'instructor-preferences',
+    'Instructor Preferences',
+    '/dashboard/account/instructor-preferences'
+  );
 
   const form = useForm<InstructorPrefsFormValues>({
     resolver: zodResolver(instructorPrefsSchema),

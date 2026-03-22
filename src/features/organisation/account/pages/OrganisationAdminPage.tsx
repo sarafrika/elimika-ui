@@ -3,7 +3,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { CalendarIcon, ShieldCheck } from 'lucide-react';
-import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,8 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { cn } from '@/lib/utils';
+import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 
 const adminProfileSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
@@ -43,19 +42,7 @@ const adminProfileSchema = z.object({
 });
 
 export default function AdminProfile() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
-
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'account', title: 'Account', url: '/dashboard/account' },
-      {
-        id: 'admin',
-        title: 'Admin',
-        url: '/dashboard/account/admin',
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs]);
+  useOrganisationAccountBreadcrumb('admin', 'Admin', '/dashboard/account/admin');
 
   const form = useForm({
     resolver: zodResolver(adminProfileSchema),

@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarDays } from 'lucide-react';
-import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 
 const academicPeriods = ['Term', 'Semester', 'Trimester', 'Quarters', 'Non Term'] as const;
 
@@ -37,19 +36,11 @@ const availabilitySchema = z.object({
 type AvailabilityFormValues = z.infer<typeof availabilitySchema>;
 
 export default function AvailabilityPage() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
-
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'account', title: 'Account', url: '/dashboard/account' },
-      {
-        id: 'availability',
-        title: 'Availability',
-        url: '/dashboard/account/availability',
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs]);
+  useOrganisationAccountBreadcrumb(
+    'availability',
+    'Availability',
+    '/dashboard/account/availability'
+  );
 
   const form = useForm<AvailabilityFormValues>({
     resolver: zodResolver(availabilitySchema),

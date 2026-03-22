@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -24,6 +24,7 @@ import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { queryClient } from '@/lib/query-client';
 import { type ApiResponse, createTrainingBranch, updateTrainingBranch } from '@/services/client';
 import { zTrainingBranch } from '@/services/client/zod.gen';
+import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
@@ -46,19 +47,7 @@ type BranchType = z.infer<typeof branchSchema>;
 type BranchesFormValues = z.infer<typeof branchesSchema>;
 
 export default function ManageBranch() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
-
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'account', title: 'Account', url: '/dashboard/account' },
-      {
-        id: 'branches',
-        title: 'Branches',
-        url: '/dashboard/account/branches',
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs]);
+  useOrganisationAccountBreadcrumb('branches', 'Branches', '/dashboard/account/branches');
 
   const userProfile = useUserProfile();
   const organisation = useOrganisation();

@@ -1,22 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 
 export default function UsersPage() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
-
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'account', title: 'Account', url: '/dashboard/account' },
-      {
-        id: 'users',
-        title: 'Users',
-        url: '/dashboard/account/users',
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs]);
+  useOrganisationAccountBreadcrumb('users', 'Users', '/dashboard/account/users');
 
   return (
     <div>

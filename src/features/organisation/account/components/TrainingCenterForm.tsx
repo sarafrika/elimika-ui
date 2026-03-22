@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -25,6 +25,7 @@ import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { queryClient } from '@/lib/query-client';
 import { profilePicSvg } from '@/lib/utils';
 import { type User, updateOrganisation, updateUser } from '@/services/client';
+import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import {
   OrganisationIdentityFields,
@@ -50,19 +51,11 @@ const trainingCenterSchema = organisationProfileSchema.merge(
 type TrainingCenterFormValues = z.infer<typeof trainingCenterSchema>;
 
 export default function TrainingCenterForm() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
-
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'account', title: 'Account', url: '/dashboard/account' },
-      {
-        id: 'training-center',
-        title: 'Training Center',
-        url: '/dashboard/account/training-center',
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs]);
+  useOrganisationAccountBreadcrumb(
+    'training-center',
+    'Training Center',
+    '/dashboard/account/training-center'
+  );
 
   const userProfile = useUserProfile();
   const organisation = useOrganisation();
