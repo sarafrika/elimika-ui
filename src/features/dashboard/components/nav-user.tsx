@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useUserProfile } from '@/context/profile-context';
 import { useUserDomain } from '@/context/user-domain-context';
-import type { MenuItem } from '@/lib/menu';
+import type { MenuItem } from '@/src/features/dashboard/config/menu';
 import { DomainSwitcher } from './domain-switcher';
 
 type NavUserProps = {

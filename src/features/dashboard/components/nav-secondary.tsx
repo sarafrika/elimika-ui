@@ -9,7 +9,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useUserDomain } from '@/context/user-domain-context';
-import { getMenuWithActivePath, type MenuItem } from '@/lib/menu';
+import { getMenuWithActivePath, type MenuItem } from '@/src/features/dashboard/config/menu';
 
 interface NavSecondaryProps {
   items: MenuItem[];

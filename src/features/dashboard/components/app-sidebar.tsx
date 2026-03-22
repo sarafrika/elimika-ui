@@ -16,8 +16,8 @@ import {
 } from '@/components/ui/sidebar';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
-import menu from '@/lib/menu';
 import type { UserDomain } from '@/lib/types';
+import menu from '@/src/features/dashboard/config/menu';
 import { NavMain } from './nav-main';
 import { NavSecondary } from './nav-secondary';
 import { NavUser } from './nav-user';

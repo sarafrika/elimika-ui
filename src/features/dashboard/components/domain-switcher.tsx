@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  BookOpen,
-  ChevronDown,
-  GraduationCap,
-  Loader2,
-  Shield,
-  Sparkles,
-  Users,
-} from 'lucide-react';
+import { ChevronDown, Loader2, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -21,44 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUserDomain } from '@/context/user-domain-context';
 import type { UserDomain } from '@/lib/types';
-
-const domainConfig = {
-  student: {
-    icon: BookOpen,
-    title: 'Student Dashboard',
-    color: 'text-primary',
-  },
-  instructor: {
-    icon: GraduationCap,
-    title: 'Instructor Dashboard',
-    color: 'text-success',
-  },
-  course_creator: {
-    icon: Sparkles,
-    title: 'Course Creator Dashboard',
-    color: 'text-primary',
-  },
-  parent: {
-    icon: Users,
-    title: 'Parent Dashboard',
-    color: 'text-primary',
-  },
-  organisation_user: {
-    icon: Users,
-    title: 'Organization Dashboard',
-    color: 'text-primary',
-  },
-  organisation: {
-    icon: Users,
-    title: 'Organization Dashboard',
-    color: 'text-primary',
-  },
-  admin: {
-    icon: Shield,
-    title: 'Admin Dashboard',
-    color: 'text-destructive',
-  },
-} as const;
+import { dashboardDomainDisplayConfig } from '@/src/features/dashboard/config/domain-display';
 
 interface DomainSwitcherProps {
   className?: string;
@@ -77,7 +32,7 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
   const activeDomain = userDomain.activeDomain;
   const availableDomains = userDomain.domains as UserDomain[];
 
-  const currentDomainConfig = activeDomain ? domainConfig[activeDomain] : null;
+  const currentDomainConfig = activeDomain ? dashboardDomainDisplayConfig[activeDomain] : null;
   const CurrentIcon = currentDomainConfig?.icon || Users;
 
   const handleDomainSwitch = async (nextDomain: UserDomain) => {
@@ -97,7 +52,9 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
       router.push('/dashboard/all-courses');
       router.refresh(); // Force a refresh to load new domain data
 
-      toast.success(`Switched to ${domainConfig[nextDomain].title}`, { id: 'domain-switch' });
+      toast.success(`Switched to ${dashboardDomainDisplayConfig[nextDomain].title}`, {
+        id: 'domain-switch',
+      });
     } catch (_error) {
       toast.error('Failed to switch dashboard', { id: 'domain-switch' });
     } finally {
@@ -126,7 +83,7 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end' className='w-56'>
         {availableDomains.map(domain => {
-          const config = domainConfig[domain];
+          const config = dashboardDomainDisplayConfig[domain];
           if (!config) return null;
 
           const Icon = config.icon;

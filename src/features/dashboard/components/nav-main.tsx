@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type MenuItem, markActiveMenuItem } from '@/lib/menu';
 import type { UserDomain } from '@/lib/types';
+import { type MenuItem, markActiveMenuItem } from '@/src/features/dashboard/config/menu';
 
 export function NavMain({
   items,
