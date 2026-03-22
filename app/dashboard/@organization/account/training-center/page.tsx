@@ -1,5 +1,3 @@
-import TrainingCenterForm from './_components/TrainingCenterForm';
+import OrganisationTrainingCenterPage from '@/src/features/organisation/account/pages/OrganisationTrainingCenterPage';
 
-export default async function TrainingCenterPage() {
-  return <TrainingCenterForm />;
-}
+export default OrganisationTrainingCenterPage;

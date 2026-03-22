@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation';
+import OrganisationAccountRedirectPage from '@/src/features/organisation/account/pages/OrganisationAccountRedirectPage';
 
-export default function ProfileRoot() {
-  redirect('/dashboard/account/training-center');
-}
+export default OrganisationAccountRedirectPage;

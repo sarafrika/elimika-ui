@@ -1,5 +1,3 @@
-import ManageBranch from './_components/ManageBranches';
+import OrganisationBranchesPage from '@/src/features/organisation/account/pages/OrganisationBranchesPage';
 
-export default async function BranchesPage() {
-  return <ManageBranch />;
-}
+export default OrganisationBranchesPage;
