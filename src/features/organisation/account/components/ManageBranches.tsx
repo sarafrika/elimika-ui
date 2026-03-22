@@ -20,13 +20,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { queryClient } from '@/lib/query-client';
 import { type ApiResponse, createTrainingBranch, updateTrainingBranch } from '@/services/client';
 import { zTrainingBranch } from '@/services/client/zod.gen';
 import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
 
 const branchSchema = zTrainingBranch
   .omit({

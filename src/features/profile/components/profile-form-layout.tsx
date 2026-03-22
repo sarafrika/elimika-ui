@@ -23,12 +23,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import Spinner from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import {
   type ProfileFormConfirmationOptions,
   ProfileFormModeContext,
   useProfileFormMode,
-} from '@/context/profile-form-mode-context';
-import { cn } from '@/lib/utils';
+} from '@/src/features/profile/context/profile-form-mode-context';
 
 type ProfileFormShellProps = {
   title: string;

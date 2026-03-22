@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { queryClient } from '@/lib/query-client';
 import { profilePicSvg } from '@/lib/utils';
 import { type User, updateOrganisation, updateUser } from '@/services/client';
@@ -37,6 +36,7 @@ import {
   organisationProfileSchema,
 } from '@/src/features/organisation/forms/shared/organisation-profile';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
 
 const trainingCenterSchema = organisationProfileSchema.merge(
   z.object({
