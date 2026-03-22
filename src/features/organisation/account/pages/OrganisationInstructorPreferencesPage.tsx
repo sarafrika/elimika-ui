@@ -1,7 +1,6 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PlusCircle, Trash2 } from 'lucide-react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  type EditableFieldArrayColumn,
+  EditableFieldArrayTableCard,
+} from '@/src/features/organisation/account/components/EditableFieldArrayTableCard';
 import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
 
 const instructorPrefsSchema = z.object({
@@ -48,10 +51,9 @@ const instructorPrefsSchema = z.object({
 
 type InstructorPrefsFormValues = z.infer<typeof instructorPrefsSchema>;
 
-const preferenceHeaders: {
-  key: keyof InstructorPrefsFormValues['preferences'][0];
-  label: string;
-}[] = [
+const preferenceHeaders: EditableFieldArrayColumn<
+  keyof InstructorPrefsFormValues['preferences'][0]
+>[] = [
   { key: 'course', label: 'Course' },
   { key: 'type', label: 'Type' },
   { key: 'gender', label: 'Gender' },
@@ -164,75 +166,27 @@ export default function InstructorPreferencesPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-              <div className='space-y-1'>
-                <CardTitle>Instructor Search Preferences</CardTitle>
-                <CardDescription>
-                  Set filters to find the ideal instructors for your needs.
-                </CardDescription>
-              </div>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                onClick={() => append({ course: '' })}
-                className='w-full sm:w-auto'
-              >
-                <PlusCircle className='mr-2 h-4 w-4' />
-                Add Preference
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className='overflow-x-auto rounded-md border'>
-              <table className='min-w-full text-sm'>
-                <thead className='bg-muted/50'>
-                  <tr className='border-b'>
-                    {preferenceHeaders.map(header => (
-                      <th key={header.key} className='h-12 px-4 text-left align-middle font-medium'>
-                        {header.label}
-                      </th>
-                    ))}
-                    <th className='w-16 p-4'></th>
-                  </tr>
-                </thead>
-                <tbody className='divide-y divide-gray-200'>
-                  {fields.map((field, index) => (
-                    <tr key={field.id}>
-                      {preferenceHeaders.map(header => (
-                        <td key={header.key} className='p-2 align-middle'>
-                          <FormField
-                            control={form.control}
-                            name={`preferences.${index}.${header.key}` as const}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>{renderInput(field, header.key)}</FormControl>
-                                <FormMessage className='text-xs' />
-                              </FormItem>
-                            )}
-                          />
-                        </td>
-                      ))}
-                      <td className='p-2 text-center align-middle'>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='icon'
-                          onClick={() => remove(index)}
-                          className='h-8 w-8'
-                        >
-                          <Trash2 className='text-destructive h-4 w-4' />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        <EditableFieldArrayTableCard
+          title='Instructor Search Preferences'
+          description='Set filters to find the ideal instructors for your needs.'
+          columns={preferenceHeaders}
+          rows={fields}
+          addLabel='Add Preference'
+          onAdd={() => append({ course: '' })}
+          onRemove={remove}
+          renderCell={(index, key) => (
+            <FormField
+              control={form.control}
+              name={`preferences.${index}.${key}` as const}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>{renderInput(field, key)}</FormControl>
+                  <FormMessage className='text-xs' />
+                </FormItem>
+              )}
+            />
+          )}
+        />
 
         <div className='flex justify-end'>
           <Button type='submit'>Save Preferences</Button>
