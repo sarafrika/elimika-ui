@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import {
-  buildDashboardSwitchPath,
-  normalizeStoredUserDomain,
-} from '@/src/features/dashboard/lib/active-domain-storage';
+import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
+import { resolveDashboardEntryTarget } from '@/src/features/dashboard/server/entry-target';
 
 type WorkspaceAliasPageProps = {
   params: Promise<{ domain: string; slug: string[] }>;
@@ -19,11 +17,8 @@ export const metadata: Metadata = {
 export default async function WorkspaceAliasPage({ params }: WorkspaceAliasPageProps) {
   const { domain, slug } = await params;
   const normalizedDomain = normalizeStoredUserDomain(domain);
-
-  if (!normalizedDomain) {
-    redirect('/dashboard/overview');
-  }
-
   const nextPath = slug.length ? `/dashboard/${slug.join('/')}` : '/dashboard/overview';
-  redirect(buildDashboardSwitchPath(normalizedDomain, nextPath));
+  const target = await resolveDashboardEntryTarget(normalizedDomain, nextPath);
+
+  redirect(target.redirectTo);
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { getServerActiveDashboardDomain } from '@/src/features/dashboard/server/active-domain';
+import { resolveDashboardEntryTarget } from '@/src/features/dashboard/server/entry-target';
 
 export const metadata: Metadata = {
   robots: {
@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 
 export default async function DashboardEntryPage() {
   const activeDomain = await getServerActiveDashboardDomain();
+  const target = await resolveDashboardEntryTarget(activeDomain);
 
-  redirect(activeDomain ? buildDashboardSwitchPath(activeDomain) : '/dashboard/overview');
+  redirect(target.redirectTo);
 }

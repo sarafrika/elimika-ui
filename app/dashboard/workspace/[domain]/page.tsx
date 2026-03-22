@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import {
-  buildDashboardSwitchPath,
-  normalizeStoredUserDomain,
-} from '@/src/features/dashboard/lib/active-domain-storage';
+import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
+import { resolveDashboardEntryTarget } from '@/src/features/dashboard/server/entry-target';
 
 type WorkspaceEntryPageProps = {
   params: Promise<{ domain: string }>;
@@ -19,6 +17,7 @@ export const metadata: Metadata = {
 export default async function WorkspaceEntryPage({ params }: WorkspaceEntryPageProps) {
   const { domain } = await params;
   const normalizedDomain = normalizeStoredUserDomain(domain);
+  const target = await resolveDashboardEntryTarget(normalizedDomain);
 
-  redirect(normalizedDomain ? buildDashboardSwitchPath(normalizedDomain) : '/dashboard/overview');
+  redirect(target.redirectTo);
 }
