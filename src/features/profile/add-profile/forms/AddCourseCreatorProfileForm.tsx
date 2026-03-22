@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,25 +24,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
 import { useUserDomain } from '@/context/user-domain-context';
 import { createCourseCreator } from '@/services/client';
-import { zCourseCreator } from '@/services/client/zod.gen';
-
-const CourseCreatorOnboardingSchema = zCourseCreator
-  .omit({
-    uuid: true,
-    admin_verified: true,
-    created_date: true,
-    created_by: true,
-    updated_date: true,
-    updated_by: true,
-  })
-  .extend({
-    full_name: z.string().min(2, 'Full name must be at least 2 characters'),
-    bio: z.string().max(2000).optional(),
-    professional_headline: z.string().max(150).optional(),
-    website: z.union([z.string().url(), z.literal(''), z.undefined()]).optional(),
-  });
-
-type CourseCreatorOnboardingFormData = z.infer<typeof CourseCreatorOnboardingSchema>;
+import {
+  buildCourseCreatorFullName,
+  type CourseCreatorProfileFormData,
+  courseCreatorProfileSchema,
+  normalizeCourseCreatorProfileData,
+} from '@/src/features/profile/forms/shared/course-creator-profile';
 
 export default function AddCourseCreatorProfileForm() {
   const router = useRouter();
@@ -52,8 +38,8 @@ export default function AddCourseCreatorProfileForm() {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<CourseCreatorOnboardingFormData>({
-    resolver: zodResolver(CourseCreatorOnboardingSchema),
+  const form = useForm<CourseCreatorProfileFormData>({
+    resolver: zodResolver(courseCreatorProfileSchema),
     defaultValues: {
       user_uuid: '',
       full_name: '',
@@ -68,13 +54,12 @@ export default function AddCourseCreatorProfileForm() {
       form.setValue('user_uuid', user.uuid);
     }
     if (user?.first_name && user?.last_name && !form.getValues('full_name')) {
-      const fullName =
-        `${user.first_name}${user.middle_name ? ` ${user.middle_name}` : ''} ${user.last_name}`.trim();
+      const fullName = buildCourseCreatorFullName(user);
       form.setValue('full_name', fullName);
     }
   }, [user?.uuid, user?.first_name, user?.middle_name, user?.last_name, form]);
 
-  const handleSubmit = async (data: CourseCreatorOnboardingFormData) => {
+  const handleSubmit = async (data: CourseCreatorProfileFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
       return;
@@ -84,13 +69,7 @@ export default function AddCourseCreatorProfileForm() {
       data.user_uuid = user.uuid;
     }
 
-    const cleanedData = {
-      ...data,
-      website: data.website === '' ? undefined : data.website,
-      bio: data.bio === '' ? undefined : data.bio,
-      professional_headline:
-        data.professional_headline === '' ? undefined : data.professional_headline,
-    };
+    const cleanedData = normalizeCourseCreatorProfileData(data);
 
     setIsSubmitting(true);
     try {

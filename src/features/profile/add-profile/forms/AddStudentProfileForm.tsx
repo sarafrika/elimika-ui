@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -23,26 +22,10 @@ import { Input } from '@/components/ui/input';
 import { useUserProfile } from '@/context/profile-context';
 import { useUserDomain } from '@/context/user-domain-context';
 import { createStudent } from '@/services/client';
-import { zStudent } from '@/services/client/zod.gen';
-
-const StudentOnboardingSchema = zStudent
-  .omit({
-    uuid: true,
-    created_date: true,
-    created_by: true,
-    updated_date: true,
-    updated_by: true,
-    secondaryGuardianContact: true,
-    primaryGuardianContact: true,
-    allGuardianContacts: true,
-  })
-  .extend({
-    // Override phone number validation to allow empty strings
-    first_guardian_mobile: z.string().max(20).optional(),
-    second_guardian_mobile: z.string().max(20).optional(),
-  });
-
-type StudentOnboardingFormData = z.infer<typeof StudentOnboardingSchema>;
+import {
+  type StudentProfileFormData,
+  studentProfileSchema,
+} from '@/src/features/profile/forms/shared/student-profile';
 
 export default function AddStudentProfileForm() {
   const router = useRouter();
@@ -51,8 +34,8 @@ export default function AddStudentProfileForm() {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<StudentOnboardingFormData>({
-    resolver: zodResolver(StudentOnboardingSchema),
+  const form = useForm<StudentProfileFormData>({
+    resolver: zodResolver(studentProfileSchema),
     defaultValues: {
       user_uuid: user?.uuid || '',
       first_guardian_name: '',
@@ -62,7 +45,7 @@ export default function AddStudentProfileForm() {
     },
   });
 
-  const handleSubmit = async (data: StudentOnboardingFormData) => {
+  const handleSubmit = async (data: StudentProfileFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
       return;

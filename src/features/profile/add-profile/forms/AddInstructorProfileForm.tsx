@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,28 +24,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
 import { useUserDomain } from '@/context/user-domain-context';
 import { createInstructor } from '@/services/client';
-import { zInstructor } from '@/services/client/zod.gen';
-
-const InstructorOnboardingSchema = zInstructor
-  .omit({
-    uuid: true,
-    full_name: true,
-    admin_verified: true,
-    created_date: true,
-    created_by: true,
-    updated_date: true,
-    updated_by: true,
-    formatted_location: true,
-    is_profile_complete: true,
-    has_location_coordinates: true,
-  })
-  .extend({
-    website: z.union([z.string().url(), z.literal(''), z.undefined()]).optional(),
-    bio: z.string().max(2000).optional(),
-    professional_headline: z.string().max(150).optional(),
-  });
-
-type InstructorOnboardingFormData = z.infer<typeof InstructorOnboardingSchema>;
+import {
+  type InstructorProfileFormData,
+  instructorProfileSchema,
+  normalizeInstructorProfileData,
+} from '@/src/features/profile/forms/shared/instructor-profile';
 
 export default function AddInstructorProfileForm() {
   const router = useRouter();
@@ -55,8 +37,8 @@ export default function AddInstructorProfileForm() {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<InstructorOnboardingFormData>({
-    resolver: zodResolver(InstructorOnboardingSchema),
+  const form = useForm<InstructorProfileFormData>({
+    resolver: zodResolver(instructorProfileSchema),
     defaultValues: {
       user_uuid: '',
       latitude: undefined,
@@ -73,7 +55,7 @@ export default function AddInstructorProfileForm() {
     }
   }, [user?.uuid, form]);
 
-  const handleSubmit = async (data: InstructorOnboardingFormData) => {
+  const handleSubmit = async (data: InstructorProfileFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
       return;
@@ -83,13 +65,7 @@ export default function AddInstructorProfileForm() {
       data.user_uuid = user.uuid;
     }
 
-    const cleanedData = {
-      ...data,
-      website: data.website === '' ? undefined : data.website,
-      bio: data.bio === '' ? undefined : data.bio,
-      professional_headline:
-        data.professional_headline === '' ? undefined : data.professional_headline,
-    };
+    const cleanedData = normalizeInstructorProfileData(data);
 
     setIsSubmitting(true);
     try {
