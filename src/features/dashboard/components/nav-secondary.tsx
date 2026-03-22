@@ -8,8 +8,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { useUserDomain } from '@/context/user-domain-context';
 import { getMenuWithActivePath, type MenuItem } from '@/src/features/dashboard/config/menu';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 
 interface NavSecondaryProps {
   items: MenuItem[];

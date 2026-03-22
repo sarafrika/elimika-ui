@@ -18,9 +18,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useUserProfile } from '@/context/profile-context';
-import { useUserDomain } from '@/context/user-domain-context';
 import type { MenuItem } from '@/src/features/dashboard/config/menu';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { DomainSwitcher } from './domain-switcher';
 
 type NavUserProps = {

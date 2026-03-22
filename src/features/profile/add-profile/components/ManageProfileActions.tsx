@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
-import { useUserProfile } from '@/context/profile-context';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
@@ -28,6 +27,7 @@ import {
   deleteStudentMutation,
   deleteUserMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type RemovableDomain = 'student' | 'instructor' | 'course_creator';
 

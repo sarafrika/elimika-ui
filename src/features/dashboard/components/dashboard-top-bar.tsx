@@ -7,9 +7,9 @@ import { ThemeSwitcher } from '@/components/theme-switcher';
 import { AppBreadcrumb } from '@/components/ui/app-breadcrumb';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useUserDomain } from '@/context/user-domain-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getCartOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { useCartStore } from '@/store/cart-store';
 import { DomainSwitcher } from './domain-switcher';
 

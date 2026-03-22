@@ -11,9 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useUserDomain } from '@/context/user-domain-context';
 import type { UserDomain } from '@/lib/types';
 import { dashboardDomainDisplayConfig } from '@/src/features/dashboard/config/domain-display';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 
 interface DomainSwitcherProps {
   className?: string;

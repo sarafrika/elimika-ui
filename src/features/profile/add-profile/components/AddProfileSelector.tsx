@@ -4,9 +4,9 @@ import { ArrowLeft, ArrowRight, BookOpen, GraduationCap, Users } from 'lucide-re
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { useUserProfile } from '@/context/profile-context';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type ProfileAccent = {
   icon: string;

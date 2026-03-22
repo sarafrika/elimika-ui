@@ -1,8 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import UserProfileProvider from './profile-context';
-import { UserDomainProvider } from './user-domain-context';
+import { UserDomainProvider } from '@/src/features/dashboard/context/user-domain-context';
+import UserProfileProvider from '@/src/features/profile/context/profile-context';
 
 export function ProfileProviders({ children }: { children: ReactNode }) {
   return <UserProfileProvider>{children}</UserProfileProvider>;

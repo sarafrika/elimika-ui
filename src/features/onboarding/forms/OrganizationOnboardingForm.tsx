@@ -22,9 +22,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useUserProfile } from '@/context/profile-context';
 import { createOrganisation } from '@/services/client';
 import { zOrganisation } from '@/services/client/zod.gen';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 const OrganizationOnboardingSchema = zOrganisation.omit({
   uuid: true,

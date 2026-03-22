@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { type ReactNode, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
-import { useUserProfile } from '@/context/profile-context';
-import { useUserDomain } from '@/context/user-domain-context';
 import { cn } from '@/lib/utils';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type CourseCreatorAccessGateProps = {
   children: ReactNode;

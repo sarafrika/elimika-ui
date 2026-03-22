@@ -10,8 +10,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
-import { useUserProfile } from '@/context/profile-context';
 import { createInstructor } from '@/services/client';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { InstructorLocationFields } from '@/src/features/profile/forms/shared/components/InstructorLocationFields';
 import { InstructorProfessionalFields } from '@/src/features/profile/forms/shared/components/InstructorProfessionalFields';
 import {

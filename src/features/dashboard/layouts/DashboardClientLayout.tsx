@@ -6,9 +6,7 @@ import CustomLoader from '@/components/custom-loader';
 import { type DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
-import { useUserProfile } from '@/context/profile-context';
 import { DashboardProviders } from '@/context/profile-providers';
-import { useUserDomain } from '@/context/user-domain-context';
 import type { DashboardChildrenTypes, UserDomain } from '@/lib/types';
 import { AppSidebar } from '@/src/features/dashboard/components/app-sidebar';
 import DashboardMainContent from '@/src/features/dashboard/components/dashboard-main-content';
@@ -18,6 +16,8 @@ import {
   domainToSlotKeyMap,
   type KnownDomain,
 } from '@/src/features/dashboard/config/workspaces';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 export function DashboardClientLayout(dashboardProps: DashboardChildrenTypes) {
   return (
