@@ -45,6 +45,10 @@ import type {
   UpdateCourseLessonResponse,
   UpdateLessonContentResponse,
   UpdateCourseAssessmentResponse,
+  UpdateLineItemResponse,
+  UpsertLineItemScoreResponse,
+  GetLineItemRubricEvaluationResponse,
+  UpsertLineItemRubricEvaluationResponse,
   GetCourseCreatorByUuidResponse,
   UpdateCourseCreatorResponse,
   UpdateCourseCreatorSkillResponse,
@@ -61,8 +65,6 @@ import type {
   UpdateCatalogItemResponse,
   GetClassDefinitionResponse,
   UpdateClassDefinitionResponse,
-  GetLessonPlanResponse,
-  SaveLessonPlanResponse,
   GetCertificateByUuidResponse,
   UpdateCertificateResponse,
   UpdateCertificateTemplateResponse,
@@ -156,6 +158,8 @@ import type {
   UploadLessonMediaResponse,
   GetCourseAssessmentsResponse,
   AddCourseAssessmentResponse,
+  GetLineItemsResponse,
+  CreateLineItemResponse,
   GetAllCourseCreatorsResponse,
   CreateCourseCreatorResponse,
   VerifyCourseCreatorResponse,
@@ -222,8 +226,8 @@ import type {
   GetAdminUsersResponse,
   CreateAdminUserResponse,
   ModerateProgramResponse,
-  ModerateOrganisationResponse,
   CreateOrganisationUserResponse,
+  ModerateOrganisationResponse,
   VerifyInstructorResponse,
   UnverifyInstructorResponse,
   ModerateCourseResponse,
@@ -299,6 +303,7 @@ import type {
   ListCurrenciesResponse,
   GetPrimaryRubricResponse,
   GetRubricsByContextResponse,
+  GetEnrollmentGradeBookResponse,
   GetCourseEnrollmentsResponse,
   GetCourseCategoriesResponse,
   SearchTrainingApplicationsResponse,
@@ -1197,6 +1202,90 @@ export const updateCourseAssessmentResponseTransformer = async (
   return data;
 };
 
+const courseAssessmentLineItemSchemaResponseTransformer = (data: any) => {
+  if (data.due_at) {
+    data.due_at = new Date(data.due_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseAssessmentLineItemSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseAssessmentLineItemSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateLineItemResponseTransformer = async (
+  data: any
+): Promise<UpdateLineItemResponse> => {
+  data = apiResponseCourseAssessmentLineItemSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseAssessmentLineItemScoreSchemaResponseTransformer = (data: any) => {
+  if (data.graded_at) {
+    data.graded_at = new Date(data.graded_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseAssessmentLineItemScoreSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseAssessmentLineItemScoreSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const upsertLineItemScoreResponseTransformer = async (
+  data: any
+): Promise<UpsertLineItemScoreResponse> => {
+  data = apiResponseCourseAssessmentLineItemScoreSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseAssessmentLineItemRubricEvaluationSchemaResponseTransformer = (data: any) => {
+  if (data.graded_at) {
+    data.graded_at = new Date(data.graded_at);
+  }
+  return data;
+};
+
+const apiResponseCourseAssessmentLineItemRubricEvaluationSchemaResponseTransformer = (
+  data: any
+) => {
+  if (data.data) {
+    data.data = courseAssessmentLineItemRubricEvaluationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getLineItemRubricEvaluationResponseTransformer = async (
+  data: any
+): Promise<GetLineItemRubricEvaluationResponse> => {
+  data = apiResponseCourseAssessmentLineItemRubricEvaluationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const upsertLineItemRubricEvaluationResponseTransformer = async (
+  data: any
+): Promise<UpsertLineItemRubricEvaluationResponse> => {
+  data = apiResponseCourseAssessmentLineItemRubricEvaluationSchemaResponseTransformer(data);
+  return data;
+};
+
 const courseCreatorSchemaResponseTransformer = (data: any) => {
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
@@ -1575,45 +1664,6 @@ export const updateClassDefinitionResponseTransformer = async (
   data: any
 ): Promise<UpdateClassDefinitionResponse> => {
   data = apiResponseClassDefinitionResponseSchemaResponseTransformer(data);
-  return data;
-};
-
-const classLessonPlanSchemaResponseTransformer = (data: any) => {
-  if (data.scheduled_start) {
-    data.scheduled_start = new Date(data.scheduled_start);
-  }
-  if (data.scheduled_end) {
-    data.scheduled_end = new Date(data.scheduled_end);
-  }
-  if (data.created_date) {
-    data.created_date = new Date(data.created_date);
-  }
-  if (data.updated_date) {
-    data.updated_date = new Date(data.updated_date);
-  }
-  return data;
-};
-
-const apiResponseListClassLessonPlanSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = data.data.map((item: any) => {
-      return classLessonPlanSchemaResponseTransformer(item);
-    });
-  }
-  return data;
-};
-
-export const getLessonPlanResponseTransformer = async (
-  data: any
-): Promise<GetLessonPlanResponse> => {
-  data = apiResponseListClassLessonPlanSchemaResponseTransformer(data);
-  return data;
-};
-
-export const saveLessonPlanResponseTransformer = async (
-  data: any
-): Promise<SaveLessonPlanResponse> => {
-  data = apiResponseListClassLessonPlanSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3010,6 +3060,27 @@ export const addCourseAssessmentResponseTransformer = async (
   return data;
 };
 
+const apiResponseListCourseAssessmentLineItemSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return courseAssessmentLineItemSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getLineItemsResponseTransformer = async (data: any): Promise<GetLineItemsResponse> => {
+  data = apiResponseListCourseAssessmentLineItemSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createLineItemResponseTransformer = async (
+  data: any
+): Promise<CreateLineItemResponse> => {
+  data = apiResponseCourseAssessmentLineItemSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoCourseCreatorSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -3963,17 +4034,17 @@ export const moderateProgramResponseTransformer = async (
   return data;
 };
 
-export const moderateOrganisationResponseTransformer = async (
-  data: any
-): Promise<ModerateOrganisationResponse> => {
-  data = apiResponseOrganisationSchemaResponseTransformer(data);
-  return data;
-};
-
 export const createOrganisationUserResponseTransformer = async (
   data: any
 ): Promise<CreateOrganisationUserResponse> => {
   data = apiResponseUserSchemaResponseTransformer(data);
+  return data;
+};
+
+export const moderateOrganisationResponseTransformer = async (
+  data: any
+): Promise<ModerateOrganisationResponse> => {
+  data = apiResponseOrganisationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4988,6 +5059,67 @@ export const getRubricsByContextResponseTransformer = async (
   return data;
 };
 
+const courseAssessmentScoreSchemaResponseTransformer = (data: any) => {
+  if (data.graded_at) {
+    data.graded_at = new Date(data.graded_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const lineItemEntryDtoSchemaResponseTransformer = (data: any) => {
+  if (data.line_item) {
+    data.line_item = courseAssessmentLineItemSchemaResponseTransformer(data.line_item);
+  }
+  if (data.score) {
+    data.score = courseAssessmentLineItemScoreSchemaResponseTransformer(data.score);
+  }
+  return data;
+};
+
+const componentDtoSchemaResponseTransformer = (data: any) => {
+  if (data.assessment) {
+    data.assessment = courseAssessmentSchemaResponseTransformer(data.assessment);
+  }
+  if (data.aggregate_score) {
+    data.aggregate_score = courseAssessmentScoreSchemaResponseTransformer(data.aggregate_score);
+  }
+  if (data.line_items) {
+    data.line_items = data.line_items.map((item: any) => {
+      return lineItemEntryDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const courseGradeBookSchemaResponseTransformer = (data: any) => {
+  if (data.components) {
+    data.components = data.components.map((item: any) => {
+      return componentDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseCourseGradeBookSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseGradeBookSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getEnrollmentGradeBookResponseTransformer = async (
+  data: any
+): Promise<GetEnrollmentGradeBookResponse> => {
+  data = apiResponseCourseGradeBookSchemaResponseTransformer(data);
+  return data;
+};
+
 const courseEnrollmentSchemaResponseTransformer = (data: any) => {
   if (data.enrollment_date) {
     data.enrollment_date = new Date(data.enrollment_date);
@@ -5566,17 +5698,17 @@ const userMetricsSchemaResponseTransformer = (data: any) => {
 };
 
 const organizationMetricsSchemaResponseTransformer = (data: any) => {
-  if (data.total_organizations) {
-    data.total_organizations = BigInt(data.total_organizations.toString());
+  if (data.total_organisations) {
+    data.total_organisations = BigInt(data.total_organisations.toString());
   }
   if (data.pending_approvals) {
     data.pending_approvals = BigInt(data.pending_approvals.toString());
   }
-  if (data.active_organizations) {
-    data.active_organizations = BigInt(data.active_organizations.toString());
+  if (data.active_organisations) {
+    data.active_organisations = BigInt(data.active_organisations.toString());
   }
-  if (data.suspended_organizations) {
-    data.suspended_organizations = BigInt(data.suspended_organizations.toString());
+  if (data.suspended_organisations) {
+    data.suspended_organisations = BigInt(data.suspended_organisations.toString());
   }
   return data;
 };
@@ -5607,8 +5739,8 @@ const adminMetricsSchemaResponseTransformer = (data: any) => {
   if (data.system_admins) {
     data.system_admins = BigInt(data.system_admins.toString());
   }
-  if (data.organization_admins) {
-    data.organization_admins = BigInt(data.organization_admins.toString());
+  if (data.organisation_admins) {
+    data.organisation_admins = BigInt(data.organisation_admins.toString());
   }
   return data;
 };
@@ -5774,9 +5906,9 @@ const adminDashboardStatsSchemaResponseTransformer = (data: any) => {
   if (data.user_metrics) {
     data.user_metrics = userMetricsSchemaResponseTransformer(data.user_metrics);
   }
-  if (data.organization_metrics) {
-    data.organization_metrics = organizationMetricsSchemaResponseTransformer(
-      data.organization_metrics
+  if (data.organisation_metrics) {
+    data.organisation_metrics = organizationMetricsSchemaResponseTransformer(
+      data.organisation_metrics
     );
   }
   if (data.content_metrics) {

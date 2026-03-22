@@ -24,7 +24,7 @@ export type CreateClientConfig<T extends DefaultClientOptions = ClientOptions> =
 export const client = createClient(
   createClientConfig(
     createConfig<ClientOptions>({
-      baseUrl: 'https://api.elimika.sarafrika.com',
+      baseUrl: 'https://api.elimika.staging.sarafrika.com',
     })
   )
 );

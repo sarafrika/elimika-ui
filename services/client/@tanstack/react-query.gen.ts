@@ -73,6 +73,11 @@ import {
   updateLessonContent,
   deleteCourseAssessment,
   updateCourseAssessment,
+  deleteLineItem,
+  updateLineItem,
+  upsertLineItemScore,
+  getLineItemRubricEvaluation,
+  upsertLineItemRubricEvaluation,
   deleteCourseCreator,
   getCourseCreatorByUuid,
   updateCourseCreator,
@@ -101,8 +106,6 @@ import {
   deactivateClassDefinition,
   getClassDefinition,
   updateClassDefinition,
-  getLessonPlan,
-  saveLessonPlan,
   deleteCertificate,
   getCertificateByUuid,
   updateCertificate,
@@ -207,6 +210,8 @@ import {
   reorderLessonContent,
   getCourseAssessments,
   addCourseAssessment,
+  getLineItems,
+  createLineItem,
   getAllCourseCreators,
   createCourseCreator,
   verifyCourseCreator,
@@ -276,8 +281,8 @@ import {
   getAdminUsers,
   createAdminUser,
   moderateProgram,
-  moderateOrganisation,
   createOrganisationUser,
+  moderateOrganisation,
   verifyInstructor,
   unverifyInstructor,
   listAll,
@@ -376,12 +381,14 @@ import {
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
+  listDocumentTypes,
   listCurrencies,
   getDefaultCurrency,
   getStatusTransitions,
   checkRubricAssociation,
   getPrimaryRubric,
   getRubricsByContext,
+  getEnrollmentGradeBook,
   getCourseEnrollments,
   getCourseCompletionRate,
   removeAllCategoriesFromCourse,
@@ -391,6 +398,7 @@ import {
   getPublishedCourses,
   getCourseMedia,
   getCoursesByInstructor,
+  getCourseContentMedia,
   getCoursesByCategory,
   getActiveCourses,
   isCourseCreatorVerified,
@@ -641,6 +649,18 @@ import type {
   UpdateCourseAssessmentData,
   UpdateCourseAssessmentError,
   UpdateCourseAssessmentResponse,
+  DeleteLineItemData,
+  DeleteLineItemError,
+  UpdateLineItemData,
+  UpdateLineItemError,
+  UpdateLineItemResponse,
+  UpsertLineItemScoreData,
+  UpsertLineItemScoreError,
+  UpsertLineItemScoreResponse,
+  GetLineItemRubricEvaluationData,
+  UpsertLineItemRubricEvaluationData,
+  UpsertLineItemRubricEvaluationError,
+  UpsertLineItemRubricEvaluationResponse,
   DeleteCourseCreatorData,
   DeleteCourseCreatorError,
   DeleteCourseCreatorResponse,
@@ -712,10 +732,6 @@ import type {
   UpdateClassDefinitionData,
   UpdateClassDefinitionError,
   UpdateClassDefinitionResponse,
-  GetLessonPlanData,
-  SaveLessonPlanData,
-  SaveLessonPlanError,
-  SaveLessonPlanResponse,
   DeleteCertificateData,
   DeleteCertificateError,
   DeleteCertificateResponse,
@@ -1005,6 +1021,10 @@ import type {
   AddCourseAssessmentData,
   AddCourseAssessmentError,
   AddCourseAssessmentResponse,
+  GetLineItemsData,
+  CreateLineItemData,
+  CreateLineItemError,
+  CreateLineItemResponse,
   GetAllCourseCreatorsData,
   GetAllCourseCreatorsError,
   GetAllCourseCreatorsResponse,
@@ -1200,12 +1220,12 @@ import type {
   ModerateProgramData,
   ModerateProgramError,
   ModerateProgramResponse,
-  ModerateOrganisationData,
-  ModerateOrganisationError,
-  ModerateOrganisationResponse,
   CreateOrganisationUserData,
   CreateOrganisationUserError,
   CreateOrganisationUserResponse,
+  ModerateOrganisationData,
+  ModerateOrganisationError,
+  ModerateOrganisationResponse,
   VerifyInstructorData,
   VerifyInstructorError,
   VerifyInstructorResponse,
@@ -1430,6 +1450,7 @@ import type {
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
+  ListDocumentTypesData,
   ListCurrenciesData,
   ListCurrenciesError,
   ListCurrenciesResponse,
@@ -1440,6 +1461,7 @@ import type {
   GetRubricsByContextData,
   GetRubricsByContextError,
   GetRubricsByContextResponse,
+  GetEnrollmentGradeBookData,
   GetCourseEnrollmentsData,
   GetCourseEnrollmentsError,
   GetCourseEnrollmentsResponse,
@@ -1461,6 +1483,7 @@ import type {
   GetCoursesByInstructorData,
   GetCoursesByInstructorError,
   GetCoursesByInstructorResponse,
+  GetCourseContentMediaData,
   GetCoursesByCategoryData,
   GetCoursesByCategoryError,
   GetCoursesByCategoryResponse,
@@ -2627,7 +2650,7 @@ export const updateOrganisationMutation = (
 };
 
 /**
- * Delete a training branch by UUID within organization
+ * Delete a training branch by UUID within organisation
  */
 export const deleteTrainingBranch1Mutation = (
   options?: Partial<Options<DeleteTrainingBranch1Data>>
@@ -2657,7 +2680,7 @@ export const getTrainingBranchByUuid1QueryKey = (options: Options<GetTrainingBra
   createQueryKey('getTrainingBranchByUuid1', options);
 
 /**
- * Get a training branch by UUID within organization
+ * Get a training branch by UUID within organisation
  */
 export const getTrainingBranchByUuid1Options = (options: Options<GetTrainingBranchByUuid1Data>) => {
   return queryOptions({
@@ -2675,7 +2698,7 @@ export const getTrainingBranchByUuid1Options = (options: Options<GetTrainingBran
 };
 
 /**
- * Update a training branch by UUID within organization
+ * Update a training branch by UUID within organisation
  */
 export const updateTrainingBranch1Mutation = (
   options?: Partial<Options<UpdateTrainingBranch1Data>>
@@ -3518,6 +3541,135 @@ export const updateCourseAssessmentMutation = (
 };
 
 /**
+ * Delete gradebook line item
+ * Removes a linked task from a weighted course assessment component.
+ */
+export const deleteLineItemMutation = (
+  options?: Partial<Options<DeleteLineItemData>>
+): UseMutationOptions<unknown, DeleteLineItemError, Options<DeleteLineItemData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteLineItemError,
+    Options<DeleteLineItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteLineItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update gradebook line item
+ * Updates a linked task inside a weighted course assessment component.
+ */
+export const updateLineItemMutation = (
+  options?: Partial<Options<UpdateLineItemData>>
+): UseMutationOptions<UpdateLineItemResponse, UpdateLineItemError, Options<UpdateLineItemData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateLineItemResponse,
+    UpdateLineItemError,
+    Options<UpdateLineItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateLineItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Upsert line item score
+ * Records or updates a learner score for a linked gradebook task.
+ */
+export const upsertLineItemScoreMutation = (
+  options?: Partial<Options<UpsertLineItemScoreData>>
+): UseMutationOptions<
+  UpsertLineItemScoreResponse,
+  UpsertLineItemScoreError,
+  Options<UpsertLineItemScoreData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpsertLineItemScoreResponse,
+    UpsertLineItemScoreError,
+    Options<UpsertLineItemScoreData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await upsertLineItemScore({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getLineItemRubricEvaluationQueryKey = (
+  options: Options<GetLineItemRubricEvaluationData>
+) => createQueryKey('getLineItemRubricEvaluation', options);
+
+/**
+ * Get line item rubric evaluation
+ * Returns the rubric evaluation for a learner against a rubric-backed gradebook line item.
+ */
+export const getLineItemRubricEvaluationOptions = (
+  options: Options<GetLineItemRubricEvaluationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getLineItemRubricEvaluation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getLineItemRubricEvaluationQueryKey(options),
+  });
+};
+
+/**
+ * Upsert line item rubric evaluation
+ * Completes or updates the rubric evaluation for a learner against a rubric-backed gradebook line item.
+ */
+export const upsertLineItemRubricEvaluationMutation = (
+  options?: Partial<Options<UpsertLineItemRubricEvaluationData>>
+): UseMutationOptions<
+  UpsertLineItemRubricEvaluationResponse,
+  UpsertLineItemRubricEvaluationError,
+  Options<UpsertLineItemRubricEvaluationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpsertLineItemRubricEvaluationResponse,
+    UpsertLineItemRubricEvaluationError,
+    Options<UpsertLineItemRubricEvaluationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await upsertLineItemRubricEvaluation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete a course creator
  * Removes a course creator profile from the system. This will cascade delete associated data.
  */
@@ -4258,50 +4410,6 @@ export const updateClassDefinitionMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateClassDefinition({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getLessonPlanQueryKey = (options: Options<GetLessonPlanData>) =>
-  createQueryKey('getLessonPlan', options);
-
-/**
- * Get the lesson plan for a class definition
- */
-export const getLessonPlanOptions = (options: Options<GetLessonPlanData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getLessonPlan({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getLessonPlanQueryKey(options),
-  });
-};
-
-/**
- * Replace the lesson plan for a class definition
- */
-export const saveLessonPlanMutation = (
-  options?: Partial<Options<SaveLessonPlanData>>
-): UseMutationOptions<SaveLessonPlanResponse, SaveLessonPlanError, Options<SaveLessonPlanData>> => {
-  const mutationOptions: UseMutationOptions<
-    SaveLessonPlanResponse,
-    SaveLessonPlanError,
-    Options<SaveLessonPlanData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await saveLessonPlan({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -7004,7 +7112,7 @@ export const createTrainingBranch1QueryKey = (options: Options<CreateTrainingBra
   createQueryKey('createTrainingBranch1', options);
 
 /**
- * Create a new training branch within organization
+ * Create a new training branch within organisation
  */
 export const createTrainingBranch1Options = (options: Options<CreateTrainingBranch1Data>) => {
   return queryOptions({
@@ -7022,7 +7130,7 @@ export const createTrainingBranch1Options = (options: Options<CreateTrainingBran
 };
 
 /**
- * Create a new training branch within organization
+ * Create a new training branch within organisation
  */
 export const createTrainingBranch1Mutation = (
   options?: Partial<Options<CreateTrainingBranch1Data>>
@@ -7050,7 +7158,7 @@ export const createTrainingBranch1Mutation = (
 
 /**
  * Remove user from training branch
- * Removes a user from a training branch. The user remains in the parent organization but loses branch-specific assignment.
+ * Removes a user from a training branch. The user remains in the parent organisation but loses branch-specific assignment.
  */
 export const removeUserFromBranchMutation = (
   options?: Partial<Options<RemoveUserFromBranchData>>
@@ -7081,7 +7189,7 @@ export const assignUserToBranchQueryKey = (options: Options<AssignUserToBranchDa
 
 /**
  * Assign user to training branch
- * Assigns a user to a specific training branch with a defined role. If the user is not already in the parent organization, creates organization membership first. If the user is already in the organization, updates their branch assignment.
+ * Assigns a user to a specific training branch with a defined role. If the user is not already in the parent organisation, creates organisation membership first. If the user is already in the organisation, updates their branch assignment.
  */
 export const assignUserToBranchOptions = (options: Options<AssignUserToBranchData>) => {
   return queryOptions({
@@ -7100,7 +7208,7 @@ export const assignUserToBranchOptions = (options: Options<AssignUserToBranchDat
 
 /**
  * Assign user to training branch
- * Assigns a user to a specific training branch with a defined role. If the user is not already in the parent organization, creates organization membership first. If the user is already in the organization, updates their branch assignment.
+ * Assigns a user to a specific training branch with a defined role. If the user is not already in the parent organisation, creates organisation membership first. If the user is already in the organisation, updates their branch assignment.
  */
 export const assignUserToBranchMutation = (
   options?: Partial<Options<AssignUserToBranchData>>
@@ -9773,6 +9881,74 @@ export const addCourseAssessmentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await addCourseAssessment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getLineItemsQueryKey = (options: Options<GetLineItemsData>) =>
+  createQueryKey('getLineItems', options);
+
+/**
+ * List gradebook line items
+ * Returns linked tasks configured under a weighted course assessment component.
+ */
+export const getLineItemsOptions = (options: Options<GetLineItemsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getLineItems({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getLineItemsQueryKey(options),
+  });
+};
+
+export const createLineItemQueryKey = (options: Options<CreateLineItemData>) =>
+  createQueryKey('createLineItem', options);
+
+/**
+ * Create gradebook line item
+ * Adds a linked task under a weighted course assessment component.
+ */
+export const createLineItemOptions = (options: Options<CreateLineItemData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createLineItem({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createLineItemQueryKey(options),
+  });
+};
+
+/**
+ * Create gradebook line item
+ * Adds a linked task under a weighted course assessment component.
+ */
+export const createLineItemMutation = (
+  options?: Partial<Options<CreateLineItemData>>
+): UseMutationOptions<CreateLineItemResponse, CreateLineItemError, Options<CreateLineItemData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateLineItemResponse,
+    CreateLineItemError,
+    Options<CreateLineItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createLineItem({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -12853,7 +13029,7 @@ export const createAssignmentQueryKey = (options: Options<CreateAssignmentData>)
 
 /**
  * Create a new assignment
- * Creates a new assignment with default DRAFT status and inactive state.
+ * Creates a new assignment with unpublished state by default.
  */
 export const createAssignmentOptions = (options: Options<CreateAssignmentData>) => {
   return queryOptions({
@@ -12872,7 +13048,7 @@ export const createAssignmentOptions = (options: Options<CreateAssignmentData>) 
 
 /**
  * Create a new assignment
- * Creates a new assignment with default DRAFT status and inactive state.
+ * Creates a new assignment with unpublished state by default.
  */
 export const createAssignmentMutation = (
   options?: Partial<Options<CreateAssignmentData>>
@@ -13169,7 +13345,7 @@ export const assignAdminDomainQueryKey = (options: Options<AssignAdminDomainData
 
 /**
  * Assign admin domain to user
- * Assigns admin domain privileges to a user. This grants the user administrative access either globally (system admin) or within specific organizational contexts. Only existing system administrators can perform this operation.
+ * Assigns admin domain privileges to a user. This grants the user administrative access either globally (system admin) or within specific organisational contexts. Only existing system administrators can perform this operation.
  */
 export const assignAdminDomainOptions = (options: Options<AssignAdminDomainData>) => {
   return queryOptions({
@@ -13188,7 +13364,7 @@ export const assignAdminDomainOptions = (options: Options<AssignAdminDomainData>
 
 /**
  * Assign admin domain to user
- * Assigns admin domain privileges to a user. This grants the user administrative access either globally (system admin) or within specific organizational contexts. Only existing system administrators can perform this operation.
+ * Assigns admin domain privileges to a user. This grants the user administrative access either globally (system admin) or within specific organisational contexts. Only existing system administrators can perform this operation.
  */
 export const assignAdminDomainMutation = (
   options?: Partial<Options<AssignAdminDomainData>>
@@ -13219,7 +13395,7 @@ export const getAdminUsersQueryKey = (options: Options<GetAdminUsersData>) =>
 
 /**
  * Get all admin users
- * Retrieves a paginated list of all users with administrative privileges. Includes both system administrators and organization administrators. Supports filtering by admin level, status, and other criteria.
+ * Retrieves a paginated list of all users with administrative privileges. Includes both system administrators and organisation administrators. Supports filtering by admin level, status, and other criteria.
  */
 export const getAdminUsersOptions = (options: Options<GetAdminUsersData>) => {
   return queryOptions({
@@ -13242,7 +13418,7 @@ export const getAdminUsersInfiniteQueryKey = (
 
 /**
  * Get all admin users
- * Retrieves a paginated list of all users with administrative privileges. Includes both system administrators and organization administrators. Supports filtering by admin level, status, and other criteria.
+ * Retrieves a paginated list of all users with administrative privileges. Includes both system administrators and organisation administrators. Supports filtering by admin level, status, and other criteria.
  */
 export const getAdminUsersInfiniteOptions = (options: Options<GetAdminUsersData>) => {
   return infiniteQueryOptions<
@@ -13379,56 +13555,6 @@ export const moderateProgramMutation = (
   return mutationOptions;
 };
 
-export const moderateOrganisationQueryKey = (options: Options<ModerateOrganisationData>) =>
-  createQueryKey('moderateOrganisation', options);
-
-/**
- * Moderate organization verification
- * Handles organization approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
- */
-export const moderateOrganisationOptions = (options: Options<ModerateOrganisationData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await moderateOrganisation({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: moderateOrganisationQueryKey(options),
-  });
-};
-
-/**
- * Moderate organization verification
- * Handles organization approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
- */
-export const moderateOrganisationMutation = (
-  options?: Partial<Options<ModerateOrganisationData>>
-): UseMutationOptions<
-  ModerateOrganisationResponse,
-  ModerateOrganisationError,
-  Options<ModerateOrganisationData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ModerateOrganisationResponse,
-    ModerateOrganisationError,
-    Options<ModerateOrganisationData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await moderateOrganisation({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const createOrganisationUserQueryKey = (options: Options<CreateOrganisationUserData>) =>
   createQueryKey('createOrganisationUser', options);
 
@@ -13469,6 +13595,56 @@ export const createOrganisationUserMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await createOrganisationUser({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const moderateOrganisationQueryKey = (options: Options<ModerateOrganisationData>) =>
+  createQueryKey('moderateOrganisation', options);
+
+/**
+ * Moderate organisation verification
+ * Handles organisation approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
+ */
+export const moderateOrganisationOptions = (options: Options<ModerateOrganisationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await moderateOrganisation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: moderateOrganisationQueryKey(options),
+  });
+};
+
+/**
+ * Moderate organisation verification
+ * Handles organisation approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
+ */
+export const moderateOrganisationMutation = (
+  options?: Partial<Options<ModerateOrganisationData>>
+): UseMutationOptions<
+  ModerateOrganisationResponse,
+  ModerateOrganisationError,
+  Options<ModerateOrganisationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ModerateOrganisationResponse,
+    ModerateOrganisationError,
+    Options<ModerateOrganisationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await moderateOrganisation({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -17194,7 +17370,7 @@ export const getBranchUsersQueryKey = (options: Options<GetBranchUsersData>) =>
 
 /**
  * Get users assigned to training branch
- * Retrieves all users that are assigned to a specific training branch within the organization. This includes users with any role/domain within the branch.
+ * Retrieves all users that are assigned to a specific training branch within the organisation. This includes users with any role/domain within the branch.
  */
 export const getBranchUsersOptions = (options: Options<GetBranchUsersData>) => {
   return queryOptions({
@@ -18449,6 +18625,27 @@ export const hasCapacityForEnrollmentOptions = (options: Options<HasCapacityForE
   });
 };
 
+export const listDocumentTypesQueryKey = (options?: Options<ListDocumentTypesData>) =>
+  createQueryKey('listDocumentTypes', options);
+
+/**
+ * List available document types
+ */
+export const listDocumentTypesOptions = (options?: Options<ListDocumentTypesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listDocumentTypes({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listDocumentTypesQueryKey(options),
+  });
+};
+
 export const listCurrenciesQueryKey = (options: Options<ListCurrenciesData>) =>
   createQueryKey('listCurrencies', options);
 
@@ -18675,6 +18872,28 @@ export const getRubricsByContextInfiniteOptions = (options: Options<GetRubricsBy
       queryKey: getRubricsByContextInfiniteQueryKey(options),
     }
   );
+};
+
+export const getEnrollmentGradeBookQueryKey = (options: Options<GetEnrollmentGradeBookData>) =>
+  createQueryKey('getEnrollmentGradeBook', options);
+
+/**
+ * Get enrollment gradebook
+ * Returns the weighted gradebook view for a learner in a course.
+ */
+export const getEnrollmentGradeBookOptions = (options: Options<GetEnrollmentGradeBookData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrollmentGradeBook({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrollmentGradeBookQueryKey(options),
+  });
 };
 
 export const getCourseEnrollmentsQueryKey = (options: Options<GetCourseEnrollmentsData>) =>
@@ -19174,6 +19393,31 @@ export const getCoursesByInstructorInfiniteOptions = (
       queryKey: getCoursesByInstructorInfiniteQueryKey(options),
     }
   );
+};
+
+export const getCourseContentMediaQueryKey = (options: Options<GetCourseContentMediaData>) =>
+  createQueryKey('getCourseContentMedia', options);
+
+/**
+ * Get uploaded lesson content media
+ * Retrieves uploaded lesson content files by their stored relative path.
+ * This is the canonical preview endpoint for course content media such as images,
+ * PDFs, audio, and video attached during lesson authoring.
+ *
+ */
+export const getCourseContentMediaOptions = (options: Options<GetCourseContentMediaData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseContentMedia({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseContentMediaQueryKey(options),
+  });
 };
 
 export const getCoursesByCategoryQueryKey = (options: Options<GetCoursesByCategoryData>) =>
@@ -21284,8 +21528,7 @@ export const searchAssignmentsQueryKey = (options: Options<SearchAssignmentsData
  * **Common Assignment Search Examples:**
  * - `title_like=essay` - Assignments with "essay" in title
  * - `lessonUuid=uuid` - Assignments for specific lesson
- * - `status=PUBLISHED` - Only published assignments
- * - `active=true` - Only active assignments
+ * - `is_published=true` - Only published assignments
  * - `dueDate_gte=2024-12-01T00:00:00` - Assignments due from Dec 1, 2024
  * - `maxPoints_gte=50` - Assignments worth 50+ points
  *
@@ -21316,8 +21559,7 @@ export const searchAssignmentsInfiniteQueryKey = (
  * **Common Assignment Search Examples:**
  * - `title_like=essay` - Assignments with "essay" in title
  * - `lessonUuid=uuid` - Assignments for specific lesson
- * - `status=PUBLISHED` - Only published assignments
- * - `active=true` - Only active assignments
+ * - `is_published=true` - Only published assignments
  * - `dueDate_gte=2024-12-01T00:00:00` - Assignments due from Dec 1, 2024
  * - `maxPoints_gte=50` - Assignments worth 50+ points
  *
@@ -21431,7 +21673,7 @@ export const isUserAdminQueryKey = (options: Options<IsUserAdminData>) =>
 
 /**
  * Check if user is admin
- * Checks whether a specific user has any type of administrative privileges. Returns true if the user has either system admin or organization admin roles.
+ * Checks whether a specific user has any type of administrative privileges. Returns true if the user has either system admin or organisation admin roles.
  */
 export const isUserAdminOptions = (options: Options<IsUserAdminData>) => {
   return queryOptions({
@@ -21522,8 +21764,8 @@ export const getOrganizationAdminUsersQueryKey = (
 ) => createQueryKey('getOrganizationAdminUsers', options);
 
 /**
- * Get organization admin users
- * Retrieves a paginated list of users with organization administrator privileges. These users have administrative access within specific organizational contexts.
+ * Get organisation admin users
+ * Retrieves a paginated list of users with organisation administrator privileges. These users have administrative access within specific organisational contexts.
  */
 export const getOrganizationAdminUsersOptions = (
   options: Options<GetOrganizationAdminUsersData>
@@ -21548,8 +21790,8 @@ export const getOrganizationAdminUsersInfiniteQueryKey = (
   createQueryKey('getOrganizationAdminUsers', options, true);
 
 /**
- * Get organization admin users
- * Retrieves a paginated list of users with organization administrator privileges. These users have administrative access within specific organizational contexts.
+ * Get organisation admin users
+ * Retrieves a paginated list of users with organisation administrator privileges. These users have administrative access within specific organisational contexts.
  */
 export const getOrganizationAdminUsersInfiniteOptions = (
   options: Options<GetOrganizationAdminUsersData>
@@ -21757,8 +21999,8 @@ export const isOrganisationVerifiedQueryKey = (options: Options<IsOrganisationVe
   createQueryKey('isOrganisationVerified', options);
 
 /**
- * Check if organization is verified
- * Checks whether a specific organization has been verified by an admin. Returns true if the organization has admin verification status.
+ * Check if organisation is verified
+ * Checks whether a specific organisation has been verified by an admin. Returns true if the organisation has admin verification status.
  */
 export const isOrganisationVerifiedOptions = (options: Options<IsOrganisationVerifiedData>) => {
   return queryOptions({
@@ -21779,8 +22021,8 @@ export const getPendingOrganisationsQueryKey = (options: Options<GetPendingOrgan
   createQueryKey('getPendingOrganisations', options);
 
 /**
- * Get pending organization approvals
- * Retrieves a paginated list of organizations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
+ * Get pending organisation approvals
+ * Retrieves a paginated list of organisations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
  */
 export const getPendingOrganisationsOptions = (options: Options<GetPendingOrganisationsData>) => {
   return queryOptions({
@@ -21803,8 +22045,8 @@ export const getPendingOrganisationsInfiniteQueryKey = (
   createQueryKey('getPendingOrganisations', options, true);
 
 /**
- * Get pending organization approvals
- * Retrieves a paginated list of organizations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
+ * Get pending organisation approvals
+ * Retrieves a paginated list of organisations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
  */
 export const getPendingOrganisationsInfiniteOptions = (
   options: Options<GetPendingOrganisationsData>
@@ -21898,7 +22140,7 @@ export const getDashboardStatisticsQueryKey = (options?: Options<GetDashboardSta
 
 /**
  * Get admin dashboard statistics
- * Retrieves comprehensive statistics for the admin dashboard including user metrics, organization metrics, content metrics, system performance, and admin-specific data.
+ * Retrieves comprehensive statistics for the admin dashboard including user metrics, organisation metrics, content metrics, system performance, and admin-specific data.
  */
 export const getDashboardStatisticsOptions = (options?: Options<GetDashboardStatisticsData>) => {
   return queryOptions({

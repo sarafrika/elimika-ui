@@ -1758,16 +1758,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: 2,
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -2828,7 +2828,7 @@ export const InstructorProfessionalMembershipSchema = {
   example: {
     uuid: 'mem12345-6789-abcd-ef01-234567890abc',
     instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
-    organization_name: 'Institute of Electrical and Electronics Engineers (IEEE)',
+    organisation_name: 'Institute of Electrical and Electronics Engineers (IEEE)',
     membership_number: 'IEEE-92345678',
     start_date: '2020-03-15',
     end_date: null,
@@ -2843,7 +2843,7 @@ export const InstructorProfessionalMembershipSchema = {
     is_long_standing_member: true,
     has_membership_number: true,
     membership_status: 'ACTIVE',
-    organization_type: 'PROFESSIONAL_INSTITUTE',
+    organisation_type: 'PROFESSIONAL_INSTITUTE',
     years_of_membership: 4.25,
     is_recent_membership: true,
   },
@@ -2863,10 +2863,10 @@ export const InstructorProfessionalMembershipSchema = {
         '**[REQUIRED]** Reference to the instructor profile UUID. Links membership record to specific instructor.',
       example: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
     },
-    organization_name: {
+    organisation_name: {
       type: 'string',
       description:
-        '**[REQUIRED]** Full name of the professional organization, association, or certification body.',
+        '**[REQUIRED]** Full name of the professional organisation, association, or certification body.',
       example: 'Institute of Electrical and Electronics Engineers (IEEE)',
       maxLength: 255,
       minLength: 0,
@@ -2874,7 +2874,7 @@ export const InstructorProfessionalMembershipSchema = {
     membership_number: {
       type: 'string',
       description:
-        '**[OPTIONAL]** Official membership number or identifier issued by the organization.',
+        '**[OPTIONAL]** Official membership number or identifier issued by the organisation.',
       example: 'IEEE-92345678',
       maxLength: 100,
       minLength: 0,
@@ -2953,9 +2953,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: 4,
       readOnly: true,
     },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
-    },
     membership_period: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
@@ -2976,8 +2973,8 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    organization_type: {
-      $ref: '#/components/schemas/OrganizationTypeEnum',
+    organisation_type: {
+      $ref: '#/components/schemas/OrganisationTypeEnum',
     },
     years_of_membership: {
       type: 'number',
@@ -3001,8 +2998,11 @@ export const InstructorProfessionalMembershipSchema = {
       example: 51,
       readOnly: true,
     },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
+    },
   },
-  required: ['instructor_uuid', 'organization_name'],
+  required: ['instructor_uuid', 'organisation_name'],
 } as const;
 
 export const ApiResponseInstructorProfessionalMembershipSchema = {
@@ -3031,7 +3031,7 @@ export const InstructorExperienceSchema = {
     uuid: 'exp12345-6789-abcd-ef01-234567890abc',
     instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
     position: 'Senior Software Developer',
-    organization_name: 'Safaricom PLC',
+    organisation_name: 'Safaricom PLC',
     responsibilities:
       'Led development of mobile banking applications, mentored junior developers, implemented DevOps practices, and collaborated with cross-functional teams to deliver high-quality software solutions.',
     years_of_experience: 5.5,
@@ -3074,10 +3074,10 @@ export const InstructorExperienceSchema = {
       maxLength: 255,
       minLength: 0,
     },
-    organization_name: {
+    organisation_name: {
       type: 'string',
       description:
-        '**[REQUIRED]** Name of the organization, company, or institution where the instructor worked.',
+        '**[REQUIRED]** Name of the organisation, company, or institution where the instructor worked.',
       example: 'Safaricom PLC',
       maxLength: 255,
       minLength: 0,
@@ -3211,7 +3211,7 @@ export const InstructorExperienceSchema = {
       readOnly: true,
     },
   },
-  required: ['instructor_uuid', 'organization_name', 'position'],
+  required: ['instructor_uuid', 'organisation_name', 'position'],
 } as const;
 
 export const ApiResponseInstructorExperienceSchema = {
@@ -4282,7 +4282,6 @@ export const CourseRequirementSchema = {
   description: 'Course prerequisites and participation requirements',
   example: {
     uuid: 'r1e2q3u4-5i6r-7e8m-9e10-abcdefghijkl',
-    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
     requirement_type: 'STUDENT',
     requirement_text: 'Basic knowledge of Java programming and object-oriented concepts',
     is_mandatory: true,
@@ -4290,9 +4289,6 @@ export const CourseRequirementSchema = {
     created_by: 'instructor@sarafrika.com',
     updated_date: '2024-04-15T15:30:00',
     updated_by: 'instructor@sarafrika.com',
-    requirement_category: 'Student Prerequisite',
-    is_technical_requirement: true,
-    priority_level: 'High',
   },
   properties: {
     uuid: {
@@ -4302,12 +4298,6 @@ export const CourseRequirementSchema = {
         '**[READ-ONLY]** Unique system identifier for the course requirement. Auto-generated by the system.',
       example: 'r1e2q3u4-5i6r-7e8m-9e10-abcdefghijkl',
       readOnly: true,
-    },
-    course_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[REQUIRED]** Reference to the course UUID that this requirement applies to.',
-      example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
     },
     requirement_type: {
       $ref: '#/components/schemas/RequirementTypeEnum',
@@ -4358,7 +4348,7 @@ export const CourseRequirementSchema = {
       readOnly: true,
     },
   },
-  required: ['course_uuid', 'requirement_text', 'requirement_type'],
+  required: ['requirement_text', 'requirement_type'],
 } as const;
 
 export const ApiResponseCourseRequirementSchema = {
@@ -4602,7 +4592,7 @@ export const LessonContentSchema = {
       type: 'integer',
       format: 'int32',
       description:
-        '**[REQUIRED]** Display order of content within the lesson for sequential presentation.',
+        '**[OPTIONAL]** Display order of content within the lesson for sequential presentation. If omitted, the system appends the content at the end.',
       example: 1,
       minimum: 1,
     },
@@ -4669,7 +4659,7 @@ export const LessonContentSchema = {
       readOnly: true,
     },
   },
-  required: ['content_type_uuid', 'display_order', 'lesson_uuid', 'title'],
+  required: ['content_type_uuid', 'lesson_uuid', 'title'],
 } as const;
 
 export const ApiResponseLessonContentSchema = {
@@ -4700,6 +4690,7 @@ export const CourseAssessmentSchema = {
     title: 'Class Attendance and Participation',
     description: 'Regular attendance and active participation in class discussions and activities',
     weight_percentage: 20,
+    aggregation_strategy: 'weighted_average',
     rubric_uuid: 'a1s2s3r4-5u6b-7r8i-9c10-abcdefghijkl',
     is_required: true,
     created_date: '2024-04-01T12:00:00',
@@ -4758,12 +4749,21 @@ export const CourseAssessmentSchema = {
       maximum: 100,
       minimum: 0,
     },
+    aggregation_strategy: {
+      $ref: '#/components/schemas/AggregationStrategyEnum',
+    },
     rubric_uuid: {
       type: 'string',
       format: 'uuid',
       description:
         '**[OPTIONAL]** Reference to assessment rubric UUID for detailed grading criteria.',
       example: 'a1s2s3r4-5u6b-7r8i-9c10-abcdefghijkl',
+    },
+    sync_class_attendance: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates that this component should auto-sync attendance marks from class sessions under the course.',
+      example: false,
     },
     is_required: {
       type: 'boolean',
@@ -4800,18 +4800,6 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -4822,6 +4810,25 @@ export const CourseAssessmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Level of contribution to final grade based on weight.',
       example: 'Standard Contribution',
+      readOnly: true,
+    },
+    aggregation_strategy_display: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
+      example: 'Weighted line items',
+      readOnly: true,
+    },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -4836,6 +4843,345 @@ export const ApiResponseCourseAssessmentSchema = {
     },
     data: {
       $ref: '#/components/schemas/CourseAssessment',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const CourseAssessmentLineItemSchema = {
+  type: 'object',
+  description: 'Gradebook line item nested under a weighted course assessment component',
+  example: {
+    uuid: 'li1a2n3e-4i5t-6e7m-8a9b-abcdefghijkl',
+    course_assessment_uuid: 'c1a2s3s4-5e6s-7s8m-9e10-abcdefghijkl',
+    title: 'Quiz 1',
+    description: 'Foundational knowledge check',
+    item_type: 'discussion',
+    quiz_uuid: 'q1u2i3z4-5u6u-7i8d-9q10-abcdefghijkl',
+    max_score: 20,
+    weight_percentage: 25,
+    display_order: 1,
+    active: true,
+    due_at: '2024-04-20T09:00:00',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    course_assessment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    item_type: {
+      $ref: '#/components/schemas/ItemTypeEnum',
+    },
+    assignment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    scheduled_instance_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    max_score: {
+      type: 'number',
+      minimum: 0.01,
+    },
+    weight_percentage: {
+      type: 'number',
+      maximum: 100,
+      minimum: 0.01,
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+    },
+    active: {
+      type: 'boolean',
+    },
+    due_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    item_type_display: {
+      type: 'string',
+      example: 'Quiz line item',
+      readOnly: true,
+    },
+  },
+  required: ['item_type', 'title'],
+} as const;
+
+export const ApiResponseCourseAssessmentLineItemSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseAssessmentLineItem',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const CourseAssessmentLineItemScoreSchema = {
+  type: 'object',
+  description: 'Learner score stored against a gradebook line item',
+  example: {
+    uuid: 'sc1o2r3e-4i5t-6e7m-8a9b-abcdefghijkl',
+    line_item_uuid: 'li1a2n3e-4i5t-6e7m-8a9b-abcdefghijkl',
+    enrollment_uuid: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    score: 18,
+    max_score: 20,
+    percentage: 90,
+    comments: 'Strong quiz performance',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    line_item_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    score: {
+      type: 'number',
+      minimum: 0,
+    },
+    max_score: {
+      type: 'number',
+      minimum: 0.01,
+    },
+    percentage: {
+      type: 'number',
+      maximum: 100,
+      minimum: 0,
+    },
+    comments: {
+      type: 'string',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    graded_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    graded_by_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      example: 18,
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponseCourseAssessmentLineItemScoreSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseAssessmentLineItemScore',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const CourseAssessmentLineItemRubricEvaluationSchema = {
+  type: 'object',
+  description: 'Stored rubric evaluation for a learner against a gradebook line item',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    line_item_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum3',
+    },
+    score: {
+      type: 'number',
+      readOnly: true,
+    },
+    percentage: {
+      type: 'number',
+      readOnly: true,
+    },
+    comments: {
+      type: 'string',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    graded_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    graded_by_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    criteria_selections: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseAssessmentLineItemRubricEvaluationRow',
+      },
+    },
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    attendance_status: {
+      $ref: '#/components/schemas/AttendanceStatusEnum',
+    },
+    max_score: {
+      type: 'number',
+      readOnly: true,
+    },
+    evaluation_display: {
+      type: 'string',
+      example: 'Completed: 8 / 10 (80%)',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const CourseAssessmentLineItemRubricEvaluationRowSchema = {
+  type: 'object',
+  description: 'Selected rubric scoring level for one criterion in a line-item evaluation',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    criteria_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    scoring_level_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    points: {
+      type: 'number',
+      readOnly: true,
+    },
+    comments: {
+      type: 'string',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    criteria_name: {
+      type: 'string',
+      readOnly: true,
+    },
+    scoring_level_name: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['criteria_uuid', 'scoring_level_uuid'],
+} as const;
+
+export const ApiResponseCourseAssessmentLineItemRubricEvaluationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseAssessmentLineItemRubricEvaluation',
     },
     message: {
       type: 'string',
@@ -5048,7 +5394,7 @@ export const CourseCreatorProfessionalMembershipSchema = {
   example: {
     uuid: 'memb1234-5678-abcd-ef01-234567890abc',
     course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-    organization_name: 'International Society for Technology in Education',
+    organisation_name: 'International Society for Technology in Education',
     membership_number: 'ISTE-2024-991',
     start_date: '2022-01-01',
     end_date: null,
@@ -5064,7 +5410,7 @@ export const CourseCreatorProfessionalMembershipSchema = {
       type: 'string',
       format: 'uuid',
     },
-    organization_name: {
+    organisation_name: {
       type: 'string',
       maxLength: 255,
       minLength: 0,
@@ -5108,7 +5454,7 @@ export const CourseCreatorProfessionalMembershipSchema = {
       readOnly: true,
     },
   },
-  required: ['course_creator_uuid', 'organization_name'],
+  required: ['course_creator_uuid', 'organisation_name'],
 } as const;
 
 export const ApiResponseCourseCreatorProfessionalMembershipSchema = {
@@ -5136,7 +5482,7 @@ export const CourseCreatorExperienceSchema = {
     uuid: 'exp12345-6789-abcd-ef01-234567890abc',
     course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
     position: 'Lead Content Strategist',
-    organization_name: 'Digital Learning Labs',
+    organisation_name: 'Digital Learning Labs',
     responsibilities: 'Designed blended learning experiences for enterprise teams.',
     years_of_experience: 5.5,
     start_date: '2019-01-01',
@@ -5158,7 +5504,7 @@ export const CourseCreatorExperienceSchema = {
       maxLength: 255,
       minLength: 0,
     },
-    organization_name: {
+    organisation_name: {
       type: 'string',
       maxLength: 255,
       minLength: 0,
@@ -5205,7 +5551,7 @@ export const CourseCreatorExperienceSchema = {
       readOnly: true,
     },
   },
-  required: ['course_creator_uuid', 'organization_name', 'position'],
+  required: ['course_creator_uuid', 'organisation_name', 'position'],
 } as const;
 
 export const ApiResponseCourseCreatorExperienceSchema = {
@@ -5429,7 +5775,7 @@ export const CourseCreatorCertificationSchema = {
     uuid: 'cert1234-5678-abcd-ef01-234567890abc',
     course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
     certification_name: 'Adobe Captivate Specialist',
-    issuing_organization: 'Adobe',
+    issuing_organisation: 'Adobe',
     issued_date: '2023-04-01',
     expiry_date: '2025-04-01',
     credential_id: 'ADCAP-2023-8891',
@@ -5452,7 +5798,7 @@ export const CourseCreatorCertificationSchema = {
       maxLength: 255,
       minLength: 0,
     },
-    issuing_organization: {
+    issuing_organisation: {
       type: 'string',
       maxLength: 255,
       minLength: 0,
@@ -5504,7 +5850,7 @@ export const CourseCreatorCertificationSchema = {
       readOnly: true,
     },
   },
-  required: ['certification_name', 'course_creator_uuid', 'issuing_organization'],
+  required: ['certification_name', 'course_creator_uuid', 'issuing_organisation'],
 } as const;
 
 export const ApiResponseCourseCreatorCertificationSchema = {
@@ -6143,6 +6489,7 @@ export const ClassDefinitionSchema = {
     location_name: 'Nairobi HQ – Room 101',
     location_latitude: -1.292066,
     location_longitude: 36.821945,
+    meeting_link: 'https://meet.google.com/abc-defg-hij',
     max_participants: 25,
     allow_waitlist: true,
     session_templates: [
@@ -6201,7 +6548,7 @@ export const ClassDefinitionSchema = {
       type: 'string',
       format: 'uuid',
       description:
-        '**[OPTIONAL]** Reference to the organization UUID that owns this class definition.',
+        '**[OPTIONAL]** Reference to the organisation UUID that owns this class definition.',
       example: 'org12345-6789-abcd-ef01-234567890abc',
     },
     course_uuid: {
@@ -6264,6 +6611,14 @@ export const ClassDefinitionSchema = {
       description:
         '**[OPTIONAL]** Longitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.',
       example: 36.821945,
+    },
+    meeting_link: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Virtual meeting URL for online participation (e.g., Zoom, Google Meet, Teams).',
+      example: 'https://meet.google.com/abc-defg-hij',
+      maxLength: 1000,
+      minLength: 0,
     },
     max_participants: {
       type: 'integer',
@@ -6462,123 +6817,6 @@ export const ClassDefinitionResponseSchema = {
     class_definition: {
       $ref: '#/components/schemas/ClassDefinition',
       description: 'Persisted class definition',
-    },
-  },
-} as const;
-
-export const ClassLessonPlanSchema = {
-  type: 'object',
-  description: 'Lesson scheduling metadata scoped to a class definition',
-  example: {
-    uuid: 'clp-1234-5678-90ab-cdef12345678',
-    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
-    lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
-    scheduled_start: '2024-05-10T09:00:00',
-    scheduled_end: '2024-05-10T10:30:00',
-    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
-    instructor_uuid: 'inst1234-5678-90ab-cdef123456789abc',
-    notes: 'Cover prerequisite concepts from the bootcamp cohort.',
-    created_date: '2024-04-01T12:00:00',
-    created_by: 'instructor@sarafrika.com',
-    updated_date: '2024-04-02T08:30:00',
-    updated_by: 'instructor@sarafrika.com',
-  },
-  properties: {
-    uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[READ-ONLY]** Unique identifier for this class lesson plan entry.',
-      example: 'clp-1234-5678-90ab-cdef12345678',
-      readOnly: true,
-    },
-    class_definition_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[REQUIRED]** Class definition that owns this plan entry.',
-      example: 'cd123456-7890-abcd-ef01-234567890abc',
-    },
-    lesson_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[REQUIRED]** Lesson the plan entry references.',
-      example: 'lesson-1234-5678-90ab-cdef12345678',
-    },
-    scheduled_start: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[OPTIONAL]** Planned start timestamp in UTC.',
-      example: '2024-05-10T09:00:00',
-    },
-    scheduled_end: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[OPTIONAL]** Planned end timestamp in UTC.',
-      example: '2024-05-10T10:30:00',
-    },
-    scheduled_instance_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[OPTIONAL]** Reference to a concrete scheduled instance created by timetabling.',
-      example: 'si123456-7890-abcd-ef01-234567890abc',
-    },
-    instructor_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[OPTIONAL]** Instructor assigned to deliver this lesson.',
-      example: 'inst1234-5678-90ab-cdef123456789abc',
-    },
-    notes: {
-      type: 'string',
-      description: '**[OPTIONAL]** Trainer notes or reminders for the lesson.',
-      example: 'Cover prerequisite concepts from the bootcamp cohort.',
-    },
-    created_date: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[READ-ONLY]** Timestamp when this plan entry was created.',
-      example: '2024-04-01T12:00:00',
-      readOnly: true,
-    },
-    created_by: {
-      type: 'string',
-      description: '**[READ-ONLY]** User identifier who created the plan entry.',
-      example: 'instructor@sarafrika.com',
-      readOnly: true,
-    },
-    updated_date: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[READ-ONLY]** Timestamp when the plan entry was last updated.',
-      example: '2024-04-02T08:30:00',
-      readOnly: true,
-    },
-    updated_by: {
-      type: 'string',
-      description: '**[READ-ONLY]** User identifier who last updated the plan entry.',
-      example: 'instructor@sarafrika.com',
-      readOnly: true,
-    },
-  },
-} as const;
-
-export const ApiResponseListClassLessonPlanSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/ClassLessonPlan',
-      },
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
     },
   },
 } as const;
@@ -6924,14 +7162,12 @@ export const AssignmentSchema = {
     max_points: 100,
     rubric_uuid: 'r1u2b3r4-5i6c-7a8s-9s10-abcdefghijkl',
     submission_types: ['DOCUMENT', 'AUDIO', 'TEXT'],
-    status: 'PUBLISHED',
-    active: true,
+    is_published: true,
     created_date: '2024-04-01T12:00:00',
     created_by: 'instructor@sarafrika.com',
     updated_date: '2024-04-05T10:30:00',
     updated_by: 'instructor@sarafrika.com',
     assignment_category: 'Theory Assignment',
-    is_published: true,
     points_display: '100.00 points',
     assignment_scope: 'Lesson-Specific',
     submission_summary: '3 submission types accepted',
@@ -7008,7 +7244,7 @@ export const AssignmentSchema = {
     is_published: {
       type: 'boolean',
       description:
-        '**[OPTIONAL]** Indicates if the assignment is actively available for students. Can only be true for published assignments.',
+        '**[OPTIONAL]** Indicates whether the assignment is published and visible to students.',
       example: true,
     },
     source_assignment_uuid: {
@@ -7554,7 +7790,7 @@ export const ScheduledInstanceSchema = {
       minimum: 0,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum3',
+      $ref: '#/components/schemas/StatusEnum4',
     },
     cancellation_reason: {
       type: 'string',
@@ -7598,6 +7834,12 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -7615,12 +7857,6 @@ export const ScheduledInstanceSchema = {
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -7879,7 +8115,7 @@ export const ProgramTrainingApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum4',
+      $ref: '#/components/schemas/StatusEnum5',
     },
     application_notes: {
       type: 'string',
@@ -8166,7 +8402,7 @@ export const GuardianStudentLinkSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum6',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -8300,7 +8536,7 @@ export const EnrollmentSchema = {
       example: 'st123456-7890-abcd-ef01-234567890abc',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum6',
+      $ref: '#/components/schemas/StatusEnum7',
     },
     attendance_marked_at: {
       type: 'string',
@@ -8355,16 +8591,16 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    is_attendance_marked: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
-      readOnly: true,
-    },
     status_description: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    is_attendance_marked: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
       readOnly: true,
     },
   },
@@ -8479,7 +8715,7 @@ export const CourseTrainingApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum7',
+      $ref: '#/components/schemas/StatusEnum8',
     },
     application_notes: {
       type: 'string',
@@ -9020,7 +9256,6 @@ export const ClassQuizScheduleSchema = {
     class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
     lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
     quiz_uuid: 'quiz-1234-5678-90ab-cdef12345678',
-    class_lesson_plan_uuid: 'clp-1234-5678-90ab-cdef12345678',
     visible_at: '2024-05-09T07:00:00',
     due_at: '2024-05-09T23:59:00',
     timezone: 'Africa/Nairobi',
@@ -9060,12 +9295,6 @@ export const ClassQuizScheduleSchema = {
       format: 'uuid',
       description: '**[REQUIRED]** Quiz template or clone referenced by this schedule.',
       example: 'quiz-1234-5678-90ab-cdef12345678',
-    },
-    class_lesson_plan_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[OPTIONAL]** Linked lesson plan entry for ordering context.',
-      example: 'clp-1234-5678-90ab-cdef12345678',
     },
     visible_at: {
       type: 'string',
@@ -9170,7 +9399,6 @@ export const ClassAssignmentScheduleSchema = {
     class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
     lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
     assignment_uuid: 'assign-1234-5678-90ab-cdef12345678',
-    class_lesson_plan_uuid: 'clp-1234-5678-90ab-cdef12345678',
     visible_at: '2024-05-08T07:00:00',
     due_at: '2024-05-12T23:59:00',
     grading_due_at: '2024-05-15T17:00:00',
@@ -9209,12 +9437,6 @@ export const ClassAssignmentScheduleSchema = {
       format: 'uuid',
       description: '**[REQUIRED]** Assignment template or clone that the schedule references.',
       example: 'assign-1234-5678-90ab-cdef12345678',
-    },
-    class_lesson_plan_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[OPTIONAL]** Lesson plan entry this schedule ties to.',
-      example: 'clp-1234-5678-90ab-cdef12345678',
     },
     visible_at: {
       type: 'string',
@@ -9411,7 +9633,7 @@ export const BookingResponseSchema = {
       description: 'End time for the session',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     price_amount: {
       type: 'number',
@@ -9659,7 +9881,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-10T14:30:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum9',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     score: {
       type: 'number',
@@ -11580,7 +11802,7 @@ export const QuizAttemptSchema = {
       example: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     created_date: {
       type: 'string',
@@ -11619,6 +11841,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -11635,12 +11863,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
       readOnly: true,
     },
   },
@@ -11885,7 +12107,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     progress_percentage: {
       type: 'number',
@@ -11937,16 +12159,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -12447,7 +12669,7 @@ export const InstructorCalendarEntrySchema = {
         'Flag indicating availability; false represents blocked time or scheduled instances occupying the slot',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum12',
+      $ref: '#/components/schemas/StatusEnum13',
     },
     title: {
       type: 'string',
@@ -12558,7 +12780,7 @@ export const GuardianStudentDashboardDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum6',
     },
     courseProgress: {
       type: 'array',
@@ -12671,7 +12893,7 @@ export const GuardianStudentSummaryDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum6',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -12815,7 +13037,7 @@ export const StudentScheduleSchema = {
       readOnly: true,
     },
     scheduling_status: {
-      $ref: '#/components/schemas/StatusEnum3',
+      $ref: '#/components/schemas/StatusEnum4',
     },
     enrollment_status: {
       $ref: '#/components/schemas/EnrollmentStatusEnum',
@@ -12834,16 +13056,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -12900,6 +13122,68 @@ export const ApiResponseLongSchema = {
     },
     error: {
       type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseListDocumentTypeOptionSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/DocumentTypeOption',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const DocumentTypeOptionSchema = {
+  type: 'object',
+  description: 'Selectable document type metadata for instructor and course creator uploads',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Unique identifier of the document type',
+      example: '35b49d4c-aec0-4a88-873b-5fa91342198f',
+    },
+    name: {
+      type: 'string',
+      description: 'Document type code/name',
+      example: 'CERTIFICATE',
+    },
+    description: {
+      type: 'string',
+      description: 'Human-readable description of the document type',
+      example: 'Educational certificates and diplomas',
+    },
+    max_file_size_mb: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Maximum allowed file size for this type in MB',
+      example: 10,
+    },
+    allowed_extensions: {
+      type: 'array',
+      description: 'Allowed file extensions for this document type',
+      example: ['pdf', 'jpg', 'png'],
+      items: {
+        type: 'string',
+      },
+    },
+    is_required: {
+      type: 'boolean',
+      description: 'Whether this document type is mandatory in onboarding flows',
     },
   },
 } as const;
@@ -13219,6 +13503,240 @@ export const ApiResponseListLessonContentSchema = {
   },
 } as const;
 
+export const ApiResponseCourseGradeBookSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseGradeBook',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ComponentDTOSchema = {
+  type: 'object',
+  properties: {
+    assessment: {
+      $ref: '#/components/schemas/CourseAssessment',
+    },
+    aggregate_score: {
+      $ref: '#/components/schemas/CourseAssessmentScore',
+    },
+    configured_line_item_weight_percentage: {
+      type: 'number',
+    },
+    line_items: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LineItemEntryDTO',
+      },
+    },
+  },
+} as const;
+
+export const CourseAssessmentScoreSchema = {
+  type: 'object',
+  description: 'Course assessment score with grading information and instructor feedback',
+  example: {
+    uuid: 's1c2o3r4-5e6a-7s8s-9e10-abcdefghijkl',
+    enrollment_uuid: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    assessment_uuid: 'a1s2s3e4-5s6s-7m8e-9n10-abcdefghijkl',
+    score: 87.5,
+    max_score: 100,
+    percentage: 87.5,
+    graded_at: '2024-04-15T14:30:00',
+    graded_by_uuid: 'i1n2s3t4-5r6u-7c8t-9o10-abcdefghijkl',
+    comments:
+      'Excellent understanding of the core concepts. Strong analytical skills demonstrated throughout the assessment. Minor areas for improvement in theoretical applications.',
+    created_date: '2024-04-15T14:30:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T14:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    score_category: 'High Performance',
+    is_passing: true,
+    grade_display: '87.50 / 100.00 (87.50%)',
+    performance_level: 'Above Average',
+    feedback_summary: 'Detailed instructor feedback provided',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Unique system identifier for the assessment score record. Auto-generated by the system.',
+      example: 's1c2o3r4-5e6a-7s8s-9e10-abcdefghijkl',
+      readOnly: true,
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the enrollment UUID of the student being assessed.',
+      example: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    },
+    assessment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the assessment UUID being scored.',
+      example: 'a1s2s3e4-5s6s-7m8e-9n10-abcdefghijkl',
+    },
+    score: {
+      type: 'number',
+      description: '**[OPTIONAL]** Score achieved by the student on this assessment.',
+      example: 87.5,
+      minimum: 0,
+    },
+    max_score: {
+      type: 'number',
+      description: '**[OPTIONAL]** Maximum possible score for this assessment.',
+      example: 100,
+      minimum: 0,
+    },
+    percentage: {
+      type: 'number',
+      description: '**[OPTIONAL]** Percentage score calculated from score and max_score.',
+      example: 87.5,
+      maximum: 100,
+      minimum: 0,
+    },
+    graded_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Timestamp when the assessment was graded by the instructor.',
+      example: '2024-04-15T14:30:00',
+    },
+    graded_by_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Reference to the instructor UUID who graded this assessment.',
+      example: 'i1n2s3t4-5r6u-7c8t-9o10-abcdefghijkl',
+    },
+    comments: {
+      type: 'string',
+      description:
+        "**[OPTIONAL]** Instructor's comments and feedback on the assessment performance.",
+      example:
+        'Excellent understanding of the core concepts. Strong analytical skills demonstrated throughout the assessment. Minor areas for improvement in theoretical applications.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[READ-ONLY]** Timestamp when the score record was created. Automatically set by the system.',
+      example: '2024-04-15T14:30:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Email or username of the user who created this score record. Used for audit trails.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[READ-ONLY]** Timestamp when the score record was last modified. Automatically updated by the system.',
+      example: '2024-04-15T14:30:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Email or username of the user who last modified this score record. Used for audit trails.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    is_passing: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).',
+      example: true,
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 87.5,
+      readOnly: true,
+    },
+    score_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the score based on performance level.',
+      example: 'High Performance',
+      readOnly: true,
+    },
+    performance_level: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Performance level classification based on the achieved percentage.',
+      example: 'Above Average',
+      readOnly: true,
+    },
+    feedback_summary: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.',
+      example: 'Detailed instructor feedback provided',
+      readOnly: true,
+    },
+  },
+  required: ['assessment_uuid', 'enrollment_uuid'],
+} as const;
+
+export const CourseGradeBookSchema = {
+  type: 'object',
+  description:
+    'Enrollment-gradebook view showing weighted components, line items, and aggregate grade',
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    final_grade: {
+      type: 'number',
+    },
+    graded_weight_percentage: {
+      type: 'number',
+    },
+    configured_weight_percentage: {
+      type: 'number',
+    },
+    components: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ComponentDTO',
+      },
+    },
+  },
+} as const;
+
+export const LineItemEntryDTOSchema = {
+  type: 'object',
+  properties: {
+    line_item: {
+      $ref: '#/components/schemas/CourseAssessmentLineItem',
+    },
+    score: {
+      $ref: '#/components/schemas/CourseAssessmentLineItemScore',
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOCourseEnrollmentSchema = {
   type: 'object',
   properties: {
@@ -13294,7 +13812,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     progress_percentage: {
       type: 'number',
@@ -13346,16 +13864,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -13541,6 +14059,27 @@ export const PagedDTOCourseAssessmentSchema = {
     },
     links: {
       $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCourseAssessmentLineItemSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseAssessmentLineItem',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
     },
   },
 } as const;
@@ -14450,9 +14989,9 @@ export const AdminDashboardStatsSchema = {
       $ref: '#/components/schemas/UserMetrics',
       description: 'User-related metrics',
     },
-    organization_metrics: {
+    organisation_metrics: {
       $ref: '#/components/schemas/OrganizationMetrics',
-      description: 'Organization-related metrics',
+      description: 'Organisation-related metrics',
     },
     content_metrics: {
       $ref: '#/components/schemas/ContentMetrics',
@@ -14513,7 +15052,7 @@ export const AdminMetricsSchema = {
       type: 'integer',
       format: 'int64',
     },
-    organization_admins: {
+    organisation_admins: {
       type: 'integer',
       format: 'int64',
     },
@@ -14752,9 +15291,9 @@ export const LearningMetricsSchema = {
 
 export const OrganizationMetricsSchema = {
   type: 'object',
-  description: 'Organization metrics for dashboard',
+  description: 'Organisation metrics for dashboard',
   properties: {
-    total_organizations: {
+    total_organisations: {
       type: 'integer',
       format: 'int64',
     },
@@ -14762,11 +15301,11 @@ export const OrganizationMetricsSchema = {
       type: 'integer',
       format: 'int64',
     },
-    active_organizations: {
+    active_organisations: {
       type: 'integer',
       format: 'int64',
     },
-    suspended_organizations: {
+    suspended_organisations: {
       type: 'integer',
       format: 'int64',
     },
@@ -15169,17 +15708,9 @@ export const ProficiencyLevelEnumSchema = {
   example: 'EXPERT',
 } as const;
 
-export const MembershipStatusEnumSchema = {
+export const OrganisationTypeEnumSchema = {
   type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
-  readOnly: true,
-} as const;
-
-export const OrganizationTypeEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Classification of organization type based on name keywords.',
+  description: '**[READ-ONLY]** Classification of organisation type based on name keywords.',
   enum: [
     'PROFESSIONAL_INSTITUTE',
     'CERTIFICATION_BODY',
@@ -15189,6 +15720,14 @@ export const OrganizationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
+  readOnly: true,
+} as const;
+
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
   readOnly: true,
 } as const;
 
@@ -15237,6 +15776,42 @@ export const ProvidedByEnumSchema = {
   description: '**[OPTIONAL]** Party responsible for providing this requirement.',
   enum: ['course_creator', 'instructor', 'organisation', 'student'],
   example: 'organisation',
+} as const;
+
+export const AggregationStrategyEnumSchema = {
+  type: 'string',
+  description:
+    '**[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.',
+  enum: ['points_sum', 'weighted_average'],
+  example: 'weighted_average',
+} as const;
+
+export const ItemTypeEnumSchema = {
+  type: 'string',
+  enum: [
+    'assignment',
+    'quiz',
+    'attendance',
+    'project',
+    'discussion',
+    'exam',
+    'practical',
+    'performance',
+    'participation',
+    'manual',
+  ],
+} as const;
+
+export const StatusEnum3Schema = {
+  type: 'string',
+  enum: ['pending', 'completed'],
+  readOnly: true,
+} as const;
+
+export const AttendanceStatusEnumSchema = {
+  type: 'string',
+  enum: ['attended', 'absent'],
+  readOnly: true,
 } as const;
 
 export const ProficiencyLevelEnum2Schema = {
@@ -15297,7 +15872,7 @@ export const SubmissionTypesEnumSchema = {
   },
 } as const;
 
-export const StatusEnum3Schema = {
+export const StatusEnum4Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current status of the scheduled instance.',
   enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'],
@@ -15310,7 +15885,7 @@ export const ApplicantTypeEnumSchema = {
   enum: ['instructor', 'organisation'],
 } as const;
 
-export const StatusEnum4Schema = {
+export const StatusEnum5Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
   enum: ['pending', 'approved', 'rejected', 'revoked'],
@@ -15327,19 +15902,19 @@ export const ShareScopeEnumSchema = {
   enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
 } as const;
 
-export const StatusEnum5Schema = {
+export const StatusEnum6Schema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
 
-export const StatusEnum6Schema = {
+export const StatusEnum7Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
   example: 'ENROLLED',
 } as const;
 
-export const StatusEnum7Schema = {
+export const StatusEnum8Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
   enum: ['pending', 'approved', 'rejected'],
@@ -15361,7 +15936,7 @@ export const ReleaseStrategyEnumSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum8Schema = {
+export const StatusEnum9Schema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: [
@@ -15383,7 +15958,7 @@ export const PaymentStatusEnumSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum9Schema = {
+export const StatusEnum10Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -15412,14 +15987,14 @@ export const TransactionTypeEnumSchema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum10Schema = {
+export const StatusEnum11Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the quiz attempt.',
   enum: ['IN_PROGRESS', 'SUBMITTED', 'GRADED'],
   example: 'GRADED',
 } as const;
 
-export const StatusEnum11Schema = {
+export const StatusEnum12Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -15440,7 +16015,7 @@ export const AvailabilityTypeEnumSchema = {
   example: 'WEEKLY',
 } as const;
 
-export const StatusEnum12Schema = {
+export const StatusEnum13Schema = {
   type: 'string',
   description: 'Scheduled instance status when applicable',
   enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'],
