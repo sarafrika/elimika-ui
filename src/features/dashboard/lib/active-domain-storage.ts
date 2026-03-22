@@ -1,7 +1,7 @@
 import type { UserDomain } from '@/lib/types';
 
 export const ACTIVE_DASHBOARD_COOKIE = 'elimika-active-dashboard';
-const ACTIVE_DASHBOARD_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+export const ACTIVE_DASHBOARD_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 const ALLOWED_DOMAINS: UserDomain[] = [
   'student',
@@ -22,18 +22,26 @@ export function normalizeStoredUserDomain(domain: unknown): UserDomain | null {
 export function readPersistedDashboardDomain(storageKey: string): UserDomain | null {
   if (typeof window === 'undefined') return null;
 
+  const cookieMatch = window.document.cookie
+    .split('; ')
+    .find(entry => entry.startsWith(`${ACTIVE_DASHBOARD_COOKIE}=`));
+  const cookieValue = cookieMatch?.split('=')[1];
+  const normalizedCookieValue = normalizeStoredUserDomain(
+    cookieValue ? decodeURIComponent(cookieValue) : null
+  );
+
+  if (normalizedCookieValue) {
+    window.localStorage.setItem(storageKey, normalizedCookieValue);
+    return normalizedCookieValue;
+  }
+
   const localValue = window.localStorage.getItem(storageKey);
   const normalizedLocalValue = normalizeStoredUserDomain(localValue);
   if (normalizedLocalValue) {
     return normalizedLocalValue;
   }
 
-  const cookieMatch = window.document.cookie
-    .split('; ')
-    .find(entry => entry.startsWith(`${ACTIVE_DASHBOARD_COOKIE}=`));
-  const cookieValue = cookieMatch?.split('=')[1];
-
-  return normalizeStoredUserDomain(cookieValue ? decodeURIComponent(cookieValue) : null);
+  return null;
 }
 
 export function persistDashboardDomain(storageKey: string, domain: UserDomain) {
@@ -48,4 +56,9 @@ export function clearPersistedDashboardDomain(storageKey: string) {
 
   window.localStorage.removeItem(storageKey);
   window.document.cookie = `${ACTIVE_DASHBOARD_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+}
+
+export function buildDashboardSwitchPath(domain: UserDomain, nextPath = '/dashboard/overview') {
+  const searchParams = new URLSearchParams({ next: nextPath });
+  return `/dashboard/switch/${domain}?${searchParams.toString()}`;
 }

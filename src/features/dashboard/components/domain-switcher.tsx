@@ -14,6 +14,7 @@ import {
 import type { UserDomain } from '@/lib/types';
 import { dashboardDomainDisplayConfig } from '@/src/features/dashboard/config/domain-display';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 interface DomainSwitcherProps {
   className?: string;
@@ -43,14 +44,7 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
 
     try {
       userDomain.setActiveDomain(nextDomain);
-
-      // Small delay to allow context to update
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Navigate to overview page of new domain
-      // router.push('/dashboard/overview');
-      router.push('/dashboard/all-courses');
-      router.refresh(); // Force a refresh to load new domain data
+      router.push(buildDashboardSwitchPath(nextDomain, '/dashboard/all-courses'));
 
       toast.success(`Switched to ${dashboardDomainDisplayConfig[nextDomain].title}`, {
         id: 'domain-switch',

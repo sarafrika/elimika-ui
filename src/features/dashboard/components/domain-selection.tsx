@@ -1,11 +1,13 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { BrandPill } from '@/components/ui/brand-pill';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { UserDomain } from '@/lib/types';
 import { dashboardDomainDisplayConfig } from '@/src/features/dashboard/config/domain-display';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 interface DomainSelectionProps {
   domains: UserDomain[];
@@ -14,6 +16,7 @@ interface DomainSelectionProps {
 }
 
 export function DomainSelection({ domains, onDomainSelect, userName }: DomainSelectionProps) {
+  const router = useRouter();
   const [selectedDomain, setSelectedDomain] = useState<UserDomain | null>(null);
 
   const handleDomainSelect = (domain: UserDomain) => {
@@ -23,6 +26,7 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
   const handleContinue = () => {
     if (selectedDomain) {
       onDomainSelect(selectedDomain);
+      router.push(buildDashboardSwitchPath(selectedDomain));
     }
   };
 
