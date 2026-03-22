@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { createInstructor } from '@/services/client';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { InstructorLocationFields } from '@/src/features/profile/forms/shared/components/InstructorLocationFields';
 import { InstructorProfessionalFields } from '@/src/features/profile/forms/shared/components/InstructorProfessionalFields';
@@ -80,7 +81,7 @@ export function InstructorOnboardingForm() {
       }
 
       toast.success('Instructor account created successfully!');
-      router.replace('/dashboard/overview');
+      router.replace(buildDashboardSwitchPath('instructor'));
     } catch (error: any) {
       const errorMessage =
         error?.message || 'Failed to create instructor account. Please try again.';

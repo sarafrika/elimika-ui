@@ -13,6 +13,7 @@ import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createInstructor } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { InstructorLocationFields } from '@/src/features/profile/forms/shared/components/InstructorLocationFields';
 import { InstructorProfessionalFields } from '@/src/features/profile/forms/shared/components/InstructorProfessionalFields';
@@ -80,9 +81,7 @@ export default function AddInstructorProfileForm() {
       toast.success('Instructor profile added successfully!');
 
       userDomain.setActiveDomain('instructor');
-
-      await new Promise(resolve => setTimeout(resolve, 300));
-      router.replace('/dashboard/overview');
+      router.replace(buildDashboardSwitchPath('instructor'));
     } catch (error: any) {
       const errorMessage =
         error?.message || 'Failed to create instructor profile. Please try again.';

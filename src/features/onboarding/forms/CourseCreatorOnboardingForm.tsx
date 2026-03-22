@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { createCourseCreator } from '@/services/client';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { CourseCreatorProfileFields } from '@/src/features/profile/forms/shared/components/CourseCreatorProfileFields';
 import { CourseCreatorUserInfoGrid } from '@/src/features/profile/forms/shared/components/CourseCreatorUserInfoGrid';
@@ -85,7 +86,7 @@ export function CourseCreatorOnboardingForm() {
       }
 
       toast.success('Course Creator account created successfully!');
-      router.replace('/dashboard/overview');
+      router.replace(buildDashboardSwitchPath('course_creator'));
     } catch (error: any) {
       const errorMessage =
         error?.message || 'Failed to create course creator account. Please try again.';

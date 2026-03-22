@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { createStudent } from '@/services/client';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { StudentGuardianFields } from '@/src/features/profile/forms/shared/components/StudentGuardianFields';
 import {
@@ -56,11 +57,10 @@ export function StudentOnboardingForm() {
       await user.invalidateQuery?.();
 
       toast.success('Student account created successfully!');
+      router.replace(buildDashboardSwitchPath('student'));
     } catch (_error) {
       toast.error('Failed to create student account. Please try again.');
       setIsSubmitting(false);
-    } finally {
-      router.replace('/dashboard/overview');
     }
   };
 

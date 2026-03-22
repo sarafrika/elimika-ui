@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { createOrganisation } from '@/services/client';
 import { zOrganisation } from '@/services/client/zod.gen';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 const OrganizationOnboardingSchema = zOrganisation.omit({
@@ -116,7 +117,7 @@ export function OrganizationOnboardingForm() {
 
       const successMessage = response.data?.message || 'Organization registered successfully!';
       toast.success(successMessage);
-      router.replace('/dashboard/overview');
+      router.replace(buildDashboardSwitchPath('organisation_user'));
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Failed to register organization. Please try again.'));
     }

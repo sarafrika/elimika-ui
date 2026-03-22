@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form } from '@/components/ui/form';
 import { createStudent } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { StudentGuardianFields } from '@/src/features/profile/forms/shared/components/StudentGuardianFields';
 import {
@@ -61,10 +62,7 @@ export default function AddStudentProfileForm() {
 
       // Set the new domain as active and redirect
       userDomain.setActiveDomain('student');
-
-      // Small delay to allow context to update
-      await new Promise(resolve => setTimeout(resolve, 300));
-      router.replace('/dashboard/overview');
+      router.replace(buildDashboardSwitchPath('student'));
     } catch (_error) {
       toast.error('Failed to create student profile. Please try again.');
       setIsSubmitting(false);

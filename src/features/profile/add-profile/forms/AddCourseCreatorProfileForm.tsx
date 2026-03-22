@@ -13,6 +13,7 @@ import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createCourseCreator } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { CourseCreatorProfileFields } from '@/src/features/profile/forms/shared/components/CourseCreatorProfileFields';
 import { CourseCreatorUserInfoGrid } from '@/src/features/profile/forms/shared/components/CourseCreatorUserInfoGrid';
@@ -84,9 +85,7 @@ export default function AddCourseCreatorProfileForm() {
       toast.success('Course Creator profile added successfully!');
 
       userDomain.setActiveDomain('course_creator');
-
-      await new Promise(resolve => setTimeout(resolve, 300));
-      router.replace('/dashboard/overview');
+      router.replace(buildDashboardSwitchPath('course_creator'));
     } catch (error: any) {
       const errorMessage =
         error?.message || 'Failed to create course creator profile. Please try again.';
