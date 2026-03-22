@@ -9,18 +9,10 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Form } from '@/components/ui/form';
 import { useUserProfile } from '@/context/profile-context';
 import { createStudent } from '@/services/client';
+import { StudentGuardianFields } from '@/src/features/profile/forms/shared/components/StudentGuardianFields';
 import {
   type StudentProfileFormData,
   studentProfileSchema,
@@ -95,60 +87,7 @@ export function StudentOnboardingForm() {
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='first_guardian_name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Primary Guardian Name (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder='John Doe' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='first_guardian_mobile'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Primary Guardian Mobile (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Phone number (optional)' {...field} />
-                    </FormControl>
-                    <FormDescription>Phone number (any format accepted)</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='second_guardian_name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Secondary Guardian Name (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Jane Doe' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='second_guardian_mobile'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Secondary Guardian Mobile (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Phone number (optional)' {...field} />
-                    </FormControl>
-                    <FormDescription>Phone number (any format accepted)</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <StudentGuardianFields form={form} variant='onboarding' />
             </CardContent>
           </Card>
 

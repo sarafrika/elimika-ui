@@ -9,19 +9,11 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Form } from '@/components/ui/form';
 import { useUserProfile } from '@/context/profile-context';
 import { useUserDomain } from '@/context/user-domain-context';
 import { createStudent } from '@/services/client';
+import { StudentGuardianFields } from '@/src/features/profile/forms/shared/components/StudentGuardianFields';
 import {
   type StudentProfileFormData,
   studentProfileSchema,
@@ -112,75 +104,7 @@ export default function AddStudentProfileForm() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-              {/* Primary Guardian */}
-              <div className='space-y-4'>
-                <h3 className='text-lg font-semibold'>Primary Guardian (Optional)</h3>
-
-                <FormField
-                  control={form.control}
-                  name='first_guardian_name'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Guardian Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Enter guardian name' {...field} />
-                      </FormControl>
-                      <FormDescription>Full name of your primary guardian</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='first_guardian_mobile'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Guardian Mobile</FormLabel>
-                      <FormControl>
-                        <Input placeholder='+254 700 000 000' {...field} />
-                      </FormControl>
-                      <FormDescription>Mobile number of your primary guardian</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Secondary Guardian */}
-              <div className='space-y-4'>
-                <h3 className='text-lg font-semibold'>Secondary Guardian (Optional)</h3>
-
-                <FormField
-                  control={form.control}
-                  name='second_guardian_name'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Guardian Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Enter guardian name' {...field} />
-                      </FormControl>
-                      <FormDescription>Full name of your secondary guardian</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='second_guardian_mobile'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Guardian Mobile</FormLabel>
-                      <FormControl>
-                        <Input placeholder='+254 700 000 000' {...field} />
-                      </FormControl>
-                      <FormDescription>Mobile number of your secondary guardian</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <StudentGuardianFields form={form} variant='add-profile' />
 
               <div className='flex gap-4 pt-6'>
                 <Button

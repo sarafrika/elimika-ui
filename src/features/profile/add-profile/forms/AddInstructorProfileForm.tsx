@@ -7,23 +7,15 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
 import { useUserDomain } from '@/context/user-domain-context';
 import { createInstructor } from '@/services/client';
+import { InstructorLocationFields } from '@/src/features/profile/forms/shared/components/InstructorLocationFields';
+import { InstructorProfessionalFields } from '@/src/features/profile/forms/shared/components/InstructorProfessionalFields';
 import {
   type InstructorProfileFormData,
   instructorProfileSchema,
@@ -178,61 +170,12 @@ export default function AddInstructorProfileForm() {
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='professional_headline'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Professional Headline</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='e.g., Experienced Software Development Instructor'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      A brief professional headline (max 150 characters)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='bio'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <SimpleEditor
-                        value={field.value ?? ''}
-                        onChange={field.onChange}
-                        showToolbar
-                        isEditable
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Share your experience and teaching philosophy. Formatting and media supported.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='website'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website (Optional)</FormLabel>
-                    <FormControl>
-                      <Input type='url' placeholder='https://yourwebsite.com' {...field} />
-                    </FormControl>
-                    <FormDescription>Your personal or professional website</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <InstructorProfessionalFields
+                form={form}
+                professionalHeadlinePlaceholder='e.g., Experienced Software Development Instructor'
+                bioDescription='Share your experience and teaching philosophy. Formatting and media supported.'
+                websitePlaceholder='https://yourwebsite.com'
+                websiteDescription='Your personal or professional website'
               />
             </CardContent>
           </Card>
@@ -245,57 +188,17 @@ export default function AddInstructorProfileForm() {
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
-              <div className='flex gap-4'>
-                <FormField
-                  control={form.control}
-                  name='latitude'
-                  render={({ field }) => (
-                    <FormItem className='flex-1'>
-                      <FormLabel>Latitude</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='number'
-                          step='any'
-                          placeholder='e.g., -1.286389'
-                          {...field}
-                          onChange={e => field.onChange(parseFloat(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='longitude'
-                  render={({ field }) => (
-                    <FormItem className='flex-1'>
-                      <FormLabel>Longitude</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='number'
-                          step='any'
-                          placeholder='e.g., 36.817223'
-                          {...field}
-                          onChange={e => field.onChange(parseFloat(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <Button
-                type='button'
-                variant='outline'
-                onClick={handleGetCurrentLocation}
-                className='w-full'
-              >
-                <MapPin className='mr-2 h-4 w-4' />
-                Detect Current Location
-              </Button>
+              <InstructorLocationFields
+                form={form}
+                onUseCurrentLocation={handleGetCurrentLocation}
+                latitudePlaceholder='e.g., -1.286389'
+                longitudePlaceholder='e.g., 36.817223'
+                buttonLabel='Detect Current Location'
+                buttonClassName='w-full'
+                buttonIcon={MapPin}
+                fieldsWrapperClassName='flex gap-4'
+                fieldItemClassName='flex-1'
+              />
             </CardContent>
           </Card>
 

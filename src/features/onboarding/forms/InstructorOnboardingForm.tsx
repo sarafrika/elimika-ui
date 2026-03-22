@@ -7,21 +7,13 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Form } from '@/components/ui/form';
 import { useUserProfile } from '@/context/profile-context';
 import { createInstructor } from '@/services/client';
+import { InstructorLocationFields } from '@/src/features/profile/forms/shared/components/InstructorLocationFields';
+import { InstructorProfessionalFields } from '@/src/features/profile/forms/shared/components/InstructorProfessionalFields';
 import {
   type InstructorProfileFormData,
   instructorProfileSchema,
@@ -167,59 +159,12 @@ export function InstructorOnboardingForm() {
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='professional_headline'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Professional Headline</FormLabel>
-                    <FormControl>
-                      <Input placeholder='e.g. Software Engineer & Python Expert' {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      A brief title that summarizes your expertise (max 150 characters)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='bio'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <SimpleEditor
-                        value={field.value ?? ''}
-                        onChange={field.onChange}
-                        showToolbar
-                        isEditable
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Share your background, expertise, and teaching philosophy. Rich text is
-                      supported.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='website'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website (Optional)</FormLabel>
-                    <FormControl>
-                      <Input type='url' placeholder='https://your-portfolio.com' {...field} />
-                    </FormControl>
-                    <FormDescription>Professional website or portfolio URL</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <InstructorProfessionalFields
+                form={form}
+                professionalHeadlinePlaceholder='e.g. Software Engineer & Python Expert'
+                bioDescription='Share your background, expertise, and teaching philosophy. Rich text is supported.'
+                websitePlaceholder='https://your-portfolio.com'
+                websiteDescription='Professional website or portfolio URL'
               />
             </CardContent>
           </Card>
@@ -233,56 +178,15 @@ export function InstructorOnboardingForm() {
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                <FormField
-                  control={form.control}
-                  name='latitude'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Latitude</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='number'
-                          step='any'
-                          placeholder='-1.2921'
-                          {...field}
-                          onChange={e =>
-                            field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='longitude'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Longitude</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='number'
-                          step='any'
-                          placeholder='36.8219'
-                          {...field}
-                          onChange={e =>
-                            field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className='flex justify-center'>
-                <Button type='button' variant='outline' onClick={handleGetCurrentLocation}>
-                  Use Current Location
-                </Button>
-              </div>
+              <InstructorLocationFields
+                form={form}
+                onUseCurrentLocation={handleGetCurrentLocation}
+                latitudePlaceholder='-1.2921'
+                longitudePlaceholder='36.8219'
+                buttonLabel='Use Current Location'
+                fieldsWrapperClassName='grid grid-cols-1 gap-4 md:grid-cols-2'
+                buttonClassName='mx-auto flex'
+              />
             </CardContent>
           </Card>
 

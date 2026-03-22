@@ -7,21 +7,13 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Form } from '@/components/ui/form';
 import { useUserProfile } from '@/context/profile-context';
 import { createCourseCreator } from '@/services/client';
+import { CourseCreatorProfileFields } from '@/src/features/profile/forms/shared/components/CourseCreatorProfileFields';
+import { CourseCreatorUserInfoGrid } from '@/src/features/profile/forms/shared/components/CourseCreatorUserInfoGrid';
 import {
   buildCourseCreatorFullName,
   type CourseCreatorProfileFormData,
@@ -155,32 +147,7 @@ export function CourseCreatorOnboardingForm() {
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                <div>
-                  <FormLabel className='text-muted-foreground'>Full Name</FormLabel>
-                  <div className='bg-muted mt-2 rounded-md border px-3 py-2 text-sm'>
-                    {user?.first_name} {user?.middle_name} {user?.last_name}
-                  </div>
-                </div>
-                <div>
-                  <FormLabel className='text-muted-foreground'>Email</FormLabel>
-                  <div className='bg-muted mt-2 rounded-md border px-3 py-2 text-sm'>
-                    {user?.email}
-                  </div>
-                </div>
-                <div>
-                  <FormLabel className='text-muted-foreground'>Username</FormLabel>
-                  <div className='bg-muted mt-2 rounded-md border px-3 py-2 text-sm'>
-                    {user?.username}
-                  </div>
-                </div>
-                <div>
-                  <FormLabel className='text-muted-foreground'>Phone Number</FormLabel>
-                  <div className='bg-muted mt-2 rounded-md border px-3 py-2 text-sm'>
-                    {user?.phone_number}
-                  </div>
-                </div>
-              </div>
+              <CourseCreatorUserInfoGrid user={user} />
             </CardContent>
           </Card>
 
@@ -193,75 +160,12 @@ export function CourseCreatorOnboardingForm() {
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
-              {/* Hidden field for full_name */}
-              <FormField
-                control={form.control}
-                name='full_name'
-                render={({ field }) => (
-                  <FormItem className='hidden'>
-                    <FormControl>
-                      <Input type='hidden' {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='professional_headline'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Professional Headline</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='e.g. Expert Course Creator & Educational Content Designer'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      A brief title that summarizes your expertise (max 150 characters)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='bio'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <SimpleEditor
-                        value={field.value ?? ''}
-                        onChange={field.onChange}
-                        showToolbar
-                        isEditable
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Share your background, expertise, and course creation philosophy. Rich text is
-                      supported.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='website'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website (Optional)</FormLabel>
-                    <FormControl>
-                      <Input type='url' placeholder='https://your-portfolio.com' {...field} />
-                    </FormControl>
-                    <FormDescription>Professional website or portfolio URL</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <CourseCreatorProfileFields
+                form={form}
+                professionalHeadlinePlaceholder='e.g. Expert Course Creator & Educational Content Designer'
+                bioDescription='Share your background, expertise, and course creation philosophy. Rich text is supported.'
+                websitePlaceholder='https://your-portfolio.com'
+                websiteDescription='Professional website or portfolio URL'
               />
             </CardContent>
           </Card>
