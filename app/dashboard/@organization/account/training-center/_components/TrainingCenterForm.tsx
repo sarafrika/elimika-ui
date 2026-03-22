@@ -1,5 +1,11 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -12,39 +18,34 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useProfileFormMode } from '@/context/profile-form-mode-context';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
+import {
+  OrganisationIdentityFields,
+  OrganisationLocationField,
+  OrganisationWebsiteField,
+} from '@/src/features/organisation/forms/shared/components/OrganisationFields';
+import {
+  normalizeCoordinateValue,
+  organisationProfileSchema,
+} from '@/src/features/organisation/forms/shared/organisation-profile';
 import CustomLoader from '../../../../../../components/custom-loader';
 import ImageSelector, { type ImageType } from '../../../../../../components/image-selector';
-import LocationInput from '../../../../../../components/locationInput';
-import { useUserProfile } from '../../../../../../context/profile-context';
 import { useOrganisation } from '../../../../../../context/organisation-context';
+import { useUserProfile } from '../../../../../../context/profile-context';
 import { queryClient } from '../../../../../../lib/query-client';
 import { profilePicSvg } from '../../../../../../lib/utils';
-import { updateOrganisation, updateUser, type User } from '../../../../../../services/client';
-import { zOrganisation } from '../../../../../../services/client/zod.gen';
+import { type User, updateOrganisation, updateUser } from '../../../../../../services/client';
 
-const trainingCenterSchema = zOrganisation
-  .omit({
-    created_date: true,
-    updated_date: true,
+const trainingCenterSchema = organisationProfileSchema.merge(
+  z.object({
+    logoUrl: z.string().url().optional().or(z.literal('')),
+    contactPersonEmail: z.string(),
+    contactPersonPhone: z.string(),
+    website: z.string().url().optional().or(z.literal('')),
+    address: z.string().optional(),
   })
-  .merge(
-    z.object({
-      logoUrl: z.string().url().optional().or(z.literal('')),
-      contactPersonEmail: z.string(),
-      contactPersonPhone: z.string(),
-      website: z.string().url().optional().or(z.literal('')),
-      address: z.string().optional(),
-    })
-  );
+);
 
 type TrainingCenterFormValues = z.infer<typeof trainingCenterSchema>;
 
@@ -86,20 +87,9 @@ export default function TrainingCenterForm() {
   const latitudeWatch = form.watch('latitude');
   const longitudeWatch = form.watch('longitude');
 
-  const normalizeCoordinate = (value: unknown) => {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-    if (typeof value === 'string' && value.trim() !== '') {
-      const parsed = Number(value);
-      return Number.isFinite(parsed) ? parsed : undefined;
-    }
-    return undefined;
-  };
-
   const watchedCoordinates = {
-    latitude: normalizeCoordinate(latitudeWatch),
-    longitude: normalizeCoordinate(longitudeWatch),
+    latitude: normalizeCoordinateValue(latitudeWatch),
+    longitude: normalizeCoordinateValue(longitudeWatch),
   };
 
   const [isSaving, setIsSaving] = useState(false);
@@ -155,13 +145,18 @@ export default function TrainingCenterForm() {
     return <CustomLoader />;
   }
 
-  const domainBadges =
-    userProfile?.user_domain?.map(domain =>
-      domain
-        .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
-    ) ?? [];
+  const domainBadges = (
+    Array.isArray(userProfile?.user_domain)
+      ? userProfile.user_domain
+      : userProfile?.user_domain
+        ? [userProfile.user_domain]
+        : []
+  ).map(domain =>
+    domain
+      .split('_')
+      .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
+  );
 
   return (
     <ProfileFormShell
@@ -206,51 +201,12 @@ export default function TrainingCenterForm() {
               )}
             />
 
-            <div className='grid gap-6 sm:grid-cols-2'>
-              <FormField
-                control={form.control}
-                name='name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Organisation name</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Elimika Skills Centre' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='licence_no'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Licence number</FormLabel>
-                    <FormControl>
-                      <Input placeholder='E12345/2024' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name='description'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>About your organisation</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder='Introduce your training centre, target learners, and key programmes.'
-                      className='min-h-32 resize-y'
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <OrganisationIdentityFields
+              form={form}
+              namePlaceholder='Elimika Skills Centre'
+              licencePlaceholder='E12345/2024'
+              descriptionPlaceholder='Introduce your training centre, target learners, and key programmes.'
+              descriptionRows={6}
             />
           </ProfileFormSection>
 
@@ -304,54 +260,30 @@ export default function TrainingCenterForm() {
               </Button>
             }
           >
-            <FormField
-              control={form.control}
-              name='location'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Physical address</FormLabel>
-                  <FormControl>
-                    <LocationInput
-                      {...field}
-                      coordinates={watchedCoordinates}
-                      onSuggest={result => {
-                        const feature = result.features[0];
-                        if (!feature) return;
-                        const coordinates = feature.properties?.coordinates;
-                        const countryName =
-                          (feature.properties?.context as any)?.country?.name ??
-                          feature.properties?.context?.country_name;
-                        if (
-                          typeof coordinates?.latitude === 'number' &&
-                          typeof coordinates?.longitude === 'number'
-                        ) {
-                          form.setValue('latitude', coordinates.latitude);
-                          form.setValue('longitude', coordinates.longitude);
-                        }
-                        if (countryName) {
-                          form.setValue('country', countryName);
-                        }
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <OrganisationLocationField
+              form={form}
+              coordinates={watchedCoordinates}
+              onSuggest={result => {
+                const feature = result.features[0];
+                if (!feature) return;
+                const coordinates = feature.properties?.coordinates;
+                const countryName =
+                  (feature.properties?.context as any)?.country?.name ??
+                  feature.properties?.context?.country_name;
+                if (
+                  typeof coordinates?.latitude === 'number' &&
+                  typeof coordinates?.longitude === 'number'
+                ) {
+                  form.setValue('latitude', coordinates.latitude);
+                  form.setValue('longitude', coordinates.longitude);
+                }
+                if (countryName) {
+                  form.setValue('country', countryName);
+                }
+              }}
             />
 
-            <FormField
-              control={form.control}
-              name='website'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Website</FormLabel>
-                  <FormControl>
-                    <Input placeholder='https://elimika.org' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <OrganisationWebsiteField form={form} placeholder='https://elimika.org' />
           </ProfileFormSection>
         </form>
       </Form>

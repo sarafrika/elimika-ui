@@ -7,33 +7,22 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import type { z } from 'zod';
-import LocationInput from '@/components/locationInput';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Form } from '@/components/ui/form';
 import { createOrganisation } from '@/services/client';
-import { zOrganisation } from '@/services/client/zod.gen';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import {
+  OrganisationCountryField,
+  OrganisationIdentityFields,
+  OrganisationLocationField,
+} from '@/src/features/organisation/forms/shared/components/OrganisationFields';
+import {
+  normalizeCoordinateValue,
+  type OrganisationProfileFormData,
+  organisationProfileSchema,
+} from '@/src/features/organisation/forms/shared/organisation-profile';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-
-const OrganizationOnboardingSchema = zOrganisation.omit({
-  uuid: true,
-  created_date: true,
-  updated_date: true,
-});
-
-type OrganizationOnboardingFormData = z.infer<typeof OrganizationOnboardingSchema>;
 
 const _organizationTypes = [
   { value: 'PROFESSIONAL_INSTITUTE', label: 'Professional Institute' },
@@ -50,8 +39,8 @@ export function OrganizationOnboardingForm() {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<OrganizationOnboardingFormData>({
-    resolver: zodResolver(OrganizationOnboardingSchema),
+  const form = useForm<OrganisationProfileFormData>({
+    resolver: zodResolver(organisationProfileSchema),
     defaultValues: {
       name: '',
       description: '',
@@ -65,20 +54,9 @@ export function OrganizationOnboardingForm() {
   const latitudeWatch = form.watch('latitude');
   const longitudeWatch = form.watch('longitude');
 
-  const normalizeCoordinate = (value: unknown) => {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-    if (typeof value === 'string' && value.trim() !== '') {
-      const parsed = Number(value);
-      return Number.isFinite(parsed) ? parsed : undefined;
-    }
-    return undefined;
-  };
-
   const watchedCoordinates = {
-    latitude: normalizeCoordinate(latitudeWatch),
-    longitude: normalizeCoordinate(longitudeWatch),
+    latitude: normalizeCoordinateValue(latitudeWatch),
+    longitude: normalizeCoordinateValue(longitudeWatch),
   };
 
   const getApiErrorMessage = (error: unknown, fallback: string) => {
@@ -95,7 +73,7 @@ export function OrganizationOnboardingForm() {
     return fallback;
   };
 
-  const handleSubmit = async (data: OrganizationOnboardingFormData) => {
+  const handleSubmit = async (data: OrganisationProfileFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
       return;
@@ -144,112 +122,50 @@ export function OrganizationOnboardingForm() {
               <CardDescription>Basic information about your organization</CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Organization Name <span className='text-destructive'>*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder='Elimika Training Institute' {...field} />
-                    </FormControl>
-                    <FormDescription>Official name of your organization</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <OrganisationIdentityFields
+                form={form}
+                requiredName
+                nameLabel='Organization Name'
+                namePlaceholder='Elimika Training Institute'
+                nameDescription='Official name of your organization'
+                licenceLabel='License Number (Optional)'
+                licencePlaceholder='REG-123456'
+                licenceDescription='Official license or registration number'
+                descriptionLabel='Description'
+                descriptionPlaceholder='Describe your organization, its mission, and the types of courses you offer...'
+                descriptionDescription="Provide additional context about your organization's purpose and activities"
               />
 
-              <FormField
-                control={form.control}
-                name='licence_no'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>License Number (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder='REG-123456' {...field} />
-                    </FormControl>
-                    <FormDescription>Official license or registration number</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <OrganisationLocationField
+                form={form}
+                coordinates={watchedCoordinates}
+                label='Location (Optional)'
+                description='Physical location or address of your organization'
+                onSuggest={result => {
+                  const feature = result.features[0];
+                  const coordinates = feature?.properties?.coordinates;
+                  const contextCountry =
+                    (feature?.properties?.context as any)?.country?.name ??
+                    feature?.properties?.context?.country_name;
+
+                  if (
+                    typeof coordinates?.latitude === 'number' &&
+                    typeof coordinates?.longitude === 'number'
+                  ) {
+                    form.setValue('latitude', coordinates.latitude);
+                    form.setValue('longitude', coordinates.longitude);
+                  }
+                  if (contextCountry) {
+                    form.setValue('country', contextCountry);
+                  }
+                }}
               />
 
-              <FormField
-                control={form.control}
-                name='location'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location (Optional)</FormLabel>
-                    <FormControl>
-                      <LocationInput
-                        {...field}
-                        coordinates={watchedCoordinates}
-                        onSuggest={result => {
-                          const feature = result.features[0];
-                          const coordinates = feature?.properties?.coordinates;
-                          const contextCountry =
-                            (feature?.properties?.context as any)?.country?.name ??
-                            feature?.properties?.context?.country_name;
-
-                          if (
-                            typeof coordinates?.latitude === 'number' &&
-                            typeof coordinates?.longitude === 'number'
-                          ) {
-                            form.setValue('latitude', coordinates.latitude);
-                            form.setValue('longitude', coordinates.longitude);
-                          }
-                          if (contextCountry) {
-                            form.setValue('country', contextCountry);
-                          }
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Physical location or address of your organization
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='country'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Country (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Kenya' {...field} />
-                    </FormControl>
-                    <FormDescription>Country where your organization is located</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='description'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder='Describe your organization, its mission, and the types of courses you offer...'
-                        className='resize-none'
-                        rows={4}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Provide additional context about your organization&apos;s purpose and
-                      activities
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <OrganisationCountryField
+                form={form}
+                label='Country (Optional)'
+                placeholder='Kenya'
+                description='Country where your organization is located'
               />
             </CardContent>
           </Card>
