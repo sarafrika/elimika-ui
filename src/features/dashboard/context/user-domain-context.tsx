@@ -5,6 +5,12 @@ import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { UserDomain } from '@/lib/types';
 import { getDashboardStorageKey } from '@/lib/utils';
+import {
+  clearPersistedDashboardDomain,
+  normalizeStoredUserDomain,
+  persistDashboardDomain,
+  readPersistedDashboardDomain,
+} from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type UserDomainContextValue = {
@@ -17,23 +23,7 @@ type UserDomainContextValue = {
   clearDomain: () => void;
 };
 
-const ALLOWED_DOMAINS: UserDomain[] = [
-  'student',
-  'instructor',
-  'admin',
-  'parent',
-  'course_creator',
-  'organisation_user',
-  'organisation',
-] as const;
-
 const UserDomainContext = createContext<UserDomainContextValue | null>(null);
-
-const normalizeDomain = (domain: unknown): UserDomain | null => {
-  if (typeof domain !== 'string') return null;
-  const normalized = domain === 'organization' ? 'organisation' : domain;
-  return ALLOWED_DOMAINS.includes(normalized as UserDomain) ? (normalized as UserDomain) : null;
-};
 
 export function UserDomainProvider({ children }: { children: ReactNode }) {
   const profile = useUserProfile();
@@ -43,7 +33,7 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
   const domains = useMemo(() => {
     const asArray = Array.isArray(rawDomains) ? rawDomains : rawDomains ? [rawDomains] : [];
     const normalized = asArray
-      .map(normalizeDomain)
+      .map(normalizeStoredUserDomain)
       .filter((domain): domain is UserDomain => Boolean(domain));
     return Array.from(new Set(normalized));
   }, [rawDomains]);
@@ -65,10 +55,7 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const storedDomain =
-      typeof window !== 'undefined'
-        ? (localStorage.getItem(dashboardStorageKey) as UserDomain | null)
-        : null;
+    const storedDomain = readPersistedDashboardDomain(dashboardStorageKey);
 
     const nextDomain =
       storedDomain && domains.includes(storedDomain) ? storedDomain : (domains[0] ?? null);
@@ -95,9 +82,9 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined' || !hydrated) return;
 
     if (activeDomain) {
-      localStorage.setItem(dashboardStorageKey, activeDomain);
+      persistDashboardDomain(dashboardStorageKey, activeDomain);
     } else {
-      localStorage.removeItem(dashboardStorageKey);
+      clearPersistedDashboardDomain(dashboardStorageKey);
     }
   }, [activeDomain, dashboardStorageKey, hydrated]);
 
@@ -105,10 +92,7 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
     if (status === 'unauthenticated') {
       setActiveDomainState(null);
       setHydrated(false);
-
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(dashboardStorageKey);
-      }
+      clearPersistedDashboardDomain(dashboardStorageKey);
     }
   }, [status, dashboardStorageKey]);
 
@@ -119,9 +103,7 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
 
   const clearDomain = () => {
     setActiveDomainState(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(dashboardStorageKey);
-    }
+    clearPersistedDashboardDomain(dashboardStorageKey);
   };
 
   const value = useMemo(
