@@ -1,5 +1,5 @@
-import { getPublicCourseDetail } from '@/src/lib/catalogue/server';
 import { NextResponse } from 'next/server';
+import { getPublicCourseDetail } from '@/src/features/catalogue/server';
 
 type RouteContext = {
   params: Promise<{ courseId: string }>;

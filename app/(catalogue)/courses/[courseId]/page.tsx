@@ -1,5 +1,5 @@
-import { PublicCourseDetailPage } from '@/src/components/catalogue/PublicCourseDetailPage';
-import { getPublicCourseDetail } from '@/src/lib/catalogue/server';
+import { PublicCourseDetailPage } from '@/src/features/catalogue/components/PublicCourseDetailPage';
+import { getPublicCourseDetail } from '@/src/features/catalogue/server';
 
 type CourseDetailPageProps = {
   params: Promise<{ courseId: string }>;

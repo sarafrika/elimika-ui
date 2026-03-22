@@ -1,5 +1,5 @@
-import { PublicCoursesPage } from '@/src/components/catalogue/PublicCoursesPage';
-import { listPublicCatalogueCourses } from '@/src/lib/catalogue/server';
+import { PublicCoursesPage } from '@/src/features/catalogue/components/PublicCoursesPage';
+import { listPublicCatalogueCourses } from '@/src/features/catalogue/server';
 
 export default async function PublicCoursesRoute() {
   try {

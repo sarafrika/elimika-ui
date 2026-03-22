@@ -1,9 +1,5 @@
-import AddCourseCreatorProfileForm from '../_components/add-course-creator-profile-form';
+import { AddCourseCreatorProfilePage as AddCourseCreatorProfileView } from '@/src/features/profile/add-profile/pages/AddCourseCreatorProfilePage';
 
 export default function AddCourseCreatorProfilePage() {
-  return (
-    <div className='bg-background min-h-screen py-8'>
-      <AddCourseCreatorProfileForm />
-    </div>
-  );
+  return <AddCourseCreatorProfileView />;
 }

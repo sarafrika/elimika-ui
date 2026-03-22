@@ -1,21 +1,18 @@
-import LoginButton from '@/components/LoginButton';
-import { PublicTopNav } from '@/components/PublicTopNav';
-import { BrandPill } from '@/components/ui/brand-pill';
 import {
   ArrowRight,
   BookOpenCheck,
+  Briefcase,
+  Building2,
+  DollarSign,
+  FolderOpen,
   GraduationCap,
   LayoutDashboard,
   Sparkles,
-  Briefcase,
-  FolderOpen,
-  DollarSign,
-  BookOpen,
-  Users,
-  Building2,
 } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import LoginButton from '@/components/LoginButton';
+import { BrandPill } from '@/components/ui/brand-pill';
 
 const currentYear = new Date().getFullYear();
 
@@ -29,7 +26,7 @@ const productHighlights = [
   {
     title: 'Dynamic domain dashboards',
     description:
-      'Switch effortlessly between course creator, instructor, organisation, and learner views—each with bespoke insights.',
+      'Switch effortlessly between course creator, instructor, organisation, and learner views, each with bespoke insights.',
     icon: LayoutDashboard,
   },
   {
@@ -41,17 +38,16 @@ const productHighlights = [
 ] as const;
 
 const domainLabels = ['Course creators', 'Instructors', 'Organisations', 'Learners'] as const;
+
 const sarafrikaPoints = [
   'Unified design tokens capture the gradient language of the Elimika bloom.',
   'Inclusive typography and colour ensure accessibility without diluting brand character.',
   'Scalable architecture supports institutions, educators, and lifelong learners alike.',
 ] as const;
 
-export default function Home() {
+export function MarketingHomePage() {
   return (
-    <div className='bg-background text-foreground relative min-h-screen overflow-hidden'>
-      <PublicTopNav />
-
+    <>
       <main>
         <section className='border-border/50 relative overflow-hidden border-b'>
           <div className='relative mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-6 pt-24 pb-24 text-center lg:pt-28'>
@@ -59,12 +55,12 @@ export default function Home() {
               Product experience
             </span>
             <h1 className='text-foreground max-w-4xl text-4xl leading-tight font-semibold text-balance sm:text-5xl lg:text-[56px]'>
-              Elimika is the home of orchestrated learning experiences for Africa&rsquo;s creators
+              Elimika is the home of orchestrated learning experiences for Africa&apos;s creators
               and institutions.
             </h1>
             <p className='text-muted-foreground max-w-3xl text-base sm:text-lg'>
-              A product suite born from the Elimika mark—layered gradients, confident geometry, and
-              purposeful flows—designed to elevate every learning journey.
+              A product suite born from the Elimika mark: layered gradients, confident geometry, and
+              purposeful flows designed to elevate every learning journey.
             </p>
             <div className='flex flex-col items-center gap-4 sm:flex-row'>
               <LoginButton />
@@ -108,8 +104,8 @@ export default function Home() {
                 Purpose-built for creators, instructors, organisations, and learners
               </h2>
               <p className='text-muted-foreground text-base'>
-                Each role inherits an environment aligned with their workflow—no context-switching,
-                just clarity, governance, and inspired execution.
+                Each role inherits an environment aligned with their workflow - no
+                context-switching, just clarity, governance, and inspired execution.
               </p>
               <div className='grid gap-4 sm:grid-cols-2'>
                 <FeatureBadge label='Guided course creation' />
@@ -122,8 +118,8 @@ export default function Home() {
             <div className='border-border/60 bg-card/80 flex-1 rounded-[32px] border p-8 shadow-xl shadow-black/10'>
               <p className='text-primary text-sm font-semibold'>What our partners say</p>
               <blockquote className='text-muted-foreground mt-3 text-base'>
-                “Elimika is where storytelling meets infrastructure. The product honours our brand
-                while giving our teams the clarity they need to scale.”
+                &ldquo;Elimika is where storytelling meets infrastructure. The product honours our
+                brand while giving our teams the clarity they need to scale.&rdquo;
               </blockquote>
               <div className='mt-6 flex items-center gap-3'>
                 <div className='bg-primary/15 rounded-full p-2'>
@@ -152,6 +148,7 @@ export default function Home() {
             <div className='grid gap-6 md:grid-cols-3'>
               {productHighlights.map(feature => {
                 const Icon = feature.icon;
+
                 return (
                   <article
                     key={feature.title}
@@ -177,7 +174,7 @@ export default function Home() {
               </h2>
               <p className='text-muted-foreground text-base'>
                 Skills Wallet is a secure digital platform that records and validates your skills,
-                certificates, and experiences. Whether you&rsquo;re a student, professional, or
+                certificates, and experiences. Whether you&apos;re a student, professional, or
                 employer, Skills Wallet makes learning and employment smarter and more connected.
               </p>
               <Link
@@ -338,8 +335,8 @@ export default function Home() {
                 Product craftsmanship by Sarafrika, inspired by the Elimika emblem
               </h2>
               <p className='text-muted-foreground text-base'>
-                Sarafrika&rsquo;s product studios steward Elimika&rsquo;s vision—from interface
-                language to enabling technology—embedding sustainable design and engineering across
+                Sarafrika&apos;s product studios steward Elimika&apos;s vision, from interface
+                language to enabling technology, embedding sustainable design and engineering across
                 every release.
               </p>
               <ul className='text-muted-foreground space-y-3 text-sm'>
@@ -370,8 +367,9 @@ export default function Home() {
                 />
               </div>
               <p className='text-muted-foreground text-center text-sm'>
-                "Together, Elimika and Sarafrika celebrate African ingenuity—building a product
-                ecosystem where talent thrives, organisations transform, and learners flourish."
+                &ldquo;Together, Elimika and Sarafrika celebrate African ingenuity, building a
+                product ecosystem where talent thrives, organisations transform, and learners
+                flourish.&rdquo;
               </p>
             </div>
           </div>
@@ -385,7 +383,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </div>
+    </>
   );
 }
 

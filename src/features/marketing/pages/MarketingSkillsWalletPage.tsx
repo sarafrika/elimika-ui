@@ -1,19 +1,16 @@
-'use client';
-
-import { PublicTopNav } from '@/components/PublicTopNav';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { HelpSection, SkillsFundSection } from '@/components/PublicSections';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { HelpSection, SkillsFundSection } from '@/src/features/marketing/sections/PublicSections';
 
 const featureCards = [
   {
     title: 'Skills Card',
     description:
-      'Upload, verify, and showcase your skills in one place—portable, lifelong skills identity.',
+      'Upload, verify, and showcase your skills in one place - portable, lifelong skills identity.',
   },
   {
     title: 'Employer Access',
@@ -34,7 +31,7 @@ const featureCards = [
     description:
       'Spend on approved training or upskilling programs and switch careers as industries change.',
   },
-];
+] as const;
 
 const personas = [
   { label: 'Students', copy: 'Build a verified record of your learning from early years.' },
@@ -44,7 +41,7 @@ const personas = [
     label: 'Training providers',
     copy: 'Reliable funding, instant payments, and transparent accreditation.',
   },
-];
+] as const;
 
 const testimonials = [
   {
@@ -53,12 +50,11 @@ const testimonials = [
     name: 'Mary',
     role: 'Student',
   },
-];
+] as const;
 
-export default function SkillsWalletPage() {
+export function MarketingSkillsWalletPage() {
   return (
-    <div className='bg-background text-foreground min-h-screen'>
-      <PublicTopNav />
+    <>
       <main className='mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 py-12 lg:py-16'>
         <Hero />
         <WhatIs />
@@ -71,7 +67,7 @@ export default function SkillsWalletPage() {
         <FinalCta />
       </main>
       <Footer />
-    </div>
+    </>
   );
 }
 
@@ -90,7 +86,7 @@ function Hero() {
             Your Skills. Your Future. Your Wallet.
           </h1>
           <p className='text-muted-foreground text-base sm:text-lg'>
-            Store, showcase, and share your skills securely with Elimika Skills Wallet – a digital
+            Store, showcase, and share your skills securely with Elimika Skills Wallet - a digital
             passport for education, training, and work opportunities.
           </p>
         </div>
@@ -126,8 +122,8 @@ function WhatIs() {
         </h2>
         <p className='text-muted-foreground text-base'>
           Skills Wallet is a secure digital platform that records and validates your skills,
-          certificates, and experiences. Whether you’re a student, professional, or employer, Skills
-          Wallet makes learning and employment smarter and more connected.
+          certificates, and experiences. Whether you&apos;re a student, professional, or employer,
+          Skills Wallet makes learning and employment smarter and more connected.
         </p>
       </div>
       <div className='border-border/60 bg-muted/50 relative overflow-hidden rounded-[32px] border p-8 shadow-lg'>
@@ -180,39 +176,6 @@ function Features() {
             </CardContent>
           </Card>
         ))}
-      </div>
-    </section>
-  );
-}
-
-function SkillsFund() {
-  return (
-    <section
-      id='skills-fund'
-      className='border-border/70 bg-primary/10 shadow-primary/10 rounded-[32px] border p-8 shadow-lg'
-    >
-      <div className='flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
-        <div className='space-y-3'>
-          <p className='text-primary text-xs font-semibold tracking-[0.3em] uppercase'>
-            Skills Fund
-          </p>
-          <h2 className='text-foreground text-3xl font-semibold sm:text-4xl'>
-            Invest in Your Future
-          </h2>
-          <p className='text-muted-foreground max-w-2xl text-base'>
-            The Skills Fund connects learners with funding for training, apprenticeships,
-            scholarships, workshops, and courses. Employers and families can contribute and track
-            skills investment ROI.
-          </p>
-        </div>
-        <div className='flex flex-wrap gap-3'>
-          <Button size='lg' className='rounded-full px-6'>
-            Apply for Skills Fund
-          </Button>
-          <Button size='lg' variant='outline' className='rounded-full px-6'>
-            Fund Student
-          </Button>
-        </div>
       </div>
     </section>
   );
@@ -332,6 +295,7 @@ function Footer() {
     'Help',
     'Contact',
   ];
+
   return (
     <footer className='border-border/60 bg-card/60 mt-12 border-t'>
       <div className='mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10 lg:flex-row lg:items-center lg:justify-between'>
@@ -352,7 +316,7 @@ function Footer() {
       <Separator />
       <div className='text-muted-foreground mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 text-xs'>
         <span>Support</span>
-        <span>© Skills Wallet</span>
+        <span>&copy; Skills Wallet</span>
       </div>
     </footer>
   );

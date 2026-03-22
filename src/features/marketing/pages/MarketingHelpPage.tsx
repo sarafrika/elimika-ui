@@ -1,10 +1,7 @@
-'use client';
-
-import { PublicTopNav } from '@/components/PublicTopNav';
-import { HelpSection } from '@/components/PublicSections';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { HelpSection } from '@/src/features/marketing/sections/PublicSections';
 
 const faqs = [
   {
@@ -22,13 +19,11 @@ const faqs = [
     answer:
       'Courses listed in Elimika are vetted and mapped to accreditation requirements where applicable.',
   },
-];
+] as const;
 
-export default function HelpPage() {
+export function MarketingHelpPage() {
   return (
-    <div className='bg-background text-foreground min-h-screen'>
-      <PublicTopNav />
-
+    <>
       <main className='mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-12 lg:py-16'>
         <header className='border-border bg-card/80 space-y-6 rounded-[36px] border p-8 shadow-xl backdrop-blur-sm lg:p-12'>
           <Badge
@@ -88,6 +83,6 @@ export default function HelpPage() {
           </p>
         </div>
       </main>
-    </div>
+    </>
   );
 }

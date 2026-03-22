@@ -1,14 +1,15 @@
 'use client';
+import { usePathname, useRouter } from 'next/navigation';
+import { type ReactNode, useEffect, useMemo } from 'react';
 import { AppSidebar } from '@/components/app-sidebar';
 import DashboardMainContent from '@/components/dashboard-main-content';
 import { type DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
+import { DashboardProviders } from '@/context/profile-providers';
 import { useUserDomain } from '@/context/user-domain-context';
 import type { DashboardChildrenTypes, UserDomain } from '@/lib/types';
-import { usePathname, useRouter } from 'next/navigation';
-import { type ReactNode, useEffect, useMemo } from 'react';
 import CustomLoader from '../../components/custom-loader';
 import { DomainSelection } from '../../components/domain-selection';
 
@@ -37,6 +38,14 @@ const domainToDashboardViewMap: Record<KnownDomain, DashboardView> = {
 };
 
 export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) {
+  return (
+    <DashboardProviders>
+      <DashboardLayoutContent {...dashboardProps} />
+    </DashboardProviders>
+  );
+}
+
+function DashboardLayoutContent(dashboardProps: DashboardChildrenTypes) {
   const profile = useUserProfile();
   const domain = useUserDomain();
   const router = useRouter();

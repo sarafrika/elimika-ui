@@ -1,5 +1,5 @@
-import { listPublicCatalogueCourses } from '@/src/lib/catalogue/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { listPublicCatalogueCourses } from '@/src/features/catalogue/server';
 
 export async function GET(request: NextRequest) {
   const page = Number(request.nextUrl.searchParams.get('page') ?? '0');
