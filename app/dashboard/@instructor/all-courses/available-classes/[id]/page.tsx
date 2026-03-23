@@ -1,16 +1,5 @@
-'use client';
+import AvailableClassesPage from '@/src/features/dashboard/courses/pages/AvailableClassesPage';
 
-
-import { useParams } from 'next/navigation';
-import CourseEnrollmentsPage from '../../../../_home-components/CourseEnrollmentsPage';
-
-const Page = () => {
-  const params = useParams();
-  const courseId = params?.id as string;
-
-  return (
-    <CourseEnrollmentsPage courseId={courseId as string} />
-  )
+export default function InstructorAvailableClassesRoute({ params }: { params: { id: string } }) {
+  return <AvailableClassesPage courseId={params.id} />;
 }
-
-export default Page
