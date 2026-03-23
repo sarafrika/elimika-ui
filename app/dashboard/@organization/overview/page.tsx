@@ -1,15 +1,12 @@
-import { elimikaDesignSystem, cx } from '@/lib/design-system';
-import { Badge } from '@/components/ui/badge';
+import { elimikaDesignSystem } from '@/lib/design-system';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
-  Building2,
   Users,
   GitBranch,
   BookOpen,
   TrendingUp,
   ShieldCheck,
-  ShieldAlert,
   Mail,
   FileText,
   ArrowRight,

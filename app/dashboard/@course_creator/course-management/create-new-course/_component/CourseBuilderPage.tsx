@@ -185,7 +185,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   if (creatorLoading) {

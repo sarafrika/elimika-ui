@@ -1,7 +1,16 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, FileSpreadsheet, FileText, Image, PlusCircle, Trash2, Video, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  FileSpreadsheet,
+  FileText,
+  Image,
+  PlusCircle,
+  Trash2,
+  Video,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -420,9 +429,7 @@ export const AssignmentCreationForm = ({
                   />
                 </div>
                 <div className='flex flex-col gap-2'>
-                  <Label className='text-foreground text-sm font-medium'>
-                    Category (optional)
-                  </Label>
+                  <Label className='text-foreground text-sm font-medium'>Category (optional)</Label>
                   <Input
                     type='text'
                     placeholder='e.g., Homework, Project'

@@ -222,7 +222,7 @@ export default function ClassPreviewPage() {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const shareToSocial = (platform: SharePlatform, { title, links }: ShareOptions) => {

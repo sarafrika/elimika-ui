@@ -1,5 +1,7 @@
 'use client';
 
+import { AssignmentDialog } from '@/app/dashboard/@course_creator/_components/assignment-management-form';
+import { QuizDialog } from '@/app/dashboard/@course_creator/_components/quiz-management-form';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
@@ -26,16 +28,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
-import { cx, elimikaDesignSystem, getCardClasses, getEmptyStateClasses, getHeaderClasses, getStatCardClasses } from '@/lib/design-system';
+import { useUserProfile } from '@/context/profile-context';
+import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
+import {
+  cx,
+  elimikaDesignSystem,
+  getCardClasses,
+  getEmptyStateClasses,
+  getHeaderClasses,
+  getStatCardClasses,
+} from '@/lib/design-system';
 import {
   deleteAssignmentMutation,
   deleteQuizMutation,
   getCourseLessonsOptions,
+  getEnrollmentsForClassOptions,
   getPendingGradingOptions,
   getStudentByIdOptions,
   getSubmissionAttachmentsOptions,
   getUserByUuidOptions,
-  getEnrollmentsForClassOptions,
   gradeSubmissionMutation,
   returnSubmissionMutation,
   searchAssignmentsOptions,
@@ -48,36 +59,26 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  AlertCircle,
   Award,
   BookOpen,
-  CheckCircle2,
   ClipboardCheck,
-  ClipboardList,
-  Clock3,
   Eye,
-  FileCheck2,
   FileText,
   Filter,
   GraduationCap,
   ListChecks,
   Loader2,
-  MoreVertical,
   PenLine,
   Search,
   Sparkles,
   Trash2,
   Trophy,
   Undo2,
-  UserCheck,
   Users,
 } from 'lucide-react';
 import moment from 'moment';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
-import { AssignmentDialog } from '@/app/dashboard/@course_creator/_components/assignment-management-form';
-import { QuizDialog } from '@/app/dashboard/@course_creator/_components/quiz-management-form';
 
 type WorkspaceTab = 'overview' | 'tasks' | 'submissions' | 'grades' | 'exams';
 type TaskType = 'assignment' | 'quiz';
@@ -152,6 +153,8 @@ const formatEnum = (value?: string | null) => {
     .join(' ');
 };
 
+const normalizeIdentity = (value?: string | null) => value?.trim().toLowerCase() ?? '';
+
 function SectionIntro({
   badge,
   title,
@@ -163,11 +166,11 @@ function SectionIntro({
 }) {
   return (
     <div className='space-y-2'>
-      <Badge variant='outline' className='w-fit border-primary/30 bg-primary/5 text-primary'>
+      <Badge variant='outline' className='border-primary/30 bg-primary/5 text-primary w-fit'>
         {badge}
       </Badge>
-      <h2 className='text-xl font-semibold text-foreground sm:text-2xl'>{title}</h2>
-      <p className='max-w-3xl text-sm text-muted-foreground'>{description}</p>
+      <h2 className='text-foreground text-xl font-semibold sm:text-2xl'>{title}</h2>
+      <p className='text-muted-foreground max-w-3xl text-sm'>{description}</p>
     </div>
   );
 }
@@ -183,10 +186,10 @@ function EmptyState({
 }) {
   return (
     <div className={cx(getEmptyStateClasses(), 'min-h-[260px]')}>
-      <Icon className='h-10 w-10 text-primary/70' />
+      <Icon className='text-primary/70 h-10 w-10' />
       <div className='space-y-1'>
         <h3 className='text-lg font-semibold'>{title}</h3>
-        <p className='max-w-lg text-sm text-muted-foreground'>{description}</p>
+        <p className='text-muted-foreground max-w-lg text-sm'>{description}</p>
       </div>
     </div>
   );
@@ -228,33 +231,33 @@ function SubmissionDetailDialog({
         {!submission ? null : (
           <div className='space-y-5'>
             <div className='grid gap-3 md:grid-cols-2'>
-              <div className='rounded-2xl border border-border/60 bg-muted/30 p-4'>
-                <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+              <div className='border-border/60 bg-muted/30 rounded-2xl border p-4'>
+                <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                   Student
                 </p>
-                <p className='mt-1 text-sm font-medium text-foreground'>{submission.studentName}</p>
-                <p className='mt-1 text-xs text-muted-foreground'>{submission.classTitle}</p>
+                <p className='text-foreground mt-1 text-sm font-medium'>{submission.studentName}</p>
+                <p className='text-muted-foreground mt-1 text-xs'>{submission.classTitle}</p>
               </div>
-              <div className='rounded-2xl border border-border/60 bg-muted/30 p-4'>
-                <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+              <div className='border-border/60 bg-muted/30 rounded-2xl border p-4'>
+                <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                   Status
                 </p>
                 <div className='mt-2 flex flex-wrap items-center gap-2'>
                   <Badge variant={getStatusVariant(submission.status)}>
                     {formatEnum(submission.status)}
                   </Badge>
-                  <span className='text-xs text-muted-foreground'>
+                  <span className='text-muted-foreground text-xs'>
                     Submitted {formatDateTime(submission.submitted_at)}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className='space-y-2 rounded-2xl border border-border/60 p-4'>
-              <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+            <div className='border-border/60 space-y-2 rounded-2xl border p-4'>
+              <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                 Submission text
               </p>
-              <div className='text-sm text-foreground'>
+              <div className='text-foreground text-sm'>
                 {submission.submission_text ? (
                   <RichTextRenderer htmlString={submission.submission_text} />
                 ) : (
@@ -263,9 +266,9 @@ function SubmissionDetailDialog({
               </div>
             </div>
 
-            <div className='space-y-3 rounded-2xl border border-border/60 p-4'>
+            <div className='border-border/60 space-y-3 rounded-2xl border p-4'>
               <div className='flex items-center justify-between'>
-                <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                   Attachments
                 </p>
                 <Badge variant='secondary'>{attachments.length}</Badge>
@@ -277,7 +280,7 @@ function SubmissionDetailDialog({
                   <Skeleton className='h-14 w-full rounded-2xl' />
                 </div>
               ) : attachments.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>No attachment uploaded.</p>
+                <p className='text-muted-foreground text-sm'>No attachment uploaded.</p>
               ) : (
                 <div className='space-y-2'>
                   {attachments.map((attachment: any) => (
@@ -286,17 +289,17 @@ function SubmissionDetailDialog({
                       href={attachment.file_url}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='flex items-center justify-between rounded-2xl border border-border/60 bg-background/80 px-4 py-3 transition hover:border-primary/40 hover:bg-primary/5'
+                      className='border-border/60 bg-background/80 hover:border-primary/40 hover:bg-primary/5 flex items-center justify-between rounded-2xl border px-4 py-3 transition'
                     >
                       <div>
-                        <p className='text-sm font-medium text-foreground'>
+                        <p className='text-foreground text-sm font-medium'>
                           {attachment.original_filename || 'Submission file'}
                         </p>
-                        <p className='text-xs text-muted-foreground'>
+                        <p className='text-muted-foreground text-xs'>
                           Open attachment in a new tab
                         </p>
                       </div>
-                      <Eye className='h-4 w-4 text-muted-foreground' />
+                      <Eye className='text-muted-foreground h-4 w-4' />
                     </a>
                   ))}
                 </div>
@@ -354,7 +357,7 @@ function GradeSubmissionDialog({
         <div className='space-y-5'>
           <div className='grid gap-4 sm:grid-cols-2'>
             <div className='space-y-2'>
-              <label className='text-sm font-medium text-foreground' htmlFor='score'>
+              <label className='text-foreground text-sm font-medium' htmlFor='score'>
                 Score
               </label>
               <Input
@@ -366,7 +369,7 @@ function GradeSubmissionDialog({
               />
             </div>
             <div className='space-y-2'>
-              <label className='text-sm font-medium text-foreground' htmlFor='max-score'>
+              <label className='text-foreground text-sm font-medium' htmlFor='max-score'>
                 Max score
               </label>
               <Input
@@ -380,7 +383,7 @@ function GradeSubmissionDialog({
           </div>
 
           <div className='space-y-2'>
-            <label className='text-sm font-medium text-foreground' htmlFor='comments'>
+            <label className='text-foreground text-sm font-medium' htmlFor='comments'>
               Grading comments
             </label>
             <Textarea
@@ -392,8 +395,8 @@ function GradeSubmissionDialog({
             />
           </div>
 
-          <div className='space-y-2 rounded-2xl border border-border/60 bg-muted/30 p-4'>
-            <label className='text-sm font-medium text-foreground' htmlFor='revision'>
+          <div className='border-border/60 bg-muted/30 space-y-2 rounded-2xl border p-4'>
+            <label className='text-foreground text-sm font-medium' htmlFor='revision'>
               Return for revision
             </label>
             <Textarea
@@ -410,7 +413,11 @@ function GradeSubmissionDialog({
               disabled={!revisionFeedback.trim() || isReturning}
               onClick={() => onReturn(revisionFeedback)}
             >
-              {isReturning ? <Loader2 className='h-4 w-4 animate-spin' /> : <Undo2 className='h-4 w-4' />}
+              {isReturning ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <Undo2 className='h-4 w-4' />
+              )}
               Return for revision
             </Button>
           </div>
@@ -446,6 +453,7 @@ export function InstructorAssessmentWorkspace({
 }: Props) {
   const queryClient = useQueryClient();
   const instructor = useInstructor();
+  const user = useUserProfile();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(defaultTab);
   const [taskType, setTaskType] = useState<TaskType>(defaultTaskType);
   const [submissionType, setSubmissionType] = useState<TaskType>('assignment');
@@ -796,6 +804,9 @@ export function InstructorAssessmentWorkspace({
     });
   }, [assignments, searchQuery, selectedCourseId]);
 
+  console.log(instructor, 'instr');
+  console.log(filteredAssignments, 'FASS');
+
   const filteredQuizzes = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 
@@ -806,7 +817,9 @@ export function InstructorAssessmentWorkspace({
 
       if (!query) return true;
 
-      return [quiz.title, quiz.courseTitle].filter(Boolean).some(value => value.toLowerCase().includes(query));
+      return [quiz.title, quiz.courseTitle]
+        .filter(Boolean)
+        .some(value => value.toLowerCase().includes(query));
     });
   }, [quizzes, searchQuery, selectedCourseId]);
 
@@ -893,6 +906,24 @@ export function InstructorAssessmentWorkspace({
       ? selectedCourseId
       : editingAssignment?.courseId || editingQuiz?.courseId || '';
 
+  const canManageAssignment = (assignment?: EnrichedAssignment | null) => {
+    if (!assignment) return false;
+    const currentUserEmail = normalizeIdentity(user?.email);
+    if (!currentUserEmail) return false;
+    if (assignment.source_assignment_uuid) return false;
+
+    return normalizeIdentity(assignment.created_by) === currentUserEmail;
+  };
+
+  const canManageQuiz = (quiz?: EnrichedQuiz | null) => {
+    if (!quiz) return false;
+    const currentUserEmail = normalizeIdentity(user?.email);
+    if (!currentUserEmail) return false;
+    if (quiz.source_quiz_uuid) return false;
+
+    return normalizeIdentity(quiz.created_by) === currentUserEmail;
+  };
+
   const resetAssignmentDialog = () => {
     setAssignmentDialogOpen(false);
     setEditingAssignment(null);
@@ -917,6 +948,11 @@ export function InstructorAssessmentWorkspace({
 
   const handleDeleteAssignment = () => {
     if (!assignmentToDelete?.uuid) return;
+    if (!canManageAssignment(assignmentToDelete)) {
+      toast.error('Course creator assignments are view-only for instructors.');
+      setAssignmentToDelete(null);
+      return;
+    }
 
     deleteAssignmentMut.mutate(
       { path: { uuid: assignmentToDelete.uuid } },
@@ -932,6 +968,11 @@ export function InstructorAssessmentWorkspace({
 
   const handleDeleteQuiz = () => {
     if (!quizToDelete?.uuid) return;
+    if (!canManageQuiz(quizToDelete)) {
+      toast.error('Course creator quizzes are view-only for instructors.');
+      setQuizToDelete(null);
+      return;
+    }
 
     deleteQuizMut.mutate(
       { path: { uuid: quizToDelete.uuid } },
@@ -945,7 +986,11 @@ export function InstructorAssessmentWorkspace({
     );
   };
 
-  const handleGradeSubmission = (payload: { score: number; maxScore: number; comments: string }) => {
+  const handleGradeSubmission = (payload: {
+    score: number;
+    maxScore: number;
+    comments: string;
+  }) => {
     if (!gradingSubmission?.uuid || !gradingSubmission.assignment_uuid) return;
 
     gradeSubmissionMut.mutate(
@@ -1033,7 +1078,7 @@ export function InstructorAssessmentWorkspace({
     <div className='space-y-6'>
       {!embedded ? (
         <section className={cx(getHeaderClasses(), 'relative overflow-hidden')}>
-          <div className='dark:hidden pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,97,237,0.14),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(0,97,237,0.12),transparent_38%)]' />
+          <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,97,237,0.14),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(0,97,237,0.12),transparent_38%)] dark:hidden' />
           <div className='relative space-y-6'>
             <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
               <div className='space-y-4'>
@@ -1045,22 +1090,22 @@ export function InstructorAssessmentWorkspace({
                     Manage tasks, submissions, and grades
                   </h1>
                   <p className={elimikaDesignSystem.components.header.subtitle}>
-                    Run assignment and quiz operations across your courses, review learner work,
-                    and grade submissions from one responsive instructor surface.
+                    Run assignment and quiz operations across your courses, review learner work, and
+                    grade submissions from one responsive instructor surface.
                   </p>
                 </div>
               </div>
 
-              <Card className='w-full max-w-md rounded-[32px] border-primary/20 bg-primary/5 shadow-none'>
+              <Card className='border-primary/20 bg-primary/5 w-full max-w-md rounded-[32px] shadow-none'>
                 <CardContent className='space-y-3 p-6'>
-                  <div className='flex items-center gap-2 text-primary'>
+                  <div className='text-primary flex items-center gap-2'>
                     <Sparkles className='h-4 w-4' />
                     <span className='text-sm font-semibold'>Active assessment load</span>
                   </div>
-                  <p className='text-2xl font-semibold text-foreground'>
+                  <p className='text-foreground text-2xl font-semibold'>
                     {stats.pending} submission{stats.pending === 1 ? '' : 's'} waiting for action
                   </p>
-                  <p className='text-sm text-muted-foreground'>
+                  <p className='text-muted-foreground text-sm'>
                     {selectedCourse
                       ? `Filtered to ${selectedCourse.title}.`
                       : 'Use the course filter below to narrow the workspace.'}
@@ -1073,12 +1118,12 @@ export function InstructorAssessmentWorkspace({
               <Card className={getStatCardClasses()}>
                 <CardContent className='p-0'>
                   <div className='flex items-center gap-3'>
-                    <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                    <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                       <FileText className='h-5 w-5' />
                     </div>
                     <div>
-                      <p className='text-sm text-muted-foreground'>Assignments</p>
-                      <p className='text-2xl font-semibold text-foreground'>{stats.assignments}</p>
+                      <p className='text-muted-foreground text-sm'>Assignments</p>
+                      <p className='text-foreground text-2xl font-semibold'>{stats.assignments}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -1086,12 +1131,12 @@ export function InstructorAssessmentWorkspace({
               <Card className={getStatCardClasses()}>
                 <CardContent className='p-0'>
                   <div className='flex items-center gap-3'>
-                    <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                    <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                       <ListChecks className='h-5 w-5' />
                     </div>
                     <div>
-                      <p className='text-sm text-muted-foreground'>Quizzes</p>
-                      <p className='text-2xl font-semibold text-foreground'>{stats.quizzes}</p>
+                      <p className='text-muted-foreground text-sm'>Quizzes</p>
+                      <p className='text-foreground text-2xl font-semibold'>{stats.quizzes}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -1099,12 +1144,12 @@ export function InstructorAssessmentWorkspace({
               <Card className={getStatCardClasses()}>
                 <CardContent className='p-0'>
                   <div className='flex items-center gap-3'>
-                    <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                    <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                       <ClipboardCheck className='h-5 w-5' />
                     </div>
                     <div>
-                      <p className='text-sm text-muted-foreground'>Pending grading</p>
-                      <p className='text-2xl font-semibold text-foreground'>{stats.pending}</p>
+                      <p className='text-muted-foreground text-sm'>Pending grading</p>
+                      <p className='text-foreground text-2xl font-semibold'>{stats.pending}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -1112,12 +1157,14 @@ export function InstructorAssessmentWorkspace({
               <Card className={getStatCardClasses()}>
                 <CardContent className='p-0'>
                   <div className='flex items-center gap-3'>
-                    <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                    <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                       <Trophy className='h-5 w-5' />
                     </div>
                     <div>
-                      <p className='text-sm text-muted-foreground'>Recorded grades</p>
-                      <p className='text-2xl font-semibold text-foreground'>{stats.gradedResults}</p>
+                      <p className='text-muted-foreground text-sm'>Recorded grades</p>
+                      <p className='text-foreground text-2xl font-semibold'>
+                        {stats.gradedResults}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -1127,19 +1174,19 @@ export function InstructorAssessmentWorkspace({
         </section>
       ) : null}
 
-      <Card className='overflow-hidden rounded-[32px] border-border/60 bg-card/95'>
+      <Card className='border-border/60 bg-card/95 overflow-hidden rounded-[32px]'>
         <CardContent className='space-y-5 p-5 sm:p-6'>
           <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
             <div className='space-y-1'>
-              <p className='text-sm font-semibold text-foreground'>Workspace filters</p>
-              <p className='text-sm text-muted-foreground'>
+              <p className='text-foreground text-sm font-semibold'>Workspace filters</p>
+              <p className='text-muted-foreground text-sm'>
                 Filter the assessment workspace by course or search by learner and task name.
               </p>
             </div>
 
             <div className='flex flex-col gap-3 sm:flex-row'>
               <div className='relative min-w-0 flex-1 sm:min-w-[260px]'>
-                <Search className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+                <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                 <Input
                   value={searchQuery}
                   onChange={event => setSearchQuery(event.target.value)}
@@ -1176,8 +1223,12 @@ export function InstructorAssessmentWorkspace({
         </CardContent>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={value => setActiveTab(value as WorkspaceTab)} className='space-y-6'>
-        <TabsList className='grid w-full grid-cols-2 gap-2 rounded-[24px] bg-muted/60 p-1 md:grid-cols-5'>
+      <Tabs
+        value={activeTab}
+        onValueChange={value => setActiveTab(value as WorkspaceTab)}
+        className='space-y-6'
+      >
+        <TabsList className='bg-muted/60 grid w-full grid-cols-2 gap-2 rounded-[24px] p-1 md:grid-cols-5'>
           <TabsTrigger value='overview'>Overview</TabsTrigger>
           <TabsTrigger value='tasks'>Tasks</TabsTrigger>
           <TabsTrigger value='submissions'>Submissions</TabsTrigger>
@@ -1197,8 +1248,8 @@ export function InstructorAssessmentWorkspace({
               <CardHeader className='p-5 pb-3 sm:p-6'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <h3 className='text-lg font-semibold text-foreground'>Pending grading queue</h3>
-                    <p className='text-sm text-muted-foreground'>
+                    <h3 className='text-foreground text-lg font-semibold'>Pending grading queue</h3>
+                    <p className='text-muted-foreground text-sm'>
                       Assignment submissions that still need instructor action.
                     </p>
                   </div>
@@ -1207,7 +1258,7 @@ export function InstructorAssessmentWorkspace({
               </CardHeader>
               <CardContent className='space-y-3 p-5 pt-0 sm:p-6 sm:pt-0'>
                 {pendingGrading.length === 0 ? (
-                  <p className='text-sm text-muted-foreground'>Nothing pending right now.</p>
+                  <p className='text-muted-foreground text-sm'>Nothing pending right now.</p>
                 ) : (
                   pendingGrading.slice(0, 5).map(item => (
                     <button
@@ -1217,16 +1268,18 @@ export function InstructorAssessmentWorkspace({
                         setGradingSubmission(item);
                         setActiveTab('grades');
                       }}
-                      className='flex w-full flex-col gap-2 rounded-[24px] border border-border/60 bg-background/70 p-4 text-left transition hover:border-primary/40 hover:bg-primary/5'
+                      className='border-border/60 bg-background/70 hover:border-primary/40 hover:bg-primary/5 flex w-full flex-col gap-2 rounded-[24px] border p-4 text-left transition'
                     >
                       <div className='flex flex-wrap items-center justify-between gap-2'>
-                        <p className='font-medium text-foreground'>{item.assignmentTitle}</p>
-                        <Badge variant={getStatusVariant(item.status)}>{formatEnum(item.status)}</Badge>
+                        <p className='text-foreground font-medium'>{item.assignmentTitle}</p>
+                        <Badge variant={getStatusVariant(item.status)}>
+                          {formatEnum(item.status)}
+                        </Badge>
                       </div>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className='text-muted-foreground text-sm'>
                         {item.studentName} · {item.courseTitle}
                       </p>
-                      <p className='text-xs text-muted-foreground'>
+                      <p className='text-muted-foreground text-xs'>
                         Submitted {formatDateTime(item.submitted_at)}
                       </p>
                     </button>
@@ -1239,15 +1292,17 @@ export function InstructorAssessmentWorkspace({
               <Card className={getCardClasses()}>
                 <CardContent className='space-y-4 p-0'>
                   <div className='flex items-center gap-3'>
-                    <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                    <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                       <Users className='h-5 w-5' />
                     </div>
                     <div>
-                      <p className='text-sm text-muted-foreground'>Active learners tracked</p>
-                      <p className='text-3xl font-semibold text-foreground'>{enrollmentMetaMap.size}</p>
+                      <p className='text-muted-foreground text-sm'>Active learners tracked</p>
+                      <p className='text-foreground text-3xl font-semibold'>
+                        {enrollmentMetaMap.size}
+                      </p>
                     </div>
                   </div>
-                  <p className='text-sm text-muted-foreground'>
+                  <p className='text-muted-foreground text-sm'>
                     Learners with enrollments across your current instructor classes.
                   </p>
                 </CardContent>
@@ -1257,8 +1312,8 @@ export function InstructorAssessmentWorkspace({
                 <CardHeader className='p-5 pb-3 sm:p-6'>
                   <div className='flex items-center justify-between'>
                     <div>
-                      <h3 className='text-lg font-semibold text-foreground'>Latest graded work</h3>
-                      <p className='text-sm text-muted-foreground'>
+                      <h3 className='text-foreground text-lg font-semibold'>Latest graded work</h3>
+                      <p className='text-muted-foreground text-sm'>
                         Recent assignment grades and scored quiz attempts.
                       </p>
                     </div>
@@ -1267,21 +1322,21 @@ export function InstructorAssessmentWorkspace({
                 </CardHeader>
                 <CardContent className='space-y-3 p-5 pt-0 sm:p-6 sm:pt-0'>
                   {gradebookRows.length === 0 ? (
-                    <p className='text-sm text-muted-foreground'>No grades recorded yet.</p>
+                    <p className='text-muted-foreground text-sm'>No grades recorded yet.</p>
                   ) : (
                     gradebookRows.slice(0, 5).map(row => (
                       <div
                         key={row.id}
-                        className='rounded-[24px] border border-border/60 bg-background/70 p-4'
+                        className='border-border/60 bg-background/70 rounded-[24px] border p-4'
                       >
                         <div className='flex flex-wrap items-center justify-between gap-2'>
-                          <p className='font-medium text-foreground'>{row.taskTitle}</p>
+                          <p className='text-foreground font-medium'>{row.taskTitle}</p>
                           <Badge variant={getStatusVariant(row.status)}>{row.type}</Badge>
                         </div>
-                        <p className='mt-1 text-sm text-muted-foreground'>
+                        <p className='text-muted-foreground mt-1 text-sm'>
                           {row.studentName} · {row.courseTitle}
                         </p>
-                        <p className='mt-1 text-xs text-primary'>{row.scoreDisplay}</p>
+                        <p className='text-primary mt-1 text-xs'>{row.scoreDisplay}</p>
                       </div>
                     ))
                   )}
@@ -1298,15 +1353,19 @@ export function InstructorAssessmentWorkspace({
             description='Manage instructor-owned assignments and quizzes by course with a cleaner, standard assessment layout.'
           />
 
-          <div className='flex flex-col gap-4 rounded-[28px] border border-border/60 bg-card/90 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
-            <Tabs value={taskType} onValueChange={value => setTaskType(value as TaskType)} className='w-full'>
+          <div className='border-border/60 bg-card/90 flex flex-col gap-4 rounded-[28px] border p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
+            <Tabs
+              value={taskType}
+              onValueChange={value => setTaskType(value as TaskType)}
+              className='w-full'
+            >
               <TabsList className='grid w-full grid-cols-2 sm:w-[320px]'>
                 <TabsTrigger value='assignment'>Assignments</TabsTrigger>
                 <TabsTrigger value='quiz'>Quizzes</TabsTrigger>
               </TabsList>
             </Tabs>
 
-            <div className='flex flex-col gap-3 sm:flex-row'>
+            {/* <div className='flex flex-col gap-3 sm:flex-row'>
               <Button
                 disabled={selectedCourseId === ALL_COURSES}
                 onClick={() => {
@@ -1328,16 +1387,8 @@ export function InstructorAssessmentWorkspace({
                 <ListChecks className='mr-2 h-4 w-4' />
                 New quiz
               </Button>
-            </div>
+            </div> */}
           </div>
-
-          {selectedCourseId === ALL_COURSES ? (
-            <EmptyState
-              icon={BookOpen}
-              title='Pick a course to create new tasks'
-              description='You can still browse existing tasks across all courses, but creating a new assignment or quiz requires a specific course context.'
-            />
-          ) : null}
 
           {taskType === 'assignment' ? (
             filteredAssignments.length === 0 ? (
@@ -1348,65 +1399,81 @@ export function InstructorAssessmentWorkspace({
               />
             ) : (
               <div className='grid gap-4 xl:grid-cols-2'>
-                {filteredAssignments.map(item => (
-                  <Card key={item.uuid} className={cx(getCardClasses(), 'p-0 hover:translate-y-0')}>
-                    <CardHeader className='space-y-3 p-5 pb-3 sm:p-6'>
-                      <div className='flex items-start justify-between gap-4'>
-                        <div className='space-y-2'>
-                          <div className='flex flex-wrap gap-2'>
-                            <Badge variant='secondary'>{item.courseTitle}</Badge>
-                            <Badge variant={getStatusVariant(item.status)}>
-                              {formatEnum(item.status)}
-                            </Badge>
+                {filteredAssignments.map(item => {
+                  const isManageable = canManageAssignment(item);
+
+                  return (
+                    <Card
+                      key={item.uuid}
+                      className={cx(getCardClasses(), 'p-0 hover:translate-y-0')}
+                    >
+                      <CardHeader className='space-y-3 p-5 pb-3 sm:p-6'>
+                        <div className='flex items-start justify-between gap-4'>
+                          <div className='space-y-2'>
+                            <div className='flex flex-wrap gap-2'>
+                              <Badge variant='secondary'>{item.courseTitle}</Badge>
+                              <Badge variant={getStatusVariant(item.status)}>
+                                {formatEnum(item.status)}
+                              </Badge>
+                              {!isManageable ? <Badge variant='outline'>View only</Badge> : null}
+                            </div>
+                            <h3 className='text-foreground text-lg font-semibold'>{item.title}</h3>
                           </div>
-                          <h3 className='text-lg font-semibold text-foreground'>{item.title}</h3>
+                          {isManageable ? (
+                            <div className='flex items-center gap-2'>
+                              <Button
+                                variant='outline'
+                                size='icon'
+                                onClick={() => {
+                                  setEditingAssignment(item);
+                                  setAssignmentDialogOpen(true);
+                                }}
+                              >
+                                <PenLine className='h-4 w-4' />
+                              </Button>
+                              <Button
+                                variant='outline'
+                                size='icon'
+                                onClick={() => setAssignmentToDelete(item)}
+                              >
+                                <Trash2 className='h-4 w-4' />
+                              </Button>
+                            </div>
+                          ) : null}
                         </div>
-                        <div className='flex items-center gap-2'>
-                          <Button
-                            variant='outline'
-                            size='icon'
-                            onClick={() => {
-                              setEditingAssignment(item);
-                              setAssignmentDialogOpen(true);
-                            }}
-                          >
-                            <PenLine className='h-4 w-4' />
-                          </Button>
-                          <Button
-                            variant='outline'
-                            size='icon'
-                            onClick={() => setAssignmentToDelete(item)}
-                          >
-                            <Trash2 className='h-4 w-4' />
-                          </Button>
+                      </CardHeader>
+                      <CardContent className='space-y-4 p-5 pt-0 sm:p-6 sm:pt-0'>
+                        <div className='text-muted-foreground text-sm'>
+                          <RichTextRenderer htmlString={item.description || ''} maxChars={220} />
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className='space-y-4 p-5 pt-0 sm:p-6 sm:pt-0'>
-                      <div className='text-sm text-muted-foreground'>
-                        <RichTextRenderer htmlString={item.description || ''} maxChars={220} />
-                      </div>
-                      <div className='grid gap-3 sm:grid-cols-2'>
-                        <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                          <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                            Due date
-                          </p>
-                          <p className='mt-1 text-sm font-medium text-foreground'>
-                            {formatDateTime(item.due_date)}
-                          </p>
+                        <div className='grid gap-3 sm:grid-cols-2'>
+                          <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                            <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                              Due date
+                            </p>
+                            <p className='text-foreground mt-1 text-sm font-medium'>
+                              {formatDateTime(item.due_date)}
+                            </p>
+                          </div>
+                          <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                            <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                              Max. Points
+                            </p>
+                            <p className='text-foreground mt-1 text-sm font-medium'>
+                              {item.points_display || `${item.max_points || 0} pts`}
+                            </p>
+                          </div>
                         </div>
-                        <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                          <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                            Points
+                        {!isManageable ? (
+                          <p className='text-muted-foreground text-xs'>
+                            This assignment was created outside the instructor workspace and is
+                            view-only here.
                           </p>
-                          <p className='mt-1 text-sm font-medium text-foreground'>
-                            {item.points_display || `${item.max_points || 0} pts`}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        ) : null}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )
           ) : filteredQuizzes.length === 0 ? (
@@ -1417,71 +1484,96 @@ export function InstructorAssessmentWorkspace({
             />
           ) : (
             <div className='grid gap-4 xl:grid-cols-2'>
-              {filteredQuizzes.map(item => (
-                <Card key={item.uuid} className={cx(getCardClasses(), 'p-0 hover:translate-y-0')}>
-                  <CardHeader className='space-y-3 p-5 pb-3 sm:p-6'>
-                    <div className='flex items-start justify-between gap-4'>
-                      <div className='space-y-2'>
-                        <div className='flex flex-wrap gap-2'>
-                          <Badge variant='secondary'>{item.courseTitle}</Badge>
-                          <Badge variant={getStatusVariant(item.status)}>
-                            {formatEnum(item.status)}
-                          </Badge>
+              {filteredQuizzes.map(item => {
+                const isManageable = canManageQuiz(item);
+
+                return (
+                  <Card key={item.uuid} className={cx(getCardClasses(), 'p-0 hover:translate-y-0')}>
+                    <CardHeader className='space-y-3 p-5 pb-3 sm:p-6'>
+                      <div className='flex items-start justify-between gap-4'>
+                        <div className='space-y-2'>
+                          <div className='flex flex-wrap gap-2'>
+                            <Badge variant='secondary'>{item.courseTitle}</Badge>
+                            <Badge variant={getStatusVariant(item.status)}>
+                              {formatEnum(item.status)}
+                            </Badge>
+                            {!isManageable ? <Badge variant='outline'>View only</Badge> : null}
+                          </div>
+                          <h3 className='text-foreground text-lg font-semibold'>{item.title}</h3>
                         </div>
-                        <h3 className='text-lg font-semibold text-foreground'>{item.title}</h3>
+                        {isManageable ? (
+                          <div className='flex items-center gap-2'>
+                            <Button
+                              variant='outline'
+                              size='icon'
+                              onClick={() => {
+                                setEditingQuiz(item);
+                                setQuizDialogOpen(true);
+                              }}
+                            >
+                              <PenLine className='h-4 w-4' />
+                            </Button>
+                            <Button
+                              variant='outline'
+                              size='icon'
+                              onClick={() => setQuizToDelete(item)}
+                            >
+                              <Trash2 className='h-4 w-4' />
+                            </Button>
+                          </div>
+                        ) : null}
                       </div>
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          variant='outline'
-                          size='icon'
-                          onClick={() => {
-                            setEditingQuiz(item);
-                            setQuizDialogOpen(true);
-                          }}
-                        >
-                          <PenLine className='h-4 w-4' />
-                        </Button>
-                        <Button variant='outline' size='icon' onClick={() => setQuizToDelete(item)}>
-                          <Trash2 className='h-4 w-4' />
-                        </Button>
+                    </CardHeader>
+                    <CardContent className='space-y-4 p-5 pt-0 sm:p-6 sm:pt-0'>
+                      <p className='text-muted-foreground text-sm'>
+                        {item.description || 'No description provided.'}
+                      </p>
+                      <div className='grid gap-3 sm:grid-cols-3'>
+                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                          <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                            Time limit
+                          </p>
+                          <p className='text-foreground mt-1 text-sm font-medium'>
+                            {item.time_limit_display || 'Not timed'}
+                          </p>
+                        </div>
+                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                          <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                            Attempts
+                          </p>
+                          <p className='text-foreground mt-1 text-sm font-medium'>
+                            {item.attempts_allowed || 'N/A'}
+                          </p>
+                        </div>
+                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                          <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                            Passing score
+                          </p>
+                          <p className='text-foreground mt-1 text-sm font-medium'>
+                            {item.passing_score ?? 'N/A'}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className='space-y-4 p-5 pt-0 sm:p-6 sm:pt-0'>
-                    <p className='text-sm text-muted-foreground'>
-                      {item.description || 'No description provided.'}
-                    </p>
-                    <div className='grid gap-3 sm:grid-cols-3'>
-                      <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                        <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                          Time limit
+                      {!isManageable ? (
+                        <p className='text-muted-foreground text-xs'>
+                          This quiz was created outside the instructor workspace and is view-only
+                          here.
                         </p>
-                        <p className='mt-1 text-sm font-medium text-foreground'>
-                          {item.time_limit_display || 'Not timed'}
-                        </p>
-                      </div>
-                      <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                        <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                          Attempts
-                        </p>
-                        <p className='mt-1 text-sm font-medium text-foreground'>
-                          {item.attempts_allowed || 'N/A'}
-                        </p>
-                      </div>
-                      <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                        <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                          Passing score
-                        </p>
-                        <p className='mt-1 text-sm font-medium text-foreground'>
-                          {item.passing_score ?? 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
+
+          {/* {selectedCourseId === ALL_COURSES ? (
+            <EmptyState
+              icon={BookOpen}
+              title='Pick a course to create new tasks'
+              description='You can still browse existing tasks across all courses, but creating a new assignment or quiz requires a specific course context.'
+            />
+          ) : null} */}
         </TabsContent>
 
         <TabsContent value='submissions' className='space-y-6'>
@@ -1491,7 +1583,7 @@ export function InstructorAssessmentWorkspace({
             description='Assignments expose manual grading actions, while quiz attempts show automatically scored performance where available.'
           />
 
-          <div className='flex flex-col gap-4 rounded-[28px] border border-border/60 bg-card/90 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
+          <div className='border-border/60 bg-card/90 flex flex-col gap-4 rounded-[28px] border p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
             <Tabs
               value={submissionType}
               onValueChange={value => setSubmissionType(value as TaskType)}
@@ -1502,7 +1594,7 @@ export function InstructorAssessmentWorkspace({
                 <TabsTrigger value='quiz'>Quiz attempts</TabsTrigger>
               </TabsList>
             </Tabs>
-            <p className='text-sm text-muted-foreground'>
+            <p className='text-muted-foreground text-sm'>
               {submissionType === 'assignment'
                 ? `${filteredSubmissions.length} submission${filteredSubmissions.length === 1 ? '' : 's'} found`
                 : `${filteredAttempts.length} attempt${filteredAttempts.length === 1 ? '' : 's'} found`}
@@ -1529,16 +1621,26 @@ export function InstructorAssessmentWorkspace({
                               {formatEnum(item.status)}
                             </Badge>
                           </div>
-                          <h3 className='text-lg font-semibold text-foreground'>{item.assignmentTitle}</h3>
-                          <p className='text-sm text-muted-foreground'>
+                          <h3 className='text-foreground text-lg font-semibold'>
+                            {item.assignmentTitle}
+                          </h3>
+                          <p className='text-muted-foreground text-sm'>
                             {item.studentName} · {item.classTitle}
                           </p>
                         </div>
                         <div className='flex items-center gap-2'>
-                          <Button variant='outline' size='icon' onClick={() => setViewingSubmission(item)}>
+                          <Button
+                            variant='outline'
+                            size='icon'
+                            onClick={() => setViewingSubmission(item)}
+                          >
                             <Eye className='h-4 w-4' />
                           </Button>
-                          <Button variant='outline' size='icon' onClick={() => setGradingSubmission(item)}>
+                          <Button
+                            variant='outline'
+                            size='icon'
+                            onClick={() => setGradingSubmission(item)}
+                          >
                             <Award className='h-4 w-4' />
                           </Button>
                         </div>
@@ -1546,25 +1648,29 @@ export function InstructorAssessmentWorkspace({
                     </CardHeader>
                     <CardContent className='space-y-4 p-5 pt-0 sm:p-6 sm:pt-0'>
                       <div className='grid gap-3 sm:grid-cols-2'>
-                        <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                          <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                          <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                             Submitted
                           </p>
-                          <p className='mt-1 text-sm font-medium text-foreground'>
+                          <p className='text-foreground mt-1 text-sm font-medium'>
                             {formatDateTime(item.submitted_at)}
                           </p>
                         </div>
-                        <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                          <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                        <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                          <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                             Grade
                           </p>
-                          <p className='mt-1 text-sm font-medium text-foreground'>
+                          <p className='text-foreground mt-1 text-sm font-medium'>
                             {item.grade_display || 'Not graded yet'}
                           </p>
                         </div>
                       </div>
                       <div className='flex flex-wrap gap-3'>
-                        <Button variant='outline' className='gap-2' onClick={() => setViewingSubmission(item)}>
+                        <Button
+                          variant='outline'
+                          className='gap-2'
+                          onClick={() => setViewingSubmission(item)}
+                        >
                           <Eye className='h-4 w-4' />
                           View details
                         </Button>
@@ -1592,39 +1698,41 @@ export function InstructorAssessmentWorkspace({
                     <div className='space-y-2'>
                       <div className='flex flex-wrap gap-2'>
                         <Badge variant='secondary'>{item.courseTitle}</Badge>
-                        <Badge variant={getStatusVariant(item.status)}>{formatEnum(item.status)}</Badge>
+                        <Badge variant={getStatusVariant(item.status)}>
+                          {formatEnum(item.status)}
+                        </Badge>
                         <Badge variant={item.is_passed ? 'success' : 'outline'}>
                           {item.is_passed ? 'Passed' : 'Review'}
                         </Badge>
                       </div>
-                      <h3 className='text-lg font-semibold text-foreground'>{item.quizTitle}</h3>
-                      <p className='text-sm text-muted-foreground'>
+                      <h3 className='text-foreground text-lg font-semibold'>{item.quizTitle}</h3>
+                      <p className='text-muted-foreground text-sm'>
                         {item.studentName} · {item.classTitle}
                       </p>
                     </div>
                   </CardHeader>
                   <CardContent className='grid gap-3 p-5 pt-0 sm:grid-cols-3 sm:p-6 sm:pt-0'>
-                    <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                      <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                    <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                      <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                         Score
                       </p>
-                      <p className='mt-1 text-sm font-medium text-foreground'>
+                      <p className='text-foreground mt-1 text-sm font-medium'>
                         {item.grade_display || `${item.score ?? 0}/${item.max_score ?? 0}`}
                       </p>
                     </div>
-                    <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                      <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                    <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                      <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                         Attempt
                       </p>
-                      <p className='mt-1 text-sm font-medium text-foreground'>
+                      <p className='text-foreground mt-1 text-sm font-medium'>
                         Attempt {item.attempt_number || 1}
                       </p>
                     </div>
-                    <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                      <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                    <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                      <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                         Submitted
                       </p>
-                      <p className='mt-1 text-sm font-medium text-foreground'>
+                      <p className='text-foreground mt-1 text-sm font-medium'>
                         {formatDateTime(item.submitted_at)}
                       </p>
                     </div>
@@ -1647,8 +1755,8 @@ export function InstructorAssessmentWorkspace({
               <CardHeader className='p-5 pb-3 sm:p-6'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <h3 className='text-lg font-semibold text-foreground'>Pending grading</h3>
-                    <p className='text-sm text-muted-foreground'>
+                    <h3 className='text-foreground text-lg font-semibold'>Pending grading</h3>
+                    <p className='text-muted-foreground text-sm'>
                       Open each submission to score it or return it for revision.
                     </p>
                   </div>
@@ -1657,21 +1765,25 @@ export function InstructorAssessmentWorkspace({
               </CardHeader>
               <CardContent className='space-y-3 p-5 pt-0 sm:p-6 sm:pt-0'>
                 {pendingGrading.length === 0 ? (
-                  <p className='text-sm text-muted-foreground'>No grading backlog.</p>
+                  <p className='text-muted-foreground text-sm'>No grading backlog.</p>
                 ) : (
                   pendingGrading.map(item => (
                     <div
                       key={item.uuid}
-                      className='rounded-[24px] border border-border/60 bg-background/70 p-4'
+                      className='border-border/60 bg-background/70 rounded-[24px] border p-4'
                     >
                       <div className='flex flex-wrap items-center justify-between gap-2'>
                         <div>
-                          <p className='font-medium text-foreground'>{item.assignmentTitle}</p>
-                          <p className='text-sm text-muted-foreground'>
+                          <p className='text-foreground font-medium'>{item.assignmentTitle}</p>
+                          <p className='text-muted-foreground text-sm'>
                             {item.studentName} · {item.courseTitle}
                           </p>
                         </div>
-                        <Button size='sm' className='gap-2' onClick={() => setGradingSubmission(item)}>
+                        <Button
+                          size='sm'
+                          className='gap-2'
+                          onClick={() => setGradingSubmission(item)}
+                        >
                           <Award className='h-4 w-4' />
                           Grade
                         </Button>
@@ -1686,8 +1798,8 @@ export function InstructorAssessmentWorkspace({
               <CardHeader className='p-5 pb-3 sm:p-6'>
                 <div className='flex items-center justify-between gap-4'>
                   <div>
-                    <h3 className='text-lg font-semibold text-foreground'>Recorded grades</h3>
-                    <p className='text-sm text-muted-foreground'>
+                    <h3 className='text-foreground text-lg font-semibold'>Recorded grades</h3>
+                    <p className='text-muted-foreground text-sm'>
                       Latest assignment grades and quiz performance.
                     </p>
                   </div>
@@ -1696,12 +1808,12 @@ export function InstructorAssessmentWorkspace({
               </CardHeader>
               <CardContent className='p-5 pt-0 sm:p-6 sm:pt-0'>
                 {gradebookRows.length === 0 ? (
-                  <p className='text-sm text-muted-foreground'>No grades available yet.</p>
+                  <p className='text-muted-foreground text-sm'>No grades available yet.</p>
                 ) : (
-                  <div className='overflow-hidden rounded-[24px] border border-border/60'>
+                  <div className='border-border/60 overflow-hidden rounded-[24px] border'>
                     <ScrollArea className='max-h-[520px]'>
                       <div className='min-w-[760px]'>
-                        <div className='grid grid-cols-[1.1fr_1.1fr_0.8fr_0.8fr_0.8fr] border-b border-border/60 bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                        <div className='border-border/60 bg-muted/40 text-muted-foreground grid grid-cols-[1.1fr_1.1fr_0.8fr_0.8fr_0.8fr] border-b px-4 py-3 text-xs font-semibold tracking-wide uppercase'>
                           <span>Student</span>
                           <span>Task</span>
                           <span>Type</span>
@@ -1711,16 +1823,18 @@ export function InstructorAssessmentWorkspace({
                         {gradebookRows.map(row => (
                           <div
                             key={row.id}
-                            className='grid grid-cols-[1.1fr_1.1fr_0.8fr_0.8fr_0.8fr] items-center border-b border-border/40 px-4 py-3 text-sm last:border-b-0'
+                            className='border-border/40 grid grid-cols-[1.1fr_1.1fr_0.8fr_0.8fr_0.8fr] items-center border-b px-4 py-3 text-sm last:border-b-0'
                           >
                             <div>
-                              <p className='font-medium text-foreground'>{row.studentName}</p>
-                              <p className='text-xs text-muted-foreground'>{row.courseTitle}</p>
+                              <p className='text-foreground font-medium'>{row.studentName}</p>
+                              <p className='text-muted-foreground text-xs'>{row.courseTitle}</p>
                             </div>
                             <span className='text-foreground'>{row.taskTitle}</span>
                             <span className='text-muted-foreground'>{row.type}</span>
-                            <span className='font-medium text-primary'>{row.scoreDisplay}</span>
-                            <Badge variant={getStatusVariant(row.status)}>{formatEnum(row.status)}</Badge>
+                            <span className='text-primary font-medium'>{row.scoreDisplay}</span>
+                            <Badge variant={getStatusVariant(row.status)}>
+                              {formatEnum(row.status)}
+                            </Badge>
                           </div>
                         ))}
                       </div>
@@ -1742,14 +1856,14 @@ export function InstructorAssessmentWorkspace({
           <Card className={cx(getCardClasses(), 'hover:translate-y-0')}>
             <CardContent className='space-y-4 p-0'>
               <div className='flex items-start gap-4'>
-                <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                   <GraduationCap className='h-5 w-5' />
                 </div>
                 <div className='space-y-3'>
-                  <h3 className='text-lg font-semibold text-foreground'>
+                  <h3 className='text-foreground text-lg font-semibold'>
                     Exam management will plug into this workspace once the API is available
                   </h3>
-                  <p className='max-w-3xl text-sm text-muted-foreground'>
+                  <p className='text-muted-foreground max-w-3xl text-sm'>
                     I could not find a dedicated exam management or grading API in the generated
                     client. Rather than showing a broken interface, this section now communicates
                     the current platform capability clearly while assignments and quizzes handle the

@@ -124,6 +124,12 @@ export default function InstructorSchedulePage() {
     [classes, selectedClassId]
   );
 
+  const isSelectedDateToday = useMemo(() => isSameDay(selectedDate, new Date()), [selectedDate]);
+
+  const focusLabel = isSelectedDateToday
+    ? "Day's focus"
+    : `${moment(selectedDate).format('ddd, MMM D')} focus`;
+
   const stats = useMemo(() => {
     const totalSessions = allSchedules.length;
     const upcoming = allSchedules.filter(schedule =>
@@ -176,11 +182,13 @@ export default function InstructorSchedulePage() {
   return (
     <main className={elimikaDesignSystem.components.pageContainer}>
       <section className={cx(getHeaderClasses(), 'relative overflow-hidden')}>
-        <div className='dark:hidden pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,97,237,0.14),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(0,97,237,0.12),transparent_35%)]' />
+        <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,97,237,0.14),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(0,97,237,0.12),transparent_35%)] dark:hidden' />
         <div className='relative space-y-6'>
           <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
             <div className='space-y-4'>
-              <Badge className={elimikaDesignSystem.components.header.badge}>Instructor schedules</Badge>
+              <Badge className={elimikaDesignSystem.components.header.badge}>
+                Instructor schedules
+              </Badge>
               <div className='space-y-3'>
                 <h1 className={elimikaDesignSystem.components.header.title}>
                   Calendar-driven class management
@@ -192,16 +200,16 @@ export default function InstructorSchedulePage() {
               </div>
             </div>
 
-            <Card className='w-full max-w-md rounded-[32px] border-primary/20 bg-primary/5 shadow-none'>
+            <Card className='border-primary/20 bg-primary/5 w-full max-w-md rounded-[32px] shadow-none'>
               <CardContent className='space-y-3 p-6'>
-                <div className='flex items-center gap-2 text-primary'>
+                <div className='text-primary flex items-center gap-2'>
                   <Sparkles className='h-4 w-4' />
-                  <span className='text-sm font-semibold'>Today&apos;s focus</span>
+                  <span className='text-sm font-semibold'>{focusLabel}</span>
                 </div>
-                <p className='text-2xl font-semibold text-foreground'>
+                <p className='text-foreground text-2xl font-semibold'>
                   {filteredSchedules.length} session{filteredSchedules.length === 1 ? '' : 's'}
                 </p>
-                <p className='text-sm text-muted-foreground'>
+                <p className='text-muted-foreground text-sm'>
                   {moment(selectedDate).format('dddd, MMMM D')} agenda currently loaded for direct
                   class operations.
                 </p>
@@ -213,12 +221,12 @@ export default function InstructorSchedulePage() {
             <Card className={getStatCardClasses()}>
               <CardContent className='p-0'>
                 <div className='flex items-center gap-3'>
-                  <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                  <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                     <CalendarDays className='h-5 w-5' />
                   </div>
                   <div>
-                    <p className='text-sm text-muted-foreground'>All sessions</p>
-                    <p className='text-2xl font-semibold text-foreground'>{stats.totalSessions}</p>
+                    <p className='text-muted-foreground text-sm'>All sessions</p>
+                    <p className='text-foreground text-2xl font-semibold'>{stats.totalSessions}</p>
                   </div>
                 </div>
               </CardContent>
@@ -227,12 +235,12 @@ export default function InstructorSchedulePage() {
             <Card className={getStatCardClasses()}>
               <CardContent className='p-0'>
                 <div className='flex items-center gap-3'>
-                  <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                  <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                     <Clock3 className='h-5 w-5' />
                   </div>
                   <div>
-                    <p className='text-sm text-muted-foreground'>Upcoming</p>
-                    <p className='text-2xl font-semibold text-foreground'>{stats.upcoming}</p>
+                    <p className='text-muted-foreground text-sm'>Upcoming</p>
+                    <p className='text-foreground text-2xl font-semibold'>{stats.upcoming}</p>
                   </div>
                 </div>
               </CardContent>
@@ -241,12 +249,12 @@ export default function InstructorSchedulePage() {
             <Card className={getStatCardClasses()}>
               <CardContent className='p-0'>
                 <div className='flex items-center gap-3'>
-                  <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                  <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                     <Layers3 className='h-5 w-5' />
                   </div>
                   <div>
-                    <p className='text-sm text-muted-foreground'>Classes</p>
-                    <p className='text-2xl font-semibold text-foreground'>{stats.uniqueCourses}</p>
+                    <p className='text-muted-foreground text-sm'>Classes</p>
+                    <p className='text-foreground text-2xl font-semibold'>{stats.uniqueCourses}</p>
                   </div>
                 </div>
               </CardContent>
@@ -255,12 +263,12 @@ export default function InstructorSchedulePage() {
             <Card className={getStatCardClasses()}>
               <CardContent className='p-0'>
                 <div className='flex items-center gap-3'>
-                  <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                  <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                     <Users className='h-5 w-5' />
                   </div>
                   <div>
-                    <p className='text-sm text-muted-foreground'>Selected day</p>
-                    <p className='text-2xl font-semibold text-foreground'>{stats.todaysSessions}</p>
+                    <p className='text-muted-foreground text-sm'>Selected day</p>
+                    <p className='text-foreground text-2xl font-semibold'>{stats.todaysSessions}</p>
                   </div>
                 </div>
               </CardContent>
@@ -270,14 +278,14 @@ export default function InstructorSchedulePage() {
       </section>
 
       <section className='grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]'>
-        <Card className='overflow-hidden rounded-[32px] border-border/60 bg-card/95'>
+        <Card className='border-border/60 bg-card/95 overflow-hidden rounded-[32px]'>
           <CardContent className='space-y-6 p-5 sm:p-6'>
             <div className='space-y-1'>
               <Badge variant='outline' className='border-primary/30 bg-primary/5 text-primary'>
                 Filters
               </Badge>
-              <h2 className='text-xl font-semibold text-foreground'>Pick a date and class</h2>
-              <p className='text-sm text-muted-foreground'>
+              <h2 className='text-foreground text-xl font-semibold'>Pick a date and class</h2>
+              <p className='text-muted-foreground text-sm'>
                 The day agenda updates immediately and keeps session actions available across mobile
                 and desktop layouts.
               </p>
@@ -285,7 +293,7 @@ export default function InstructorSchedulePage() {
 
             <div className='grid gap-3'>
               <div className='relative'>
-                <Search className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+                <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                 <Input
                   value={searchQuery}
                   onChange={event => setSearchQuery(event.target.value)}
@@ -322,7 +330,7 @@ export default function InstructorSchedulePage() {
               </Button>
             </div>
 
-            <div className='rounded-[28px] border border-border/60 bg-background/70 p-3'>
+            <div className='border-border/60 bg-background/70 rounded-[28px] border p-3'>
               <DateCalendar
                 mode='single'
                 selected={selectedDate}
@@ -335,28 +343,28 @@ export default function InstructorSchedulePage() {
               />
             </div>
 
-            <div className='space-y-3 rounded-[28px] border border-border/60 bg-background/70 p-4'>
+            <div className='border-border/60 bg-background/70 space-y-3 rounded-[28px] border p-4'>
               <div className='flex items-center justify-between'>
-                <h3 className='text-sm font-semibold text-foreground'>Upcoming preview</h3>
+                <h3 className='text-foreground text-sm font-semibold'>Upcoming preview</h3>
                 <Badge variant='secondary'>{upcomingPreview.length}</Badge>
               </div>
 
               {upcomingPreview.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>No upcoming sessions available.</p>
+                <p className='text-muted-foreground text-sm'>No upcoming sessions available.</p>
               ) : (
                 <div className='space-y-3'>
                   {upcomingPreview.map(schedule => (
                     <button
                       key={schedule.uuid}
                       type='button'
-                      className='w-full rounded-[24px] border border-border/60 bg-card/80 p-3 text-left transition hover:border-primary/40 hover:bg-primary/5'
+                      className='border-border/60 bg-card/80 hover:border-primary/40 hover:bg-primary/5 w-full rounded-[24px] border p-3 text-left transition'
                       onClick={() => setSelectedDate(new Date(schedule.start_time))}
                     >
-                      <p className='font-medium text-foreground'>{schedule.classTitle}</p>
-                      <p className='mt-1 text-xs text-muted-foreground'>
+                      <p className='text-foreground font-medium'>{schedule.classTitle}</p>
+                      <p className='text-muted-foreground mt-1 text-xs'>
                         {moment(schedule.start_time).format('ddd, MMM D · h:mm A')}
                       </p>
-                      <p className='mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground'>
+                      <p className='text-muted-foreground mt-1 inline-flex items-center gap-1 text-xs'>
                         <MapPin className='h-3.5 w-3.5' />
                         {schedule.location_name || schedule.location_type || 'Location pending'}
                       </p>
@@ -370,13 +378,13 @@ export default function InstructorSchedulePage() {
 
         <div className='space-y-6'>
           <div className='space-y-2'>
-            <Badge variant='outline' className='w-fit border-primary/30 bg-primary/5 text-primary'>
+            <Badge variant='outline' className='border-primary/30 bg-primary/5 text-primary w-fit'>
               Day agenda
             </Badge>
-            <h2 className='text-2xl font-semibold text-foreground'>
+            <h2 className='text-foreground text-2xl font-semibold'>
               {moment(selectedDate).format('dddd, MMMM D')}
             </h2>
-            <p className='text-sm text-muted-foreground'>
+            <p className='text-muted-foreground text-sm'>
               {selectedClass
                 ? `Showing sessions for ${selectedClass.title}.`
                 : 'Showing sessions for all instructor classes.'}

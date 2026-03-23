@@ -351,7 +351,7 @@ const MySkillsPage = () => {
                     className='hidden items-center gap-2'
                   >
                     <PlusCircle className='h-4 w-4' />
-                    Add Your First Skill
+                    Add New Skill
                   </Button>
 
                   <Button
@@ -362,7 +362,7 @@ const MySkillsPage = () => {
                   >
                     {/* Browse Courses */}
                     <PlusCircle className='h-5 w-5' />
-                    Add Your First Skill
+                    Add New Skill
                   </Button>
                 </div>
               ) : (

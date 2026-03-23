@@ -283,9 +283,10 @@ const MySkillsPage = () => {
                   </p>
                   <Button
                     onClick={() => router.push('/dashboard/all-courses')}
-                    className='flex items-center gap-2'>
+                    className='flex items-center gap-2'
+                  >
                     <PlusCircle className='h-4 w-4' />
-                    Add Your First Skill
+                    Add New Skill
                   </Button>
                 </div>
               ) : (

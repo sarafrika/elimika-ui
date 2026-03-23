@@ -17,6 +17,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { CourseCard } from '../_components/course-card';
 
+const normalizeText = (value?: string | null) => value?.toLowerCase().trim() ?? '';
+
 export default function MyCoursesPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -59,32 +61,32 @@ export default function MyCoursesPage() {
   const currentCategory = CATEGORIES.find(cat => cat.name === selectedCategory);
 
   const filteredCourses = courses?.filter((course: any) => {
+    const normalizedSearch = normalizeText(searchQuery);
     const matchesSearch =
-      searchQuery === '' ||
-      course?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course?.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    // course?.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      normalizedSearch === '' ||
+      normalizeText(course?.name || course?.title).includes(normalizedSearch) ||
+      normalizeText(course?.description).includes(normalizedSearch);
 
     const matchesCategory =
       selectedCategory === 'All' ||
       course?.category_names?.some(
-        (cat: string) => cat.toLowerCase() === currentCategory?.name.toLowerCase()
+        (cat: string) => normalizeText(cat) === normalizeText(currentCategory?.name)
       );
 
     return matchesSearch && matchesCategory;
   });
 
   const filteredPrograms = programs?.filter((program: any) => {
+    const normalizedSearch = normalizeText(searchQuery);
     const matchesSearch =
-      searchQuery === '' ||
-      program?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      program?.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    // course?.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      normalizedSearch === '' ||
+      normalizeText(program?.title || program?.name).includes(normalizedSearch) ||
+      normalizeText(program?.description).includes(normalizedSearch);
 
     const matchesCategory =
       selectedCategory === 'All' ||
       program?.category_names?.some(
-        (cat: string) => cat.toLowerCase() === currentCategory?.name.toLowerCase()
+        (cat: string) => normalizeText(cat) === normalizeText(currentCategory?.name)
       );
 
     return matchesSearch && matchesCategory;
@@ -119,32 +121,28 @@ export default function MyCoursesPage() {
       <div className='container mx-auto py-2'>
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
-          <TabsList className="mb-2 grid w-full max-w-md grid-cols-2 bg-muted dark:bg-gray-800">
+          <TabsList className='bg-muted mb-2 grid w-full max-w-md grid-cols-2 dark:bg-gray-800'>
             <TabsTrigger
-              value="courses"
-              className="flex items-center gap-2
-      data-[state=active]:bg-white data-[state=active]:text-black
-      dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white"
+              value='courses'
+              className='flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white'
             >
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className='h-4 w-4' />
               Courses
               {filteredCourses.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant='secondary' className='ml-1'>
                   {filteredCourses.length}
                 </Badge>
               )}
             </TabsTrigger>
 
             <TabsTrigger
-              value="programs"
-              className="flex items-center gap-2
-      data-[state=active]:bg-white data-[state=active]:text-black
-      dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white"
+              value='programs'
+              className='flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white'
             >
-              <Layers className="h-4 w-4" />
+              <Layers className='h-4 w-4' />
               Programs
               {filteredPrograms.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant='secondary' className='ml-1'>
                   {filteredPrograms.length}
                 </Badge>
               )}
@@ -182,12 +180,7 @@ export default function MyCoursesPage() {
                     <TabsTrigger
                       key={category.name}
                       value={category.name}
-                      className="flex flex-shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 
-  hover:bg-gray-100 hover:text-black
-  data-[state=active]:bg-white data-[state=active]:text-black
-  
-  dark:hover:bg-gray-700 dark:hover:text-white
-  dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white"
+                      className='flex flex-shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 hover:bg-gray-100 hover:text-black data-[state=active]:bg-white data-[state=active]:text-black dark:hover:bg-gray-700 dark:hover:text-white dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white'
                     >
                       {category.name}
                     </TabsTrigger>
@@ -200,9 +193,14 @@ export default function MyCoursesPage() {
           {/* Results */}
           <div className='mb-6'>
             <div className='flex items-center justify-between'>
-              <h2>{selectedCategory === 'all' ? 'All Courses' : currentCategory?.name}</h2>
+              <h2>{selectedCategory === 'All' ? 'All Courses' : currentCategory?.name}</h2>
               <p className='text-muted-foreground text-sm'>
-                {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
+                {activeTab === 'courses' ? filteredCourses.length : filteredPrograms.length}{' '}
+                {activeTab === 'courses' ? 'course' : 'program'}
+                {(activeTab === 'courses' ? filteredCourses.length : filteredPrograms.length) !== 1
+                  ? 's'
+                  : ''}{' '}
+                found
               </p>
             </div>
           </div>
@@ -235,7 +233,7 @@ export default function MyCoursesPage() {
                   variant='outline'
                   onClick={() => {
                     setSearchQuery('');
-                    setSelectedCategory('all');
+                    setSelectedCategory('All');
                   }}
                 >
                   Clear filters
@@ -289,7 +287,7 @@ export default function MyCoursesPage() {
                   variant='outline'
                   onClick={() => {
                     setSearchQuery('');
-                    setSelectedCategory('all');
+                    setSelectedCategory('All');
                   }}
                 >
                   Clear filters

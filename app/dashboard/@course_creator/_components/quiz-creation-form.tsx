@@ -146,20 +146,23 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border hover:border-primary/50'
-                  }`}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
+                  opt.isCorrect
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                    }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                  }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
-                    }`}
+                  className={`text-sm font-medium ${
+                    opt.isCorrect ? 'text-primary' : 'text-foreground'
+                  }`}
                 >
                   {opt.text}
                 </span>

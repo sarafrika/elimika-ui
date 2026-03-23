@@ -973,8 +973,8 @@ const RubricManager: React.FC = () => {
                           const matchingScoring =
                             (scoringLevel.uuid
                               ? c.scoring.find(
-                                s => s.rubric_scoring_level_uuid === scoringLevel.uuid
-                              )
+                                  s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                                )
                               : undefined) ?? c.scoring[slIdx];
 
                           const scoringEntry = matchingScoring || {
@@ -989,8 +989,8 @@ const RubricManager: React.FC = () => {
                           // - Otherwise fall back to position index (slIdx)
                           const actualIdx = scoringLevel.uuid
                             ? c.scoring.findIndex(
-                              s => s.rubric_scoring_level_uuid === scoringLevel.uuid
-                            )
+                                s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                              )
                             : slIdx;
 
                           const resolvedIdx = actualIdx !== -1 ? actualIdx : slIdx;

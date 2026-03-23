@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,10 +39,14 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { deleteCourseMutation, getCourseTrainingRequirementsOptions, searchCoursesOptions, searchCoursesQueryKey } from '../../../../../services/client/@tanstack/react-query.gen';
+import {
+  deleteCourseMutation,
+  getCourseTrainingRequirementsOptions,
+  searchCoursesOptions,
+  searchCoursesQueryKey,
+} from '../../../../../services/client/@tanstack/react-query.gen';
 import { CatalogueWorkspace } from '../../../@admin/catalogue/_components/catalogue-workspace';
 import ProgramsList from '../../programs/_components/ProgramList';
-
 
 type CourseStatusFilter = 'all' | 'draft' | 'in_review' | 'published' | 'archived';
 
@@ -249,15 +253,18 @@ function CourseRow({ course }: { course: Course }) {
   const creator = useCourseCreator();
 
   const { data: tReq } = useQuery({
-    ...getCourseTrainingRequirementsOptions({ path: { courseUuid: course?.uuid as string }, query: { pageable: {} } }),
-    enabled: !!course?.uuid
-  })
+    ...getCourseTrainingRequirementsOptions({
+      path: { courseUuid: course?.uuid as string },
+      query: { pageable: {} },
+    }),
+    enabled: !!course?.uuid,
+  });
 
   const deleteCourse = useMutation(deleteCourseMutation());
 
   const statusMeta = STATUS_BADGE[course.status] ?? {
     label: course.status,
-    variant: "secondary",
+    variant: 'secondary',
   };
 
   const requirementsCount = tReq?.data?.metadata?.totalElements ?? 0;
@@ -270,7 +277,7 @@ function CourseRow({ course }: { course: Course }) {
         { path: { uuid } },
         {
           onSuccess: () => {
-            toast.success("Course deleted successfully");
+            toast.success('Course deleted successfully');
 
             qc.invalidateQueries({
               queryKey: searchCoursesQueryKey({
@@ -285,28 +292,23 @@ function CourseRow({ course }: { course: Course }) {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   return (
     <TableRow
-      className="cursor-pointer"
-      onClick={() =>
-        router.push(`/dashboard/course-management/preview/${course?.uuid}`)
-      }
+      className='cursor-pointer'
+      onClick={() => router.push(`/dashboard/course-management/preview/${course?.uuid}`)}
     >
       <TableCell>
-        <div className="flex flex-col gap-1">
-          <span className="leading-tight font-semibold">{course.name}</span>
+        <div className='flex flex-col gap-1'>
+          <span className='leading-tight font-semibold'>{course.name}</span>
 
-          <div className="text-muted-foreground text-xs">
+          <div className='text-muted-foreground text-xs'>
             {course?.description ? (
-              <RichTextRenderer
-                htmlString={course?.description as string}
-                maxChars={65}
-              />
+              <RichTextRenderer htmlString={course?.description as string} maxChars={65} />
             ) : (
-              "No description added yet."
+              'No description added yet.'
             )}
           </div>
         </div>
@@ -316,44 +318,33 @@ function CourseRow({ course }: { course: Course }) {
         <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
       </TableCell>
 
-      <TableCell className="font-medium">
-        {typeof course.minimum_training_fee === "number"
+      <TableCell className='font-medium'>
+        {typeof course.minimum_training_fee === 'number'
           ? formatCurrency(course.minimum_training_fee)
-          : "Not set"}
+          : 'Not set'}
       </TableCell>
 
       <TableCell>
-        {course.creator_share_percentage}% /{" "}
-        {course.instructor_share_percentage}%
+        {course.creator_share_percentage}% / {course.instructor_share_percentage}%
       </TableCell>
 
       <TableCell>{requirementsCount}</TableCell>
 
-      <TableCell className="text-muted-foreground text-sm">
-        {course.updated_date
-          ? format(new Date(course.updated_date), "dd MMM yyyy")
-          : "—"}
+      <TableCell className='text-muted-foreground text-sm'>
+        {course.updated_date ? format(new Date(course.updated_date), 'dd MMM yyyy') : '—'}
       </TableCell>
 
       {/* Actions */}
-      <TableCell
-        className="text-muted-foreground text-sm"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className=' items-center justify-center flex flex-row gap-3' >
-          <Link
-            href={`/dashboard/course-management/create-new-course?id=${course?.uuid}`}
-          >
+      <TableCell className='text-muted-foreground text-sm' onClick={e => e.stopPropagation()}>
+        <div className='flex flex-row items-center justify-center gap-3'>
+          <Link href={`/dashboard/course-management/create-new-course?id=${course?.uuid}`}>
             <Edit size={18} />
           </Link>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button>
-                <TrashIcon
-                  size={18}
-                  className="text-destructive hover:opacity-70"
-                />
+                <TrashIcon size={18} className='text-destructive hover:opacity-70' />
               </button>
             </AlertDialogTrigger>
 
@@ -362,8 +353,8 @@ function CourseRow({ course }: { course: Course }) {
                 <AlertDialogTitle>Delete Course</AlertDialogTitle>
 
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the
-                  course <b>{course.name}</b>.
+                  This action cannot be undone. This will permanently delete the course{' '}
+                  <b>{course.name}</b>.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
@@ -371,7 +362,7 @@ function CourseRow({ course }: { course: Course }) {
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
 
                 <AlertDialogAction
-                  className="bg-destructive text-white hover:bg-destructive/90"
+                  className='bg-destructive hover:bg-destructive/90 text-white'
                   onClick={() => handleDeleteCourse(course?.uuid as string)}
                 >
                   Delete
@@ -384,8 +375,6 @@ function CourseRow({ course }: { course: Course }) {
     </TableRow>
   );
 }
-
-
 
 function _truncate(value: string, length: number) {
   if (value.length <= length) return value;

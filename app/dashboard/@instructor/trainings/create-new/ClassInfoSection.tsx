@@ -36,7 +36,11 @@ export const ClassInformationSection = ({
           <TableRow className='border-b hover:bg-transparent'>
             <TableCell className='bg-muted/30 w-1/3 py-4 font-semibold'>Meeting Link</TableCell>
             <TableCell className='bg-card py-4'>
-              <Input placeholder='Enter meeting link' />
+              <Input
+                value={data.meeting_link}
+                onChange={e => onChange({ meeting_link: e.target.value })}
+                placeholder='Enter meeting link'
+              />
             </TableCell>
           </TableRow>
 

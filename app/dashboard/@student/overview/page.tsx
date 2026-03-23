@@ -5,6 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useUserProfile } from '@/context/profile-context';
+import { getStudentScheduleOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
   BookOpenCheck,
@@ -14,73 +17,173 @@ import {
   Search,
   ThumbsUp,
 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useMemo } from 'react';
 
 const approvalStages = [
   {
     title: 'Profile submitted',
-    description: 'We have received your registration details.',
+    description: 'We have received your student profile details.',
     icon: FileText,
   },
   {
     title: 'Under review',
-    description: 'Our team is validating guardian contacts and date of birth.',
+    description: 'Your profile is waiting for admin verification.',
     icon: Search,
   },
   {
     title: 'Approved',
-    description: 'You can now access classes and required documents.',
+    description: 'Your student profile has been approved for learning access.',
     icon: ThumbsUp,
   },
   {
     title: 'Enrolled',
-    description: 'Your timetable and learning resources unlock automatically.',
+    description: 'This stays open until you join your first class or course.',
     icon: GraduationCap,
   },
 ] as const;
 
-const submittedDetails = {
-  name: 'John Doe',
-  phone: '0712345678',
-  email: 'john.doe@example.com',
-  guardianName: 'Jane Doe',
-  guardianPhone: '+254 700 000 001',
-  hasGuardian: true,
-};
+function getAge(dateOfBirth?: Date | string | null) {
+  if (!dateOfBirth) return null;
+
+  const dob = new Date(dateOfBirth);
+  if (Number.isNaN(dob.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age -= 1;
+  }
+
+  return age;
+}
 
 export default function StudentOverviewPage() {
-  const { data: session } = useSession();
-  const isProfileComplete = false;
-  const currentStageIndex = 1;
-  const currentStage = approvalStages[currentStageIndex];
-  const progressPercent = ((currentStageIndex + 1) / approvalStages.length) * 100;
+  const user = useUserProfile();
+  const student = user?.student as
+    | (typeof user.student & { admin_verified?: boolean })
+    | undefined;
+  const studentUuid = student?.uuid;
+  const name = student?.full_name ?? user?.displayName ?? user?.fullName ?? 'Student';
+
+  console.log(user, "user")
+  console.log(student, "student")
+
+  const { data: enrollmentData, isLoading: isEnrollmentLoading } = useQuery({
+    ...getStudentScheduleOptions({
+      path: { studentUuid: studentUuid ?? '' },
+      query: { start: '2024-01-01', end: '2035-12-31' },
+    }),
+    enabled: !!studentUuid,
+  });
+
+  const age = getAge(user?.dob);
+  const requiresGuardian = typeof age === 'number' ? age < 18 : false;
+  const hasPrimaryGuardian = Boolean(
+    student?.first_guardian_name?.trim() && student?.first_guardian_mobile?.trim()
+  );
+  const isAdminVerified = Boolean(student?.admin_verified);
+  const enrollmentCount = enrollmentData?.data?.length ?? 0;
+  const hasEnrollment = enrollmentCount > 0;
+
+  const profileChecklist = useMemo(
+    () => [
+      {
+        label: 'Email address',
+        description: 'Add a valid email address for course updates and account recovery.',
+        complete: Boolean(user?.email?.trim()),
+      },
+      {
+        label: 'Phone number',
+        description: 'Include a working phone number so instructors and support can reach you.',
+        complete: Boolean(user?.phone_number?.trim()),
+      },
+      {
+        label: 'Date of birth',
+        description: 'Your date of birth is used for learner records and guardian checks.',
+        complete: Boolean(user?.dob),
+      },
+      {
+        label: 'Guardian contact',
+        description: requiresGuardian
+          ? 'Add at least one guardian contact because this learner is under 18.'
+          : 'Optional for adult learners, but useful for emergency contact records.',
+        complete: requiresGuardian ? hasPrimaryGuardian : true,
+      },
+      {
+        label: 'Admin verification',
+        description: 'A verified student profile moves both review and approval stages forward.',
+        complete: isAdminVerified,
+      },
+    ],
+    [
+      hasPrimaryGuardian,
+      isAdminVerified,
+      requiresGuardian,
+      user?.dob,
+      user?.email,
+      user?.phone_number,
+    ]
+  );
+
+  const completedProfileSteps = profileChecklist.filter(item => item.complete).length;
+  const totalProfileSteps = profileChecklist.length;
+  const profileProgress =
+    totalProfileSteps === 0 ? 0 : (completedProfileSteps / totalProfileSteps) * 100;
+  const isProfileComplete = completedProfileSteps === totalProfileSteps;
+  const nextIncompleteProfileStep = profileChecklist.find(item => !item.complete);
+
+  const stageCompletion = [
+    Boolean(studentUuid),
+    isAdminVerified,
+    isAdminVerified,
+    hasEnrollment,
+  ];
+
+  const completedStageCount = stageCompletion.filter(Boolean).length;
+  const currentStageIndex = stageCompletion.findIndex(complete => !complete);
+  const resolvedStageIndex =
+    currentStageIndex === -1 ? approvalStages.length - 1 : currentStageIndex;
+  const currentStage = approvalStages[resolvedStageIndex];
+  const approvalProgress = (completedStageCount / approvalStages.length) * 100;
 
   const profileCard = (
     <Card>
       <CardHeader>
         <CardTitle>Profile completion</CardTitle>
         <CardDescription>
-          {isProfileComplete
-            ? 'Your application is complete while we finish verification.'
-            : 'Finish your profile so we can review and enrol you.'}
+          Track the student profile requirements before learning access is fully unlocked.
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
         <div className='flex items-center justify-between text-sm font-medium'>
           <span>Steps completed</span>
           <span>
-            {currentStageIndex + 1} / {approvalStages.length}
+            {completedProfileSteps} / {totalProfileSteps}
           </span>
         </div>
-        <Progress value={progressPercent} className='h-2' />
+        <Progress value={profileProgress} className='h-2' />
         <div className='border-border/60 bg-muted/40 rounded-2xl border p-4'>
-          <p className='text-foreground text-sm font-semibold'>{currentStage.title}</p>
-          <p className='text-muted-foreground text-sm'>{currentStage.description}</p>
+          <p className='text-foreground text-sm font-semibold'>
+            {user?.isLoading
+              ? 'Checking profile completion'
+              : isProfileComplete
+                ? 'Profile complete'
+                : `Next: ${nextIncompleteProfileStep?.label ?? 'Finish your profile'}`}
+          </p>
+          <p className='text-muted-foreground text-xs'>
+            {user?.isLoading
+              ? 'Refreshing your saved student profile details.'
+              : isProfileComplete
+                ? 'Your core learner details are complete. Admin verification and enrollment milestones are tracked separately below.'
+                : nextIncompleteProfileStep?.description}
+          </p>
         </div>
         <Button asChild className='w-full'>
-          <Link prefetch href='/dashboard/profile/general'>
-            {isProfileComplete ? 'View student profile' : 'Complete my profile'}
+          <Link prefetch href='/dashboard/profile'>
+            {isProfileComplete ? 'View profile' : 'Complete profile'}
             <ArrowRight className='ml-2 h-4 w-4' />
           </Link>
         </Button>
@@ -92,20 +195,34 @@ export default function StudentOverviewPage() {
     <Card>
       <CardHeader>
         <CardTitle>Submitted details</CardTitle>
-        <CardDescription>Review the contact information you supplied.</CardDescription>
+        <CardDescription>
+          Review the learner and guardian information currently on file.
+        </CardDescription>
       </CardHeader>
       <CardContent className='space-y-3 text-sm'>
-        <DetailRow label='Student name' value={submittedDetails.name} />
-        <DetailRow label='Mobile number' value={submittedDetails.phone} />
-        <DetailRow label='Email address' value={submittedDetails.email} />
-        {submittedDetails.hasGuardian ? (
-          <div className='border-border/60 rounded-2xl border border-dashed p-3'>
-            <DetailRow label='Guardian name' value={submittedDetails.guardianName} />
-            <DetailRow label='Guardian mobile' value={submittedDetails.guardianPhone} />
-          </div>
-        ) : null}
+        <DetailRow label='Student name' value={name} />
+        <DetailRow label='Mobile number' value={user?.phone_number || 'Not provided'} />
+        <DetailRow label='Email address' value={user?.email || 'Not provided'} />
+        <DetailRow
+          label='Date of birth'
+          value={user?.dob ? new Date(user.dob).toLocaleDateString() : 'Not provided'}
+        />
+        <div className='border-border/60 rounded-2xl border border-dashed p-3'>
+          <DetailRow
+            label='Primary guardian'
+            value={
+              student?.first_guardian_name || (requiresGuardian ? 'Required' : 'Not provided')
+            }
+          />
+          <DetailRow
+            label='Guardian mobile'
+            value={
+              student?.first_guardian_mobile || (requiresGuardian ? 'Required' : 'Not provided')
+            }
+          />
+        </div>
         <Button variant='ghost' asChild className='w-full justify-start px-0 text-sm'>
-          <Link prefetch href='/dashboard/profile/guardian'>
+          <Link prefetch href='/dashboard/profile'>
             Edit guardian details
           </Link>
         </Button>
@@ -117,12 +234,31 @@ export default function StudentOverviewPage() {
     <Card>
       <CardHeader>
         <CardTitle>Approval timeline</CardTitle>
-        <CardDescription>Monitor each stage of your onboarding journey.</CardDescription>
+        <CardDescription>
+          Admin verification now clears both the review and approval stages together.
+        </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
+        <div className='flex items-center justify-between text-sm font-medium'>
+          <span>Milestone progress</span>
+          <span>
+            {completedStageCount} / {approvalStages.length}
+          </span>
+        </div>
+        <Progress value={approvalProgress} className='h-2' />
+        <div className='border-border/60 bg-muted/40 rounded-2xl border p-4'>
+          <p className='text-foreground text-sm font-semibold'>
+            {isEnrollmentLoading ? 'Checking enrollment milestones' : currentStage.title}
+          </p>
+          <p className='text-muted-foreground text-xs'>
+            {isEnrollmentLoading
+              ? 'Refreshing your verification and enrollment progress.'
+              : currentStage.description}
+          </p>
+        </div>
         {approvalStages.map((stage, idx) => {
-          const isCompleted = idx < currentStageIndex;
-          const isCurrent = idx === currentStageIndex;
+          const isCompleted = stageCompletion[idx];
+          const isCurrent = !isCompleted && idx === resolvedStageIndex;
           const Icon = stage.icon;
 
           return (
@@ -131,13 +267,12 @@ export default function StudentOverviewPage() {
               className='border-border/60 flex items-start gap-3 rounded-2xl border p-3'
             >
               <div
-                className={`mt-1 flex size-9 items-center justify-center rounded-full border ${
-                  isCompleted
-                    ? 'border-success bg-success text-success-foreground'
-                    : isCurrent
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-muted text-muted-foreground'
-                }`}
+                className={`mt-1 flex size-9 items-center justify-center rounded-full border ${isCompleted
+                  ? 'border-success bg-success text-success-foreground'
+                  : isCurrent
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-muted text-muted-foreground'
+                  }`}
               >
                 {isCompleted ? <CheckCircle2 className='h-4 w-4' /> : <Icon className='h-4 w-4' />}
               </div>
@@ -155,21 +290,33 @@ export default function StudentOverviewPage() {
   const enrollmentCard = (
     <Card>
       <CardHeader>
-        <CardTitle>Ready for enrolment?</CardTitle>
-        <CardDescription>Upload proof-of-age documents or request assistance.</CardDescription>
+        <CardTitle>Enrollment access</CardTitle>
+        <CardDescription>
+          The final milestone stays open until your first successful enrollment.
+        </CardDescription>
       </CardHeader>
       <CardContent className='flex flex-col gap-3 text-sm'>
         <Badge variant='outline' className='w-fit'>
           <BookOpenCheck className='mr-1 h-3.5 w-3.5' />
-          Required: national ID or birth certificate
+          {isAdminVerified ? 'Admin verified' : 'Awaiting admin verification'}
         </Badge>
         <p className='text-muted-foreground'>
-          Uploading a valid document unlocks seats in classes that enforce age restrictions.
+          {hasEnrollment
+            ? `You already have ${enrollmentCount} enrollment${enrollmentCount === 1 ? '' : 's'} on record.`
+            : isAdminVerified
+              ? 'Your profile is approved. Browse courses to complete the enrollment milestone.'
+              : 'Once an administrator verifies your profile, the review and approval stages will both complete automatically.'}
         </p>
         <div className='flex flex-wrap gap-2'>
-          <Button size='sm'>Upload documents</Button>
-          <Button variant='outline' size='sm'>
-            Talk to support
+          <Button size='sm' asChild>
+            <Link prefetch href='/dashboard/all-courses'>
+              Browse courses
+            </Link>
+          </Button>
+          <Button variant='outline' size='sm' asChild>
+            <Link prefetch href={hasEnrollment ? '/dashboard/schedule' : '/dashboard/profile'}>
+              {hasEnrollment ? 'View schedule' : 'Review profile'}
+            </Link>
           </Button>
         </div>
       </CardContent>
@@ -179,15 +326,15 @@ export default function StudentOverviewPage() {
   return (
     <DomainOverviewShell
       domainLabel='Student workspace'
-      title={`Welcome, ${session?.user?.name ?? 'Student'}`}
-      subtitle='Track your approvals, manage guardian contacts, and unlock enrolment in one place.'
+      title={`Welcome, ${name}`}
+      subtitle='Track profile completion, admin approval, guardian details, and first enrollment from one place.'
       badge={{
         label: isProfileComplete ? 'Profile complete' : 'Profile incomplete',
         tone: isProfileComplete ? 'success' : 'warning',
       }}
       actions={
         <Button asChild variant='outline'>
-          <Link prefetch href='/dashboard/profile/general'>
+          <Link prefetch href='/dashboard/profile'>
             View profile
           </Link>
         </Button>
@@ -212,7 +359,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className='flex items-center justify-between gap-4'>
       <span className='text-muted-foreground text-xs uppercase'>{label}</span>
-      <span className='text-foreground text-sm font-semibold'>{value}</span>
+      <span className='text-foreground text-right text-sm font-semibold'>{value}</span>
     </div>
   );
 }

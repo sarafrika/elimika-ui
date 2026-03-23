@@ -4,7 +4,6 @@ import { elimikaDesignSystem } from '@/lib/design-system';
 import { Users } from 'lucide-react';
 
 const WaitingListPage = () => {
-
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
       {/* Header */}
@@ -31,8 +30,7 @@ const WaitingListPage = () => {
           </p>
 
           <p className='text-muted-foreground mt-1 max-w-sm text-xs sm:text-sm'>
-            Students who request to join your class but haven’t been enrolled yet will appear
-            here.
+            Students who request to join your class but haven’t been enrolled yet will appear here.
           </p>
         </div>
       </div>

@@ -70,10 +70,7 @@ type AssignmentRow = {
   submissions: any[];
 };
 
-function formatDate(
-  value?: string | Date | null,
-  options?: Intl.DateTimeFormatOptions
-) {
+function formatDate(value?: string | Date | null, options?: Intl.DateTimeFormatOptions) {
   if (value === null || value === undefined || value === '') {
     return 'No deadline';
   }
@@ -525,9 +522,9 @@ export function StudentAssignmentWorkspace() {
     const averageScore =
       gradedSubmissions.length > 0
         ? Math.round(
-          gradedSubmissions.reduce((totalScore, percentage) => totalScore + percentage, 0) /
-          gradedSubmissions.length
-        )
+            gradedSubmissions.reduce((totalScore, percentage) => totalScore + percentage, 0) /
+              gradedSubmissions.length
+          )
         : 0;
 
     const progress = total > 0 ? Math.round(((submitted + graded + returned) / total) * 100) : 0;
@@ -1009,7 +1006,7 @@ export function StudentAssignmentWorkspace() {
                       <p className='text-foreground mt-1 text-sm'>
                         {formatDate(
                           selectedAssignment.schedule?.due_at ||
-                          selectedAssignment.assignment?.due_date
+                            selectedAssignment.assignment?.due_date
                         )}
                       </p>
                     </div>
@@ -1066,7 +1063,7 @@ export function StudentAssignmentWorkspace() {
                           {selectedAssignment.latestSubmission.percentage == null
                             ? 'Pending'
                             : selectedAssignment.latestSubmission.grade_display ||
-                            `${Math.round(selectedAssignment.latestSubmission.percentage)}%`}
+                              `${Math.round(selectedAssignment.latestSubmission.percentage)}%`}
                         </p>
                       </div>
                     </div>

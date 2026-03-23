@@ -75,7 +75,7 @@ function useStudentClassDefinitions(student?: any) {
       classDetails,
       course,
       enrollments: enrollments.filter((en: any) => en.class_definition_uuid === uuid),
-      schedules: classScheduleArray,
+      schedules: classScheduleArray[i] ?? [],
     };
   });
 

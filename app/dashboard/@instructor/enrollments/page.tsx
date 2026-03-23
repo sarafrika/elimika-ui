@@ -167,7 +167,9 @@ const EnrollmentsPage = () => {
         };
 
         if (existing) {
-          const hasCourse = existing.courses.some(course => course.courseId === nextCourse.courseId);
+          const hasCourse = existing.courses.some(
+            course => course.courseId === nextCourse.courseId
+          );
 
           if (!hasCourse) {
             existing.courses.push(nextCourse);
@@ -189,7 +191,6 @@ const EnrollmentsPage = () => {
 
     return Array.from(map.values()).sort((a, b) => a.studentName.localeCompare(b.studentName));
   }, [classEnrollmentRows, studentMap]);
-
 
   const courseOptions = useMemo(
     () =>
@@ -248,11 +249,13 @@ const EnrollmentsPage = () => {
   //   isClassesError ||
   //   enrollmentQueries.some(query => query.isError) ||
   //   studentQueries.some(query => query.isError);
-  const hasError = false
+  const hasError = false;
 
   const handleViewEnrollment = (studentId: string) => {
     const params =
-      selectedCourseId === ALL_COURSES_VALUE ? '' : `?courseId=${encodeURIComponent(selectedCourseId)}`;
+      selectedCourseId === ALL_COURSES_VALUE
+        ? ''
+        : `?courseId=${encodeURIComponent(selectedCourseId)}`;
     router.push(`/dashboard/enrollments/${studentId}${params}`);
   };
 
@@ -438,7 +441,7 @@ const EnrollmentsPage = () => {
           </p>
         </Card>
       ) : (
-        <Card className='py-0 border-border/50 bg-card overflow-hidden'>
+        <Card className='border-border/50 bg-card overflow-hidden py-0'>
           <ul className='divide-border/50 divide-y'>
             {filteredStudents.map(student => {
               const visibleCourses =
