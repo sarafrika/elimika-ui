@@ -11,12 +11,12 @@ import {
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import type { ReactNode } from 'react';
-import PurchasableCatalogue from '@/app/dashboard/_components/purchasable-catalogue';
 import DomainOverviewShell from '@/components/domain-overview-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import PurchasableCatalogue from '@/src/features/dashboard/components/PurchasableCatalogue';
 
 const onboardingSteps = [
   {

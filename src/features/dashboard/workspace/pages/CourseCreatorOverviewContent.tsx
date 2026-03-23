@@ -13,7 +13,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
-import PurchasableCatalogue from '@/app/dashboard/_components/purchasable-catalogue';
 import DomainOverviewShell from '@/components/domain-overview-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +23,7 @@ import type {
   CourseCreatorTrainingRequirementSummary,
   CourseCreatorVerificationStatus,
 } from '@/lib/types/course-creator';
+import PurchasableCatalogue from '@/src/features/dashboard/components/PurchasableCatalogue';
 
 export default function CourseCreatorOverviewContent() {
   const { data, profile } = useCourseCreator();
