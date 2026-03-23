@@ -1,17 +1,12 @@
-'use client';
+import ClassEnrollmentPage from '@/src/features/dashboard/courses/pages/ClassEnrollmentPage';
 
-import { useParams, useSearchParams } from 'next/navigation';
-import ClassEnrollmentPage from '../../../../../_home-components/ClassEnrollmentPage';
+type CourseCreatorClassEnrollRouteProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ id?: string }>;
+};
 
-const Page = () => {
-  const searchParams = useSearchParams();
-  const params = useParams();
-  const courseId = params?.id as string;
-  const classId = searchParams.get('id');
-
-  return (
-    <ClassEnrollmentPage classId={classId as string} courseId={courseId as string} />
-  )
+export default async function CourseCreatorClassEnrollRoute({ params, searchParams }: CourseCreatorClassEnrollRouteProps) {
+  const { id } = await params;
+  const { id: classId = '' } = await searchParams;
+  return <ClassEnrollmentPage courseId={id} classId={classId} />;
 }
-
-export default Page
