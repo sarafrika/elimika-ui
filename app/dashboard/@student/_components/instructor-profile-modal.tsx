@@ -1,19 +1,5 @@
 'use client';
 
-import RichTextRenderer from '@/components/editors/richTextRenders';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useStudent } from '@/context/student-context';
-import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
-import {
-  getInstructorCalendarOptions,
-  getInstructorReviewsOptions,
-  listCatalogItemsOptions,
-  searchTrainingApplicationsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Award,
@@ -31,13 +17,27 @@ import {
 import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useStudent } from '@/context/student-context';
+import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
+import {
+  getInstructorCalendarOptions,
+  getInstructorReviewsOptions,
+  listCatalogItemsOptions,
+  searchTrainingApplicationsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import type { Booking } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
 import {
   AvailabilityData,
   ClassScheduleItem,
   convertToCalendarEvents,
 } from '../../@instructor/availability/components/types';
 import { ReviewCard } from '../../@instructor/reviews/review-card';
-import type { Booking } from '../all-courses/instructor/page';
 import BookInstructorTimeTableManager from './book-instructor-schedule';
 
 type Props = {

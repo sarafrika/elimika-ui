@@ -5,8 +5,6 @@ import { BookOpen, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { InstructorDirectory } from '@/app/dashboard/_components/instructor-directory';
-import { ManageBookings } from '@/app/dashboard/_components/manage-bookings';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
@@ -16,6 +14,8 @@ import {
   getStudentBookingsOptions,
   listTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { InstructorDirectory } from '@/src/features/dashboard/courses/components/instructor-directory';
+import { ManageBookings } from '@/src/features/dashboard/courses/components/manage-bookings';
 
 export type Instructor = {
   id: string;

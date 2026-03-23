@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { CustomLoadingState } from '@/app/dashboard/@course_creator/_components/loading-state';
-import EnrollCourseCard from '@/app/dashboard/_components/enroll-course-card';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,6 +19,7 @@ import {
   listCatalogItemsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import EnrollCourseCard from '@/src/features/dashboard/courses/components/enroll-course-card';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 export default function AvailableProgramsPage({ programId }: { programId: string }) {
