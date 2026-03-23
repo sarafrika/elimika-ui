@@ -12,7 +12,7 @@ export default function CourseDetailsPage({ params }: any) {
   return (
     <ReusableCourseDetailsPage
       courseId={data}
-      handleEnroll={() => { }}
+      handleEnroll={() => {}}
       student_uuid={student?.uuid}
     />
   );

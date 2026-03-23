@@ -1,6 +1,9 @@
 'use client';
 
-import { ClassScheduleManager, type ManagedScheduleItem } from '@/components/instructor/ClassScheduleManager';
+import {
+  ClassScheduleManager,
+  type ManagedScheduleItem,
+} from '@/components/instructor/ClassScheduleManager';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -96,32 +99,37 @@ export default function TrainingInterfacePage() {
   return (
     <main className={elimikaDesignSystem.components.pageContainer}>
       <section className={cx(getHeaderClasses(), 'relative overflow-hidden')}>
-        <div className='dark:hidden pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,97,237,0.14),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(0,97,237,0.12),transparent_36%)]' />
+        <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,97,237,0.14),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(0,97,237,0.12),transparent_36%)] dark:hidden' />
         <div className='relative space-y-6'>
           <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
             <div className='space-y-4'>
-              <Badge className={elimikaDesignSystem.components.header.badge}>Instructor console</Badge>
+              <Badge className={elimikaDesignSystem.components.header.badge}>
+                Instructor console
+              </Badge>
               <div className='space-y-3'>
                 <h1 className={elimikaDesignSystem.components.header.title}>
                   {classData?.title || 'Training class'}
                 </h1>
                 <p className={elimikaDesignSystem.components.header.subtitle}>
-                  Manage every session for this class, track attendance, launch live teaching,
-                  and attach assignments or quizzes from a single workflow.
+                  Manage every session for this class, track attendance, launch live teaching, and
+                  attach assignments or quizzes from a single workflow.
                 </p>
               </div>
             </div>
 
-            <Card className='w-full max-w-md rounded-[32px] border-primary/20 bg-primary/5 shadow-none'>
+            <Card className='border-primary/20 bg-primary/5 w-full max-w-md rounded-[32px] shadow-none'>
               <CardContent className='space-y-3 p-6'>
                 <div className='flex items-center justify-between'>
-                  <span className='text-sm font-medium text-foreground'>Course progress</span>
-                  <span className='text-sm font-semibold text-primary'>{progress.percentage}%</span>
+                  <span className='text-foreground text-sm font-medium'>Course progress</span>
+                  <span className='text-primary text-sm font-semibold'>{progress.percentage}%</span>
                 </div>
-                <div className='h-2 overflow-hidden rounded-full bg-primary/10'>
-                  <div className='h-full rounded-full bg-primary' style={{ width: `${progress.percentage}%` }} />
+                <div className='bg-primary/10 h-2 overflow-hidden rounded-full'>
+                  <div
+                    className='bg-primary h-full rounded-full'
+                    style={{ width: `${progress.percentage}%` }}
+                  />
                 </div>
-                <p className='text-sm text-muted-foreground'>
+                <p className='text-muted-foreground text-sm'>
                   {progress.completed} of {progress.total} sessions completed.
                 </p>
               </CardContent>
@@ -132,12 +140,12 @@ export default function TrainingInterfacePage() {
             <Card className={getStatCardClasses()}>
               <CardContent className='p-0'>
                 <div className='flex items-center gap-3'>
-                  <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                  <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                     <Users className='h-5 w-5' />
                   </div>
                   <div>
-                    <p className='text-sm text-muted-foreground'>Students</p>
-                    <p className='text-2xl font-semibold text-foreground'>{enrollments.length}</p>
+                    <p className='text-muted-foreground text-sm'>Students</p>
+                    <p className='text-foreground text-2xl font-semibold'>{enrollments.length}</p>
                   </div>
                 </div>
               </CardContent>
@@ -146,12 +154,12 @@ export default function TrainingInterfacePage() {
             <Card className={getStatCardClasses()}>
               <CardContent className='p-0'>
                 <div className='flex items-center gap-3'>
-                  <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                  <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                     <Calendar className='h-5 w-5' />
                   </div>
                   <div>
-                    <p className='text-sm text-muted-foreground'>Sessions</p>
-                    <p className='text-2xl font-semibold text-foreground'>{schedules.length}</p>
+                    <p className='text-muted-foreground text-sm'>Sessions</p>
+                    <p className='text-foreground text-2xl font-semibold'>{schedules.length}</p>
                   </div>
                 </div>
               </CardContent>
@@ -160,12 +168,12 @@ export default function TrainingInterfacePage() {
             <Card className={getStatCardClasses()}>
               <CardContent className='p-0'>
                 <div className='flex items-center gap-3'>
-                  <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                  <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                     <MapPin className='h-5 w-5' />
                   </div>
                   <div>
-                    <p className='text-sm text-muted-foreground'>Location</p>
-                    <p className='text-sm font-semibold text-foreground'>
+                    <p className='text-muted-foreground text-sm'>Location</p>
+                    <p className='text-foreground text-sm font-semibold'>
                       {classData?.location_name || classData?.location_type || 'Not set'}
                     </p>
                   </div>
@@ -176,12 +184,12 @@ export default function TrainingInterfacePage() {
             <Card className={getStatCardClasses()}>
               <CardContent className='p-0'>
                 <div className='flex items-center gap-3'>
-                  <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+                  <div className='bg-primary/10 text-primary rounded-2xl p-3'>
                     <Clock3 className='h-5 w-5' />
                   </div>
                   <div>
-                    <p className='text-sm text-muted-foreground'>Next session</p>
-                    <p className='text-sm font-semibold text-foreground'>
+                    <p className='text-muted-foreground text-sm'>Next session</p>
+                    <p className='text-foreground text-sm font-semibold'>
                       {nextSession
                         ? moment(nextSession.start_time).format('ddd, MMM D · h:mm A')
                         : 'No upcoming session'}
@@ -196,11 +204,11 @@ export default function TrainingInterfacePage() {
 
       <section className='space-y-6'>
         <div className='flex flex-col gap-2'>
-          <Badge variant='outline' className='w-fit border-primary/30 bg-primary/5 text-primary'>
+          <Badge variant='outline' className='border-primary/30 bg-primary/5 text-primary w-fit'>
             Session operations
           </Badge>
-          <h2 className='text-2xl font-semibold text-foreground'>Run the class by week</h2>
-          <p className='max-w-3xl text-sm text-muted-foreground'>
+          <h2 className='text-foreground text-2xl font-semibold'>Run the class by week</h2>
+          <p className='text-muted-foreground max-w-3xl text-sm'>
             Each schedule card exposes the same operational actions: launch virtual class, manage
             attendance, and attach class-specific assignments or quizzes.
           </p>

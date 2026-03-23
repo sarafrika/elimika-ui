@@ -252,7 +252,7 @@ export function ClassScheduleManager({
   }, [rosterAllEnrollments]);
 
   const selectedScheduleStudents = selectedSchedule
-    ? studentsByScheduleInstance[selectedSchedule.uuid] ?? []
+    ? (studentsByScheduleInstance[selectedSchedule.uuid] ?? [])
     : [];
 
   const filteredScheduleStudents = useMemo(
@@ -306,7 +306,9 @@ export function ClassScheduleManager({
 
   const quizUuids = useMemo(
     () =>
-      [...new Set((quizSchedules?.data ?? []).map((item: any) => item.quiz_uuid).filter(Boolean))] as string[],
+      [
+        ...new Set((quizSchedules?.data ?? []).map((item: any) => item.quiz_uuid).filter(Boolean)),
+      ] as string[],
     [quizSchedules]
   );
 
@@ -408,9 +410,7 @@ export function ClassScheduleManager({
           const name = selectedScheduleStudents.find(
             (entry: any) => entry?.user?.uuid === studentId
           )?.user?.full_name;
-          toast.success(
-            `Marked ${isPresent ? 'present' : 'absent'}${name ? ` for ${name}` : ''}.`
-          );
+          toast.success(`Marked ${isPresent ? 'present' : 'absent'}${name ? ` for ${name}` : ''}.`);
         },
         onSettled: () => {
           setLoadingEnrollmentUuid(null);
@@ -569,7 +569,7 @@ export function ClassScheduleManager({
   if (!schedules.length) {
     return (
       <div className={getEmptyStateClasses()}>
-        <Calendar className='h-10 w-10 text-primary/70' />
+        <Calendar className='text-primary/70 h-10 w-10' />
         <div className='space-y-1'>
           <h3 className='text-lg font-semibold'>{emptyTitle}</h3>
           <p className='text-muted-foreground max-w-lg text-sm'>{emptyDescription}</p>
@@ -580,10 +580,10 @@ export function ClassScheduleManager({
 
   return (
     <div className='space-y-5'>
-      <div className='flex flex-col gap-4 rounded-[28px] border border-border/60 bg-card/90 p-5 shadow-sm sm:p-6 lg:flex-row lg:items-center lg:justify-between'>
+      <div className='border-border/60 bg-card/90 flex flex-col gap-4 rounded-[28px] border p-5 shadow-sm sm:p-6 lg:flex-row lg:items-center lg:justify-between'>
         <div className='space-y-1'>
-          <h2 className='text-xl font-semibold text-foreground'>{title}</h2>
-          {description ? <p className='text-sm text-muted-foreground'>{description}</p> : null}
+          <h2 className='text-foreground text-xl font-semibold'>{title}</h2>
+          {description ? <p className='text-muted-foreground text-sm'>{description}</p> : null}
         </div>
 
         {showCollectionActions && activeClassId ? (
@@ -615,29 +615,33 @@ export function ClassScheduleManager({
           <section key={group.label} className='space-y-3'>
             {groupBy !== 'none' ? (
               <div className='flex items-center gap-3'>
-                <div className='flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
+                <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-2xl'>
                   <Calendar className='h-4 w-4' />
                 </div>
                 <div>
-                  <h3 className='text-base font-semibold text-foreground'>{group.label}</h3>
-                  <p className='text-xs text-muted-foreground'>
+                  <h3 className='text-foreground text-base font-semibold'>{group.label}</h3>
+                  <p className='text-muted-foreground text-xs'>
                     {group.items.length} session{group.items.length === 1 ? '' : 's'}
                   </p>
                 </div>
               </div>
             ) : null}
 
-            <div className='grid gap-4 xl:grid-cols-2'>
+            <div className='grid gap-4 2xl:grid-cols-2'>
               {group.items.map(schedule => {
                 const isPast = moment(schedule.end_time).isBefore(moment());
                 const isLive =
                   moment(schedule.start_time).isBefore(moment()) &&
                   moment(schedule.end_time).isAfter(moment());
                 const students = studentsByScheduleInstance[schedule.uuid] ?? [];
-                const rosterPreviewAvailable = !!fixedClassId || selectedSchedule?.classId === schedule.classId;
+                const rosterPreviewAvailable =
+                  !!fixedClassId || selectedSchedule?.classId === schedule.classId;
 
                 return (
-                  <Card key={schedule.uuid} className={cx(getCardClasses(), 'p-0 hover:translate-y-0')}>
+                  <Card
+                    key={schedule.uuid}
+                    className={cx(getCardClasses(), 'p-0 hover:translate-y-0')}
+                  >
                     <CardHeader className='space-y-4 p-5 pb-3 sm:p-6'>
                       <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
                         <div className='space-y-3'>
@@ -652,10 +656,10 @@ export function ClassScheduleManager({
                           </div>
 
                           <div className='space-y-1'>
-                            <h3 className='text-lg font-semibold text-foreground'>
+                            <h3 className='text-foreground text-lg font-semibold'>
                               {schedule.classTitle}
                             </h3>
-                            <p className='text-sm text-muted-foreground'>
+                            <p className='text-muted-foreground text-sm'>
                               {moment(schedule.start_time).format('dddd, MMM D')} ·{' '}
                               {moment(schedule.start_time).format('h:mm A')} -{' '}
                               {moment(schedule.end_time).format('h:mm A')}
@@ -664,11 +668,7 @@ export function ClassScheduleManager({
                         </div>
 
                         <div className='flex items-center gap-2 self-start'>
-                          <Button
-                            size='sm'
-                            className='gap-2'
-                            onClick={() => launchClass(schedule)}
-                          >
+                          <Button size='sm' className='gap-2' onClick={() => launchClass(schedule)}>
                             <Video className='h-4 w-4' />
                             Launch
                           </Button>
@@ -699,31 +699,31 @@ export function ClassScheduleManager({
                     </CardHeader>
 
                     <CardContent className='space-y-5 p-5 pt-0 sm:p-6 sm:pt-0'>
-                      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
-                        <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                          <div className='mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                      <div className='grid gap-3 md:grid-cols-2 2xl:grid-cols-3'>
+                        <div className='border-border/60 bg-background/70 min-w-0 rounded-2xl border p-3'>
+                          <div className='text-muted-foreground mb-1 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
                             <Clock className='h-3.5 w-3.5' />
                             Duration
                           </div>
-                          <div className='text-sm font-medium text-foreground'>
+                          <div className='text-foreground text-sm font-medium break-words'>
                             {schedule.duration_formatted ?? 'Not available'}
                           </div>
                         </div>
-                        <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                          <div className='mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                        <div className='border-border/60 bg-background/70 min-w-0 rounded-2xl border p-3'>
+                          <div className='text-muted-foreground mb-1 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
                             <MapPin className='h-3.5 w-3.5' />
                             Location
                           </div>
-                          <div className='text-sm font-medium text-foreground'>
+                          <div className='text-foreground text-sm font-medium break-words'>
                             {schedule.location_name || humanizeEnum(schedule.location_type)}
                           </div>
                         </div>
-                        <div className='rounded-2xl border border-border/60 bg-background/70 p-3 sm:col-span-2 xl:col-span-1'>
-                          <div className='mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                        <div className='border-border/60 bg-background/70 min-w-0 rounded-2xl border p-3 md:col-span-2 2xl:col-span-1'>
+                          <div className='text-muted-foreground mb-1 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
                             <Users className='h-3.5 w-3.5' />
                             Session roster
                           </div>
-                          <div className='text-sm font-medium text-foreground'>
+                          <div className='text-foreground text-sm font-medium break-words'>
                             {rosterPreviewAvailable
                               ? `${students.length} student${students.length === 1 ? '' : 's'}`
                               : 'Load in attendance'}
@@ -731,10 +731,10 @@ export function ClassScheduleManager({
                         </div>
                       </div>
 
-                      <div className='flex flex-col gap-3 sm:flex-row'>
+                      <div className='flex flex-col gap-3 xl:flex-row xl:flex-wrap'>
                         <Button
                           variant='outline'
-                          className='gap-2'
+                          className='gap-2 xl:flex-1'
                           onClick={() => openAttendance(schedule)}
                         >
                           <UserCheck className='h-4 w-4' />
@@ -742,7 +742,7 @@ export function ClassScheduleManager({
                         </Button>
                         <Button
                           variant='outline'
-                          className='gap-2'
+                          className='gap-2 xl:flex-1'
                           onClick={() => openAssignmentDialog(schedule)}
                         >
                           <Plus className='h-4 w-4' />
@@ -750,7 +750,7 @@ export function ClassScheduleManager({
                         </Button>
                         <Button
                           variant='outline'
-                          className='gap-2'
+                          className='gap-2 xl:flex-1'
                           onClick={() => openQuizDialog(schedule)}
                         >
                           <PlayCircle className='h-4 w-4' />
@@ -780,7 +780,7 @@ export function ClassScheduleManager({
               </SheetHeader>
 
               <div className='relative mt-4'>
-                <Search className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+                <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                 <Input
                   value={attendanceSearch}
                   onChange={event => setAttendanceSearch(event.target.value)}
@@ -799,10 +799,10 @@ export function ClassScheduleManager({
                 </div>
               ) : filteredScheduleStudents.length === 0 ? (
                 <div className={cx(getEmptyStateClasses(), 'min-h-[240px]')}>
-                  <Users className='h-10 w-10 text-primary/70' />
+                  <Users className='text-primary/70 h-10 w-10' />
                   <div className='space-y-1'>
                     <h3 className='text-lg font-semibold'>No students found</h3>
-                    <p className='text-sm text-muted-foreground'>
+                    <p className='text-muted-foreground text-sm'>
                       {attendanceSearch
                         ? 'Adjust the search query to find enrolled students.'
                         : 'This session does not have any enrolled students yet.'}
@@ -821,11 +821,11 @@ export function ClassScheduleManager({
                     return (
                       <div
                         key={enrollmentUuid}
-                        className='flex flex-col gap-4 rounded-[24px] border border-border/60 bg-card/80 p-4 sm:flex-row sm:items-center sm:justify-between'
+                        className='border-border/60 bg-card/80 flex flex-col gap-4 rounded-[24px] border p-4 sm:flex-row sm:items-center sm:justify-between'
                       >
                         <div className='min-w-0 flex-1 space-y-2'>
                           <div className='flex items-center gap-3'>
-                            <div className='flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary'>
+                            <div className='bg-primary/10 text-primary flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold'>
                               {name
                                 .split(' ')
                                 .map((part: string) => part[0])
@@ -833,14 +833,14 @@ export function ClassScheduleManager({
                                 .join('')}
                             </div>
                             <div className='min-w-0'>
-                              <p className='truncate font-medium text-foreground'>{name}</p>
-                              <p className='text-xs text-muted-foreground'>
+                              <p className='text-foreground truncate font-medium'>{name}</p>
+                              <p className='text-muted-foreground text-xs'>
                                 {stats?.presentCount ?? 0} of {stats?.totalSessions ?? 0} attended
                               </p>
                             </div>
                           </div>
                           <div className='max-w-xs space-y-1'>
-                            <div className='flex items-center justify-between text-xs text-muted-foreground'>
+                            <div className='text-muted-foreground flex items-center justify-between text-xs'>
                               <span>Overall attendance</span>
                               <span>{Math.round(stats?.percentage ?? 0)}%</span>
                             </div>
@@ -856,11 +856,13 @@ export function ClassScheduleManager({
                               !studentId ||
                               !enrollmentUuid ||
                               currentStatus === true ||
-                              (loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending)
+                              (loadingEnrollmentUuid === enrollmentUuid &&
+                                markAttendanceMut.isPending)
                             }
                             onClick={() => markAttendance(studentId, enrollmentUuid, true)}
                           >
-                            {loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending ? (
+                            {loadingEnrollmentUuid === enrollmentUuid &&
+                            markAttendanceMut.isPending ? (
                               <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                             ) : (
                               <CheckCircle className='h-4 w-4' />
@@ -874,11 +876,13 @@ export function ClassScheduleManager({
                               !studentId ||
                               !enrollmentUuid ||
                               currentStatus === false ||
-                              (loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending)
+                              (loadingEnrollmentUuid === enrollmentUuid &&
+                                markAttendanceMut.isPending)
                             }
                             onClick={() => markAttendance(studentId, enrollmentUuid, false)}
                           >
-                            {loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending ? (
+                            {loadingEnrollmentUuid === enrollmentUuid &&
+                            markAttendanceMut.isPending ? (
                               <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                             ) : (
                               <XCircle className='h-4 w-4' />
@@ -1018,7 +1022,9 @@ export function ClassScheduleManager({
                   const quiz = allQuizzes?.data?.content?.find((item: any) => item.uuid === uuid);
                   setSelectedQuizUuid(uuid);
                   setSelectedQuiz(quiz ?? null);
-                  setTimeLimitOverride(quiz?.time_limit_minutes ? String(quiz.time_limit_minutes) : '');
+                  setTimeLimitOverride(
+                    quiz?.time_limit_minutes ? String(quiz.time_limit_minutes) : ''
+                  );
                   setAttemptLimitOverride(
                     quiz?.attempts_allowed ? String(quiz.attempts_allowed) : ''
                   );
@@ -1094,7 +1100,10 @@ export function ClassScheduleManager({
             <Button variant='outline' onClick={() => setIsQuizDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={createQuiz} disabled={!selectedQuizUuid || addQuizScheduleMut.isPending}>
+            <Button
+              onClick={createQuiz}
+              disabled={!selectedQuizUuid || addQuizScheduleMut.isPending}
+            >
               <Plus className='mr-2 h-4 w-4' />
               {addQuizScheduleMut.isPending ? 'Saving...' : 'Add quiz'}
             </Button>
@@ -1108,7 +1117,7 @@ export function ClassScheduleManager({
             <div className='border-b px-6 py-5'>
               <SheetHeader>
                 <SheetTitle className='flex items-center gap-2 text-xl'>
-                  <FileText className='h-5 w-5 text-primary' />
+                  <FileText className='text-primary h-5 w-5' />
                   Class assignments
                 </SheetTitle>
                 <SheetDescription>
@@ -1120,10 +1129,10 @@ export function ClassScheduleManager({
             <div className='flex-1 overflow-auto px-6 py-5'>
               {!mergedAssignments.length ? (
                 <div className={cx(getEmptyStateClasses(), 'min-h-[260px]')}>
-                  <FileText className='h-10 w-10 text-primary/70' />
+                  <FileText className='text-primary/70 h-10 w-10' />
                   <div className='space-y-1'>
                     <h3 className='text-lg font-semibold'>No assignments scheduled</h3>
-                    <p className='text-sm text-muted-foreground'>
+                    <p className='text-muted-foreground text-sm'>
                       Use any session card to attach assignments.
                     </p>
                   </div>
@@ -1134,20 +1143,20 @@ export function ClassScheduleManager({
                     const isExpanded = expandedAssignmentUuid === item.uuid;
 
                     return (
-                      <Card key={item.uuid} className='overflow-hidden border-border/60'>
+                      <Card key={item.uuid} className='border-border/60 overflow-hidden'>
                         <CardContent className='p-5'>
                           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
                             <div className='space-y-2'>
-                              <h3 className='text-base font-semibold text-foreground'>
+                              <h3 className='text-foreground text-base font-semibold'>
                                 {item.assignment.title}
                               </h3>
                               <div
-                                className='line-clamp-2 text-sm text-muted-foreground'
+                                className='text-muted-foreground line-clamp-2 text-sm'
                                 dangerouslySetInnerHTML={{
                                   __html: item.assignment.description || '',
                                 }}
                               />
-                              <div className='flex flex-wrap gap-2 text-xs text-muted-foreground'>
+                              <div className='text-muted-foreground flex flex-wrap gap-2 text-xs'>
                                 <span className='inline-flex items-center gap-1'>
                                   <Calendar className='h-3.5 w-3.5' />
                                   Due {moment(item.due_at).format('MMM D, YYYY')}
@@ -1158,7 +1167,8 @@ export function ClassScheduleManager({
                                 </span>
                                 <span className='inline-flex items-center gap-1'>
                                   <Paperclip className='h-3.5 w-3.5' />
-                                  {item.attachments.length} file{item.attachments.length === 1 ? '' : 's'}
+                                  {item.attachments.length} file
+                                  {item.attachments.length === 1 ? '' : 's'}
                                 </span>
                               </div>
                             </div>
@@ -1168,7 +1178,9 @@ export function ClassScheduleManager({
                                 variant='ghost'
                                 size='icon'
                                 onClick={() =>
-                                  setExpandedAssignmentUuid(prev => (prev === item.uuid ? null : item.uuid))
+                                  setExpandedAssignmentUuid(prev =>
+                                    prev === item.uuid ? null : item.uuid
+                                  )
                                 }
                               >
                                 {isExpanded ? (
@@ -1182,7 +1194,9 @@ export function ClassScheduleManager({
                                 size='sm'
                                 className='text-destructive'
                                 disabled={deleteAssignmentScheduleMut.isPending || !activeClassId}
-                                onClick={() => activeClassId && removeAssignment(activeClassId, item.uuid)}
+                                onClick={() =>
+                                  activeClassId && removeAssignment(activeClassId, item.uuid)
+                                }
                               >
                                 <Trash2 className='mr-2 h-4 w-4' />
                                 Remove
@@ -1191,10 +1205,10 @@ export function ClassScheduleManager({
                           </div>
 
                           {isExpanded ? (
-                            <div className='mt-4 space-y-4 border-t border-border/60 pt-4'>
+                            <div className='border-border/60 mt-4 space-y-4 border-t pt-4'>
                               {item.assignment.instructions ? (
                                 <div
-                                  className='rounded-2xl bg-muted/40 p-4 text-sm text-muted-foreground'
+                                  className='bg-muted/40 text-muted-foreground rounded-2xl p-4 text-sm'
                                   dangerouslySetInnerHTML={{
                                     __html: item.assignment.instructions,
                                   }}
@@ -1210,28 +1224,28 @@ export function ClassScheduleManager({
                                   return (
                                     <div
                                       key={attachment.uuid}
-                                      className='flex items-center gap-3 rounded-2xl border border-border/60 bg-background/70 p-3'
+                                      className='border-border/60 bg-background/70 flex items-center gap-3 rounded-2xl border p-3'
                                     >
-                                      <div className='rounded-xl border border-border/60 bg-background p-2'>
+                                      <div className='border-border/60 bg-background rounded-xl border p-2'>
                                         <FileIcon className={cx('h-5 w-5', color)} />
                                       </div>
                                       <div className='min-w-0 flex-1'>
-                                        <p className='truncate text-sm font-medium text-foreground'>
+                                        <p className='text-foreground truncate text-sm font-medium'>
                                           {attachment.original_filename}
                                         </p>
-                                        <p className='text-xs text-muted-foreground'>Attachment</p>
+                                        <p className='text-muted-foreground text-xs'>Attachment</p>
                                       </div>
                                       <a
                                         href={attachment.file_url}
                                         target='_blank'
                                         rel='noopener noreferrer'
-                                        className='rounded-lg p-2 hover:bg-muted'
+                                        className='hover:bg-muted rounded-lg p-2'
                                       >
-                                        <ExternalLink className='h-4 w-4 text-muted-foreground' />
+                                        <ExternalLink className='text-muted-foreground h-4 w-4' />
                                       </a>
                                       <button
                                         type='button'
-                                        className='rounded-lg p-2 hover:bg-muted'
+                                        className='hover:bg-muted rounded-lg p-2'
                                         onClick={() =>
                                           downloadFile(
                                             attachment.file_url,
@@ -1239,7 +1253,7 @@ export function ClassScheduleManager({
                                           )
                                         }
                                       >
-                                        <Download className='h-4 w-4 text-muted-foreground' />
+                                        <Download className='text-muted-foreground h-4 w-4' />
                                       </button>
                                     </div>
                                   );
@@ -1263,7 +1277,9 @@ export function ClassScheduleManager({
         onOpenChange={setIsQuizzesSheetOpen}
         mergedQuizzes={mergedQuizzes}
         deleteQuizScheduleMut={deleteQuizScheduleMut}
-        onRemoveQuiz={(scheduleUuid: string) => activeClassId && removeQuiz(activeClassId, scheduleUuid)}
+        onRemoveQuiz={(scheduleUuid: string) =>
+          activeClassId && removeQuiz(activeClassId, scheduleUuid)
+        }
       />
     </div>
   );

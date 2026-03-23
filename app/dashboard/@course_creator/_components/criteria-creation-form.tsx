@@ -19,7 +19,6 @@ const CriteriaCreationForm = ({ course }: CriteriaCreationFormProps) => {
         <CourseAssessmentStructure courseUuid={course?.data?.uuid as string} createdBy={''} />
       </div>
 
-
       {/* <div className='border-border mb-4 flex border-b'>
         {tabs.map(tab => (
           <button

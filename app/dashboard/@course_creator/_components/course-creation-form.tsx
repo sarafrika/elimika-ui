@@ -19,7 +19,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,7 +45,7 @@ import {
   getCourseByUuidQueryKey,
   getCourseTrainingRequirementsOptions,
   searchCoursesQueryKey,
-  updateCourseTrainingRequirementMutation
+  updateCourseTrainingRequirementMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -64,7 +64,7 @@ import { toast } from 'sonner';
 import {
   type CourseCreationFormValues,
   courseCreationSchema,
-  emptyRequirement
+  emptyRequirement,
 } from './course-creation-types';
 import { TrainingRequirementsSection } from './training-requirement-section';
 
@@ -113,7 +113,7 @@ function SavingOverlay({ stage }: { stage: SaveStage }) {
   const currentIndex = steps.findIndex(s => s.key === stage);
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm'>
+    <div className='bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm'>
       <div className='bg-card border-border flex w-full max-w-sm flex-col items-center gap-6 rounded-2xl border p-8 shadow-2xl'>
         <div className='relative flex h-16 w-16 items-center justify-center'>
           <div className='border-primary absolute inset-0 animate-spin rounded-full border-2 border-t-transparent' />
@@ -127,8 +127,9 @@ function SavingOverlay({ stage }: { stage: SaveStage }) {
             return (
               <div
                 key={step.key}
-                className={`flex items-center gap-3 transition-opacity duration-300 ${isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
-                  }`}
+                className={`flex items-center gap-3 transition-opacity duration-300 ${
+                  isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
+                }`}
               >
                 {isDone ? (
                   <CheckCircle2 className='h-4 w-4 shrink-0 text-green-500' />
@@ -316,7 +317,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     }, [creatorShare, form]);
 
-
     const onSubmit = (data: CourseCreationFormValues) => {
       const resolvedCourseCreatorUuid = authorUuid;
 
@@ -465,9 +465,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
             setSaveStage('redirecting');
             setTimeout(() => {
-              router.replace(
-                `/dashboard/course-management/create-new-course?id=${newCourseUuid}`
-              );
+              router.replace(`/dashboard/course-management/create-new-course?id=${newCourseUuid}`);
             }, 600);
           },
         }
@@ -494,8 +492,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     }, [isFree, form]);
 
     const isSaving = !!saveStage;
-    const isRequirementSaving =
-      addTrainingReqMut.isPending || updateTrainingReqMut.isPending;
+    const isRequirementSaving = addTrainingReqMut.isPending || updateTrainingReqMut.isPending;
 
     return (
       <>

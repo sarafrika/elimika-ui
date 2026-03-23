@@ -94,8 +94,14 @@ export default function NotesModal({
   };
 
   return (
-    <Sheet open={open} onOpenChange={open => { setOpen(open); if (!open) resetForm(); }}>
-      <SheetContent className='flex w-full flex-col p-3 sm:p-6 sm:max-w-[600px]'>
+    <Sheet
+      open={open}
+      onOpenChange={open => {
+        setOpen(open);
+        if (!open) resetForm();
+      }}
+    >
+      <SheetContent className='flex w-full flex-col p-3 sm:max-w-[600px] sm:p-6'>
         <SheetHeader className='border-border border-b pb-4'>
           <SheetTitle>{title}</SheetTitle>
           {description && (
@@ -212,7 +218,12 @@ export default function NotesModal({
 
         {/* Sticky footer */}
         <div className='border-border flex justify-end gap-2 border-t pt-4'>
-          <Button variant='outline' onClick={handleClose} disabled={isLoading} {...cancelButtonProps}>
+          <Button
+            variant='outline'
+            onClick={handleClose}
+            disabled={isLoading}
+            {...cancelButtonProps}
+          >
             {cancelText}
           </Button>
           <Button

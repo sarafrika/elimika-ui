@@ -387,9 +387,9 @@ const RevenuePage = () => {
               <Landmark className='text-primary' size={24} />
             </div>
           </div>
-          <Button
-            onClick={() => setIsTransferSheetOpen(true)}
-            className='mt-6 w-full'>Withdraw Funds</Button>
+          <Button onClick={() => setIsTransferSheetOpen(true)} className='mt-6 w-full'>
+            Withdraw Funds
+          </Button>
         </div>
 
         {/* View Stats Button */}
@@ -693,39 +693,30 @@ const RevenuePage = () => {
         </div>
       </section>
 
-
       {/* ── Transfer Funds Sheet ───────────────────────────────────────────── */}
       <TransferFundsSheet
         open={isTransferSheetOpen}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           setIsTransferSheetOpen(open);
           if (!open) resetTransferForm();
         }}
         balance={analyticsData.netRevenue}
         isInsufficientBalance={isInsufficientBalance}
-
         targetUserUuid={targetUserUuid}
         setTargetUserUuid={setTargetUserUuid}
-
         transferAmount={transferAmount}
         setTransferAmount={setTransferAmount}
-
         transferCurrency={transferCurrency}
         setTransferCurrency={setTransferCurrency}
-
         transferReference={transferReference}
         setTransferReference={setTransferReference}
-
         transferDescription={transferDescription}
         setTransferDescription={setTransferDescription}
-
         userSearchQuery={userSearchQuery}
         setUserSearchQuery={setUserSearchQuery}
-
         isPending={transferFundsMut.isPending}
         isError={transferFundsMut.isError}
         isSuccess={transferFundsMut.isSuccess}
-
         onSubmit={handleTransferFunds}
         onCancel={() => {
           setIsTransferSheetOpen(false);

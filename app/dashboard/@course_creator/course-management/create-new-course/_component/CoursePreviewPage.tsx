@@ -117,10 +117,11 @@ export default function CustomCoursePreview() {
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${activeTab === tab
-                        ? 'border-primary text-primary border-b-2'
-                        : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                      className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                        activeTab === tab
+                          ? 'border-primary text-primary border-b-2'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
                     >
                       {tab.charAt(0).toUpperCase() + tab.slice(1)}
                     </button>

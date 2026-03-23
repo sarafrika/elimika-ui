@@ -1,10 +1,17 @@
 'use client';
 
+import { useUserProfile } from '@/context/profile-context';
+import {
+  getInstructorEducationOptions,
+  getInstructorExperienceOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
 import DomainOverviewShell from '@/components/domain-overview-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useMemo } from 'react';
 import {
   ArrowRight,
   Briefcase,
@@ -13,56 +20,113 @@ import {
   ClipboardList,
   Shield,
 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import PurchasableCatalogue from '../../_components/purchasable-catalogue';
 
-const onboardingSteps = [
-  {
-    title: 'Profile submitted',
-    description: 'Portfolio, certifications, and availability captured.',
-  },
-  {
-    title: 'Credentials under review',
-    description: 'Quality and compliance teams are validating your documentation.',
-  },
-  {
-    title: 'Demo lesson scheduled',
-    description: 'Showcase your facilitation style to programme leads.',
-  },
-  {
-    title: 'Approved & listed',
-    description: 'Your timetable unlocks across eligible organisations.',
-  },
-] as const;
-
 export default function InstructorOverviewPage() {
-  const { data: session } = useSession();
-  const name = session?.user?.name ?? 'Instructor';
-  const isProfileComplete = false;
-  const currentStepIndex = 1;
-  const progress = ((currentStepIndex + 1) / onboardingSteps.length) * 100;
+  const user = useUserProfile();
+  const instructor = user?.instructor;
+  const instructorUuid = instructor?.uuid;
+  const name = instructor?.full_name ?? user?.displayName ?? user?.fullName ?? 'Instructor';
+
+  const { data: educationData, isLoading: isEducationLoading } = useQuery({
+    ...getInstructorEducationOptions({
+      path: { instructorUuid: instructorUuid ?? '' },
+    }),
+    enabled: !!instructorUuid,
+  });
+
+  const { data: experienceData, isLoading: isExperienceLoading } = useQuery({
+    ...getInstructorExperienceOptions({
+      path: { instructorUuid: instructorUuid ?? '' },
+      query: { pageable: {} },
+    }),
+    enabled: !!instructorUuid,
+  });
+
+  const educationCount = educationData?.data?.length ?? instructor?.educations?.length ?? 0;
+  const careerCount = experienceData?.data?.content?.length ?? instructor?.experience?.length ?? 0;
+
+  const completionItems = useMemo(
+    () => [
+      {
+        label: 'Email address',
+        description: 'Add a working email so learners and organisations can reach you.',
+        complete: Boolean(user?.email?.trim()),
+      },
+      {
+        label: 'Phone number',
+        description: 'Include a valid phone number for bookings and account contact.',
+        complete: Boolean(user?.phone_number?.trim()),
+      },
+      {
+        label: 'About',
+        description: 'Write your bio so your teaching background is visible on your profile.',
+        complete: Boolean(instructor?.bio?.trim()),
+      },
+      {
+        label: 'Education',
+        description: 'Add at least one qualification under your education profile section.',
+        complete: educationCount > 0,
+      },
+      {
+        label: 'Career pathways',
+        description: 'Add career history so your teaching experience is visible to organisations.',
+        complete: careerCount > 0,
+      },
+      {
+        label: 'Verification',
+        description: 'Your instructor profile must be verified by an administrator.',
+        complete: Boolean(instructor?.admin_verified),
+      },
+    ],
+    [
+      careerCount,
+      educationCount,
+      instructor?.admin_verified,
+      instructor?.bio,
+      user?.email,
+      user?.phone_number,
+    ]
+  );
+
+  const completedSteps = completionItems.filter(item => item.complete).length;
+  const totalSteps = completionItems.length;
+  const progress = totalSteps === 0 ? 0 : (completedSteps / totalSteps) * 100;
+  const isProfileComplete = completedSteps === totalSteps;
+  const nextIncompleteItem = completionItems.find(item => !item.complete);
+  const isChecklistLoading = user?.isLoading || isEducationLoading || isExperienceLoading;
 
   const profileCard = (
     <Card>
       <CardHeader>
         <CardTitle>Instructor profile</CardTitle>
         <CardDescription>
-          Keep your headline, credentials, and rate card up to date for faster booking.
+          Track the sections required before your instructor profile is fully complete.
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
         <div className='flex items-center justify-between text-sm font-medium'>
-          <span>Completion</span>
-          <span>{Math.round(progress)}%</span>
+          <span>Steps completed</span>
+          <span>
+            {completedSteps} / {totalSteps}
+          </span>
         </div>
         <Progress value={progress} className='h-2' />
         <div className='border-border/60 bg-muted/40 rounded-2xl border p-4'>
           <p className='text-foreground text-sm font-semibold'>
-            {onboardingSteps[currentStepIndex].title}
+            {isChecklistLoading
+              ? 'Checking profile completion'
+              : isProfileComplete
+                ? 'Profile complete'
+                : `Next: ${nextIncompleteItem?.label ?? 'Finish your profile'}`}
           </p>
           <p className='text-muted-foreground text-xs'>
-            {onboardingSteps[currentStepIndex].description}
+            {isChecklistLoading
+              ? 'Refreshing your saved profile sections and verification status.'
+              : isProfileComplete
+                ? 'Your contact details, profile content, education, career history, and verification are all in place.'
+                : nextIncompleteItem?.description}
           </p>
         </div>
         <Button asChild className='w-full'>
@@ -94,7 +158,7 @@ export default function InstructorOverviewPage() {
           <Detail label='Average satisfaction' value='4.8 / 5.0' />
         </div>
         <Button variant='ghost' size='sm' asChild className='px-0 text-left'>
-          <Link prefetch href='/dashboard/profile/expertise'>
+          <Link prefetch href='/dashboard/profile/skills'>
             Edit specialisations
           </Link>
         </Button>
@@ -105,38 +169,44 @@ export default function InstructorOverviewPage() {
   const approvalPanel = (
     <Card>
       <CardHeader>
-        <CardTitle>Approval checklist</CardTitle>
+        <CardTitle>Profile checklist</CardTitle>
         <CardDescription>
-          Complete each requirement to unlock contracts across Elimika organisations.
+          Completion is based on the same details available across your profile sections.
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-3'>
-        {onboardingSteps.map((step, index) => {
-          const isCompleted = index < currentStepIndex;
-          const isCurrent = index === currentStepIndex;
+        {completionItems.map(item => {
+          const isCompleted = item.complete;
           return (
             <div
-              key={step.title}
+              key={item.label}
               className='border-border/70 flex items-start gap-3 rounded-2xl border p-3 text-sm'
             >
               <div
-                className={`mt-0.5 flex size-8 items-center justify-center rounded-full border ${isCompleted
-                  ? 'border-success bg-success text-success-foreground'
-                  : isCurrent
-                    ? 'border-primary bg-primary/10 text-primary'
+                className={`mt-0.5 flex size-8 items-center justify-center rounded-full border ${
+                  isCompleted
+                    ? 'border-success bg-success text-success-foreground'
                     : 'border-border bg-muted text-muted-foreground'
-                  }`}
+                }`}
               >
-                {isCompleted ? <CheckCircle2 className='h-4 w-4' /> : index + 1}
+                {isCompleted ? (
+                  <CheckCircle2 className='h-4 w-4' />
+                ) : (
+                  <ClipboardList className='h-4 w-4' />
+                )}
               </div>
               <div>
-                <p className='font-semibold'>{step.title}</p>
-                <p className='text-muted-foreground text-xs'>{step.description}</p>
+                <p className='font-semibold'>{item.label}</p>
+                <p className='text-muted-foreground text-xs'>{item.description}</p>
               </div>
             </div>
           );
         })}
-        <Button size='sm'>Upload credential evidence</Button>
+        <Button size='sm' asChild>
+          <Link prefetch href='/dashboard/profile'>
+            Review profile sections
+          </Link>
+        </Button>
       </CardContent>
     </Card>
   );
@@ -166,7 +236,7 @@ export default function InstructorOverviewPage() {
           icon={<Shield className='h-4 w-4' />}
           title='Background check'
           description='Upload the latest clearance certificate and references.'
-          href='/dashboard/profile/compliance'
+          href='/dashboard/profile/certificates'
         />
         <QuickAction
           icon={<Briefcase className='h-4 w-4' />}

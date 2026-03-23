@@ -12,7 +12,7 @@ import { useCourseRubrics } from '@/hooks/use-course-rubric';
 import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
-  getCourseReviewsOptions
+  getCourseReviewsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { useQuery } from '@tanstack/react-query';
@@ -84,7 +84,6 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
   });
   const course = courseDetail?.data;
 
-
   // FETCH ASSESSMENTS
   const { data: reviewsData } = useQuery({
     ...getCourseReviewsOptions({ path: { courseUuid: courseId as string } }),
@@ -97,11 +96,13 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
   const { data: courseRubrics, isLoading: rubric, errors } = useCourseRubrics(courseId as string);
 
   const { data: assessmentsData } = useQuery({
-    ...getCourseAssessmentsOptions({ path: { courseUuid: courseId as string }, query: { pageable: {} } }),
+    ...getCourseAssessmentsOptions({
+      path: { courseUuid: courseId as string },
+      query: { pageable: {} },
+    }),
     enabled: !!courseId,
   });
   const assessments: any[] = assessmentsData?.data?.content ?? [];
-
 
   // State for video player and reading mode
   const [isPlaying, setIsPlaying] = useState(false);
@@ -124,7 +125,6 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
       setIsAudioPlaying(true);
     }
   };
-
 
   if (isLoading) {
     return (
@@ -274,54 +274,54 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                   <Collapsible key={skill?.lesson?.uuid ?? skillIndex}>
                     {/* Lesson Header — always visible, acts as trigger */}
                     <CollapsibleTrigger className='group w-full'>
-                      <div className='flex items-center gap-3 rounded-md border border-border bg-muted/40 px-4 py-3 transition-colors hover:bg-muted'>
-                        <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary'>
+                      <div className='border-border bg-muted/40 hover:bg-muted flex items-center gap-3 rounded-md border px-4 py-3 transition-colors'>
+                        <span className='bg-primary/10 text-primary flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold'>
                           {skillIndex + 1}
                         </span>
 
                         <div className='min-w-0 flex-1 text-left'>
-                          <p className='text-sm font-semibold leading-snug text-foreground'>
+                          <p className='text-foreground text-sm leading-snug font-semibold'>
                             {skill?.lesson?.title}
                           </p>
                           {contentCount > 0 && (
-                            <p className='text-xs text-muted-foreground'>
+                            <p className='text-muted-foreground text-xs'>
                               {contentCount} item{contentCount !== 1 ? 's' : ''}
                             </p>
                           )}
                         </div>
-                        <ChevronDown className='h-4 w-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180' />
+                        <ChevronDown className='text-muted-foreground h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180' />
                       </div>
                     </CollapsibleTrigger>
 
                     {/* Expandable content */}
                     <CollapsibleContent>
-                      <div className='mx-1 overflow-hidden rounded-b-xl border border-t-0 border-border'>
+                      <div className='border-border mx-1 overflow-hidden rounded-b-xl border border-t-0'>
                         {/* Description */}
                         {skill?.lesson?.description && (
-                          <div className='border-b border-border px-4 py-3 text-sm text-muted-foreground'>
+                          <div className='border-border text-muted-foreground border-b px-4 py-3 text-sm'>
                             <RichTextRenderer htmlString={skill.lesson.description} />
                           </div>
                         )}
 
                         {/* Content Items */}
                         {contentCount > 0 ? (
-                          <div className='divide-y divide-border'>
+                          <div className='divide-border divide-y'>
                             {skill.content.data.map((c, cIndex) => {
                               const contentTypeName = contentTypeMap[c.content_type_uuid] || 'file';
                               return (
                                 <div
                                   key={c.uuid}
-                                  className='flex items-center justify-between px-4 py-2.5 transition-colors hover:bg-accent/40'
+                                  className='hover:bg-accent/40 flex items-center justify-between px-4 py-2.5 transition-colors'
                                 >
                                   <div className='flex items-center gap-3'>
-                                    <div className='flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground'>
+                                    <div className='bg-muted text-muted-foreground flex h-7 w-7 shrink-0 items-center justify-center rounded-md'>
                                       {getResourceIcon(contentTypeName)}
                                     </div>
                                     <div>
-                                      <p className='text-sm font-medium leading-snug text-foreground'>
+                                      <p className='text-foreground text-sm leading-snug font-medium'>
                                         {cIndex + 1}. {c.title}
                                       </p>
-                                      <p className='text-xs capitalize text-muted-foreground'>
+                                      <p className='text-muted-foreground text-xs capitalize'>
                                         {contentTypeName}
                                       </p>
                                     </div>
@@ -340,7 +340,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                             })}
                           </div>
                         ) : (
-                          <p className='px-4 py-3 text-xs text-muted-foreground'>
+                          <p className='text-muted-foreground px-4 py-3 text-xs'>
                             No content items for this lesson.
                           </p>
                         )}
@@ -364,26 +364,19 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         <CardContent>
           {assessments?.length ? (
             assessments.map((assessment: any) => {
-              const hasRubric = Boolean(assessment?.rubric_uuid)
+              const hasRubric = Boolean(assessment?.rubric_uuid);
 
               return (
-                <div
-                  key={assessment.uuid}
-                  className="border-b pt-2 pb-4 last:border-0"
-                >
-                  <div className="flex items-center gap-2">
-                    <BookOpenCheck className="text-primary h-4 w-4" />
+                <div key={assessment.uuid} className='border-b pt-2 pb-4 last:border-0'>
+                  <div className='flex items-center gap-2'>
+                    <BookOpenCheck className='text-primary h-4 w-4' />
 
-                    <h3 className="font-semibold">
-                      {assessment?.title ?? "Untitled Assessment"}
-                    </h3>
+                    <h3 className='font-semibold'>{assessment?.title ?? 'Untitled Assessment'}</h3>
                   </div>
 
-                  <RichTextRenderer
-                    htmlString={assessment?.description ?? "No description."}
-                  />
+                  <RichTextRenderer htmlString={assessment?.description ?? 'No description.'} />
 
-                  <div className="mt-2 flex flex-wrap gap-6">
+                  <div className='mt-2 flex flex-wrap gap-6'>
                     {/* {assessment?.assessment_type && (
                       <p className="text-muted-foreground text-sm">
                         Type: {assessment.assessment_type}
@@ -397,15 +390,15 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                     )} */}
 
                     {assessment?.weight_percentage != null && (
-                      <p className="text-muted-foreground text-sm">
-                        <Scale className="mr-1 inline-block h-4 w-4" />
+                      <p className='text-muted-foreground text-sm'>
+                        <Scale className='mr-1 inline-block h-4 w-4' />
                         Weight: {assessment.weight_display ?? `${assessment.weight_percentage}%`}
                       </p>
                     )}
 
                     {assessment?.is_required && (
-                      <p className="text-muted-foreground text-sm">
-                        <CheckCircle className="mr-1 inline-block h-4 w-4" />
+                      <p className='text-muted-foreground text-sm'>
+                        <CheckCircle className='mr-1 inline-block h-4 w-4' />
                         Required
                       </p>
                     )}
@@ -417,20 +410,18 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                     )} */}
 
                     {!hasRubric && (
-                      <p className="text-destructive text-sm italic">
-                        No rubric attached
-                      </p>
+                      <p className='text-destructive text-sm italic'>No rubric attached</p>
                     )}
                   </div>
                 </div>
-              )
+              );
             })
           ) : (
             <EmptyState
               icon={FileWarning}
-              title="No Assessments Yet"
-              description="You can create assessments once lessons are added."
-              actionLabel="Add Assessment"
+              title='No Assessments Yet'
+              description='You can create assessments once lessons are added.'
+              actionLabel='Add Assessment'
               onAction={handleConfirm}
             />
           )}

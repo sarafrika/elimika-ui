@@ -5,7 +5,6 @@ import useInstructorClassesWithDetails from '../../../../hooks/use-instructor-cl
 import TrainingsPage from './overview/page';
 
 export default function TrainingManagementPage() {
-
   const instructor = useInstructor();
   const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
     instructor?.uuid as string

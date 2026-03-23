@@ -275,7 +275,7 @@ const ClassBuilderPage = () => {
         allDay: false,
         class_color: '',
         classroom: '',
-        meeting_link: '',
+        meeting_link: classData?.meeting_link,
         reminder: '',
       });
 
@@ -388,7 +388,7 @@ const ClassBuilderPage = () => {
         is_active: !isDraft,
         default_start_time: start_time,
         default_end_time: end_time,
-        meeting_link: '',
+        meeting_link: classDetails.meeting_link,
         session_templates: [
           {
             start_time: start_time,

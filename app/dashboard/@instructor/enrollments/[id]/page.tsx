@@ -21,15 +21,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import {
-  BookOpen,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  MoveLeft,
-  Users,
-  XCircle,
-} from 'lucide-react';
+import { BookOpen, Calendar, CheckCircle2, Clock, MoveLeft, Users, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -415,10 +407,11 @@ const EnrollmentDetails = () => {
                     key={enrollment.courseId}
                     type='button'
                     onClick={() => setSelectedCourseId(enrollment.courseId)}
-                    className={`border-border/50 w-full rounded-xl border p-4 text-left transition-colors ${selectedEnrollment?.courseId === enrollment.courseId
-                      ? 'border-primary bg-primary/5'
-                      : 'hover:bg-accent/5'
-                      }`}
+                    className={`border-border/50 w-full rounded-xl border p-4 text-left transition-colors ${
+                      selectedEnrollment?.courseId === enrollment.courseId
+                        ? 'border-primary bg-primary/5'
+                        : 'hover:bg-accent/5'
+                    }`}
                   >
                     <div className='flex items-start justify-between gap-3'>
                       <div className='min-w-0 space-y-2'>
@@ -494,10 +487,10 @@ const EnrollmentDetails = () => {
                       <p className='text-foreground text-xl font-semibold'>
                         {selectedEnrollment.markedSessions > 0
                           ? `${Math.round(
-                            (selectedEnrollment.attendedSessions /
-                              selectedEnrollment.markedSessions) *
-                            100
-                          )}%`
+                              (selectedEnrollment.attendedSessions /
+                                selectedEnrollment.markedSessions) *
+                                100
+                            )}%`
                           : 'N/A'}
                       </p>
                     </div>
@@ -573,7 +566,9 @@ const EnrollmentDetails = () => {
             <li>• Sessions awaiting attendance: {pendingSessions}</li>
             <li>
               • Overall attendance rate:{' '}
-              {markedSessions > 0 ? `${Math.round((attendedSessions / markedSessions) * 100)}%` : 'N/A'}
+              {markedSessions > 0
+                ? `${Math.round((attendedSessions / markedSessions) * 100)}%`
+                : 'N/A'}
             </li>
           </ul>
         </Card>

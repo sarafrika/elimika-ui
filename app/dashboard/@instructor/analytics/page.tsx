@@ -1,6 +1,49 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useInstructor } from '@/context/instructor-context';
+import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import {
+  cx,
+  elimikaDesignSystem,
+  getCardClasses,
+  getEmptyStateClasses,
+  getHeaderClasses,
+  getStatCardClasses,
+} from '@/lib/design-system';
+import {
+  getCourseEnrollmentsOptions,
+  getInstructorRatingSummaryOptions,
+  getInstructorScheduleOptions,
+  getRevenueDashboard1Options,
+  getStudentByIdOptions,
+  getUserByUuidOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import {
+  BookOpen,
+  CalendarDays,
+  ChartColumnBig,
+  Clock3,
+  DollarSign,
+  GraduationCap,
+  Star,
+  Trophy,
+  Users,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -15,43 +58,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { useMemo, useState } from 'react';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import {
-  BookOpen,
-  CalendarDays,
-  ChartColumnBig,
-  Clock3,
-  DollarSign,
-  GraduationCap,
-  Star,
-  Trophy,
-  Users,
-} from 'lucide-react';
-import {
-  getCourseEnrollmentsOptions,
-  getInstructorRatingSummaryOptions,
-  getInstructorScheduleOptions,
-  getStudentByIdOptions,
-  getRevenueDashboard1Options,
-  getUserByUuidOptions,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useInstructor } from '@/context/instructor-context';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cx, elimikaDesignSystem, getCardClasses, getEmptyStateClasses, getHeaderClasses, getStatCardClasses } from '@/lib/design-system';
-import { useEffect } from 'react';
 
 type TimeRangeValue = '7' | '30' | '90' | '365';
 
@@ -101,10 +107,10 @@ function getShortLabel(date: Date, range: TimeRangeValue) {
 function AnalyticsEmptyState() {
   return (
     <div className={getEmptyStateClasses()}>
-      <ChartColumnBig className='h-10 w-10 text-primary/70' />
+      <ChartColumnBig className='text-primary/70 h-10 w-10' />
       <div className='space-y-1'>
         <h3 className='text-lg font-semibold'>No analytics yet</h3>
-        <p className='max-w-lg text-sm text-muted-foreground'>
+        <p className='text-muted-foreground max-w-lg text-sm'>
           Instructor analytics will appear here once there are active classes, student enrollments,
           or revenue events tied to your instructor account.
         </p>
@@ -159,13 +165,13 @@ function MetricCard({
       <Card className={getStatCardClasses()}>
         <CardContent className='p-0'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-2xl bg-primary/10 p-3 text-primary'>
+            <div className='bg-primary/10 text-primary rounded-2xl p-3'>
               <Icon className='h-5 w-5' />
             </div>
             <div className='min-w-0'>
-              <p className='text-sm text-muted-foreground'>{title}</p>
-              <p className='truncate text-2xl font-semibold text-foreground'>{value}</p>
-              <p className='text-xs text-muted-foreground'>{helper}</p>
+              <p className='text-muted-foreground text-sm'>{title}</p>
+              <p className='text-foreground truncate text-2xl font-semibold'>{value}</p>
+              <p className='text-muted-foreground text-xs'>{helper}</p>
             </div>
           </div>
         </CardContent>
@@ -189,7 +195,9 @@ export default function AnalyticsPage() {
 
   const { start, end } = useMemo(() => buildDateRange(Number(timeRange)), [timeRange]);
 
-  const { classes, isLoading: classesLoading } = useInstructorClassesWithSchedules(instructor?.uuid);
+  const { classes, isLoading: classesLoading } = useInstructorClassesWithSchedules(
+    instructor?.uuid
+  );
 
   const uniqueCourses = useMemo(() => {
     const map = new Map<string, { uuid: string; name: string }>();
@@ -271,16 +279,14 @@ export default function AnalyticsPage() {
   );
 
   const userQueries = useQueries({
-    queries: students
-      .filter(Boolean)
-      .map((student: any) => ({
-        ...getUserByUuidOptions({
-          path: { uuid: student.user_uuid as string },
-        }),
-        enabled: !!student?.user_uuid,
-        staleTime: 5 * 60 * 1000,
-        refetchOnWindowFocus: false,
-      })),
+    queries: students.filter(Boolean).map((student: any) => ({
+      ...getUserByUuidOptions({
+        path: { uuid: student.user_uuid as string },
+      }),
+      enabled: !!student?.user_uuid,
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    })),
   });
 
   const userMap = useMemo(() => {
@@ -511,7 +517,9 @@ export default function AnalyticsPage() {
   const instructorEarnings = getRevenueAmount(revenueSummary?.estimated_earnings);
   const grossRevenue = getRevenueAmount(revenueSummary?.gross_totals);
   const sessionsTaught = scheduleItems.length;
-  const upcomingSessions = scheduleItems.filter((item: any) => new Date(item.start_time) > new Date()).length;
+  const upcomingSessions = scheduleItems.filter(
+    (item: any) => new Date(item.start_time) > new Date()
+  ).length;
 
   const chartMotion = {
     initial: { opacity: 0, y: 18 },
@@ -550,7 +558,7 @@ export default function AnalyticsPage() {
   return (
     <main className='space-y-8'>
       <section className={cx(getHeaderClasses(), 'relative overflow-hidden')}>
-        <div className='dark:hidden pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,97,237,0.14),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(0,97,237,0.12),transparent_36%)]' />
+        <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,97,237,0.14),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(0,97,237,0.12),transparent_36%)] dark:hidden' />
         <div className='relative space-y-6'>
           <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
             <div className='space-y-4'>
@@ -583,7 +591,10 @@ export default function AnalyticsPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={timeRange} onValueChange={value => setTimeRange(value as TimeRangeValue)}>
+              <Select
+                value={timeRange}
+                onValueChange={value => setTimeRange(value as TimeRangeValue)}
+              >
                 <SelectTrigger className='w-full sm:w-[180px]'>
                   <SelectValue />
                 </SelectTrigger>
@@ -602,7 +613,7 @@ export default function AnalyticsPage() {
             <MetricCard
               title='Students managed'
               value={String(uniqueStudentsCount)}
-              helper='Unique learners across selected courses'
+              helper='Students across selected courses'
               icon={Users}
             />
             <MetricCard
@@ -628,7 +639,7 @@ export default function AnalyticsPage() {
       </section>
 
       <Tabs defaultValue='overview' className='space-y-6'>
-        <TabsList className='grid w-full grid-cols-3 rounded-[24px] bg-muted/60 p-1'>
+        <TabsList className='bg-muted/60 grid w-full grid-cols-3 rounded-[24px] p-1'>
           <TabsTrigger value='overview'>Overview</TabsTrigger>
           <TabsTrigger value='courses'>Courses</TabsTrigger>
           <TabsTrigger value='students'>Students</TabsTrigger>
@@ -641,7 +652,9 @@ export default function AnalyticsPage() {
               description='New course enrollments over the selected time range.'
             >
               {enrollmentTrendData.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>No enrollment activity in this range.</p>
+                <p className='text-muted-foreground text-sm'>
+                  No enrollment activity in this range.
+                </p>
               ) : (
                 <motion.div {...chartMotion} className='h-[300px] w-full'>
                   <ResponsiveContainer width='100%' height='100%'>
@@ -654,7 +667,11 @@ export default function AnalyticsPage() {
                       </defs>
                       <CartesianGrid stroke='hsl(var(--border))' strokeDasharray='4 4' />
                       <XAxis dataKey='label' stroke='hsl(var(--muted-foreground))' fontSize={12} />
-                      <YAxis stroke='hsl(var(--muted-foreground))' fontSize={12} allowDecimals={false} />
+                      <YAxis
+                        stroke='hsl(var(--muted-foreground))'
+                        fontSize={12}
+                        allowDecimals={false}
+                      />
                       <Tooltip
                         contentStyle={{
                           background: 'hsl(var(--card))',
@@ -682,14 +699,20 @@ export default function AnalyticsPage() {
               description='Scheduled class sessions across the selected time range.'
             >
               {teachingLoadData.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>No scheduled sessions in this range.</p>
+                <p className='text-muted-foreground text-sm'>
+                  No scheduled sessions in this range.
+                </p>
               ) : (
                 <motion.div {...chartMotion} className='h-[300px] w-full'>
                   <ResponsiveContainer width='100%' height='100%'>
                     <BarChart data={teachingLoadData}>
                       <CartesianGrid stroke='hsl(var(--border))' strokeDasharray='4 4' />
                       <XAxis dataKey='label' stroke='hsl(var(--muted-foreground))' fontSize={12} />
-                      <YAxis stroke='hsl(var(--muted-foreground))' fontSize={12} allowDecimals={false} />
+                      <YAxis
+                        stroke='hsl(var(--muted-foreground))'
+                        fontSize={12}
+                        allowDecimals={false}
+                      />
                       <Tooltip
                         contentStyle={{
                           background: 'hsl(var(--card))',
@@ -717,7 +740,7 @@ export default function AnalyticsPage() {
               description='Enrollment state across completed, active, and not-started learning.'
             >
               {completionDistribution.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>No progress data available yet.</p>
+                <p className='text-muted-foreground text-sm'>No progress data available yet.</p>
               ) : (
                 <motion.div {...chartMotion} className='h-[280px] w-full'>
                   <ResponsiveContainer width='100%' height='100%'>
@@ -750,11 +773,14 @@ export default function AnalyticsPage() {
 
               <div className='mt-4 grid gap-2 sm:grid-cols-3'>
                 {completionDistribution.map(entry => (
-                  <div key={entry.name} className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                    <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                  <div
+                    key={entry.name}
+                    className='border-border/60 bg-background/70 rounded-2xl border p-3'
+                  >
+                    <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                       {entry.name}
                     </p>
-                    <p className='mt-1 text-lg font-semibold text-foreground'>{entry.value}</p>
+                    <p className='text-foreground mt-1 text-lg font-semibold'>{entry.value}</p>
                   </div>
                 ))}
               </div>
@@ -765,38 +791,38 @@ export default function AnalyticsPage() {
               description='Instructor earnings and gross sales from the selected analytics range.'
             >
               <div className='mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
-                <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                  <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                  <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                     Gross revenue
                   </p>
-                  <p className='mt-1 text-lg font-semibold text-foreground'>
+                  <p className='text-foreground mt-1 text-lg font-semibold'>
                     {grossRevenue.toLocaleString()}
                   </p>
                 </div>
-                <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                  <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                  <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                     Instructor earnings
                   </p>
-                  <p className='mt-1 text-lg font-semibold text-foreground'>
+                  <p className='text-foreground mt-1 text-lg font-semibold'>
                     {instructorEarnings.toLocaleString()}
                   </p>
                 </div>
-                <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                  <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                  <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                     Sessions taught
                   </p>
-                  <p className='mt-1 text-lg font-semibold text-foreground'>{sessionsTaught}</p>
+                  <p className='text-foreground mt-1 text-lg font-semibold'>{sessionsTaught}</p>
                 </div>
-                <div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-                  <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                <div className='border-border/60 bg-background/70 rounded-2xl border p-3'>
+                  <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                     Upcoming sessions
                   </p>
-                  <p className='mt-1 text-lg font-semibold text-foreground'>{upcomingSessions}</p>
+                  <p className='text-foreground mt-1 text-lg font-semibold'>{upcomingSessions}</p>
                 </div>
               </div>
 
               {revenueSeries.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>No revenue events in this range.</p>
+                <p className='text-muted-foreground text-sm'>No revenue events in this range.</p>
               ) : (
                 <motion.div {...chartMotion} className='h-[280px] w-full'>
                   <ResponsiveContainer width='100%' height='100%'>
@@ -853,9 +879,9 @@ export default function AnalyticsPage() {
               value={
                 coursePerformanceData.length
                   ? `${Math.round(
-                      coursePerformanceData.reduce((sum, item) => sum + item.averageGrade, 0) /
-                        coursePerformanceData.length
-                    )}%`
+                    coursePerformanceData.reduce((sum, item) => sum + item.averageGrade, 0) /
+                    coursePerformanceData.length
+                  )}%`
                   : 'N/A'
               }
               helper='Average final grade across filtered courses'
@@ -874,7 +900,7 @@ export default function AnalyticsPage() {
             description='Enrollment volume, completion rate, and average grade by course.'
           >
             {coursePerformanceData.length === 0 ? (
-              <p className='text-sm text-muted-foreground'>No course performance data available.</p>
+              <p className='text-muted-foreground text-sm'>No course performance data available.</p>
             ) : (
               <div className='space-y-3'>
                 {coursePerformanceData.map(course => (
@@ -883,36 +909,38 @@ export default function AnalyticsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35, ease: 'easeOut' }}
-                    className='rounded-[24px] border border-border/60 bg-background/75 p-4'
+                    className='border-border/60 bg-background/75 rounded-[24px] border p-4'
                   >
                     <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
                       <div>
-                        <p className='font-medium text-foreground'>{course.course}</p>
-                        <p className='text-sm text-muted-foreground'>
+                        <p className='text-foreground font-medium'>{course.course}</p>
+                        <p className='text-muted-foreground text-sm'>
                           {course.enrolled} student{course.enrolled === 1 ? '' : 's'} enrolled
                         </p>
                       </div>
                       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
                         <div>
-                          <p className='text-xs uppercase tracking-wide text-muted-foreground'>
+                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
                             Completion
                           </p>
-                          <p className='text-sm font-semibold text-foreground'>
+                          <p className='text-foreground text-sm font-semibold'>
                             {formatPercent(course.completionRate)}
                           </p>
                         </div>
                         <div>
-                          <p className='text-xs uppercase tracking-wide text-muted-foreground'>
+                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
                             Avg. grade
                           </p>
-                          <p className='text-sm font-semibold text-foreground'>
-                            {course.averageGrade > 0 ? `${Math.round(course.averageGrade)}%` : 'N/A'}
+                          <p className='text-foreground text-sm font-semibold'>
+                            {course.averageGrade > 0
+                              ? `${Math.round(course.averageGrade)}%`
+                              : 'N/A'}
                           </p>
                         </div>
                         <div className='self-end'>
-                          <div className='h-2 w-full overflow-hidden rounded-full bg-muted'>
+                          <div className='bg-muted h-2 w-full overflow-hidden rounded-full'>
                             <motion.div
-                              className='h-full rounded-full bg-primary'
+                              className='bg-primary h-full rounded-full'
                               initial={{ width: 0 }}
                               animate={{ width: `${course.completionRate}%` }}
                               transition={{ duration: 0.75, ease: 'easeOut' }}
@@ -935,7 +963,7 @@ export default function AnalyticsPage() {
               description='Learners ranked by progress and final-grade performance across the selected course scope.'
             >
               {topStudents.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>No student analytics available.</p>
+                <p className='text-muted-foreground text-sm'>No student analytics available.</p>
               ) : (
                 <div className='space-y-3'>
                   {topStudents.map((student, index) => (
@@ -944,34 +972,36 @@ export default function AnalyticsPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.35, delay: index * 0.05, ease: 'easeOut' }}
-                      className='flex flex-col gap-3 rounded-[24px] border border-border/60 bg-background/75 p-4 sm:flex-row sm:items-center sm:justify-between'
+                      className='border-border/60 bg-background/75 flex flex-col gap-3 rounded-[24px] border p-4 sm:flex-row sm:items-center sm:justify-between'
                     >
                       <div className='flex items-center gap-3'>
-                        <div className='flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary'>
+                        <div className='bg-primary/10 text-primary flex h-11 w-11 items-center justify-center rounded-full font-semibold'>
                           {student.name.charAt(0)}
                         </div>
                         <div>
-                          <p className='font-medium text-foreground'>{student.name}</p>
-                          <p className='text-sm text-muted-foreground'>
+                          <p className='text-foreground font-medium'>{student.name}</p>
+                          <p className='text-muted-foreground text-sm'>
                             {student.courseCount} course{student.courseCount === 1 ? '' : 's'}
                           </p>
                         </div>
                       </div>
                       <div className='grid gap-2 sm:grid-cols-2'>
-                        <div className='rounded-2xl bg-muted/50 px-3 py-2'>
-                          <p className='text-xs uppercase tracking-wide text-muted-foreground'>
+                        <div className='bg-muted/50 rounded-2xl px-3 py-2'>
+                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
                             Progress
                           </p>
-                          <p className='text-sm font-semibold text-foreground'>
+                          <p className='text-foreground text-sm font-semibold'>
                             {formatPercent(student.completionAverage)}
                           </p>
                         </div>
-                        <div className='rounded-2xl bg-muted/50 px-3 py-2'>
-                          <p className='text-xs uppercase tracking-wide text-muted-foreground'>
+                        <div className='bg-muted/50 rounded-2xl px-3 py-2'>
+                          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
                             Avg. grade
                           </p>
-                          <p className='text-sm font-semibold text-foreground'>
-                            {student.gradeAverage > 0 ? `${Math.round(student.gradeAverage)}%` : 'N/A'}
+                          <p className='text-foreground text-sm font-semibold'>
+                            {student.gradeAverage > 0
+                              ? `${Math.round(student.gradeAverage)}%`
+                              : 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -986,7 +1016,7 @@ export default function AnalyticsPage() {
               description='Distribution of learner enrollment states in the current filter.'
             >
               {relevantEnrollments.length === 0 ? (
-                <p className='text-sm text-muted-foreground'>No enrollment records available.</p>
+                <p className='text-muted-foreground text-sm'>No enrollment records available.</p>
               ) : (
                 <motion.div {...chartMotion} className='h-[320px] w-full'>
                   <ResponsiveContainer width='100%' height='100%'>
@@ -1004,7 +1034,11 @@ export default function AnalyticsPage() {
                     >
                       <CartesianGrid stroke='hsl(var(--border))' strokeDasharray='4 4' />
                       <XAxis dataKey='status' stroke='hsl(var(--muted-foreground))' fontSize={12} />
-                      <YAxis stroke='hsl(var(--muted-foreground))' fontSize={12} allowDecimals={false} />
+                      <YAxis
+                        stroke='hsl(var(--muted-foreground))'
+                        fontSize={12}
+                        allowDecimals={false}
+                      />
                       <Tooltip
                         contentStyle={{
                           background: 'hsl(var(--card))',

@@ -1,12 +1,5 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  getStudentScheduleOptions,
-  getUserByUuidOptions,
-} from '@/services/client/@tanstack/react-query.gen';
 import { useQueries } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -26,27 +19,59 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  getStudentScheduleOptions,
+  getUserByUuidOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { Skeleton } from '../../../components/ui/skeleton';
 
 type FilterType = 'all' | 'active' | 'inactive';
 type Category = 'All';
 
+const filterOptions: Array<{
+  value: FilterType;
+  label: string;
+  description: string;
+  icon: typeof User;
+}> = [
+  {
+    value: 'all',
+    label: 'All students',
+    description: 'View the full learner directory.',
+    icon: User,
+  },
+  {
+    value: 'active',
+    label: 'Active',
+    description: 'Students with active access.',
+    icon: UserCheck,
+  },
+  {
+    value: 'inactive',
+    label: 'Inactive',
+    description: 'Students currently inactive.',
+    icon: UserX,
+  },
+];
+
+const categoryOptions: Category[] = ['All'];
+
 export default function StudentsListPage({ studentsData }: { studentsData: any }) {
-  const [pageSize] = useState(20);
   const [page, setPage] = useState(0);
 
   const students = studentsData?.data?.content ?? [];
   const totalPages = studentsData?.data?.metadata?.totalPages ?? 0;
-  const totalElements = studentsData?.data?.metadata?.totalElements ?? 0;
 
   const studentDetailQueries = useQueries({
     queries: students.map(student => ({
       ...getUserByUuidOptions({ path: { uuid: student.user_uuid as string } }),
-      enabled: !!student.uuid,
+      enabled: !!student.user_uuid,
     })),
   });
   const detailedStudents = studentDetailQueries.map(q => q.data?.data);
-  const isLoading = studentDetailQueries.some(q => q.isLoading);
 
   const studentEnrollmentQueries = useQueries({
     queries: students.map(student => ({
@@ -57,15 +82,11 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
       enabled: !!student.uuid,
     })),
   });
+  const isLoading =
+    studentDetailQueries.some(q => q.isLoading) ||
+    studentEnrollmentQueries.some(q => q.isLoading);
 
   const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data);
-  const sortedEnrollments = detailedEnrollments.map(enrollments =>
-    enrollments?.sort((a: any, b: any) => {
-      const dateA = new Date(a.enrollment_date);
-      const dateB = new Date(b.enrollment_date);
-      return dateB.getTime() - dateA.getTime();
-    })
-  );
 
   const uniqueEnrollments = detailedEnrollments.map(enrollments => {
     if (!enrollments) return [];
@@ -81,11 +102,39 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
     });
   });
 
+  const enrollmentMap = useMemo(
+    () =>
+      new Map(
+        students.map((student, index) => [
+          student.user_uuid as string,
+          uniqueEnrollments[index] ?? [],
+        ])
+      ),
+    [students, uniqueEnrollments]
+  );
+
+  const resolvedStudents = useMemo(
+    () =>
+      students
+        .map((student, index) => {
+          const user = detailedStudents[index];
+          if (!user) return null;
+
+          return {
+            ...user,
+            studentProfile: student,
+            enrollmentCount: (uniqueEnrollments[index] ?? []).length,
+          };
+        })
+        .filter(Boolean),
+    [students, detailedStudents, uniqueEnrollments]
+  );
+
   // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [selectedCategory, setSelectedCategory] = useState<Category>('All');
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedStudentUuid, setSelectedStudentUuid] = useState<string | null>(null);
   const [starredStudents, setStarredStudents] = useState<Set<string>>(new Set());
 
   // Mobile states
@@ -106,20 +155,24 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
 
   // Filter students based on search, filter type, and category
   const filteredStudents = useMemo(() => {
-    let filtered = detailedStudents.filter(Boolean);
+    let filtered = resolvedStudents;
 
     // Search filter
     if (searchQuery) {
+      const normalizedQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(
         student =>
-          student?.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          student?.username?.toLowerCase().includes(searchQuery.toLowerCase())
+          student?.display_name?.toLowerCase().includes(normalizedQuery) ||
+          student?.username?.toLowerCase().includes(normalizedQuery) ||
+          student?.email?.toLowerCase().includes(normalizedQuery)
       );
     }
 
     // Filter type
     if (selectedFilter === 'active') {
       filtered = filtered.filter(student => student?.active);
+    } else if (selectedFilter === 'inactive') {
+      filtered = filtered.filter(student => !student?.active);
     }
 
     // Category filter
@@ -128,17 +181,31 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
     }
 
     return filtered;
-  }, [detailedStudents, searchQuery, selectedFilter, selectedCategory, starredStudents]);
+  }, [resolvedStudents, searchQuery, selectedFilter, selectedCategory]);
 
-  // Set first student as selected by default
+  const selectedStudent = useMemo(
+    () => filteredStudents.find(student => student?.uuid === selectedStudentUuid) ?? null,
+    [filteredStudents, selectedStudentUuid]
+  );
+
+  // Keep the current selection if it still exists after filtering; otherwise select the first row.
   useEffect(() => {
-    if (filteredStudents.length > 0) {
-      setSelectedStudent(filteredStudents[0]);
+    if (filteredStudents.length === 0) {
+      setSelectedStudentUuid(null);
+      return;
     }
-  }, [filteredStudents]);
 
-  const toggleStar = (studentUuid: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+    const selectionStillVisible = filteredStudents.some(
+      student => student?.uuid === selectedStudentUuid
+    );
+
+    if (!selectionStillVisible) {
+      setSelectedStudentUuid(filteredStudents[0]?.uuid ?? null);
+    }
+  }, [filteredStudents, selectedStudentUuid]);
+
+  const toggleStar = (studentUuid: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setStarredStudents(prev => {
       const newSet = new Set(prev);
       if (newSet.has(studentUuid)) {
@@ -150,13 +217,8 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
     });
   };
 
-  const handleDelete = (studentUuid: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Implement delete logic
-  };
-
   const handleStudentClick = (student: any) => {
-    setSelectedStudent(student);
+    setSelectedStudentUuid(student?.uuid ?? null);
     // Open mobile details sheet on mobile devices
     if (window.innerWidth < 1024) {
       setIsMobileDetailsOpen(true);
@@ -168,75 +230,97 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
   };
 
   const getEnrollmentForStudent = (studentUuid: string) => {
-    const index = students.findIndex(s => s.user_uuid === studentUuid);
-    return index >= 0 ? uniqueEnrollments[index] : null;
+    return enrollmentMap.get(studentUuid) ?? [];
   };
-
-  useEffect(() => {
-    setPage(0);
-  }, [searchQuery, selectedFilter, selectedCategory]);
 
   return (
     <Card className='p-2'>
       <div className='flex h-[calc(75vh-4rem)] gap-0 overflow-hidden sm:h-[calc(82vh-4rem)] md:h-[calc(80vh-4rem)]'>
         {/* Left Sidebar - Desktop Only */}
-        <aside className='bg-background hidden w-64 flex-col border-r p-4 lg:flex'>
-          {/* Filter Options */}
-          <div className='mb-6 space-y-2'>
-            <button
-              onClick={() => setSelectedFilter('all')}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                selectedFilter === 'all' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-              }`}
-            >
-              <User size={16} />
-              All
-            </button>
-            <button
-              onClick={() => {
-                setSelectedFilter('active');
-                setIsMobileMenuOpen(false);
-              }}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-              }`}
-            >
-              <UserCheck className='text-success/50' size={16} />
-              Active
-            </button>
-            <button
-              onClick={() => {
-                setSelectedFilter('inactive');
-                setIsMobileMenuOpen(false);
-              }}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-              }`}
-            >
-              <UserX className='text-destructive/50' size={16} />
-              Inactive
-            </button>
-          </div>
+        <aside className='bg-background hidden w-72 flex-col border-r p-4 lg:flex'>
+          <div className='space-y-5'>
+            <div className='rounded-2xl border border-border/70 bg-muted/20 p-3'>
+              <div className='mb-3 flex items-start justify-between gap-3'>
+                <div>
+                  <p className='text-sm font-semibold'>Smart filters</p>
+                  <p className='text-muted-foreground text-xs'>
+                    Narrow the student directory quickly.
+                  </p>
+                </div>
+                <div className='rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary'>
+                  {filteredStudents.length}
+                </div>
+              </div>
 
-          {/* Categories */}
-          <div>
-            <h3 className='text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase'>
-              Categories
-            </h3>
-            <div className='space-y-2'>
-              {/* {(['All', 'Section A', 'Section B', 'Section C'] as Category[]).map(category => ( */}
-              {(['All'] as Category[]).map(category => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                    selectedCategory === category ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                  }`}
-                >
+              <div className='space-y-2'>
+                {filterOptions.map(option => {
+                  const Icon = option.icon;
+                  const isActive = selectedFilter === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSelectedFilter(option.value);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all ${
+                        isActive
+                          ? 'border-primary/30 bg-primary/10 text-primary shadow-sm'
+                          : 'border-transparent bg-background hover:border-border/70 hover:bg-muted/60'
+                      }`}
+                    >
+                      <span
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                          isActive ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        <Icon size={18} />
+                      </span>
+                      <span className='min-w-0 flex-1'>
+                        <span className='block text-sm font-semibold'>{option.label}</span>
+                        <span className='text-muted-foreground block text-xs'>
+                          {option.description}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className='rounded-2xl border border-border/70 bg-background p-3'>
+              <div className='mb-3 flex items-center gap-2'>
+                <span className='flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground'>
                   <Building2 size={16} />
-                  {category}
-                </button>
-              ))}
+                </span>
+                <div>
+                  <p className='text-sm font-semibold'>Categories</p>
+                  <p className='text-muted-foreground text-xs'>
+                    Segment learners when more groups are added.
+                  </p>
+                </div>
+              </div>
+
+              <div className='flex flex-wrap gap-2'>
+                {categoryOptions.map(category => {
+                  const isActive = selectedCategory === category;
+
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`rounded-full border px-3 py-2 text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'border-primary/30 bg-primary/10 text-primary'
+                          : 'border-border/70 bg-background text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </aside>
@@ -305,9 +389,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
             ) : (
               <div className='divide-y'>
                 {filteredStudents.map((student: any) => {
-                  const isStarred = starredStudents.has(student?.uuid);
-                  const isSelected = selectedStudent?.uuid === student?.uuid;
-                  const enrollment = getEnrollmentForStudent(student?.uuid);
+                  const isSelected = selectedStudentUuid === student?.uuid;
 
                   return (
                     <div
@@ -325,7 +407,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                       <div className='flex-1 overflow-hidden'>
                         <p className='truncate text-sm font-medium'>{student?.display_name}</p>
                         <p className='text-muted-foreground truncate text-xs'>
-                          {enrollment?.length || 0} classes enrolled
+                          {student?.enrollmentCount || 0} classes enrolled
                         </p>
                       </div>
 
@@ -406,9 +488,14 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
           />
 
           {/* Sheet */}
-          <aside className='animate-slide-in-left bg-background absolute top-0 bottom-0 left-0 w-80 max-w-[85vw] p-4 shadow-xl'>
+          <aside className='animate-slide-in-left bg-background absolute top-0 bottom-0 left-0 w-80 max-w-[85vw] border-r p-4 shadow-xl'>
             <div className='mb-6 flex items-center justify-between'>
-              <h2 className='text-lg font-semibold'>Filters</h2>
+              <div>
+                <h2 className='text-lg font-semibold'>Filters</h2>
+                <p className='text-muted-foreground text-xs'>
+                  Refine which students appear in the list.
+                </p>
+              </div>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className='hover:bg-muted rounded-lg p-2'
@@ -418,65 +505,75 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
             </div>
 
             {/* Filter Options */}
-            <div className='mb-6 space-y-2'>
-              <button
-                onClick={() => {
-                  setSelectedFilter('all');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  selectedFilter === 'all' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                }`}
-              >
-                <Mail size={16} />
-                All
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedFilter('active');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                }`}
-              >
-                <UserCheck className='text-success/50' size={16} />
-                Active
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedFilter('inactive');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  selectedFilter === 'active' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                }`}
-              >
-                <UserX className='text-destructive/50' size={16} />
-                Inactive
-              </button>
+            <div className='mb-6 rounded-2xl border border-border/70 bg-muted/20 p-3'>
+              <div className='mb-3 flex items-center justify-between'>
+                <h3 className='text-sm font-semibold'>Status</h3>
+                <span className='rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary'>
+                  {filteredStudents.length}
+                </span>
+              </div>
+              <div className='space-y-2'>
+                {filterOptions.map(option => {
+                  const Icon = option.icon;
+                  const isActive = selectedFilter === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSelectedFilter(option.value);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all ${
+                        isActive
+                          ? 'border-primary/30 bg-primary/10 text-primary'
+                          : 'border-transparent bg-background hover:border-border/70 hover:bg-muted/60'
+                      }`}
+                    >
+                      <span
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                          isActive ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        <Icon size={18} />
+                      </span>
+                      <span className='min-w-0 flex-1'>
+                        <span className='block text-sm font-semibold'>{option.label}</span>
+                        <span className='text-muted-foreground block text-xs'>
+                          {option.description}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Categories */}
-            <div>
-              <h3 className='text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase'>
-                Categories
-              </h3>
-              <div className='space-y-2'>
-                {(['All'] as Category[]).map(category => (
+            <div className='rounded-2xl border border-border/70 bg-background p-3'>
+              <div className='mb-3 flex items-center gap-2'>
+                <span className='flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground'>
+                  <Building2 size={16} />
+                </span>
+                <div>
+                  <h3 className='text-sm font-semibold'>Categories</h3>
+                  <p className='text-muted-foreground text-xs'>Current grouping options.</p>
+                </div>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                {categoryOptions.map(category => (
                   <button
                     key={category}
                     onClick={() => {
                       setSelectedCategory(category);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
+                    className={`rounded-full border px-3 py-2 text-sm font-medium transition-colors ${
                       selectedCategory === category
                         ? 'bg-primary/10 text-primary'
-                        : 'hover:bg-muted'
+                        : 'text-muted-foreground hover:bg-muted'
                     }`}
                   >
-                    <Building2 size={16} />
                     {category}
                   </button>
                 ))}

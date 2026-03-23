@@ -106,7 +106,9 @@ export default function CategoriesPage() {
   const createMutation = useMutation({
     ...createCategoryMutation(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }) });
+      queryClient.invalidateQueries({
+        queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }),
+      });
       toast.success('Category created successfully');
       setIsDialogOpen(false);
       resetForm();
@@ -120,7 +122,10 @@ export default function CategoriesPage() {
   const updateMutation = useMutation({
     ...updateCategoryMutation(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }) }); toast.success('Category updated successfully');
+      queryClient.invalidateQueries({
+        queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }),
+      });
+      toast.success('Category updated successfully');
       setIsDialogOpen(false);
       setEditingCategory(null);
       resetForm();
@@ -134,7 +139,9 @@ export default function CategoriesPage() {
   const deleteMutation = useMutation({
     ...deleteCategoryMutation(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }) });
+      queryClient.invalidateQueries({
+        queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }),
+      });
       toast.success('Category deleted successfully');
       setDeletingCategory(null);
     },
@@ -241,18 +248,19 @@ export default function CategoriesPage() {
         break;
     }
 
-    const cmp = typeof aVal === 'string' ? aVal.localeCompare(bVal as string) : aVal - (bVal as number);
+    const cmp =
+      typeof aVal === 'string' ? aVal.localeCompare(bVal as string) : aVal - (bVal as number);
     return sortDirection === 'asc' ? cmp : -cmp;
   });
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredCategories = normalizedSearch
     ? sortedCategories.filter(
-      cat =>
-        (cat.name || '').toLowerCase().includes(normalizedSearch) ||
-        (cat.description || '').toLowerCase().includes(normalizedSearch) ||
-        (cat.category_path || '').toLowerCase().includes(normalizedSearch)
-    )
+        cat =>
+          (cat.name || '').toLowerCase().includes(normalizedSearch) ||
+          (cat.description || '').toLowerCase().includes(normalizedSearch) ||
+          (cat.category_path || '').toLowerCase().includes(normalizedSearch)
+      )
     : sortedCategories;
 
   // Reset to page 1 on search
@@ -262,7 +270,11 @@ export default function CategoriesPage() {
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ArrowUpDown className='text-muted-foreground h-4 w-4' />;
-    return sortDirection === 'asc' ? <ArrowUp className='h-4 w-4' /> : <ArrowDown className='h-4 w-4' />;
+    return sortDirection === 'asc' ? (
+      <ArrowUp className='h-4 w-4' />
+    ) : (
+      <ArrowDown className='h-4 w-4' />
+    );
   };
 
   const activeCount = categories.filter(c => c.is_active).length;
@@ -566,9 +578,7 @@ export default function CategoriesPage() {
               <div className='flex items-center justify-between rounded-lg border p-4'>
                 <div className='space-y-0.5'>
                   <Label htmlFor='is_root_category'>Root Category</Label>
-                  <p className='text-muted-foreground text-xs'>
-                    Mark as a top-level root category
-                  </p>
+                  <p className='text-muted-foreground text-xs'>Mark as a top-level root category</p>
                 </div>
                 <Switch
                   id='is_root_category'

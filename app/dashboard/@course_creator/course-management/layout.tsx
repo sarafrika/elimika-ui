@@ -81,21 +81,21 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
         </div>
 
         {/* Courses/Programs Toggle */}
-        <Tabs value={currentType} onValueChange={handleTypeChange} className="w-fit">
-          <TabsList className="grid w-full grid-cols-2 bg-muted">
+        <Tabs value={currentType} onValueChange={handleTypeChange} className='w-fit'>
+          <TabsList className='bg-muted grid w-full grid-cols-2'>
             <TabsTrigger
-              value="courses"
-              className="flex items-center gap-2 data-[state=active]:bg-background"
+              value='courses'
+              className='data-[state=active]:bg-background flex items-center gap-2'
             >
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className='h-4 w-4' />
               <span>Courses</span>
             </TabsTrigger>
 
             <TabsTrigger
-              value="programs"
-              className="flex items-center gap-2 data-[state=active]:bg-background"
+              value='programs'
+              className='data-[state=active]:bg-background flex items-center gap-2'
             >
-              <GraduationCap className="h-4 w-4" />
+              <GraduationCap className='h-4 w-4' />
               <span>Programs</span>
             </TabsTrigger>
           </TabsList>

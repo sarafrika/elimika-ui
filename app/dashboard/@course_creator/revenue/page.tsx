@@ -589,7 +589,10 @@ const RevenuePage = () => {
                     <span className='text-foreground text-sm font-semibold'>KES {0}</span>
                   </div>
                   <div className='bg-muted h-2 w-full rounded-full'>
-                    <div className='bg-primary h-2 rounded-full transition-all duration-300' style={{ width: '0%' }} />
+                    <div
+                      className='bg-primary h-2 rounded-full transition-all duration-300'
+                      style={{ width: '0%' }}
+                    />
                   </div>
                   <div className='text-muted-foreground mt-1 text-xs'>0% of total</div>
                 </div>
@@ -602,35 +605,27 @@ const RevenuePage = () => {
       {/* ── Transfer Funds Sheet ───────────────────────────────────────────── */}
       <TransferFundsSheet
         open={isTransferSheetOpen}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           setIsTransferSheetOpen(open);
           if (!open) resetTransferForm();
         }}
         balance={analyticsData.netRevenue}
         isInsufficientBalance={isInsufficientBalance}
-
         targetUserUuid={targetUserUuid}
         setTargetUserUuid={setTargetUserUuid}
-
         transferAmount={transferAmount}
         setTransferAmount={setTransferAmount}
-
         transferCurrency={transferCurrency}
         setTransferCurrency={setTransferCurrency}
-
         transferReference={transferReference}
         setTransferReference={setTransferReference}
-
         transferDescription={transferDescription}
         setTransferDescription={setTransferDescription}
-
         userSearchQuery={userSearchQuery}
         setUserSearchQuery={setUserSearchQuery}
-
         isPending={transferFundsMut.isPending}
         isError={transferFundsMut.isError}
         isSuccess={transferFundsMut.isSuccess}
-
         onSubmit={handleTransferFunds}
         onCancel={() => {
           setIsTransferSheetOpen(false);

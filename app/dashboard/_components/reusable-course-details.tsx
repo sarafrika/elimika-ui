@@ -190,14 +190,14 @@ export default function ReusableCourseDetailsPage({
   const avgRating =
     reviewCount > 0
       ? (
-        reviews!.data!.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviewCount
-      ).toFixed(1)
+          reviews!.data!.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviewCount
+        ).toFixed(1)
       : null;
 
   return (
-    <div className='mb-24 min-h-screen max-w-7xl mx-auto'>
+    <div className='mx-auto mb-24 min-h-screen max-w-7xl'>
       {/* ── HERO BAND ──────────────────────────────────────────────── */}
-      <div className='relative mb-12 overflow-hidden border border-border rounded-2xl px-8 py-12 md:px-14 md:py-16'>
+      <div className='border-border relative mb-12 overflow-hidden rounded-2xl border px-8 py-12 md:px-14 md:py-16'>
         {/* subtle grid texture */}
         <div
           className='pointer-events-none absolute inset-0 opacity-[0.04]'
@@ -214,14 +214,14 @@ export default function ReusableCourseDetailsPage({
               {/* Tags */}
               <div className='mb-5 flex flex-wrap items-center gap-2'>
                 {difficultyName && (
-                  <span className='rounded-full border border-primary/40 bg-primary/10 px-3 py-0.5 text-xs font-semibold uppercase tracking-widest text-primary'>
+                  <span className='border-primary/40 bg-primary/10 text-primary rounded-full border px-3 py-0.5 text-xs font-semibold tracking-widest uppercase'>
                     {difficultyName}
                   </span>
                 )}
                 {courseData?.category_names?.map((cat: string, i: number) => (
                   <span
                     key={i}
-                    className='rounded-full border border-border/50 bg-muted/30 px-3 py-0.5 text-xs text-muted-foreground'
+                    className='border-border/50 bg-muted/30 text-muted-foreground rounded-full border px-3 py-0.5 text-xs'
                   >
                     {cat}
                   </span>
@@ -229,7 +229,7 @@ export default function ReusableCourseDetailsPage({
               </div>
 
               {/* Title */}
-              <h1 className='mb-4 text-3xl font-extrabold leading-tight tracking-tight md:text-4xl lg:text-5xl'>
+              <h1 className='mb-4 text-3xl leading-tight font-extrabold tracking-tight md:text-4xl lg:text-5xl'>
                 {courseData?.name}
               </h1>
 
@@ -240,20 +240,21 @@ export default function ReusableCourseDetailsPage({
                     {[1, 2, 3, 4, 5].map(s => (
                       <Star
                         key={s}
-                        className={`h-4 w-4 ${s <= Math.round(Number(avgRating))
-                          ? 'fill-warning text-warning'
-                          : 'text-muted-foreground/40'
-                          }`}
+                        className={`h-4 w-4 ${
+                          s <= Math.round(Number(avgRating))
+                            ? 'fill-warning text-warning'
+                            : 'text-muted-foreground/40'
+                        }`}
                       />
                     ))}
                   </div>
-                  <span className='text-sm font-semibold text-warning'>{avgRating}</span>
-                  <span className='text-sm text-muted-foreground'>({reviewCount} reviews)</span>
+                  <span className='text-warning text-sm font-semibold'>{avgRating}</span>
+                  <span className='text-muted-foreground text-sm'>({reviewCount} reviews)</span>
                 </div>
               )}
 
               {/* Class limit */}
-              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+              <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                 <Users className='h-4 w-4' />
                 <span>{courseData?.class_limit} class limit</span>
               </div>
@@ -261,8 +262,8 @@ export default function ReusableCourseDetailsPage({
 
             {/* Instructor */}
             <div className='flex items-center gap-4'>
-              <Avatar className='h-12 w-12 ring-2 ring-primary/30'>
-                <AvatarFallback className='bg-muted font-semibold text-foreground'>
+              <Avatar className='ring-primary/30 h-12 w-12 ring-2'>
+                <AvatarFallback className='bg-muted text-foreground font-semibold'>
                   {courseCreator?.full_name
                     ?.split(' ')
                     .map((n: string) => n[0])
@@ -270,16 +271,18 @@ export default function ReusableCourseDetailsPage({
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className='font-semibold text-foreground'>{courseCreator?.full_name}</p>
-                <p className='text-sm text-muted-foreground'>{courseCreator?.professional_headline}</p>
+                <p className='text-foreground font-semibold'>{courseCreator?.full_name}</p>
+                <p className='text-muted-foreground text-sm'>
+                  {courseCreator?.professional_headline}
+                </p>
               </div>
             </div>
           </div>
 
           {/* RIGHT — enrollment card */}
-          <div className='flex flex-col gap-4 rounded-xl border border-border bg-white/5 p-6 backdrop-blur-sm'>
+          <div className='border-border flex flex-col gap-4 rounded-xl border bg-white/5 p-6 backdrop-blur-sm'>
             {/* Intro video / thumbnail */}
-            <div className='relative flex h-40 items-center justify-center overflow-hidden rounded-lg bg-muted'>
+            <div className='bg-muted relative flex h-40 items-center justify-center overflow-hidden rounded-lg'>
               {courseData?.intro_video_url ? (
                 <button
                   type='button'
@@ -295,13 +298,13 @@ export default function ReusableCourseDetailsPage({
                     setIsPlaying(true);
                   }}
                 >
-                  <span className='flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 transition-transform group-hover:scale-110'>
-                    <Play className='h-6 w-6 fill-foreground text-foreground' />
+                  <span className='bg-primary shadow-primary/30 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform group-hover:scale-110'>
+                    <Play className='fill-foreground text-foreground h-6 w-6' />
                   </span>
-                  <span className='text-xs text-muted-foreground'>Watch intro</span>
+                  <span className='text-muted-foreground text-xs'>Watch intro</span>
                 </button>
               ) : (
-                <div className='flex flex-col items-center gap-2 text-muted-foreground/60'>
+                <div className='text-muted-foreground/60 flex flex-col items-center gap-2'>
                   <BookOpen className='h-10 w-10' />
                   <p className='text-xs'>No intro video</p>
                 </div>
@@ -310,11 +313,12 @@ export default function ReusableCourseDetailsPage({
 
             {/* Price */}
             <div>
-              <p className='text-3xl font-extrabold text-foreground'>
-                KES{' '}
-                <span className='text-primary'>{courseData?.minimum_training_fee}</span>
+              <p className='text-foreground text-3xl font-extrabold'>
+                KES <span className='text-primary'>{courseData?.minimum_training_fee}</span>
               </p>
-              <p className='mt-0.5 text-xs text-muted-foreground'>minimum training fee · per hour per head</p>
+              <p className='text-muted-foreground mt-0.5 text-xs'>
+                minimum training fee · per hour per head
+              </p>
             </div>
 
             {/* CTAs */}
@@ -324,7 +328,7 @@ export default function ReusableCourseDetailsPage({
                   onClick={() =>
                     router.push(`/dashboard/all-courses/available-classes/${courseData?.uuid}`)
                   }
-                  className='w-full bg-primary font-semibold hover:bg-primary/90'
+                  className='bg-primary hover:bg-primary/90 w-full font-semibold'
                   size='lg'
                 >
                   Enroll for Programs / Classes
@@ -346,16 +350,16 @@ export default function ReusableCourseDetailsPage({
             </div>
 
             {/* Quick stat pills */}
-            <div className='mt-2 grid grid-cols-3 divide-x divide-border rounded-lg border border-border bg-muted/30'>
+            <div className='divide-border border-border bg-muted/30 mt-2 grid grid-cols-3 divide-x rounded-lg border'>
               {[
                 { icon: BookOpen, value: lessonsWithContent?.length || 0, label: 'Lessons' },
                 { icon: HelpCircle, value: filteredQuizzes?.length || 0, label: 'Quizzes' },
                 { icon: ClipboardList, value: filteredAssignments?.length || 0, label: 'Tasks' },
               ].map(({ icon: Icon, value, label }) => (
                 <div key={label} className='flex flex-col items-center py-3'>
-                  <Icon className='mb-1 h-4 w-4 text-primary' />
-                  <span className='text-lg font-bold text-foreground'>{value}</span>
-                  <span className='text-[10px] text-muted-foreground'>{label}</span>
+                  <Icon className='text-primary mb-1 h-4 w-4' />
+                  <span className='text-foreground text-lg font-bold'>{value}</span>
+                  <span className='text-muted-foreground text-[10px]'>{label}</span>
                 </div>
               ))}
             </div>
@@ -365,7 +369,6 @@ export default function ReusableCourseDetailsPage({
 
       {/* ── BODY ───────────────────────────────────────────────────── */}
       <div className='space-y-10'>
-
         {/* About */}
         <section>
           <SectionLabel>About This Course</SectionLabel>
@@ -414,22 +417,24 @@ export default function ReusableCourseDetailsPage({
           </div>
 
           {reviewCount === 0 ? (
-            <div className='rounded-xl border border-dashed border-border p-10 text-center'>
-              <GraduationCap className='mx-auto mb-3 h-8 w-8 text-muted-foreground/40' />
-              <p className='text-sm text-muted-foreground'>No reviews yet. Be the first!</p>
+            <div className='border-border rounded-xl border border-dashed p-10 text-center'>
+              <GraduationCap className='text-muted-foreground/40 mx-auto mb-3 h-8 w-8' />
+              <p className='text-muted-foreground text-sm'>No reviews yet. Be the first!</p>
             </div>
           ) : (
             <div className='grid gap-4 sm:grid-cols-2'>
-              {reviews?.data?.slice(0, 6).map((review: any) => (
-                <ReviewCard key={review.uuid} review={review} type='others' />
-              ))}
+              {reviews?.data
+                ?.slice(0, 6)
+                .map((review: any) => (
+                  <ReviewCard key={review.uuid} review={review} type='others' />
+                ))}
             </div>
           )}
 
           {reviewCount > 6 && (
             <button
               type='button'
-              className='mt-4 flex items-center gap-1 text-sm font-medium text-warning/60 hover:underline dark:text-warning/40'
+              className='text-warning/60 dark:text-warning/40 mt-4 flex items-center gap-1 text-sm font-medium hover:underline'
             >
               View all {reviewCount} reviews <ChevronRight className='h-4 w-4' />
             </button>
@@ -470,11 +475,5 @@ function SectionLabel({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <h2
-      className={`mb-4 text-xl font-bold tracking-tight ${className}`}
-    >
-      {children}
-    </h2>
-  );
+  return <h2 className={`mb-4 text-xl font-bold tracking-tight ${className}`}>{children}</h2>;
 }

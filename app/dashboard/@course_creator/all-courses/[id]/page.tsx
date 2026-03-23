@@ -9,11 +9,10 @@ export default function CourseDetailsPage({ params }: any) {
   const router = useRouter();
   const student = useStudent();
 
-
   return (
     <ReusableCourseDetailsPage
       courseId={data}
-      handleEnroll={() => { }}
+      handleEnroll={() => {}}
       student_uuid={student?.uuid}
     />
   );

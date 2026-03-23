@@ -78,7 +78,7 @@ export default function TrainingsPage({
         <Button
           onClick={() => router.push(`/dashboard/trainings/create-new`)}
           size='lg'
-          className='w-full gap-2 max-w-fit self-end '
+          className='w-full max-w-fit gap-2 self-end'
         >
           <PlusIcon className='h-5 w-5' />
           Create New Class

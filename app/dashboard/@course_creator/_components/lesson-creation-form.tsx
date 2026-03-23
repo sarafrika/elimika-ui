@@ -443,7 +443,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const handleDeleteContent = async (resolvedId: any, lessonId: any, contentId: any) => {
@@ -468,17 +468,23 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const getContentIcon = (type: string) => {
     switch (type) {
-      case 'TEXT': return <FileText className='h-4 w-4' />;
-      case 'IMAGE': return <ImageIcon className='h-4 w-4' />;
-      case 'VIDEO': return <Video className='h-4 w-4' />;
-      case 'AUDIO': return <Headphones className='h-4 w-4' />;
-      case 'PDF': return <FileUp className='h-4 w-4' />;
-      default: return <FileText className='h-4 w-4' />;
+      case 'TEXT':
+        return <FileText className='h-4 w-4' />;
+      case 'IMAGE':
+        return <ImageIcon className='h-4 w-4' />;
+      case 'VIDEO':
+        return <Video className='h-4 w-4' />;
+      case 'AUDIO':
+        return <Headphones className='h-4 w-4' />;
+      case 'PDF':
+        return <FileUp className='h-4 w-4' />;
+      default:
+        return <FileText className='h-4 w-4' />;
     }
   };
 
