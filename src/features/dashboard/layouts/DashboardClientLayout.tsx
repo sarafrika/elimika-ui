@@ -1,7 +1,7 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
-import { type ReactNode, useEffect, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
+import { type ReactNode, useMemo } from 'react';
 import CustomLoader from '@/components/custom-loader';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
@@ -33,37 +33,7 @@ export function DashboardClientLayout(dashboardProps: DashboardChildrenTypes) {
 function DashboardLayoutContent(dashboardProps: DashboardChildrenTypes) {
   const profile = useUserProfile();
   const domain = useUserDomain();
-  const router = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    if (!profile?.isLoading && domain.isReady && !domain.isLoading && profile) {
-      if (domain.domains.length === 0 && profile.user_domain !== undefined) {
-        router.push('/onboarding');
-      }
-    }
-  }, [profile, profile?.isLoading, domain.isReady, domain.isLoading, domain.domains, router]);
-
-  useEffect(() => {
-    if (
-      !profile?.isLoading &&
-      !domain.isLoading &&
-      domain.isReady &&
-      profile &&
-      domain.activeDomain === 'organisation_user' &&
-      (!profile.organisation_affiliations || profile.organisation_affiliations.length === 0)
-    ) {
-      router.push('/onboarding/organisation');
-    }
-  }, [
-    profile,
-    profile?.isLoading,
-    domain.isLoading,
-    domain.isReady,
-    profile?.organisation_affiliations,
-    domain.activeDomain,
-    router,
-  ]);
 
   const userDomains = useMemo(() => domain.domains as KnownDomain[], [domain.domains]);
   const activeDomain = (domain.activeDomain ?? null) as KnownDomain | null;

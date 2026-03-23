@@ -13,6 +13,11 @@ type DashboardEntryResolution = {
   activeDomain: UserDomain | null;
 };
 
+type DashboardGuardResolution = {
+  redirectTo: string | null;
+  activeDomain: UserDomain | null;
+};
+
 async function getServerDashboardUser() {
   const session = await auth();
 
@@ -101,6 +106,46 @@ export async function resolveDashboardEntryTarget(
 
   return {
     redirectTo: buildDashboardSwitchPath(activeDomain, nextPath),
+    activeDomain,
+  };
+}
+
+export async function resolveDashboardGuard(
+  preferredDomain: UserDomain | null
+): Promise<DashboardGuardResolution> {
+  const user = await getServerDashboardUser();
+
+  if (!user) {
+    return {
+      redirectTo: '/',
+      activeDomain: null,
+    };
+  }
+
+  const domains = extractUserDomains(user);
+  if (!domains.length) {
+    return {
+      redirectTo: '/onboarding',
+      activeDomain: null,
+    };
+  }
+
+  const activeDomain =
+    (preferredDomain && domains.includes(preferredDomain) ? preferredDomain : domains[0]) ?? null;
+
+  if (
+    activeDomain &&
+    (activeDomain === 'organisation' || activeDomain === 'organisation_user') &&
+    (!user.organisation_affiliations || user.organisation_affiliations.length === 0)
+  ) {
+    return {
+      redirectTo: '/onboarding/organisation',
+      activeDomain,
+    };
+  }
+
+  return {
+    redirectTo: null,
     activeDomain,
   };
 }
