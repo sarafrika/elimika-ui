@@ -1,5 +1,5 @@
-import MyCoursesPage from '@/app/dashboard/_home-components/MyCoursesPage';
+import AllCoursesPage from '@/src/features/dashboard/courses/pages/AllCoursesPage';
 
 export function SharedAllCoursesPage() {
-  return <MyCoursesPage />;
+  return <AllCoursesPage />;
 }
