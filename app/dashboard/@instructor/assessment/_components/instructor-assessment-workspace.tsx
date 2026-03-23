@@ -804,9 +804,6 @@ export function InstructorAssessmentWorkspace({
     });
   }, [assignments, searchQuery, selectedCourseId]);
 
-  console.log(instructor, 'instr');
-  console.log(filteredAssignments, 'FASS');
-
   const filteredQuizzes = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 

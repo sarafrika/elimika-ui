@@ -68,9 +68,6 @@ export default function StudentOverviewPage() {
   const studentUuid = student?.uuid;
   const name = student?.full_name ?? user?.displayName ?? user?.fullName ?? 'Student';
 
-  console.log(user, "user")
-  console.log(student, "student")
-
   const { data: enrollmentData, isLoading: isEnrollmentLoading } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: studentUuid ?? '' },
