@@ -17,11 +17,11 @@ import { toast } from 'sonner';
 import { Textarea } from '../../../../components/ui/textarea';
 import { requirementTypes } from './course-creation-types';
 
-export type Provider = 'instructor' | 'organization' | 'student';
+export type Provider = 'instructor' | 'organisation' | 'student';
 
 const PROVIDERS: { value: Provider; label: string }[] = [
   { value: 'instructor', label: 'Instructor' },
-  { value: 'organization', label: 'Organization' },
+  { value: 'organisation', label: 'Organisation' },
   { value: 'student', label: 'Student' },
 ];
 
@@ -93,7 +93,7 @@ export function TrainingRequirementsSection({
   const [draftsByProvider, setDraftsByProvider] = useState<Record<Provider, DraftRow[]>>({
     course_creator: [emptyDraft()],
     instructor: [emptyDraft()],
-    organization: [emptyDraft()],
+    organisation: [emptyDraft()],
     student: [emptyDraft()],
   });
 

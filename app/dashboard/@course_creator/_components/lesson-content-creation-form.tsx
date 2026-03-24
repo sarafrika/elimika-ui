@@ -4,11 +4,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
-
 import {
   Eye,
   FileText,
@@ -21,6 +16,10 @@ import {
   Video,
   X,
 } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import { SimpleEditor } from '../../../../components/tiptap-templates/simple/simple-editor';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
@@ -35,6 +34,7 @@ import {
 import { Input } from '../../../../components/ui/input';
 import { RadioGroup, RadioGroupItem } from '../../../../components/ui/radio-group';
 import { ScrollArea } from '../../../../components/ui/scroll-area';
+import { resolveLessonContentSource } from '../../../../lib/lesson-content-preview';
 import { cn } from '../../../../lib/utils';
 import {
   addLessonContentMutation,
@@ -949,7 +949,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
         <VideoPlayer
           isOpen={isPlaying && contentTypeName === 'video'}
           onClose={() => setIsPlaying(false)}
-          videoUrl={selectedLesson?.content_text || ''}
+          videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
           title={selectedLesson?.title}
         />
 
@@ -958,14 +958,14 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           onClose={() => setIsReading(false)}
           title={selectedLesson?.title || ''}
           description={selectedLesson?.description}
-          content={selectedLesson?.content_text || ''}
+          content={resolveLessonContentSource(selectedLesson, contentTypeName)}
           contentType={contentTypeName as 'text' | 'pdf'}
         />
 
         <AudioPlayer
           isOpen={isAudioPlaying && contentTypeName === 'audio'}
           onClose={() => setIsAudioPlaying(false)}
-          audioUrl={selectedLesson?.content_text || ''}
+          audioUrl={resolveLessonContentSource(selectedLesson, 'audio')}
           title={selectedLesson?.title}
           description={selectedLesson?.description}
         />

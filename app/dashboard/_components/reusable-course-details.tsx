@@ -1,23 +1,5 @@
 'use client';
 
-import RichTextRenderer from '@/components/editors/richTextRenders';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
-import {
-  getAllAssignmentsOptions,
-  getAllDifficultyLevelsOptions,
-  getAllQuizzesOptions,
-  getCourseByUuidOptions,
-  getCourseCreatorByUuidOptions,
-  getCourseLessonsOptions,
-  getCourseReviewsOptions,
-  getCourseReviewsQueryKey,
-  submitCourseReviewMutation,
-} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -33,6 +15,26 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
+import {
+  getAllAssignmentsOptions,
+  getAllDifficultyLevelsOptions,
+  getAllQuizzesOptions,
+  getCourseByUuidOptions,
+  getCourseCreatorByUuidOptions,
+  getCourseLessonsOptions,
+  getCourseReviewsOptions,
+  getCourseReviewsQueryKey,
+  submitCourseReviewMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import { CustomLoadingState } from '../@course_creator/_components/loading-state';
 import { ReviewCard } from '../@instructor/reviews/review-card';
 import { VideoPlayer } from '../@student/schedule/classes/[id]/VideoPlayer';
@@ -50,6 +52,8 @@ interface ContentItem {
   title: string;
   content_type_uuid: string;
   content_text?: string;
+  file_url?: string | null;
+  value?: string | null;
   description?: string;
 }
 
@@ -369,6 +373,18 @@ export default function ReusableCourseDetailsPage({
 
       {/* ── BODY ───────────────────────────────────────────────────── */}
       <div className='space-y-10'>
+        <CourseTrainingRequirements
+          requirements={courseData?.training_requirements}
+          viewerRole={userRole as
+            | 'admin'
+            | 'course_creator'
+            | 'instructor'
+            | 'organization'
+            | 'student'
+            | undefined}
+          description='Review what is required for this course before enrollment or delivery.'
+        />
+
         {/* About */}
         <section>
           <SectionLabel>About This Course</SectionLabel>
@@ -446,7 +462,7 @@ export default function ReusableCourseDetailsPage({
       <VideoPlayer
         isOpen={isPlaying}
         onClose={() => setIsPlaying(false)}
-        videoUrl={selectedLesson?.content_text || ''}
+        videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
         title={selectedLesson?.title}
       />
 
