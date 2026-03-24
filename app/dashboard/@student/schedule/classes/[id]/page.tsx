@@ -1,15 +1,20 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { isAfter } from 'date-fns';
 import { BookOpen, Calendar } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+// Import hooks
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useStudent } from '@/context/student-context';
+import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
+import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
 // Import your API functions
 import {
   getClassDefinitionOptions,
@@ -19,12 +24,6 @@ import {
   getInstructorByUuidOptions,
   submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-
-// Import hooks
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useStudent } from '@/context/student-context';
-import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
-import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { CustomLoadingState } from '../../../../@course_creator/_components/loading-state';
 import { FeedbackDialog } from '../../../../_components/review-instructor-modal';
 import { ClassPageHeader } from './ClassPageHeader';
@@ -388,7 +387,7 @@ export default function ClassDetailsPage() {
       <VideoPlayer
         isOpen={isPlaying && contentTypeName === 'video'}
         onClose={() => setIsPlaying(false)}
-        videoUrl={selectedLesson?.content_text || ''}
+        videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
         title={selectedLesson?.title}
       />
 
@@ -397,7 +396,7 @@ export default function ClassDetailsPage() {
         onClose={() => setIsReading(false)}
         title={selectedLesson?.title || ''}
         description={selectedLesson?.description}
-        content={selectedLesson?.content_text || ''}
+        content={resolveLessonContentSource(selectedLesson, contentTypeName)}
         contentType={contentTypeName as 'text' | 'pdf'}
       />
     </div>

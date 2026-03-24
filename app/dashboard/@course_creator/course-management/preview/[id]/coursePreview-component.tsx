@@ -1,5 +1,6 @@
 'use client';
 
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseRubrics } from '@/hooks/use-course-rubric';
+import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
 import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
@@ -199,6 +201,12 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
           </Button>
         </div>
       </section>
+
+      <CourseTrainingRequirements
+        requirements={course?.training_requirements}
+        viewerRole='course_creator'
+        description='All training requirements grouped by the party responsible for providing them.'
+      />
 
       {/* Description */}
       <Card>
@@ -574,7 +582,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
       <VideoPlayer
         isOpen={isPlaying && contentTypeName === 'video'}
         onClose={() => setIsPlaying(false)}
-        videoUrl={selectedLesson?.content_text || ''}
+        videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
         title={selectedLesson?.title}
       />
 
@@ -584,14 +592,14 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         onClose={() => setIsReading(false)}
         title={selectedLesson?.title || ''}
         description={selectedLesson?.description}
-        content={selectedLesson?.content_text || ''}
+        content={resolveLessonContentSource(selectedLesson, contentTypeName)}
         contentType={contentTypeName as 'text' | 'pdf'}
       />
 
       <AudioPlayer
         isOpen={isAudioPlaying && contentTypeName === 'audio'}
         onClose={() => setIsAudioPlaying(false)}
-        audioUrl={selectedLesson?.content_text || ''}
+        audioUrl={resolveLessonContentSource(selectedLesson, 'audio')}
         title={selectedLesson?.title}
         description={selectedLesson?.description}
       />

@@ -1,5 +1,28 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  Award,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Edit,
+  Eye,
+  FileQuestion,
+  FileText,
+  Loader2,
+  Search,
+  Trash2,
+  TrendingUp,
+  Users,
+  X,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,29 +53,6 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  Award,
-  BookOpen,
-  CheckCircle2,
-  Clock,
-  Edit,
-  Eye,
-  FileQuestion,
-  FileText,
-  Loader2,
-  Search,
-  Trash2,
-  TrendingUp,
-  Users,
-  X,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
 import {
   getAllTrainingProgramsOptions,
   getAllTrainingProgramsQueryKey,
@@ -1227,6 +1227,7 @@ import {
 import { Label } from '../../../../components/ui/label';
 import { useProgramLessonsWithContent } from '../../../../hooks/use-programlessonwithcontent';
 import { useStudentsMap } from '../../../../hooks/use-studentsMap';
+import { resolveLessonContentSource } from '../../../../lib/lesson-content-preview';
 import { getResourceIcon } from '../../../../lib/resources-icon';
 import { ContentItem } from '../../@instructor/trainings/overview/[id]/page';
 import { AudioPlayer } from '../../@student/schedule/classes/[id]/AudioPlayer';
@@ -1508,7 +1509,7 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
       <VideoPlayer
         isOpen={isPlaying && contentTypeName === 'video'}
         onClose={() => setIsPlaying(false)}
-        videoUrl={selectedLesson?.content_text || ''}
+        videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
         title={selectedLesson?.title}
       />
 
@@ -1517,14 +1518,14 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
         onClose={() => setIsReading(false)}
         title={selectedLesson?.title || ''}
         description={selectedLesson?.description}
-        content={selectedLesson?.content_text || ''}
+        content={resolveLessonContentSource(selectedLesson, contentTypeName)}
         contentType={contentTypeName as 'text' | 'pdf'}
       />
 
       <AudioPlayer
         isOpen={isAudioPlaying && contentTypeName === 'audio'}
         onClose={() => setIsAudioPlaying(false)}
-        audioUrl={selectedLesson?.content_text || ''}
+        audioUrl={resolveLessonContentSource(selectedLesson, 'audio')}
         title={selectedLesson?.title}
         description={selectedLesson?.description}
       />
