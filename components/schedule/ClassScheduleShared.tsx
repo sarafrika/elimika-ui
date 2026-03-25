@@ -255,7 +255,8 @@ export const ScheduleWeekView: React.FC<{
   onEventSelect: (event: CalendarEvent) => void;
   selectedEvent: CalendarEvent | null;
   currentDate: Date;
-}> = ({ events, onEventSelect, selectedEvent, currentDate }) => {
+  onDateSelect?: (date: Date) => void;
+}> = ({ events, onEventSelect, selectedEvent, currentDate, onDateSelect }) => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const hours = Array.from({ length: 18 }, (_, i) => i + 4);
 
@@ -309,7 +310,11 @@ export const ScheduleWeekView: React.FC<{
           return (
             <div key={day} className='border-border bg-card rounded-xl border p-3 shadow-sm'>
               <div className='mb-3 flex items-center justify-between gap-3'>
-                <div>
+                <button
+                  type='button'
+                  onClick={() => onDateSelect?.(date)}
+                  className='hover:text-primary text-left transition-colors'
+                >
                   <div className='text-foreground text-sm font-semibold'>{day}</div>
                   <div className='text-muted-foreground text-xs'>
                     {date.toLocaleDateString('en-US', {
@@ -318,7 +323,7 @@ export const ScheduleWeekView: React.FC<{
                       year: 'numeric',
                     })}
                   </div>
-                </div>
+                </button>
                 <div className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
                   {dayEvents.length} {dayEvents.length === 1 ? 'session' : 'sessions'}
                 </div>
@@ -384,14 +389,19 @@ export const ScheduleWeekView: React.FC<{
             Time
           </div>
           {weekDaysWithDates.map(({ day, date }) => (
-            <div key={day} className='border-border border-l p-2 md:p-3'>
+            <button
+              key={day}
+              type='button'
+              onClick={() => onDateSelect?.(date)}
+              className='border-border hover:bg-primary/5 border-l p-2 transition-colors md:p-3'
+            >
               <div className='text-foreground text-center text-xs font-semibold md:text-sm'>
                 {day}
               </div>
               <div className='text-muted-foreground mt-0.5 text-center text-xs'>
                 {date.getDate()}
               </div>
-            </div>
+            </button>
           ))}
         </div>
         <div className='relative'>
@@ -534,7 +544,8 @@ export const ScheduleMonthView: React.FC<{
   events: CalendarEvent[];
   onEventSelect: (event: CalendarEvent) => void;
   currentDate: Date;
-}> = ({ events, onEventSelect, currentDate }) => {
+  onDateSelect?: (date: Date) => void;
+}> = ({ events, onEventSelect, currentDate, onDateSelect }) => {
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -560,7 +571,11 @@ export const ScheduleMonthView: React.FC<{
           return (
             <div key={dayNumber} className='border-border bg-card rounded-xl border p-3 shadow-sm'>
               <div className='mb-3 flex items-center justify-between gap-3'>
-                <div>
+                <button
+                  type='button'
+                  onClick={() => onDateSelect?.(targetDate)}
+                  className='hover:text-primary text-left transition-colors'
+                >
                   <div className='text-foreground text-sm font-semibold'>
                     {targetDate.toLocaleDateString('en-US', {
                       weekday: 'long',
@@ -571,7 +586,7 @@ export const ScheduleMonthView: React.FC<{
                   <div className='text-muted-foreground text-xs'>
                     {dayEvents.length} {dayEvents.length === 1 ? 'session' : 'sessions'}
                   </div>
-                </div>
+                </button>
               </div>
               <div className='space-y-2'>
                 {dayEvents.map(event => (
@@ -585,7 +600,9 @@ export const ScheduleMonthView: React.FC<{
                       <div className='text-foreground truncate text-sm font-semibold'>
                         {event.title}
                       </div>
-                      <div className='text-muted-foreground truncate text-xs'>{event.courseName}</div>
+                      <div className='text-muted-foreground truncate text-xs'>
+                        {event.courseName}
+                      </div>
                       <div className='text-muted-foreground mt-1 text-xs'>
                         {new Date(event.startTime).toLocaleTimeString('en-US', {
                           hour: '2-digit',
@@ -629,7 +646,12 @@ export const ScheduleMonthView: React.FC<{
           return (
             <div
               key={dayNumber}
-              className='border-border hover:border-ring min-h-[70px] rounded-lg border p-2 transition-colors md:min-h-[100px]'
+              className='border-border hover:border-ring hover:bg-primary/5 min-h-[70px] rounded-lg border p-2 transition-colors md:min-h-[100px]'
+              onClick={() =>
+                onDateSelect?.(
+                  new Date(currentDate.getFullYear(), currentDate.getMonth(), dayNumber)
+                )
+              }
             >
               <div className='text-foreground mb-1.5 text-xs font-semibold md:text-sm'>
                 {dayNumber}
@@ -640,7 +662,10 @@ export const ScheduleMonthView: React.FC<{
                     key={event.id}
                     className='cursor-pointer truncate rounded p-1 text-[10px] transition-opacity hover:opacity-80 md:text-xs'
                     style={{ backgroundColor: event.color, color: 'white' }}
-                    onClick={() => onEventSelect(event)}
+                    onClick={e => {
+                      e.stopPropagation();
+                      onEventSelect(event);
+                    }}
                     title={`${event.title} - ${event.courseName}`}
                   >
                     {event.title}
@@ -665,14 +690,26 @@ export const ScheduleYearView: React.FC<{
   currentDate: Date;
   onMonthClick: (month: number) => void;
 }> = ({ events, currentDate, onMonthClick }) => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
 
   const getEventsForMonth = (monthIndex: number) =>
     events.filter(event => {
       const eventDate = new Date(event.startTime);
       return (
-        eventDate.getFullYear() === currentDate.getFullYear() &&
-        eventDate.getMonth() === monthIndex
+        eventDate.getFullYear() === currentDate.getFullYear() && eventDate.getMonth() === monthIndex
       );
     });
 
@@ -684,7 +721,7 @@ export const ScheduleYearView: React.FC<{
 
   return (
     <div className='scrollbar-hide flex-1 overflow-auto p-3 md:p-5'>
-      <div className='mx-auto grid max-w-[1400px] grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 min-[1551px]:grid-cols-4 md:gap-4'>
+      <div className='mx-auto grid max-w-[1400px] grid-cols-1 gap-3 min-[1551px]:grid-cols-4 sm:grid-cols-2 md:gap-4 lg:grid-cols-3'>
         {months.map((month, monthIdx) => {
           const monthEvents = getEventsForMonth(monthIdx);
           const daysInMonth = getDaysInMonth(monthIdx);
