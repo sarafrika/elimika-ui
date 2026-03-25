@@ -2,6 +2,7 @@
 
 import { AssignmentDialog } from '@/app/dashboard/@course_creator/_components/assignment-management-form';
 import { QuizDialog } from '@/app/dashboard/@course_creator/_components/quiz-management-form';
+import { AttachmentResourceList } from '@/components/assessment/AttachmentResourceList';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
@@ -24,12 +25,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
+import { useQuizDetails } from '@/hooks/use-quiz-details';
 import {
   cx,
   elimikaDesignSystem,
@@ -41,6 +50,7 @@ import {
 import {
   deleteAssignmentMutation,
   deleteQuizMutation,
+  getAssignmentAttachmentsOptions,
   getCourseLessonsOptions,
   getEnrollmentsForClassOptions,
   getPendingGradingOptions,
@@ -61,6 +71,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import {
   Award,
   BookOpen,
+  CheckCircle2,
   ClipboardCheck,
   Eye,
   FileText,
@@ -75,6 +86,7 @@ import {
   Trophy,
   Undo2,
   Users,
+  XCircle,
 } from 'lucide-react';
 import moment from 'moment';
 import { useEffect, useMemo, useState } from 'react';
@@ -96,6 +108,7 @@ type CourseOption = {
 };
 
 type EnrichedAssignment = any & {
+  attachments?: any[];
   courseId: string;
   courseTitle: string;
 };
@@ -215,8 +228,17 @@ function SubmissionDetailDialog({
     }),
     enabled: !!assignmentUuid && !!submission?.uuid,
   });
+  const { data: assignmentAttachmentData, isLoading: assignmentAttachmentsLoading } = useQuery({
+    ...getAssignmentAttachmentsOptions({
+      path: {
+        assignmentUuid: assignmentUuid as string,
+      },
+    }),
+    enabled: !!assignmentUuid,
+  });
 
   const attachments = attachmentData?.data ?? [];
+  const assignmentAttachments = assignmentAttachmentData?.data ?? [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -269,7 +291,29 @@ function SubmissionDetailDialog({
             <div className='border-border/60 space-y-3 rounded-2xl border p-4'>
               <div className='flex items-center justify-between'>
                 <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
-                  Attachments
+                  Assignment resources
+                </p>
+                <Badge variant='secondary'>{assignmentAttachments.length}</Badge>
+              </div>
+
+              {assignmentAttachmentsLoading ? (
+                <div className='space-y-2'>
+                  <Skeleton className='h-14 w-full rounded-2xl' />
+                  <Skeleton className='h-14 w-full rounded-2xl' />
+                </div>
+              ) : (
+                <AttachmentResourceList
+                  attachments={assignmentAttachments}
+                  emptyMessage='No files were attached to this assignment.'
+                  previewLabel='Read file'
+                />
+              )}
+            </div>
+
+            <div className='border-border/60 space-y-3 rounded-2xl border p-4'>
+              <div className='flex items-center justify-between'>
+                <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                  Submission attachments
                 </p>
                 <Badge variant='secondary'>{attachments.length}</Badge>
               </div>
@@ -333,6 +377,14 @@ function GradeSubmissionDialog({
   const [maxScore, setMaxScore] = useState('');
   const [comments, setComments] = useState('');
   const [revisionFeedback, setRevisionFeedback] = useState('');
+  const { data: assignmentAttachmentData, isLoading: assignmentAttachmentsLoading } = useQuery({
+    ...getAssignmentAttachmentsOptions({
+      path: {
+        assignmentUuid: submission?.assignment_uuid as string,
+      },
+    }),
+    enabled: !!submission?.assignment_uuid && open,
+  });
 
   useEffect(() => {
     if (!submission || !open) return;
@@ -395,6 +447,26 @@ function GradeSubmissionDialog({
             />
           </div>
 
+          <div className='border-border/60 bg-background/70 space-y-3 rounded-2xl border p-4'>
+            <div className='flex items-center justify-between'>
+              <p className='text-foreground text-sm font-medium'>Assignment resources</p>
+              <Badge variant='secondary'>{assignmentAttachmentData?.data?.length ?? 0}</Badge>
+            </div>
+
+            {assignmentAttachmentsLoading ? (
+              <div className='space-y-2'>
+                <Skeleton className='h-14 rounded-2xl' />
+                <Skeleton className='h-14 rounded-2xl' />
+              </div>
+            ) : (
+              <AttachmentResourceList
+                attachments={assignmentAttachmentData?.data ?? []}
+                emptyMessage='No files were attached to this assignment.'
+                previewLabel='Read file'
+              />
+            )}
+          </div>
+
           <div className='border-border/60 bg-muted/30 space-y-2 rounded-2xl border p-4'>
             <label className='text-foreground text-sm font-medium' htmlFor='revision'>
               Return for revision
@@ -446,6 +518,141 @@ function GradeSubmissionDialog({
   );
 }
 
+function QuizPreviewSheet({
+  open,
+  onOpenChange,
+  quiz,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  quiz: EnrichedQuiz | null;
+}) {
+  const { questions, isLoading, isError } = useQuizDetails(quiz?.uuid as string, open && !!quiz);
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className='w-full overflow-hidden p-0 sm:max-w-full lg:max-w-[920px]'>
+        <div className='flex h-full flex-col'>
+          <div className='border-b px-5 py-4 sm:px-6'>
+            <SheetHeader>
+              <SheetTitle>{quiz?.title || 'Quiz preview'}</SheetTitle>
+              <SheetDescription>
+                {quiz
+                  ? 'Preview questions, answer options, and correct answers for this quiz.'
+                  : 'Select a quiz to preview its questions.'}
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+
+          <div className='flex-1 overflow-y-auto px-5 py-5 sm:px-6'>
+            {!quiz ? null : isLoading ? (
+              <div className='space-y-3'>
+                <Skeleton className='h-36 w-full rounded-2xl' />
+                <Skeleton className='h-36 w-full rounded-2xl' />
+                <Skeleton className='h-36 w-full rounded-2xl' />
+              </div>
+            ) : isError ? (
+              <div className={cx(getEmptyStateClasses(), 'min-h-[240px]')}>
+                <ListChecks className='text-primary/70 h-10 w-10' />
+                <div className='space-y-1'>
+                  <h3 className='text-lg font-semibold'>Unable to load quiz questions</h3>
+                  <p className='text-muted-foreground text-sm'>
+                    Try opening this quiz again after the current request finishes.
+                  </p>
+                </div>
+              </div>
+            ) : questions.length === 0 ? (
+              <div className={cx(getEmptyStateClasses(), 'min-h-[240px]')}>
+                <ListChecks className='text-primary/70 h-10 w-10' />
+                <div className='space-y-1'>
+                  <h3 className='text-lg font-semibold'>No questions added yet</h3>
+                  <p className='text-muted-foreground text-sm'>
+                    This quiz does not have any questions configured.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className='space-y-4'>
+                {questions
+                  .slice()
+                  .sort(
+                    (left: any, right: any) =>
+                      (left.display_order ?? 0) - (right.display_order ?? 0)
+                  )
+                  .map((question: any, index: number) => (
+                    <Card key={question.uuid} className='border-border/60'>
+                      <CardContent className='space-y-4 p-5'>
+                        <div className='flex items-start justify-between gap-4'>
+                          <div className='space-y-2'>
+                            <div className='flex flex-wrap items-center gap-2'>
+                              <Badge variant='outline'>Question {index + 1}</Badge>
+                              <Badge variant='secondary'>
+                                {formatEnum(question.question_type)}
+                              </Badge>
+                              <Badge variant='secondary'>
+                                {question.points_display || `${question.points ?? 0} pts`}
+                              </Badge>
+                            </div>
+                            <p className='text-foreground font-medium'>{question.question_text}</p>
+                          </div>
+                        </div>
+
+                        {question.requires_options && (question.options?.length ?? 0) > 0 ? (
+                          <div className='space-y-2'>
+                            {question.options
+                              .slice()
+                              .sort(
+                                (left: any, right: any) =>
+                                  (left.display_order ?? 0) - (right.display_order ?? 0)
+                              )
+                              .map((option: any) => (
+                                <div
+                                  key={option.uuid}
+                                  className={cx(
+                                    'rounded-2xl border p-3',
+                                    option.is_correct
+                                      ? 'border-success/30 bg-success/10'
+                                      : 'border-border/60 bg-background/70'
+                                  )}
+                                >
+                                  <div className='flex items-start justify-between gap-3'>
+                                    <div className='flex items-start gap-2'>
+                                      {option.is_correct ? (
+                                        <CheckCircle2 className='text-success mt-0.5 h-4 w-4 shrink-0' />
+                                      ) : (
+                                        <XCircle className='text-muted-foreground mt-0.5 h-4 w-4 shrink-0' />
+                                      )}
+                                      <p className='text-foreground text-sm'>
+                                        {option.option_text}
+                                      </p>
+                                    </div>
+                                    <Badge variant={option.is_correct ? 'success' : 'outline'}>
+                                      {option.is_correct ? 'Correct' : 'Option'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <div className='border-border/60 bg-background/70 rounded-2xl border p-4 text-sm'>
+                            <p className='text-muted-foreground'>Written-response question.</p>
+                            <p className='text-foreground mt-2'>
+                              Instructors review these answers manually after learners submit them.
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 export function InstructorAssessmentWorkspace({
   defaultTab = 'overview',
   defaultTaskType = 'assignment',
@@ -468,6 +675,7 @@ export function InstructorAssessmentWorkspace({
   const [quizToDelete, setQuizToDelete] = useState<EnrichedQuiz | null>(null);
   const [viewingSubmission, setViewingSubmission] = useState<EnrichedSubmission | null>(null);
   const [gradingSubmission, setGradingSubmission] = useState<EnrichedSubmission | null>(null);
+  const [viewingQuiz, setViewingQuiz] = useState<EnrichedQuiz | null>(null);
 
   const { classes, loading: classesLoading } = useInstructorClassesWithDetails(
     instructor?.uuid as string
@@ -625,12 +833,28 @@ export function InstructorAssessmentWorkspace({
           classTitle: classItem.title || 'Untitled class',
           courseId: classItem.course?.uuid,
           courseTitle: classItem.course?.name,
+          studentUuid: student?.uuid,
         });
       });
     });
 
     return map;
   }, [classEnrollmentRows, studentMap, userMap]);
+
+  const uniqueStudentCount = useMemo(() => {
+    const uniqueIds = new Set<string>();
+
+    classEnrollmentRows.forEach(({ enrollments }) => {
+      enrollments.forEach((enrollment: any) => {
+        const student = studentMap.get(enrollment.student_uuid);
+        if (student?.uuid) {
+          uniqueIds.add(student.uuid);
+        }
+      });
+    });
+
+    return uniqueIds.size;
+  }, [classEnrollmentRows, studentMap]);
 
   const { data: assignmentsData, isLoading: assignmentsLoading } = useQuery({
     ...searchAssignmentsOptions({
@@ -715,6 +939,29 @@ export function InstructorAssessmentWorkspace({
     return map;
   }, [assignments]);
 
+  const assignmentAttachmentQueries = useQueries({
+    queries: assignments.map(assignment => ({
+      ...getAssignmentAttachmentsOptions({
+        path: { assignmentUuid: assignment.uuid as string },
+      }),
+      enabled: !!assignment.uuid,
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
+  const assignmentAttachmentsMap = useMemo(() => {
+    const map = new Map<string, any[]>();
+
+    assignments.forEach((assignment, index) => {
+      if (assignment.uuid) {
+        map.set(assignment.uuid, assignmentAttachmentQueries[index]?.data?.data ?? []);
+      }
+    });
+
+    return map;
+  }, [assignmentAttachmentQueries, assignments]);
+
   const quizMap = useMemo(() => {
     const map = new Map<string, EnrichedQuiz>();
     quizzes.forEach(quiz => {
@@ -791,18 +1038,23 @@ export function InstructorAssessmentWorkspace({
   const filteredAssignments = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 
-    return assignments.filter(assignment => {
-      if (selectedCourseId !== ALL_COURSES && assignment.courseId !== selectedCourseId) {
-        return false;
-      }
+    return assignments
+      .map(assignment => ({
+        ...assignment,
+        attachments: assignmentAttachmentsMap.get(assignment.uuid as string) ?? [],
+      }))
+      .filter(assignment => {
+        if (selectedCourseId !== ALL_COURSES && assignment.courseId !== selectedCourseId) {
+          return false;
+        }
 
-      if (!query) return true;
+        if (!query) return true;
 
-      return [assignment.title, assignment.courseTitle]
-        .filter(Boolean)
-        .some(value => value.toLowerCase().includes(query));
-    });
-  }, [assignments, searchQuery, selectedCourseId]);
+        return [assignment.title, assignment.courseTitle]
+          .filter(Boolean)
+          .some(value => value.toLowerCase().includes(query));
+      });
+  }, [assignmentAttachmentsMap, assignments, searchQuery, selectedCourseId]);
 
   const filteredQuizzes = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -1171,51 +1423,63 @@ export function InstructorAssessmentWorkspace({
         </section>
       ) : null}
 
-      <Card className='border-border/60 bg-card/95 overflow-hidden rounded-[32px]'>
-        <CardContent className='space-y-5 p-5 sm:p-6'>
-          <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-            <div className='space-y-1'>
-              <p className='text-foreground text-sm font-semibold'>Workspace filters</p>
-              <p className='text-muted-foreground text-sm'>
+      <Card className="border-border/60 bg-card/95 overflow-hidden rounded-[32px]">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col gap-4">
+
+            {/* Header */}
+            <div className="space-y-1 max-w-2xl">
+              <p className="text-foreground text-sm font-semibold">
+                Workspace filters
+              </p>
+              <p className="text-muted-foreground text-sm">
                 Filter the assessment workspace by course or search by learner and task name.
               </p>
             </div>
 
-            <div className='flex flex-col gap-3 sm:flex-row'>
-              <div className='relative min-w-0 flex-1 sm:min-w-[260px]'>
-                <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+            {/* Controls */}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_260px_auto]">
+
+              {/* Search */}
+              <div className="relative w-full">
+                <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
                   value={searchQuery}
-                  onChange={event => setSearchQuery(event.target.value)}
-                  placeholder='Search task, student, or course'
-                  className='pl-9'
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search task, student, or course"
+                  className="pl-9 w-full"
                 />
               </div>
+
+              {/* Select */}
               <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
-                <SelectTrigger className='sm:w-[260px]'>
-                  <SelectValue placeholder='Select course' />
+                <SelectTrigger className="w-full sm:w-full lg:w-[260px]">
+                  <SelectValue placeholder="Select course" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL_COURSES}>All courses</SelectItem>
-                  {courseOptions.map(course => (
+                  {courseOptions.map((course) => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
+              {/* Reset Button */}
               <Button
-                variant='outline'
-                className='gap-2'
+                variant="outline"
+                className="gap-2 w-full sm:w-full lg:w-auto"
                 onClick={() => {
                   setSelectedCourseId(ALL_COURSES);
                   setSearchQuery('');
                 }}
               >
-                <Filter className='h-4 w-4' />
+                <Filter className="h-4 w-4" />
                 Reset
               </Button>
             </div>
+
           </div>
         </CardContent>
       </Card>
@@ -1294,9 +1558,7 @@ export function InstructorAssessmentWorkspace({
                     </div>
                     <div>
                       <p className='text-muted-foreground text-sm'>Active learners tracked</p>
-                      <p className='text-foreground text-3xl font-semibold'>
-                        {enrollmentMetaMap.size}
-                      </p>
+                      <p className='text-foreground text-3xl font-semibold'>{uniqueStudentCount}</p>
                     </div>
                   </div>
                   <p className='text-muted-foreground text-sm'>
@@ -1461,6 +1723,19 @@ export function InstructorAssessmentWorkspace({
                             </p>
                           </div>
                         </div>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <Badge variant='outline'>
+                            {item.attachments?.length ?? 0} resource
+                            {(item.attachments?.length ?? 0) === 1 ? '' : 's'}
+                          </Badge>
+                        </div>
+                        {(item.attachments?.length ?? 0) > 0 ? (
+                          <AttachmentResourceList
+                            attachments={item.attachments ?? []}
+                            emptyMessage='No files were attached to this assignment.'
+                            previewLabel='Read file'
+                          />
+                        ) : null}
                         {!isManageable ? (
                           <p className='text-muted-foreground text-xs'>
                             This assignment was created outside the instructor workspace and is
@@ -1500,6 +1775,13 @@ export function InstructorAssessmentWorkspace({
                         </div>
                         {isManageable ? (
                           <div className='flex items-center gap-2'>
+                            <Button
+                              variant='outline'
+                              size='icon'
+                              onClick={() => setViewingQuiz(item)}
+                            >
+                              <Eye className='h-4 w-4' />
+                            </Button>
                             <Button
                               variant='outline'
                               size='icon'
@@ -1550,6 +1832,16 @@ export function InstructorAssessmentWorkspace({
                             {item.passing_score ?? 'N/A'}
                           </p>
                         </div>
+                      </div>
+                      <div className='flex flex-wrap gap-3'>
+                        <Button
+                          variant='outline'
+                          className='gap-2'
+                          onClick={() => setViewingQuiz(item)}
+                        >
+                          <Eye className='h-4 w-4' />
+                          Preview questions
+                        </Button>
                       </div>
                       {!isManageable ? (
                         <p className='text-muted-foreground text-xs'>
@@ -1846,33 +2138,24 @@ export function InstructorAssessmentWorkspace({
         <TabsContent value='exams' className='space-y-6'>
           <SectionIntro
             badge='Exams'
-            title='Exam operations are staged for backend support'
-            description='The instructor UI now makes that limitation explicit instead of exposing an unfinished screen. Assignment and quiz workflows are fully usable today.'
+            title='No exams yet'
+            description='Exams you create will appear here.'
           />
 
           <Card className={cx(getCardClasses(), 'hover:translate-y-0')}>
-            <CardContent className='space-y-4 p-0'>
-              <div className='flex items-start gap-4'>
-                <div className='bg-primary/10 text-primary rounded-2xl p-3'>
-                  <GraduationCap className='h-5 w-5' />
-                </div>
-                <div className='space-y-3'>
-                  <h3 className='text-foreground text-lg font-semibold'>
-                    Exam management will plug into this workspace once the API is available
-                  </h3>
-                  <p className='text-muted-foreground max-w-3xl text-sm'>
-                    I could not find a dedicated exam management or grading API in the generated
-                    client. Rather than showing a broken interface, this section now communicates
-                    the current platform capability clearly while assignments and quizzes handle the
-                    active instructor assessment workflows.
-                  </p>
-                  <div className='flex flex-wrap gap-3'>
-                    <Badge variant='secondary'>Assignments ready</Badge>
-                    <Badge variant='secondary'>Quizzes ready</Badge>
-                    <Badge variant='outline'>Exams awaiting backend support</Badge>
-                  </div>
-                </div>
+            <CardContent className='flex flex-col items-center justify-center py-12 text-center'>
+              <div className='bg-primary/10 text-primary mb-4 rounded-2xl p-3'>
+                <GraduationCap className='h-5 w-5' />
               </div>
+
+              <h3 className='text-foreground text-lg font-semibold'>No exams available</h3>
+
+              <p className='text-muted-foreground mt-2 max-w-md text-sm'>
+                You haven’t created any exams yet. When you do, they’ll show up here.
+              </p>
+
+              {/* Optional CTA */}
+              <Button className='mt-4'>Create exam</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1933,6 +2216,12 @@ export function InstructorAssessmentWorkspace({
         onOpenChange={open => !open && setViewingSubmission(null)}
         submission={viewingSubmission}
         assignmentUuid={viewingSubmission?.assignment_uuid}
+      />
+
+      <QuizPreviewSheet
+        open={!!viewingQuiz}
+        onOpenChange={open => !open && setViewingQuiz(null)}
+        quiz={viewingQuiz}
       />
 
       <GradeSubmissionDialog

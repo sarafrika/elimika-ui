@@ -158,6 +158,11 @@ export default {
       icon: ClipboardCheck,
     },
     {
+      title: 'Quiz',
+      url: '/dashboard/quiz',
+      icon: ClipboardList,
+    },
+    {
       title: 'Assessment (Grades)',
       url: '/dashboard/assessment',
       icon: Award,

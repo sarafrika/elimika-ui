@@ -14,7 +14,7 @@ import {
   listCatalogItemsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Award,
   BookOpen,
@@ -22,6 +22,7 @@ import {
   Calendar,
   CheckCircle,
   DollarSign,
+  GraduationCap,
   MapPin,
   Star,
   Users,
@@ -49,15 +50,13 @@ type Props = {
 export const InstructorProfileComponent: React.FC<Props> = ({
   instructor,
   onClose,
-  onBookingComplete,
+  onBookingComplete: _onBookingComplete,
 }) => {
   const student = useStudent();
-  const qc = useQueryClient();
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
 
   const [showBooking, setShowBooking] = useState(false);
-  const [reason, setReason] = useState('');
 
   const { data: timetable } = useQuery({
     ...getInstructorCalendarOptions({
@@ -121,11 +120,35 @@ export const InstructorProfileComponent: React.FC<Props> = ({
     course => course.course_uuid === courseId
   );
 
-  const [selectedRateKey, setSelectedRateKey] = useState('');
-  const [totalAmount, setTotalAmount] = useState(0);
+  const rateEntries = [
+    {
+      key: 'private_online_rate',
+      label: 'Private online',
+      description: '1:1 virtual training session',
+      amount: matchedCourse?.rate_card?.private_online_rate,
+    },
+    {
+      key: 'private_inperson_rate',
+      label: 'Private in person',
+      description: '1:1 onsite training session',
+      amount: matchedCourse?.rate_card?.private_inperson_rate,
+    },
+    {
+      key: 'group_online_rate',
+      label: 'Group online',
+      description: 'Virtual session for multiple learners',
+      amount: matchedCourse?.rate_card?.group_online_rate,
+    },
+    {
+      key: 'group_inperson_rate',
+      label: 'Group in person',
+      description: 'Physical session for multiple learners',
+      amount: matchedCourse?.rate_card?.group_inperson_rate,
+    },
+  ].filter(entry => typeof entry.amount === 'number');
 
   return (
-    <div className='relative mx-auto w-full max-w-7xl self-center overflow-y-auto'>
+    <div className='relative mx-auto w-full max-w-7xl self-center overflow-y-auto rounded-[32px] bg-background'>
       <Button
         variant='ghost'
         size='sm'
@@ -135,9 +158,10 @@ export const InstructorProfileComponent: React.FC<Props> = ({
         <X className='h-6 w-6' />
       </Button>
 
-      <div className='space-y-6 pt-6 pr-6'>
-        {/* Header */}
-        <div className='flex items-start gap-6'>
+      <div className='space-y-6 p-6'>
+        <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]'>
+          <Card className='rounded-[32px] border-border/60 p-6 shadow-sm'>
+            <div className='flex items-start gap-6'>
           <Avatar className='h-24 w-24'>
             <AvatarImage src={instructor.profileImage} alt={instructor.name} />
             <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
@@ -183,23 +207,98 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               </Badge>
             </div>
           </div>
+            </div>
+          </Card>
+
+          <Card className='rounded-[32px] border-border/60 p-6 shadow-sm'>
+            <div className='space-y-4'>
+              <div>
+                <p className='text-muted-foreground text-sm'>Booking fit</p>
+                <h3 className='mt-1 text-xl font-semibold'>Know who you are booking</h3>
+              </div>
+
+              <div className='space-y-3 text-sm'>
+                <div className='rounded-2xl border border-border/60 p-4'>
+                  <div className='font-medium'>Course alignment</div>
+                  <p className='text-muted-foreground mt-1'>
+                    {matchedCourse?.course_name ??
+                      'This instructor is approved to teach the selected course.'}
+                  </p>
+                </div>
+
+                <div className='rounded-2xl border border-border/60 p-4'>
+                  <div className='font-medium'>Session formats</div>
+                  <p className='text-muted-foreground mt-1'>
+                    Use the scheduler below to request an online or in-person slot based on the rate you choose.
+                  </p>
+                </div>
+
+                <div className='rounded-2xl border border-border/60 p-4'>
+                  <div className='font-medium'>Booking flow</div>
+                  <p className='text-muted-foreground mt-1'>
+                    Pick a rate, add a short purpose, then choose a slot from the timetable to create your booking request.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => setShowBooking(current => !current)}
+                size='lg'
+                className='w-full gap-2'
+              >
+                <Calendar className='h-4 w-4' />
+                {showBooking ? 'Hide booking scheduler' : 'Start booking'}
+              </Button>
+            </div>
+          </Card>
         </div>
 
-        {/* Book Button */}
-        <div className='flex justify-end'>
-          <Button
-            onClick={() => setShowBooking(true)}
-            size='lg'
-            className='flex items-center gap-2'
-          >
-            <Calendar className='h-4 w-4' />
-            Book Session
-          </Button>
-        </div>
+        {rateEntries.length > 0 && (
+          <Card className='rounded-[32px] border-border/60 p-6 shadow-sm'>
+            <div className='mb-4 flex items-center justify-between gap-4'>
+              <div>
+                <h3 className='text-lg font-semibold'>Rate overview</h3>
+                <p className='text-muted-foreground text-sm'>
+                  Understand the available session types before opening the booking scheduler.
+                </p>
+              </div>
+              <Badge variant='secondary'>{rateEntries.length} rate options</Badge>
+            </div>
+
+            <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+              {rateEntries.map(entry => (
+                <div
+                  key={entry.key}
+                  className='rounded-3xl border border-border/60 bg-muted/30 p-4'
+                >
+                  <div className='font-medium'>{entry.label}</div>
+                  <p className='text-muted-foreground mt-1 text-sm'>{entry.description}</p>
+                  <div className='mt-4 text-xl font-semibold'>
+                    {matchedCourse?.rate_card?.currency ?? 'KES'} {entry.amount}
+                    <span className='text-muted-foreground text-sm font-normal'> / hour</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {/* Booking Form */}
         {showBooking && (
-          <>
+          <Card className='rounded-[32px] border-border/60 p-6 shadow-sm'>
+            <div className='mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
+              <div>
+                <h3 className='text-lg font-semibold'>Booking scheduler</h3>
+                <p className='text-muted-foreground text-sm'>
+                  Use the instructor timetable to choose a slot after reviewing the available rates and expectations.
+                </p>
+              </div>
+
+              <Badge variant='secondary' className='w-fit'>
+                Course booking flow
+              </Badge>
+            </div>
+
             <BookInstructorTimeTableManager
               availabilityData={availabilityData || []}
               onAvailabilityUpdate={setAvailabilityData}
@@ -208,13 +307,10 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 student_uuid: student?.uuid || '',
                 instructor_uuid: instructor?.uuid || '',
                 booking_id: '',
-                price_amount: totalAmount,
-                purpose: reason,
-                rate_key: selectedRateKey as any,
                 rates: matchedCourse?.rate_card,
               }}
-            />
-          </>
+              />
+          </Card>
         )}
 
         {/* Content Tabs */}
@@ -270,6 +366,33 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 ) : (
                   <p className='text-muted-foreground text-sm'>No specializations added</p>
                 )}
+              </Card>
+
+              <Card className='p-6'>
+                <div className='mb-3 flex items-center gap-2'>
+                  <GraduationCap className='h-5 w-5' />
+                  <h3>Why students book this instructor</h3>
+                </div>
+                <div className='grid gap-4 md:grid-cols-3'>
+                  <div className='rounded-2xl border border-border/60 p-4'>
+                    <div className='font-medium'>Experience depth</div>
+                    <p className='text-muted-foreground mt-1 text-sm'>
+                      {instructor?.total_experience_years ?? 0} years of experience in the field.
+                    </p>
+                  </div>
+                  <div className='rounded-2xl border border-border/60 p-4'>
+                    <div className='font-medium'>Course relevance</div>
+                    <p className='text-muted-foreground mt-1 text-sm'>
+                      Approved for this course and visible in the student booking flow.
+                    </p>
+                  </div>
+                  <div className='rounded-2xl border border-border/60 p-4'>
+                    <div className='font-medium'>Booking clarity</div>
+                    <p className='text-muted-foreground mt-1 text-sm'>
+                      Rates, schedule, and review history are shown before you commit.
+                    </p>
+                  </div>
+                </div>
               </Card>
 
               {/* Classes */}

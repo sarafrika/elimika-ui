@@ -64,7 +64,9 @@ type Lesson = {
 };
 
 type ContentType = 'TEXT' | 'VIDEO' | 'AUDIO' | 'PDF' | 'IMAGE';
-const tabs = ['Lesson Content', 'Practice Activities'];
+// const tabs = ['Lesson Content', 'Practice Activities'];
+const tabs = ['Lesson Content'];
+
 
 const lessonFormSchema = z.object({
   title: z.string().min(1),
@@ -391,7 +393,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const getContentIcon = (type: string) => {
@@ -471,11 +473,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
-                  activeTab === tab
-                    ? 'border-primary text-primary font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
+                  ? 'border-primary text-primary font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
               >
                 {tab}
               </button>
@@ -526,11 +527,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                             )}
                           >
                             <div
-                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                                selectedContentId === content.uuid
-                                  ? 'bg-primary/20 text-primary'
-                                  : 'bg-background text-muted-foreground'
-                              }`}
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${selectedContentId === content.uuid
+                                ? 'bg-primary/20 text-primary'
+                                : 'bg-background text-muted-foreground'
+                                }`}
                             >
                               {getContentIcon(content.content_type_key)}
                             </div>
@@ -974,13 +974,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
        
         } */}
 
-      {/* {activeTab === "Practice Activities" &&
-        <div className='mb-10 flex h-auto'>
-          Practice Activities
-        </div>
-      }
-
-      {activeTab === "Assessment Tasks" && <div>Assessment tasks</div>} */}
+      {/*  {activeTab === "Assessment Tasks" && <div>Assessment tasks</div>} */}
     </div>
   );
 };

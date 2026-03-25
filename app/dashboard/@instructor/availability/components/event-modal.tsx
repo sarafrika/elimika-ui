@@ -22,6 +22,7 @@ import {
   blockInstructorTimeMutation,
   createBookingMutation,
   getInstructorCalendarQueryKey,
+  getStudentBookingsQueryKey,
   scheduleClassMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -433,6 +434,12 @@ export function EventModal({
               queryKey: getInstructorCalendarQueryKey({
                 query: { start_date: '' as any, end_date: '' as any },
                 path: { instructorUuid: instrucor?.uuid as string },
+              }),
+            });
+            qc.invalidateQueries({
+              queryKey: getStudentBookingsQueryKey({
+                path: { studentUuid: studentBookingData?.student_uuid ?? '' },
+                query: { pageable: {}, status: '' },
               }),
             });
             onClose();
