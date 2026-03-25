@@ -375,13 +375,15 @@ export default function ReusableCourseDetailsPage({
       <div className='space-y-10'>
         <CourseTrainingRequirements
           requirements={courseData?.training_requirements}
-          viewerRole={userRole as
-            | 'admin'
-            | 'course_creator'
-            | 'instructor'
-            | 'organization'
-            | 'student'
-            | undefined}
+          viewerRole={
+            userRole as
+              | 'admin'
+              | 'course_creator'
+              | 'instructor'
+              | 'organization'
+              | 'student'
+              | undefined
+          }
           description='Review what is required for this course before enrollment or delivery.'
         />
 

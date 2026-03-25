@@ -1,6 +1,7 @@
 'use client';
 
 import RichTextRenderer from '@/components/editors/richTextRenders';
+import { AttachmentResourceList } from '@/components/assessment/AttachmentResourceList';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +39,6 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
-  Download,
   GraduationCap,
   Loader2,
   Search,
@@ -212,44 +212,6 @@ function getGradeTone(percentage?: number | null) {
   if (percentage >= 60) return 'text-primary';
   if (percentage >= 40) return 'text-warning';
   return 'text-destructive';
-}
-
-function AssignmentAttachmentList({
-  attachments,
-  emptyMessage,
-}: {
-  attachments: any[];
-  emptyMessage: string;
-}) {
-  if (attachments.length === 0) {
-    return <p className='text-muted-foreground text-sm'>{emptyMessage}</p>;
-  }
-
-  return (
-    <div className='space-y-2'>
-      {attachments.map(attachment => (
-        <div
-          key={attachment.uuid ?? attachment.file_url ?? attachment.original_filename}
-          className='border-border/60 bg-background/70 flex items-center justify-between gap-3 rounded-2xl border p-3'
-        >
-          <div className='min-w-0'>
-            <p className='text-foreground truncate text-sm font-medium'>
-              {attachment.original_filename || 'Attachment'}
-            </p>
-            <p className='text-muted-foreground text-xs'>
-              {attachment.mime_type || 'Open or download resource'}
-            </p>
-          </div>
-          <Button asChild size='sm' variant='outline' className='shrink-0 rounded-full'>
-            <a href={attachment.file_url} rel='noreferrer' target='_blank'>
-              <Download className='mr-2 h-4 w-4' />
-              Open
-            </a>
-          </Button>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export function StudentAssignmentWorkspace() {
@@ -1019,9 +981,10 @@ export function StudentAssignmentWorkspace() {
                   <CardTitle className='text-base'>Resources from your instructor</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <AssignmentAttachmentList
+                  <AttachmentResourceList
                     attachments={selectedAssignment.attachments}
                     emptyMessage='No supporting files were attached to this assignment.'
+                    previewLabel='Read file'
                   />
                 </CardContent>
               </Card>
@@ -1096,9 +1059,10 @@ export function StudentAssignmentWorkspace() {
                           <Skeleton className='h-14 rounded-2xl' />
                         </div>
                       ) : (
-                        <AssignmentAttachmentList
+                        <AttachmentResourceList
                           attachments={selectedSubmissionAttachmentsQuery.data?.data ?? []}
                           emptyMessage='No files were uploaded with the latest submission.'
+                          previewLabel='Read file'
                         />
                       )}
                     </div>

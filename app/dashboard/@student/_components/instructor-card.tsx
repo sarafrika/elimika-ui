@@ -10,7 +10,7 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { Briefcase, Building, MapPin, Star, Users } from 'lucide-react';
+import { ArrowRight, Briefcase, Building, MapPin, Star, Users } from 'lucide-react';
 import { InstructorSkillCard } from '../../@instructor/profile/skills/_component/instructor-skill-card';
 
 type Props = {
@@ -61,7 +61,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
   const maxRate = rates.length ? Math.max(...rates) : null;
 
   return (
-    <Card className='min-w-[300px] overflow-hidden transition-shadow hover:shadow-lg sm:min-w-[320px]'>
+    <Card className='border-border/60 min-w-[300px] overflow-hidden rounded-[28px] shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:min-w-[320px]'>
       <div className='space-y-4 p-4 sm:p-6'>
         <div className='flex items-start gap-4'>
           <Avatar className='h-16 w-16'>
@@ -111,28 +111,18 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
         </div>
 
         {/* Location and Mode */}
-        <div className='flex items-center gap-3 text-sm'>
+        <div className='flex flex-wrap items-center gap-3 text-sm'>
           {instructor?.formatted_location && (
             <div className='text-muted-foreground flex items-center gap-1'>
               <MapPin className='h-4 w-4' />
-              <span>{'Laos'}</span>
-              <span>{instructor?.formatted_location || 'LOCATION'}</span>
+              <span>{instructor?.formatted_location || 'Location not specified'}</span>
             </div>
           )}
-          {/* {instructor.mode.includes('online') && (
-                        <Badge variant="secondary" className="gap-1">
-                            <Video className="w-3 h-3" />
-                            Online
-                        </Badge>
-                    )} */}
-          {/* <Badge variant='secondary' className='gap-1'>
-            <Video className='h-3 w-3' />
-            Online
-          </Badge> */}
+          <Badge variant='secondary'>Bookable for this course</Badge>
         </div>
 
         {/* Specializations */}
-        <div className='flex h-12 min-h-6 w-full flex-wrap'>
+        <div className='flex min-h-6 w-full flex-wrap gap-2'>
           {skillNames?.length > 0 ? (
             <>
               {skillNames.slice(0, 3).map((spec, index) => (
@@ -170,23 +160,25 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
         </div>
 
         {/* Rate */}
-        <div className='border-border border-t pt-3'>
+        <div className='border-border border-t pt-4'>
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-muted-foreground text-sm'>Starting from</p>
 
               {matchedCourse && minRate !== null ? (
-                <p className='text-lg'>
-                  KES {minRate} - {maxRate}
-                  <span className='text-muted-foreground text-sm'>/hour</span>
+                <p className='text-lg font-semibold'>
+                  {rateCard?.currency ?? 'KES'} {minRate}
+                  {maxRate !== null && maxRate !== minRate ? ` - ${maxRate}` : ''}
+                  <span className='text-muted-foreground text-sm'> per hour</span>
                 </p>
               ) : (
                 <p className='text-muted-foreground text-sm'>Hourly rate not available</p>
               )}
             </div>
 
-            <Button onClick={onViewProfile} size='sm'>
-              View Profile
+            <Button onClick={onViewProfile} size='sm' className='gap-2'>
+              View profile
+              <ArrowRight className='h-4 w-4' />
             </Button>
           </div>
         </div>

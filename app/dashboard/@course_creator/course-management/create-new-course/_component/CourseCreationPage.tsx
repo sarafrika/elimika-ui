@@ -1,17 +1,22 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useMutation } from '@tanstack/react-query';
-import { BookCheck, MoveLeft } from 'lucide-react';
+import Spinner from '@/components/ui/spinner';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { BookCheck, MoveLeft, Undo2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCourseCreator } from '../../../../../../context/course-creator-context';
 import { queryClient } from '../../../../../../lib/query-client';
 import {
+  getCourseByUuidOptions,
+  getCourseByUuidQueryKey,
   publishCourseMutation,
   publishCourseQueryKey,
   searchCoursesQueryKey,
+  unpublishCourseMutation,
+  unpublishCourseQueryKey,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
 import CourseBuilderPage from './CourseBuilderPage';
 import CoursePreviewPage from './CoursePreviewPage';
@@ -24,7 +29,13 @@ const CourseCreationPage = () => {
 
   const [activeTab, setActiveTab] = useState('builder');
 
+  const { data: course } = useQuery({
+    ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
+    enabled: !!courseId,
+  });
+
   const PublishCourse = useMutation(publishCourseMutation());
+  const UnpublishCourse = useMutation(unpublishCourseMutation());
   const handlePublishCourse = async () => {
     if (!courseId) return;
 
@@ -57,6 +68,46 @@ const CourseCreationPage = () => {
     } catch (_err) {}
   };
 
+  const handleUnpublishCourse = async () => {
+    if (!courseId) return;
+
+    try {
+      await UnpublishCourse.mutateAsync(
+        {
+          path: { uuid: courseId as string },
+        },
+        {
+          onSuccess(data) {
+            toast.success(data?.message || 'Course unpublished successfully');
+            queryClient.invalidateQueries({
+              queryKey: unpublishCourseQueryKey({ path: { uuid: courseId as string } }),
+            });
+            queryClient.invalidateQueries({
+              queryKey: publishCourseQueryKey({ path: { uuid: courseId as string } }),
+            });
+            queryClient.invalidateQueries({
+              queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
+            });
+            queryClient.invalidateQueries({
+              queryKey: searchCoursesQueryKey({
+                query: {
+                  searchParams: { course_creator_uuid_eq: creator?.profile?.uuid },
+                  pageable: {},
+                },
+              }),
+            });
+          },
+          onError: error => {
+            toast.error(error?.message || 'Failed to unpublish course');
+          },
+        }
+      );
+    } catch (_err) {}
+  };
+
+  const isPublished = course?.data?.is_published === true || course?.data?.status === 'published';
+  const isCourseActionPending = PublishCourse.isPending || UnpublishCourse.isPending;
+
   return (
     <div className='mx-auto space-y-5'>
       <div
@@ -85,13 +136,27 @@ const CourseCreationPage = () => {
             Preview
           </Button>
 
-          <Button
-            variant={'ghost'}
-            onClick={handlePublishCourse}
-            className='border-muted-foreground/50 border px-12'
-          >
-            <BookCheck /> Publish
-          </Button>
+          {isPublished ? (
+            <Button
+              variant='outline'
+              onClick={handleUnpublishCourse}
+              disabled={!courseId || isCourseActionPending}
+              className='px-6'
+            >
+              {UnpublishCourse.isPending ? <Spinner /> : <Undo2 />}
+              Unpublish
+            </Button>
+          ) : (
+            <Button
+              variant='ghost'
+              onClick={handlePublishCourse}
+              disabled={!courseId || isCourseActionPending}
+              className='border-muted-foreground/50 border px-12'
+            >
+              {PublishCourse.isPending ? <Spinner /> : <BookCheck />}
+              Publish
+            </Button>
+          )}
         </div>
       </div>
 

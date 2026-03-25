@@ -83,8 +83,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
     })),
   });
   const isLoading =
-    studentDetailQueries.some(q => q.isLoading) ||
-    studentEnrollmentQueries.some(q => q.isLoading);
+    studentDetailQueries.some(q => q.isLoading) || studentEnrollmentQueries.some(q => q.isLoading);
 
   const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data);
 
@@ -239,7 +238,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
         {/* Left Sidebar - Desktop Only */}
         <aside className='bg-background hidden w-72 flex-col border-r p-4 lg:flex'>
           <div className='space-y-5'>
-            <div className='rounded-2xl border border-border/70 bg-muted/20 p-3'>
+            <div className='border-border/70 bg-muted/20 rounded-2xl border p-3'>
               <div className='mb-3 flex items-start justify-between gap-3'>
                 <div>
                   <p className='text-sm font-semibold'>Smart filters</p>
@@ -247,7 +246,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                     Narrow the student directory quickly.
                   </p>
                 </div>
-                <div className='rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary'>
+                <div className='bg-primary/10 text-primary rounded-full px-2.5 py-1 text-xs font-semibold'>
                   {filteredStudents.length}
                 </div>
               </div>
@@ -267,7 +266,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                       className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all ${
                         isActive
                           ? 'border-primary/30 bg-primary/10 text-primary shadow-sm'
-                          : 'border-transparent bg-background hover:border-border/70 hover:bg-muted/60'
+                          : 'bg-background hover:border-border/70 hover:bg-muted/60 border-transparent'
                       }`}
                     >
                       <span
@@ -289,9 +288,9 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
               </div>
             </div>
 
-            <div className='rounded-2xl border border-border/70 bg-background p-3'>
+            <div className='border-border/70 bg-background rounded-2xl border p-3'>
               <div className='mb-3 flex items-center gap-2'>
-                <span className='flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground'>
+                <span className='bg-muted text-muted-foreground flex h-9 w-9 items-center justify-center rounded-full'>
                   <Building2 size={16} />
                 </span>
                 <div>
@@ -505,10 +504,10 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
             </div>
 
             {/* Filter Options */}
-            <div className='mb-6 rounded-2xl border border-border/70 bg-muted/20 p-3'>
+            <div className='border-border/70 bg-muted/20 mb-6 rounded-2xl border p-3'>
               <div className='mb-3 flex items-center justify-between'>
                 <h3 className='text-sm font-semibold'>Status</h3>
-                <span className='rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary'>
+                <span className='bg-primary/10 text-primary rounded-full px-2.5 py-1 text-xs font-semibold'>
                   {filteredStudents.length}
                 </span>
               </div>
@@ -527,7 +526,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
                       className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all ${
                         isActive
                           ? 'border-primary/30 bg-primary/10 text-primary'
-                          : 'border-transparent bg-background hover:border-border/70 hover:bg-muted/60'
+                          : 'bg-background hover:border-border/70 hover:bg-muted/60 border-transparent'
                       }`}
                     >
                       <span
@@ -550,9 +549,9 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
             </div>
 
             {/* Categories */}
-            <div className='rounded-2xl border border-border/70 bg-background p-3'>
+            <div className='border-border/70 bg-background rounded-2xl border p-3'>
               <div className='mb-3 flex items-center gap-2'>
-                <span className='flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground'>
+                <span className='bg-muted text-muted-foreground flex h-9 w-9 items-center justify-center rounded-full'>
                   <Building2 size={16} />
                 </span>
                 <div>

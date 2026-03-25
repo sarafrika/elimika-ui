@@ -222,7 +222,9 @@ const MySkillsPage = () => {
       const classDefinition = classDefinitionsMap.get(enroll.class_definition_uuid);
       const courseUuid = classDefinition?.course_uuid;
       const programUuid = classDefinition?.program_uuid;
-      const courseOrProgram = courseUuid ? coursesMap.get(courseUuid) : programsMap.get(programUuid);
+      const courseOrProgram = courseUuid
+        ? coursesMap.get(courseUuid)
+        : programsMap.get(programUuid);
 
       // Find matching certificate
       const certificate = certificates.find(
@@ -567,12 +569,13 @@ const MySkillsPage = () => {
                           </div>
                           <div className='bg-muted h-2 w-full overflow-hidden rounded-full'>
                             <div
-                              className={`h-2 rounded-full transition-all duration-500 ${course.status === 'complete' || course.status === 'passed'
-                                ? 'bg-success'
-                                : course.status === 'failed'
-                                  ? 'bg-destructive'
-                                  : 'bg-yellow-500'
-                                }`}
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                course.status === 'complete' || course.status === 'passed'
+                                  ? 'bg-success'
+                                  : course.status === 'failed'
+                                    ? 'bg-destructive'
+                                    : 'bg-yellow-500'
+                              }`}
                               style={{ width: `${course.progress}%` }}
                             />
                           </div>

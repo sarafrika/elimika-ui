@@ -28,6 +28,7 @@ type Props = {
   classes: any[];
   onBookingComplete: (booking: Booking) => void;
   courseId: string;
+  isLoading?: boolean;
 };
 
 type Filters = {
@@ -46,9 +47,10 @@ type Filters = {
 
 export const InstructorDirectory: React.FC<Props> = ({
   instructors,
-  classes,
+  classes: _classes,
   onBookingComplete,
   courseId,
+  isLoading = false,
 }) => {
   const [selectedInstructor, setSelectedInstructor] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(true);
@@ -109,7 +111,10 @@ export const InstructorDirectory: React.FC<Props> = ({
       }
 
       // Gender
-      if (filters.gender !== 'all' && instructor.gender.toLowerCase() !== filters.gender) {
+      if (
+        filters.gender !== 'all' &&
+        String(instructor.gender ?? '').toLowerCase() !== filters.gender
+      ) {
         return false;
       }
 
@@ -162,7 +167,9 @@ export const InstructorDirectory: React.FC<Props> = ({
       // Location
       if (
         filters.location &&
-        !instructor.location?.city.toLowerCase().includes(filters.location.toLowerCase())
+        !String(instructor.location?.city ?? '')
+          .toLowerCase()
+          .includes(filters.location.toLowerCase())
       ) {
         return false;
       }
@@ -217,13 +224,43 @@ export const InstructorDirectory: React.FC<Props> = ({
   };
 
   return (
-    <div className='flex gap-6'>
+    <div className='space-y-6'>
       {!selectedInstructor && (
-        <>
-          {/* Filter Sidebar */}
+        <Card className='border-border/60 bg-card/80 rounded-[32px] p-6 shadow-sm'>
+          <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
+            <div className='space-y-2'>
+              <h2 className='text-2xl font-semibold'>Instructor discovery</h2>
+              <p className='text-muted-foreground max-w-3xl text-sm'>
+                Explore approved instructors for this course, compare expertise and pricing, then
+                open a full profile before you book.
+              </p>
+            </div>
+
+            <div className='flex flex-wrap gap-3 text-sm'>
+              <div className='border-border rounded-full border px-4 py-2'>
+                {filteredInstructors?.length ?? 0} matched instructor
+                {(filteredInstructors?.length ?? 0) === 1 ? '' : 's'}
+              </div>
+              <div className='border-border rounded-full border px-4 py-2'>
+                {filters.specializations.length} active specialization filter
+                {filters.specializations.length === 1 ? '' : 's'}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {selectedInstructor ? (
+        <InstructorProfileComponent
+          instructor={selectedInstructor}
+          onClose={() => setSelectedInstructor(null)}
+          onBookingComplete={onBookingComplete}
+        />
+      ) : (
+        <div className='flex gap-6'>
           {showFilters && (
             <div className='w-60 flex-shrink-0 space-y-4 xl:w-80'>
-              <Card className='space-y-6 p-4'>
+              <Card className='border-border/60 sticky top-6 space-y-6 rounded-[32px] p-4 shadow-sm'>
                 <div className='flex items-center justify-between'>
                   <h3 onClick={() => {}} className='flex items-center gap-2'>
                     <Filter className='h-4 w-4' />
@@ -404,12 +441,10 @@ export const InstructorDirectory: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Main Content */}
           <div className='flex-1'>
-            {/* Results Header */}
-            <div className='mb-6 flex items-center justify-between'>
+            <div className='mb-6 flex items-center justify-between gap-4'>
               <div>
-                <p className='text-muted-foreground'>
+                <p className='text-muted-foreground text-sm'>
                   Showing {filteredInstructors?.length} of {instructors?.length} instructors
                 </p>
               </div>
@@ -423,7 +458,6 @@ export const InstructorDirectory: React.FC<Props> = ({
               </Button>
             </div>
 
-            {/* Active Filters */}
             {(filters.specializations.length > 0 ||
               filters.mode.length > 0 ||
               filters.instructorType !== 'all' ||
@@ -465,8 +499,15 @@ export const InstructorDirectory: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Instructor Grid */}
-            {filteredInstructors?.length === 0 ? (
+            {isLoading ? (
+              <Card className='rounded-[32px] p-12 text-center shadow-sm'>
+                <Search className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                <h3 className='text-lg font-semibold'>Loading instructors</h3>
+                <p className='text-muted-foreground mt-2 text-sm'>
+                  Approved instructor profiles are being prepared for this course.
+                </p>
+              </Card>
+            ) : filteredInstructors?.length === 0 ? (
               <Card className='p-12 text-center'>
                 <Search className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
                 <h3>No instructors found</h3>
@@ -492,16 +533,7 @@ export const InstructorDirectory: React.FC<Props> = ({
               </div>
             )}
           </div>
-        </>
-      )}
-
-      {/* Instructor Profile Modal */}
-      {selectedInstructor && (
-        <InstructorProfileComponent
-          instructor={selectedInstructor}
-          onClose={() => setSelectedInstructor(null)}
-          onBookingComplete={onBookingComplete}
-        />
+        </div>
       )}
     </div>
   );

@@ -28,7 +28,12 @@ const PROVIDER_ORDER: ProvidedByEnum[] = [
   'course_creator',
 ];
 
-const FULL_ACCESS_ROLES = new Set<ViewerRole>(['admin', 'course_creator', 'instructor', 'organization']);
+const FULL_ACCESS_ROLES = new Set<ViewerRole>([
+  'admin',
+  'course_creator',
+  'instructor',
+  'organization',
+]);
 
 export function CourseTrainingRequirements({
   requirements,
@@ -91,7 +96,10 @@ export function CourseTrainingRequirements({
                       <div>
                         <p className='text-sm font-semibold'>{requirement.name}</p>
                         <p className='text-muted-foreground text-xs capitalize'>
-                          {String(requirement.requirement_type ?? 'requirement').replaceAll('_', ' ')}
+                          {String(requirement.requirement_type ?? 'requirement').replaceAll(
+                            '_',
+                            ' '
+                          )}
                         </p>
                       </div>
                       <Badge variant={requirement.is_mandatory ? 'default' : 'secondary'}>

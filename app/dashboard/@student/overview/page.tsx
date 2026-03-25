@@ -62,9 +62,7 @@ function getAge(dateOfBirth?: Date | string | null) {
 
 export default function StudentOverviewPage() {
   const user = useUserProfile();
-  const student = user?.student as
-    | (typeof user.student & { admin_verified?: boolean })
-    | undefined;
+  const student = user?.student as (typeof user.student & { admin_verified?: boolean }) | undefined;
   const studentUuid = student?.uuid;
   const name = student?.full_name ?? user?.displayName ?? user?.fullName ?? 'Student';
 
@@ -132,12 +130,7 @@ export default function StudentOverviewPage() {
   const isProfileComplete = completedProfileSteps === totalProfileSteps;
   const nextIncompleteProfileStep = profileChecklist.find(item => !item.complete);
 
-  const stageCompletion = [
-    Boolean(studentUuid),
-    isAdminVerified,
-    isAdminVerified,
-    hasEnrollment,
-  ];
+  const stageCompletion = [Boolean(studentUuid), isAdminVerified, isAdminVerified, hasEnrollment];
 
   const completedStageCount = stageCompletion.filter(Boolean).length;
   const currentStageIndex = stageCompletion.findIndex(complete => !complete);
@@ -207,9 +200,7 @@ export default function StudentOverviewPage() {
         <div className='border-border/60 rounded-2xl border border-dashed p-3'>
           <DetailRow
             label='Primary guardian'
-            value={
-              student?.first_guardian_name || (requiresGuardian ? 'Required' : 'Not provided')
-            }
+            value={student?.first_guardian_name || (requiresGuardian ? 'Required' : 'Not provided')}
           />
           <DetailRow
             label='Guardian mobile'
@@ -264,12 +255,13 @@ export default function StudentOverviewPage() {
               className='border-border/60 flex items-start gap-3 rounded-2xl border p-3'
             >
               <div
-                className={`mt-1 flex size-9 items-center justify-center rounded-full border ${isCompleted
-                  ? 'border-success bg-success text-success-foreground'
-                  : isCurrent
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border bg-muted text-muted-foreground'
-                  }`}
+                className={`mt-1 flex size-9 items-center justify-center rounded-full border ${
+                  isCompleted
+                    ? 'border-success bg-success text-success-foreground'
+                    : isCurrent
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-muted text-muted-foreground'
+                }`}
               >
                 {isCompleted ? <CheckCircle2 className='h-4 w-4' /> : <Icon className='h-4 w-4' />}
               </div>

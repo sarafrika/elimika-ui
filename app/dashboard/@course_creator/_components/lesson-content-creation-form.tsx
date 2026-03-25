@@ -64,7 +64,8 @@ type Lesson = {
 };
 
 type ContentType = 'TEXT' | 'VIDEO' | 'AUDIO' | 'PDF' | 'IMAGE';
-const tabs = ['Lesson Content', 'Practice Activities'];
+// const tabs = ['Lesson Content', 'Practice Activities'];
+const tabs = ['Lesson Content'];
 
 const lessonFormSchema = z.object({
   title: z.string().min(1),
@@ -974,13 +975,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
        
         } */}
 
-      {/* {activeTab === "Practice Activities" &&
-        <div className='mb-10 flex h-auto'>
-          Practice Activities
-        </div>
-      }
-
-      {activeTab === "Assessment Tasks" && <div>Assessment tasks</div>} */}
+      {/*  {activeTab === "Assessment Tasks" && <div>Assessment tasks</div>} */}
     </div>
   );
 };

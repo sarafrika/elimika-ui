@@ -28,6 +28,14 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useInstructor } from '@/context/instructor-context';
@@ -810,89 +818,120 @@ export function ClassScheduleManager({
                   </div>
                 </div>
               ) : (
-                <div className='space-y-3'>
-                  {filteredScheduleStudents.map((entry: any) => {
-                    const name = entry?.user?.full_name ?? 'Unknown student';
-                    const enrollmentUuid = entry?.enrollment?.uuid;
-                    const studentId = entry?.user?.uuid;
-                    const currentStatus = entry?.enrollment?.did_attend;
-                    const stats = studentId ? calculateStudentAttendance(studentId) : null;
+                <div className='border-border/60 bg-card/80 overflow-hidden rounded-[24px] border'>
+                  <div className='max-h-full overflow-auto'>
+                    <Table>
+                      <TableHeader className='bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-10 backdrop-blur'>
+                        <TableRow>
+                          <TableHead>Student</TableHead>
+                          <TableHead>Attendance</TableHead>
+                          <TableHead>Rate</TableHead>
+                          <TableHead className='text-right'>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredScheduleStudents.map((entry: any) => {
+                          const name = entry?.user?.full_name ?? 'Unknown student';
+                          const enrollmentUuid = entry?.enrollment?.uuid;
+                          const studentId = entry?.user?.uuid;
+                          const currentStatus = entry?.enrollment?.did_attend;
+                          const stats = studentId ? calculateStudentAttendance(studentId) : null;
+                          const initials = name
+                            .split(' ')
+                            .map((part: string) => part[0])
+                            .slice(0, 2)
+                            .join('');
+                          const isLoadingRow =
+                            loadingEnrollmentUuid === enrollmentUuid && markAttendanceMut.isPending;
 
-                    return (
-                      <div
-                        key={enrollmentUuid}
-                        className='border-border/60 bg-card/80 flex flex-col gap-4 rounded-[24px] border p-4 sm:flex-row sm:items-center sm:justify-between'
-                      >
-                        <div className='min-w-0 flex-1 space-y-2'>
-                          <div className='flex items-center gap-3'>
-                            <div className='bg-primary/10 text-primary flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold'>
-                              {name
-                                .split(' ')
-                                .map((part: string) => part[0])
-                                .slice(0, 2)
-                                .join('')}
-                            </div>
-                            <div className='min-w-0'>
-                              <p className='text-foreground truncate font-medium'>{name}</p>
-                              <p className='text-muted-foreground text-xs'>
-                                {stats?.presentCount ?? 0} of {stats?.totalSessions ?? 0} attended
-                              </p>
-                            </div>
-                          </div>
-                          <div className='max-w-xs space-y-1'>
-                            <div className='text-muted-foreground flex items-center justify-between text-xs'>
-                              <span>Overall attendance</span>
-                              <span>{Math.round(stats?.percentage ?? 0)}%</span>
-                            </div>
-                            <Progress value={stats?.percentage ?? 0} className='h-2' />
-                          </div>
-                        </div>
-
-                        <div className='flex gap-2'>
-                          <Button
-                            variant={currentStatus === true ? 'default' : 'outline'}
-                            className='gap-2'
-                            disabled={
-                              !studentId ||
-                              !enrollmentUuid ||
-                              currentStatus === true ||
-                              (loadingEnrollmentUuid === enrollmentUuid &&
-                                markAttendanceMut.isPending)
-                            }
-                            onClick={() => markAttendance(studentId, enrollmentUuid, true)}
-                          >
-                            {loadingEnrollmentUuid === enrollmentUuid &&
-                            markAttendanceMut.isPending ? (
-                              <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
-                            ) : (
-                              <CheckCircle className='h-4 w-4' />
-                            )}
-                            Present
-                          </Button>
-                          <Button
-                            variant={currentStatus === false ? 'destructive' : 'outline'}
-                            className='gap-2'
-                            disabled={
-                              !studentId ||
-                              !enrollmentUuid ||
-                              currentStatus === false ||
-                              (loadingEnrollmentUuid === enrollmentUuid &&
-                                markAttendanceMut.isPending)
-                            }
-                            onClick={() => markAttendance(studentId, enrollmentUuid, false)}
-                          >
-                            {loadingEnrollmentUuid === enrollmentUuid &&
-                            markAttendanceMut.isPending ? (
-                              <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
-                            ) : (
-                              <XCircle className='h-4 w-4' />
-                            )}
-                            Absent
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                          return (
+                            <TableRow key={enrollmentUuid}>
+                              <TableCell>
+                                <div className='flex items-center gap-3'>
+                                  <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold'>
+                                    {initials}
+                                  </div>
+                                  <div className='min-w-0'>
+                                    <p className='text-foreground truncate font-medium'>{name}</p>
+                                    <p className='text-muted-foreground text-xs'>
+                                      {stats?.presentCount ?? 0} of {stats?.totalSessions ?? 0}{' '}
+                                      attended
+                                    </p>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    currentStatus === true
+                                      ? 'success'
+                                      : currentStatus === false
+                                        ? 'destructive'
+                                        : 'secondary'
+                                  }
+                                >
+                                  {currentStatus === true
+                                    ? 'Present'
+                                    : currentStatus === false
+                                      ? 'Absent'
+                                      : 'Pending'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className='min-w-[180px]'>
+                                <div className='space-y-2'>
+                                  <div className='text-muted-foreground flex items-center justify-between text-xs'>
+                                    <span>Overall attendance</span>
+                                    <span>{Math.round(stats?.percentage ?? 0)}%</span>
+                                  </div>
+                                  <Progress value={stats?.percentage ?? 0} className='h-2' />
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className='flex justify-end gap-2'>
+                                  <Button
+                                    variant={currentStatus === true ? 'default' : 'outline'}
+                                    className='gap-2'
+                                    disabled={
+                                      !studentId ||
+                                      !enrollmentUuid ||
+                                      currentStatus === true ||
+                                      isLoadingRow
+                                    }
+                                    onClick={() => markAttendance(studentId, enrollmentUuid, true)}
+                                  >
+                                    {isLoadingRow ? (
+                                      <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                                    ) : (
+                                      <CheckCircle className='h-4 w-4' />
+                                    )}
+                                    Present
+                                  </Button>
+                                  <Button
+                                    variant={currentStatus === false ? 'destructive' : 'outline'}
+                                    className='gap-2'
+                                    disabled={
+                                      !studentId ||
+                                      !enrollmentUuid ||
+                                      currentStatus === false ||
+                                      isLoadingRow
+                                    }
+                                    onClick={() => markAttendance(studentId, enrollmentUuid, false)}
+                                  >
+                                    {isLoadingRow ? (
+                                      <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                                    ) : (
+                                      <XCircle className='h-4 w-4' />
+                                    )}
+                                    Absent
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               )}
             </div>
