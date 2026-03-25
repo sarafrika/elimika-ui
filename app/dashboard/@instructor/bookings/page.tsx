@@ -18,7 +18,13 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
-import { cx, elimikaDesignSystem, getEmptyStateClasses, getHeaderClasses, getStatCardClasses } from '@/lib/design-system';
+import {
+  cx,
+  elimikaDesignSystem,
+  getEmptyStateClasses,
+  getHeaderClasses,
+  getStatCardClasses,
+} from '@/lib/design-system';
 import {
   acceptBookingMutation,
   declineBookingMutation,
@@ -128,7 +134,8 @@ const getDurationLabel = (start?: Date, end?: Date) => {
 
 const getScheduleCategory = (booking: BookingResponse, now: Date) => {
   const isPast = booking.start_time < now || TERMINAL_STATUSES.includes(booking.status);
-  const isUpcoming = booking.start_time >= now && !['cancelled', 'declined', 'expired'].includes(booking.status);
+  const isUpcoming =
+    booking.start_time >= now && !['cancelled', 'declined', 'expired'].includes(booking.status);
   const isRequest = REQUEST_STATUSES.includes(booking.status) && booking.start_time >= now;
 
   return {
@@ -183,7 +190,10 @@ function BookingsPage() {
   const acceptBooking = useMutation(acceptBookingMutation());
   const declineBooking = useMutation(declineBookingMutation());
 
-  const bookings = useMemo<BookingResponse[]>(() => bookingsQuery.data?.data?.content ?? [], [bookingsQuery.data]);
+  const bookings = useMemo<BookingResponse[]>(
+    () => bookingsQuery.data?.data?.content ?? [],
+    [bookingsQuery.data]
+  );
   const now = useMemo(() => new Date(), [bookings]);
 
   const studentUuids = useMemo(
@@ -269,7 +279,8 @@ function BookingsPage() {
       return;
     }
 
-    const selectedStillVisible = selected && visibleBookings.some(booking => booking.uuid === selected.uuid);
+    const selectedStillVisible =
+      selected && visibleBookings.some(booking => booking.uuid === selected.uuid);
     if (!selectedStillVisible) {
       setSelected(visibleBookings[0]);
     }
@@ -453,7 +464,9 @@ function BookingsPage() {
       return (
         <div className={getEmptyStateClasses()}>
           <CircleAlert className={elimikaDesignSystem.components.emptyState.icon} />
-          <div className={elimikaDesignSystem.components.emptyState.title}>Could not load bookings</div>
+          <div className={elimikaDesignSystem.components.emptyState.title}>
+            Could not load bookings
+          </div>
           <p className={elimikaDesignSystem.components.emptyState.description}>
             Refresh the page or check the query parameters for this booking view.
           </p>
@@ -466,7 +479,9 @@ function BookingsPage() {
         <div className={getEmptyStateClasses()}>
           <CalendarDays className={elimikaDesignSystem.components.emptyState.icon} />
           <div className={elimikaDesignSystem.components.emptyState.title}>{emptyTitle}</div>
-          <p className={elimikaDesignSystem.components.emptyState.description}>{emptyDescription}</p>
+          <p className={elimikaDesignSystem.components.emptyState.description}>
+            {emptyDescription}
+          </p>
         </div>
       );
     }
@@ -494,21 +509,27 @@ function BookingsPage() {
                   <div className='text-foreground font-semibold'>
                     {student?.full_name ?? booking.student_uuid.slice(0, 8)}
                   </div>
-                  <div className='text-muted-foreground text-sm'>{booking.purpose ?? 'No purpose provided'}</div>
+                  <div className='text-muted-foreground text-sm'>
+                    {booking.purpose ?? 'No purpose provided'}
+                  </div>
                 </div>
 
-                <Badge className={cx('capitalize text-white', getStatusColor(booking.status))}>
+                <Badge className={cx('text-white capitalize', getStatusColor(booking.status))}>
                   {booking.status.replace('_', ' ')}
                 </Badge>
               </div>
 
               <div className='mt-4 grid gap-2 text-sm md:grid-cols-2'>
                 <div className='text-muted-foreground'>{formatDate(booking.start_time)}</div>
-                <div className='text-muted-foreground'>{formatTimeRange(booking.start_time, booking.end_time)}</div>
+                <div className='text-muted-foreground'>
+                  {formatTimeRange(booking.start_time, booking.end_time)}
+                </div>
                 <div className='text-foreground font-medium'>
                   {booking.currency ?? 'KES'} {booking.price_amount ?? 0}
                 </div>
-                <div className='text-muted-foreground'>Duration: {getDurationLabel(booking.start_time, booking.end_time)}</div>
+                <div className='text-muted-foreground'>
+                  Duration: {getDurationLabel(booking.start_time, booking.end_time)}
+                </div>
               </div>
             </button>
           );
@@ -524,13 +545,16 @@ function BookingsPage() {
         <div className='relative space-y-6'>
           <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
             <div className='space-y-4'>
-              <Badge className={elimikaDesignSystem.components.header.badge}>Instructor bookings</Badge>
+              <Badge className={elimikaDesignSystem.components.header.badge}>
+                Instructor bookings
+              </Badge>
               <div className='space-y-3'>
                 <h1 className={elimikaDesignSystem.components.header.title}>
                   Manage requests and see how sessions spread across your calendar
                 </h1>
                 <p className={elimikaDesignSystem.components.header.subtitle}>
-                  Review incoming training bookings, approve or decline requests, and monitor how upcoming sessions are distributed across your working month.
+                  Review incoming training bookings, approve or decline requests, and monitor how
+                  upcoming sessions are distributed across your working month.
                 </p>
               </div>
             </div>
@@ -545,7 +569,8 @@ function BookingsPage() {
                   {stats.thisWeek} booking{stats.thisWeek === 1 ? '' : 's'} this week
                 </p>
                 <p className='text-muted-foreground text-sm'>
-                  {stats.totalHours.toFixed(1)} scheduled hours are currently visible in the upcoming queue.
+                  {stats.totalHours.toFixed(1)} scheduled hours are currently visible in the
+                  upcoming queue.
                 </p>
               </CardContent>
             </Card>
@@ -574,7 +599,9 @@ function BookingsPage() {
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm'>Needs attention</p>
-                    <p className='text-foreground text-2xl font-semibold'>{stats.requiresAttention}</p>
+                    <p className='text-foreground text-2xl font-semibold'>
+                      {stats.requiresAttention}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -602,7 +629,9 @@ function BookingsPage() {
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm'>Upcoming hours</p>
-                    <p className='text-foreground text-2xl font-semibold'>{stats.totalHours.toFixed(1)}</p>
+                    <p className='text-foreground text-2xl font-semibold'>
+                      {stats.totalHours.toFixed(1)}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -612,7 +641,7 @@ function BookingsPage() {
       </section>
 
       <section className='grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]'>
-        <Card className='rounded-[32px] border-border/60 shadow-sm'>
+        <Card className='border-border/60 rounded-[32px] shadow-sm'>
           <CardHeader className='space-y-3'>
             <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
               <div>
@@ -623,14 +652,16 @@ function BookingsPage() {
               </div>
 
               <div className='text-muted-foreground text-sm'>
-                {calendarMonthStats.totalBookings} upcoming booking{calendarMonthStats.totalBookings === 1 ? '' : 's'}
-                {' '}across {calendarMonthStats.activeDays} active day{calendarMonthStats.activeDays === 1 ? '' : 's'}
+                {calendarMonthStats.totalBookings} upcoming booking
+                {calendarMonthStats.totalBookings === 1 ? '' : 's'} across{' '}
+                {calendarMonthStats.activeDays} active day
+                {calendarMonthStats.activeDays === 1 ? '' : 's'}
               </div>
             </div>
           </CardHeader>
 
           <CardContent className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_260px]'>
-            <div className='overflow-auto rounded-3xl border border-border/60'>
+            <div className='border-border/60 overflow-auto rounded-3xl border'>
               <DateCalendar
                 mode='single'
                 selected={calendarDate}
@@ -652,12 +683,14 @@ function BookingsPage() {
             </div>
 
             <div className='space-y-4'>
-              <div className='rounded-3xl border border-border/60 bg-muted/30 p-4'>
+              <div className='border-border/60 bg-muted/30 rounded-3xl border p-4'>
                 <div className='text-sm font-semibold'>Legend</div>
                 <div className='mt-3 space-y-2 text-sm'>
                   <div className='flex items-center gap-2'>
                     <span className='bg-primary/10 border-primary/20 h-3 w-3 rounded-full border' />
-                    <span className='text-muted-foreground'>Day with at least one upcoming booking</span>
+                    <span className='text-muted-foreground'>
+                      Day with at least one upcoming booking
+                    </span>
                   </div>
                   <div className='flex items-center gap-2'>
                     <span className='ring-primary/40 h-3 w-3 rounded-full ring-2' />
@@ -666,25 +699,29 @@ function BookingsPage() {
                 </div>
               </div>
 
-              <div className='rounded-3xl border border-border/60 p-4'>
+              <div className='border-border/60 rounded-3xl border p-4'>
                 <div className='text-sm font-semibold'>Busiest dates</div>
                 <div className='mt-3 space-y-3'>
                   {busiestDays.length === 0 ? (
-                    <p className='text-muted-foreground text-sm'>No upcoming bookings are scheduled yet.</p>
+                    <p className='text-muted-foreground text-sm'>
+                      No upcoming bookings are scheduled yet.
+                    </p>
                   ) : (
                     busiestDays.map(entry => (
                       <div key={entry.day} className='flex items-center justify-between text-sm'>
                         <span className='text-muted-foreground'>
                           {formatDate(new Date(entry.day))}
                         </span>
-                        <Badge variant='secondary'>{entry.count} session{entry.count === 1 ? '' : 's'}</Badge>
+                        <Badge variant='secondary'>
+                          {entry.count} session{entry.count === 1 ? '' : 's'}
+                        </Badge>
                       </div>
                     ))
                   )}
                 </div>
               </div>
 
-              <div className='rounded-3xl border border-border/60 p-4'>
+              <div className='border-border/60 rounded-3xl border p-4'>
                 <div className='text-sm font-semibold'>Time-of-day load</div>
                 <div className='mt-3 space-y-3 text-sm'>
                   <div className='flex items-center justify-between'>
@@ -705,11 +742,9 @@ function BookingsPage() {
           </CardContent>
         </Card>
 
-        <Card className='rounded-[32px] border-border/60 shadow-sm'>
+        <Card className='border-border/60 rounded-[32px] shadow-sm'>
           <CardHeader>
-            <CardTitle className='text-xl'>
-              {formatDate(calendarDate)} agenda
-            </CardTitle>
+            <CardTitle className='text-xl'>{formatDate(calendarDate)} agenda</CardTitle>
             <p className='text-muted-foreground text-sm'>
               Daily view of the sessions already occupying the selected date.
             </p>
@@ -718,8 +753,10 @@ function BookingsPage() {
           <CardContent className='space-y-6'>
             <div className='space-y-3'>
               {selectedDayBookings.length === 0 ? (
-                <div className='rounded-3xl border border-dashed border-border p-6 text-center'>
-                  <p className='text-muted-foreground text-sm'>No upcoming bookings on this date.</p>
+                <div className='border-border rounded-3xl border border-dashed p-6 text-center'>
+                  <p className='text-muted-foreground text-sm'>
+                    No upcoming bookings on this date.
+                  </p>
                 </div>
               ) : (
                 selectedDayBookings.map(booking => {
@@ -745,7 +782,9 @@ function BookingsPage() {
                             {formatTimeRange(booking.start_time, booking.end_time)}
                           </div>
                         </div>
-                        <Badge className={cx('capitalize text-white', getStatusColor(booking.status))}>
+                        <Badge
+                          className={cx('text-white capitalize', getStatusColor(booking.status))}
+                        >
                           {booking.status.replace('_', ' ')}
                         </Badge>
                       </div>
@@ -772,7 +811,9 @@ function BookingsPage() {
                         style={{
                           width: `${Math.max(
                             count === 0 ? 0 : 8,
-                            bookings.length === 0 ? 0 : (count / Math.max(...weekdaySpread, 1)) * 100
+                            bookings.length === 0
+                              ? 0
+                              : (count / Math.max(...weekdaySpread, 1)) * 100
                           )}%`,
                         }}
                       />
@@ -786,7 +827,7 @@ function BookingsPage() {
       </section>
 
       <section className='grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]'>
-        <Card className='rounded-[32px] border-border/60 shadow-sm'>
+        <Card className='border-border/60 rounded-[32px] shadow-sm'>
           <CardHeader className='space-y-4'>
             <div className='flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between'>
               <div>
@@ -875,7 +916,12 @@ function BookingsPage() {
                 <Button size='sm' variant='outline' onClick={handlePrev} disabled={page <= 1}>
                   Prev
                 </Button>
-                <Button size='sm' variant='outline' onClick={handleNext} disabled={page >= totalPages}>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={handleNext}
+                  disabled={page >= totalPages}
+                >
                   Next
                 </Button>
               </div>
@@ -883,7 +929,7 @@ function BookingsPage() {
           </CardContent>
         </Card>
 
-        <Card className='rounded-[32px] border-border/60 shadow-sm'>
+        <Card className='border-border/60 rounded-[32px] shadow-sm'>
           <CardHeader>
             <CardTitle className='text-xl'>Booking detail and actions</CardTitle>
             <p className='text-muted-foreground text-sm'>
@@ -895,9 +941,12 @@ function BookingsPage() {
             {!selected ? (
               <div className={getEmptyStateClasses()}>
                 <GraduationCap className={elimikaDesignSystem.components.emptyState.icon} />
-                <div className={elimikaDesignSystem.components.emptyState.title}>Select a booking</div>
+                <div className={elimikaDesignSystem.components.emptyState.title}>
+                  Select a booking
+                </div>
                 <p className={elimikaDesignSystem.components.emptyState.description}>
-                  Pick any booking from the queue or calendar agenda to see full details and take action.
+                  Pick any booking from the queue or calendar agenda to see full details and take
+                  action.
                 </p>
               </div>
             ) : (
@@ -905,11 +954,14 @@ function BookingsPage() {
                 <div className='flex items-start justify-between gap-3'>
                   <div className='flex items-start gap-3'>
                     <Avatar className='h-11 w-11'>
-                      <AvatarFallback>{(studentsById[selected.student_uuid]?.full_name ?? 'S').charAt(0)}</AvatarFallback>
+                      <AvatarFallback>
+                        {(studentsById[selected.student_uuid]?.full_name ?? 'S').charAt(0)}
+                      </AvatarFallback>
                     </Avatar>
                     <div>
                       <div className='text-lg font-semibold'>
-                        {studentsById[selected.student_uuid]?.full_name ?? selected.student_uuid.slice(0, 8)}
+                        {studentsById[selected.student_uuid]?.full_name ??
+                          selected.student_uuid.slice(0, 8)}
                       </div>
                       <div className='text-muted-foreground text-sm'>
                         {studentsById[selected.student_uuid]?.email ?? 'No contact info available'}
@@ -917,22 +969,26 @@ function BookingsPage() {
                     </div>
                   </div>
 
-                  <Badge className={cx('capitalize text-white', getStatusColor(selected.status))}>
+                  <Badge className={cx('text-white capitalize', getStatusColor(selected.status))}>
                     {selected.status.replace('_', ' ')}
                   </Badge>
                 </div>
 
                 <div className='grid gap-3 md:grid-cols-2'>
-                  <div className='rounded-3xl border border-border/60 p-4'>
-                    <div className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Session date</div>
+                  <div className='border-border/60 rounded-3xl border p-4'>
+                    <div className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
+                      Session date
+                    </div>
                     <div className='mt-2 font-semibold'>{formatDate(selected.start_time)}</div>
                     <div className='text-muted-foreground mt-1 text-sm'>
                       {formatTimeRange(selected.start_time, selected.end_time)}
                     </div>
                   </div>
 
-                  <div className='rounded-3xl border border-border/60 p-4'>
-                    <div className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Compensation</div>
+                  <div className='border-border/60 rounded-3xl border p-4'>
+                    <div className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
+                      Compensation
+                    </div>
                     <div className='mt-2 font-semibold'>
                       {selected.currency ?? 'KES'} {selected.price_amount ?? 0}
                     </div>
@@ -942,14 +998,17 @@ function BookingsPage() {
                   </div>
                 </div>
 
-                <div className='rounded-3xl border border-border/60 p-4'>
-                  <div className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Purpose</div>
+                <div className='border-border/60 rounded-3xl border p-4'>
+                  <div className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
+                    Purpose
+                  </div>
                   <p className='mt-2 text-sm leading-6'>
-                    {selected.purpose ?? 'No additional booking note was provided for this session.'}
+                    {selected.purpose ??
+                      'No additional booking note was provided for this session.'}
                   </p>
                 </div>
 
-                <div className='rounded-3xl border border-border/60 p-4'>
+                <div className='border-border/60 rounded-3xl border p-4'>
                   <div className='grid gap-4 text-sm md:grid-cols-2'>
                     <div>
                       <span className='text-muted-foreground'>Course</span>
@@ -959,22 +1018,30 @@ function BookingsPage() {
                     </div>
                     <div>
                       <span className='text-muted-foreground'>Booked on</span>
-                      <div className='mt-1 font-medium'>{formatDateTime(selected.created_date)}</div>
+                      <div className='mt-1 font-medium'>
+                        {formatDateTime(selected.created_date)}
+                      </div>
                     </div>
                     <div>
                       <span className='text-muted-foreground'>Payment engine</span>
-                      <div className='mt-1 font-medium'>{selected.payment_engine ?? 'Not specified'}</div>
+                      <div className='mt-1 font-medium'>
+                        {selected.payment_engine ?? 'Not specified'}
+                      </div>
                     </div>
                     <div>
                       <span className='text-muted-foreground'>Payment status</span>
                       <div className='mt-1 font-medium'>
-                        {selected.payment_reference ? 'Payment reference captured' : 'Awaiting payment reference'}
+                        {selected.payment_reference
+                          ? 'Payment reference captured'
+                          : 'Awaiting payment reference'}
                       </div>
                     </div>
                     {selected.hold_expires_at && (
                       <div className='md:col-span-2'>
                         <span className='text-muted-foreground'>Hold expires</span>
-                        <div className='mt-1 font-medium'>{formatDateTime(selected.hold_expires_at)}</div>
+                        <div className='mt-1 font-medium'>
+                          {formatDateTime(selected.hold_expires_at)}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -997,14 +1064,18 @@ function BookingsPage() {
                   )}
 
                   {canDeclineBooking(selected.status) && (
-                    <Button variant='destructive' className='sm:flex-1' onClick={() => setOpenDeclineModal(true)}>
+                    <Button
+                      variant='destructive'
+                      className='sm:flex-1'
+                      onClick={() => setOpenDeclineModal(true)}
+                    >
                       Reject booking
                     </Button>
                   )}
                 </div>
 
                 {selected.status === 'declined' && (
-                  <div className='rounded-3xl border border-border/60 bg-muted/30 p-4 text-sm'>
+                  <div className='border-border/60 bg-muted/30 rounded-3xl border p-4 text-sm'>
                     <div className='flex items-center gap-2 font-medium'>
                       <XCircle className='h-4 w-4' />
                       Booking already declined

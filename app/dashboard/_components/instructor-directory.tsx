@@ -226,7 +226,7 @@ export const InstructorDirectory: React.FC<Props> = ({
   return (
     <div className='space-y-6'>
       {!selectedInstructor && (
-        <Card className='rounded-[32px] border-border/60 bg-card/80 p-6 shadow-sm'>
+        <Card className='border-border/60 bg-card/80 rounded-[32px] p-6 shadow-sm'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
             <div className='space-y-2'>
               <h2 className='text-2xl font-semibold'>Instructor discovery</h2>
@@ -237,11 +237,11 @@ export const InstructorDirectory: React.FC<Props> = ({
             </div>
 
             <div className='flex flex-wrap gap-3 text-sm'>
-              <div className='rounded-full border border-border px-4 py-2'>
+              <div className='border-border rounded-full border px-4 py-2'>
                 {filteredInstructors?.length ?? 0} matched instructor
                 {(filteredInstructors?.length ?? 0) === 1 ? '' : 's'}
               </div>
-              <div className='rounded-full border border-border px-4 py-2'>
+              <div className='border-border rounded-full border px-4 py-2'>
                 {filters.specializations.length} active specialization filter
                 {filters.specializations.length === 1 ? '' : 's'}
               </div>
@@ -260,7 +260,7 @@ export const InstructorDirectory: React.FC<Props> = ({
         <div className='flex gap-6'>
           {showFilters && (
             <div className='w-60 flex-shrink-0 space-y-4 xl:w-80'>
-              <Card className='sticky top-6 space-y-6 rounded-[32px] border-border/60 p-4 shadow-sm'>
+              <Card className='border-border/60 sticky top-6 space-y-6 rounded-[32px] p-4 shadow-sm'>
                 <div className='flex items-center justify-between'>
                   <h3 onClick={() => {}} className='flex items-center gap-2'>
                     <Filter className='h-4 w-4' />

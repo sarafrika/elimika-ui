@@ -879,9 +879,9 @@ export default function AnalyticsPage() {
               value={
                 coursePerformanceData.length
                   ? `${Math.round(
-                    coursePerformanceData.reduce((sum, item) => sum + item.averageGrade, 0) /
-                    coursePerformanceData.length
-                  )}%`
+                      coursePerformanceData.reduce((sum, item) => sum + item.averageGrade, 0) /
+                        coursePerformanceData.length
+                    )}%`
                   : 'N/A'
               }
               helper='Average final grade across filtered courses'

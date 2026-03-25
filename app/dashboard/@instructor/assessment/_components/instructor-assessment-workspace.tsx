@@ -1423,42 +1423,38 @@ export function InstructorAssessmentWorkspace({
         </section>
       ) : null}
 
-      <Card className="border-border/60 bg-card/95 overflow-hidden rounded-[32px]">
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col gap-4">
-
+      <Card className='border-border/60 bg-card/95 overflow-hidden rounded-[32px]'>
+        <CardContent className='p-4 sm:p-6'>
+          <div className='flex flex-col gap-4'>
             {/* Header */}
-            <div className="space-y-1 max-w-2xl">
-              <p className="text-foreground text-sm font-semibold">
-                Workspace filters
-              </p>
-              <p className="text-muted-foreground text-sm">
+            <div className='max-w-2xl space-y-1'>
+              <p className='text-foreground text-sm font-semibold'>Workspace filters</p>
+              <p className='text-muted-foreground text-sm'>
                 Filter the assessment workspace by course or search by learner and task name.
               </p>
             </div>
 
             {/* Controls */}
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_260px_auto]">
-
+            <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_260px_auto]'>
               {/* Search */}
-              <div className="relative w-full">
-                <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <div className='relative w-full'>
+                <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                 <Input
                   value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search task, student, or course"
-                  className="pl-9 w-full"
+                  onChange={event => setSearchQuery(event.target.value)}
+                  placeholder='Search task, student, or course'
+                  className='w-full pl-9'
                 />
               </div>
 
               {/* Select */}
               <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
-                <SelectTrigger className="w-full sm:w-full lg:w-[260px]">
-                  <SelectValue placeholder="Select course" />
+                <SelectTrigger className='w-full sm:w-full lg:w-[260px]'>
+                  <SelectValue placeholder='Select course' />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL_COURSES}>All courses</SelectItem>
-                  {courseOptions.map((course) => (
+                  {courseOptions.map(course => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
                     </SelectItem>
@@ -1468,18 +1464,17 @@ export function InstructorAssessmentWorkspace({
 
               {/* Reset Button */}
               <Button
-                variant="outline"
-                className="gap-2 w-full sm:w-full lg:w-auto"
+                variant='outline'
+                className='w-full gap-2 sm:w-full lg:w-auto'
                 onClick={() => {
                   setSelectedCourseId(ALL_COURSES);
                   setSearchQuery('');
                 }}
               >
-                <Filter className="h-4 w-4" />
+                <Filter className='h-4 w-4' />
                 Reset
               </Button>
             </div>
-
           </div>
         </CardContent>
       </Card>

@@ -141,7 +141,7 @@ export function WeeklyAvailabilityGrid({
   };
 
   function doesSlotApplyToDate(slot: any, date: Date) {
-    if (slot.recurring) {
+    if (slot.recurring || slot.isRecurring) {
       const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
       return weekday.toLowerCase() === slot.day.toLowerCase();
     }

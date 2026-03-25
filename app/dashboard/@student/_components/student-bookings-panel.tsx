@@ -161,8 +161,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
     () =>
       filteredBookings.filter(
         booking =>
-          booking.start_time < now ||
-          ['cancelled', 'declined', 'expired'].includes(booking.status)
+          booking.start_time < now || ['cancelled', 'declined', 'expired'].includes(booking.status)
       ),
     [filteredBookings, now]
   );
@@ -186,7 +185,10 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
       return;
     }
 
-    if (!selectedBooking || !visibleBookings.some(booking => booking.uuid === selectedBooking.uuid)) {
+    if (
+      !selectedBooking ||
+      !visibleBookings.some(booking => booking.uuid === selectedBooking.uuid)
+    ) {
       setSelectedBooking(visibleBookings[0]);
     }
   }, [selectedBooking, visibleBookings]);
@@ -207,7 +209,8 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
       ['confirmed', 'accepted_confirmed'].includes(booking.status)
     ).length;
     const upcoming = bookings.filter(
-      booking => booking.start_time >= now && !['cancelled', 'declined', 'expired'].includes(booking.status)
+      booking =>
+        booking.start_time >= now && !['cancelled', 'declined', 'expired'].includes(booking.status)
     ).length;
     const bookedDays = new Set(
       bookings
@@ -227,7 +230,9 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
     () =>
       [...bookings]
         .filter(
-          booking => booking.start_time >= now && !['cancelled', 'declined', 'expired'].includes(booking.status)
+          booking =>
+            booking.start_time >= now &&
+            !['cancelled', 'declined', 'expired'].includes(booking.status)
         )
         .sort((left, right) => left.start_time.getTime() - right.start_time.getTime())
         .slice(0, 5),
@@ -286,7 +291,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
   return (
     <div className='space-y-6'>
       <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-        <Card className='rounded-[28px] border-border/60 shadow-sm'>
+        <Card className='border-border/60 rounded-[28px] shadow-sm'>
           <CardContent className='p-6'>
             <div className='flex items-center gap-3'>
               <div className='bg-primary/10 text-primary rounded-2xl p-3'>
@@ -300,7 +305,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
           </CardContent>
         </Card>
 
-        <Card className='rounded-[28px] border-border/60 shadow-sm'>
+        <Card className='border-border/60 rounded-[28px] shadow-sm'>
           <CardContent className='p-6'>
             <div className='flex items-center gap-3'>
               <div className='bg-primary/10 text-primary rounded-2xl p-3'>
@@ -314,7 +319,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
           </CardContent>
         </Card>
 
-        <Card className='rounded-[28px] border-border/60 shadow-sm'>
+        <Card className='border-border/60 rounded-[28px] shadow-sm'>
           <CardContent className='p-6'>
             <div className='flex items-center gap-3'>
               <div className='bg-primary/10 text-primary rounded-2xl p-3'>
@@ -328,7 +333,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
           </CardContent>
         </Card>
 
-        <Card className='rounded-[28px] border-border/60 shadow-sm'>
+        <Card className='border-border/60 rounded-[28px] shadow-sm'>
           <CardContent className='p-6'>
             <div className='flex items-center gap-3'>
               <div className='bg-primary/10 text-primary rounded-2xl p-3'>
@@ -344,7 +349,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
       </div>
 
       <div className='grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]'>
-        <Card className='rounded-[32px] border-border/60 shadow-sm'>
+        <Card className='border-border/60 rounded-[32px] shadow-sm'>
           <CardHeader className='space-y-4'>
             <div className='flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between'>
               <div>
@@ -404,13 +409,17 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
                 return (
                   <TabsContent key={tab} value={tab} className='pt-4'>
                     {items.length === 0 ? (
-                      <div className='rounded-[28px] border border-dashed border-border p-10 text-center'>
-                        <p className='text-muted-foreground text-sm'>No bookings in this section yet.</p>
+                      <div className='border-border rounded-[28px] border border-dashed p-10 text-center'>
+                        <p className='text-muted-foreground text-sm'>
+                          No bookings in this section yet.
+                        </p>
                       </div>
                     ) : (
                       <div className='space-y-3'>
                         {items.map(booking => {
-                          const instructor = instructors.find(item => item.uuid === booking.instructor_uuid);
+                          const instructor = instructors.find(
+                            item => item.uuid === booking.instructor_uuid
+                          );
                           const isActive = selectedBooking?.uuid === booking.uuid;
 
                           return (
@@ -434,13 +443,17 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
                                   </div>
                                 </div>
 
-                                <Badge className={`capitalize text-white ${getStatusColor(booking.status)}`}>
+                                <Badge
+                                  className={`text-white capitalize ${getStatusColor(booking.status)}`}
+                                >
                                   {booking.status.replace('_', ' ')}
                                 </Badge>
                               </div>
 
                               <div className='mt-4 grid gap-2 text-sm md:grid-cols-2'>
-                                <div className='text-muted-foreground'>{formatDate(booking.start_time)}</div>
+                                <div className='text-muted-foreground'>
+                                  {formatDate(booking.start_time)}
+                                </div>
                                 <div className='text-muted-foreground'>
                                   {formatTimeRange(booking.start_time, booking.end_time)}
                                 </div>
@@ -464,7 +477,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
         </Card>
 
         <div className='space-y-6'>
-          <Card className='rounded-[32px] border-border/60 shadow-sm'>
+          <Card className='border-border/60 rounded-[32px] shadow-sm'>
             <CardHeader>
               <CardTitle className='text-xl'>Booking detail</CardTitle>
               <p className='text-muted-foreground text-sm'>
@@ -474,7 +487,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
 
             <CardContent>
               {!selectedBooking ? (
-                <div className='rounded-[28px] border border-dashed border-border p-10 text-center'>
+                <div className='border-border rounded-[28px] border border-dashed p-10 text-center'>
                   <p className='text-muted-foreground text-sm'>
                     Pick a booking from the list to see the full session detail.
                   </p>
@@ -490,22 +503,30 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
                         {selectedInstructor?.professional_headline ?? 'Training instructor'}
                       </div>
                     </div>
-                    <Badge className={`capitalize text-white ${getStatusColor(selectedBooking.status)}`}>
+                    <Badge
+                      className={`text-white capitalize ${getStatusColor(selectedBooking.status)}`}
+                    >
                       {selectedBooking.status.replace('_', ' ')}
                     </Badge>
                   </div>
 
                   <div className='grid gap-3 md:grid-cols-2'>
-                    <div className='rounded-3xl border border-border/60 p-4'>
-                      <div className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Session date</div>
-                      <div className='mt-2 font-semibold'>{formatDate(selectedBooking.start_time)}</div>
+                    <div className='border-border/60 rounded-3xl border p-4'>
+                      <div className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
+                        Session date
+                      </div>
+                      <div className='mt-2 font-semibold'>
+                        {formatDate(selectedBooking.start_time)}
+                      </div>
                       <div className='text-muted-foreground mt-1 text-sm'>
                         {formatTimeRange(selectedBooking.start_time, selectedBooking.end_time)}
                       </div>
                     </div>
 
-                    <div className='rounded-3xl border border-border/60 p-4'>
-                      <div className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Amount</div>
+                    <div className='border-border/60 rounded-3xl border p-4'>
+                      <div className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
+                        Amount
+                      </div>
                       <div className='mt-2 font-semibold'>
                         {selectedBooking.currency ?? 'KES'} {selectedBooking.price_amount ?? 0}
                       </div>
@@ -515,34 +536,44 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
                     </div>
                   </div>
 
-                  <div className='rounded-3xl border border-border/60 p-4'>
-                    <div className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Course</div>
+                  <div className='border-border/60 rounded-3xl border p-4'>
+                    <div className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
+                      Course
+                    </div>
                     <div className='mt-2 font-medium'>
                       {selectedCourse.data?.data?.name ?? selectedBooking.course_uuid.slice(0, 8)}
                     </div>
                   </div>
 
-                  <div className='rounded-3xl border border-border/60 p-4'>
-                    <div className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Purpose</div>
+                  <div className='border-border/60 rounded-3xl border p-4'>
+                    <div className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
+                      Purpose
+                    </div>
                     <p className='mt-2 text-sm leading-6'>
                       {selectedBooking.purpose ?? 'No additional booking purpose was supplied.'}
                     </p>
                   </div>
 
-                  <div className='rounded-3xl border border-border/60 p-4'>
+                  <div className='border-border/60 rounded-3xl border p-4'>
                     <div className='grid gap-4 text-sm md:grid-cols-2'>
                       <div>
                         <span className='text-muted-foreground'>Booked on</span>
-                        <div className='mt-1 font-medium'>{formatDateTime(selectedBooking.created_date)}</div>
+                        <div className='mt-1 font-medium'>
+                          {formatDateTime(selectedBooking.created_date)}
+                        </div>
                       </div>
                       <div>
                         <span className='text-muted-foreground'>Payment engine</span>
-                        <div className='mt-1 font-medium'>{selectedBooking.payment_engine ?? 'Not specified'}</div>
+                        <div className='mt-1 font-medium'>
+                          {selectedBooking.payment_engine ?? 'Not specified'}
+                        </div>
                       </div>
                       {selectedBooking.hold_expires_at && (
                         <div className='md:col-span-2'>
                           <span className='text-muted-foreground'>Payment hold expires</span>
-                          <div className='mt-1 font-medium'>{formatDateTime(selectedBooking.hold_expires_at)}</div>
+                          <div className='mt-1 font-medium'>
+                            {formatDateTime(selectedBooking.hold_expires_at)}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -577,7 +608,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
             </CardContent>
           </Card>
 
-          <Card className='rounded-[32px] border-border/60 shadow-sm'>
+          <Card className='border-border/60 rounded-[32px] shadow-sm'>
             <CardHeader>
               <CardTitle className='text-xl'>Upcoming cadence</CardTitle>
               <p className='text-muted-foreground text-sm'>
@@ -587,7 +618,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
 
             <CardContent className='space-y-4'>
               {groupedUpcomingDays.length === 0 ? (
-                <div className='rounded-[28px] border border-dashed border-border p-8 text-center'>
+                <div className='border-border rounded-[28px] border border-dashed p-8 text-center'>
                   <p className='text-muted-foreground text-sm'>No future sessions scheduled yet.</p>
                 </div>
               ) : (
@@ -595,7 +626,9 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
                   <div key={group.label} className='space-y-2'>
                     <div className='flex items-center justify-between text-sm'>
                       <span className='text-muted-foreground'>{group.label}</span>
-                      <span className='font-medium'>{group.count} session{group.count === 1 ? '' : 's'}</span>
+                      <span className='font-medium'>
+                        {group.count} session{group.count === 1 ? '' : 's'}
+                      </span>
                     </div>
                     <div className='bg-muted h-2 rounded-full'>
                       <div
@@ -618,19 +651,24 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
 
               <div className='space-y-3'>
                 {upcomingSchedule.map(booking => {
-                  const instructor = instructors.find(item => item.uuid === booking.instructor_uuid);
+                  const instructor = instructors.find(
+                    item => item.uuid === booking.instructor_uuid
+                  );
                   return (
                     <div
                       key={booking.uuid}
                       className={`rounded-2xl border p-3 ${
-                        selectedBooking?.uuid === booking.uuid ? 'border-primary bg-primary/5' : 'border-border'
+                        selectedBooking?.uuid === booking.uuid
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border'
                       }`}
                     >
                       <div className='flex items-center justify-between gap-3 text-sm'>
                         <div>
                           <div className='font-medium'>{instructor?.full_name ?? 'Instructor'}</div>
                           <div className='text-muted-foreground'>
-                            {formatDate(booking.start_time)} • {formatTimeRange(booking.start_time, booking.end_time)}
+                            {formatDate(booking.start_time)} •{' '}
+                            {formatTimeRange(booking.start_time, booking.end_time)}
                           </div>
                         </div>
                         <Badge variant='secondary'>

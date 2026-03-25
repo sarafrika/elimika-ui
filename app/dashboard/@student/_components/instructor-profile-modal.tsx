@@ -148,7 +148,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
   ].filter(entry => typeof entry.amount === 'number');
 
   return (
-    <div className='relative mx-auto w-full max-w-7xl self-center overflow-y-auto rounded-[32px] bg-background'>
+    <div className='bg-background relative mx-auto w-full max-w-7xl self-center overflow-y-auto rounded-[32px]'>
       <Button
         variant='ghost'
         size='sm'
@@ -160,57 +160,57 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
       <div className='space-y-6 p-6'>
         <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]'>
-          <Card className='rounded-[32px] border-border/60 p-6 shadow-sm'>
+          <Card className='border-border/60 rounded-[32px] p-6 shadow-sm'>
             <div className='flex items-start gap-6'>
-          <Avatar className='h-24 w-24'>
-            <AvatarImage src={instructor.profileImage} alt={instructor.name} />
-            <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
-          </Avatar>
+              <Avatar className='h-24 w-24'>
+                <AvatarImage src={instructor.profileImage} alt={instructor.name} />
+                <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
+              </Avatar>
 
-          <div className='flex-1'>
-            <div className='flex items-start justify-between'>
-              <div>
-                <div className='mb-1 flex items-center gap-2'>
-                  <h2>{instructor?.full_name}</h2>
+              <div className='flex-1'>
+                <div className='flex items-start justify-between'>
+                  <div>
+                    <div className='mb-1 flex items-center gap-2'>
+                      <h2>{instructor?.full_name}</h2>
+                    </div>
+                    <p className='text-muted-foreground'>{instructor?.professional_headline}</p>
+                  </div>
                 </div>
-                <p className='text-muted-foreground'>{instructor?.professional_headline}</p>
-              </div>
-            </div>
 
-            {/* Quick Stats */}
-            <div className='mt-4 flex flex-wrap items-center gap-4'>
-              <div className='flex items-center gap-1'>
-                <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
-                <span>{instructorReviews?.length} reviews</span>
-              </div>
-              <div className='text-muted-foreground flex items-center gap-1'>
-                <Users className='h-4 w-4' />
-                <span>N/A students</span>
-              </div>
-              <div className='text-muted-foreground flex items-center gap-1'>
-                <Briefcase className='h-4 w-4' />
-                <span>{instructor?.total_experience_years} years experience</span>
-              </div>
-              {instructor?.has_location_coordinates && (
-                <div className='text-muted-foreground flex items-center gap-1'>
-                  <MapPin className='h-4 w-4' />
-                  <span>{instructor?.formatted_location}</span>
+                {/* Quick Stats */}
+                <div className='mt-4 flex flex-wrap items-center gap-4'>
+                  <div className='flex items-center gap-1'>
+                    <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
+                    <span>{instructorReviews?.length} reviews</span>
+                  </div>
+                  <div className='text-muted-foreground flex items-center gap-1'>
+                    <Users className='h-4 w-4' />
+                    <span>N/A students</span>
+                  </div>
+                  <div className='text-muted-foreground flex items-center gap-1'>
+                    <Briefcase className='h-4 w-4' />
+                    <span>{instructor?.total_experience_years} years experience</span>
+                  </div>
+                  {instructor?.has_location_coordinates && (
+                    <div className='text-muted-foreground flex items-center gap-1'>
+                      <MapPin className='h-4 w-4' />
+                      <span>{instructor?.formatted_location}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Mode badges */}
-            <div className='mt-3 flex gap-2'>
-              <Badge variant='secondary' className='gap-1'>
-                <Video className='h-3 w-3' />
-                Online / Onsite
-              </Badge>
-            </div>
-          </div>
+                {/* Mode badges */}
+                <div className='mt-3 flex gap-2'>
+                  <Badge variant='secondary' className='gap-1'>
+                    <Video className='h-3 w-3' />
+                    Online / Onsite
+                  </Badge>
+                </div>
+              </div>
             </div>
           </Card>
 
-          <Card className='rounded-[32px] border-border/60 p-6 shadow-sm'>
+          <Card className='border-border/60 rounded-[32px] p-6 shadow-sm'>
             <div className='space-y-4'>
               <div>
                 <p className='text-muted-foreground text-sm'>Booking fit</p>
@@ -218,7 +218,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               </div>
 
               <div className='space-y-3 text-sm'>
-                <div className='rounded-2xl border border-border/60 p-4'>
+                <div className='border-border/60 rounded-2xl border p-4'>
                   <div className='font-medium'>Course alignment</div>
                   <p className='text-muted-foreground mt-1'>
                     {matchedCourse?.course_name ??
@@ -226,17 +226,19 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                   </p>
                 </div>
 
-                <div className='rounded-2xl border border-border/60 p-4'>
+                <div className='border-border/60 rounded-2xl border p-4'>
                   <div className='font-medium'>Session formats</div>
                   <p className='text-muted-foreground mt-1'>
-                    Use the scheduler below to request an online or in-person slot based on the rate you choose.
+                    Use the scheduler below to request an online or in-person slot based on the rate
+                    you choose.
                   </p>
                 </div>
 
-                <div className='rounded-2xl border border-border/60 p-4'>
+                <div className='border-border/60 rounded-2xl border p-4'>
                   <div className='font-medium'>Booking flow</div>
                   <p className='text-muted-foreground mt-1'>
-                    Pick a rate, add a short purpose, then choose a slot from the timetable to create your booking request.
+                    Pick a rate, add a short purpose, then choose a slot from the timetable to
+                    create your booking request.
                   </p>
                 </div>
               </div>
@@ -254,7 +256,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
         </div>
 
         {rateEntries.length > 0 && (
-          <Card className='rounded-[32px] border-border/60 p-6 shadow-sm'>
+          <Card className='border-border/60 rounded-[32px] p-6 shadow-sm'>
             <div className='mb-4 flex items-center justify-between gap-4'>
               <div>
                 <h3 className='text-lg font-semibold'>Rate overview</h3>
@@ -269,7 +271,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               {rateEntries.map(entry => (
                 <div
                   key={entry.key}
-                  className='rounded-3xl border border-border/60 bg-muted/30 p-4'
+                  className='border-border/60 bg-muted/30 rounded-3xl border p-4'
                 >
                   <div className='font-medium'>{entry.label}</div>
                   <p className='text-muted-foreground mt-1 text-sm'>{entry.description}</p>
@@ -285,12 +287,13 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
         {/* Booking Form */}
         {showBooking && (
-          <Card className='rounded-[32px] border-border/60 p-6 shadow-sm'>
+          <Card className='border-border/60 rounded-[32px] p-6 shadow-sm'>
             <div className='mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
               <div>
                 <h3 className='text-lg font-semibold'>Booking scheduler</h3>
                 <p className='text-muted-foreground text-sm'>
-                  Use the instructor timetable to choose a slot after reviewing the available rates and expectations.
+                  Use the instructor timetable to choose a slot after reviewing the available rates
+                  and expectations.
                 </p>
               </div>
 
@@ -308,8 +311,10 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 instructor_uuid: instructor?.uuid || '',
                 booking_id: '',
                 rates: matchedCourse?.rate_card,
+                instructor_name: instructor?.full_name || '',
+                course_name: matchedCourse?.course_name || '',
               }}
-              />
+            />
           </Card>
         )}
 
@@ -374,19 +379,19 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                   <h3>Why students book this instructor</h3>
                 </div>
                 <div className='grid gap-4 md:grid-cols-3'>
-                  <div className='rounded-2xl border border-border/60 p-4'>
+                  <div className='border-border/60 rounded-2xl border p-4'>
                     <div className='font-medium'>Experience depth</div>
                     <p className='text-muted-foreground mt-1 text-sm'>
                       {instructor?.total_experience_years ?? 0} years of experience in the field.
                     </p>
                   </div>
-                  <div className='rounded-2xl border border-border/60 p-4'>
+                  <div className='border-border/60 rounded-2xl border p-4'>
                     <div className='font-medium'>Course relevance</div>
                     <p className='text-muted-foreground mt-1 text-sm'>
                       Approved for this course and visible in the student booking flow.
                     </p>
                   </div>
-                  <div className='rounded-2xl border border-border/60 p-4'>
+                  <div className='border-border/60 rounded-2xl border p-4'>
                     <div className='font-medium'>Booking clarity</div>
                     <p className='text-muted-foreground mt-1 text-sm'>
                       Rates, schedule, and review history are shown before you commit.

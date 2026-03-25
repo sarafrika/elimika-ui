@@ -61,7 +61,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
   const maxRate = rates.length ? Math.max(...rates) : null;
 
   return (
-    <Card className='min-w-[300px] rounded-[28px] border-border/60 overflow-hidden shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:min-w-[320px]'>
+    <Card className='border-border/60 min-w-[300px] overflow-hidden rounded-[28px] shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:min-w-[320px]'>
       <div className='space-y-4 p-4 sm:p-6'>
         <div className='flex items-start gap-4'>
           <Avatar className='h-16 w-16'>

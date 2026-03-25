@@ -33,33 +33,37 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { useInstructor } from '@/context/instructor-context';
 import useAmdinClassesWithDetails from '@/hooks/use-admin-classes';
 import { useCompactScheduleLayout } from '@/hooks/use-compact-schedule-layout';
 import { useStudentsMap } from '@/hooks/use-studentsMap';
 import { getEnrollmentsForInstanceOptions } from '@/services/client/@tanstack/react-query.gen';
 
-export default function AdminClassPage() {
+export default function InstructorClassPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedClassId, setSelectedClassId] = useState<string | 'all'>('all');
-  const [selectedInstructorId, setSelectedInstructorId] = useState<string | null>(null);
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({
     classes: true,
-    instructors: false,
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [isFiltersSheetOpen, setIsFiltersSheetOpen] = useState(false);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
 
+  const instructor = useInstructor();
   const isCompactLayout = useCompactScheduleLayout();
 
-  const { classes: classesWithCourseAndInstructor, isPending } = useAmdinClassesWithDetails();
+  const { classes: classData, isPending } = useAmdinClassesWithDetails();
+
+  const classesWithCourseAndInstructor = useMemo(
+    () => classData?.filter(cls => cls?.default_instructor_uuid === instructor?.uuid) || [],
+    [classData, instructor?.uuid]
+  );
 
   const allEvents = useMemo<CalendarEvent[]>(() => {
-    if (!classesWithCourseAndInstructor) return [];
-
     const events: CalendarEvent[] = [];
+
     classesWithCourseAndInstructor.forEach((classDef: ClassDefinition, classIndex: number) => {
       const color = COLOR_PALETTE[classIndex % COLOR_PALETTE.length];
       classDef.schedule?.forEach((scheduleItem: ClassSchedule) => {
@@ -84,9 +88,12 @@ export default function AdminClassPage() {
     return events;
   }, [classesWithCourseAndInstructor]);
 
-  const uniqueClasses = useMemo(() => {
-    if (!classesWithCourseAndInstructor) return [];
+  const filteredEvents = useMemo(() => {
+    if (selectedClassId === 'all') return allEvents;
+    return allEvents.filter(event => event.classDefinitionId === selectedClassId);
+  }, [allEvents, selectedClassId]);
 
+  const uniqueClasses = useMemo(() => {
     const classes = classesWithCourseAndInstructor.map((classDef: ClassDefinition) => ({
       id: classDef.uuid,
       name: `${classDef.title} - ${classDef.course?.name || 'Unknown'}`,
@@ -99,40 +106,7 @@ export default function AdminClassPage() {
     return allClasses.filter(cls => cls.name.toLowerCase().includes(query));
   }, [classesWithCourseAndInstructor, searchQuery]);
 
-  const uniqueInstructors = useMemo(() => {
-    if (!classesWithCourseAndInstructor) return [];
-
-    const instructorMap = new Map<string, { id: string; name: string }>();
-    classesWithCourseAndInstructor.forEach((classDef: ClassDefinition) => {
-      if (classDef.instructor?.uuid) {
-        instructorMap.set(classDef.instructor.uuid, {
-          id: classDef.instructor.uuid,
-          name: classDef.instructor.full_name || 'Unknown Instructor',
-        });
-      }
-    });
-
-    return Array.from(instructorMap.values());
-  }, [classesWithCourseAndInstructor]);
-
-  const filteredEvents = useMemo(() => {
-    let events = allEvents;
-
-    if (selectedClassId !== 'all') {
-      events = events.filter(event => event.classDefinitionId === selectedClassId);
-    }
-
-    if (selectedInstructorId) {
-      const instructor = uniqueInstructors.find(inst => inst.id === selectedInstructorId);
-      if (instructor) {
-        events = events.filter(event => event.instructor === instructor.name);
-      }
-    }
-
-    return events;
-  }, [allEvents, selectedClassId, selectedInstructorId, uniqueInstructors]);
-
-  const activeFilterCount = Number(selectedClassId !== 'all') + Number(!!selectedInstructorId);
+  const activeFilterCount = Number(selectedClassId !== 'all');
 
   useEffect(() => {
     if (selectedClassId && selectedClassId !== 'all') {
@@ -164,33 +138,12 @@ export default function AdminClassPage() {
         items: uniqueClasses,
         onItemClick: id => {
           setSelectedClassId(id);
-          setSelectedInstructorId(null);
           setIsFiltersSheetOpen(false);
         },
         selectedId: selectedClassId,
       },
-      {
-        key: 'instructors',
-        label: 'Instructors',
-        count: uniqueInstructors.length,
-        isOpen: openDropdowns.instructors,
-        onToggle: () => setOpenDropdowns(prev => ({ ...prev, instructors: !prev.instructors })),
-        items: uniqueInstructors,
-        onItemClick: id => {
-          setSelectedInstructorId(current => (current === id ? null : id));
-          setIsFiltersSheetOpen(false);
-        },
-        selectedId: selectedInstructorId,
-      },
     ],
-    [
-      openDropdowns.classes,
-      openDropdowns.instructors,
-      selectedClassId,
-      selectedInstructorId,
-      uniqueClasses,
-      uniqueInstructors,
-    ]
+    [openDropdowns.classes, selectedClassId, uniqueClasses]
   );
 
   const handleDateChange = (direction: 'prev' | 'next') => {
@@ -325,10 +278,7 @@ export default function AdminClassPage() {
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 activeFilterCount={activeFilterCount}
-                onClearFilters={() => {
-                  setSelectedClassId('all');
-                  setSelectedInstructorId(null);
-                }}
+                onClearFilters={() => setSelectedClassId('all')}
                 sections={filterSections}
               />
             </div>
@@ -380,17 +330,14 @@ export default function AdminClassPage() {
               <SheetHeader className='border-border border-b'>
                 <SheetTitle>Classes</SheetTitle>
                 <SheetDescription>
-                  Search and filter class sessions without crowding the calendar.
+                  Search and filter your sessions without crowding the calendar.
                 </SheetDescription>
               </SheetHeader>
               <ScheduleFiltersPanel
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 activeFilterCount={activeFilterCount}
-                onClearFilters={() => {
-                  setSelectedClassId('all');
-                  setSelectedInstructorId(null);
-                }}
+                onClearFilters={() => setSelectedClassId('all')}
                 sections={filterSections}
               />
             </SheetContent>

@@ -176,13 +176,16 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
         <div className='relative space-y-6'>
           <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
             <div className='space-y-4'>
-              <Badge className={elimikaDesignSystem.components.header.badge}>Book an instructor</Badge>
+              <Badge className={elimikaDesignSystem.components.header.badge}>
+                Book an instructor
+              </Badge>
               <div className='space-y-3'>
                 <h1 className={elimikaDesignSystem.components.header.title}>
                   Choose the right instructor before you commit to a session
                 </h1>
                 <p className={elimikaDesignSystem.components.header.subtitle}>
-                  Compare instructor profiles, understand teaching fit, review rates and availability, then track every booking from payment through session day.
+                  Compare instructor profiles, understand teaching fit, review rates and
+                  availability, then track every booking from payment through session day.
                 </p>
               </div>
             </div>
@@ -197,7 +200,8 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
                   Review profile, pricing, then schedule
                 </p>
                 <p className='text-muted-foreground text-sm'>
-                  The refreshed flow makes it easier to understand who you are booking and what the session will cost before you pick a slot.
+                  The refreshed flow makes it easier to understand who you are booking and what the
+                  session will cost before you pick a slot.
                 </p>
               </CardContent>
             </Card>
