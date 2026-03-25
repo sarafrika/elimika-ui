@@ -109,16 +109,17 @@ export default function InstructorClassPage() {
   const activeFilterCount = Number(selectedClassId !== 'all');
 
   useEffect(() => {
-    if (selectedClassId && selectedClassId !== 'all') {
-      const classEvents = allEvents.filter(e => e.classDefinitionId === selectedClassId);
-      if (classEvents.length > 0) {
-        const sortedEvents = classEvents.sort(
-          (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-        );
-        setCurrentDate(new Date(sortedEvents[0].startTime));
-      }
-    }
-  }, [allEvents, selectedClassId]);
+    if (activeFilterCount === 0 || filteredEvents.length === 0) return;
+
+    const sortedEvents = [...filteredEvents].sort(
+      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    );
+    const nextDate = new Date(sortedEvents[0].startTime);
+
+    setCurrentDate(previousDate =>
+      previousDate.getTime() === nextDate.getTime() ? previousDate : nextDate
+    );
+  }, [activeFilterCount, filteredEvents]);
 
   useEffect(() => {
     if (!isCompactLayout) {
@@ -168,6 +169,11 @@ export default function InstructorClassPage() {
   const handleMonthClick = (monthIndex: number) => {
     setCurrentDate(new Date(currentDate.getFullYear(), monthIndex, 1));
     setViewMode('month');
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setCurrentDate(date);
+    setViewMode('day');
   };
 
   const handleEventSelect = (event: CalendarEvent) => {
@@ -290,6 +296,7 @@ export default function InstructorClassPage() {
                   onEventSelect={handleEventSelect}
                   selectedEvent={selectedEvent}
                   currentDate={currentDate}
+                  onDateSelect={handleDateSelect}
                 />
               )}
               {viewMode === 'day' && (
@@ -305,6 +312,7 @@ export default function InstructorClassPage() {
                   events={filteredEvents}
                   onEventSelect={handleEventSelect}
                   currentDate={currentDate}
+                  onDateSelect={handleDateSelect}
                 />
               )}
               {viewMode === 'year' && (
