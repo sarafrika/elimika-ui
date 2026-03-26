@@ -215,14 +215,14 @@ function AssessmentSheet({
   const [form, setForm] = useState<AssessmentFormValues>(() =>
     initial
       ? {
-          title: initial.title,
-          description: initial.description ?? '',
-          rubric_uuid: initial.rubric_uuid ?? '',
-          weight_percentage: initial.weight_percentage,
-          is_required: initial.is_required,
-          assessment_type: '',
-          is_major_assessment: initial.is_major_assessment,
-        }
+        title: initial.title,
+        description: initial.description ?? '',
+        rubric_uuid: initial.rubric_uuid ?? '',
+        weight_percentage: initial.weight_percentage,
+        is_required: initial.is_required,
+        assessment_type: '',
+        is_major_assessment: initial.is_major_assessment,
+      }
       : DEFAULT_FORM
   );
 
@@ -232,14 +232,14 @@ function AssessmentSheet({
     setForm(
       initial
         ? {
-            title: initial.title,
-            description: initial.description ?? '',
-            rubric_uuid: initial.rubric_uuid ?? '',
-            weight_percentage: initial.weight_percentage,
-            is_required: initial.is_required,
-            assessment_type: '',
-            is_major_assessment: initial.is_major_assessment,
-          }
+          title: initial.title,
+          description: initial.description ?? '',
+          rubric_uuid: initial.rubric_uuid ?? '',
+          weight_percentage: initial.weight_percentage,
+          is_required: initial.is_required,
+          assessment_type: '',
+          is_major_assessment: initial.is_major_assessment,
+        }
         : DEFAULT_FORM
     );
   }
@@ -272,7 +272,6 @@ function AssessmentSheet({
   function validate(): boolean {
     const newErrors: typeof errors = {};
     if (!form.title.trim()) newErrors.title = 'Title is required';
-    if (!form.assessment_type) newErrors.assessment_type = 'Assessment type is required';
     if (
       form.weight_percentage === '' ||
       Number(form.weight_percentage) < 0 ||
@@ -290,10 +289,10 @@ function AssessmentSheet({
     const body = {
       title: form.title.trim(),
       description: form.description.trim(),
-      rubric_uuid: form.rubric_uuid || undefined,
+      rubric_uuid: '',
       weight_percentage: Number(form.weight_percentage),
       is_required: form.is_required,
-      assessment_type: '',
+      assessment_type: 'course_template',
       is_major_assessment: form.is_major_assessment,
     };
 
@@ -306,6 +305,10 @@ function AssessmentSheet({
         {
           onSuccess: () => {
             toast.success('Assessment created successfully!');
+
+            setForm(DEFAULT_FORM);
+            setErrors({});
+
             onSuccess();
           },
           onError: (err: any) => toast.error(err?.message || 'Failed to create assessment'),
@@ -754,11 +757,10 @@ export const CourseAssessmentStructure = ({
                           {a.weight_percentage}% (0–{a.weight_percentage})
                         </span>
                         <span
-                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            a.is_required
-                              ? 'bg-success/10 text-success/70'
-                              : 'bg-muted-foreground/10 text-muted-foreground'
-                          }`}
+                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
+                            ? 'bg-success/10 text-success/70'
+                            : 'bg-muted-foreground/10 text-muted-foreground'
+                            }`}
                         >
                           {a.is_required ? 'Required' : 'Not required'}
                         </span>

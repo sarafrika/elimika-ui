@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   COLOR_PALETTE,
@@ -50,6 +50,7 @@ export default function InstructorClassPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFiltersSheetOpen, setIsFiltersSheetOpen] = useState(false);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
+  const lastAutoFocusKeyRef = useRef<string | null>(null);
 
   const instructor = useInstructor();
   const isCompactLayout = useCompactScheduleLayout();
@@ -107,19 +108,26 @@ export default function InstructorClassPage() {
   }, [classesWithCourseAndInstructor, searchQuery]);
 
   const activeFilterCount = Number(selectedClassId !== 'all');
+  const selectedFilterKey = selectedClassId === 'all' ? 'all' : selectedClassId;
 
   useEffect(() => {
-    if (activeFilterCount === 0 || filteredEvents.length === 0) return;
+    if (activeFilterCount === 0 || filteredEvents.length === 0) {
+      lastAutoFocusKeyRef.current = null;
+      return;
+    }
+
+    if (lastAutoFocusKeyRef.current === selectedFilterKey) return;
 
     const sortedEvents = [...filteredEvents].sort(
       (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     );
     const nextDate = new Date(sortedEvents[0].startTime);
+    lastAutoFocusKeyRef.current = selectedFilterKey;
 
     setCurrentDate(previousDate =>
       previousDate.getTime() === nextDate.getTime() ? previousDate : nextDate
     );
-  }, [activeFilterCount, filteredEvents]);
+  }, [activeFilterCount, filteredEvents, selectedFilterKey]);
 
   useEffect(() => {
     if (!isCompactLayout) {

@@ -95,6 +95,7 @@ function CertificationsSettingsContent() {
           await updateGuardianInfo.mutateAsync(
             {
               body: {
+                ...(studentInfo as any),
                 ...(data as any),
                 user_uuid: student?.user_uuid as string,
                 updated_by: student?.user_uuid,
@@ -106,6 +107,7 @@ function CertificationsSettingsContent() {
                 qc.invalidateQueries({
                   queryKey: getStudentByIdQueryKey({ path: { uuid: student?.uuid as string } }),
                 });
+                qc.invalidateQueries({ queryKey: ['profile'] });
                 toast.success(response?.message || 'Information updated successfully');
                 disableEditing();
               },

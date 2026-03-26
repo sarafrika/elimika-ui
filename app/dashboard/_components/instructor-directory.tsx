@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Slider } from '@/components/ui/slider';
 import { useQuery } from '@tanstack/react-query';
 import { DollarSign, Filter, MapPin, Search, Star, X } from 'lucide-react';
@@ -53,7 +54,7 @@ export const InstructorDirectory: React.FC<Props> = ({
   isLoading = false,
 }) => {
   const [selectedInstructor, setSelectedInstructor] = useState<any | null>(null);
-  const [showFilters, setShowFilters] = useState(true);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     searchQuery: '',
     courseType: [],
@@ -85,7 +86,17 @@ export const InstructorDirectory: React.FC<Props> = ({
     ];
   }, [newSkllll]);
 
-  const _allCourses = [...new Set(instructors?.flatMap(i => i.courses))] as any;
+  const activeFilterCount = [
+    filters.specializations.length > 0,
+    filters.mode.length > 0,
+    filters.instructorType !== 'all',
+    filters.gender !== 'all',
+    filters.minRating > 0,
+    filters.location.trim().length > 0,
+    filters.searchQuery.trim().length > 0,
+    filters.experience[0] !== 0 || filters.experience[1] !== 20,
+    filters.feeRange[0] !== 0 || filters.feeRange[1] !== 1000,
+  ].filter(Boolean).length;
 
   // Filter instructors based on criteria
   const filteredInstructors = instructors
@@ -223,6 +234,178 @@ export const InstructorDirectory: React.FC<Props> = ({
     }));
   };
 
+  const filterPanel = (
+    <div className='space-y-6 p-5 sm:p-6'>
+      <div className='flex items-center justify-between gap-3'>
+        <div className='space-y-1'>
+          <h3 className='flex items-center gap-2 text-base font-semibold'>
+            <Filter className='h-4 w-4' />
+            Filters
+          </h3>
+          <p className='text-muted-foreground text-sm'>
+            Narrow the directory without losing space for instructor cards.
+          </p>
+        </div>
+        <Button variant='ghost' size='sm' onClick={clearFilters} className='h-8 px-2'>
+          Clear all
+        </Button>
+      </div>
+
+      <div>
+        <Label>Search</Label>
+        <div className='relative mt-2'>
+          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
+          <Input
+            placeholder='Search instructors...'
+            value={filters.searchQuery}
+            onChange={e => setFilters({ ...filters, searchQuery: e.target.value })}
+            className='pl-10'
+          />
+        </div>
+      </div>
+
+      <div className='w-full'>
+        <Label>Instructor Type</Label>
+        <Select
+          value={filters.instructorType}
+          onValueChange={(value: any) => setFilters({ ...filters, instructorType: value })}
+        >
+          <SelectTrigger className='mt-2 w-full'>
+            <SelectValue placeholder='Select instructor type' />
+          </SelectTrigger>
+          <SelectContent className='w-full'>
+            <SelectItem value='all'>All</SelectItem>
+            <SelectItem value='individual'>Individual</SelectItem>
+            <SelectItem value='organization'>Organization</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Gender</Label>
+        <Select
+          value={filters.gender}
+          onValueChange={(value: any) => setFilters({ ...filters, gender: value })}
+        >
+          <SelectTrigger className='mt-2 w-full'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='all'>All</SelectItem>
+            <SelectItem value='male'>Male</SelectItem>
+            <SelectItem value='female'>Female</SelectItem>
+            <SelectItem value='other'>Other</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Minimum Rating</Label>
+        <div className='mt-2 flex items-center gap-2'>
+          <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
+          <Slider
+            value={[filters.minRating]}
+            onValueChange={value => setFilters({ ...filters, minRating: value[0] ?? 0 })}
+            max={5}
+            step={0.5}
+            className='flex-1'
+          />
+          <span className='w-8 text-sm'>{filters.minRating.toFixed(1)}</span>
+        </div>
+      </div>
+
+      <div>
+        <Label>Experience (years)</Label>
+        <div className='mt-2 flex items-center gap-2'>
+          <Slider
+            value={filters.experience}
+            onValueChange={value => setFilters({ ...filters, experience: value })}
+            max={20}
+            step={1}
+            className='my-2 flex-1'
+          />
+        </div>
+        <p className='text-muted-foreground mt-1 text-sm'>
+          {filters.experience[0]} - {filters.experience[1]} years
+        </p>
+      </div>
+
+      <div>
+        <Label>Specializations</Label>
+        <div className='mt-3 space-y-2'>
+          {allSpecializations.slice(0, 5).map((spec: any) => (
+            <div key={spec} className='flex items-center gap-2.5'>
+              <Checkbox
+                id={`spec-${spec}`}
+                checked={filters.specializations.includes(spec)}
+                onCheckedChange={() => toggleSpecialization(spec)}
+              />
+              <label htmlFor={`spec-${spec}`} className='cursor-pointer text-sm'>
+                {spec}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <Label>Hourly Rate (USD)</Label>
+        <div className='mt-2 flex items-center gap-2'>
+          <DollarSign className='text-muted-foreground h-4 w-4' />
+          <Slider
+            value={filters.feeRange}
+            onValueChange={value => setFilters({ ...filters, feeRange: value })}
+            max={1000}
+            step={10}
+            className='flex-1'
+          />
+        </div>
+        <p className='text-muted-foreground mt-1 text-sm'>
+          ${filters.feeRange[0]} - ${filters.feeRange[1]}
+        </p>
+      </div>
+
+      <div>
+        <Label>Mode</Label>
+        <div className='mt-2 space-y-2'>
+          <div className='flex items-center gap-2'>
+            <Checkbox
+              id='mode-online'
+              checked={filters.mode.includes('online')}
+              onCheckedChange={() => toggleMode('online')}
+            />
+            <label htmlFor='mode-online' className='cursor-pointer text-sm'>
+              Online
+            </label>
+          </div>
+          <div className='flex items-center gap-2'>
+            <Checkbox
+              id='mode-onsite'
+              checked={filters.mode.includes('onsite')}
+              onCheckedChange={() => toggleMode('onsite')}
+            />
+            <label htmlFor='mode-onsite' className='cursor-pointer text-sm'>
+              Onsite
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <Label>Location</Label>
+        <div className='relative mt-2'>
+          <MapPin className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
+          <Input
+            placeholder='City name...'
+            value={filters.location}
+            onChange={e => setFilters({ ...filters, location: e.target.value })}
+            className='pl-10'
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className='space-y-6'>
       {!selectedInstructor && (
@@ -257,247 +440,79 @@ export const InstructorDirectory: React.FC<Props> = ({
           onBookingComplete={onBookingComplete}
         />
       ) : (
-        <div className='flex gap-6'>
-          {showFilters && (
-            <div className='w-60 flex-shrink-0 space-y-4 xl:w-80'>
-              <Card className='border-border/60 sticky top-6 space-y-6 rounded-[32px] p-4 shadow-sm'>
-                <div className='flex items-center justify-between'>
-                  <h3 onClick={() => {}} className='flex items-center gap-2'>
-                    <Filter className='h-4 w-4' />
-                    Filters
-                  </h3>
-                  <Button variant='ghost' size='sm' onClick={clearFilters} className='h-8 px-2'>
-                    Clear All
-                  </Button>
-                </div>
-
-                {/* Search */}
-                <div>
-                  <Label>Search</Label>
-                  <div className='relative mt-2'>
-                    <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                    <Input
-                      placeholder='Search instructors...'
-                      value={filters.searchQuery}
-                      onChange={e => setFilters({ ...filters, searchQuery: e.target.value })}
-                      className='pl-10'
-                    />
-                  </div>
-                </div>
-
-                {/* Instructor Type */}
-                <div className='w-full'>
-                  <Label>Instructor Type</Label>
-                  <Select
-                    value={filters.instructorType}
-                    onValueChange={(value: any) =>
-                      setFilters({ ...filters, instructorType: value })
-                    }
-                  >
-                    <SelectTrigger className='mt-2 w-full'>
-                      <SelectValue placeholder='Select instructor type' />
-                    </SelectTrigger>
-                    <SelectContent className='w-full'>
-                      <SelectItem value='all'>All</SelectItem>
-                      <SelectItem value='individual'>Individual</SelectItem>
-                      <SelectItem value='organization'>Organization</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Gender */}
-                <div>
-                  <Label>Gender</Label>
-                  <Select
-                    value={filters.gender}
-                    onValueChange={(value: any) => setFilters({ ...filters, gender: value })}
-                  >
-                    <SelectTrigger className='mt-2 w-full'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All</SelectItem>
-                      <SelectItem value='male'>Male</SelectItem>
-                      <SelectItem value='female'>Female</SelectItem>
-                      <SelectItem value='other'>Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Minimum Rating */}
-                <div>
-                  <Label>Minimum Rating</Label>
-                  <div className='mt-2 flex items-center gap-2'>
-                    <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
-                    <Slider
-                      value={[filters.minRating]}
-                      onValueChange={
-                        _value => setFilters({ ...filters })
-                        // setFilters({ ...filters, minRating: value[0] })
-                      }
-                      max={5}
-                      step={0.5}
-                      className='flex-1'
-                    />
-                    <span className='w-8 text-sm'>{filters.minRating.toFixed(1)}</span>
-                  </div>
-                </div>
-
-                {/* Experience */}
-                <div>
-                  <Label>Experience (years)</Label>
-                  <div className='mt-2 flex items-center gap-2'>
-                    <Slider
-                      value={filters.experience}
-                      onValueChange={value => setFilters({ ...filters, experience: value })}
-                      max={20}
-                      step={1}
-                      className='my-2 flex-1'
-                    />
-                  </div>
-                  <p className='text-muted-foreground mt-1 text-sm'>
-                    {filters.experience[0]} - {filters.experience[1]} years
-                  </p>
-                </div>
-
-                {/* Specializations */}
-                <div>
-                  <Label>Specializations</Label>
-                  <div className='mt-3 space-y-2'>
-                    {allSpecializations.slice(0, 5).map((spec: any) => (
-                      <div key={spec} className='flex items-center gap-2.5'>
-                        <Checkbox
-                          id={`spec-${spec}`}
-                          checked={filters.specializations.includes(spec)}
-                          onCheckedChange={() => toggleSpecialization(spec)}
-                        />
-                        <label htmlFor={`spec-${spec}`} className='cursor-pointer text-sm'>
-                          {spec}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Fee Range */}
-                <div>
-                  <Label>Hourly Rate (USD)</Label>
-                  <div className='mt-2 flex items-center gap-2'>
-                    <DollarSign className='text-muted-foreground h-4 w-4' />
-                    <Slider
-                      value={filters.feeRange}
-                      onValueChange={value => setFilters({ ...filters, feeRange: value })}
-                      max={1000}
-                      step={10}
-                      className='flex-1'
-                    />
-                  </div>
-                  <p className='text-muted-foreground mt-1 text-sm'>
-                    ${filters.feeRange[0]} - ${filters.feeRange[1]}
-                  </p>
-                </div>
-
-                {/* Mode */}
-                <div>
-                  <Label>Mode</Label>
-                  <div className='mt-2 space-y-2'>
-                    <div className='flex items-center gap-2'>
-                      <Checkbox
-                        id='mode-online'
-                        checked={filters.mode.includes('online')}
-                        onCheckedChange={() => toggleMode('online')}
-                      />
-                      <label htmlFor='mode-online' className='cursor-pointer text-sm'>
-                        Online
-                      </label>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <Checkbox
-                        id='mode-onsite'
-                        checked={filters.mode.includes('onsite')}
-                        onCheckedChange={() => toggleMode('onsite')}
-                      />
-                      <label htmlFor='mode-onsite' className='cursor-pointer text-sm'>
-                        Onsite
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div className='pb-20'>
-                  <Label>Location</Label>
-                  <div className='relative mt-2'>
-                    <MapPin className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                    <Input
-                      placeholder='City name...'
-                      value={filters.location}
-                      onChange={e => setFilters({ ...filters, location: e.target.value })}
-                      className='pl-10'
-                    />
-                  </div>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          <div className='flex-1'>
-            <div className='mb-6 flex items-center justify-between gap-4'>
-              <div>
+        <>
+          <div className='min-w-0'>
+            <div className='mb-6 flex flex-col gap-4 rounded-[32px] border border-border/60 bg-card/70 p-4 shadow-sm sm:p-5 lg:flex-row lg:items-start lg:justify-between'>
+              <div className='space-y-2'>
                 <p className='text-muted-foreground text-sm'>
                   Showing {filteredInstructors?.length} of {instructors?.length} instructors
                 </p>
+                <div className='flex flex-wrap gap-2 text-sm'>
+                  <div className='rounded-full border border-border px-3 py-1.5'>
+                    {activeFilterCount} active filter{activeFilterCount === 1 ? '' : 's'}
+                  </div>
+                  <div className='rounded-full border border-border px-3 py-1.5'>
+                    {allSpecializations.length} available specialization
+                    {allSpecializations.length === 1 ? '' : 's'}
+                  </div>
+                </div>
               </div>
-              <Button
-                variant='outline'
-                onClick={() => setShowFilters(!showFilters)}
-                className='gap-2'
-              >
-                <Filter className='h-4 w-4' />
-                {showFilters ? 'Hide' : 'Show'} Filters
-              </Button>
+              <div className='flex flex-wrap items-center gap-3'>
+                <Button onClick={() => setIsFiltersOpen(true)} className='gap-2'>
+                  <Filter className='h-4 w-4' />
+                  Open filters
+                  <span className='rounded-full bg-background/90 px-2 py-0.5 text-xs text-foreground'>
+                    {activeFilterCount}
+                  </span>
+                </Button>
+                {activeFilterCount > 0 && (
+                  <Button onClick={clearFilters} variant='ghost' className='px-2'>
+                    Reset filters
+                  </Button>
+                )}
+              </div>
             </div>
 
             {(filters.specializations.length > 0 ||
               filters.mode.length > 0 ||
               filters.instructorType !== 'all' ||
               filters.minRating > 0) && (
-              <div className='mb-6 flex flex-wrap gap-2'>
-                {filters.specializations.map(spec => (
-                  <Badge key={spec} variant='secondary' className='gap-1'>
-                    {spec}
-                    <X
-                      className='h-3 w-3 cursor-pointer'
-                      onClick={() => toggleSpecialization(spec)}
-                    />
-                  </Badge>
-                ))}
-                {filters.mode.map(mode => (
-                  <Badge key={mode} variant='secondary' className='gap-1'>
-                    {mode}
-                    <X className='h-3 w-3 cursor-pointer' onClick={() => toggleMode(mode)} />
-                  </Badge>
-                ))}
-                {filters.instructorType !== 'all' && (
-                  <Badge variant='secondary' className='gap-1'>
-                    {filters.instructorType}
-                    <X
-                      className='h-3 w-3 cursor-pointer'
-                      onClick={() => setFilters({ ...filters, instructorType: 'all' })}
-                    />
-                  </Badge>
-                )}
-                {filters.minRating > 0 && (
-                  <Badge variant='secondary' className='gap-1'>
-                    {filters.minRating}+ rating
-                    <X
-                      className='h-3 w-3 cursor-pointer'
-                      onClick={() => setFilters({ ...filters, minRating: 0 })}
-                    />
-                  </Badge>
-                )}
-              </div>
-            )}
+                <div className='mb-6 flex flex-wrap gap-2'>
+                  {filters.specializations.map(spec => (
+                    <Badge key={spec} variant='secondary' className='gap-1'>
+                      {spec}
+                      <X
+                        className='h-3 w-3 cursor-pointer'
+                        onClick={() => toggleSpecialization(spec)}
+                      />
+                    </Badge>
+                  ))}
+                  {filters.mode.map(mode => (
+                    <Badge key={mode} variant='secondary' className='gap-1'>
+                      {mode}
+                      <X className='h-3 w-3 cursor-pointer' onClick={() => toggleMode(mode)} />
+                    </Badge>
+                  ))}
+                  {filters.instructorType !== 'all' && (
+                    <Badge variant='secondary' className='gap-1'>
+                      {filters.instructorType}
+                      <X
+                        className='h-3 w-3 cursor-pointer'
+                        onClick={() => setFilters({ ...filters, instructorType: 'all' })}
+                      />
+                    </Badge>
+                  )}
+                  {filters.minRating > 0 && (
+                    <Badge variant='secondary' className='gap-1'>
+                      {filters.minRating}+ rating
+                      <X
+                        className='h-3 w-3 cursor-pointer'
+                        onClick={() => setFilters({ ...filters, minRating: 0 })}
+                      />
+                    </Badge>
+                  )}
+                </div>
+              )}
 
             {isLoading ? (
               <Card className='rounded-[32px] p-12 text-center shadow-sm'>
@@ -519,9 +534,9 @@ export const InstructorDirectory: React.FC<Props> = ({
                 </Button>
               </Card>
             ) : (
-              <div className='grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:gap-5 2xl:grid-cols-3'>
                 {filteredInstructors?.map((instructor: any, index: any) => (
-                  <div key={index}>
+                  <div key={index} className='min-w-0'>
                     <InstructorCard
                       key={instructor?.uuid}
                       instructor={instructor}
@@ -533,7 +548,19 @@ export const InstructorDirectory: React.FC<Props> = ({
               </div>
             )}
           </div>
-        </div>
+
+          <Sheet open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+            <SheetContent side='right' className='w-[100vw] max-w-md overflow-y-auto p-0 pb-6'>
+              <SheetHeader className='border-border border-b px-5 py-4 text-left sm:px-6'>
+                <SheetTitle>Filter instructors</SheetTitle>
+                <SheetDescription>
+                  Refine the directory while keeping the card grid fully visible.
+                </SheetDescription>
+              </SheetHeader>
+              {filterPanel}
+            </SheetContent>
+          </Sheet>
+        </>
       )}
     </div>
   );

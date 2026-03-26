@@ -1664,6 +1664,6 @@ export const instructorTabs: TabDefinition[] = [
   { id: 'certs', label: 'Certificates', component: InstructorCertificatesTab },
   { id: 'career', label: 'Career Pathways', component: InstructorCareerTab },
   { id: 'rates', label: 'Rate Card', component: InstructorRatesTab },
-  { id: 'gallery', label: 'Gallery', component: InstructorGalleryTab },
-  { id: 'friends', label: 'Connections', component: InstructorFriendsTab },
+  // { id: 'gallery', label: 'Gallery', component: InstructorGalleryTab },
+  // { id: 'friends', label: 'Connections', component: InstructorFriendsTab },
 ];

@@ -9,12 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudent } from '@/context/student-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import {
+  getEnrollmentsForClassOptions,
   getInstructorCalendarOptions,
   getInstructorReviewsOptions,
   listCatalogItemsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   Award,
   BookOpen,
@@ -120,6 +121,58 @@ export const InstructorProfileComponent: React.FC<Props> = ({
     course => course.course_uuid === courseId
   );
 
+  const classEnrollmentQueries = useQueries({
+    queries: filteredClasses.map(classItem => ({
+      ...getEnrollmentsForClassOptions({
+        path: { uuid: classItem.uuid },
+      }),
+      queryKey: ['student-instructor-profile-class-enrollments', classItem.uuid],
+      enabled: !!classItem.uuid,
+    })),
+  });
+
+  const classEnrollmentCounts = new Map(
+    filteredClasses.map((classItem, index) => {
+      const enrollments = classEnrollmentQueries[index]?.data?.data ?? [];
+      const uniqueStudentIds = new Set(
+        enrollments.map((enrollment: any) => enrollment?.student_uuid ?? enrollment?.uuid).filter(Boolean)
+      );
+
+      return [classItem.uuid, uniqueStudentIds.size || enrollments.length];
+    })
+  );
+
+  const getClassEnrollmentMeta = (classItem: any) => {
+    const capacity = Number(classItem?.max_participants ?? 0);
+
+    const uniqueEnrolledCount = Array.isArray(classItem?.enrollments)
+      ? new Set(
+        classItem.enrollments
+          .map((enrollment: any) => enrollment?.student_uuid ?? enrollment?.uuid)
+          .filter(Boolean)
+      ).size
+      : 0;
+
+    const queriedEnrolledCount = classItem?.uuid
+      ? Number(classEnrollmentCounts.get(classItem.uuid) ?? 0)
+      : 0;
+
+    const enrolledCount = Number(
+      queriedEnrolledCount ||
+      classItem?.current_enrollments ||
+      (uniqueEnrolledCount > 0 ? uniqueEnrolledCount : classItem?.enrollments?.length ?? 0)
+    );
+
+    const enrollmentPercentage =
+      capacity > 0 ? Math.min(100, Math.round((enrolledCount / capacity) * 100)) : 0;
+
+    return {
+      capacity,
+      enrolledCount,
+      enrollmentPercentage,
+    };
+  };
+
   const rateEntries = [
     {
       key: 'private_online_rate',
@@ -217,31 +270,29 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 <h3 className='mt-1 text-xl font-semibold'>Know who you are booking</h3>
               </div>
 
-              <div className='space-y-3 text-sm'>
-                <div className='border-border/60 rounded-2xl border p-4'>
-                  <div className='font-medium'>Course alignment</div>
-                  <p className='text-muted-foreground mt-1'>
+              <ul className='list-disc space-y-3 pl-5 text-sm'>
+                <li>
+                  <span className='font-medium'>Course alignment: </span>
+                  <span className='text-muted-foreground'>
                     {matchedCourse?.course_name ??
                       'This instructor is approved to teach the selected course.'}
-                  </p>
-                </div>
+                  </span>
+                </li>
 
-                <div className='border-border/60 rounded-2xl border p-4'>
-                  <div className='font-medium'>Session formats</div>
-                  <p className='text-muted-foreground mt-1'>
-                    Use the scheduler below to request an online or in-person slot based on the rate
-                    you choose.
-                  </p>
-                </div>
+                <li>
+                  <span className='font-medium'>Session formats: </span>
+                  <span className='text-muted-foreground'>
+                    Use the scheduler below to request an online or in-person slot based on the rate you choose.
+                  </span>
+                </li>
 
-                <div className='border-border/60 rounded-2xl border p-4'>
-                  <div className='font-medium'>Booking flow</div>
-                  <p className='text-muted-foreground mt-1'>
-                    Pick a rate, add a short purpose, then choose a slot from the timetable to
-                    create your booking request.
-                  </p>
-                </div>
-              </div>
+                <li>
+                  <span className='font-medium'>Booking flow: </span>
+                  <span className='text-muted-foreground'>
+                    Pick a rate, add a short purpose, then choose a slot from the timetable to create your booking request.
+                  </span>
+                </li>
+              </ul>
 
               <Button
                 onClick={() => setShowBooking(current => !current)}
@@ -254,36 +305,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({
             </div>
           </Card>
         </div>
-
-        {rateEntries.length > 0 && (
-          <Card className='border-border/60 rounded-[32px] p-6 shadow-sm'>
-            <div className='mb-4 flex items-center justify-between gap-4'>
-              <div>
-                <h3 className='text-lg font-semibold'>Rate overview</h3>
-                <p className='text-muted-foreground text-sm'>
-                  Understand the available session types before opening the booking scheduler.
-                </p>
-              </div>
-              <Badge variant='secondary'>{rateEntries.length} rate options</Badge>
-            </div>
-
-            <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-              {rateEntries.map(entry => (
-                <div
-                  key={entry.key}
-                  className='border-border/60 bg-muted/30 rounded-3xl border p-4'
-                >
-                  <div className='font-medium'>{entry.label}</div>
-                  <p className='text-muted-foreground mt-1 text-sm'>{entry.description}</p>
-                  <div className='mt-4 text-xl font-semibold'>
-                    {matchedCourse?.rate_card?.currency ?? 'KES'} {entry.amount}
-                    <span className='text-muted-foreground text-sm font-normal'> / hour</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
 
         {/* Booking Form */}
         {showBooking && (
@@ -379,12 +400,12 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                   <h3>Why students book this instructor</h3>
                 </div>
                 <div className='grid gap-4 md:grid-cols-3'>
-                  <div className='border-border/60 rounded-2xl border p-4'>
+                  {instructor?.total_experience_years > 0 && <div className='border-border/60 rounded-2xl border p-4'>
                     <div className='font-medium'>Experience depth</div>
                     <p className='text-muted-foreground mt-1 text-sm'>
                       {instructor?.total_experience_years ?? 0} years of experience in the field.
                     </p>
-                  </div>
+                  </div>}
                   <div className='border-border/60 rounded-2xl border p-4'>
                     <div className='font-medium'>Course relevance</div>
                     <p className='text-muted-foreground mt-1 text-sm'>
@@ -416,24 +437,33 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
                 {filteredClasses?.length > 0 ? (
                   <div className='divide-border divide-y rounded-md'>
-                    {filteredClasses.map(course => (
-                      <div
-                        key={course?.uuid}
-                        className='hover:bg-secondary dark:hover:bg-muted flex items-start gap-3 p-4 transition'
-                      >
-                        <CheckCircle className='mt-1 h-5 w-5 text-green-600' />
-                        <div className='flex flex-col'>
-                          <div>
-                            <p className='font-medium'>{course?.title}</p>
-                            <p className='text-muted-foreground text-sm'>0% enrollment</p>
-                          </div>
-                          <div className='text-muted-foreground mt-1 flex items-start gap-2 text-sm'>
-                            <BookOpen className='text-muted-foreground h-4 w-4' />
-                            <span>{course?.course?.name}</span>
+                    {filteredClasses.map(course => {
+                      const { capacity, enrolledCount, enrollmentPercentage } =
+                        getClassEnrollmentMeta(course);
+
+                      return (
+                        <div
+                          key={course?.uuid}
+                          className='hover:bg-secondary dark:hover:bg-muted flex items-start gap-3 p-4 transition'
+                        >
+                          <CheckCircle className='mt-1 h-5 w-5 text-green-600' />
+                          <div className='flex flex-col'>
+                            <div>
+                              <p className='font-medium'>{course?.title}</p>
+                              <p className='text-muted-foreground text-sm'>
+                                {capacity > 0
+                                  ? `${enrollmentPercentage}% enrollment • ${enrolledCount}/${capacity} seats filled`
+                                  : `${enrolledCount} enrolled`}
+                              </p>
+                            </div>
+                            <div className='text-muted-foreground mt-1 flex items-start gap-2 text-sm'>
+                              <BookOpen className='text-muted-foreground h-4 w-4' />
+                              <span>{course?.course?.name}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
@@ -494,56 +524,35 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
             {/* Rates Tab */}
             <TabsContent value='rates' className='space-y-4'>
-              <Card className='p-6'>
-                <div>
-                  <CardTitle className='mb-4'>Rate Card</CardTitle>
-                </div>
-                <div className='space-y-4'>
-                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
+              {rateEntries.length > 0 && (
+                <Card className='border-border/60 rounded-[32px] p-6 shadow-sm'>
+                  <div className='mb-4 flex items-center justify-between gap-4'>
                     <div>
-                      <p>Group In Person Rate</p>
-                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
+                      <h3 className='text-lg font-semibold'>Rate overview</h3>
+                      <p className='text-muted-foreground text-sm'>
+                        Understand the available session types before opening the booking scheduler.
+                      </p>
                     </div>
-                    <p className='text-2xl'>
-                      {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.group_inperson_rate}
-                    </p>
+                    <Badge variant='secondary'>{rateEntries.length} rate options</Badge>
                   </div>
 
-                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
-                    <div>
-                      <p>Group Online Rate</p>
-                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
-                    </div>
-                    <p className='text-2xl'>
-                      {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.group_online_rate}
-                    </p>
+                  <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+                    {rateEntries.map(entry => (
+                      <div
+                        key={entry.key}
+                        className='border-border/60 bg-muted/30 rounded-3xl border p-4'
+                      >
+                        <div className='font-medium'>{entry.label}</div>
+                        <p className='text-muted-foreground mt-1 text-sm'>{entry.description}</p>
+                        <div className='mt-4 text-xl font-semibold'>
+                          {matchedCourse?.rate_card?.currency ?? 'KES'} {entry.amount}
+                          <span className='text-muted-foreground text-sm font-normal'> / hour</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-
-                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
-                    <div>
-                      <p>Private In Person Rate</p>
-                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
-                    </div>
-                    <p className='text-2xl'>
-                      {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.private_inperson_rate}
-                    </p>
-                  </div>
-
-                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
-                    <div>
-                      <p>Private Online Rate</p>
-                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
-                    </div>
-                    <p className='text-2xl'>
-                      {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.private_online_rate}
-                    </p>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              )}
 
               <Card className='border-primary/30 bg-primary/10 mb-6 p-6'>
                 <div className='flex gap-3'>
