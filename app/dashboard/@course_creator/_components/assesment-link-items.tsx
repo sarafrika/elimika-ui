@@ -415,37 +415,45 @@ export function LinkItemsModal({
 
   async function handleConfirm() {
     if (selected.size === 0) return;
+
     setIsSaving(true);
 
     const tasks = availableTasks.filter(t => selected.has(t.uuid));
 
-    const results = await Promise.allSettled(
-      tasks.map(
-        (task, i) =>
-          new Promise<void>((resolve, reject) => {
-            createLineItemMut.mutate(
-              {
-                path: { courseUuid, assessmentUuid },
-                body: buildLineItemBody(task, assessmentUuid, i) as any,
-              },
-              { onSuccess: () => resolve(), onError: err => reject(err) }
-            );
+    try {
+      const results = await Promise.allSettled(
+        tasks.map((task, i) =>
+          createLineItemMut.mutateAsync({
+            path: { courseUuid, assessmentUuid },
+            body: buildLineItemBody(task, assessmentUuid, i) as any,
           })
-      )
-    );
+        )
+      );
 
-    const failed = results.filter(r => r.status === 'rejected').length;
-    const succeeded = results.length - failed;
+      const failed = results.filter(r => r.status === 'rejected').length;
+      const succeeded = results.length - failed;
 
-    if (succeeded > 0)
-      toast.success(`${succeeded} item${succeeded > 1 ? 's' : ''} linked successfully.`);
-    if (failed > 0) toast.error(`${failed} item${failed > 1 ? 's' : ''} failed to link.`);
+      if (succeeded > 0) {
+        toast.success(`${succeeded} item${succeeded > 1 ? 's' : ''} linked successfully.`);
+      }
 
-    invalidateLineItems();
-    setIsSaving(false);
-    setSelected(new Set());
-    onSuccess?.();
-    if (failed === 0) onClose();
+      if (failed > 0) {
+        toast.error(`${failed} item${failed > 1 ? 's' : ''} failed to link.`);
+      }
+
+      invalidateLineItems();
+
+      setSelected(new Set());
+
+      if (failed === 0) {
+        onSuccess?.();
+        onClose();
+      }
+    } catch (err) {
+      toast.error('Something went wrong while linking items.');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function handleClose() {
