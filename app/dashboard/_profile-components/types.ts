@@ -1,3 +1,4 @@
+import type { UserProfileType } from '@/lib/types';
 import React from 'react';
 
 export type UserDomain = 'instructor' | 'student' | 'admin' | 'course_creator' | 'organization';
@@ -23,6 +24,7 @@ export interface SharedUserProfile {
   gender?: string;
   active?: boolean;
   username?: string;
+  user_no?: string;
   student_profile?: any;
 }
 
@@ -42,6 +44,8 @@ export interface TabDefinition {
 export interface ProfilePageProps {
   tabs: TabDefinition[];
   profile: SharedUserProfile;
+  domain?: UserDomain;
+  profileSource?: Partial<UserProfileType> | null;
   isLoading?: boolean;
   headerBadge?: React.ReactNode;
   defaultTab?: string;

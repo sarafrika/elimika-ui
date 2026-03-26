@@ -283,6 +283,7 @@ export default function PublicUserProfilePage() {
     <ProfilePage
       tabs={tabs}
       profile={profile}
+      domain={domain}
       headerBadge={<DomainBadge domain={domain} profile={profile} />}
       isPublic={true}
     />

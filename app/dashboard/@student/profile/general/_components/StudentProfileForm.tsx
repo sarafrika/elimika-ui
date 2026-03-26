@@ -24,13 +24,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
 import { tanstackClient } from '@/services/api/tanstack-client';
-import { updateUserMutation } from '@/services/client/@tanstack/react-query.gen';
+import {
+  updateStudentMutation,
+  updateUserMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -50,6 +54,7 @@ const StudentProfileSchema = z.object({
   dob: z.any(),
   username: z.string(),
   gender: z.any(),
+  bio: z.string().optional(),
 });
 
 type StudentProfileType = z.infer<typeof StudentProfileSchema>;
@@ -84,27 +89,28 @@ export default function StudentProfileGeneralForm() {
       dob: user?.dob as any,
       username: user?.username || '',
       gender: user?.gender as any,
+      bio: user?.student?.bio || '',
     },
   });
 
   const userMutation = useMutation(updateUserMutation());
+  const studentMutation = useMutation(updateStudentMutation());
   const pictureMutation = tanstackClient.useMutation(
     'post',
     '/api/v1/users/{userUuid}/profile-image'
   );
 
-  const { errors } = useMultiMutations([userMutation]);
+  const { errors } = useMultiMutations([userMutation, studentMutation]);
 
-  // ✅ Proper error setting on form fields
   if (errors && errors.length > 0) {
     errors.forEach((error: any) => {
       if (error?.error && typeof error.error === 'object') {
         for (const key in error.error) {
           const value = error.error[key];
-          if (key in user!) {
-            form.setError(`user.${key}` as any, {
+          if (key in form.getValues()) {
+            form.setError(key as keyof StudentProfileType, {
               type: 'manual',
-              message: value,
+              message: String(value),
             });
           }
         }
@@ -157,25 +163,39 @@ export default function StudentProfileGeneralForm() {
       cancelLabel: 'Keep editing',
       onConfirm: async () => {
         try {
-          await userMutation.mutateAsync(
-            {
+          const [userResponse] = await Promise.all([
+            userMutation.mutateAsync({
               body: {
-                ...data,
+                first_name: data.first_name,
+                middle_name: data.middle_name,
+                last_name: data.last_name,
+                email: data.email,
+                phone_number: data.phone_number,
+                profile_image_url: data.profile_image_url,
                 dob: data.dob ?? '',
+                username: data.username,
+                gender: data.gender,
                 active: user?.active as boolean,
-              },
+              } as any,
               path: { uuid: user?.uuid as string },
-            },
-            {
-              onSuccess: data => {
-                qc.invalidateQueries({ queryKey: ['profile'] });
-                toast.success(data?.message);
-                disableEditing();
-              },
-            }
-          );
+            }),
+            user?.student?.uuid
+              ? studentMutation.mutateAsync({
+                  body: {
+                    ...(user.student as any),
+                    bio: data.bio?.trim() || undefined,
+                    user_uuid: user.student.user_uuid,
+                  },
+                  path: { uuid: user.student.uuid },
+                })
+              : Promise.resolve(null),
+          ]);
+
+          qc.invalidateQueries({ queryKey: ['profile'] });
+          toast.success(userResponse?.message || 'Profile updated successfully');
+          disableEditing();
         } catch (_error) {
-          // handled by toast inside mutation
+          // handled by mutation state + alert surface
         }
       },
     });
@@ -443,6 +463,42 @@ export default function StudentProfileGeneralForm() {
           </ProfileFormSection>
 
           <ProfileFormSection
+            title='Learner bio'
+            description='Share a short introduction so instructors better understand the learner.'
+            viewContent={
+              <div className='space-y-2'>
+                <h4 className='text-muted-foreground text-sm font-medium'>About the learner</h4>
+                {user?.student?.bio ? (
+                  <p className='text-foreground text-sm leading-6 whitespace-pre-line'>
+                    {user.student.bio}
+                  </p>
+                ) : (
+                  <p className='text-muted-foreground text-sm italic'>No bio provided</p>
+                )}
+              </div>
+            }
+          >
+            <FormField
+              control={form.control}
+              name='bio'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bio</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder='Tell instructors a bit about the learner, interests, goals, or support needs.'
+                      className='min-h-32 resize-y'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </ProfileFormSection>
+
+          <ProfileFormSection
             title='Contact & access'
             description='Details we use to reach you and secure your account.'
             viewContent={
@@ -457,10 +513,17 @@ export default function StudentProfileGeneralForm() {
                 type='submit'
                 className='min-w-36'
                 disabled={
-                  !isEditing || userMutation.isPending || pictureMutation.isPending || isConfirming
+                  !isEditing ||
+                  userMutation.isPending ||
+                  studentMutation.isPending ||
+                  pictureMutation.isPending ||
+                  isConfirming
                 }
               >
-                {userMutation.isPending || pictureMutation.isPending || isConfirming ? (
+                {userMutation.isPending ||
+                studentMutation.isPending ||
+                pictureMutation.isPending ||
+                isConfirming ? (
                   <span className='flex items-center gap-2'>
                     <Spinner className='h-4 w-4' />
                     Saving…

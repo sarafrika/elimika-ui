@@ -1655,6 +1655,6 @@ export const creatorTabs: TabDefinition[] = [
   { id: 'skills', label: 'Skills Card', component: CreatorSkillsTab },
   { id: 'certs', label: 'Certificates', component: CreatorCertificatesTab },
   { id: 'career', label: 'Career Pathways', component: CreatorCareerTab },
-  { id: 'gallery', label: 'Gallery', component: CreatorGalleryTab },
-  { id: 'friends', label: 'Connections', component: CreatorFriendsTab },
+  // { id: 'gallery', label: 'Gallery', component: CreatorGalleryTab },
+  // { id: 'friends', label: 'Connections', component: CreatorFriendsTab },
 ];
