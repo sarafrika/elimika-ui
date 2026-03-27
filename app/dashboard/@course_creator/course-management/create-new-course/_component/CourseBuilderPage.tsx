@@ -24,6 +24,7 @@ import {
   CheckCheck,
   CheckCircle,
   File,
+  FileCheck,
   GraduationCap,
   Palette,
   SlidersHorizontal,
@@ -35,6 +36,7 @@ import { toast } from 'sonner';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
+import CourseGradingSection from '../../../_components/course-grading-section';
 import { CoursePricingForm } from '../../../_components/course-pricing-form';
 import CriteriaCreationForm from '../../../_components/criteria-creation-form';
 import type { ICourse } from '../../../_components/instructor-type';
@@ -185,7 +187,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   if (creatorLoading) {
@@ -239,10 +241,12 @@ export default function CourseBuilderPage() {
             <StepperTrigger step={3} title='Assessment Tasks' icon={SlidersHorizontal} />
 
             <StepperTrigger step={4} title='Assessment Structure' icon={CheckCheck} />
+            <StepperTrigger step={5} title='Course Grading' icon={FileCheck} />
+
 
             {/* <StepperTrigger step={5} title='Rules' icon={ClipboardList} /> */}
-            <StepperTrigger step={5} title='Branding' icon={Palette} />
-            <StepperTrigger step={6} title='Pricing' icon={BadgeDollarSign} />
+            <StepperTrigger step={6} title='Branding' icon={Palette} />
+            <StepperTrigger step={7} title='Pricing' icon={BadgeDollarSign} />
             {/* <StepperTrigger step={7} title='Compliance' icon={BadgeCheck} /> */}
 
             {/* <StepperTrigger step={7} title='Review' icon={Eye} /> */}
@@ -328,10 +332,21 @@ export default function CourseBuilderPage() {
               title='Assessment Structure'
               description='Create assessment rubrics to evaluate student performance'
               showNavigation
-              nextButtonText='Continue to Branding'
+              nextButtonText='Continue to Course Grading'
               previousButtonText='Back to Assessment Tasks'
             >
               <CriteriaCreationForm course={course} />
+            </StepperContent>
+
+            <StepperContent
+              step={5}
+              title='Course Grading'
+              description='Set the grading criteria and structure used to evaluate learner progress and performance..'
+              showNavigation
+              nextButtonText='Continue to Branding'
+              previousButtonText='Back to Assesssment Structure'
+            >
+              <CourseGradingSection course={course} />
             </StepperContent>
 
             {/* <StepperContent
@@ -355,7 +370,7 @@ export default function CourseBuilderPage() {
             </StepperContent> */}
 
             <StepperContent
-              step={5}
+              step={6}
               title='Branding'
               description='Add visual elements to make your course more appealing'
               showNavigation
@@ -376,7 +391,7 @@ export default function CourseBuilderPage() {
             </StepperContent>
 
             <StepperContent
-              step={6}
+              step={7}
               title='Pricing'
               description='Set the price, discounts, and access options for your course.'
               showNavigation
@@ -397,7 +412,7 @@ export default function CourseBuilderPage() {
             </StepperContent>
 
             {/* <StepperContent
-              step={7}
+              step={8}
               title='Course Compliance & Q?A'
               description='Confirm that all required compliance and quality checks have been completed.'
               // showNavigation
@@ -417,7 +432,7 @@ export default function CourseBuilderPage() {
             </StepperContent> */}
 
             <StepperContent
-              step={8}
+              step={9}
               title='Review Course'
               description='Review your course before publishing'
               showNavigation

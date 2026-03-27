@@ -135,7 +135,7 @@ export default function StatisticsContent() {
     <div className='flex flex-col gap-6'>
       <div className='space-y-4'>
         <div className='border-border/60 bg-card rounded-3xl border p-6 shadow-sm'>
-          <div className='flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
+          <div className='flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between'>
             <div className='space-y-3'>
               <Badge variant='outline' className='w-fit tracking-[0.3em] uppercase'>
                 System Administrator
@@ -172,7 +172,7 @@ export default function StatisticsContent() {
                 )}
               </div>
             </div>
-            <div className='grid min-w-[260px] flex-1 grid-cols-2 gap-3'>
+            <div className='grid w-full gap-3 sm:grid-cols-2 xl:max-w-[320px]'>
               {missionStats.map(stat => (
                 <div
                   key={stat.label}
@@ -222,7 +222,7 @@ export default function StatisticsContent() {
         </div>
       </div>
 
-      <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]'>
+      <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]'>
         <div className='space-y-6'>
           <KPICards statistics={statistics} isLoading={isLoading} />
           <AnalyticsCharts statistics={statistics} isLoading={isLoading} />

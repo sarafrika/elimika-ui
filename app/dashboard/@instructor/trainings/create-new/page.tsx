@@ -20,6 +20,12 @@ import { ClassInformationSection } from './ClassInfoSection';
 import { NotificationSection } from './NotificationSection';
 import { PreviewSection } from './PreviewSection';
 import { ScheduleSection } from './ScheduleSection';
+import {
+  buildUtcIsoDateTime,
+  generateScheduleInstances,
+  ScheduleMode,
+  ScheduledSessionInstance,
+} from './schedule-utils';
 
 // Types
 export interface ClassDetails {
@@ -179,6 +185,8 @@ const ClassBuilderPage = () => {
   const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
+  const [scheduleMode, setScheduleMode] = useState<ScheduleMode>('class');
+  const [customSessions, setCustomSessions] = useState<ScheduledSessionInstance[]>([]);
 
   const resolveId = classId || savedClassUuid;
   const { data: combinedClass, isLoading } = useClassDetails(resolveId as string);
@@ -307,23 +315,31 @@ const ClassBuilderPage = () => {
     scheduleSettings.repeat.interval,
     scheduleSettings.repeat.unit === 'week' ? scheduleSettings.repeat.days : undefined
   );
+  const classScheduleInstances = generateScheduleInstances(scheduleSettings);
+  const sortedCustomSessions = customSessions
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   // Form Validation
   const isFormValid = (): boolean => {
-    const isFormValid = () => {
-      // ✅ Must have either program_uuid OR course_uuid
-      if (!classDetails?.program_uuid && !classDetails?.course_uuid) {
-        toast.error('Please select either a Program or a Course');
+    if (!classDetails?.program_uuid && !classDetails?.course_uuid) {
+      toast.error('Please select either a Program or a Course');
+      return false;
+    }
+
+    if (classDetails?.program_uuid && classDetails?.course_uuid) {
+      toast.error('Please select only one: Program or Course');
+      return false;
+    }
+
+    if (scheduleMode === 'custom') {
+      if (sortedCustomSessions.length === 0) {
+        toast.error('Please add at least one custom schedule session');
         return false;
       }
 
-      // ✅ Optional: prevent both at the same time (if that's a rule)
-      if (classDetails?.program_uuid && classDetails?.course_uuid) {
-        toast.error('Please select only one: Program or Course');
-        return false;
-      }
       return true;
-    };
+    }
 
     if (
       !scheduleSettings.startClass.date ||
@@ -348,6 +364,10 @@ const ClassBuilderPage = () => {
       toast.error('Invalid date range or recurrence settings');
       return false;
     }
+    if (classScheduleInstances.length === 0) {
+      toast.error('No class schedule instances could be generated');
+      return false;
+    }
     return true;
   };
 
@@ -358,18 +378,42 @@ const ClassBuilderPage = () => {
     if (!isFormValid()) return;
 
     try {
-      const start_time = new Date(
-        `${scheduleSettings.startClass.date}T${scheduleSettings.startClass.startTime}:00Z`
-      ).toISOString();
-      const end_time = new Date(
-        `${scheduleSettings.startClass.date}T${scheduleSettings.startClass.endTime}:00Z`
-      ).toISOString();
+      const sessionTemplates =
+        scheduleMode === 'custom'
+          ? sortedCustomSessions.map(session => ({
+              start_time: buildUtcIsoDateTime(session.date, session.startTime),
+              end_time: buildUtcIsoDateTime(session.date, session.endTime),
+              conflict_resolution: 'FAIL',
+            }))
+          : (() => {
+              const startTime = scheduleSettings.allDay
+                ? '00:00'
+                : (scheduleSettings.startClass.startTime as string);
+              const endTime = scheduleSettings.allDay
+                ? '23:59'
+                : (scheduleSettings.startClass.endTime as string);
+              const startTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, startTime);
+              const endTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, endTime);
+              const selectedDays = scheduleSettings.repeat.days || [];
+              const days_of_week = selectedDays
+                .sort()
+                .map(dayIndex => DAY_NAMES[dayIndex])
+                .join(',');
 
-      const selectedDays = scheduleSettings.repeat.days || [];
-      const days_of_week = selectedDays
-        .sort()
-        .map(dayIndex => DAY_NAMES[dayIndex])
-        .join(',');
+              return [
+                {
+                  start_time: startTimeIso,
+                  end_time: endTimeIso,
+                  recurrence: {
+                    recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
+                    interval_value: scheduleSettings.repeat.interval,
+                    days_of_week: days_of_week || undefined,
+                    occurrence_count: occurrenceCount,
+                  },
+                  conflict_resolution: 'FAIL',
+                },
+              ];
+            })();
 
       const payload = {
         course_uuid: classDetails.course_uuid,
@@ -386,22 +430,22 @@ const ClassBuilderPage = () => {
         max_participants: classDetails.class_limit,
         allow_waitlist: true,
         is_active: !isDraft,
-        default_start_time: start_time,
-        default_end_time: end_time,
+        default_start_time:
+          scheduleMode === 'custom'
+            ? buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
+            : buildUtcIsoDateTime(
+                scheduleSettings.startClass.date,
+                scheduleSettings.allDay ? '00:00' : (scheduleSettings.startClass.startTime as string)
+              ),
+        default_end_time:
+          scheduleMode === 'custom'
+            ? buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
+            : buildUtcIsoDateTime(
+                scheduleSettings.startClass.date,
+                scheduleSettings.allDay ? '23:59' : (scheduleSettings.startClass.endTime as string)
+              ),
         meeting_link: classDetails.meeting_link,
-        session_templates: [
-          {
-            start_time: start_time,
-            end_time: end_time,
-            recurrence: {
-              recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
-              interval_value: scheduleSettings.repeat.interval,
-              days_of_week: days_of_week || undefined,
-              occurrence_count: occurrenceCount,
-            },
-            conflict_resolution: 'FAIL',
-          },
-        ],
+        session_templates: sessionTemplates,
       };
 
       if (resolveId) {
@@ -511,6 +555,10 @@ const ClassBuilderPage = () => {
                 data={scheduleSettings}
                 onChange={updates => setScheduleSettings(prev => ({ ...prev, ...updates }))}
                 occurrenceCount={occurrenceCount}
+                scheduleMode={scheduleMode}
+                onScheduleModeChange={setScheduleMode}
+                customSessions={customSessions}
+                onCustomSessionsChange={setCustomSessions}
               />
 
               {/* Class Information Section */}
@@ -530,6 +578,8 @@ const ClassBuilderPage = () => {
                 <PreviewSection
                   classDetails={classDetails}
                   scheduleSettings={scheduleSettings}
+                  scheduleMode={scheduleMode}
+                  customSessions={customSessions}
                   courseData={courseDetail?.data}
                   courseLessons={courseLessons?.data?.content}
                   occurrenceCount={occurrenceCount}

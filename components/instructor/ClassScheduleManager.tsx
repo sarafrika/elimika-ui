@@ -4,14 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -939,216 +931,220 @@ export function ClassScheduleManager({
         </SheetContent>
       </Sheet>
 
-      <Dialog open={isAssignmentDialogOpen} onOpenChange={setIsAssignmentDialogOpen}>
-        <DialogContent className='sm:max-w-[560px]'>
-          <DialogHeader>
-            <DialogTitle>Add assignment</DialogTitle>
-            <DialogDescription>
-              {selectedSchedule
-                ? `Schedule work for ${selectedSchedule.classTitle} on ${moment(selectedSchedule.start_time).format('MMM D, YYYY')}.`
-                : 'Choose an assignment to attach to this session.'}
-            </DialogDescription>
-          </DialogHeader>
+      <Sheet open={isAssignmentDialogOpen} onOpenChange={setIsAssignmentDialogOpen}>
+        <SheetContent className='w-full overflow-y-auto p-0 sm:max-w-[560px]'>
+          <div className='flex h-full flex-col gap-6 p-6'>
+            <SheetHeader>
+              <SheetTitle>Add assignment</SheetTitle>
+              <SheetDescription>
+                {selectedSchedule
+                  ? `Schedule work for ${selectedSchedule.classTitle} on ${moment(selectedSchedule.start_time).format('MMM D, YYYY')}.`
+                  : 'Choose an assignment to attach to this session.'}
+              </SheetDescription>
+            </SheetHeader>
 
-          <div className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='assignment-select'>Assignment</Label>
-              <select
-                id='assignment-select'
-                className='border-input bg-background w-full rounded-md border px-3 py-2 text-sm'
-                value={selectedAssignmentUuid}
-                onChange={event => {
-                  const uuid = event.target.value;
-                  setSelectedAssignmentUuid(uuid);
-                  setSelectedAssignment(
-                    allAssignments?.data?.content?.find((item: any) => item.uuid === uuid) ?? null
-                  );
-                }}
+            <div className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='assignment-select'>Assignment</Label>
+                <select
+                  id='assignment-select'
+                  className='border-input bg-background w-full rounded-md border px-3 py-2 text-sm'
+                  value={selectedAssignmentUuid}
+                  onChange={event => {
+                    const uuid = event.target.value;
+                    setSelectedAssignmentUuid(uuid);
+                    setSelectedAssignment(
+                      allAssignments?.data?.content?.find((item: any) => item.uuid === uuid) ?? null
+                    );
+                  }}
+                >
+                  <option value=''>Select assignment</option>
+                  {allAssignments?.data?.content?.map((assignment: any) => (
+                    <option key={assignment.uuid} value={assignment.uuid}>
+                      {assignment.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <div className='space-y-2'>
+                  <Label>Visible at</Label>
+                  <Input
+                    type='datetime-local'
+                    value={visibleAt}
+                    onChange={event => setVisibleAt(event.target.value)}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label>Due at</Label>
+                  <Input
+                    type='datetime-local'
+                    value={assignmentDueDate}
+                    onChange={event => setAssignmentDueDate(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <div className='space-y-2'>
+                  <Label>Grading due at</Label>
+                  <Input
+                    type='datetime-local'
+                    value={gradingDueAt}
+                    onChange={event => setGradingDueAt(event.target.value)}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label>Max attempts</Label>
+                  <Input
+                    type='number'
+                    min='1'
+                    value={maxAttempts}
+                    onChange={event => setMaxAttempts(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className='space-y-2'>
+                <Label>Notes</Label>
+                <Textarea
+                  rows={3}
+                  value={assignmentNotes}
+                  onChange={event => setAssignmentNotes(event.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className='mt-auto flex justify-end gap-2 border-t pt-4'>
+              <Button variant='outline' onClick={() => setIsAssignmentDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={createAssignment}
+                disabled={!selectedAssignmentUuid || addAssignmentScheduleMut.isPending}
               >
-                <option value=''>Select assignment</option>
-                {allAssignments?.data?.content?.map((assignment: any) => (
-                  <option key={assignment.uuid} value={assignment.uuid}>
-                    {assignment.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label>Visible at</Label>
-                <Input
-                  type='datetime-local'
-                  value={visibleAt}
-                  onChange={event => setVisibleAt(event.target.value)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Due at</Label>
-                <Input
-                  type='datetime-local'
-                  value={assignmentDueDate}
-                  onChange={event => setAssignmentDueDate(event.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label>Grading due at</Label>
-                <Input
-                  type='datetime-local'
-                  value={gradingDueAt}
-                  onChange={event => setGradingDueAt(event.target.value)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Max attempts</Label>
-                <Input
-                  type='number'
-                  min='1'
-                  value={maxAttempts}
-                  onChange={event => setMaxAttempts(event.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <Label>Notes</Label>
-              <Textarea
-                rows={3}
-                value={assignmentNotes}
-                onChange={event => setAssignmentNotes(event.target.value)}
-              />
+                <Plus className='mr-2 h-4 w-4' />
+                {addAssignmentScheduleMut.isPending ? 'Saving...' : 'Add assignment'}
+              </Button>
             </div>
           </div>
+        </SheetContent>
+      </Sheet>
 
-          <DialogFooter>
-            <Button variant='outline' onClick={() => setIsAssignmentDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={createAssignment}
-              disabled={!selectedAssignmentUuid || addAssignmentScheduleMut.isPending}
-            >
-              <Plus className='mr-2 h-4 w-4' />
-              {addAssignmentScheduleMut.isPending ? 'Saving...' : 'Add assignment'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <Sheet open={isQuizDialogOpen} onOpenChange={setIsQuizDialogOpen}>
+        <SheetContent className='w-full overflow-y-auto p-0 sm:max-w-[560px]'>
+          <div className='flex h-full flex-col gap-6 p-6'>
+            <SheetHeader>
+              <SheetTitle>Add quiz</SheetTitle>
+              <SheetDescription>
+                {selectedSchedule
+                  ? `Schedule a quiz for ${selectedSchedule.classTitle} on ${moment(selectedSchedule.start_time).format('MMM D, YYYY')}.`
+                  : 'Choose a quiz to attach to this session.'}
+              </SheetDescription>
+            </SheetHeader>
 
-      <Dialog open={isQuizDialogOpen} onOpenChange={setIsQuizDialogOpen}>
-        <DialogContent className='sm:max-w-[560px]'>
-          <DialogHeader>
-            <DialogTitle>Add quiz</DialogTitle>
-            <DialogDescription>
-              {selectedSchedule
-                ? `Schedule a quiz for ${selectedSchedule.classTitle} on ${moment(selectedSchedule.start_time).format('MMM D, YYYY')}.`
-                : 'Choose a quiz to attach to this session.'}
-            </DialogDescription>
-          </DialogHeader>
+            <div className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='quiz-select'>Quiz</Label>
+                <select
+                  id='quiz-select'
+                  className='border-input bg-background w-full rounded-md border px-3 py-2 text-sm'
+                  value={selectedQuizUuid}
+                  onChange={event => {
+                    const uuid = event.target.value;
+                    const quiz = allQuizzes?.data?.content?.find((item: any) => item.uuid === uuid);
+                    setSelectedQuizUuid(uuid);
+                    setSelectedQuiz(quiz ?? null);
+                    setTimeLimitOverride(
+                      quiz?.time_limit_minutes ? String(quiz.time_limit_minutes) : ''
+                    );
+                    setAttemptLimitOverride(
+                      quiz?.attempts_allowed ? String(quiz.attempts_allowed) : ''
+                    );
+                    setPassingScoreOverride(quiz?.passing_score ? String(quiz.passing_score) : '');
+                  }}
+                >
+                  <option value=''>Select quiz</option>
+                  {allQuizzes?.data?.content?.map((quiz: any) => (
+                    <option key={quiz.uuid} value={quiz.uuid}>
+                      {quiz.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='quiz-select'>Quiz</Label>
-              <select
-                id='quiz-select'
-                className='border-input bg-background w-full rounded-md border px-3 py-2 text-sm'
-                value={selectedQuizUuid}
-                onChange={event => {
-                  const uuid = event.target.value;
-                  const quiz = allQuizzes?.data?.content?.find((item: any) => item.uuid === uuid);
-                  setSelectedQuizUuid(uuid);
-                  setSelectedQuiz(quiz ?? null);
-                  setTimeLimitOverride(
-                    quiz?.time_limit_minutes ? String(quiz.time_limit_minutes) : ''
-                  );
-                  setAttemptLimitOverride(
-                    quiz?.attempts_allowed ? String(quiz.attempts_allowed) : ''
-                  );
-                  setPassingScoreOverride(quiz?.passing_score ? String(quiz.passing_score) : '');
-                }}
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <div className='space-y-2'>
+                  <Label>Visible at</Label>
+                  <Input
+                    type='datetime-local'
+                    value={quizVisibleAt}
+                    onChange={event => setQuizVisibleAt(event.target.value)}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label>Due at</Label>
+                  <Input
+                    type='datetime-local'
+                    value={quizDueDate}
+                    onChange={event => setQuizDueDate(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className='grid gap-4 sm:grid-cols-3'>
+                <div className='space-y-2'>
+                  <Label>Time limit</Label>
+                  <Input
+                    type='number'
+                    value={timeLimitOverride}
+                    onChange={event => setTimeLimitOverride(event.target.value)}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label>Attempts</Label>
+                  <Input
+                    type='number'
+                    value={attemptLimitOverride}
+                    onChange={event => setAttemptLimitOverride(event.target.value)}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label>Passing score</Label>
+                  <Input
+                    type='number'
+                    value={passingScoreOverride}
+                    onChange={event => setPassingScoreOverride(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className='space-y-2'>
+                <Label>Notes</Label>
+                <Textarea
+                  rows={3}
+                  value={quizNotes}
+                  onChange={event => setQuizNotes(event.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className='mt-auto flex justify-end gap-2 border-t pt-4'>
+              <Button variant='outline' onClick={() => setIsQuizDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={createQuiz}
+                disabled={!selectedQuizUuid || addQuizScheduleMut.isPending}
               >
-                <option value=''>Select quiz</option>
-                {allQuizzes?.data?.content?.map((quiz: any) => (
-                  <option key={quiz.uuid} value={quiz.uuid}>
-                    {quiz.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label>Visible at</Label>
-                <Input
-                  type='datetime-local'
-                  value={quizVisibleAt}
-                  onChange={event => setQuizVisibleAt(event.target.value)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Due at</Label>
-                <Input
-                  type='datetime-local'
-                  value={quizDueDate}
-                  onChange={event => setQuizDueDate(event.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className='grid gap-4 sm:grid-cols-3'>
-              <div className='space-y-2'>
-                <Label>Time limit</Label>
-                <Input
-                  type='number'
-                  value={timeLimitOverride}
-                  onChange={event => setTimeLimitOverride(event.target.value)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Attempts</Label>
-                <Input
-                  type='number'
-                  value={attemptLimitOverride}
-                  onChange={event => setAttemptLimitOverride(event.target.value)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Passing score</Label>
-                <Input
-                  type='number'
-                  value={passingScoreOverride}
-                  onChange={event => setPassingScoreOverride(event.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <Label>Notes</Label>
-              <Textarea
-                rows={3}
-                value={quizNotes}
-                onChange={event => setQuizNotes(event.target.value)}
-              />
+                <Plus className='mr-2 h-4 w-4' />
+                {addQuizScheduleMut.isPending ? 'Saving...' : 'Add quiz'}
+              </Button>
             </div>
           </div>
-
-          <DialogFooter>
-            <Button variant='outline' onClick={() => setIsQuizDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={createQuiz}
-              disabled={!selectedQuizUuid || addQuizScheduleMut.isPending}
-            >
-              <Plus className='mr-2 h-4 w-4' />
-              {addQuizScheduleMut.isPending ? 'Saving...' : 'Add quiz'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={isAssignmentsSheetOpen} onOpenChange={setIsAssignmentsSheetOpen}>
         <SheetContent className='w-full p-0 sm:max-w-full lg:max-w-[80vw]'>

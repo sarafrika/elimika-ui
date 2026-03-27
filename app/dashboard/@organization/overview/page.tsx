@@ -69,7 +69,7 @@ export default async function OrganizationOverviewPage() {
       </section>
 
       {/* Two Column Layout: Main Content + Sidebar */}
-      <div className='grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]'>
+      <div className='grid gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]'>
         {/* Main Content Column */}
         <div className={elimikaDesignSystem.spacing.content}>
           {/* Quick Actions */}

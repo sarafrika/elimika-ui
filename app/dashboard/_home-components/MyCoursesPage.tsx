@@ -118,7 +118,7 @@ export default function MyCoursesPage() {
 
   return (
     <div className='min-h-screen'>
-      <div className='container mx-auto py-2'>
+      <div className='mx-auto w-full max-w-screen-2xl py-2'>
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
           <TabsList className='bg-muted mb-2 grid w-full max-w-md grid-cols-2 dark:bg-gray-800'>
@@ -151,7 +151,7 @@ export default function MyCoursesPage() {
 
           {/* Search and Filters */}
           <div className='mb-8'>
-            <div className='mb-6 flex gap-4'>
+            <div className='mb-6 flex flex-col gap-4 sm:flex-row'>
               <div className='relative flex-1'>
                 <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
                 <Input
@@ -207,7 +207,7 @@ export default function MyCoursesPage() {
 
           <TabsContent value='courses' className='mt-0'>
             {/* Course Grid */}
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
+            <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
               {filteredCourses.map(course => (
                 <CourseCard
                   key={course.uuid}
@@ -261,7 +261,7 @@ export default function MyCoursesPage() {
 
           <TabsContent value='programs' className='mt-0'>
             {/* Course Grid */}
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
+            <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
               {filteredPrograms.map(program => (
                 <CourseCard
                   key={program.uuid}
