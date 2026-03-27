@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -284,10 +285,467 @@ function EducationViewCard({ edu }: { edu: any }) {
   );
 }
 
-function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
+function InstructorCertificateUploadSheet({
+  sharedProfile,
+  open,
+  onOpenChange,
+}: DomainTabProps & {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const qc = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadMeta, setUploadMeta] = useState({ title: '', description: '' });
+  const [stagedFile, setStagedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const uploadDocumentMut = useMutation(uploadInstructorDocumentMutation());
+
+  const invalidateDocs = () =>
+    qc.invalidateQueries({
+      queryKey: getInstructorDocumentsQueryKey({ path: { instructorUuid: sharedProfile?.uuid } }),
+    });
+
+  const resetForm = () => {
+    setStagedFile(null);
+    setIsDragging(false);
+    setUploadMeta({ title: '', description: '' });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleFileSelect = (file?: File | null) => {
+    if (!file) return;
+    setStagedFile(file);
+    setIsDragging(false);
+  };
+
+  const handleUpload = async () => {
+    if (!stagedFile || !uploadMeta.title.trim()) {
+      toast.error('Please add a title and select a file');
+      return;
+    }
+
+    setIsUploading(true);
+    uploadDocumentMut.mutate(
+      {
+        body: { file: stagedFile },
+        path: { instructorUuid: sharedProfile?.uuid },
+        query: {
+          title: uploadMeta.title,
+          description: uploadMeta.description,
+          document_type_uuid: '',
+          education_uuid: '',
+          experience_uuid: '',
+          expiry_date: '',
+          membership_uuid: '',
+        },
+      },
+      {
+        onSuccess: () => {
+          invalidateDocs();
+          resetForm();
+          onOpenChange(false);
+          toast.success('Document uploaded');
+          setIsUploading(false);
+        },
+        onError: err => {
+          toast.error(err?.message || 'Upload failed');
+          setIsUploading(false);
+        },
+      }
+    );
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={nextOpen => {
+      onOpenChange(nextOpen);
+      if (!nextOpen && !isUploading) resetForm();
+    }}>
+      <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-xl'>
+        <SheetHeader>
+          <SheetTitle>Upload New Certificate</SheetTitle>
+        </SheetHeader>
+        <div className='space-y-4 px-4 pb-6 sm:px-6'>
+          <div
+            className={cn(
+              'rounded-xl border-2 border-dashed p-4 transition-colors',
+              isDragging ? 'border-primary bg-primary/5' : 'border-border bg-muted/20'
+            )}
+            onDragOver={e => {
+              e.preventDefault();
+              if (!isUploading) setIsDragging(true);
+            }}
+            onDragLeave={e => {
+              e.preventDefault();
+              setIsDragging(false);
+            }}
+            onDrop={e => {
+              e.preventDefault();
+              if (isUploading) return;
+              handleFileSelect(e.dataTransfer.files?.[0]);
+            }}
+          >
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <div className='py-3' >
+                <p className='text-sm font-medium'>Drag and drop a certificate file here</p>
+                <p className='text-muted-foreground text-xs'>PDF, DOC, JPG or PNG up to 10 MB</p>
+              </div>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                className='h-8 gap-2 text-xs'
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                <Paperclip className='h-3.5 w-3.5' /> Choose file
+              </Button>
+            </div>
+          </div>
+
+          <div className='grid grid-cols-1 gap-3'>
+            <Input
+              placeholder='Document title'
+              value={uploadMeta.title}
+              onChange={e => setUploadMeta(p => ({ ...p, title: e.target.value }))}
+            />
+            <Input
+              placeholder='Description (optional)'
+              value={uploadMeta.description}
+              onChange={e => setUploadMeta(p => ({ ...p, description: e.target.value }))}
+            />
+          </div>
+
+          {stagedFile ? (
+            <div className='border-primary/40 bg-primary/5 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm'>
+              <FileText className='text-primary h-4 w-4 shrink-0' />
+              <span className='text-foreground flex-1 truncate'>{stagedFile.name}</span>
+              <span className='text-muted-foreground shrink-0 text-xs'>
+                {(stagedFile.size / 1024).toFixed(0)} KB
+              </span>
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon'
+                className='hover:text-destructive h-6 w-6'
+                onClick={() => {
+                  setStagedFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                disabled={isUploading}
+              >
+                <X className='h-3.5 w-3.5' />
+              </Button>
+            </div>
+          ) : (
+            <div className='flex items-center gap-4'>
+              <input
+                ref={fileInputRef}
+                type='file'
+                accept='.pdf,.jpg,.jpeg,.png,.doc,.docx'
+                className='hidden'
+                onChange={e => {
+                  handleFileSelect(e.target.files?.[0]);
+                }}
+              />
+              <p className='text-muted-foreground text-xs'>No file selected yet. Use drag and drop or choose a file.</p>
+            </div>
+          )}
+
+          <div className='flex justify-end'>
+            <Button
+              type='button'
+              size='sm'
+              className='gap-2'
+              onClick={handleUpload}
+              disabled={!stagedFile || !uploadMeta.title.trim() || isUploading}
+            >
+              <Upload className='h-3.5 w-3.5' />
+              {isUploading ? 'Uploading…' : 'Upload'}
+            </Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function InstructorCertificateDocumentsSection({
+  sharedProfile,
+  onOpenUpload,
+}: DomainTabProps & {
+  onOpenUpload: () => void;
+}) {
+  const qc = useQueryClient();
+  const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+
+  const { data, isLoading } = useQuery({
+    ...getInstructorDocumentsOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
+    enabled: !!sharedProfile?.uuid,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  const deleteDocumentMut = useMutation(deleteInstructorDocumentMutation());
+
+  const invalidateDocs = () =>
+    qc.invalidateQueries({
+      queryKey: getInstructorDocumentsQueryKey({ path: { instructorUuid: sharedProfile?.uuid } }),
+    });
+
+  const handleDelete = (uuid: string) => {
+    if (!confirm('Remove this document?')) return;
+
+    deleteDocumentMut.mutate(
+      { path: { documentUuid: uuid, instructorUuid: sharedProfile?.uuid } },
+      {
+        onSuccess: () => {
+          invalidateDocs();
+          toast.success('Document removed');
+        },
+        onError: () => toast.error('Could not remove document'),
+      }
+    );
+  };
+
+  const docs = data?.data ?? [];
+
+  if (isLoading) {
+    return (
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+        {[1, 2, 3, 4].map(i => (
+          <Card key={i}>
+            <CardContent className='flex items-center gap-4 pt-4'>
+              <Skeleton className='h-10 w-10 rounded-full' />
+              <div className='flex-1 space-y-2'>
+                <Skeleton className='h-4 w-3/4' />
+                <Skeleton className='h-3 w-1/2' />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {docs.length === 0 ? (
+        <Card>
+          <CardContent className='flex flex-col items-center justify-center py-10 text-center'>
+            <FileText className='text-muted-foreground/30 mb-3 h-10 w-10' />
+            <p className='text-muted-foreground text-sm'>No documents uploaded yet.</p>
+            <Button
+              type='button'
+              variant='link'
+              size='sm'
+              className='mt-1 text-xs'
+              onClick={onOpenUpload}
+            >
+              Upload your first document
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          {docs.map((cert: any) => (
+            <Card key={cert.uuid}>
+              <CardContent className='space-y-3 pt-4'>
+                <div className='flex items-start justify-between gap-2'>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <Badge
+                      variant='outline'
+                      className='border-success/60 bg-success/10 text-xs font-semibold tracking-wide uppercase'
+                    >
+                      {cert.status}
+                    </Badge>
+                    {cert.is_verified && (
+                      <Badge variant='secondary' className='text-xs'>
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='icon'
+                    className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 shrink-0'
+                    onClick={() => handleDelete(cert.uuid)}
+                  >
+                    <Trash2 className='h-3.5 w-3.5' />
+                  </Button>
+                </div>
+
+                <div>
+                  <p className='text-foreground text-sm font-semibold'>{cert.title}</p>
+                  {cert.description && (
+                    <p className='text-muted-foreground mt-0.5 text-xs'>{cert.description}</p>
+                  )}
+                  {cert.expiry_date && (
+                    <p className='text-muted-foreground/70 mt-0.5 text-xs'>
+                      Expiry: {cert.expiry_date}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type='button'
+                  className='border-border bg-muted/30 hover:bg-muted/60 flex w-full flex-row items-center gap-3 rounded-lg border px-3 py-2 transition-colors'
+                  onClick={() => setSelectedPdf(cert.file_path)}
+                >
+                  <div className='bg-destructive/5 shrink-0 rounded-lg p-2'>
+                    <FileText className='text-destructive/50 h-4 w-4' />
+                  </div>
+                  <div className='min-w-0 flex-1 text-left'>
+                    <p className='truncate text-sm font-medium'>{cert.original_filename}</p>
+                    <p className='text-muted-foreground text-xs'>{cert.file_size_formatted}</p>
+                  </div>
+                </button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {selectedPdf && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60'>
+          <div className='relative h-[90%] w-[90%] overflow-hidden rounded-lg bg-white'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='absolute top-3 right-3 text-xs'
+              onClick={() => setSelectedPdf(null)}
+            >
+              Close
+            </Button>
+            <iframe src={selectedPdf} className='h-full w-full' title='PDF Viewer' />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function InstructorVerifiedDocumentsSection({ sharedProfile }: DomainTabProps) {
+  const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+
+  const { data: verifiedDocs, isLoading } = useQuery({
+    ...getInstructorDocumentsOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
+    enabled: !!sharedProfile?.uuid,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    select: response =>
+      (response?.data ?? []).filter(
+        doc => doc.is_verified || doc.verification_status === 'VERIFIED'
+      ),
+  });
+
+  return (
+    <>
+      <Card>
+        <CardHeader className='pb-2'>
+          <CardTitle className='text-sm font-semibold'>Verified Documents</CardTitle>
+        </CardHeader>
+        <CardContent className='pt-0'>
+          {isLoading ? (
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              {[1, 2].map(i => (
+                <div key={i} className='rounded-xl border p-4'>
+                  <div className='space-y-2'>
+                    <Skeleton className='h-4 w-2/3' />
+                    <Skeleton className='h-3 w-1/2' />
+                    <Skeleton className='h-10 w-full rounded-lg' />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !verifiedDocs || verifiedDocs.length === 0 ? (
+            <div className='flex flex-col items-center justify-center py-10 text-center'>
+              <FileText className='text-muted-foreground/30 mb-3 h-10 w-10' />
+              <p className='text-muted-foreground text-sm'>No verified documents yet.</p>
+            </div>
+          ) : (
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              {verifiedDocs.map((doc: any) => (
+                <Card key={doc.uuid}>
+                  <CardContent className='space-y-3 pt-4'>
+                    <div className='flex items-start justify-between gap-2'>
+                      <div className='min-w-0 flex-1'>
+                        <p className='text-foreground truncate text-sm font-semibold'>
+                          {doc.title || doc.original_filename}
+                        </p>
+                        {doc.description ? (
+                          <p className='text-muted-foreground mt-1 text-xs'>{doc.description}</p>
+                        ) : null}
+                      </div>
+                      <Badge variant='success' className='shrink-0 text-xs'>
+                        Verified
+                      </Badge>
+                    </div>
+
+                    <button
+                      type='button'
+                      className='border-border bg-muted/30 hover:bg-muted/60 flex w-full flex-row items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60'
+                      onClick={() => doc.file_path && setSelectedPdf(doc.file_path)}
+                      disabled={!doc.file_path}
+                    >
+                      <div className='bg-primary/10 shrink-0 rounded-lg p-2'>
+                        <FileText className='text-primary h-4 w-4' />
+                      </div>
+                      <div className='min-w-0 flex-1'>
+                        <p className='truncate text-sm font-medium'>{doc.original_filename}</p>
+                        <p className='text-muted-foreground text-xs'>
+                          {doc.file_size_formatted || 'Preview available'}
+                        </p>
+                      </div>
+                    </button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {selectedPdf && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60'>
+          <div className='relative h-[90%] w-[90%] overflow-hidden rounded-lg bg-white'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='absolute top-3 right-3 text-xs'
+              onClick={() => setSelectedPdf(null)}
+            >
+              Close
+            </Button>
+            <iframe src={selectedPdf} className='h-full w-full' title='Document Preview' />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function instructorskillstab({ sharedProfile }: DomainTabProps) {
+  return (
+    <TabShell>
+      <InstructorVerifiedDocumentsSection sharedProfile={sharedProfile} />
+    </TabShell>
+  );
+}
+
+function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
   const qc = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadSheetOpen, setIsUploadSheetOpen] = useState(false);
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
 
   const { data, isLoading } = useQuery({
@@ -350,7 +808,7 @@ function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
       }));
       replace(mapped);
       setAttachments(
-        mapped.map((ed: any) =>
+        serverEducations.map((ed: any) =>
           ed.document_url
             ? { remote: { name: ed.document_name ?? 'Document', url: ed.document_url } }
             : {}
@@ -477,6 +935,15 @@ function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
             ))}
           </CardContent>
         </Card>
+        <InstructorCertificateDocumentsSection
+          sharedProfile={sharedProfile}
+          onOpenUpload={() => setIsUploadSheetOpen(true)}
+        />
+        <InstructorCertificateUploadSheet
+          sharedProfile={sharedProfile}
+          open={isUploadSheetOpen}
+          onOpenChange={setIsUploadSheetOpen}
+        />
       </TabShell>
     );
   }
@@ -486,17 +953,28 @@ function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
       <TabShell>
         <Card>
           <CardHeader className='pb-2'>
-            <div className='flex items-center justify-between'>
+            <div className='flex items-center justify-between gap-3'>
               <CardTitle className='text-sm font-semibold'>Education</CardTitle>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='h-8 gap-1.5 text-xs'
-                onClick={enterEditMode}
-              >
-                <Pencil className='h-3.5 w-3.5' /> Edit
-              </Button>
+              <div className='flex items-center gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='h-8 gap-1.5 text-xs'
+                  onClick={() => setIsUploadSheetOpen(true)}
+                >
+                  <Upload className='h-3.5 w-3.5' /> Upload New Certificate
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='h-8 gap-1.5 text-xs'
+                  onClick={enterEditMode}
+                >
+                  <Pencil className='h-3.5 w-3.5' /> Edit
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className='pt-0'>
@@ -519,6 +997,15 @@ function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
             )}
           </CardContent>
         </Card>
+        <InstructorCertificateDocumentsSection
+          sharedProfile={sharedProfile}
+          onOpenUpload={() => setIsUploadSheetOpen(true)}
+        />
+        <InstructorCertificateUploadSheet
+          sharedProfile={sharedProfile}
+          open={isUploadSheetOpen}
+          onOpenChange={setIsUploadSheetOpen}
+        />
       </TabShell>
     );
   }
@@ -762,283 +1249,15 @@ function InstructorSkillsTab({ sharedProfile }: DomainTabProps) {
           </Card>
         </form>
       </Form>
-    </TabShell>
-  );
-}
-
-function InstructorCertificatesTab({ sharedProfile }: DomainTabProps) {
-  const qc = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
-  const [uploadMeta, setUploadMeta] = useState({ title: '', description: '' });
-  const [stagedFile, setStagedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-
-  const { data, isLoading } = useQuery({
-    ...getInstructorDocumentsOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
-    enabled: !!sharedProfile?.uuid,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
-
-  const uploadDocumentMut = useMutation(uploadInstructorDocumentMutation());
-  const deleteDocumentMut = useMutation(deleteInstructorDocumentMutation());
-
-  const invalidateDocs = () =>
-    qc.invalidateQueries({
-      queryKey: getInstructorDocumentsQueryKey({ path: { instructorUuid: sharedProfile?.uuid } }),
-    });
-
-  const handleUpload = async () => {
-    if (!stagedFile || !uploadMeta.title.trim()) {
-      toast.error('Please add a title and select a file');
-      return;
-    }
-    setIsUploading(true);
-    uploadDocumentMut.mutate(
-      {
-        body: { file: stagedFile },
-        path: { instructorUuid: sharedProfile?.uuid },
-        query: {
-          title: uploadMeta.title,
-          description: uploadMeta.description,
-          document_type_uuid: '',
-          education_uuid: '',
-          experience_uuid: '',
-          expiry_date: '',
-          membership_uuid: '',
-        },
-      },
-      {
-        onSuccess: () => {
-          invalidateDocs();
-          setStagedFile(null);
-          setUploadMeta({ title: '', description: '' });
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          toast.success('Document uploaded');
-          setIsUploading(false);
-        },
-        onError: err => {
-          toast.error(err?.message || 'Upload failed');
-          setIsUploading(false);
-        },
-      }
-    );
-  };
-
-  const handleDelete = (uuid: string) => {
-    if (!confirm('Remove this document?')) return;
-    deleteDocumentMut.mutate(
-      { path: { documentUuid: uuid, instructorUuid: sharedProfile?.uuid } },
-      {
-        onSuccess: () => {
-          invalidateDocs();
-          toast.success('Document removed');
-        },
-        onError: () => toast.error('Could not remove document'),
-      }
-    );
-  };
-
-  if (isLoading) {
-    return (
-      <TabShell>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          {[1, 2, 3, 4].map(i => (
-            <Card key={i}>
-              <CardContent className='flex items-center gap-4 pt-4'>
-                <Skeleton className='h-10 w-10 rounded-full' />
-                <div className='flex-1 space-y-2'>
-                  <Skeleton className='h-4 w-3/4' />
-                  <Skeleton className='h-3 w-1/2' />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </TabShell>
-    );
-  }
-
-  const docs = data?.data ?? [];
-
-  return (
-    <TabShell>
-      {/* Upload panel */}
-      <Card>
-        <CardHeader className='pb-0'>
-          <CardTitle className='text-sm font-semibold'>Upload Document</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-2 pt-0'>
-          <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-            <Input
-              placeholder='Document title'
-              value={uploadMeta.title}
-              onChange={e => setUploadMeta(p => ({ ...p, title: e.target.value }))}
-            />
-            <Input
-              placeholder='Description (optional)'
-              value={uploadMeta.description}
-              onChange={e => setUploadMeta(p => ({ ...p, description: e.target.value }))}
-            />
-          </div>
-
-          {stagedFile ? (
-            <div className='border-primary/40 bg-primary/5 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm'>
-              <FileText className='text-primary h-4 w-4 shrink-0' />
-              <span className='text-foreground flex-1 truncate'>{stagedFile.name}</span>
-              <span className='text-muted-foreground shrink-0 text-xs'>
-                {(stagedFile.size / 1024).toFixed(0)} KB
-              </span>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                className='hover:text-destructive h-6 w-6'
-                onClick={() => {
-                  setStagedFile(null);
-                  if (fileInputRef.current) fileInputRef.current.value = '';
-                }}
-              >
-                <X className='h-3.5 w-3.5' />
-              </Button>
-            </div>
-          ) : (
-            <div className='flexx-row flex items-center gap-4'>
-              <input
-                ref={fileInputRef}
-                type='file'
-                accept='.pdf,.jpg,.jpeg,.png,.doc,.docx'
-                className='hidden'
-                onChange={e => {
-                  const f = e.target.files?.[0];
-                  if (f) setStagedFile(f);
-                }}
-              />
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='h-8 gap-2 text-xs'
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Paperclip className='h-3.5 w-3.5' /> Select file
-              </Button>
-              <p className='text-muted-foreground text-xs'>
-                PDF · max 10 MB
-                {/* PDF, DOC, JPG or PNG · max 10 MB */}
-              </p>
-            </div>
-          )}
-
-          <div className='flex justify-end'>
-            <Button
-              type='button'
-              size='sm'
-              className='gap-2'
-              onClick={handleUpload}
-              disabled={!stagedFile || !uploadMeta.title.trim() || isUploading}
-            >
-              <Upload className='h-3.5 w-3.5' />
-              {isUploading ? 'Uploading…' : 'Upload'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Documents list */}
-      {docs.length === 0 ? (
-        <Card>
-          <CardContent className='flex flex-col items-center justify-center py-10 text-center'>
-            <FileText className='text-muted-foreground/30 mb-3 h-10 w-10' />
-            <p className='text-muted-foreground text-sm'>No documents uploaded yet.</p>
-            <Button
-              type='button'
-              variant='link'
-              size='sm'
-              className='mt-1 text-xs'
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Upload your first document
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          {docs.map((cert: any) => (
-            <Card key={cert.uuid}>
-              <CardContent className='space-y-3 pt-4'>
-                <div className='flex items-start justify-between gap-2'>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <Badge
-                      variant='outline'
-                      className='border-success/60 bg-success/10 text-xs font-semibold tracking-wide uppercase'
-                    >
-                      {cert.status}
-                    </Badge>
-                    {cert.is_verified && (
-                      <Badge variant='secondary' className='text-xs'>
-                        Verified
-                      </Badge>
-                    )}
-                  </div>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 shrink-0'
-                    onClick={() => handleDelete(cert.uuid)}
-                  >
-                    <Trash2 className='h-3.5 w-3.5' />
-                  </Button>
-                </div>
-
-                <div>
-                  <p className='text-foreground text-sm font-semibold'>{cert.title}</p>
-                  {cert.expiry_date && (
-                    <p className='text-muted-foreground/70 mt-0.5 text-xs'>
-                      Expiry: {cert.expiry_date}
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  type='button'
-                  className='border-border bg-muted/30 hover:bg-muted/60 flex w-full flex-row items-center gap-3 rounded-lg border px-3 py-2 transition-colors'
-                  onClick={() => setSelectedPdf(cert.file_path)}
-                >
-                  <div className='bg-destructive/5 shrink-0 rounded-lg p-2'>
-                    <FileText className='text-destructive/50 h-4 w-4' />
-                  </div>
-                  <div className='min-w-0 flex-1 text-left'>
-                    <p className='truncate text-sm font-medium'>{cert.original_filename}</p>
-                    <p className='text-muted-foreground text-xs'>{cert.file_size_formatted}</p>
-                  </div>
-                </button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {selectedPdf && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60'>
-          <div className='relative h-[90%] w-[90%] overflow-hidden rounded-lg bg-white'>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              className='absolute top-3 right-3 text-xs'
-              onClick={() => setSelectedPdf(null)}
-            >
-              Close
-            </Button>
-            <iframe src={selectedPdf} className='h-full w-full' title='PDF Viewer' />
-          </div>
-        </div>
-      )}
+      <InstructorCertificateDocumentsSection
+        sharedProfile={sharedProfile}
+        onOpenUpload={() => setIsUploadSheetOpen(true)}
+      />
+      <InstructorCertificateUploadSheet
+        sharedProfile={sharedProfile}
+        open={isUploadSheetOpen}
+        onOpenChange={setIsUploadSheetOpen}
+      />
     </TabShell>
   );
 }
@@ -1278,7 +1497,13 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
         <Card>
           <CardHeader className='pb-2'>
             <div className='flex items-center justify-between'>
-              <CardTitle className='text-sm font-semibold'>Career Timeline</CardTitle>
+              <div>
+                <CardTitle className='text-sm font-semibold'>Career Timeline</CardTitle>
+                <p className='mt-2 text-xs text-muted-foreground'>
+                  Tell your career story—highlight your roles, experiences, and milestones that define your professional journey.
+                </p>
+              </div>
+
               <Button
                 type='button'
                 variant='outline'
@@ -1289,6 +1514,7 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
                 <Pencil className='h-3.5 w-3.5' /> Edit
               </Button>
             </div>
+
           </CardHeader>
           <CardContent className='pt-0'>
             {serverExperiences.length === 0 ? (
@@ -1660,8 +1886,8 @@ function InstructorFriendsTab({ userUuid }: DomainTabProps) {
 // ── Tab Registry ──
 export const instructorTabs: TabDefinition[] = [
   { id: 'about', label: 'About', component: InstructorAboutTab },
-  { id: 'skills', label: 'Skills Card', component: InstructorSkillsTab },
-  { id: 'certs', label: 'Certificates', component: InstructorCertificatesTab },
+  { id: 'skills', label: 'Skills Card', component: instructorskillstab },
+  { id: 'certs', label: 'Certificates', component: instructorcertificatestab },
   { id: 'career', label: 'Career Pathways', component: InstructorCareerTab },
   { id: 'rates', label: 'Rate Card', component: InstructorRatesTab },
   // { id: 'gallery', label: 'Gallery', component: InstructorGalleryTab },
