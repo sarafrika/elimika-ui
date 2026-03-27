@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   COLOR_PALETTE,
@@ -38,8 +38,12 @@ import useAmdinClassesWithDetails from '@/hooks/use-admin-classes';
 import { useCompactScheduleLayout } from '@/hooks/use-compact-schedule-layout';
 import { useStudentsMap } from '@/hooks/use-studentsMap';
 import { getEnrollmentsForInstanceOptions } from '@/services/client/@tanstack/react-query.gen';
+import { PlusIcon } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { Button } from '../../../../components/ui/button';
 
 export default function InstructorClassPage() {
+  const router = useRouter()
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -237,6 +241,15 @@ export default function InstructorClassPage() {
           assignments, attendance tracking, and revenue oversight to ensure smooth operations.
         </p>
       </div>
+
+      <Button
+        onClick={() => router.push(`/dashboard/trainings/create-new`)}
+        size='lg'
+        className='w-full max-w-fit gap-2 self-end'
+      >
+        <PlusIcon className='h-5 w-5' />
+        Create New Class
+      </Button>
 
       {isPending ? (
         <Card className='bg-background flex h-[calc(75vh-4rem)] flex-col overflow-hidden rounded-2xl border font-sans'>

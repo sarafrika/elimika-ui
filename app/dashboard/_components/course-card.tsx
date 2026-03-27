@@ -70,7 +70,7 @@ export function CourseCard({
 
   return (
     <Card
-      className='group border-border max-w-[360px] cursor-pointer rounded-lg border-[1px] p-0 transition-all hover:-translate-y-1 hover:shadow-lg'
+      className='group border-border w-full min-w-0 cursor-pointer rounded-lg border-[1px] p-0 transition-all hover:-translate-y-1 hover:shadow-lg'
       onClick={handleClick}
     >
       <div className='relative'>
@@ -130,7 +130,7 @@ export function CourseCard({
 
         <CardContent className='p-4'>
           {/* Category */}
-          <div className='mb-2 flex items-center gap-2'>
+          <div className='mb-2 flex flex-wrap items-center gap-2'>
             {course?.category_names?.map((category, index) => (
               <Badge key={index} variant='outline' className='text-xs'>
                 {category}
@@ -148,20 +148,20 @@ export function CourseCard({
           </div>
 
           {/* Instructor */}
-          <div className='mb-3 flex items-center gap-2'>
+          <div className='mb-3 flex min-w-0 items-center gap-2'>
             <Avatar className='min-h-9 min-w-9'>
               <AvatarImage src={course?.course_creator_uuid} />
               <AvatarFallback className='text-xs'>
                 {getInitials(courseCreator?.full_name) || 'XY'}
               </AvatarFallback>
             </Avatar>
-            <span className='text-muted-foreground text-sm'>
+            <span className='text-muted-foreground min-w-0 truncate text-sm'>
               {courseCreator?.full_name || 'Creator Name'}
             </span>
           </div>
 
           {/* Stats */}
-          <div className='text-muted-foreground mb-4 flex items-center gap-4 text-sm'>
+          <div className='text-muted-foreground mb-4 flex flex-wrap items-center gap-3 text-sm'>
             <div className='flex items-center gap-1'>
               <Star className='h-4 w-4 fill-yellow-400 text-yellow-400' />
               {/* <span>{course?.rating}</span> */}
@@ -177,9 +177,9 @@ export function CourseCard({
             </div>
           </div>
 
-          <div className='flex items-end justify-between gap-2 self-end pt-4'>
+          <div className='flex flex-wrap items-end justify-between gap-2 self-end pt-4'>
             {isStudentView ? (
-              <>
+              <div className='flex w-full flex-wrap justify-end gap-2'>
                 <Button
                   onClick={e => {
                     e.stopPropagation();
@@ -188,6 +188,7 @@ export function CourseCard({
                   }}
                   size='sm'
                   variant='outline'
+                  className='w-full sm:w-auto'
                 >
                   Search Instructor
                 </Button>
@@ -198,10 +199,11 @@ export function CourseCard({
                     handleEnroll();
                     // router.push(`/dashboard/all-courses/enroll/${course.uuid}`);
                   }}
+                  className='w-full sm:w-auto'
                 >
                   Enroll
                 </Button>
-              </>
+              </div>
             ) : (
               <Button
                 size='sm'

@@ -14,6 +14,7 @@ import {
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { SimpleEditor } from '../../../../components/tiptap-templates/simple/simple-editor';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
@@ -408,11 +409,11 @@ export const AssignmentCreationForm = ({
                 <Label className='text-foreground text-sm font-medium'>
                   Instructions (optional)
                 </Label>
-                <Textarea
-                  placeholder='Enter assignment instructions'
-                  rows={3}
-                  value={assignmentData.instructions}
-                  onChange={e => handleAssignmentInputChange('instructions', e.target.value)}
+                <SimpleEditor
+                  value={assignmentData.description}
+                  onChange={(value) =>
+                    handleAssignmentInputChange('description', value)
+                  }
                 />
               </div>
 
@@ -443,7 +444,7 @@ export const AssignmentCreationForm = ({
 
               {/* ── Rubric ─────────────────────────────────────────────────── */}
               <div className='flex flex-col gap-1.5'>
-                <Label className='text-sm font-medium'>Rubric (optional)</Label>
+                <Label className='text-sm font-medium'>Evaluation Criteria</Label>
                 <p className='text-muted-foreground text-xs'>
                   Associate a grading rubric with this assignment
                 </p>
@@ -451,7 +452,7 @@ export const AssignmentCreationForm = ({
                 {isLoadingRubrics ? (
                   <div className='flex items-center gap-2 py-2'>
                     <Spinner className='h-4 w-4' />
-                    <span className='text-muted-foreground text-xs'>Loading rubrics...</span>
+                    <span className='text-muted-foreground text-xs'>Loading evalutaion rubrics...</span>
                   </div>
                 ) : (
                   <>

@@ -136,7 +136,7 @@ function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetiz
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
-        <div className='grid grid-cols-2 gap-4 text-sm'>
+        <div className='grid gap-4 text-sm sm:grid-cols-2'>
           <div>
             <p className='text-muted-foreground'>Courses with fee floor</p>
             <p className='text-lg font-semibold'>{monetization.coursesWithMinimumFee}</p>
@@ -193,7 +193,7 @@ function TrainingRequirementsCard({
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
-        <div className='grid grid-cols-3 gap-3 text-center'>
+        <div className='grid gap-3 text-center sm:grid-cols-3'>
           <RequirementStat label='Total' value={trainingRequirements.totalRequirements} />
           <RequirementStat label='Mandatory' value={trainingRequirements.mandatoryRequirements} />
           <RequirementStat label='Optional' value={trainingRequirements.optionalRequirements} />
@@ -254,7 +254,7 @@ function QuickActionsCard() {
           Frequently used controls to keep your catalogue and collaborators aligned.
         </CardDescription>
       </CardHeader>
-      <CardContent className='grid gap-3 sm:grid-cols-2'>
+      <CardContent className='grid gap-3'>
         <ActionTile
           title='Provision instructors'
           description='Invite mentors and outline their revenue share.'

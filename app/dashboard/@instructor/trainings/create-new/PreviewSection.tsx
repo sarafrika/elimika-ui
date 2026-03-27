@@ -12,21 +12,30 @@ import {
 import { Calendar, Clock, Users } from 'lucide-react';
 import { useMemo } from 'react';
 import { ClassDetails, ScheduleSettings } from './page';
+import { ScheduleMode, ScheduledSessionInstance } from './schedule-utils';
 
 export const PreviewSection = ({
   classDetails,
   scheduleSettings,
+  scheduleMode,
+  customSessions,
   courseData,
   courseLessons,
   occurrenceCount,
 }: {
   classDetails: ClassDetails;
   scheduleSettings: ScheduleSettings;
+  scheduleMode: ScheduleMode;
+  customSessions: ScheduledSessionInstance[];
   courseData?: any;
   courseLessons?: any[];
   occurrenceCount: number;
 }) => {
   const totalHours = useMemo(() => {
+    if (scheduleMode === 'custom') {
+      return customSessions.reduce((sum, session) => sum + session.hours, 0);
+    }
+
     if (scheduleSettings.allDay) return 12;
 
     const { startTime, endTime } = scheduleSettings.startClass;
@@ -42,7 +51,7 @@ export const PreviewSection = ({
     const diff = end >= start ? end - start : 24 - start + end;
 
     return Number(diff.toFixed(2));
-  }, [scheduleSettings]);
+  }, [customSessions, scheduleMode, scheduleSettings]);
 
   const ratePerLesson = parseFloat(classDetails.rate_card || '0') * totalHours || 0;
   const lessonsCount = courseLessons?.length || 0;
@@ -82,7 +91,9 @@ export const PreviewSection = ({
           </div>
           <div>
             <p className='text-muted-foreground text-sm'>Occurrences</p>
-            <p className='text-foreground text-lg font-semibold'>{occurrenceCount}</p>
+            <p className='text-foreground text-lg font-semibold'>
+              {scheduleMode === 'custom' ? customSessions.length : occurrenceCount}
+            </p>
           </div>
         </div>
       </div>
@@ -110,8 +121,8 @@ export const PreviewSection = ({
           <TableRow className='hover:bg-transparent'>
             <TableCell className='bg-muted/30 py-4 font-semibold'>Start Date</TableCell>
             <TableCell className='bg-card py-4'>
-              {scheduleSettings.startClass.date
-                ? new Date(scheduleSettings.startClass.date).toLocaleDateString('en-US', {
+              {(scheduleMode === 'custom' ? customSessions[0]?.date : scheduleSettings.startClass.date)
+                ? new Date(`${scheduleMode === 'custom' ? customSessions[0]?.date : scheduleSettings.startClass.date}T00:00:00`).toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
@@ -124,9 +135,13 @@ export const PreviewSection = ({
           <TableRow className='hover:bg-transparent'>
             <TableCell className='bg-muted/30 py-4 font-semibold'>Time</TableCell>
             <TableCell className='bg-card py-4'>
-              {scheduleSettings.allDay
-                ? 'All Day'
-                : `${scheduleSettings.startClass.startTime || '—'} - ${scheduleSettings.startClass.endTime || '—'}`}
+              {scheduleMode === 'custom'
+                ? customSessions.length > 0
+                  ? `${customSessions[0].startTime} - ${customSessions[0].endTime}`
+                  : '—'
+                : scheduleSettings.allDay
+                  ? 'All Day'
+                  : `${scheduleSettings.startClass.startTime || '—'} - ${scheduleSettings.startClass.endTime || '—'}`}
             </TableCell>
           </TableRow>
 

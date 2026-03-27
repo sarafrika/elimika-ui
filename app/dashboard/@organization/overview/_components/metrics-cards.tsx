@@ -75,7 +75,7 @@ export function OrganizationMetricsCards() {
   ];
 
   return (
-    <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+    <div className='grid gap-6 sm:grid-cols-2 xl:grid-cols-4'>
       {metrics.map(metric => {
         const Icon = metric.icon;
         const colorStyles = getColorStyles(metric.color);
