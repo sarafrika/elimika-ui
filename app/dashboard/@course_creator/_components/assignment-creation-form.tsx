@@ -28,7 +28,6 @@ import {
 import { Separator } from '../../../../components/ui/separator';
 import Spinner from '../../../../components/ui/spinner';
 import { Switch } from '../../../../components/ui/switch';
-import { Textarea } from '../../../../components/ui/textarea';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import { cn } from '../../../../lib/utils';
 import {
@@ -262,7 +261,7 @@ export const AssignmentCreationForm = ({
   return (
     <div className='grid grid-cols-4 gap-6'>
       {/* Lessons sidebar */}
-      <div className='bg-card rounded-xl border p-4 shadow-sm'>
+      <div className='shadow-sm'>
         <h3 className='text-foreground mb-4 text-lg font-semibold'>Lessons</h3>
 
         {lessons?.content?.length ? (
@@ -287,7 +286,7 @@ export const AssignmentCreationForm = ({
                   )}
                 >
                   <p className='text-xs'>LESSON {lesson.lesson_number}.</p>
-                  <p className='truncate'>{lesson.title}</p>
+                  <p className='line-clamp-2'>{lesson.title}</p>
                 </li>
               ))}
           </ul>
@@ -396,11 +395,11 @@ export const AssignmentCreationForm = ({
                 <Label className='text-foreground text-sm font-medium'>
                   Description (optional)
                 </Label>
-                <Textarea
-                  placeholder='Enter assignment description'
-                  rows={3}
+                <SimpleEditor
                   value={assignmentData.description}
-                  onChange={e => handleAssignmentInputChange('description', e.target.value)}
+                  onChange={(value) =>
+                    handleAssignmentInputChange('description', value)
+                  }
                 />
               </div>
 
@@ -410,9 +409,9 @@ export const AssignmentCreationForm = ({
                   Instructions (optional)
                 </Label>
                 <SimpleEditor
-                  value={assignmentData.description}
+                  value={assignmentData.instructions}
                   onChange={(value) =>
-                    handleAssignmentInputChange('description', value)
+                    handleAssignmentInputChange('instructions', value)
                   }
                 />
               </div>
