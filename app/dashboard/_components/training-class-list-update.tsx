@@ -332,7 +332,7 @@ export function ClassKPICards({
                 value={activeClasses.toString()}
                 subtitle="Currently running"
                 icon={CheckCircle}
-                color="bg-emerald-500/10 text-emerald-600"
+                color="bg-primary/10 text-primary"
             />
 
             <KPIItem
