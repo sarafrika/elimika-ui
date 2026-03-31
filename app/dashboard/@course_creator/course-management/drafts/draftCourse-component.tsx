@@ -24,11 +24,13 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { formatCourseDate } from '@/lib/format-course-date';
 import {
   deleteCourseMutation,
+  publishCourseMutation,
+  publishCourseQueryKey,
   searchCoursesOptions,
   searchCoursesQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { EyeIcon, MoreVertical, PenIcon, PlusCircle, TrashIcon } from 'lucide-react';
+import { BookCheck, EyeIcon, MoreVertical, PenIcon, PlusCircle, TrashIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -60,7 +62,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
   const [page, setPage] = useState(0);
 
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data, isFetched, isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     ...searchCoursesOptions({
       query: {
         searchParams: { status: 'draft', course_creator_uuid_eq: courseCreatorId },
@@ -72,6 +74,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
 
   // DELETE COURSE MUTATION
   const DeleteCourse = useMutation(deleteCourseMutation());
+  const PublishCourse = useMutation(publishCourseMutation());
   const handleDeleteCourse = async (courseId: string) => {
     if (!courseId || !courseCreatorId) return;
 
@@ -91,6 +94,46 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
                 },
               }),
             });
+          },
+        }
+      );
+    } catch (_err) {}
+  };
+
+  const handlePublishCourse = async (courseId: string) => {
+    if (!courseId || !courseCreatorId) return;
+
+    try {
+      await PublishCourse.mutateAsync(
+        {
+          path: { uuid: courseId },
+        },
+        {
+          onSuccess(data) {
+            if (!data?.success) {
+              toast.error(
+                typeof data?.error === 'string'
+                  ? data.error
+                  : 'An error occurred while publishing the course.'
+              );
+              return;
+            }
+
+            toast.success(data?.message || 'Course published successfully');
+            queryClient.invalidateQueries({
+              queryKey: publishCourseQueryKey({ path: { uuid: courseId } }),
+            });
+            queryClient.invalidateQueries({
+              queryKey: searchCoursesQueryKey({
+                query: {
+                  searchParams: { course_creator_uuid_eq: courseCreatorId },
+                  pageable: { page, size },
+                },
+              }),
+            });
+          },
+          onError(error) {
+            toast.error(error?.message || 'Failed to publish course');
           },
         }
       );
@@ -277,6 +320,13 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
                                       <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
                                       Preview
                                     </Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handlePublishCourse(course.uuid)}
+                                    disabled={PublishCourse.isPending}
+                                  >
+                                    <BookCheck className='mr-2 h-4 w-4' />
+                                    Publish
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
