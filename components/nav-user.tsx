@@ -64,7 +64,7 @@ export function NavUser({ items }: NavUserProps) {
                 </AvatarFallback>
               </Avatar>
 
-              <div className='grid flex-1 text-left text-sm leading-tight'>
+              <div className='group-data-[collapsible=icon]:hidden grid flex-1 text-left text-sm leading-tight'>
                 <div className='flex items-center gap-2'>
                   <span className='truncate font-medium'>{user?.first_name}</span>
                   <Badge
@@ -76,7 +76,7 @@ export function NavUser({ items }: NavUserProps) {
                 </div>
                 <span className='text-muted-foreground truncate text-xs'>{user?.email}</span>
               </div>
-              <ChevronsUpDown className='text-muted-foreground ml-auto size-4' />
+              <ChevronsUpDown className='text-muted-foreground group-data-[collapsible=icon]:hidden ml-auto size-4' />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
 

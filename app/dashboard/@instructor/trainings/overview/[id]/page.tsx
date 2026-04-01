@@ -204,7 +204,8 @@ export default function ClassPreviewPage() {
   const registrationLink = getRegistrationLink();
   const inviteLink = getInviteLink();
 
-  const [copied, setCopied] = useState(false);
+  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
+  const [registrationLinkCopied, setRegistrationLinkCopied] = useState(false);
 
   // const totalLessons = classData.schedule.skills.reduce((acc, skill) => acc + skill.lessons.length, 0);
   // const totalHours = classData.schedule.skills.reduce((total, skill) => {
@@ -839,12 +840,12 @@ export default function ClassPreviewPage() {
           <div className='flex gap-2'>
             <Input value={inviteLink} readOnly className='font-mono text-sm' />
             <Button
-              onClick={() => copyLink(inviteLink, setCopied)}
+              onClick={() => copyLink(inviteLink, setInviteLinkCopied)}
               variant='outline'
               className='gap-2'
             >
               <Copy className='h-4 w-4' />
-              {copied ? 'Copied!' : 'Copy'}
+              {inviteLinkCopied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
         </CardHeader>
@@ -857,12 +858,12 @@ export default function ClassPreviewPage() {
           <div className='flex gap-2'>
             <Input value={registrationLink} readOnly className='font-mono text-sm' />
             <Button
-              onClick={() => copyLink(registrationLink, setCopied)}
+              onClick={() => copyLink(registrationLink, setRegistrationLinkCopied)}
               variant='outline'
               className='gap-2'
             >
               <Copy className='h-4 w-4' />
-              {copied ? 'Copied!' : 'Copy'}
+              {registrationLinkCopied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
         </CardHeader>

@@ -3,6 +3,7 @@
 import { DomainSwitcher } from '@/components/domain-switcher';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { AppBreadcrumb } from '@/components/ui/app-breadcrumb';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQuery } from '@tanstack/react-query';
 import { ShoppingCart } from 'lucide-react';
@@ -67,6 +68,7 @@ export default function DashboardTopBar({ showToggle = true }: { showToggle?: bo
         </div>
       ) : (
         <div className='flex w-full items-center gap-3'>
+          <SidebarTrigger className='hidden md:inline-flex' />
           <Link
             href='/'
             className='text-foreground hover:text-primary text-base font-semibold tracking-tight transition'

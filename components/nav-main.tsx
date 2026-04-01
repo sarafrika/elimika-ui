@@ -2,9 +2,10 @@
 
 import { markActiveMenuItem, type MenuItem } from '@/lib/menu';
 import type { UserDomain } from '@/lib/types';
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from './ui/sidebar';
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from './ui/sidebar';
 
 export function NavMain({
   items,
@@ -34,23 +35,33 @@ export function NavMain({
 
 // Recursive Accordion MenuItem
 function MenuItemWithAccordion({ item, isAdmin }: { item: MenuItem; isAdmin: boolean }) {
-  const [isOpen, setIsOpen] = useState(true); // set initial accordion open state t true
-  // const [isOpen, setIsOpen] = useState(item.isActive ?? false);
+  const { state } = useSidebar();
+  const [isOpen, setIsOpen] = useState(item.isActive ?? true);
 
   const hasChildren = item.items && item.items.length > 0;
+  const isCollapsed = state === 'collapsed';
+  const shouldShowChildren = hasChildren && isOpen && !isCollapsed;
 
   return (
     <SidebarMenuItem>
       {hasChildren ? (
         <>
-          {/* Toggle Button for Accordion */}
-          <SidebarMenuButton isActive={item.isActive} onClick={() => setIsOpen(!isOpen)}>
+          <SidebarMenuButton
+            isActive={item.isActive}
+            tooltip={item.title}
+            onClick={() => setIsOpen(!isOpen)}
+            aria-expanded={isCollapsed ? undefined : isOpen}
+            className='group/menu-button'
+          >
             {item.icon && <item.icon />}
             <span>{item.title}</span>
+            <ChevronRight
+              className={`ml-auto size-4 transition-transform group-data-[collapsible=icon]:hidden ${isOpen ? 'rotate-90' : ''
+                }`}
+            />
           </SidebarMenuButton>
 
-          {/* Nested Items */}
-          {isOpen && (
+          {shouldShowChildren && (
             <SidebarMenu className='border-border/60 ml-4 border-l pl-4'>
               {item.items
                 ?.filter(child => (child.requiresAdmin ? isAdmin : true))
@@ -61,7 +72,7 @@ function MenuItemWithAccordion({ item, isAdmin }: { item: MenuItem; isAdmin: boo
           )}
         </>
       ) : (
-        <SidebarMenuButton isActive={item.isActive} asChild>
+        <SidebarMenuButton isActive={item.isActive} asChild tooltip={item.title}>
           <Link href={item.url!}>
             {item.icon && <item.icon />}
             <span>{item.title}</span>

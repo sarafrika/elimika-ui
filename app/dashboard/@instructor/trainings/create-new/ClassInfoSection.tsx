@@ -14,14 +14,15 @@ export const ClassInformationSection = ({
   data: ClassDetails;
   onChange: (updates: Partial<ClassDetails>) => void;
 }) => {
-  const inviteUrl =
-    typeof window !== 'undefined' ? `${window.location.origin}/class-invite?id=${data?.uuid}` : '';
+  const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
-  const registrationUrl = origin
+  const inviteUrl = originUrl ? `${originUrl}/class-invite?id=${data?.uuid}` : '';
+
+  const registrationUrl = originUrl
     ? data?.course_uuid
-      ? `${origin}/dashboard/all-courses/available-classes/${data.course_uuid}/enroll?id=${data.uuid}`
+      ? `${originUrl}/dashboard/all-courses/available-classes/${data.course_uuid}/enroll?id=${data.uuid}`
       : data?.program_uuid
-        ? `${origin}/dashboard/all-courses/available-classes/${data.program_uuid}/enroll?id=${data.uuid}`
+        ? `${originUrl}/dashboard/all-courses/available-classes/${data.program_uuid}/enroll?id=${data.uuid}`
         : ''
     : '';
 
@@ -34,30 +35,12 @@ export const ClassInformationSection = ({
       <Table>
         <TableBody>
           <TableRow className='border-b hover:bg-transparent'>
-            <TableCell className='bg-muted/30 w-1/3 py-4 font-semibold'>Meeting Link</TableCell>
-            <TableCell className='bg-card py-4'>
-              <Input
-                value={data.meeting_link}
-                onChange={e => onChange({ meeting_link: e.target.value })}
-                placeholder='Enter meeting link'
-              />
-            </TableCell>
-          </TableRow>
-
-          <TableRow className='border-b hover:bg-transparent'>
-            <TableCell className='bg-muted/30 py-4 font-semibold'>Location</TableCell>
-            <TableCell className='bg-card py-4'>
-              <Input placeholder='Enter location' />
-            </TableCell>
-          </TableRow>
-
-          <TableRow className='border-b hover:bg-transparent'>
-            <TableCell className='bg-muted/30 py-4 font-semibold'>Classroom</TableCell>
+            <TableCell className='bg-muted/30 py-4 font-semibold'>Class Location</TableCell>
             <TableCell className='bg-card py-4'>
               <Input
                 value={data.location_name}
                 onChange={e => onChange({ location_name: e.target.value })}
-                placeholder='Enter classroom/meeting link'
+                placeholder='Enter Class Location or Room Name'
               />
             </TableCell>
           </TableRow>
@@ -70,9 +53,13 @@ export const ClassInformationSection = ({
           </TableRow>
 
           <TableRow className='border-b hover:bg-transparent'>
-            <TableCell className='bg-muted/30 py-4 font-semibold'>Equipment</TableCell>
+            <TableCell className='bg-muted/30 w-1/3 py-4 font-semibold'>Meeting Link</TableCell>
             <TableCell className='bg-card py-4'>
-              <Input placeholder='List any required equipment' />
+              <Input
+                value={data.meeting_link}
+                onChange={e => onChange({ meeting_link: e.target.value })}
+                placeholder='Enter meeting link'
+              />
             </TableCell>
           </TableRow>
 

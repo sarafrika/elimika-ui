@@ -29,7 +29,6 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
     bio,
     admin_verified,
     website,
-    formatted_location,
     uuid,
   } = instructor;
 
@@ -72,9 +71,6 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
             className='prose prose-sm text-muted-foreground max-w-none'
           />
         )}
-
-        {formatted_location && <p className='text-muted-foreground'>📍 {formatted_location}</p>}
-
         {website && (
           <p className='text-blue-600 hover:underline'>
             🌐{' '}

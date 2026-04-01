@@ -65,25 +65,9 @@ const edSchema = zCourseCreatorEducation
     z.object({
       uuid: z.string().optional(),
       field_of_study: z.string(),
-      year_started: z.string().min(4, 'Start year is required'),
       year_completed: z.string().optional(),
       is_recent_qualification: z.boolean(),
     })
-  )
-  .refine(
-    data => {
-      if (data.is_recent_qualification) return true;
-      if (!data.year_completed) return true;
-
-      const start = Number(data.year_started);
-      const end = Number(data.year_completed);
-
-      return !Number.isNaN(start) && !Number.isNaN(end) && end >= start;
-    },
-    {
-      path: ['year_completed'],
-      message: 'End year must be the same as or after the start year',
-    }
   );
 
 const educationSchema = z.object({
@@ -127,7 +111,6 @@ export default function EducationSettings() {
     school_name: '',
     qualification: '',
     field_of_study: '',
-    year_started: '',
     year_completed: '',
     is_recent_qualification: false,
     full_description: '',
@@ -251,15 +234,10 @@ export default function EducationSettings() {
     toast('Education removed successfully');
   }
 
-  const formatYearRange = (
-    startYear?: string | number,
-    endYear?: string | number,
-    isCurrent?: boolean
-  ) => {
-    if (!startYear) return 'Years not specified';
-    if (isCurrent) return `${startYear} - Present`;
-    if (!endYear) return `${startYear}`;
-    return `${startYear} - ${endYear}`;
+  const formatCompletionYear = (endYear?: string | number, isCurrent?: boolean) => {
+    if (isCurrent) return 'Present';
+    if (!endYear) return 'Year not specified';
+    return `${endYear}`;
   };
 
   const currentYear = new Date().getFullYear();
@@ -308,8 +286,7 @@ export default function EducationSettings() {
                     subtitle={edu.school_name}
                     description={edu.full_description}
                     badge={edu.is_recent_qualification ? 'Current' : undefined}
-                    dateRange={formatYearRange(
-                      edu.year_started,
+                    dateRange={formatCompletionYear(
                       edu.year_completed,
                       edu.is_recent_qualification
                     )}
@@ -446,53 +423,12 @@ export default function EducationSettings() {
                       />
                     </div>
 
-                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
-                      {/* ================= START YEAR ================= */}
-                      <FormField
-                        control={form.control}
-                        name={`educations.${index}.year_started`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Start year</FormLabel>
-
-                            <div className='flex gap-2'>
-                              <FormControl>
-                                <Input
-                                  type='number'
-                                  placeholder='YYYY'
-                                  value={field.value ?? ''}
-                                  onChange={e => field.onChange(e.target.value)}
-                                />
-                              </FormControl>
-
-                              <Select
-                                value={field.value?.toString()}
-                                onValueChange={field.onChange}
-                              >
-                                <SelectTrigger className='w-[110px]'>
-                                  <SelectValue placeholder='Select' />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {years.map(year => (
-                                    <SelectItem key={year} value={year.toString()}>
-                                      {year}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* ================= END YEAR ================= */}
+                    <div className='grid grid-cols-1 gap-5'>
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_completed`}
                         render={({ field }) => {
-                          const isDisabled = form.watch(`educations.${index}.is_complete`);
+                          const isDisabled = form.watch(`educations.${index}.is_recent_qualification`);
 
                           return (
                             <FormItem>
