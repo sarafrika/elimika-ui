@@ -272,7 +272,7 @@ function EducationViewCard({ edu }: { edu: any }) {
           )}
         </div>
         <p className='text-muted-foreground text-sm'>
-          {edu.education_level} - {edu.school_name}
+          {edu.school_name}
         </p>
         {edu.full_description && (
           <p className='text-muted-foreground pt-1 text-xs'>{edu.full_description}</p>

@@ -44,6 +44,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
+  ArrowLeft,
   BookOpen,
   CalendarCheck2,
   CheckCircle2,
@@ -54,16 +55,16 @@ import {
   FileAudio,
   FileImage,
   FileText,
-  Layers3,
   ListChecks,
   MapPin,
   PlayCircle,
   Radio,
   Search,
   Users,
-  Video,
+  Video
 } from 'lucide-react';
 import moment from 'moment';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -202,7 +203,7 @@ function getYouTubeEmbedUrl(source: string) {
       const videoId = url.searchParams.get('v');
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     }
-  } catch {}
+  } catch { }
 
   return '';
 }
@@ -815,6 +816,15 @@ export default function InstructorTrainingConsole() {
 
   return (
     <main className={elimikaDesignSystem.components.pageContainer}>
+      <div className='-mt-6 sm:-mt-10' >
+        <Button asChild variant='outline' className='gap-2'>
+          <Link href='/dashboard/trainings'>
+            <ArrowLeft className='h-4 w-4' />
+            Back
+          </Link>
+        </Button>
+      </div>
+
       <section className={cx(getHeaderClasses(), 'relative overflow-hidden')}>
         <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.16),transparent_34%),radial-gradient(circle_at_bottom_left,hsl(var(--accent)/0.14),transparent_36%)] dark:hidden' />
         <div className='relative space-y-6'>
@@ -1373,7 +1383,7 @@ export default function InstructorTrainingConsole() {
                         const isBusy =
                           markAttendanceMut.isPending &&
                           markAttendanceMut.variables?.path?.enrollmentUuid ===
-                            entry.enrollment?.uuid;
+                          entry.enrollment?.uuid;
 
                         return (
                           <div

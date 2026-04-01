@@ -1,6 +1,5 @@
 'use client';
 
-import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,12 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+
+const stripHtml = (value?: string | null) =>
+  value
+    ?.replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() ?? '';
 
 interface CourseCardProps {
   course: Course;
@@ -143,8 +148,15 @@ export function CourseCard({
             {course?.name || course?.title}
           </h3>
 
-          <div className='text-muted-foreground mb-3 line-clamp-2 text-sm'>
-            <RichTextRenderer htmlString={course?.description as string} />
+          <div
+            className='text-muted-foreground mb-3 min-h-10 overflow-hidden text-sm leading-5'
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {stripHtml(course?.description)}
           </div>
 
           {/* Instructor */}

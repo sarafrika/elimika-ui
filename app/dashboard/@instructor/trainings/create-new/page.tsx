@@ -27,6 +27,8 @@ import {
   ScheduledSessionInstance,
 } from './schedule-utils';
 
+const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new';
+
 // Types
 export interface ClassDetails {
   uuid: string;
@@ -255,6 +257,79 @@ const ClassBuilderPage = () => {
     classColour: '',
   });
 
+
+  useEffect(() => {
+    if (resolveId || isDataInitialized || typeof window === 'undefined') return;
+
+    const savedDraft = window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY);
+    if (!savedDraft) {
+      setIsDataInitialized(true);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(savedDraft) as {
+        classDetails?: Partial<ClassDetails>;
+        scheduleSettings?: Partial<ScheduleSettings>;
+        notificationSettings?: Partial<NotificationSettings>;
+        scheduleMode?: ScheduleMode;
+        customSessions?: ScheduledSessionInstance[];
+        savedAt?: string;
+      };
+
+      if (parsed.classDetails) {
+        setClassDetails(prev => ({ ...prev, ...parsed.classDetails }));
+      }
+
+      if (parsed.scheduleSettings) {
+        setScheduleSettings(prev => ({
+          ...prev,
+          ...parsed.scheduleSettings,
+          academicPeriod: {
+            ...prev.academicPeriod,
+            ...parsed.scheduleSettings?.academicPeriod,
+          },
+          registrationPeriod: {
+            ...prev.registrationPeriod,
+            ...parsed.scheduleSettings?.registrationPeriod,
+          },
+          startClass: {
+            ...prev.startClass,
+            ...parsed.scheduleSettings?.startClass,
+          },
+          repeat: {
+            ...prev.repeat,
+            ...parsed.scheduleSettings?.repeat,
+          },
+          timetable: {
+            ...prev.timetable,
+            ...parsed.scheduleSettings?.timetable,
+            time: {
+              ...prev.timetable.time,
+              ...parsed.scheduleSettings?.timetable?.time,
+            },
+          },
+        }));
+      }
+
+      if (parsed.notificationSettings) {
+        setNotificationSettings(prev => ({ ...prev, ...parsed.notificationSettings }));
+      }
+
+      if (parsed.scheduleMode) {
+        setScheduleMode(parsed.scheduleMode);
+      }
+
+      if (Array.isArray(parsed.customSessions)) {
+        setCustomSessions(parsed.customSessions);
+      }
+    } catch {
+      window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
+    } finally {
+      setIsDataInitialized(true);
+    }
+  }, [resolveId, isDataInitialized]);
+
   // Sync fetched data to state
   useEffect(() => {
     // Only initialize data if we're editing (have a resolveId) and data is loaded
@@ -306,6 +381,35 @@ const ClassBuilderPage = () => {
       setIsDataInitialized(true);
     }
   }, [classData, isLoading, courseDetail, resolveId, isDataInitialized, instructor?.full_name]);
+
+
+  useEffect(() => {
+    if (resolveId || !isDataInitialized || typeof window === 'undefined') return;
+
+    const timeout = window.setTimeout(() => {
+      window.localStorage.setItem(
+        LOCAL_CLASS_DRAFT_KEY,
+        JSON.stringify({
+          classDetails,
+          scheduleSettings,
+          notificationSettings,
+          scheduleMode,
+          customSessions,
+          savedAt: new Date().toISOString(),
+        })
+      );
+    }, 500);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    classDetails,
+    scheduleSettings,
+    notificationSettings,
+    scheduleMode,
+    customSessions,
+    resolveId,
+    isDataInitialized,
+  ]);
 
   // Calculate occurrence count
   const occurrenceCount = calculateOccurrences(
@@ -490,6 +594,10 @@ const ClassBuilderPage = () => {
                   path: { instructorUuid: instructor?.uuid as string },
                 }),
               });
+
+              if (typeof window !== 'undefined') {
+                window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
+              }
 
               toast.success(isDraft ? 'Class saved as draft' : 'Class created successfully');
               router.push('/dashboard/trainings');
