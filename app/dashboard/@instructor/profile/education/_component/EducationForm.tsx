@@ -63,7 +63,6 @@ const edSchema = zInstructorEducation
     z.object({
       uuid: z.string().optional(),
       field_of_study: z.string(),
-      year_started: z.string(),
       year_completed: z.string().optional(),
     })
   );
@@ -101,7 +100,6 @@ export default function EducationSettings() {
     school_name: '',
     qualification: '',
     field_of_study: '',
-    year_started: '',
     year_completed: '',
     is_recent_qualification: false,
     full_description: '',
@@ -201,15 +199,10 @@ export default function EducationSettings() {
     toast('Education removed successfully');
   }
 
-  const formatYearRange = (
-    startYear?: string | number,
-    endYear?: string | number,
-    isCurrent?: boolean
-  ) => {
-    if (!startYear) return 'Years not specified';
-    if (isCurrent) return `${startYear} - Present`;
-    if (!endYear) return `${startYear}`;
-    return `${startYear} - ${endYear}`;
+  const formatCompletionYear = (endYear?: string | number, isCurrent?: boolean) => {
+    if (isCurrent) return 'Present';
+    if (!endYear) return 'Year not specified';
+    return `${endYear}`;
   };
 
   const domainBadges =
@@ -255,8 +248,7 @@ export default function EducationSettings() {
                     subtitle={edu.school_name}
                     description={edu.full_description}
                     badge={edu.is_recent_qualification ? 'Current' : undefined}
-                    dateRange={formatYearRange(
-                      edu.year_started,
+                    dateRange={formatCompletionYear(
                       edu.year_completed,
                       edu.is_recent_qualification
                     )}
@@ -392,20 +384,7 @@ export default function EducationSettings() {
                       />
                     </div>
 
-                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
-                      <FormField
-                        control={form.control}
-                        name={`educations.${index}.year_started`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Start year</FormLabel>
-                            <FormControl>
-                              <Input type='number' placeholder='YYYY' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    <div className='grid grid-cols-1 gap-5'>
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_completed`}
@@ -416,7 +395,7 @@ export default function EducationSettings() {
                               <Input
                                 type='number'
                                 placeholder='YYYY'
-                                disabled={form.watch(`educations.${index}.is_complete`)}
+                                disabled={form.watch(`educations.${index}.is_recent_qualification`)}
                                 {...field}
                               />
                             </FormControl>

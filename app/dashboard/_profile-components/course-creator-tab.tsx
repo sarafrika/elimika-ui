@@ -1138,17 +1138,18 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                       />
                     </div>
 
-                    <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 self-end">
+                      {/* Hidden start year */}
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_started`}
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="hidden">
                             <FormLabel>Start year</FormLabel>
                             <FormControl>
                               <Input
-                                type='number'
-                                placeholder='YYYY'
+                                type="number"
+                                placeholder="YYYY"
                                 min={1900}
                                 max={2099}
                                 {...field}
@@ -1158,16 +1159,18 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                           </FormItem>
                         )}
                       />
+
+                      {/* End year */}
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_completed`}
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="md:col-start-2">
                             <FormLabel>End year</FormLabel>
                             <FormControl>
                               <Input
-                                type='number'
-                                placeholder='YYYY'
+                                type="number"
+                                placeholder="YYYY"
                                 min={1900}
                                 max={2099}
                                 disabled={form.watch(`educations.${index}.is_recent_qualification`)}
@@ -1175,22 +1178,24 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                                 value={field.value ?? ''}
                               />
                             </FormControl>
-                            <div className='mt-2'>
+
+                            <div className="mt-2">
                               <FormField
                                 control={form.control}
                                 name={`educations.${index}.is_recent_qualification`}
                                 render={({ field: cb }) => (
-                                  <FormItem className='flex flex-row items-center gap-2 space-y-0'>
+                                  <FormItem className="flex flex-row items-center gap-2 space-y-0">
                                     <FormControl>
                                       <Checkbox checked={cb.value} onCheckedChange={cb.onChange} />
                                     </FormControl>
-                                    <FormLabel className='cursor-pointer text-sm font-normal'>
+                                    <FormLabel className="cursor-pointer text-sm font-normal">
                                       Currently studying here
                                     </FormLabel>
                                   </FormItem>
                                 )}
                               />
                             </div>
+
                             <FormMessage />
                           </FormItem>
                         )}

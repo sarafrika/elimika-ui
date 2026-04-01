@@ -24,7 +24,6 @@ import {
   CheckCircle,
   DollarSign,
   GraduationCap,
-  MapPin,
   Star,
   Users,
   Video,
@@ -244,12 +243,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                     <Briefcase className='h-4 w-4' />
                     <span>{instructor?.total_experience_years} years experience</span>
                   </div>
-                  {instructor?.has_location_coordinates && (
-                    <div className='text-muted-foreground flex items-center gap-1'>
-                      <MapPin className='h-4 w-4' />
-                      <span>{instructor?.formatted_location}</span>
-                    </div>
-                  )}
                 </div>
 
                 {/* Mode badges */}

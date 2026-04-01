@@ -348,6 +348,7 @@ export function ProfilePage({
     Boolean(bioPreview) ||
     typeof profile.latitude === 'number' ||
     typeof profile.longitude === 'number';
+  const canViewLocation = !isPublic;
 
   return (
     <div className='space-y-0 font-sans'>
@@ -449,10 +450,12 @@ export function ProfilePage({
                 icon={<Briefcase className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
                 value={profile.professional_headline}
               />
-              <MetaItem
-                icon={<MapPin className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
-                value={profile.address}
-              />
+              {canViewLocation ? (
+                <MetaItem
+                  icon={<MapPin className='text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4' />}
+                  value={profile.address}
+                />
+              ) : null}
             </div>
 
             <div className='mb-2 flex flex-wrap gap-x-3 gap-y-1.5 sm:mb-3 sm:gap-x-5 sm:gap-y-2'>
