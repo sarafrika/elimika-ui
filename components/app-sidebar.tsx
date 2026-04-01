@@ -49,7 +49,7 @@ export function AppSidebar({
   const groupLabel = activeDomain ? `${formatDomainName(activeDomain)} Panel` : 'Panel';
 
   return (
-    <Sidebar variant='inset' {...props}>
+    <Sidebar variant='inset' collapsible='icon' {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -65,7 +65,7 @@ export function AppSidebar({
                     priority
                   />
                 </div>
-                <div className='grid flex-1 text-left text-sm leading-tight'>
+                <div className='group-data-[collapsible=icon]:hidden grid flex-1 text-left text-sm leading-tight'>
                   <span className='truncate font-medium capitalize'>
                     {organisation?.name || 'Elimika'}
                   </span>

@@ -1,7 +1,7 @@
 'use client';
 
-import { getDashboardStorageKey } from '@/lib/utils';
 import type { UserDomain } from '@/lib/types';
+import { getDashboardStorageKey } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
@@ -35,9 +35,17 @@ const normalizeDomain = (domain: unknown): UserDomain | null => {
   return ALLOWED_DOMAINS.includes(normalized as UserDomain) ? (normalized as UserDomain) : null;
 };
 
+const getStoredDomain = (storageKeys: string[], legacyStorageKey: string) => {
+  if (typeof window === 'undefined') return null;
+
+  return [...storageKeys, legacyStorageKey]
+    .map(storageKey => normalizeDomain(localStorage.getItem(storageKey)))
+    .find((domain): domain is UserDomain => Boolean(domain)) ?? null;
+};
+
 export function UserDomainProvider({ children }: { children: ReactNode }) {
   const profile = useUserProfile();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const rawDomains = profile?.user_domain;
 
   const domains = useMemo(() => {
@@ -51,13 +59,21 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
   const [activeDomain, setActiveDomainState] = useState<UserDomain | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const dashboardStorageKey = useMemo(
-    () => getDashboardStorageKey(profile?.uuid ?? profile?.email ?? undefined),
-    [profile?.uuid, profile?.email]
+  const dashboardStorageKeys = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [profile?.uuid, profile?.email, session?.user?.email]
+            .filter((identifier): identifier is string => Boolean(identifier))
+            .map(identifier => getDashboardStorageKey(identifier))
+        )
+      ),
+    [profile?.uuid, profile?.email, session?.user?.email]
   );
+  const legacyDashboardStorageKey = useMemo(() => getDashboardStorageKey(), []);
 
   useEffect(() => {
-    if (profile?.isLoading || hydrated) return;
+    if (profile?.isLoading) return;
 
     if (!domains.length) {
       setActiveDomainState(null);
@@ -65,41 +81,39 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const storedDomain =
-      typeof window !== 'undefined'
-        ? (localStorage.getItem(dashboardStorageKey) as UserDomain | null)
-        : null;
+    const storedDomain = getStoredDomain(dashboardStorageKeys, legacyDashboardStorageKey);
 
-    const nextDomain =
-      storedDomain && domains.includes(storedDomain) ? storedDomain : (domains[0] ?? null);
+    setActiveDomainState(previousDomain => {
+      if (storedDomain && domains.includes(storedDomain)) {
+        return storedDomain;
+      }
 
-    setActiveDomainState(nextDomain);
-    setHydrated(true);
-  }, [profile?.isLoading, hydrated, domains, dashboardStorageKey]);
+      if (previousDomain && domains.includes(previousDomain)) {
+        return previousDomain;
+      }
 
-  useEffect(() => {
-    if (!hydrated) return;
-
-    if (!domains.length) {
-      setActiveDomainState(null);
-      return;
-    }
-
-    setActiveDomainState(prev => {
-      if (prev && domains.includes(prev)) return prev;
       return domains[0] ?? null;
     });
-  }, [domains, hydrated]);
+    setHydrated(true);
+  }, [profile?.isLoading, domains, dashboardStorageKeys, legacyDashboardStorageKey]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !hydrated) return;
 
+    const storageKeysToSync = dashboardStorageKeys.length
+      ? dashboardStorageKeys
+      : [legacyDashboardStorageKey];
+
     if (activeDomain) {
-      localStorage.setItem(dashboardStorageKey, activeDomain);
+      storageKeysToSync.forEach(storageKey => {
+        localStorage.setItem(storageKey, activeDomain);
+      });
     } else {
-      localStorage.removeItem(dashboardStorageKey);
+      storageKeysToSync.forEach(storageKey => {
+        localStorage.removeItem(storageKey);
+      });
     }
-  }, [activeDomain, dashboardStorageKey, hydrated]);
+  }, [activeDomain, dashboardStorageKeys, legacyDashboardStorageKey, hydrated]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -107,16 +121,23 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
       setHydrated(false);
 
       if (typeof window !== 'undefined') {
-        localStorage.removeItem(dashboardStorageKey);
+        [...dashboardStorageKeys, legacyDashboardStorageKey].forEach(storageKey => {
+          localStorage.removeItem(storageKey);
+        });
       }
     }
-  }, [status, dashboardStorageKey]);
+  }, [status, dashboardStorageKeys, legacyDashboardStorageKey]);
 
   const setActiveDomain = (domain: UserDomain) => {
     if (!domains.includes(domain)) return;
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem(dashboardStorageKey, domain);
+      const storageKeysToSync = dashboardStorageKeys.length
+        ? dashboardStorageKeys
+        : [legacyDashboardStorageKey];
+      storageKeysToSync.forEach(storageKey => {
+        localStorage.setItem(storageKey, domain);
+      });
     }
 
     setActiveDomainState(domain);
@@ -125,7 +146,9 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
   const clearDomain = () => {
     setActiveDomainState(null);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem(dashboardStorageKey);
+      [...dashboardStorageKeys, legacyDashboardStorageKey].forEach(storageKey => {
+        localStorage.removeItem(storageKey);
+      });
     }
   };
 
