@@ -30,7 +30,10 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
       query: { activeOnly: true },
     }),
     enabled: !!instructorUuid,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
     refetchOnWindowFocus: false,
   });
 
@@ -45,7 +48,10 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
         path: { uuid: classItem.course_uuid as string },
       }),
       enabled: !!classItem.course_uuid,
-      staleTime: 5 * 60 * 1000,
+      staleTime: 10 * 60 * 1000,
+      gcTime: 60 * 60 * 1000,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
       refetchOnWindowFocus: false,
     })),
   });
@@ -57,7 +63,10 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
         query: { pageable: {} },
       }),
       enabled: !!classItem.uuid,
-      staleTime: 5 * 60 * 1000,
+      staleTime: 10 * 60 * 1000,
+      gcTime: 60 * 60 * 1000,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
       refetchOnWindowFocus: false,
     })),
   });
