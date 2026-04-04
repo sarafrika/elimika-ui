@@ -6,12 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -539,7 +539,7 @@ export function StudentAssignmentWorkspace() {
         String(selectedAssignment.latestSubmission.status).toUpperCase()
       ));
 
-  const handleCloseDialog = (open: boolean) => {
+  const handleCloseSheet = (open: boolean) => {
     if (!open) {
       setSelectedAssignment(null);
       setSubmissionText('');
@@ -611,7 +611,7 @@ export function StudentAssignmentWorkspace() {
       });
 
       toast.success('Assignment submitted successfully.');
-      handleCloseDialog(false);
+      handleCloseSheet(false);
     } catch (error: any) {
       toast.error(error?.message || 'Unable to submit this assignment right now.');
     }
@@ -869,9 +869,10 @@ export function StudentAssignmentWorkspace() {
         )}
       </div>
 
-      <Dialog onOpenChange={handleCloseDialog} open={!!selectedAssignment}>
-        <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-4xl'>
-          <DialogHeader className='space-y-3'>
+      <Sheet onOpenChange={handleCloseSheet} open={!!selectedAssignment}>
+        <SheetContent className='w-full overflow-y-auto p-0 sm:max-w-full lg:max-w-[960px]'>
+          <div className='space-y-6 p-5 sm:p-6'>
+            <SheetHeader className='space-y-3 border-border/60 border-b px-0 pb-5'>
             <div className='flex flex-wrap items-center gap-2'>
               <Badge variant='outline' className='border-primary/20 bg-primary/10 text-primary'>
                 {selectedAssignment?.classMeta.courseTitle}
@@ -880,16 +881,16 @@ export function StudentAssignmentWorkspace() {
                 <Badge variant={selectedStatus.variant}>{selectedStatus.label}</Badge>
               ) : null}
             </div>
-            <DialogTitle className='text-2xl'>
+            <SheetTitle className='text-2xl'>
               {selectedAssignment?.assignment?.title || 'Assignment details'}
-            </DialogTitle>
-            <DialogDescription>
+            </SheetTitle>
+            <SheetDescription>
               {selectedAssignment?.classMeta.classTitle} • Due{' '}
               {formatDate(
                 selectedAssignment?.schedule?.due_at || selectedAssignment?.assignment?.due_date
               )}
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
 
           {!selectedAssignment ? null : (
             <div className='space-y-6'>
@@ -1192,10 +1193,11 @@ export function StudentAssignmentWorkspace() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

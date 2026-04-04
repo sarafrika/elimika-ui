@@ -69,6 +69,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ArrowRight,
   Award,
   BookOpen,
   CheckCircle2,
@@ -89,6 +90,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import moment from 'moment';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -1325,6 +1327,18 @@ export function InstructorAssessmentWorkspace({
 
   return (
     <div className='space-y-6'>
+      <Link
+        href="/dashboard/new-assessment"
+        className={cx(
+          elimikaDesignSystem.components.header.badge,
+          'inline-flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity'
+        )}
+      >
+        <span>New Assessment Page</span>
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+
+
       {!embedded ? (
         <section className={cx(getHeaderClasses(), 'relative overflow-hidden')}>
           <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,97,237,0.14),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(0,97,237,0.12),transparent_38%)] dark:hidden' />

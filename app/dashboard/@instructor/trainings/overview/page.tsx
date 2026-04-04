@@ -8,10 +8,12 @@ import {
   getClassDefinitionsForInstructorQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PlusIcon } from 'lucide-react';
+import { ArrowRight, PlusIcon } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { cx, elimikaDesignSystem } from '../../../../../lib/design-system';
 import { TrainingClassList } from '../../../_components/training-class-list';
 import {
   ClassDialog,
@@ -74,6 +76,18 @@ export default function TrainingsPage({
 
   return (
     <div className='mb-20 space-y-6'>
+
+      <Link
+        href="/dashboard/new-class"
+        className={cx(
+          elimikaDesignSystem.components.header.badge,
+          'inline-flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity'
+        )}
+      >
+        <span>New Class Page</span>
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+
       <div className='flex flex-col self-end'>
         <Button
           onClick={() => router.push(`/dashboard/trainings/create-new`)}
