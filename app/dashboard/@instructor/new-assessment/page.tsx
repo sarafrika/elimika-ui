@@ -5,6 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { BrandPill } from '@/components/ui/brand-pill';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from '@/components/ui/pagination';
 import { Progress } from '@/components/ui/progress';
 import {
     Select,
@@ -52,6 +61,13 @@ import {
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 type AssessmentTab = 'overview' | 'attendance' | 'formative' | 'performance' | 'summative';
+type StudentSortOption =
+    | 'name-asc'
+    | 'name-desc'
+    | 'score-desc'
+    | 'score-asc'
+    | 'rank-desc'
+    | 'rank-asc';
 
 type StudentAssessmentCard = {
     enrollmentUuid: string;
@@ -72,14 +88,22 @@ type StudentAssessmentCard = {
 type StudentRosterProps = {
     isLoading: boolean;
     selectedClassTitle: string;
+    totalStudents: number;
+    searchTerm: string;
+    sortOption: StudentSortOption;
+    currentPage: number;
+    totalPages: number;
     selectedStudentUuid: string | null;
     students: StudentAssessmentCard[];
+    onSearchChange: (value: string) => void;
+    onSortChange: (value: StudentSortOption) => void;
+    onPageChange: (page: number) => void;
     onSelectStudent: (studentUuid: string) => void;
 };
 
 const QUERY_STALE_TIME = 1000 * 60 * 10;
 const QUERY_GC_TIME = 1000 * 60 * 60;
-const SHOW_ROSTER_FILTERS_AT = 8;
+const STUDENTS_PER_PAGE = 15;
 
 const tabs: { value: AssessmentTab; label: string }[] = [
     { value: 'overview', label: 'Overview' },
@@ -247,10 +271,20 @@ function MiniBarChart({ values }: { values: number[] }) {
 function StudentRoster({
     isLoading,
     selectedClassTitle,
+    totalStudents,
+    searchTerm,
+    sortOption,
+    currentPage,
+    totalPages,
     selectedStudentUuid,
     students,
+    onSearchChange,
+    onSortChange,
+    onPageChange,
     onSelectStudent,
 }: StudentRosterProps) {
+    const hasSearchTerm = searchTerm.trim().length > 0;
+
     return (
         <Card className='border-border/70 bg-card shadow-sm'>
             <CardHeader className='space-y-4 pb-4'>
@@ -265,92 +299,173 @@ function StudentRoster({
                         <div>
                             <CardTitle className='text-lg'>Class roster</CardTitle>
                             <p className='text-muted-foreground mt-1 text-sm'>
-                                {students.length} enrolled in {selectedClassTitle}
+                                {students.length} of {totalStudents} learners in {selectedClassTitle}
                             </p>
                         </div>
                     </div>
-                    {students.length > SHOW_ROSTER_FILTERS_AT ? (
-                        <div className='text-muted-foreground flex items-center gap-2 rounded-full border border-border/60 bg-background px-3 py-2 text-xs'>
-                            <ListFilter className='h-3.5 w-3.5' />
-                            <Search className='h-3.5 w-3.5' />
+                </div>
+
+                <div className='flex flex-col gap-2'>
+                    <form
+                        className='flex flex-col gap-2 sm:flex-row'
+                        onSubmit={event => event.preventDefault()}
+                    >
+                        <div className='relative flex-1'>
+                            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+                            <Input
+                                value={searchTerm}
+                                onChange={event => onSearchChange(event.target.value)}
+                                placeholder='Search by learner name, code, level, or grade'
+                                className='bg-background h-10 rounded-full border-border/70 pr-4 pl-9 text-sm'
+                                aria-label='Search class roster'
+                            />
                         </div>
-                    ) : null}
+                        <Button type='submit' className='rounded-full px-5'>
+                            Search
+                        </Button>
+                    </form>
+
+                    <div className='flex items-center gap-2'>
+                        <div className='text-muted-foreground flex h-10 items-center gap-2 rounded-full border border-border/70 bg-background px-3 text-xs font-medium'>
+                            <ListFilter className='h-3.5 w-3.5' />
+                            Sort
+                        </div>
+                        <Select value={sortOption} onValueChange={value => onSortChange(value as StudentSortOption)}>
+                            <SelectTrigger className='bg-background h-10 rounded-full border-border/70 text-sm'>
+                                <SelectValue placeholder='Sort roster' />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value='name-asc'>Name A-Z</SelectItem>
+                                <SelectItem value='name-desc'>Name Z-A</SelectItem>
+                                <SelectItem value='score-desc'>Score high-low</SelectItem>
+                                <SelectItem value='score-asc'>Score low-high</SelectItem>
+                                <SelectItem value='rank-desc'>Rank high-low</SelectItem>
+                                <SelectItem value='rank-asc'>Rank low-high</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className='space-y-2.5'>
                 {isLoading ? (
                     Array.from({ length: 9 }).map((_, index) => (
-                        <Skeleton key={index} className='h-[92px] rounded-[24px]' />
+                        <Skeleton key={index} className='h-[76px] rounded-[20px]' />
                     ))
                 ) : students.length === 0 ? (
                     <div className='border-border/70 rounded-[24px] border border-dashed p-6 text-center'>
-                        <p className='text-foreground font-medium'>No students enrolled yet</p>
+                        <p className='text-foreground font-medium'>
+                            {hasSearchTerm ? 'No learners match this search' : 'No students enrolled yet'}
+                        </p>
                         <p className='text-muted-foreground mt-1 text-sm'>
-                            Student assessment cards will appear here once enrollments are active.
+                            {hasSearchTerm
+                                ? 'Try a different search term or sorting option to find a learner faster.'
+                                : 'Student assessment cards will appear here once enrollments are active.'}
                         </p>
                     </div>
                 ) : (
-                    students.map(student => {
-                        const isActive = student.studentUuid === selectedStudentUuid;
+                    <>
+                        {students.map(student => {
+                            const isActive = student.studentUuid === selectedStudentUuid;
 
-                        return (
-                            <button
-                                key={student.enrollmentUuid}
-                                type='button'
-                                onClick={() => onSelectStudent(student.studentUuid)}
-                                className={`w-full rounded-[24px] border p-3.5 text-left transition-colors ${isActive
-                                    ? 'border-primary bg-primary/10 shadow-sm'
-                                    : 'border-border/70 bg-background/80 hover:bg-accent'
-                                    }`}
-                            >
-                                <div className='flex items-center gap-3'>
-                                    <Avatar className='h-11 w-11 rounded-2xl'>
-                                        <AvatarImage src={student.avatarUrl} alt={student.fullName} />
-                                        <AvatarFallback className='rounded-2xl text-xs font-semibold'>
-                                            {getInitials(student.fullName)}
-                                        </AvatarFallback>
-                                    </Avatar>
+                            return (
+                                <button
+                                    key={student.enrollmentUuid}
+                                    type='button'
+                                    onClick={() => onSelectStudent(student.studentUuid)}
+                                    className={`w-full rounded-[20px] border px-3 py-3 text-left transition-colors ${isActive
+                                            ? 'border-primary bg-primary/10 shadow-sm'
+                                            : 'border-border/70 bg-background/80 hover:bg-primary/10'
+                                        }`}
+                                >
+                                    <div className='flex items-center gap-3'>
+                                        <Avatar className='h-10 w-10 rounded-xl'>
+                                            <AvatarImage src={student.avatarUrl} alt={student.fullName} />
+                                            <AvatarFallback className='rounded-xl text-[11px] font-semibold'>
+                                                {getInitials(student.fullName)}
+                                            </AvatarFallback>
+                                        </Avatar>
 
-                                    <div className='min-w-0 flex-1'>
-                                        <div className='flex items-start justify-between gap-2'>
-                                            <div className='min-w-0'>
-                                                <p className='text-foreground truncate text-sm font-semibold'>
-                                                    {student.fullName}
-                                                </p>
-                                                <p className='text-muted-foreground mt-0.5 text-[11px]'>
-                                                    {student.studentCode || student.studentUuid.slice(0, 8)}
-                                                </p>
+                                        <div className='min-w-0 flex-1'>
+                                            <div className='flex items-start justify-between gap-2'>
+                                                <div className='min-w-0 space-y-1'>
+                                                    <p className='text-foreground truncate text-sm font-semibold'>
+                                                        {student.fullName}
+                                                    </p>
+                                                    <div className='text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]'>
+                                                        <span>{student.studentCode || student.studentUuid.slice(0, 8)}</span>
+                                                        <span aria-hidden='true'>•</span>
+                                                        <span>{student.level}</span>
+                                                    </div>
+                                                </div>
+                                                <Badge
+                                                    variant={getGradeBadgeVariant(student.grade)}
+                                                    className='shrink-0'
+                                                >
+                                                    {student.grade}
+                                                </Badge>
                                             </div>
-                                            <Badge variant={getGradeBadgeVariant(student.grade)} className='shrink-0'>
-                                                {student.grade}
-                                            </Badge>
-                                        </div>
 
-                                        <div className='mt-3 grid grid-cols-3 gap-2 text-[11px]'>
-                                            <div>
-                                                <p className='text-muted-foreground'>Level</p>
-                                                <p className='text-foreground mt-1 truncate font-medium'>
-                                                    {student.level}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className='text-muted-foreground'>Score</p>
-                                                <p className='text-foreground mt-1 font-medium'>
-                                                    {formatPercentage(student.finalGrade)}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className='text-muted-foreground'>Rank</p>
-                                                <p className='text-foreground mt-1 font-medium'>
-                                                    {formatRank(student.rank)}
-                                                </p>
+                                            <div className='text-muted-foreground mt-2 flex items-center justify-between gap-3 text-[11px]'>
+                                                <span>
+                                                    Score{' '}
+                                                    <span className='text-foreground font-medium'>
+                                                        {formatPercentage(student.finalGrade)}
+                                                    </span>
+                                                </span>
+                                                <span>
+                                                    Rank{' '}
+                                                    <span className='text-foreground font-medium'>
+                                                        {formatRank(student.rank)}
+                                                    </span>
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </button>
-                        );
-                    })
+                                </button>
+                            );
+                        })}
+
+                        {totalPages > 1 ? (
+                            <Pagination className='justify-between pt-2'>
+                                <PaginationContent className='w-full justify-between'>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            href='#'
+                                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                                            onClick={event => {
+                                                event.preventDefault();
+                                                if (currentPage > 1) {
+                                                    onPageChange(currentPage - 1);
+                                                }
+                                            }}
+                                        />
+                                    </PaginationItem>
+                                    <PaginationItem>
+                                        <PaginationLink
+                                            href='#'
+                                            isActive
+                                            onClick={event => event.preventDefault()}
+                                            className='min-w-[96px]'
+                                        >
+                                            {currentPage} / {totalPages}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            href='#'
+                                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                                            onClick={event => {
+                                                event.preventDefault();
+                                                if (currentPage < totalPages) {
+                                                    onPageChange(currentPage + 1);
+                                                }
+                                            }}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        ) : null}
+                    </>
                 )}
             </CardContent>
         </Card>
@@ -363,6 +478,9 @@ export default function NewAssessmentPage() {
     const { difficultyMap } = useDifficultyLevels();
     const [selectedClassUuid, setSelectedClassUuid] = useState<string | null>(null);
     const [selectedStudentUuid, setSelectedStudentUuid] = useState<string | null>(null);
+    const [studentSearchTerm, setStudentSearchTerm] = useState('');
+    const [studentSortOption, setStudentSortOption] = useState<StudentSortOption>('score-desc');
+    const [studentCurrentPage, setStudentCurrentPage] = useState(1);
 
     useEffect(() => {
         replaceBreadcrumbs([
@@ -574,22 +692,86 @@ export default function NewAssessmentPage() {
         userQueries,
     ]);
 
+    const filteredStudentCards = useMemo(() => {
+        const normalizedSearch = studentSearchTerm.trim().toLowerCase();
+
+        const filtered = !normalizedSearch
+            ? studentCards
+            : studentCards.filter(student =>
+                [
+                    student.fullName,
+                    student.studentCode,
+                    student.level,
+                    student.grade,
+                    formatPercentage(student.finalGrade),
+                    formatRank(student.rank),
+                ]
+                    .filter(Boolean)
+                    .some(value => value?.toLowerCase().includes(normalizedSearch))
+            );
+
+        return [...filtered].sort((left, right) => {
+            switch (studentSortOption) {
+                case 'name-asc':
+                    return left.fullName.localeCompare(right.fullName);
+                case 'name-desc':
+                    return right.fullName.localeCompare(left.fullName);
+                case 'score-asc':
+                    return (left.finalGrade ?? -1) - (right.finalGrade ?? -1);
+                case 'score-desc':
+                    return (right.finalGrade ?? -1) - (left.finalGrade ?? -1);
+                case 'rank-asc':
+                    return (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER);
+                case 'rank-desc':
+                    return (right.rank ?? -1) - (left.rank ?? -1);
+                default:
+                    return 0;
+            }
+        });
+    }, [studentCards, studentSearchTerm, studentSortOption]);
+
+    const studentTotalPages = Math.max(
+        1,
+        Math.ceil(filteredStudentCards.length / STUDENTS_PER_PAGE)
+    );
+
     useEffect(() => {
-        if (!studentCards.length) {
+        setStudentCurrentPage(previous => Math.min(previous, studentTotalPages));
+    }, [studentTotalPages]);
+
+    const paginatedStudentCards = useMemo(() => {
+        const startIndex = (studentCurrentPage - 1) * STUDENTS_PER_PAGE;
+        return filteredStudentCards.slice(startIndex, startIndex + STUDENTS_PER_PAGE);
+    }, [filteredStudentCards, studentCurrentPage]);
+
+    useEffect(() => {
+        if (!filteredStudentCards.length) {
             setSelectedStudentUuid(null);
             return;
         }
 
         setSelectedStudentUuid(previous =>
-            previous && studentCards.some(card => card.studentUuid === previous)
+            previous && filteredStudentCards.some(card => card.studentUuid === previous)
                 ? previous
-                : studentCards[0]?.studentUuid ?? null
+                : filteredStudentCards[0]?.studentUuid ?? null
         );
-    }, [studentCards]);
+    }, [filteredStudentCards]);
+
+    useEffect(() => {
+        if (!paginatedStudentCards.length) {
+            return;
+        }
+
+        setSelectedStudentUuid(previous =>
+            previous && paginatedStudentCards.some(card => card.studentUuid === previous)
+                ? previous
+                : paginatedStudentCards[0]?.studentUuid ?? null
+        );
+    }, [paginatedStudentCards]);
 
     const selectedStudent = useMemo(
         () => studentCards.find(card => card.studentUuid === selectedStudentUuid) ?? null,
-        [studentCards, selectedStudentUuid]
+        [selectedStudentUuid, studentCards]
     );
 
     const {
@@ -816,8 +998,22 @@ export default function NewAssessmentPage() {
                         <StudentRoster
                             isLoading={isLoadingRoster}
                             selectedClassTitle={selectedClass.title}
+                            totalStudents={studentCards.length}
+                            searchTerm={studentSearchTerm}
+                            sortOption={studentSortOption}
+                            currentPage={studentCurrentPage}
+                            totalPages={studentTotalPages}
                             selectedStudentUuid={selectedStudentUuid}
-                            students={studentCards}
+                            students={paginatedStudentCards}
+                            onSearchChange={value => {
+                                setStudentSearchTerm(value);
+                                setStudentCurrentPage(1);
+                            }}
+                            onSortChange={value => {
+                                setStudentSortOption(value);
+                                setStudentCurrentPage(1);
+                            }}
+                            onPageChange={setStudentCurrentPage}
                             onSelectStudent={setSelectedStudentUuid}
                         />
                     </aside>
