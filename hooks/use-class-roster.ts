@@ -1,10 +1,19 @@
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import {
   getEnrollmentsForClassOptions,
   getStudentByIdOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import type {
+  GetEnrollmentsForClassResponse,
+  GetStudentByIdResponse,
+  GetUserByUuidResponse,
+} from '@/services/client/types.gen';
+
+type Enrollment = NonNullable<GetEnrollmentsForClassResponse['data']>[number];
+type Student = GetStudentByIdResponse;
+type User = NonNullable<GetUserByUuidResponse['data']>;
 
 export function useClassRoster(classId: string | undefined) {
   const enrollmentQuery = useQuery(
@@ -17,7 +26,7 @@ export function useClassRoster(classId: string | undefined) {
 
   const uniqueEnrollments = useMemo(() => {
     return Object.values(
-      allEnrollments.reduce((acc: any, e: any) => {
+      allEnrollments.reduce<Record<string, Enrollment>>((acc, e) => {
         acc[e.student_uuid] = e;
         return acc;
       }, {})
@@ -25,7 +34,7 @@ export function useClassRoster(classId: string | undefined) {
   }, [allEnrollments]);
 
   const studentQueries = useQueries({
-    queries: uniqueEnrollments.map((enrol: any) => ({
+    queries: uniqueEnrollments.map(enrol => ({
       ...getStudentByIdOptions({
         path: { uuid: enrol?.student_uuid },
       }),
@@ -33,10 +42,12 @@ export function useClassRoster(classId: string | undefined) {
     })),
   });
 
-  const students = studentQueries.map((q: any) => q?.data?.data).filter(Boolean);
+  const students = studentQueries
+    .map(q => q.data)
+    .filter((student): student is Student => Boolean(student));
 
   const userQueries = useQueries({
-    queries: students.map((stu: any) => ({
+    queries: students.map(stu => ({
       ...getUserByUuidOptions({
         path: { uuid: stu.user_uuid },
       }),
@@ -44,10 +55,10 @@ export function useClassRoster(classId: string | undefined) {
     })),
   });
 
-  const users = userQueries.map(q => q.data?.data).filter(Boolean);
+  const users = userQueries.map(q => q.data?.data).filter((user): user is User => Boolean(user));
 
   const roster = useMemo(() => {
-    return uniqueEnrollments.map((enrollment: any, index: any) => ({
+    return uniqueEnrollments.map((enrollment, index) => ({
       enrollment,
       student: studentQueries[index]?.data,
       user: userQueries[index]?.data?.data,
