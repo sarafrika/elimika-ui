@@ -1,3 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
+import { BadgeCheckIcon } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,31 +16,33 @@ import {
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { getInstructorAvailabilityOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
-import { BadgeCheckIcon } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import type { Instructor } from '@/services/client';
+import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { InstructorAvailabilitySlot } from './types';
 
 export interface InstructorCardProps {
-  instructor: any;
+  instructor: Instructor;
 }
 
 const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
-  const {
-    full_name,
-    professional_headline,
-    bio,
-    admin_verified,
-    website,
-    uuid,
-  } = instructor;
+  const { full_name, professional_headline, bio, admin_verified, website, uuid } = instructor;
 
   const [openBookModal, setOpenBookModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const instructorUuid = uuid ?? '';
 
-  const { data } = useQuery(getInstructorAvailabilityOptions({ path: { instructorUuid: uuid } }));
-  const instructorSlots = data?.data || [];
+  const { data } = useQuery(
+    getInstructorCalendarOptions({
+      path: { instructorUuid },
+      query: {
+        start_date: new Date(),
+        end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+      },
+    })
+  );
+  const instructorSlots = (data?.data ?? []).filter(
+    (slot): slot is InstructorAvailabilitySlot & { uuid: string } => typeof slot.uuid === 'string'
+  );
 
   const _slots = [
     { id: 'slot1', label: 'Tuesday, Oct 10 - 9:00 AM' },
@@ -100,15 +106,15 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
             {instructorSlots?.length > 0 ? (
               <RadioGroup value={selectedSlot ?? ''} onValueChange={setSelectedSlot}>
                 {instructorSlots
-                  ?.filter((slot: any) => slot?.custom_pattern !== 'BLOCKED_TIME_SLOT')
-                  .map((slot: any) => (
-                    <div key={slot?.uuid} className='flex items-center gap-2'>
-                      <RadioGroupItem value={slot?.uuid} id={slot?.uuid} />
+                  ?.filter(slot => slot?.custom_pattern !== 'BLOCKED_TIME_SLOT')
+                  .map(slot => (
+                    <div key={slot.uuid} className='flex items-center gap-2'>
+                      <RadioGroupItem value={slot.uuid} id={slot.uuid} />
                       <Label
-                        htmlFor={slot?.uuid}
+                        htmlFor={slot.uuid}
                         className='flex flex-col items-start gap-1 rounded-md px-2 py-1.5'
                       >
-                        <p className='text-sm font-medium'>{slot?.uuid}</p>
+                        <p className='text-sm font-medium'>{slot.uuid}</p>
                         <p className='text-xs'>{slot?.time_range}</p>
                       </Label>
                     </div>

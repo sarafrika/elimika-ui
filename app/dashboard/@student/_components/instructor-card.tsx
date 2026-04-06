@@ -1,3 +1,5 @@
+import { useQuery } from '@tanstack/react-query';
+import { ArrowRight, Briefcase, Building, Star, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,12 +11,12 @@ import {
   getUserByUuidOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Briefcase, Building, Star, Users } from 'lucide-react';
+import type { User } from '@/services/client/types.gen';
+import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { InstructorSkillCard } from '../../@instructor/profile/skills/_component/instructor-skill-card';
 
 type Props = {
-  instructor: any;
+  instructor: SearchInstructor;
   courseId: string;
   onViewProfile: () => void;
 };
@@ -24,7 +26,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
     ...getUserByUuidOptions({ path: { uuid: instructor.user_uuid } }),
     enabled: !!instructor.uuid,
   });
-  const user = data?.data as any;
+  const user: User | undefined = data?.data;
 
   const { data: skills } = useQuery({
     ...getInstructorSkillsOptions({
@@ -77,7 +79,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
                   {instructor.professional_headline}
                 </p>
               </div>
-              {user?.organisation_affiliations?.length > 0 && (
+              {(user?.organisation_affiliations?.length ?? 0) > 0 && (
                 <Building className='text-muted-foreground h-4 w-4 flex-shrink-0' />
               )}
             </div>

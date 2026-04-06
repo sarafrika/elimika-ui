@@ -1,6 +1,17 @@
 'use client';
 
+import { useQueries } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import {
+  BookOpenCheck,
+  ChartColumnBig,
+  ClipboardCheck,
+  FileText,
+  GraduationCap,
+  Sparkles,
+  Trophy,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -20,23 +31,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
+import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
 import {
   getCourseEnrollmentsOptions,
   getEnrollmentGradeBookOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQueries } from '@tanstack/react-query';
-import {
-  BookOpenCheck,
-  ChartColumnBig,
-  ClipboardCheck,
-  FileText,
-  GraduationCap,
-  Sparkles,
-  Trophy,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import type {
+  ComponentDto,
+  CourseEnrollment,
+  CourseGradeBook,
+  LineItemEntryDto,
+} from '@/services/client/types.gen';
 
 type DetailTab = 'overview' | 'assignments' | 'quizzes' | 'exams';
 
@@ -46,8 +52,35 @@ type CourseGradeRow = {
     title: string;
     uuid: string;
   };
-  enrollment: any;
-  gradebook: any | null;
+  enrollment: CourseEnrollment;
+  gradebook: CourseGradeBook | null;
+};
+
+type StudentClassDefinitionRow = ReturnType<
+  typeof useStudentClassDefinitions
+>['classDefinitions'][number];
+type ResolvedClassDetails = {
+  class_definition?: { title?: string; uuid?: string };
+  course_name?: string;
+  name?: string;
+  title?: string;
+  uuid?: string;
+};
+type CourseEnrollmentRow = {
+  classTitles: string[];
+  course: { title: string; uuid: string };
+  enrollment: CourseEnrollment;
+};
+type DetailLineItem = {
+  assessmentType: string;
+  comments?: string;
+  componentTitle: string;
+  dueAt?: Date;
+  itemType: string;
+  percentage?: number;
+  scoreDisplay?: string;
+  title: string;
+  weight?: number;
 };
 
 const PAGEABLE = { pageable: {} };
@@ -64,8 +97,17 @@ const tooltipStyles = {
 const chartMotion = {
   initial: { opacity: 0, y: 18 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.45, ease: 'easeOut' },
+  transition: { duration: 0.45, ease: 'easeOut' as const },
 };
+
+function getClassTitle(classDetails?: ResolvedClassDetails) {
+  return (
+    classDetails?.class_definition?.title ||
+    classDetails?.title ||
+    classDetails?.name ||
+    'Untitled class'
+  );
+}
 
 function formatPercent(value?: number | null) {
   if (value == null || Number.isNaN(value)) return 'Pending';
@@ -164,16 +206,12 @@ export function StudentAssessmentWorkspace() {
       }
     >();
 
-    (classDefinitions ?? []).forEach((classDefinition: any) => {
+    (classDefinitions ?? []).forEach((classDefinition: StudentClassDefinitionRow) => {
       const courseUuid = classDefinition.course?.uuid as string | undefined;
       if (!courseUuid) return;
 
-      const classTitle =
-        classDefinition.classDetails?.title ||
-        classDefinition.classDetails?.name ||
-        'Untitled class';
-      const courseTitle =
-        classDefinition.course?.name || classDefinition.course?.title || 'Untitled course';
+      const classTitle = getClassTitle(classDefinition.classDetails as ResolvedClassDetails);
+      const courseTitle = classDefinition.course?.name || 'Untitled course';
 
       const existing = courseMap.get(courseUuid);
       if (existing) {
@@ -207,42 +245,32 @@ export function StudentAssessmentWorkspace() {
     })),
   });
 
-  const courseEnrollmentRows = useMemo(
-    () =>
-      courseList
-        .map((course, index) => {
-          const courseEnrollments = courseEnrollmentQueries[index]?.data?.data?.content ?? [];
-          const matchingEnrollment =
-            courseEnrollments.find(
-              (enrollment: any) => enrollment.student_uuid === student?.uuid
-            ) ?? null;
+  const courseEnrollmentRows = useMemo<CourseEnrollmentRow[]>(() => {
+    const rows = courseList.map((course, index): CourseEnrollmentRow | null => {
+      const courseEnrollments = courseEnrollmentQueries[index]?.data?.data?.content ?? [];
+      const matchingEnrollment =
+        courseEnrollments.find(
+          (enrollment: CourseEnrollment) => enrollment.student_uuid === student?.uuid
+        ) ?? null;
 
-          if (!matchingEnrollment?.uuid) return null;
+      if (!matchingEnrollment?.uuid) return null;
 
-          return {
-            classTitles: course.classTitles,
-            course,
-            enrollment: matchingEnrollment,
-          };
-        })
-        .filter(
-          (
-            row
-          ): row is {
-            classTitles: string[];
-            course: { classTitles: string[]; title: string; uuid: string };
-            enrollment: any;
-          } => Boolean(row)
-        ),
-    [courseEnrollmentQueries, courseList, student?.uuid]
-  );
+      return {
+        classTitles: course.classTitles,
+        course: { title: course.title, uuid: course.uuid },
+        enrollment: matchingEnrollment,
+      };
+    });
+
+    return rows.filter((row): row is CourseEnrollmentRow => row !== null);
+  }, [courseEnrollmentQueries, courseList, student?.uuid]);
 
   const gradebookQueries = useQueries({
     queries: courseEnrollmentRows.map(row => ({
       ...getEnrollmentGradeBookOptions({
         path: {
           courseUuid: row.course.uuid,
-          enrollmentUuid: row.enrollment.uuid,
+          enrollmentUuid: row.enrollment.uuid ?? '',
         },
       }),
       enabled: !!row.course.uuid && !!row.enrollment.uuid,
@@ -325,7 +353,7 @@ export function StudentAssessmentWorkspace() {
 
   const selectedCourseComponentData = useMemo(
     () =>
-      (selectedCourse?.gradebook?.components ?? []).map((component: any) => ({
+      (selectedCourse?.gradebook?.components ?? []).map((component: ComponentDto) => ({
         achieved: component.aggregate_score?.percentage ?? 0,
         component:
           component.assessment?.title || component.assessment?.assessment_type || 'Component',
@@ -347,8 +375,8 @@ export function StudentAssessmentWorkspace() {
   const selectedCourseLineItems = useMemo(() => {
     const components = selectedCourse?.gradebook?.components ?? [];
 
-    return components.flatMap((component: any) =>
-      (component.line_items ?? []).map((lineItemEntry: any) => ({
+    return components.flatMap((component: ComponentDto) =>
+      (component.line_items ?? []).map((lineItemEntry: LineItemEntryDto) => ({
         assessmentType: normalizeType(component.assessment?.assessment_type),
         comments: lineItemEntry.score?.comments,
         componentTitle: component.assessment?.title || 'Assessment component',

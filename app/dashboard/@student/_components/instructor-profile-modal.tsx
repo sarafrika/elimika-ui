@@ -31,7 +31,14 @@ import {
   listCatalogItemsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type {
+  CourseTrainingApplication,
+  CourseTrainingRateCard,
+  InstructorCalendarEntry,
+  InstructorReview,
+} from '@/services/client/types.gen';
 import type { Booking } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
+import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import {
   AvailabilityData,
   ClassScheduleItem,
@@ -41,10 +48,15 @@ import { ReviewCard } from '../../@instructor/reviews/review-card';
 import BookInstructorTimeTableManager from './book-instructor-schedule';
 
 type Props = {
-  instructor: any;
+  instructor: SearchInstructor;
   onClose: () => void;
   onBookingComplete: (booking: Booking) => void;
 };
+
+type RateKey = keyof Pick<
+  CourseTrainingRateCard,
+  'group_inperson_rate' | 'group_online_rate' | 'private_inperson_rate' | 'private_online_rate'
+>;
 
 export const InstructorProfileComponent: React.FC<Props> = ({
   instructor,
@@ -62,12 +74,12 @@ export const InstructorProfileComponent: React.FC<Props> = ({
   const { data: timetable } = useQuery({
     ...getInstructorCalendarOptions({
       path: { instructorUuid: instructor?.uuid as string },
-      query: { start_date: '2024-09-10' as any, end_date: '2026-11-11' as any },
+      query: { start_date: new Date('2024-09-10'), end_date: new Date('2026-11-11') },
     }),
     enabled: !!instructor?.uuid,
   });
 
-  const instructorSchedule = timetable?.data ?? [];
+  const instructorSchedule: InstructorCalendarEntry[] = timetable?.data ?? [];
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
     events: convertToCalendarEvents(instructorSchedule as ClassScheduleItem[]),
@@ -87,7 +99,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
       ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])
       : [];
 
-    setAvailabilityData((prev: any) => ({
+    setAvailabilityData(prev => ({
       ...prev,
       events: eventsFromSchedule,
     }));
@@ -106,7 +118,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
     ...getInstructorReviewsOptions({ path: { instructorUuid: instructor?.uuid as string } }),
     enabled: !!instructor.uuid,
   });
-  const instructorReviews = reviews?.data || [];
+  const instructorReviews: InstructorReview[] = reviews?.data ?? [];
   // get students details
   // get enrollment details / class name or course name
 
@@ -117,12 +129,18 @@ export const InstructorProfileComponent: React.FC<Props> = ({
     enabled: !!instructor?.uuid,
   });
 
-  const matchedCourse = appliedCourses?.data?.content?.find(
+  const matchedCourse: CourseTrainingApplication | undefined = appliedCourses?.data?.content?.find(
     course => course.course_uuid === courseId
   );
 
-  const [selectedRateKey, setSelectedRateKey] = useState('');
+  const [selectedRateKey, setSelectedRateKey] = useState<RateKey>('private_online_rate');
   const [totalAmount, setTotalAmount] = useState(0);
+  const bookingRates = matchedCourse?.rate_card
+    ? {
+        ...matchedCourse.rate_card,
+        currency: matchedCourse.rate_card.currency ?? 'KES',
+      }
+    : undefined;
 
   return (
     <div className='relative mx-auto w-full max-w-7xl self-center overflow-y-auto'>
@@ -139,7 +157,10 @@ export const InstructorProfileComponent: React.FC<Props> = ({
         {/* Header */}
         <div className='flex items-start gap-6'>
           <Avatar className='h-24 w-24'>
-            <AvatarImage src={instructor.profileImage} alt={instructor.name} />
+            <AvatarImage
+              src={instructor.profile_image_url ?? undefined}
+              alt={instructor.full_name}
+            />
             <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
           </Avatar>
 
@@ -210,8 +231,8 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 booking_id: '',
                 price_amount: totalAmount,
                 purpose: reason,
-                rate_key: selectedRateKey as any,
-                rates: matchedCourse?.rate_card as any,
+                rate_key: selectedRateKey,
+                rates: bookingRates,
               }}
             />
           </>
@@ -233,7 +254,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               <Card className='p-6'>
                 <h3 className='mb-3'>About</h3>
                 <div className='text-muted-foreground'>
-                  <RichTextRenderer htmlString={instructor.bio} />
+                  <RichTextRenderer htmlString={instructor.bio ?? ''} />
                 </div>
               </Card>
 
@@ -243,7 +264,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 <div className='flex flex-wrap gap-2'>
                   {skills?.length > 0 ? (
                     <div className='flex flex-wrap gap-2'>
-                      {skills?.map((skill: any, index: any) => (
+                      {skills?.map(skill => (
                         <Badge key={skill.uuid} variant='outline'>
                           {skill.skill_name}
                         </Badge>
@@ -261,8 +282,8 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
                 {instructor?.specializations?.length > 0 ? (
                   <div className='flex flex-wrap gap-2'>
-                    {instructor?.specializations?.map((spec: any, index: any) => (
-                      <Badge key={spec.uuid} variant='outline'>
+                    {instructor?.specializations?.map(spec => (
+                      <Badge key={spec.uuid ?? spec.skill_name} variant='outline'>
                         {spec.skill_name}
                       </Badge>
                     ))}
@@ -320,9 +341,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
             {/* Reviews Tab */}
             <TabsContent value='reviews' className='space-y-4'>
               {Array.isArray(instructorReviews) && instructorReviews.length > 0 ? (
-                instructorReviews.map((review: any) => (
-                  <ReviewCard key={review.uuid} review={review} />
-                ))
+                instructorReviews.map(review => <ReviewCard key={review.uuid} review={review} />)
               ) : (
                 <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
                   <Star className='text-muted-foreground mb-4 h-10 w-10' />
@@ -437,7 +456,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
   );
 };
 
-const skills = [] as any[];
+const skills: Array<{ skill_name: string; uuid?: string }> = [];
 const certifications = [
   { id: 'cert-3', name: 'Deep Learning Specialization', issuer: 'DeepLearning.AI', year: 2020 },
   { id: 'cert-4', name: 'Google Cloud Professional Data Engineer', issuer: 'Google', year: 2021 },

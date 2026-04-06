@@ -1,5 +1,17 @@
 'use client';
 
+import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  CalendarDays,
+  CircleAlert,
+  Clock3,
+  CreditCard,
+  Search,
+  Wallet,
+  XCircle,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,25 +31,14 @@ import {
   requestPaymentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { BookingResponse, StatusEnum9 } from '@/services/client/types.gen';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import {
-  CalendarDays,
-  CircleAlert,
-  Clock3,
-  CreditCard,
-  Search,
-  Wallet,
-  XCircle,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { getErrorMessage, type SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { getStatusColor } from '../../_components/manage-bookings';
 
 type BookingTab = 'attention' | 'upcoming' | 'history';
 
 type Props = {
   bookings: BookingResponse[];
-  instructors: any[];
+  instructors: SearchInstructor[];
   refetchBookings: () => void;
 };
 
@@ -189,7 +190,7 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
       !selectedBooking ||
       !visibleBookings.some(booking => booking.uuid === selectedBooking.uuid)
     ) {
-      setSelectedBooking(visibleBookings[0]);
+      setSelectedBooking(visibleBookings[0] ?? null);
     }
   }, [selectedBooking, visibleBookings]);
 
@@ -266,8 +267,8 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
 
           toast.error('Payment URL not found for this booking');
         },
-        onError: (error: any) => {
-          toast.error(error?.message || 'Failed to start payment');
+        onError: error => {
+          toast.error(getErrorMessage(error, 'Failed to start payment'));
         },
       }
     );
@@ -281,8 +282,8 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
           toast.success('Booking cancelled successfully');
           refetchBookings();
         },
-        onError: (error: any) => {
-          toast.error(error?.message || 'Failed to cancel booking');
+        onError: error => {
+          toast.error(getErrorMessage(error, 'Failed to cancel booking'));
         },
       }
     );
@@ -375,7 +376,14 @@ export function StudentBookingsPanel({ bookings, instructors, refetchBookings }:
                 />
               </div>
 
-              <Select value={statusFilter} onValueChange={value => setStatusFilter(value as any)}>
+              <Select
+                value={statusFilter}
+                onValueChange={value => {
+                  if (value === 'all' || STATUS_OPTIONS.some(option => option.value === value)) {
+                    setStatusFilter(value as 'all' | StatusEnum9);
+                  }
+                }}
+              >
                 <SelectTrigger className='w-full md:w-[220px]'>
                   <SelectValue placeholder='Filter status' />
                 </SelectTrigger>

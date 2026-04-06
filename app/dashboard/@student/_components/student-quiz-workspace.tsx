@@ -1,29 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useStudent } from '@/context/student-context';
-import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
-import { useQuizDetails } from '@/hooks/use-quiz-details';
-import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
-import {
-  getEnrollmentsForClassOptions,
-  getQuizAttemptsOptions,
-  getQuizByUuidOptions,
-  getQuizSchedulesOptions,
-} from '@/services/client/@tanstack/react-query.gen';
 import { useQueries } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -40,6 +16,38 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useStudent } from '@/context/student-context';
+import { useQuizDetails } from '@/hooks/use-quiz-details';
+import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { cx, getCardClasses, getEmptyStateClasses, getStatCardClasses } from '@/lib/design-system';
+import {
+  getEnrollmentsForClassOptions,
+  getQuizAttemptsOptions,
+  getQuizByUuidOptions,
+  getQuizSchedulesOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import type {
+  ClassQuizSchedule,
+  Enrollment,
+  Quiz,
+  QuizAttempt,
+  QuizQuestion,
+  QuizQuestionOption,
+} from '@/services/client/types.gen';
 
 type ClassMeta = {
   classUuid: string;
@@ -50,12 +58,32 @@ type ClassMeta = {
 
 type QuizRow = {
   classMeta: ClassMeta;
-  attempts: any[];
-  quiz: any;
-  schedule: any;
+  attempts: QuizAttempt[];
+  quiz: Quiz;
+  schedule: ClassQuizSchedule;
 };
 
 type AnswerMap = Record<string, string | string[]>;
+type StudentClassDefinitionRow = ReturnType<
+  typeof useStudentClassDefinitions
+>['classDefinitions'][number];
+type QuizQuestionWithOptions = QuizQuestion & { options: QuizQuestionOption[] };
+type ResolvedClassDetails = {
+  class_definition?: { title?: string; uuid?: string };
+  course_name?: string;
+  name?: string;
+  title?: string;
+  uuid?: string;
+};
+
+function getClassTitle(classDetails?: ResolvedClassDetails) {
+  return (
+    classDetails?.class_definition?.title ||
+    classDetails?.title ||
+    classDetails?.name ||
+    'Untitled class'
+  );
+}
 
 function formatDate(value?: string | Date | null) {
   if (!value) return 'No deadline';
@@ -106,20 +134,17 @@ export function StudentQuizWorkspace() {
   const classItems = useMemo(
     () =>
       (classDefinitions ?? [])
-        .map((classDefinition: any) => ({
-          classTitle:
-            classDefinition.classDetails?.title ||
-            classDefinition.classDetails?.name ||
-            'Untitled class',
-          classUuid: (classDefinition.uuid || classDefinition.classDetails?.uuid) as
-            | string
-            | undefined,
-          courseTitle:
-            classDefinition.course?.name ||
-            classDefinition.course?.title ||
-            classDefinition.classDetails?.course_name ||
-            'Untitled course',
-        }))
+        .map((classDefinition: StudentClassDefinitionRow) => {
+          const classDetails = classDefinition.classDetails as ResolvedClassDetails | undefined;
+
+          return {
+            classTitle: getClassTitle(classDetails),
+            classUuid:
+              classDefinition.uuid || classDetails?.uuid || classDetails?.class_definition?.uuid,
+            courseTitle:
+              classDefinition.course?.name || classDetails?.course_name || 'Untitled course',
+          };
+        })
         .filter(
           (
             classItem
@@ -148,7 +173,8 @@ export function StudentQuizWorkspace() {
       classItems.map((classItem, index) => {
         const enrollments = classEnrollmentQueries[index]?.data?.data ?? [];
         const matchingEnrollment =
-          enrollments.find((enrollment: any) => enrollment.student_uuid === student?.uuid) ?? null;
+          enrollments.find((enrollment: Enrollment) => enrollment.student_uuid === student?.uuid) ??
+          null;
 
         return {
           ...classItem,
@@ -173,7 +199,7 @@ export function StudentQuizWorkspace() {
     () =>
       classMetaList.flatMap((classMeta, index) => {
         const schedules = quizScheduleQueries[index]?.data?.data ?? [];
-        return schedules.map((schedule: any) => ({ classMeta, schedule }));
+        return schedules.map((schedule: ClassQuizSchedule) => ({ classMeta, schedule }));
       }),
     [classMetaList, quizScheduleQueries]
   );
@@ -205,6 +231,7 @@ export function StudentQuizWorkspace() {
     queries: quizUuids.map(quizUuid => ({
       ...getQuizAttemptsOptions({
         path: { quizUuid },
+        query: { pageable: {} },
       }),
       enabled: !!quizUuid,
       staleTime: 60 * 1000,
@@ -213,7 +240,7 @@ export function StudentQuizWorkspace() {
   });
 
   const quizMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, Quiz>();
     quizUuids.forEach((quizUuid, index) => {
       const quiz = quizDetailQueries[index]?.data?.data;
       if (quiz) {
@@ -224,7 +251,7 @@ export function StudentQuizWorkspace() {
   }, [quizDetailQueries, quizUuids]);
 
   const attemptMap = useMemo(() => {
-    const map = new Map<string, any[]>();
+    const map = new Map<string, QuizAttempt[]>();
 
     quizUuids.forEach((quizUuid, index) => {
       const attempts = quizAttemptQueries[index]?.data?.data?.content ?? [];
@@ -245,7 +272,7 @@ export function StudentQuizWorkspace() {
           if (!quiz) return null;
 
           const attempts = (attemptMap.get(quizUuid) ?? []).filter(
-            (attempt: any) =>
+            (attempt: QuizAttempt) =>
               !classMeta.enrollmentUuid || attempt.enrollment_uuid === classMeta.enrollmentUuid
           );
 
@@ -287,7 +314,7 @@ export function StudentQuizWorkspace() {
       row => row.schedule?.visible_at || row.schedule?.due_at
     ).length;
     const completed = quizRows.filter(row =>
-      row.attempts.some((attempt: any) => Boolean(attempt.is_completed))
+      row.attempts.some((attempt: QuizAttempt) => Boolean(attempt.is_completed))
     ).length;
 
     return { attempted, completed, scheduled, total };
@@ -297,8 +324,10 @@ export function StudentQuizWorkspace() {
     selectedQuiz?.quiz?.uuid as string,
     !!selectedQuiz
   );
+  const quizQuestions = questions as QuizQuestionWithOptions[];
+  const selectedQuizUuid = selectedQuiz?.quiz?.uuid ?? '';
 
-  const selectedAnswers = selectedQuiz ? (answerDrafts[selectedQuiz.quiz.uuid] ?? {}) : {};
+  const selectedAnswers = selectedQuizUuid ? (answerDrafts[selectedQuizUuid] ?? {}) : {};
 
   const isLoading =
     classDefinitionsLoading ||
@@ -312,8 +341,8 @@ export function StudentQuizWorkspace() {
 
     setAnswerDrafts(current => ({
       ...current,
-      [selectedQuiz.quiz.uuid]: {
-        ...(current[selectedQuiz.quiz.uuid] ?? {}),
+      [selectedQuizUuid]: {
+        ...(current[selectedQuizUuid] ?? {}),
         [questionUuid]: value,
       },
     }));
@@ -581,19 +610,16 @@ export function StudentQuizWorkspace() {
                 ) : (
                   questions
                     .slice()
-                    .sort(
-                      (left: any, right: any) =>
-                        (left.display_order ?? 0) - (right.display_order ?? 0)
-                    )
-                    .map((question: any, index: number) => {
+                    .sort((left, right) => (left.display_order ?? 0) - (right.display_order ?? 0))
+                    .map((question: QuizQuestionWithOptions, index: number) => {
+                      const questionUuid = question.uuid ?? `question-${index}`;
                       const optionCount = Array.isArray(question.options)
                         ? question.options.length
                         : 0;
                       const multipleAnswersAllowed =
                         String(question.question_type || '').toUpperCase() === 'MULTIPLE_CHOICE' &&
-                        (question.options ?? []).filter((option: any) => option.is_correct).length >
-                          1;
-                      const currentValue = selectedAnswers[question.uuid];
+                        (question.options ?? []).filter(option => option.is_correct).length > 1;
+                      const currentValue = selectedAnswers[questionUuid];
                       const selectedOptionValues = Array.isArray(currentValue)
                         ? currentValue
                         : currentValue
@@ -601,7 +627,7 @@ export function StudentQuizWorkspace() {
                           : [];
 
                       return (
-                        <Card key={question.uuid} className='border-border/60'>
+                        <Card key={questionUuid} className='border-border/60'>
                           <CardContent className='space-y-4 p-5'>
                             <div className='space-y-2'>
                               <div className='flex flex-wrap items-center gap-2'>
@@ -630,15 +656,16 @@ export function StudentQuizWorkspace() {
                                 {(question.options ?? [])
                                   .slice()
                                   .sort(
-                                    (left: any, right: any) =>
+                                    (left, right) =>
                                       (left.display_order ?? 0) - (right.display_order ?? 0)
                                   )
-                                  .map((option: any) => {
-                                    const isSelected = selectedOptionValues.includes(option.uuid);
+                                  .map(option => {
+                                    const optionUuid = option.uuid ?? '';
+                                    const isSelected = selectedOptionValues.includes(optionUuid);
 
                                     return (
                                       <button
-                                        key={option.uuid}
+                                        key={optionUuid}
                                         type='button'
                                         className={cx(
                                           'border-border/60 bg-background/70 flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition',
@@ -646,8 +673,8 @@ export function StudentQuizWorkspace() {
                                         )}
                                         onClick={() =>
                                           toggleOption(
-                                            question.uuid,
-                                            option.uuid,
+                                            questionUuid,
+                                            optionUuid,
                                             multipleAnswersAllowed
                                           )
                                         }
@@ -682,9 +709,7 @@ export function StudentQuizWorkspace() {
                                     : 3
                                 }
                                 value={typeof currentValue === 'string' ? currentValue : ''}
-                                onChange={event =>
-                                  setAnswerValue(question.uuid, event.target.value)
-                                }
+                                onChange={event => setAnswerValue(questionUuid, event.target.value)}
                                 placeholder='Type your answer here'
                               />
                             )}
@@ -704,7 +729,7 @@ export function StudentQuizWorkspace() {
                     if (!selectedQuiz?.quiz?.uuid) return;
                     setAnswerDrafts(current => ({
                       ...current,
-                      [selectedQuiz.quiz.uuid]: {},
+                      [selectedQuizUuid]: {},
                     }));
                   }}
                 >

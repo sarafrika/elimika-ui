@@ -26,6 +26,8 @@
       "includes": [
         "src/features/profile/landing/**",
         "src/features/dashboard/courses/**",
+        "app/dashboard/_components/**",
+        "app/dashboard/@student/_components/**",
         "hooks/use-course-classes.tsx",
         "hooks/use-program-classes.tsx",
         "hooks/use-search-training-instructors.tsx"
