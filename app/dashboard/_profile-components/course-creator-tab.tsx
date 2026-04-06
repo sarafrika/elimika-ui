@@ -2,10 +2,23 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Briefcase,
+  FileText,
+  GraduationCap,
+  Grip,
+  Paperclip,
+  Pencil,
+  PlusCircle,
+  Trash2,
+  Upload,
+  X,
+  XCircle,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
-
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,7 +45,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-
+import { CAREER_COLORS } from '../../../lib/color-themes';
 import {
   addCourseCreatorEducationMutation,
   addCourseCreatorExperienceMutation,
@@ -49,22 +62,6 @@ import {
   updateCourseCreatorExperienceMutation,
   uploadCourseCreatorDocumentMutation,
 } from '../../../services/client/@tanstack/react-query.gen';
-
-import {
-  Briefcase,
-  FileText,
-  GraduationCap,
-  Grip,
-  Paperclip,
-  Pencil,
-  PlusCircle,
-  Trash2,
-  Upload,
-  X,
-  XCircle,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { CAREER_COLORS } from '../../../lib/color-themes';
 import type { DomainTabProps, TabDefinition } from './types';
 
 function TabShell({ children }: { children: React.ReactNode }) {
@@ -271,9 +268,7 @@ function EducationViewCard({ edu }: { edu: any }) {
             </Badge>
           )}
         </div>
-        <p className='text-muted-foreground text-sm'>
-          {edu.school_name}
-        </p>
+        <p className='text-muted-foreground text-sm'>{edu.school_name}</p>
         {edu.full_description && (
           <p className='text-muted-foreground pt-1 text-xs'>{edu.full_description}</p>
         )}
@@ -302,7 +297,9 @@ function CreatorCertificateUploadSheet({
 
   const invalidateDocs = () =>
     qc.invalidateQueries({
-      queryKey: getCourseCreatorDocumentsQueryKey({ path: { courseCreatorUuid: sharedProfile?.uuid } }),
+      queryKey: getCourseCreatorDocumentsQueryKey({
+        path: { courseCreatorUuid: sharedProfile?.uuid },
+      }),
     });
 
   const resetForm = () => {
@@ -330,13 +327,8 @@ function CreatorCertificateUploadSheet({
         body: { file: stagedFile },
         path: { courseCreatorUuid: sharedProfile?.uuid },
         query: {
-          title: uploadMeta.title,
-          description: uploadMeta.description,
           document_type_uuid: '',
           education_uuid: '',
-          experience_uuid: '',
-          expiry_date: '',
-          membership_uuid: '',
         },
       },
       {
@@ -356,10 +348,13 @@ function CreatorCertificateUploadSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={nextOpen => {
-      onOpenChange(nextOpen);
-      if (!nextOpen && !isUploading) resetForm();
-    }}>
+    <Sheet
+      open={open}
+      onOpenChange={nextOpen => {
+        onOpenChange(nextOpen);
+        if (!nextOpen && !isUploading) resetForm();
+      }}
+    >
       <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-xl'>
         <SheetHeader>
           <SheetTitle>Upload New Certificate</SheetTitle>
@@ -385,7 +380,7 @@ function CreatorCertificateUploadSheet({
             }}
           >
             <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-              <div className='py-3' >
+              <div className='py-3'>
                 <p className='text-sm font-medium'>Drag and drop a certificate file here</p>
                 <p className='text-muted-foreground text-xs'>PDF, DOC, JPG or PNG up to 10 MB</p>
               </div>
@@ -447,7 +442,9 @@ function CreatorCertificateUploadSheet({
                   handleFileSelect(e.target.files?.[0]);
                 }}
               />
-              <p className='text-muted-foreground text-xs'>No file selected yet. Use drag and drop or choose a file.</p>
+              <p className='text-muted-foreground text-xs'>
+                No file selected yet. Use drag and drop or choose a file.
+              </p>
             </div>
           )}
 
@@ -491,7 +488,9 @@ function CreatorCertificateDocumentsSection({
 
   const invalidateDocs = () =>
     qc.invalidateQueries({
-      queryKey: getCourseCreatorDocumentsQueryKey({ path: { courseCreatorUuid: sharedProfile?.uuid } }),
+      queryKey: getCourseCreatorDocumentsQueryKey({
+        path: { courseCreatorUuid: sharedProfile?.uuid },
+      }),
     });
 
   const handleDelete = (uuid: string) => {
@@ -638,10 +637,7 @@ function CreatorVerifiedDocumentsSection({ sharedProfile }: DomainTabProps) {
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    select: response =>
-      (response?.data ?? []).filter(
-        doc => doc.is_verified || doc.verification_status === 'VERIFIED'
-      ),
+    select: response => (response?.data ?? []).filter(doc => doc.is_verified),
   });
 
   return (
@@ -866,13 +862,13 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
 
         if (!ed.uuid) {
           const resp = await addEducationMut.mutateAsync({
-            body: { ...ed, course_creator_uuid: sharedProfile?.uuid },
+            body: { ...ed, course_creator_uuid: sharedProfile?.uuid } as any,
             path: { courseCreatorUuid: sharedProfile.uuid },
           });
           educationUuid = resp?.data?.uuid;
         } else {
           await updateEducationMut.mutateAsync({
-            body: { ...ed, course_creator_uuid: sharedProfile?.uuid },
+            body: { ...ed, course_creator_uuid: sharedProfile?.uuid } as any,
             path: { educationUuid: ed.uuid, courseCreatorUuid: sharedProfile.uuid },
           });
         }
@@ -884,12 +880,7 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
               path: { courseCreatorUuid: sharedProfile?.uuid },
               query: {
                 education_uuid: educationUuid,
-                title: ed.school_name,
-                description: ed.field_of_study,
-                document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f', // contnent type uuid for pdfs
-                experience_uuid: '',
-                expiry_date: '',
-                membership_uuid: '',
+                document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
               },
             },
             {
@@ -1138,18 +1129,18 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 self-end">
+                    <div className='grid grid-cols-1 gap-4 self-end md:grid-cols-2'>
                       {/* Hidden start year */}
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_started`}
                         render={({ field }) => (
-                          <FormItem className="hidden">
+                          <FormItem className='hidden'>
                             <FormLabel>Start year</FormLabel>
                             <FormControl>
                               <Input
-                                type="number"
-                                placeholder="YYYY"
+                                type='number'
+                                placeholder='YYYY'
                                 min={1900}
                                 max={2099}
                                 {...field}
@@ -1165,12 +1156,12 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                         control={form.control}
                         name={`educations.${index}.year_completed`}
                         render={({ field }) => (
-                          <FormItem className="md:col-start-2">
+                          <FormItem className='md:col-start-2'>
                             <FormLabel>End year</FormLabel>
                             <FormControl>
                               <Input
-                                type="number"
-                                placeholder="YYYY"
+                                type='number'
+                                placeholder='YYYY'
                                 min={1900}
                                 max={2099}
                                 disabled={form.watch(`educations.${index}.is_recent_qualification`)}
@@ -1179,16 +1170,16 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                               />
                             </FormControl>
 
-                            <div className="mt-2">
+                            <div className='mt-2'>
                               <FormField
                                 control={form.control}
                                 name={`educations.${index}.is_recent_qualification`}
                                 render={({ field: cb }) => (
-                                  <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                                  <FormItem className='flex flex-row items-center gap-2 space-y-0'>
                                     <FormControl>
                                       <Checkbox checked={cb.value} onCheckedChange={cb.onChange} />
                                     </FormControl>
-                                    <FormLabel className="cursor-pointer text-sm font-normal">
+                                    <FormLabel className='cursor-pointer text-sm font-normal'>
                                       Currently studying here
                                     </FormLabel>
                                   </FormItem>
@@ -1272,7 +1263,7 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
 const experienceSchema = z.object({
   uuid: z.string().optional(),
   instructor_uuid: z.string(),
-  organization_name: z.string().min(1, 'Organisation is required'),
+  organisation_name: z.string().min(1, 'Organisation is required'),
   position: z.string().min(1, 'Job title is required'),
   responsibilities: z.string().optional().nullable(),
   start_date: z.string().min(1, 'Start date is required'),
@@ -1316,7 +1307,7 @@ function ExperienceViewCard({ item, color }: { item: any; color: string }) {
       </div>
       <p className='text-foreground text-sm font-semibold'>{item.position}</p>
       <div className='flex items-center gap-2'>
-        <p className='text-muted-foreground text-xs'>{item.organization_name}</p>
+        <p className='text-muted-foreground text-xs'>{item.organisation_name}</p>
         {item.experience_level && (
           <>
             <span className='text-muted-foreground'>•</span>
@@ -1385,7 +1376,7 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
 
   const blankEntry = (): ExpEntry => ({
     instructor_uuid: sharedProfile?.uuid ?? '',
-    organization_name: '',
+    organisation_name: '',
     position: '',
     responsibilities: '',
     start_date: '',
@@ -1396,7 +1387,7 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
   const toFormEntry = (exp: any): ExpEntry => ({
     uuid: exp.uuid,
     instructor_uuid: sharedProfile?.uuid ?? '',
-    organization_name: exp.organization_name ?? '',
+    organisation_name: exp.organisation_name ?? '',
     position: exp.position ?? '',
     responsibilities: exp.responsibilities ?? '',
     start_date: exp.start_date ? new Date(exp.start_date).toISOString().slice(0, 7) : '',
@@ -1456,7 +1447,7 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
 
         if (!exp.uuid) {
           const resp = await addExperienceMut.mutateAsync({
-            body,
+            body: body as any,
             path: { courseCreatorUuid: sharedProfile.uuid },
           });
           if (resp?.data) {
@@ -1466,7 +1457,7 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
           }
         } else {
           await updateExperienceMut.mutateAsync({
-            body,
+            body: body as any,
             path: { experienceUuid: exp.uuid, courseCreatorUuid: sharedProfile.uuid },
           });
         }
@@ -1507,8 +1498,9 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
             <div className='flex items-center justify-between'>
               <div>
                 <CardTitle className='text-sm font-semibold'>Career Timeline</CardTitle>
-                <p className='mt-2 text-xs text-muted-foreground'>
-                  Tell your career story—highlight your roles, experiences, and milestones that define your professional journey.
+                <p className='text-muted-foreground mt-2 text-xs'>
+                  Tell your career story—highlight your roles, experiences, and milestones that
+                  define your professional journey.
                 </p>
               </div>
 
@@ -1522,7 +1514,6 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
                 <Pencil className='h-3.5 w-3.5' /> Edit
               </Button>
             </div>
-
           </CardHeader>
           <CardContent className='pt-0'>
             {serverExperiences.length === 0 ? (
@@ -1588,7 +1579,7 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
                         <Grip className='text-muted-foreground mt-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100' />
                         <div>
                           <p className='text-foreground text-sm leading-snug font-semibold'>
-                            {form.watch(`experiences.${index}.organization_name`) ||
+                            {form.watch(`experiences.${index}.organisation_name`) ||
                               'New Experience'}
                           </p>
                           <p className='text-muted-foreground text-xs'>
@@ -1611,7 +1602,7 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
                     <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                       <FormField
                         control={form.control}
-                        name={`experiences.${index}.organization_name`}
+                        name={`experiences.${index}.organisation_name`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Organisation</FormLabel>

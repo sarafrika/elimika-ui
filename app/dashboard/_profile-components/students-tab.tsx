@@ -1,13 +1,13 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { FileText, Mail, Phone, Shield, Tag, User, Users, VenusIcon } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   getClassDefinitionOptions,
   getCourseByUuidOptions,
@@ -75,7 +75,7 @@ function StudentAboutTab({ sharedProfile, userUuid }: DomainTabProps) {
                 <InfoRow
                   icon={<Tag className='text-muted-foreground h-4 w-4' />}
                   label='Age Group'
-                  value={student.demographic_tag || 'Not provided'}
+                  value={sharedProfile?.demographic_tag || 'Not provided'}
                 />
               )}
             </CardContent>
@@ -96,7 +96,7 @@ function StudentAboutTab({ sharedProfile, userUuid }: DomainTabProps) {
                   {sharedProfile?.full_name || 'Unnamed Student'}
                 </p>
                 <p className='text-muted-foreground text-xs'>
-                  {student?.demographic_tag || 'No demographic info'}
+                  {sharedProfile?.demographic_tag || 'No demographic info'}
                 </p>
               </div>
             </CardContent>
@@ -167,7 +167,7 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
   const { data: scheduleData, isLoading: isLoadingSchedule } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: sharedProfile?.uuid as string },
-      query: { start: '2000-01-01', end: '2100-12-31' },
+      query: { start: new Date('2000-01-01'), end: new Date('2100-12-31') },
     }),
     enabled: !!sharedProfile?.uuid,
   });

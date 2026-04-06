@@ -1,5 +1,5 @@
-import type { UserProfileType } from '@/lib/types';
 import React from 'react';
+import type { UserProfileType } from '@/lib/types';
 
 export type UserDomain = 'instructor' | 'student' | 'admin' | 'course_creator' | 'organization';
 
@@ -13,7 +13,7 @@ export interface SharedUserProfile {
   website?: string;
   bio?: string;
   is_online?: boolean;
-  dob?: string;
+  dob?: string | Date;
   profile_image_url?: string;
   address?: string;
   latitude?: number;
@@ -26,11 +26,12 @@ export interface SharedUserProfile {
   username?: string;
   user_no?: string;
   student_profile?: any;
+  demographic_tag?: string;
 }
 
 export interface DomainTabProps {
-  userUuid: string;
-  domain: UserDomain;
+  userUuid?: string;
+  domain?: UserDomain;
   sharedProfile: SharedUserProfile;
   isPublic?: boolean; // NEW: indicates if viewing someone else's profile
 }

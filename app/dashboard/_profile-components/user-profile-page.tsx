@@ -1,7 +1,7 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { useUserProfile } from '../../../context/profile-context';
 import { useUserDomain } from '../../../context/user-domain-context';
 import { creatorTabs } from './course-creator-tab';
@@ -18,28 +18,37 @@ const TAB_REGISTRY: Record<UserDomain, TabDefinition[]> = {
   organization: instructorTabs, // placeholder — create organisationTabs when ready
 };
 
+function normalizeDob(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value;
+  if (value instanceof Date) return value.toISOString();
+  return undefined;
+}
+
 // Profile normaliser
 function normaliseProfile(
   domain: UserDomain,
   user: ReturnType<typeof useUserProfile>
 ): SharedUserProfile | null {
+  const rawUser = user as any;
+
   switch (domain) {
     case 'instructor': {
-      const p = user?.instructor;
+      const p = rawUser?.instructor as any;
 
       if (!p) return null;
       return {
-        uuid: p.uuid,
-        active: user?.active,
-        user_uuid: p.user_uuid,
-        full_name: p.full_name,
-        email: user?.email,
-        phone: user?.phone_number,
+        uuid: p.uuid ?? rawUser?.uuid,
+        active: rawUser?.active,
+        user_uuid: p.user_uuid ?? rawUser?.uuid,
+        full_name: p.full_name ?? rawUser?.full_name ?? '',
+        email: rawUser?.email,
+        phone: rawUser?.phone_number,
         website: p.website,
-        dob: user?.dob,
+        dob: normalizeDob(rawUser?.dob),
         bio: p.bio,
-        avatar_url: user?.profile_image_url,
-        profile_image_url: user?.profile_image_url,
+        avatar_url: rawUser?.profile_image_url,
+        profile_image_url: rawUser?.profile_image_url,
         is_online: true,
         address: p.formatted_location,
         latitude: p.latitude,
@@ -47,105 +56,107 @@ function normaliseProfile(
         professional_headline: p.professional_headline,
         admin_verified: p.admin_verified,
         is_profile_complete: p.is_profile_complete,
-        gender: user?.gender,
-        user_no: user?.user_no,
+        gender: rawUser?.gender,
+        user_no: rawUser?.user_no,
       };
     }
 
     case 'student': {
-      const p = user?.student;
+      const p = rawUser?.student as any;
 
       if (!p) return null;
       return {
-        uuid: p.uuid,
-        active: user?.active,
-        user_uuid: p.user_uuid,
-        full_name: p.full_name,
-        email: user?.email,
-        phone: user?.phone_number,
-        dob: user?.dob,
-        avatar_url: user?.avatar_url,
-        profile_image_url: user?.profile_image_url,
+        uuid: p.uuid ?? rawUser?.uuid,
+        active: rawUser?.active,
+        user_uuid: p.user_uuid ?? rawUser?.uuid,
+        full_name: p.full_name ?? rawUser?.full_name ?? '',
+        email: rawUser?.email,
+        phone: rawUser?.phone_number,
+        dob: normalizeDob(rawUser?.dob),
+        avatar_url: rawUser?.avatar_url ?? rawUser?.profile_image_url,
+        profile_image_url: rawUser?.profile_image_url,
         is_online: false,
-        address: p.formatted_location || '',
+        address: p.formatted_location || p.address || '',
         latitude: p.latitude,
         longitude: p.longitude,
         bio: p.bio,
         professional_headline: p.professional_headline,
         admin_verified: p.admin_verified,
         is_profile_complete: p.is_profile_complete,
-        gender: user?.gender,
+        gender: rawUser?.gender,
         student_profile: p,
-        user_no: user?.user_no,
+        user_no: rawUser?.user_no,
+        demographic_tag: p.demographic_tag,
       };
     }
 
     case 'admin': {
-      const p = user?.admin;
+      const p = rawUser?.admin as any;
       if (!p) return null;
       return {
-        uuid: p.uuid,
-        active: user?.active,
-        user_uuid: p.user_uuid,
-        full_name: p.full_name,
-        email: user?.email,
-        phone: user?.phone_number,
-        avatar_url: user?.avatar_url,
-        profile_image_url: user?.profile_image_url,
+        uuid: p.uuid ?? rawUser?.uuid,
+        active: rawUser?.active,
+        user_uuid: p.user_uuid ?? rawUser?.uuid,
+        full_name: p.full_name ?? rawUser?.full_name ?? '',
+        email: rawUser?.email,
+        phone: rawUser?.phone_number,
+        avatar_url: rawUser?.avatar_url ?? rawUser?.profile_image_url,
+        profile_image_url: rawUser?.profile_image_url,
         address: p.formatted_location || '',
         latitude: p.latitude,
         longitude: p.longitude,
         professional_headline: p.professional_headline,
         admin_verified: p.admin_verified,
         is_profile_complete: p.is_profile_complete,
-        gender: user?.gender,
-        user_no: user?.user_no,
+        gender: rawUser?.gender,
+        user_no: rawUser?.user_no,
       };
     }
 
     case 'course_creator': {
-      const p = user?.courseCreator;
+      const p = rawUser?.courseCreator as any;
 
       if (!p) return null;
       return {
-        uuid: p.uuid,
-        active: user?.active,
-        user_uuid: p.user_uuid,
-        full_name: p.full_name,
-        email: user?.email,
-        phone: user?.phone_number,
-        avatar_url: user?.profile_image_url,
+        uuid: p.uuid ?? rawUser?.uuid,
+        active: rawUser?.active,
+        user_uuid: p.user_uuid ?? rawUser?.uuid,
+        full_name: p.full_name ?? rawUser?.full_name ?? '',
+        email: rawUser?.email,
+        phone: rawUser?.phone_number,
+        avatar_url: rawUser?.profile_image_url,
         bio: p.bio,
-        dob: user?.dob,
+        dob: normalizeDob(rawUser?.dob),
         address: (p as any)?.formatted_location || (p as any)?.location || p.address || '',
         latitude: (p as any)?.latitude,
         longitude: (p as any)?.longitude,
-        profile_image_url: user?.profile_image_url,
-        username: user?.username,
+        profile_image_url: rawUser?.profile_image_url,
+        username: rawUser?.username,
         website: p.website,
         professional_headline: p.professional_headline,
         is_profile_complete: p.is_profile_complete,
         is_online: true,
-        gender: user?.gender,
-        user_no: user?.user_no,
+        gender: rawUser?.gender,
+        user_no: rawUser?.user_no,
       };
     }
 
     case 'organization': {
-      const p = user?.organization;
+      const organizations = rawUser?.organizations;
+      const p = (Array.isArray(organizations) ? organizations[0] : rawUser?.organization) as any;
       if (!p) return null;
       return {
-        uuid: p.uuid,
-        active: user?.active,
-        user_uuid: p.user_uuid,
-        full_name: p.org_name ?? p.full_name,
-        email: user?.email,
-        dob: user?.dob,
-        phone: user?.phone_number,
-        avatar_url: user?.avatar_url,
+        uuid: p.uuid ?? rawUser?.uuid,
+        active: rawUser?.active,
+        user_uuid: p.user_uuid ?? rawUser?.uuid,
+        full_name: p.org_name ?? p.full_name ?? '',
+        email: rawUser?.email,
+        dob: normalizeDob(rawUser?.dob),
+        phone: rawUser?.phone_number,
+        avatar_url: rawUser?.avatar_url ?? rawUser?.profile_image_url,
         address: p.formatted_location || '',
-        gender: user?.gender,
-        user_no: user?.user_no,
+        gender: rawUser?.gender,
+        user_no: rawUser?.user_no,
       };
     }
   }
@@ -158,6 +169,8 @@ function DomainBadge({
   domain: UserDomain;
   user: ReturnType<typeof useUserProfile>;
 }) {
+  const rawUser = user as any;
+
   if (domain === 'instructor' && user?.instructor?.admin_verified) {
     return (
       <Badge
@@ -168,7 +181,7 @@ function DomainBadge({
       </Badge>
     );
   }
-  if (domain === 'admin' && user?.admin?.admin_verified) {
+  if (domain === 'admin' && rawUser?.admin?.admin_verified) {
     return (
       <Badge
         variant='outline'
@@ -198,7 +211,10 @@ function DomainBadge({
       </Badge>
     );
   }
-  if (domain === 'organization' && user?.organizations?.admin_verified) {
+  const organizationRecord = Array.isArray(rawUser?.organizations)
+    ? rawUser.organizations[0]
+    : rawUser?.organization;
+  if (domain === 'organization' && organizationRecord?.admin_verified) {
     return (
       <Badge
         variant='outline'
