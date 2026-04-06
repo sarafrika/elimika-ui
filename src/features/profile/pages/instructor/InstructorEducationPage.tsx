@@ -1,6 +1,6 @@
 'use client';
 
-import EducationSettings from '@/app/dashboard/@instructor/profile/education/_component/EducationForm';
+import EducationSettings from '@/src/features/profile/components/instructor/EducationSettings';
 
 export default function InstructorEducationPage() {
   return <EducationSettings />;

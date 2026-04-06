@@ -1,6 +1,6 @@
 'use client';
 
-import ProfessionalExperienceSettings from '@/app/dashboard/@instructor/profile/experience/_component/InstructorExperienceForm';
+import ProfessionalExperienceSettings from '@/src/features/profile/components/instructor/ProfessionalExperienceSettings';
 
 export default function InstructorExperiencePage() {
   return <ProfessionalExperienceSettings />;

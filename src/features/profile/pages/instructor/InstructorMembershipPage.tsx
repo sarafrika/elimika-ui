@@ -1,4 +1,4 @@
-import ProfessionalBodySettings from '@/app/dashboard/@instructor/profile/professional-membership/_component/MembershipForm';
+import ProfessionalBodySettings from '@/src/features/profile/components/instructor/ProfessionalMembershipSettings';
 
 export default function InstructorMembershipPage() {
   return <ProfessionalBodySettings />;

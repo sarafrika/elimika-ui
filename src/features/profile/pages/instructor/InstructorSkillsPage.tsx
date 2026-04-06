@@ -2,11 +2,11 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import SkillsSettings from '@/app/dashboard/@instructor/profile/skills/_component/InstructorSkillsForm';
 import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
 import type { InstructorSkill } from '@/services/api/schema';
 import { getInstructorSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
+import SkillsSettings from '@/src/features/profile/components/instructor/SkillsSettings';
 
 export default function InstructorSkillsPage() {
   const instructor = useInstructor();
