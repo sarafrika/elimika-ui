@@ -28,6 +28,8 @@
         "src/features/dashboard/courses/**",
         "app/dashboard/_components/**",
         "app/dashboard/@student/_components/**",
+        "app/class-invite/page.tsx",
+        "app/dashboard/@admin/all-courses/**",
         "hooks/use-course-classes.tsx",
         "hooks/use-program-classes.tsx",
         "hooks/use-search-training-instructors.tsx"
