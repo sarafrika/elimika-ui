@@ -215,10 +215,10 @@ export default function InstructorProfile() {
           response.forEach((resp, i) => {
             if (resp.error) {
               const { error } = resp.error as { error: Record<string, string> };
-              Object.keys(error).forEach(key => {
-                const fieldName = `${i === 0 ? 'user' : 'instructor'}.${key}` as any;
-                form.setError(fieldName, error[key] as any);
-              });
+              const firstError = Object.values(error)[0];
+              if (firstError) {
+                toast.error(firstError);
+              }
               hasErrors = true;
             }
           });
@@ -441,8 +441,6 @@ export default function InstructorProfile() {
                         <SelectContent>
                           <SelectItem value='MALE'>Male</SelectItem>
                           <SelectItem value='FEMALE'>Female</SelectItem>
-                          <SelectItem value='OTHER'>Other</SelectItem>
-                          <SelectItem value='PREFER_NOT_TO_SAY'>Prefer not to say</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -546,8 +544,8 @@ export default function InstructorProfile() {
                           typeof coords?.latitude === 'number' &&
                           typeof coords?.longitude === 'number'
                         ) {
-                          form.setValue('instructor.latitude', coords.latitude as any);
-                          form.setValue('instructor.longitude', coords.longitude as any);
+                          form.setValue('instructor.latitude', coords.latitude);
+                          form.setValue('instructor.longitude', coords.longitude);
                         }
                       }}
                     />

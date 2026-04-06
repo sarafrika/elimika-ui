@@ -33,8 +33,10 @@ import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { updateUserMutation } from '@/services/client/@tanstack/react-query.gen';
+import {
+  updateUserMutation,
+  uploadProfileImageMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import {
   ProfileFormSection,
   ProfileFormShell,
@@ -53,9 +55,9 @@ const StudentProfileSchema = z.object({
   email: z.string().email(),
   phone_number: z.string(),
   profile_image_url: z.string(),
-  dob: z.any(),
+  dob: z.date().optional(),
   username: z.string(),
-  gender: z.any(),
+  gender: z.enum(['MALE', 'FEMALE']).optional(),
 });
 
 type StudentProfileType = z.infer<typeof StudentProfileSchema>;
@@ -87,73 +89,19 @@ export default function StudentProfileGeneralForm() {
       email: user?.email || '',
       phone_number: user?.phone_number || '',
       profile_image_url: user?.profile_image_url || '',
-      dob: user?.dob as any,
+      dob: user?.dob ? new Date(user.dob) : undefined,
       username: user?.username || '',
-      gender: user?.gender as any,
+      gender: user?.gender === 'MALE' || user?.gender === 'FEMALE' ? user.gender : undefined,
     },
   });
 
   const userMutation = useMutation(updateUserMutation());
-  const pictureMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/users/{userUuid}/profile-image'
-  );
+  const pictureMutation = useMutation(uploadProfileImageMutation());
 
   const { errors } = useMultiMutations([userMutation]);
 
-  // ✅ Proper error setting on form fields
-  if (errors && errors.length > 0) {
-    errors.forEach((error: any) => {
-      if (error?.error && typeof error.error === 'object') {
-        for (const key in error.error) {
-          const value = error.error[key];
-          if (key in user!) {
-            form.setError(`user.${key}` as any, {
-              type: 'manual',
-              message: value,
-            });
-          }
-        }
-      }
-    });
-  }
-
   const [profileUrl, setProfileUrl] = useState<string | null>(user?.profile_image_url ?? null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  async function uploadProfileImage(
-    file: File,
-    userUuid: string,
-    uploadMutation: (args: any, options: any) => void,
-    onSuccess: (url: string) => void,
-    onError: (error?: any) => void
-  ) {
-    if (!file) {
-      onError?.(new Error('No file provided'));
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      onError?.(new Error('File size should be less than 5MB'));
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('profileImage', file);
-
-    uploadMutation(
-      { body: formData, params: { path: { userUuid } } },
-      {
-        onSuccess: (data: any) => {
-          const url = data?.profile_image_url;
-          if (url) {
-            onSuccess(url);
-          } else {
-            onError?.(new Error('No image URL returned'));
-          }
-        },
-      }
-    );
-  }
 
   const handleSubmit = (data: StudentProfileType) => {
     requestConfirmation({
@@ -167,7 +115,7 @@ export default function StudentProfileGeneralForm() {
             {
               body: {
                 ...data,
-                dob: data.dob ?? '',
+                dob: data.dob ?? (user?.dob ? new Date(user.dob) : new Date()),
                 active: user?.active as boolean,
               },
               path: { uuid: user?.uuid as string },
@@ -199,14 +147,18 @@ export default function StudentProfileGeneralForm() {
       .join(' ');
   };
 
-  const domainBadges =
-    // @ts-expect-error
-    user?.user_domain?.map(domain =>
-      domain
-        .split('_')
-        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
-    ) ?? [];
+  const domainBadges = (
+    Array.isArray(user?.user_domain)
+      ? user.user_domain
+      : user?.user_domain
+        ? [user.user_domain]
+        : []
+  ).map(domain =>
+    domain
+      .split('_')
+      .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
+  );
 
   return (
     <ProfileFormShell
@@ -226,8 +178,10 @@ export default function StudentProfileGeneralForm() {
               <AlertTitle>We couldn&apos;t save your changes</AlertTitle>
               <AlertDescription>
                 <ul className='ml-4 list-disc space-y-1 text-sm'>
-                  {errors.map((error: any, i: number) => (
-                    <li key={i}>{error.message}</li>
+                  {errors.map((error, i: number) => (
+                    <li key={i}>
+                      {error instanceof Error ? error.message : 'Unable to save profile changes'}
+                    </li>
                   ))}
                 </ul>
               </AlertDescription>
@@ -281,16 +235,29 @@ export default function StudentProfileGeneralForm() {
                               const file = event.target.files?.[0];
                               if (!file) return;
 
-                              uploadProfileImage(
-                                file,
-                                user?.uuid as string,
-                                pictureMutation.mutate,
-                                url => {
-                                  setProfileUrl(url);
-                                  toast.success('Profile photo updated');
-                                  field.onChange(url);
+                              if (file.size > 5 * 1024 * 1024) {
+                                toast.error('File size should be less than 5MB');
+                                return;
+                              }
+
+                              pictureMutation.mutate(
+                                {
+                                  body: { profileImage: file },
+                                  path: { userUuid: user?.uuid as string },
                                 },
-                                () => toast.error('Failed to upload profile photo')
+                                {
+                                  onSuccess: data => {
+                                    const url = data?.profile_image_url;
+                                    if (!url) {
+                                      toast.error('Failed to upload profile photo');
+                                      return;
+                                    }
+                                    setProfileUrl(url);
+                                    toast.success('Profile photo updated');
+                                    field.onChange(url);
+                                  },
+                                  onError: () => toast.error('Failed to upload profile photo'),
+                                }
                               );
                             }}
                           />
@@ -399,8 +366,6 @@ export default function StudentProfileGeneralForm() {
                       <SelectContent>
                         <SelectItem value='MALE'>Male</SelectItem>
                         <SelectItem value='FEMALE'>Female</SelectItem>
-                        <SelectItem value='OTHER'>Other</SelectItem>
-                        <SelectItem value='PREFER_NOT_TO_SAY'>Prefer not to say</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

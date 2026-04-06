@@ -28,7 +28,7 @@ export default function AdminProfile() {
       email: 'admin@example.com',
       phone_number: '+1 (555) 000-0000',
       username: 'admin_username',
-      gender: 'PREFER_NOT_TO_SAY',
+      gender: 'FEMALE',
     },
   });
 
