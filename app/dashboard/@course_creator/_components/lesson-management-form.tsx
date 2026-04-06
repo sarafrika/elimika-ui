@@ -1,6 +1,45 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import clsx from 'clsx';
+import {
+  BookOpen,
+  BookOpenCheck,
+  ChevronDown,
+  ChevronRight,
+  CircleCheckBig,
+  ClipboardCheck,
+  Clock,
+  Eye,
+  FileAudio,
+  FileIcon,
+  FileText,
+  FileVideo,
+  Grip,
+  LinkIcon,
+  MoreVertical,
+  PenLine,
+  PlusCircle,
+  Save,
+  Trash,
+  VideoIcon,
+  X,
+  Youtube,
+} from 'lucide-react';
+import Link from 'next/link';
+import React, { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type Control,
+  type FieldErrors,
+  type SubmitHandler,
+  useFieldArray,
+  useForm,
+} from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import RichTextRenderer from '@/components/editors/richTextRenders';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -36,43 +75,6 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  BookOpen,
-  BookOpenCheck,
-  ChevronDown,
-  ChevronRight,
-  CircleCheckBig,
-  ClipboardCheck,
-  Clock,
-  Eye,
-  FileAudio,
-  FileIcon,
-  FileText,
-  FileVideo,
-  Grip,
-  LinkIcon,
-  MoreVertical,
-  PenLine,
-  PlusCircle,
-  Save,
-  Trash,
-  VideoIcon,
-  X,
-  Youtube,
-} from 'lucide-react';
-import React, { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  type Control,
-  type FieldErrors,
-  type SubmitHandler,
-  useFieldArray,
-  useForm,
-} from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
-
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { addCourseAssessment } from '@/services/client';
 import {
   addCourseLessonMutation,
@@ -89,9 +91,13 @@ import {
   updateLessonContentMutation,
   uploadLessonMediaMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import clsx from 'clsx';
-import Link from 'next/link';
+import type {
+  ContentType as ApiContentType,
+  Course,
+  CourseAssessment,
+  Lesson,
+  LessonContent,
+} from '@/services/client/types.gen';
 import { useUserProfile } from '../../../../context/profile-context';
 import { cn } from '../../../../lib/utils';
 import { useRubricsWithCriteriaAndScoring } from '../rubrics/rubric-chaining';
@@ -106,6 +112,41 @@ export const CONTENT_TYPES = {
   IMAGE: 'Image',
 } as const;
 
+type SubmitCallback<T = void> = (data: T) => void;
+type RefetchCallback = () => void | Promise<void>;
+type ResourceLink = { title?: string; url?: string };
+type LessonListItem = Lesson & {
+  resources?: ResourceLink[];
+  duration_hours?: number;
+  duration_minutes?: number;
+};
+type LessonContentListItem = LessonContent & {
+  content_type_key?: ContentType;
+};
+type LessonPageData = { content?: LessonListItem[] };
+type AssessmentPageData = { content?: CourseAssessment[] };
+type LessonContentMap = Map<string, LessonContentListItem[]>;
+type AssessmentFormInitialValues = Partial<AssessmentFormValues>;
+type MutationVariables<T> = T extends {
+  mutationFn?: (variables: infer TVariables) => Promise<unknown>;
+}
+  ? TVariables
+  : never;
+type AddCourseLessonVariables = MutationVariables<ReturnType<typeof addCourseLessonMutation>>;
+type UpdateCourseLessonVariables = MutationVariables<ReturnType<typeof updateCourseLessonMutation>>;
+type AddLessonContentVariables = MutationVariables<ReturnType<typeof addLessonContentMutation>>;
+type UpdateLessonContentVariables = MutationVariables<
+  ReturnType<typeof updateLessonContentMutation>
+>;
+type ErrorLike = { message?: string; error?: unknown };
+
+const getErrorMessage = (value: unknown) => {
+  if (typeof value !== 'object' || value === null) return undefined;
+  if ('message' in value && typeof value.message === 'string') return value.message;
+  if ('error' in value && typeof value.error === 'string') return value.error;
+  return undefined;
+};
+
 const _contentItemSchema = z.object({
   contentType: z.enum(['AUDIO', 'VIDEO', 'TEXT', 'LINK', 'PDF', 'YOUTUBE'], {
     required_error: 'Content type is required',
@@ -113,7 +154,7 @@ const _contentItemSchema = z.object({
   contentTypeUuid: z.string(),
   contentCategory: z.string(),
   title: z.string().min(1, 'Title is required'),
-  value: z.any().optional(),
+  value: z.unknown().optional(),
   durationMinutes: z.coerce
     .number()
     .min(0, 'Duration minutes must be positive')
@@ -156,7 +197,9 @@ const lessonFormSchema = z.object({
     .min(1, 'Lesson description is required')
     .max(350, 'Description cannot exceed 500 characters'),
   objectives: z.string().max(400, 'Objectives cannot exceed 500 characters').optional(),
-  uuid: z.any(),
+  uuid: z.string().optional(),
+  duration_hours: z.coerce.number().min(0).optional(),
+  duration_minutes: z.coerce.number().min(0).max(59).optional(),
 });
 
 export type LessonFormValues = z.infer<typeof lessonFormSchema>;
@@ -238,20 +281,20 @@ type LessonListProps = {
   courseId: string;
   lessonId: string;
   courseTitle: string;
-  courseCategory: any;
+  courseCategory: unknown;
   // lessons
-  lessons: any;
-  lessonItems: any;
+  lessons?: LessonPageData;
+  lessonItems: unknown;
   isLoading: boolean;
   onAddLesson: () => void;
-  onEditLesson: (lesson: any) => void;
+  onEditLesson: (lesson: LessonListItem) => void;
   onDeleteLesson: (lessonId: string) => void;
-  onReorderLessons: (newLessons: any[]) => void;
+  onReorderLessons: (newLessons: LessonListItem[]) => void;
   // lesson contents
-  lessonContentsMap: Map<string, any[]>;
-  onAddLessonContent: (lesson: any) => void;
-  onEditLessonContent: (item: any) => void;
-  onDeleteLessonContent: (courseId: any, lessonId: any, contentId: any) => void;
+  lessonContentsMap: LessonContentMap;
+  onAddLessonContent: (lesson: LessonListItem) => void;
+  onEditLessonContent: (item: LessonContentListItem) => void;
+  onDeleteLessonContent: (courseId: string, lessonId: string, contentId: string) => void;
 };
 
 function LessonList({
@@ -273,7 +316,7 @@ function LessonList({
   onEditLessonContent,
   onDeleteLessonContent,
 }: LessonListProps) {
-  const _getTotalDuration = (lesson: any) => {
+  const _getTotalDuration = (lesson: LessonListItem) => {
     const hours = lesson.duration_hours || 0;
     const minutes = lesson.duration_minutes || 0;
     return hours * 60 + minutes;
@@ -295,20 +338,22 @@ function LessonList({
   }, [contentTypeList]);
 
   const enrichedLessonContentsMap = useMemo(() => {
-    const map = new Map();
+    const map = new Map<string, LessonContentListItem[]>();
 
-    lessons?.content.forEach((lesson: any) => {
-      const contents = lessonContentsMap.get(lesson.uuid) || [];
+    lessons?.content?.forEach((lesson: LessonListItem) => {
+      const contents = lesson.uuid ? lessonContentsMap.get(lesson.uuid) || [] : [];
 
       const enriched = contents.map(content => {
         const type = contentTypeData.find(item => item.uuid === content.content_type_uuid);
         return {
           ...content,
-          content_type_key: type?.name?.toUpperCase() || undefined,
+          content_type_key: (type?.name?.toUpperCase() as ContentType | undefined) || undefined,
         };
       });
 
-      map.set(lesson.uuid, enriched);
+      if (lesson.uuid) {
+        map.set(lesson.uuid, enriched);
+      }
     });
 
     return map;
@@ -341,11 +386,13 @@ function LessonList({
       ) : (
         <div className='space-y-8'>
           {lessons?.content
-            ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
-            ?.map((lesson: any, index: number) => {
+            ?.sort((a, b) => a.lesson_number - b.lesson_number)
+            ?.map((lesson, index: number) => {
               const isExpanded = expandedLessonId === lesson.uuid;
 
-              const enrichedContents = enrichedLessonContentsMap.get(lesson.uuid) || [];
+              const enrichedContents = lesson.uuid
+                ? enrichedLessonContentsMap.get(lesson.uuid) || []
+                : [];
 
               return (
                 <div
@@ -360,7 +407,10 @@ function LessonList({
                         <div className='flex flex-col items-start'>
                           <h3 className='text-lg font-medium'>{lesson.title}</h3>
                           <div className='text-muted-foreground text-sm'>
-                            <RichTextRenderer htmlString={lesson?.description} maxChars={150} />
+                            <RichTextRenderer
+                              htmlString={lesson.description ?? ''}
+                              maxChars={150}
+                            />
                           </div>
                         </div>
 
@@ -445,19 +495,24 @@ function LessonList({
                     <div className='mt-2 space-y-2 pl-8'>
                       {enrichedContents.length > 0 ? (
                         enrichedContents
-                          .sort((a: any, b: any) => a.display_order - b.display_order)
-                          .map((item: any) => (
+                          .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                          .map(item => (
                             <div
                               key={item.uuid}
                               className='group text-muted-foreground hover:bg-muted/50 flex cursor-default items-center justify-between gap-4 rounded-md p-4 text-sm transition-colors'
                             >
                               <div className='flex flex-col gap-1'>
                                 <div className='flex items-center gap-2'>
-                                  {getContentTypeIcon(item.content_type_key)}
+                                  {item.content_type_key
+                                    ? getContentTypeIcon(item.content_type_key)
+                                    : null}
                                   <span className='text-foreground font-medium'>{item.title}</span>
                                 </div>
                                 <div className='text-muted-foreground line-clamp-2 text-xs'>
-                                  <RichTextRenderer htmlString={item?.description} maxChars={150} />
+                                  <RichTextRenderer
+                                    htmlString={item.description ?? ''}
+                                    maxChars={150}
+                                  />
                                 </div>
                                 {item.content_text && (
                                   <div className='text-muted-foreground text-xs'>
@@ -501,6 +556,7 @@ function LessonList({
                                   <DropdownMenuItem
                                     className='text-destructive'
                                     onClick={() =>
+                                      item.uuid &&
                                       onDeleteLessonContent(courseId, item.lesson_uuid, item.uuid)
                                     }
                                   >
@@ -555,7 +611,7 @@ interface AppLessonCreationFormProps {
   courseId?: string | number;
   lessonId?: string | number;
   initialValues?: Partial<LessonFormValues>;
-  refetch: any;
+  refetch?: RefetchCallback;
 }
 
 function LessonCreationForm({
@@ -614,7 +670,7 @@ function LessonCreationForm({
       title: values?.title,
       description: values?.description as string,
       learning_objectives: values?.objectives as string,
-      status: course?.status as any,
+      status: (course?.status ?? 'DRAFT') as AddCourseLessonVariables['body']['status'],
       active: course?.active,
       is_published: course?.is_published,
       created_by: course?.course_creator_uuid,
@@ -623,7 +679,10 @@ function LessonCreationForm({
     };
 
     createLessonMutation.mutate(
-      { body: createLessonBody, path: { courseUuid: courseId as string } },
+      {
+        body: createLessonBody as AddCourseLessonVariables['body'],
+        path: { courseUuid: courseId as string },
+      },
       {
         onSuccess: data => {
           qc.invalidateQueries({
@@ -846,7 +905,8 @@ function LessonEditingForm({
       title: values?.title,
       description: values?.description ?? '',
       learning_objectives: values.description,
-      status: courseData?.data?.status,
+      status: (courseData?.data?.status ??
+        'DRAFT') as UpdateCourseLessonVariables['body']['status'],
       active: courseData?.data?.active,
       is_published: courseData?.data?.is_published,
       created_by: courseData?.data?.course_creator_uuid,
@@ -856,7 +916,7 @@ function LessonEditingForm({
 
     updateLessonMutation.mutate(
       {
-        body: updateLessonBody as any,
+        body: updateLessonBody as UpdateCourseLessonVariables['body'],
         path: {
           courseUuid: courseId as string,
           lessonUuid: lessonId as string,
@@ -1052,10 +1112,10 @@ const lessonContentSchema = z.object({
   content_text: z.string().optional(),
   content_category: z.string().min(1, 'Content category is required'),
   title: z.string().min(1, 'Title is required'),
-  description: z.any().optional(),
-  value: z.any().optional(),
+  description: z.string().optional(),
+  value: z.unknown().optional(),
   display_order: z.coerce.number().min(0, 'Order number must be positive'),
-  uuid: z.any().optional(),
+  uuid: z.string().optional(),
 });
 
 export type ContentFormValues = z.infer<typeof lessonContentSchema>;
@@ -1153,7 +1213,7 @@ function LessonContentForm({
 
   const selectedTypeObj = React.useMemo(() => {
     if (!contentTypeUuid) return undefined;
-    return contentTypeData.find((item: any) => item.uuid === contentTypeUuid);
+    return contentTypeData.find(item => item.uuid === contentTypeUuid);
   }, [contentTypeUuid, contentTypeData]);
 
   const selectedTypeKey = selectedTypeObj?.name?.toUpperCase() || undefined;
@@ -1179,7 +1239,7 @@ function LessonContentForm({
       content_type_uuid: data?.content_type_uuid,
       title: data?.title,
       description: data?.description,
-      content_text: data?.value,
+      content_text: typeof data.value === 'string' ? data.value : '',
       file_url: '',
       // file_size_bytes: 157200,
       // mime_type: '',
@@ -1197,7 +1257,7 @@ function LessonContentForm({
       if (isEditMode) {
         updateLessonContent.mutate(
           {
-            body: contentBody as any,
+            body: contentBody as UpdateLessonContentVariables['body'],
             path: {
               courseUuid: courseId as string,
               lessonUuid: lessonId as string,
@@ -1220,7 +1280,7 @@ function LessonContentForm({
       } else {
         createLessonContent.mutate(
           {
-            body: contentBody as any,
+            body: contentBody as AddLessonContentVariables['body'],
             path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
           },
           {
@@ -1237,8 +1297,8 @@ function LessonContentForm({
           }
         );
       }
-    } catch (error: any) {
-      toast.error(error?.message || 'Something went wrong');
+    } catch (error) {
+      toast.error(getErrorMessage(error) || 'Something went wrong');
     }
   };
 
@@ -1349,7 +1409,7 @@ function LessonContentForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {contentTypeData.map((value: any) => {
+                      {contentTypeData.map(value => {
                         const Icon =
                           ContentTypeIcons[
                             value.name.toUpperCase() as keyof typeof ContentTypeIcons
@@ -1516,8 +1576,8 @@ function LessonContentForm({
                         }),
                       });
                     },
-                    onError: (err: any) => {
-                      toast.error(err?.message || 'Media upload failed');
+                    onError: err => {
+                      toast.error(getErrorMessage(err) || 'Media upload failed');
                     },
                   }
                 );
@@ -1567,15 +1627,15 @@ interface AssessmentCreationFormProps {
   assessmentId?: string | number;
   onCancel: () => void;
   className?: string;
-  initialValues?: any;
+  initialValues?: AssessmentFormInitialValues;
 }
 
 const assessmentFormSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   assessment_type: z.string().optional(),
-  weight_percentage: z.any().optional(),
-  rubric_uuid: z.any().optional(),
+  weight_percentage: z.coerce.number().optional(),
+  rubric_uuid: z.string().optional(),
   resources: z.array(
     z.object({
       title: z.string().optional(),
@@ -1597,7 +1657,7 @@ function AssessmentCreationForm({
       title: '',
       description: '',
       assessment_type: '',
-      weight_percentage: '',
+      weight_percentage: 0,
       rubric_uuid: '',
       resources: [],
     },
@@ -1640,8 +1700,13 @@ function AssessmentCreationForm({
   // CREATE ASSESSMENT MUTATION
   const createAssessmentMutation = useMutation({
     mutationKey: ['create-assessment'],
-    mutationFn: ({ uuid, body }: { uuid: string; body: any }) =>
-      addCourseAssessment({ body, path: { courseUuid: uuid } }),
+    mutationFn: ({
+      uuid,
+      body,
+    }: {
+      uuid: string;
+      body: MutationVariables<typeof addCourseAssessment>['body'];
+    }) => addCourseAssessment({ body, path: { courseUuid: uuid } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assessments'] });
     },
@@ -1665,7 +1730,7 @@ function AssessmentCreationForm({
           weight_display: `${values.weight_percentage}% of final grade`,
           is_major_assessment: false,
           contribution_level: 'Standard Contribution',
-        },
+        } as never,
       },
       {
         onSuccess: data => {
@@ -1707,7 +1772,7 @@ function AssessmentCreationForm({
             weight_display: `${values.weight_percentage}% of final grade`,
             is_major_assessment: false,
             contribution_level: 'Standard Contribution',
-          },
+          } as never,
         },
         {
           onSuccess: data => {
@@ -1879,7 +1944,7 @@ function AssessmentCreationForm({
                               {criterion.scoring?.length > 0 ? (
                                 <div className='mt-2 space-y-2'>
                                   {/* <div className="text-xs font-medium text-muted-foreground">Scoring Levels:</div> */}
-                                  {/* {criterion.scoring.map((score: any) => (
+                                  {/* {criterion.scoring.map(score => (
                                     <div
                                       key={score.uuid}
                                       className="border-l-4 border-border/60 pl-3 py-1 bg-muted rounded"
@@ -1995,8 +2060,8 @@ function AssessmentCreationForm({
 
 type AssessmentListProps = {
   courseTitle: string;
-  assessments: any;
-  lessonItems: any;
+  assessments?: AssessmentPageData;
+  lessonItems: unknown[];
   isLoading: boolean;
   courseId?: string;
   onAddAssessment: () => void;
@@ -2010,17 +2075,18 @@ function AssessmentList({
   courseId,
   onAddAssessment,
 }: AssessmentListProps) {
-  const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
+  const [selectedAssessment, setSelectedAssessment] = useState<CourseAssessment | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const getTotalDuration = (lesson: any) => {
-    const hours = lesson.duration_hours || 0;
-    const minutes = lesson.duration_minutes || 0;
+  const getTotalDuration = (lesson: unknown) => {
+    const lessonDuration = lesson as { duration_hours?: number; duration_minutes?: number };
+    const hours = lessonDuration.duration_hours || 0;
+    const minutes = lessonDuration.duration_minutes || 0;
     return hours * 60 + minutes;
   };
 
-  const handleEditAssessment = (assessment: any) => {
+  const handleEditAssessment = (assessment: CourseAssessment) => {
     setSelectedAssessment(assessment);
     setIsModalOpen(true);
   };
@@ -2050,8 +2116,8 @@ function AssessmentList({
             }),
           });
         },
-        onError: (error: any) => {
-          toast.error(error?.message || 'Failed to delete assessment');
+        onError: error => {
+          toast.error(getErrorMessage(error) || 'Failed to delete assessment');
         },
       }
     );
@@ -2086,7 +2152,7 @@ function AssessmentList({
         </div>
       ) : (
         <div className='space-y-3'>
-          {assessments?.content.map((assessment: any, index: any) => (
+          {assessments?.content?.map((assessment, index) => (
             <div
               key={assessment?.uuid || index}
               className='group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all'
@@ -2098,7 +2164,7 @@ function AssessmentList({
                   <div className='flex flex-col items-start'>
                     <h3 className='text-lg font-medium'>{assessment.title}</h3>
                     <div className='text-muted-foreground text-sm'>
-                      <RichTextRenderer htmlString={assessment?.description} maxChars={400} />
+                      <RichTextRenderer htmlString={assessment.description ?? ''} maxChars={400} />
                     </div>
                   </div>
                   <DropdownMenu>
@@ -2136,13 +2202,13 @@ function AssessmentList({
                 <div className='text-muted-foreground flex items-center gap-4 text-sm'>
                   <div className='flex items-center gap-1.5'>
                     <Clock className='h-4 w-4' />
-                    <span>{getTotalDuration(assessment)} minutes</span>
+                    <span>{getTotalDuration(assessment as unknown)} minutes</span>
                   </div>
 
                   <div className='flex items-center gap-1.5'>
                     <BookOpen className='h-4 w-4' />
                     <span>
-                      {lessonItems?.length || '0'} {lessonItems?.length === 1 ? 'item' : 'items'}
+                      {lessonItems.length || '0'} {lessonItems.length === 1 ? 'item' : 'items'}
                     </span>
                   </div>
                 </div>
@@ -2193,9 +2259,9 @@ interface AddLessonDialogProps {
   lessonId?: string | number;
   contentId?: string | number;
   initialValues?: Partial<LessonFormValues>;
-  refetch?: () => any;
-  onSuccess?: (data: any) => void;
-  onCancel: () => any;
+  refetch?: RefetchCallback;
+  onSuccess?: SubmitCallback<unknown>;
+  onCancel: () => void;
 }
 
 function LessonDialog({
@@ -2223,7 +2289,7 @@ function LessonDialog({
             className='px-6 pb-6'
             courseId={courseId}
             lessonId={lessonId}
-            refetch={refetch}
+            refetch={refetch ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -2304,7 +2370,7 @@ function EditLessonDialog({
             lessonId={lessonId}
             initialValues={initialValues}
             onCancel={() => onOpenChange(false)}
-            refetch={refetch}
+            refetch={refetch ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -2319,7 +2385,7 @@ function AssessmentDialog({ isOpen, onOpenChange, courseId }: AddLessonDialogPro
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>Add Assessment</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Create a new assessment by providing its title, description, questions, and any helpful
+            Create a new assessment by providing its title, description, questions, and helpful
             resources
           </DialogDescription>
         </DialogHeader>

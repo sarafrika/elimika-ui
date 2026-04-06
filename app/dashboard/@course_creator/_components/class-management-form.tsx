@@ -1,5 +1,12 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { XIcon } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import z from 'zod';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,40 +50,97 @@ import {
   RecurrenceTypeEnum,
   type StatusEnum3,
 } from '@/services/client/types.gen';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { XIcon } from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import z from 'zod';
 
 const _SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
-const WEEK_DAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+const WEEK_DAYS = [
+  'SUNDAY',
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+] as const;
 
-const noopMutationOptions = () => ({
-  mutationFn: async (localOptions: any) => localOptions,
+type MutationVariables<T> = T extends {
+  mutationFn?: (variables: infer TVariables) => Promise<unknown>;
+}
+  ? TVariables
+  : never;
+type MutationResponse<T> = T extends { mutationFn?: (...args: never[]) => Promise<infer TResponse> }
+  ? TResponse
+  : never;
+type SubmitCallback<T = void> = (data: T) => void;
+type OptionalClassName = string | undefined;
+type MessageLike = { message?: string };
+type ErrorLike = { message?: string };
+type DayOfWeek = (typeof WEEK_DAYS)[number];
+type RecurrenceInitialValues = Partial<Omit<RecurrenceFormValues, 'days_of_week'>> & {
+  days_of_week?: string | DayOfWeek[];
+};
+
+type CreateClassDefinitionVariables = MutationVariables<
+  ReturnType<typeof createClassDefinitionMutation>
+>;
+type CreateClassDefinitionResult = MutationResponse<
+  ReturnType<typeof createClassDefinitionMutation>
+>;
+type UpdateClassDefinitionVariables = MutationVariables<
+  ReturnType<typeof updateClassDefinitionMutation>
+>;
+type UpdateClassDefinitionResult = MutationResponse<
+  ReturnType<typeof updateClassDefinitionMutation>
+>;
+type ScheduleClassVariables = MutationVariables<ReturnType<typeof scheduleClassMutation>>;
+type ScheduleClassResult = MutationResponse<ReturnType<typeof scheduleClassMutation>>;
+type UpdateScheduledInstanceStatusVariables = MutationVariables<
+  ReturnType<typeof updateScheduledInstanceStatusMutation>
+>;
+type UpdateScheduledInstanceStatusResult = MutationResponse<
+  ReturnType<typeof updateScheduledInstanceStatusMutation>
+>;
+
+const noopMutationOptions = <TVariables, TResponse = TVariables>() => ({
+  mutationFn: async (localOptions: TVariables) => localOptions as unknown as TResponse,
 });
 
-const getClassRecurrencePatternQueryKey = (_options?: any) => ['classRecurrencePattern'];
+const getClassRecurrencePatternQueryKey = (_options?: unknown) =>
+  ['classRecurrencePattern'] as const;
 
-const createClassRecurrencePatternMutation = noopMutationOptions;
-const updateClassRecurrencePatternMutation = noopMutationOptions;
-const scheduleRecurringClassFromDefinitionMutation = noopMutationOptions;
-const updateRecurringClassScheduleMutation = noopMutationOptions;
+const getMessage = (value: unknown) =>
+  typeof value === 'object' && value !== null && 'message' in value
+    ? (value as MessageLike).message
+    : undefined;
+
+const getErrorMessage = (value: unknown) =>
+  typeof value === 'object' && value !== null && 'message' in value
+    ? (value as ErrorLike).message
+    : undefined;
+
+const createClassRecurrencePatternMutation = noopMutationOptions<{
+  body: RecurrenceMutationBody;
+}>;
+const updateClassRecurrencePatternMutation = noopMutationOptions<{
+  path: { uuid: string };
+  body: RecurrenceMutationBody;
+}>;
+const scheduleRecurringClassFromDefinitionMutation = noopMutationOptions<{
+  path: { uuid: string };
+  query: { startDate?: string; endDate?: string };
+}>;
+const updateRecurringClassScheduleMutation = noopMutationOptions<{ path: { uuid: string } }>;
 
 export const classSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   sub_title: z.string().optional(),
   description: z.string().optional(),
   categories: z.string().array().optional(),
-  class_banner: z.any().optional(),
+  class_banner: z.unknown().optional(),
   default_instructor_uuid: z.string().optional(),
   organisation_uuid: z.string().optional(),
   course_uuid: z.string().optional(),
-  // duration_minutes: z.any().optional(),
-  default_start_time: z.any().optional(),
-  default_end_time: z.any().optional(),
+  default_start_time: z.string().optional(),
+  default_end_time: z.string().optional(),
   location_type: z.string().optional(),
   max_participants: z.coerce.number().optional(),
   allow_waitlist: z.boolean().default(false),
@@ -94,10 +158,10 @@ function ClassForm({
   className,
 }: {
   classId?: string;
-  initialValues?: ClassFormValues;
-  onSuccess: any;
+  initialValues?: Partial<ClassFormValues>;
+  onSuccess: SubmitCallback;
   onCancel: () => void;
-  className: any;
+  className?: OptionalClassName;
 }) {
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classSchema),
@@ -127,13 +191,13 @@ function ClassForm({
 
     if (classId) {
       updateAssignment.mutate(
-        { path: { uuid: classId }, body: payload as any },
+        { path: { uuid: classId }, body: payload as UpdateClassDefinitionVariables['body'] },
         {
-          onSuccess: data => {
+          onSuccess: (data: UpdateClassDefinitionResult) => {
             qc.invalidateQueries({
               queryKey: getAllActiveClassDefinitionsQueryKey(),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -141,13 +205,13 @@ function ClassForm({
       );
     } else {
       createAssignment.mutate(
-        { body: payload as any },
+        { body: payload as CreateClassDefinitionVariables['body'] },
         {
-          onSuccess: (data: any) => {
+          onSuccess: (data: CreateClassDefinitionResult) => {
             qc.invalidateQueries({
               queryKey: getAllActiveClassDefinitionsQueryKey(),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -373,14 +437,17 @@ function ClassForm({
 
 export const recurrenceSchema = z.object({
   recurrence_type: z.string().min(1, 'Recurrence type is required'),
-  interval_value: z.any().optional(),
-  days_of_week: z.any().optional(),
-  day_of_month: z.any().optional(),
-  end_date: z.any().optional(), // Accepts strings like "2024-12-31"
+  interval_value: z.coerce.number().optional(),
+  days_of_week: z.array(z.enum(WEEK_DAYS)).optional(),
+  day_of_month: z.coerce.number().optional(),
+  end_date: z.string().optional(),
   occurrence_count: z.number().int().positive().optional(),
 });
 
 export type RecurrenceFormValues = z.infer<typeof recurrenceSchema>;
+type RecurrenceMutationBody = Omit<RecurrenceFormValues, 'days_of_week'> & {
+  days_of_week?: string;
+};
 
 function RecurrencForm({
   onSuccess,
@@ -390,19 +457,21 @@ function RecurrencForm({
   className,
 }: {
   recurrenceId?: string;
-  onSuccess: any;
+  onSuccess: SubmitCallback<RecurrenceFormValues>;
   onCancel: () => void;
-  initialValues: any;
-  className: any;
+  initialValues?: RecurrenceInitialValues;
+  className?: OptionalClassName;
 }) {
-  function normalizeInitialValues(data: any): RecurrenceFormValues {
+  function normalizeInitialValues(data?: RecurrenceInitialValues): Partial<RecurrenceFormValues> {
+    const normalizedDays =
+      typeof data?.days_of_week === 'string'
+        ? data.days_of_week.split(',').map((day: string) => day.trim() as DayOfWeek)
+        : (data?.days_of_week ?? []);
+
     return {
       ...data,
-      days_of_week:
-        typeof data.days_of_week === 'string'
-          ? data.days_of_week.split(',').map((day: any) => day.trim())
-          : [],
-      end_date: data.end_date ? new Date(data.end_date).toISOString().split('T')[0] : '',
+      days_of_week: normalizedDays,
+      end_date: data?.end_date ? new Date(data.end_date).toISOString().split('T')[0] : '',
     };
   }
 
@@ -418,16 +487,16 @@ function RecurrencForm({
   const updateClassRecurrence = useMutation(updateClassRecurrencePatternMutation());
 
   const handleSubmit = async (values: RecurrenceFormValues) => {
-    const payload = {
+    const payload: RecurrenceMutationBody = {
       ...values,
-      days_of_week: Array.isArray(values.days_of_week)
-        ? values.days_of_week.join(',')
-        : values.days_of_week,
+      days_of_week: values.days_of_week?.join(','),
     };
 
     if (recurrenceId) {
       updateClassRecurrence.mutate(
-        { path: { uuid: recurrenceId }, body: payload as any },
+        { path: { uuid: recurrenceId }, body: payload } as MutationVariables<
+          ReturnType<typeof updateClassRecurrencePatternMutation>
+        >,
         {
           onSuccess: data => {
             qc.invalidateQueries({
@@ -435,25 +504,27 @@ function RecurrencForm({
                 path: { uuid: recurrenceId as string },
               }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
-            onSuccess(data);
+            onSuccess(values);
           },
         }
       );
     } else {
       createClassRecurrence.mutate(
-        { body: payload as any },
+        { body: payload } as MutationVariables<
+          ReturnType<typeof createClassRecurrencePatternMutation>
+        >,
         {
-          onSuccess: (data: any) => {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: getClassRecurrencePatternQueryKey({
                 path: { uuid: recurrenceId as string },
               }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
-            onSuccess(data);
+            onSuccess(values);
           },
         }
       );
@@ -517,9 +588,10 @@ function RecurrencForm({
                 <div className='mb-1 flex items-center gap-2'>
                   <Select
                     onValueChange={day => {
-                      const current = form.watch('days_of_week') || [];
-                      if (day && !current.includes(day)) {
-                        form.setValue('days_of_week', [...current, day]);
+                      const current = (form.watch('days_of_week') || []) as DayOfWeek[];
+                      const selectedDay = day as DayOfWeek;
+                      if (selectedDay && !current.includes(selectedDay)) {
+                        form.setValue('days_of_week', [...current, selectedDay]);
                       }
                     }}
                   >
@@ -529,9 +601,10 @@ function RecurrencForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {WEEK_DAYS.filter(
-                        day => !(form.watch('days_of_week') || []).includes(day)
-                      ).map(day => (
+                      {WEEK_DAYS.filter(day => {
+                        const current = (form.watch('days_of_week') || []) as DayOfWeek[];
+                        return !current.includes(day);
+                      }).map(day => (
                         <SelectItem key={day} value={day}>
                           {day}
                         </SelectItem>
@@ -542,7 +615,7 @@ function RecurrencForm({
 
                 {/* Show selected days as removable badges */}
                 <div className='flex flex-wrap gap-2'>
-                  {(form.watch('days_of_week') || []).map((day: string, index: number) => (
+                  {(form.watch('days_of_week') || []).map((day, index: number) => (
                     <Badge key={day} variant='secondary' className='flex items-center gap-1'>
                       {day}
                       <button
@@ -550,7 +623,9 @@ function RecurrencForm({
                         className='ml-2'
                         onClick={() => {
                           const current = form.watch('days_of_week') || [];
-                          const updated = current.filter((i: any) => i !== index);
+                          const updated = current.filter(
+                            (_, currentIndex) => currentIndex !== index
+                          );
                           form.setValue('days_of_week', updated);
                         }}
                         aria-label={`Remove day ${day}`}
@@ -641,9 +716,9 @@ function RecurrencForm({
 }
 
 export const scheduleSchema = z.object({
-  uuid: z.any().optional(),
-  start_date: z.any().optional(), // e.g. "2024-12-31"
-  end_date: z.any().optional(), // e.g. "2024-12-31"
+  uuid: z.string().optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
 });
 
 export type ScheduleFormValues = z.infer<typeof scheduleSchema>;
@@ -657,11 +732,11 @@ function ScheduleForm({
   className,
 }: {
   scheduleId?: string;
-  onSuccess: any;
+  onSuccess: SubmitCallback;
   classId?: string;
   onCancel: () => void;
-  initialValues: any;
-  className: any;
+  initialValues?: Partial<ScheduleFormValues>;
+  className?: OptionalClassName;
 }) {
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleSchema),
@@ -687,7 +762,7 @@ function ScheduleForm({
             qc.invalidateQueries({
               queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -700,11 +775,11 @@ function ScheduleForm({
           query: { startDate: payload.start_date, endDate: payload.end_date },
         },
         {
-          onSuccess: (data: any) => {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -771,9 +846,9 @@ function ScheduleForm({
 }
 
 export const timetableScheduleSchema = z.object({
-  start_time: z.any(), // e.g. "2024-12-31"
-  end_time: z.any(), // e.g. "2024-12-31"
-  timezone: z.any(),
+  start_time: z.string(),
+  end_time: z.string(),
+  timezone: z.string(),
 });
 
 export type TimetableScheduleFormValues = z.infer<typeof timetableScheduleSchema>;
@@ -788,11 +863,11 @@ function TimetableScheduleForm({
   status,
 }: {
   timetableScheduleId?: string;
-  onSuccess: any;
+  onSuccess: SubmitCallback;
   classId?: string;
   onCancel: () => void;
-  initialValues: any;
-  className: any;
+  initialValues?: Partial<TimetableScheduleFormValues>;
+  className?: OptionalClassName;
   status: StatusEnum3;
 }) {
   const form = useForm<TimetableScheduleFormValues>({
@@ -815,35 +890,38 @@ function TimetableScheduleForm({
 
     if (timetableScheduleId) {
       updateTimetableSchedule.mutate(
-        { path: { instanceUuid: timetableScheduleId as string }, query: { status } },
         {
-          onSuccess: (data: any) => {
+          path: { instanceUuid: timetableScheduleId as string },
+          query: { status },
+        } as UpdateScheduledInstanceStatusVariables,
+        {
+          onSuccess: (data: UpdateScheduledInstanceStatusResult) => {
             qc.invalidateQueries({
               queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
-          onError: (error: any) => {
-            toast.error(error?.message);
+          onError: error => {
+            toast.error(getErrorMessage(error));
           },
         }
       );
     } else {
       createTimetableSchedule.mutate(
-        { body: payload as any },
+        { body: payload as ScheduleClassVariables['body'] },
         {
-          onSuccess: (data: any) => {
+          onSuccess: (data: ScheduleClassResult) => {
             qc.invalidateQueries({
               queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
-          onError: (error: any) => {
-            toast.error(error?.message);
+          onError: error => {
+            toast.error(getErrorMessage(error));
           },
         }
       );
@@ -934,8 +1012,8 @@ interface ClassDialogProps {
   setOpen: (open: boolean) => void;
   editingClassId?: string;
   initialValues?: Partial<ClassFormValues>;
-  onSuccess?: any;
-  onCancel: () => any;
+  onSuccess?: SubmitCallback;
+  onCancel: () => void;
 }
 
 function ClassDialog({
@@ -961,10 +1039,10 @@ function ClassDialog({
         <ScrollArea className='h-[calc(90vh-12rem)]'>
           <ClassForm
             onCancel={onCancel}
-            initialValues={initialValues as any}
+            initialValues={initialValues}
             className='px-6 pb-6'
             classId={editingClassId}
-            onSuccess={onSuccess}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -975,10 +1053,10 @@ function ClassDialog({
 interface RecurrenceDialogProps {
   isOpen: boolean;
   setOpen: (open: boolean) => void;
-  onSuccess?: any;
-  editingRecurrenceId?: any;
-  initialValues?: any;
-  onCancel: () => any;
+  onSuccess?: SubmitCallback<RecurrenceFormValues>;
+  editingRecurrenceId?: string;
+  initialValues?: Partial<RecurrenceFormValues>;
+  onCancel: () => void;
 }
 
 function RecurrenceDialog({
@@ -1004,10 +1082,10 @@ function RecurrenceDialog({
         <ScrollArea className='h-[calc(90vh-12rem)]'>
           <RecurrencForm
             onCancel={onCancel}
-            initialValues={initialValues as any}
+            initialValues={initialValues}
             className='px-6 pb-6'
             recurrenceId={editingRecurrenceId}
-            onSuccess={onSuccess}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -1018,11 +1096,11 @@ function RecurrenceDialog({
 interface ScheduleDialogProps {
   isOpen: boolean;
   setOpen: (open: boolean) => void;
-  onSuccess?: any;
+  onSuccess?: SubmitCallback;
   editingScheduleId?: string;
   editingClassId?: string;
-  initialValues?: any;
-  onCancel: () => any;
+  initialValues?: Partial<ScheduleFormValues>;
+  onCancel: () => void;
 }
 
 function ScheduleDialog({
@@ -1053,11 +1131,11 @@ function ScheduleDialog({
         <ScrollArea className='h-[300px]'>
           <ScheduleForm
             onCancel={onCancel}
-            initialValues={initialValues as any}
+            initialValues={initialValues}
             className='px-6 pb-6'
             scheduleId={editingScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -1068,11 +1146,11 @@ function ScheduleDialog({
 interface TimetableScheduleDialogProps {
   isOpen: boolean;
   setOpen: (open: boolean) => void;
-  onSuccess?: any;
+  onSuccess?: SubmitCallback;
   timetableScheduleId?: string;
   editingClassId?: string;
-  initialValues?: any;
-  onCancel: () => any;
+  initialValues?: Partial<TimetableScheduleFormValues>;
+  onCancel: () => void;
   status: StatusEnum3;
 }
 
@@ -1105,11 +1183,11 @@ function TimetableScheduleDialog({
         <ScrollArea className='h-auto'>
           <TimetableScheduleForm
             onCancel={onCancel}
-            initialValues={initialValues as any}
+            initialValues={initialValues}
             className='px-6 pb-6'
             timetableScheduleId={timetableScheduleId}
             classId={editingClassId}
-            onSuccess={onSuccess}
+            onSuccess={onSuccess ?? (() => {})}
             status={status}
           />
         </ScrollArea>

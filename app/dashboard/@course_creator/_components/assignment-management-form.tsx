@@ -1,5 +1,22 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  BookOpen,
+  BookOpenCheck,
+  Calendar,
+  ClipboardCheck,
+  Grip,
+  MoreVertical,
+  PlusCircle,
+  Trash,
+  XIcon,
+} from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import z from 'zod';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,23 +54,6 @@ import {
   getCourseLessonsOptions,
   updateAssignmentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  BookOpen,
-  BookOpenCheck,
-  Calendar,
-  ClipboardCheck,
-  Grip,
-  MoreVertical,
-  PlusCircle,
-  Trash,
-  XIcon,
-} from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import z from 'zod';
 import DeleteModal from '../../../../components/custom-modals/delete-modal';
 import RichTextRenderer from '../../../../components/editors/richTextRenders';
 import {
@@ -65,7 +65,38 @@ import {
 } from '../../../../components/ui/dropdown-menu';
 import { CustomLoadingState } from './loading-state';
 
-const SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
+const SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'] as const;
+
+type MutationVariables<T> = T extends {
+  mutationFn?: (variables: infer TVariables) => Promise<unknown>;
+}
+  ? TVariables
+  : never;
+type MutationResponse<T> = T extends { mutationFn?: (...args: never[]) => Promise<infer TResponse> }
+  ? TResponse
+  : never;
+type SubmitCallback = () => void;
+type AssignmentSubmissionType = (typeof SUBMISSION_TYPES)[number];
+type AssignmentListItem = {
+  uuid?: string;
+  title?: string;
+  description?: string;
+  due_date?: Date | string;
+  max_points?: number;
+  is_published?: boolean;
+  submission_types?: AssignmentSubmissionType[];
+};
+type MessageLike = { message?: string };
+
+const getMessage = (value: unknown) =>
+  typeof value === 'object' && value !== null && 'message' in value
+    ? (value as MessageLike).message
+    : undefined;
+
+type CreateAssignmentVariables = MutationVariables<ReturnType<typeof createAssignmentMutation>>;
+type CreateAssignmentResult = MutationResponse<ReturnType<typeof createAssignmentMutation>>;
+type UpdateAssignmentVariables = MutationVariables<ReturnType<typeof updateAssignmentMutation>>;
+type UpdateAssignmentResult = MutationResponse<ReturnType<typeof updateAssignmentMutation>>;
 
 export const assignmentSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -78,7 +109,7 @@ export const assignmentSchema = z.object({
   active: z.boolean().default(false),
   due_date: z.date().optional(),
   assignment_category: z.string().optional(),
-  submission_types: z.any().optional(),
+  submission_types: z.array(z.enum(SUBMISSION_TYPES)).optional(),
 });
 
 export type AsignmentFormValues = z.infer<typeof assignmentSchema>;
@@ -93,10 +124,10 @@ function AssignmentForm({
 }: {
   assignmentId?: string;
   courseId: string;
-  initialValues?: AsignmentFormValues;
-  onSuccess: any;
+  initialValues?: Partial<AsignmentFormValues>;
+  onSuccess: SubmitCallback;
   onCancel: () => void;
-  className: any;
+  className?: string;
 }) {
   const form = useForm<AsignmentFormValues>({
     resolver: zodResolver(assignmentSchema),
@@ -135,15 +166,15 @@ function AssignmentForm({
 
     if (assignmentId) {
       updateAssignment.mutate(
-        { path: { uuid: assignmentId }, body: payload as any },
+        { path: { uuid: assignmentId }, body: payload as UpdateAssignmentVariables['body'] },
         {
-          onSuccess: data => {
+          onSuccess: (data: UpdateAssignmentResult) => {
             qc.invalidateQueries({
               queryKey: getAllAssignmentsQueryKey({
                 query: { pageable: {} },
               }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -151,15 +182,15 @@ function AssignmentForm({
       );
     } else {
       createAssignment.mutate(
-        { body: payload as any },
+        { body: payload as CreateAssignmentVariables['body'] },
         {
-          onSuccess: (data: any) => {
+          onSuccess: (data: CreateAssignmentResult) => {
             qc.invalidateQueries({
               queryKey: getAllAssignmentsQueryKey({
                 query: { pageable: {} },
               }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -287,8 +318,9 @@ function AssignmentForm({
                   <Select
                     onValueChange={type => {
                       const current = form.watch('submission_types') || [];
-                      if (type && !current.includes(type)) {
-                        form.setValue('submission_types', [...current, type]);
+                      const selectedType = type as AssignmentSubmissionType;
+                      if (selectedType && !current.includes(selectedType)) {
+                        form.setValue('submission_types', [...current, selectedType]);
                       }
                     }}
                   >
@@ -299,7 +331,7 @@ function AssignmentForm({
                     </FormControl>
                     <SelectContent>
                       {SUBMISSION_TYPES.filter(
-                        (type: string) => !(form.watch('submission_types') || []).includes(type)
+                        type => !(form.watch('submission_types') || []).includes(type)
                       ).map(type => (
                         <SelectItem key={type} value={type}>
                           {type}
@@ -321,7 +353,7 @@ function AssignmentForm({
                           const current = form.watch('submission_types') || [];
                           form.setValue(
                             'submission_types',
-                            current?.filter((_: any, i: any) => i !== index)
+                            current.filter((_, currentIndex) => currentIndex !== index)
                           );
                         }}
                         aria-label={`Remove submission type ${type}`}
@@ -384,8 +416,8 @@ interface AssignmentDialogProps {
   courseId: string;
   editingAssignmetId?: string;
   initialValues?: Partial<AsignmentFormValues>;
-  onSuccess?: any;
-  onCancel: () => any;
+  onSuccess?: SubmitCallback;
+  onCancel: () => void;
 }
 
 function AssignmentDialog({
@@ -412,11 +444,11 @@ function AssignmentDialog({
         <ScrollArea className='h-[calc(90vh-12rem)]'>
           <AssignmentForm
             onCancel={onCancel}
-            initialValues={initialValues as any}
+            initialValues={initialValues}
             className='px-6 pb-6'
             assignmentId={editingAssignmetId}
             courseId={courseId as string}
-            onSuccess={onSuccess}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -429,7 +461,7 @@ type AssignmentListProps = {
   courseId?: string;
   onAddAssignment: () => void;
   loading: boolean;
-  assignments: any;
+  assignments: AssignmentListItem[];
 };
 
 function AssignmentList({
@@ -443,16 +475,16 @@ function AssignmentList({
   const [openAssignmentModal, setOpenAssignmentModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const [editingAssignmetId, setEditingAssignmentId] = useState();
-  const [editingAssignmentData, setEditingAssignmentData] = useState();
+  const [editingAssignmetId, setEditingAssignmentId] = useState<string>();
+  const [editingAssignmentData, setEditingAssignmentData] = useState<AssignmentListItem>();
 
-  const handleEditAssignment = (assignment: any) => {
+  const handleEditAssignment = (assignment: AssignmentListItem) => {
     setOpenAssignmentModal(true);
     setEditingAssignmentId(assignment?.uuid);
     setEditingAssignmentData(assignment);
   };
 
-  const handleDeleteAssignment = (assignmentId: any) => {
+  const handleDeleteAssignment = (assignmentId: string) => {
     setEditingAssignmentId(assignmentId);
     setOpenDeleteModal(true);
   };
@@ -508,7 +540,7 @@ function AssignmentList({
         </div>
       ) : (
         <div className='space-y-3'>
-          {assignments?.map((assignment: any, index: any) => (
+          {assignments.map((assignment, index) => (
             <div
               key={assignment?.uuid || index}
               className='group border-border bg-card/90 relative flex w-full items-start gap-4 rounded-[20px] border p-4 shadow-xl backdrop-blur transition-all lg:p-8'
@@ -525,7 +557,7 @@ function AssignmentList({
                       </span>
                     </div>{' '}
                     <div className='text-muted-foreground text-sm'>
-                      <RichTextRenderer htmlString={assignment?.description} maxChars={400} />
+                      <RichTextRenderer htmlString={assignment.description ?? ''} maxChars={400} />
                     </div>
                   </div>
                   <DropdownMenu>
@@ -583,7 +615,7 @@ function AssignmentList({
                     <BookOpen className='h-4 w-4' />
                     <span className='font-semibold'>Submission types: {'  '}</span>
                     <span className='flex flex-wrap gap-2'>
-                      {assignment?.submission_types?.map((type: any, index: any) => (
+                      {assignment?.submission_types?.map((type, index) => (
                         <span
                           key={index}
                           className='bg-primary/10 text-primary inline-flex items-center rounded-full px-3 py-1 text-xs font-medium'
@@ -622,7 +654,12 @@ function AssignmentList({
                 isOpen={openAssignmentModal}
                 setOpen={setOpenAssignmentModal}
                 editingAssignmetId={editingAssignmetId}
-                initialValues={editingAssignmentData}
+                initialValues={{
+                  ...editingAssignmentData,
+                  due_date: editingAssignmentData.due_date
+                    ? new Date(editingAssignmentData.due_date)
+                    : undefined,
+                }}
                 courseId={courseId as string}
                 onCancel={() => {
                   setOpenAssignmentModal(false);
