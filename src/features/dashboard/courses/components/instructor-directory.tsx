@@ -22,10 +22,11 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { searchSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { Booking } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
+import type { BundledClass, SearchInstructor } from '../types';
 
 type Props = {
-  instructors: any[];
-  classes: any[];
+  instructors: SearchInstructor[];
+  classes: BundledClass[];
   onBookingComplete: (booking: Booking) => void;
   courseId: string;
 };
@@ -50,7 +51,7 @@ export const InstructorDirectory: React.FC<Props> = ({
   onBookingComplete,
   courseId,
 }) => {
-  const [selectedInstructor, setSelectedInstructor] = useState<any | null>(null);
+  const [selectedInstructor, setSelectedInstructor] = useState<SearchInstructor | null>(null);
   const [showFilters, setShowFilters] = useState(true);
   const [filters, setFilters] = useState<Filters>({
     searchQuery: '',
@@ -75,26 +76,22 @@ export const InstructorDirectory: React.FC<Props> = ({
     return [
       ...new Set(
         newSkllll?.data?.content
-          ?.map((skill: any) => skill?.skill_name)
-          ?.filter(
-            (name: any): name is string => typeof name === 'string' && name.trim().length > 0
-          )
+          ?.map(skill => skill?.skill_name)
+          ?.filter((name): name is string => typeof name === 'string' && name.trim().length > 0)
       ),
     ];
   }, [newSkllll]);
-
-  const _allCourses = [...new Set(instructors?.flatMap(i => i.courses))] as any;
 
   // Filter instructors based on criteria
   const filteredInstructors = instructors
     ?.filter(instructor => {
       if (
         filters.searchQuery &&
-        !instructor.full_name.toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
-        !instructor.professional_headline
+        !(instructor.full_name ?? '').toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
+        !(instructor.professional_headline ?? '')
           .toLowerCase()
           .includes(filters.searchQuery.toLowerCase()) &&
-        !instructor.bio.toLowerCase().includes(filters.searchQuery.toLowerCase())
+        !(instructor.bio ?? '').toLowerCase().includes(filters.searchQuery.toLowerCase())
       ) {
         return false;
       }
@@ -109,12 +106,12 @@ export const InstructorDirectory: React.FC<Props> = ({
       }
 
       // Gender
-      if (filters.gender !== 'all' && instructor.gender.toLowerCase() !== filters.gender) {
+      if (filters.gender !== 'all' && (instructor.gender ?? '').toLowerCase() !== filters.gender) {
         return false;
       }
 
       // Rating
-      if (instructor.rating < filters.minRating) {
+      if ((instructor.rating ?? 0) < filters.minRating) {
         return false;
       }
 
@@ -131,8 +128,9 @@ export const InstructorDirectory: React.FC<Props> = ({
       // Specializations
       // Specializations
       if (filters.specializations.length > 0) {
-        const instructorSkillNames =
-          instructor.specializations?.map((s: any) => s.skill_name.toLowerCase()) ?? [];
+        const instructorSkillNames = instructor.specializations.map(s =>
+          s.skill_name.toLowerCase()
+        );
 
         const hasMatch = filters.specializations.some(spec =>
           instructorSkillNames.includes(spec.toLowerCase())
@@ -162,7 +160,7 @@ export const InstructorDirectory: React.FC<Props> = ({
       // Location
       if (
         filters.location &&
-        !instructor.location?.city.toLowerCase().includes(filters.location.toLowerCase())
+        !(instructor.location?.city ?? '').toLowerCase().includes(filters.location.toLowerCase())
       ) {
         return false;
       }
@@ -170,8 +168,8 @@ export const InstructorDirectory: React.FC<Props> = ({
       return true;
     })
     ?.sort((a, b) => {
-      if (b.rating !== a.rating) {
-        return b.rating - a.rating;
+      if ((b.rating ?? 0) !== (a.rating ?? 0)) {
+        return (b.rating ?? 0) - (a.rating ?? 0);
       }
 
       if (b.total_experience_years !== a.total_experience_years) {
@@ -216,6 +214,18 @@ export const InstructorDirectory: React.FC<Props> = ({
     }));
   };
 
+  const handleInstructorTypeChange = (value: string) => {
+    if (value === 'all' || value === 'individual' || value === 'organization') {
+      setFilters({ ...filters, instructorType: value });
+    }
+  };
+
+  const handleGenderChange = (value: string) => {
+    if (value === 'all' || value === 'male' || value === 'female' || value === 'other') {
+      setFilters({ ...filters, gender: value });
+    }
+  };
+
   return (
     <div className='flex gap-6'>
       {!selectedInstructor && (
@@ -251,12 +261,7 @@ export const InstructorDirectory: React.FC<Props> = ({
                 {/* Instructor Type */}
                 <div className='w-full'>
                   <Label>Instructor Type</Label>
-                  <Select
-                    value={filters.instructorType}
-                    onValueChange={(value: any) =>
-                      setFilters({ ...filters, instructorType: value })
-                    }
-                  >
+                  <Select value={filters.instructorType} onValueChange={handleInstructorTypeChange}>
                     <SelectTrigger className='mt-2 w-full'>
                       <SelectValue placeholder='Select instructor type' />
                     </SelectTrigger>
@@ -271,10 +276,7 @@ export const InstructorDirectory: React.FC<Props> = ({
                 {/* Gender */}
                 <div>
                   <Label>Gender</Label>
-                  <Select
-                    value={filters.gender}
-                    onValueChange={(value: any) => setFilters({ ...filters, gender: value })}
-                  >
+                  <Select value={filters.gender} onValueChange={handleGenderChange}>
                     <SelectTrigger className='mt-2 w-full'>
                       <SelectValue />
                     </SelectTrigger>
@@ -327,7 +329,7 @@ export const InstructorDirectory: React.FC<Props> = ({
                 <div>
                   <Label>Specializations</Label>
                   <div className='mt-3 space-y-2'>
-                    {allSpecializations.slice(0, 5).map((spec: any) => (
+                    {allSpecializations.slice(0, 5).map(spec => (
                       <div key={spec} className='flex items-center gap-2.5'>
                         <Checkbox
                           id={`spec-${spec}`}
@@ -479,7 +481,7 @@ export const InstructorDirectory: React.FC<Props> = ({
               </Card>
             ) : (
               <div className='grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3'>
-                {filteredInstructors?.map((instructor: any, index: any) => (
+                {filteredInstructors?.map((instructor, index) => (
                   <div key={index}>
                     <InstructorCard
                       key={instructor?.uuid}

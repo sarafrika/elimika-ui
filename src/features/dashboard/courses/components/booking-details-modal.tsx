@@ -15,13 +15,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import type { BookingRecord, SearchInstructor } from '../types';
 import { getStatusColor } from './manage-bookings';
 
 interface BookingDetailsModalProps {
-  booking: any | null;
+  booking: BookingRecord | null;
   open: boolean;
   onClose: () => void;
-  instructors: any[];
+  instructors: SearchInstructor[];
 }
 
 export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
@@ -32,7 +33,8 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
 }) => {
   if (!booking) return null;
 
-  const getInstructor = (instructorId: string) => {
+  const getInstructor = (instructorId?: string) => {
+    if (!instructorId) return null;
     return instructors.find(i => i.uuid === instructorId);
   };
 
@@ -130,7 +132,7 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
               <div className='flex justify-between text-sm'>
                 <span className='text-muted-foreground'>Payment Status</span>
                 <Badge
-                  variant={booking.paymentStatus === 'completed' ? 'default' : 'secondary'}
+                  variant={booking.payment_reference ? 'default' : 'secondary'}
                   className='capitalize'
                 >
                   {booking.payment_session_id}

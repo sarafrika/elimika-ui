@@ -27,11 +27,12 @@ import {
   requestPaymentMutation,
   submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { type BookingRecord, getErrorMessage, type SearchInstructor } from '../types';
 import { BookingDetailsModal } from './booking-details-modal';
 import { FeedbackDialog } from './review-instructor-modal';
 
 // "cancelled" | "expired" | "confirmed" | "payment_required" | "payment_failed"
-export const getStatusColor = (status?: any): string => {
+export const getStatusColor = (status?: BookingRecord['status']): string => {
   switch (status) {
     case 'confirmed':
       return 'bg-success';
@@ -49,10 +50,10 @@ export const getStatusColor = (status?: any): string => {
 };
 
 type Props = {
-  bookings: any[];
-  instructors: any[];
-  refetchBookings: any;
-  onBookingUpdate: (booking: any) => void;
+  bookings: BookingRecord[];
+  instructors: SearchInstructor[];
+  refetchBookings: () => void | Promise<unknown>;
+  onBookingUpdate: (booking: BookingRecord) => void;
 };
 
 export const ManageBookings: React.FC<Props> = ({
@@ -61,7 +62,7 @@ export const ManageBookings: React.FC<Props> = ({
   onBookingUpdate,
   refetchBookings,
 }) => {
-  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<BookingRecord | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [openBookingDetails, setOpenBookingDetails] = useState(false);
@@ -87,7 +88,7 @@ export const ManageBookings: React.FC<Props> = ({
     cancelBooking.mutate(
       { path: { bookingUuid: selectedBooking.uuid } },
       {
-        onSuccess: data => {
+        onSuccess: () => {
           toast.success('Booking cancelled successfully');
 
           refetchBookings();
@@ -95,15 +96,15 @@ export const ManageBookings: React.FC<Props> = ({
           setSelectedBooking(null);
           setCancelReason('');
         },
-        onError: (error: any) => {
-          toast.error(`Failed to cancel booking: ${error.message}`);
+        onError: error => {
+          toast.error(`Failed to cancel booking: ${getErrorMessage(error, 'Unknown error')}`);
         },
       }
     );
   };
 
   const payBooking = useMutation(requestPaymentMutation());
-  const handlePayBooking = (booking: any) => {
+  const handlePayBooking = (booking: BookingRecord) => {
     payBooking.mutate(
       { path: { bookingUuid: booking.uuid } },
       {
@@ -114,8 +115,8 @@ export const ManageBookings: React.FC<Props> = ({
             toast.error('Payment URL not found');
           }
         },
-        onError: (error: any) => {
-          toast.error(`Failed to initiate payment: ${error.message}`);
+        onError: error => {
+          toast.error(`Failed to initiate payment: ${getErrorMessage(error, 'Unknown error')}`);
         },
       }
     );
@@ -169,7 +170,7 @@ export const ManageBookings: React.FC<Props> = ({
     return isFutureDate && notCancelled;
   });
 
-  const renderBookingCard = (booking: any) => {
+  const renderBookingCard = (booking: BookingRecord) => {
     const countdown = useCountdown(booking.hold_expires_at);
 
     const instructor = data?.data?.content?.find(i => i.uuid === booking.instructor_uuid);
@@ -203,9 +204,9 @@ export const ManageBookings: React.FC<Props> = ({
               <Badge className={`mt-2 ${getStatusColor(booking.status)}`}>{booking.status}</Badge>
 
               <div>
-                {booking.status === 'payment_required' && (
+                {booking.status === 'payment_required' && countdown && (
                   <span className='text-muted-foreground text-sm'>
-                    {`Payment expires in ${countdown?.hours}h ${String(countdown?.minutes).padStart(2, '0')}m ${String(countdown?.seconds).padStart(2, '0')}s`}
+                    {`Payment expires in ${countdown.hours}h ${String(countdown.minutes).padStart(2, '0')}m ${String(countdown.seconds).padStart(2, '0')}s`}
                   </span>
                 )}
               </div>

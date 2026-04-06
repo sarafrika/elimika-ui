@@ -15,9 +15,22 @@ import {
   getAllTrainingProgramsOptions,
   getPublishedCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { Course, TrainingProgram } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { CourseCard } from '@/src/features/dashboard/courses/components/CourseCard';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+
+const matchesSearchQuery = (value: string | undefined, query: string) =>
+  query === '' || (value ?? '').toLowerCase().includes(query.toLowerCase());
+
+const matchesSelectedCategory = (
+  categories: string[] | undefined,
+  selectedCategory: string,
+  currentCategoryName?: string
+) =>
+  selectedCategory === 'All' ||
+  categories?.some(cat => cat.toLowerCase() === currentCategoryName?.toLowerCase()) ||
+  false;
 
 export default function AllCoursesPage() {
   const router = useRouter();
@@ -61,34 +74,30 @@ export default function AllCoursesPage() {
 
   const currentCategory = CATEGORIES.find(cat => cat.name === selectedCategory);
 
-  const filteredCourses = courses?.filter((course: any) => {
+  const filteredCourses = courses?.filter((course: Course) => {
     const matchesSearch =
-      searchQuery === '' ||
-      course?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course?.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    // course?.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      matchesSearchQuery(course?.name, searchQuery) ||
+      matchesSearchQuery(course?.description, searchQuery);
 
-    const matchesCategory =
-      selectedCategory === 'All' ||
-      course?.category_names?.some(
-        (cat: string) => cat.toLowerCase() === currentCategory?.name.toLowerCase()
-      );
+    const matchesCategory = matchesSelectedCategory(
+      course?.category_names,
+      selectedCategory,
+      currentCategory?.name
+    );
 
     return matchesSearch && matchesCategory;
   });
 
-  const filteredPrograms = programs?.filter((program: any) => {
+  const filteredPrograms = programs?.filter((program: TrainingProgram) => {
     const matchesSearch =
-      searchQuery === '' ||
-      program?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      program?.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    // course?.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      matchesSearchQuery(program?.title, searchQuery) ||
+      matchesSearchQuery(program?.description, searchQuery);
 
-    const matchesCategory =
-      selectedCategory === 'All' ||
-      program?.category_names?.some(
-        (cat: string) => cat.toLowerCase() === currentCategory?.name.toLowerCase()
-      );
+    const matchesCategory = matchesSelectedCategory(
+      undefined,
+      selectedCategory,
+      currentCategory?.name
+    );
 
     return matchesSearch && matchesCategory;
   });
@@ -200,7 +209,7 @@ export default function AllCoursesPage() {
               {filteredCourses.map(course => (
                 <CourseCard
                   key={course.uuid}
-                  course={course as any}
+                  course={course}
                   isStudentView={true}
                   handleEnroll={() =>
                     router.push(
@@ -268,7 +277,7 @@ export default function AllCoursesPage() {
               {filteredPrograms.map(program => (
                 <CourseCard
                   key={program.uuid}
-                  course={program as any}
+                  course={program}
                   isStudentView={true}
                   handleEnroll={() =>
                     router.push(

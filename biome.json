@@ -21,6 +21,24 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": [
+        "src/features/profile/landing/**",
+        "src/features/dashboard/courses/**",
+        "hooks/use-course-classes.tsx",
+        "hooks/use-program-classes.tsx",
+        "hooks/use-search-training-instructors.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "error"
+          }
+        }
+      }
+    }
+  ],
   "files": {
     "includes": [
       "./**/*",

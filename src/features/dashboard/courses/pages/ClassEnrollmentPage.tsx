@@ -6,7 +6,7 @@ import { AlertCircle, Armchair, ArrowLeft, Calendar, DollarSign, MapPin, User } 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ClassScheduleCalendar } from '@/app/class-invite/page';
+import { ClassScheduleCalendar, type ClassScheduleItem } from '@/app/class-invite/page';
 import { CustomLoadingState } from '@/app/dashboard/@course_creator/_components/loading-state';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
+import { type BundledClass, getErrorMessage } from '../types';
 
 export default function ClassEnrollmentPage({
   courseId,
@@ -50,15 +51,46 @@ export default function ClassEnrollmentPage({
     return classes.find(cls => cls.uuid === classId);
   }, [classes, classId]);
   const schedule = enrollingClass?.schedule ?? [];
+  const calendarSchedule: ClassScheduleItem[] = schedule.flatMap(item => {
+    if (
+      !item.uuid ||
+      !item.class_definition_uuid ||
+      !item.start_time ||
+      !item.end_time ||
+      !item.timezone ||
+      !item.title ||
+      !item.status
+    ) {
+      return [];
+    }
 
-  const totalMinutes = enrollingClass?.schedule?.reduce((sum: any, item: any) => {
+    return [
+      {
+        uuid: item.uuid,
+        class_definition_uuid: item.class_definition_uuid,
+        start_time: new Date(item.start_time).toISOString(),
+        end_time: new Date(item.end_time).toISOString(),
+        timezone: item.timezone,
+        title: item.title,
+        location_type: item.location_type === 'ONLINE' ? 'ONLINE' : 'PHYSICAL',
+        status: item.status === 'CANCELLED' ? 'CANCELLED' : 'SCHEDULED',
+        duration_minutes: Number(item.duration_minutes ?? 0),
+        duration_formatted: item.duration_formatted ?? '',
+        time_range: item.time_range ?? '',
+        is_currently_active: item.is_currently_active ?? false,
+        can_be_cancelled: item.can_be_cancelled ?? false,
+      },
+    ];
+  });
+
+  const totalMinutes = enrollingClass?.schedule?.reduce((sum, item) => {
     const minutes = Number(item?.duration_minutes);
     return sum + (Number.isFinite(minutes) ? minutes : 0);
   }, 0);
-  const totalHours = totalMinutes / 60;
+  const totalHours = (totalMinutes ?? 0) / 60;
   const totalHoursRounded = `${Math.round(totalHours)}`;
 
-  const scheduleStats = useScheduleStats(schedule);
+  const scheduleStats = useScheduleStats(calendarSchedule);
 
   // Format dates
   const { formattedStart, formattedEnd } = useMemo(() => {
@@ -121,11 +153,11 @@ export default function ClassEnrollmentPage({
   const createCart = useMutation(createCartMutation());
   const addItemToCart = useMutation(addItemMutation());
 
-  const handleCreateCartAndPay = (cls: any) => {
+  const handleCreateCartAndPay = (cls: BundledClass | undefined) => {
     if (!cls) return;
     const catalogue = cls.catalogue;
 
-    if (catalogue === null) {
+    if (!catalogue?.variant_code) {
       toast.error('No catalogue found for this class');
       return;
     }
@@ -145,8 +177,8 @@ export default function ClassEnrollmentPage({
           },
         },
         {
-          onSuccess: (data: any) => {
-            const cartId = data?.data?.id || null;
+          onSuccess: data => {
+            const cartId = data?.id || null;
             if (cartId) {
               setCartId(cartId);
             }
@@ -158,8 +190,8 @@ export default function ClassEnrollmentPage({
             toast.success('Class added to cart!');
             router.push('/cart');
           },
-          onError: (error: any) => {
-            toast.error(error.message);
+          onError: error => {
+            toast.error(getErrorMessage(error, 'Failed to add class to cart'));
           },
         }
       );
@@ -369,8 +401,8 @@ export default function ClassEnrollmentPage({
                 <div className='space-y-1'>
                   <p className='text-sm font-medium'>Available Seats</p>
                   <p className='text-muted-foreground text-sm'>
-                    {enrollingClass?.max_participants - enrollingClass?.enrollments?.length} of{' '}
-                    {enrollingClass?.max_participants} seats
+                    {(enrollingClass?.max_participants ?? 0) - enrollingClass?.enrollments?.length}{' '}
+                    of {enrollingClass?.max_participants ?? 0} seats
                   </p>
                 </div>
               </div>
@@ -379,7 +411,7 @@ export default function ClassEnrollmentPage({
         </Card>
 
         <CardContent className='p-0'>
-          <ClassScheduleCalendar schedules={schedule as any} />
+          <ClassScheduleCalendar schedules={calendarSchedule} />
         </CardContent>
 
         {/* Benefits Card */}

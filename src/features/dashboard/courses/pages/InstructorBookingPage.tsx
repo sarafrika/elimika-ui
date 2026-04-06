@@ -16,6 +16,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { InstructorDirectory } from '@/src/features/dashboard/courses/components/instructor-directory';
 import { ManageBookings } from '@/src/features/dashboard/courses/components/manage-bookings';
+import type { BookingRecord, BundledClass, SearchInstructor } from '../types';
 
 export type Instructor = {
   id: string;
@@ -102,7 +103,7 @@ export type Booking = {
 };
 
 type Props = {
-  classes: any[];
+  classes: BundledClass[];
 };
 
 const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
@@ -135,7 +136,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       ?.filter(app => app?.applicant_type === 'instructor')
       ?.map(app => app?.applicant_uuid) ?? [];
 
-  const filteredInstructors = trainingInstructors?.filter(instructor =>
+  const filteredInstructors: SearchInstructor[] = trainingInstructors.filter(instructor =>
     approvedInstructorUuids.includes(instructor.uuid)
   );
 
@@ -158,15 +159,10 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   }, [replaceBreadcrumbs]);
 
   const handleBookingComplete = (_newBooking: Booking) => {
-    // setBookings((prev: any) => [...prev, newBooking]);
     setActiveTab('bookings');
   };
 
-  const handleBookingUpdate = (_updatedBooking: Booking) => {
-    // setBookings((prev: any) =>
-    //     prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b))
-    // );
-  };
+  const handleBookingUpdate = (_updatedBooking: BookingRecord) => {};
 
   return (
     <div className='space-y-6'>
@@ -244,7 +240,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
         <TabsContent value='browse' className='mt-6'>
           <InstructorDirectory
-            instructors={filteredInstructors as any}
+            instructors={filteredInstructors}
             classes={classes}
             onBookingComplete={handleBookingComplete}
             courseId={courseId as string}
@@ -254,7 +250,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
         <TabsContent value='bookings' className='mt-6'>
           <ManageBookings
             bookings={bookings}
-            instructors={filteredInstructors as any}
+            instructors={filteredInstructors}
             onBookingUpdate={handleBookingUpdate}
             refetchBookings={() => refetch()}
           />

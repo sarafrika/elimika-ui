@@ -1,10 +1,9 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { addYears, format } from 'date-fns';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
 import { CustomLoadingState } from '@/app/dashboard/@course_creator/_components/loading-state';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,14 +12,11 @@ import { Label } from '@/components/ui/label';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import useBundledClassInfo from '@/hooks/use-course-classes';
-import {
-  enrollStudentMutation,
-  getStudentScheduleQueryKey,
-  listCatalogItemsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { listCatalogItemsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import EnrollCourseCard from '@/src/features/dashboard/courses/components/enroll-course-card';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import type { BundledClass } from '../types';
 
 export default function AvailableClassesPage({ courseId }: { courseId: string }) {
   const router = useRouter();
@@ -28,10 +24,6 @@ export default function AvailableClassesPage({ courseId }: { courseId: string })
 
   const { replaceBreadcrumbs } = useBreadcrumb();
   const student = useStudent();
-  const qc = useQueryClient();
-
-  const [openEnrollModal, setOpenEnrollModal] = useState(false);
-  const [enrollingClass, setEnrollingClass] = useState<any | null>(null);
 
   useEffect(() => {
     if (courseId) {
@@ -118,66 +110,6 @@ export default function AvailableClassesPage({ courseId }: { courseId: string })
   const filteredClasses = classes.filter(cls =>
     catalogues?.data?.some(cat => cat.class_definition_uuid === cls.uuid)
   );
-
-  const { formattedStart, formattedEnd } = useMemo(() => {
-    if (!enrollingClass) {
-      return { formattedStart: '', formattedEnd: '' };
-    }
-
-    try {
-      const start = enrollingClass?.default_start_time
-        ? new Date(enrollingClass.default_start_time)
-        : null;
-      const end = enrollingClass?.default_end_time
-        ? new Date(enrollingClass.default_end_time)
-        : null;
-
-      return {
-        formattedStart: start ? format(start, 'MMM dd, yyyy • hh:mm a') : 'N/A',
-        formattedEnd: end ? format(end, 'MMM dd, yyyy • hh:mm a') : 'N/A',
-      };
-    } catch (e) {
-      return { formattedStart: 'N/A', formattedEnd: 'N/A' };
-    }
-  }, [enrollingClass]);
-
-  const enrollStudent = useMutation(enrollStudentMutation());
-
-  const handleEnrollStudent = () => {
-    if (!student?.uuid) return toast.error('Student not found');
-    if (!enrollingClass?.uuid) return toast.error('Class not found');
-
-    enrollStudent.mutate(
-      {
-        body: {
-          class_definition_uuid: enrollingClass.uuid,
-          student_uuid: student.uuid,
-        },
-      },
-      {
-        onSuccess: data => {
-          qc.invalidateQueries({
-            queryKey: getStudentScheduleQueryKey({
-              path: { studentUuid: student.uuid as string },
-              query: {
-                start: new Date('2025-11-02'),
-                end: new Date('2026-12-19'),
-              },
-            }),
-          });
-
-          setOpenEnrollModal(false);
-          toast.success(data?.message || 'Student enrolled successfully');
-        },
-        onError: err => {
-          // @ts-expect-error
-          toast.error(err?.error || 'Failed to enroll');
-          setOpenEnrollModal(false);
-        },
-      }
-    );
-  };
-  // @ts-ignore
 
   return (
     <div className='space-y-4 pb-10'>
@@ -285,13 +217,11 @@ export default function AvailableClassesPage({ courseId }: { courseId: string })
                   cls={cls}
                   isFull={false}
                   disableEnroll={false}
-                  handleEnroll={() => {
-                    setEnrollingClass(cls);
-                    // setOpenEnrollModal(true);
+                  handleEnroll={(selectedClass: BundledClass) => {
                     router.push(
                       buildWorkspaceAliasPath(
                         activeDomain,
-                        `/dashboard/all-courses/available-classes/${courseId}/enroll?id=${cls?.uuid}`
+                        `/dashboard/all-courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
                       )
                     );
                   }}

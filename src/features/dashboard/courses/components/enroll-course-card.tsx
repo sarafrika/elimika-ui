@@ -19,13 +19,14 @@ import {
   getCartQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useCartStore } from '@/store/cart-store';
+import { type BundledClass, getErrorMessage } from '../types';
 import AddToCartModal from './AddToCartModal';
 
 interface EnrollCourseCardProps {
-  cls: any;
+  cls: BundledClass;
   href: string;
   isFull: boolean;
-  handleEnroll: (cls: any) => void;
+  handleEnroll: (cls: BundledClass) => void;
   disableEnroll: boolean;
   variant?: 'full' | 'minimal';
 }
@@ -43,24 +44,27 @@ export default function EnrollCourseCard({
   const { cartId: savedCartId, setCartId } = useCartStore();
 
   const { difficultyMap } = useDifficultyLevels();
-  const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'Unknown';
+  const difficultyName = cls.course?.difficulty_uuid
+    ? difficultyMap[cls.course.difficulty_uuid] || 'Unknown'
+    : 'Unknown';
 
   const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(cls.uuid);
-  const enrolled = roster?.length;
-  const enrolledPercentage = (enrolled / cls?.max_participants) * 100;
+  const enrolled = roster?.length ?? 0;
+  const maxParticipants = cls.max_participants ?? 0;
+  const enrolledPercentage = maxParticipants > 0 ? (enrolled / maxParticipants) * 100 : 0;
 
   const [showCartModal, setShowCartModal] = useState(false);
-  const [selectedClass, setSelectedClass] = useState<any>(null);
+  const [selectedClass, setSelectedClass] = useState<BundledClass | null>(null);
 
   const createCart = useMutation(createCartMutation());
   const addItemToCart = useMutation(addItemMutation());
 
-  const handleCreateCart = (cls: any) => {
+  const handleCreateCart = (cls: BundledClass | null) => {
     if (!cls) return;
 
     const catalogue = cls.catalogue;
 
-    if (catalogue === null) {
+    if (!catalogue?.variant_code) {
       toast.error('No catalogue found for this class');
       setShowCartModal(false);
       return;
@@ -81,8 +85,8 @@ export default function EnrollCourseCard({
           },
         },
         {
-          onSuccess: (data: any) => {
-            const cartId = data?.data?.id || null;
+          onSuccess: data => {
+            const cartId = data?.id || null;
             if (cartId) {
               setCartId(cartId);
             }
@@ -93,8 +97,8 @@ export default function EnrollCourseCard({
 
             toast.success('Class added to cart!');
           },
-          onError: (error: any) => {
-            toast.error(error.message);
+          onError: error => {
+            toast.error(getErrorMessage(error, 'Failed to add class to cart'));
           },
         }
       );
@@ -203,13 +207,13 @@ export default function EnrollCourseCard({
 
             {/* Description */}
             <div className='text-muted-foreground line-clamp-2 text-sm leading-relaxed'>
-              <RichTextRenderer htmlString={cls?.description} maxChars={100} />
+              <RichTextRenderer htmlString={cls?.description ?? ''} maxChars={100} />
             </div>
           </Link>
 
           {/* Categories */}
           <div className='flex flex-wrap gap-2'>
-            {cls?.course?.category_names?.slice(0, 2).map((category: any, idx: any) => (
+            {cls?.course?.category_names?.slice(0, 2).map((category, idx) => (
               <Badge
                 key={idx}
                 variant='outline'

@@ -9,14 +9,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Course } from '@/services/client';
+import type { Course, TrainingProgram } from '@/services/client';
 import {
   getAllDifficultyLevelsOptions,
   getCourseCreatorByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 
 interface CourseCardProps {
-  course: Course;
+  course: Course | TrainingProgram;
   handleClick: () => void;
   handleEnroll: () => void;
   handleSearchInstructor: () => void;
@@ -31,6 +31,14 @@ export function CourseCard({
   handleSearchInstructor,
 }: CourseCardProps) {
   const _router = useRouter();
+  const courseName = 'name' in course ? course.name : course.title;
+  const courseCategories = 'category_names' in course ? course.category_names : undefined;
+  const difficultyUuid = 'difficulty_uuid' in course ? course.difficulty_uuid : undefined;
+  const introVideoUrl = 'intro_video_url' in course ? course.intro_video_url : undefined;
+  const bannerUrl = 'banner_url' in course ? course.banner_url : undefined;
+  const classLimit = 'class_limit' in course ? course.class_limit : undefined;
+  const totalDurationDisplay =
+    'total_duration_display' in course ? course.total_duration_display : undefined;
 
   const getInitials = (name: string) => {
     return name
@@ -76,10 +84,10 @@ export function CourseCard({
       <div className='relative'>
         {/* Course Image */}
         <div className='bg-muted relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg'>
-          {course?.banner_url ? (
+          {bannerUrl ? (
             <Image
-              src={course?.banner_url}
-              alt={course?.name || 'banner'}
+              src={bannerUrl}
+              alt={courseName || 'banner'}
               className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
               width={400}
               height={208}
@@ -89,7 +97,7 @@ export function CourseCard({
           )}
 
           {/* Video indicator */}
-          {course?.intro_video_url && (
+          {introVideoUrl && (
             <div className='absolute top-3 left-3 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs text-white'>
               <Play className='h-3 w-3' />
               Video
@@ -122,8 +130,8 @@ export function CourseCard({
 
           {/* Difficulty Badge */}
           <div className='absolute bottom-3 left-3'>
-            <Badge className={getDifficultyColor(course?.difficulty_uuid as string)}>
-              {getDifficultyNameFromUUID(course?.difficulty_uuid as string)}
+            <Badge className={getDifficultyColor(difficultyUuid as string)}>
+              {getDifficultyNameFromUUID(difficultyUuid as string)}
             </Badge>
           </div>
         </div>
@@ -131,7 +139,7 @@ export function CourseCard({
         <CardContent className='p-4'>
           {/* Category */}
           <div className='mb-2 flex items-center gap-2'>
-            {course?.category_names?.map((category, index) => (
+            {courseCategories?.map((category, index) => (
               <Badge key={index} variant='outline' className='text-xs'>
                 {category}
               </Badge>
@@ -140,11 +148,11 @@ export function CourseCard({
 
           {/* Title and Subtitle */}
           <h3 className='group-hover:text-primary mb-1 line-clamp-2 min-h-12 font-bold transition-colors'>
-            {course?.name}
+            {courseName}
           </h3>
 
           <div className='text-muted-foreground mb-3 line-clamp-2 text-sm'>
-            <RichTextRenderer htmlString={course?.description as string} />
+            <RichTextRenderer htmlString={course?.description ?? ''} />
           </div>
 
           {/* Instructor */}
@@ -169,11 +177,11 @@ export function CourseCard({
             </div>
             <div className='flex items-center gap-1'>
               <Users className='h-4 w-4' />
-              <span>{course?.class_limit}</span>
+              <span>{classLimit}</span>
             </div>
             <div className='flex items-center gap-1'>
               <Clock className='h-4 w-4' />
-              <span>{course?.total_duration_display}</span>
+              <span>{totalDurationDisplay}</span>
             </div>
           </div>
 

@@ -10,12 +10,18 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import Spinner from '@/components/ui/spinner';
+import type { Course } from '@/services/client/types.gen';
+import type { BundledClass } from '../types';
+
+type CourseWithOptionalShortDescription = Course & {
+  short_description?: string;
+};
 
 interface AddToCartModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  cls: any;
+  cls: BundledClass | null;
   isPending: boolean;
 }
 
@@ -29,6 +35,7 @@ export default function AddToCartModal({
   if (!cls) return null;
 
   const thumbnail = cls?.course?.thumbnail_url;
+  const courseWithShortDescription = cls.course as CourseWithOptionalShortDescription | null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -95,9 +102,9 @@ export default function AddToCartModal({
               )}
             </div>
 
-            {cls?.course?.short_description && (
+            {courseWithShortDescription?.short_description && (
               <p className='text-muted-foreground mt-3 line-clamp-3 text-sm'>
-                {cls.course.short_description}
+                {courseWithShortDescription.short_description}
               </p>
             )}
           </div>
