@@ -1,14 +1,3 @@
-import HTMLTextPreview from '@/components/editors/html-text-preview';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import type { Instructor } from '@/services/api/schema';
-import {
-  getInstructorEducationOptions,
-  getInstructorExperienceOptions,
-  getInstructorMembershipsOptions,
-  getUserByUuidOptions,
-} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import {
   Award,
@@ -23,9 +12,27 @@ import {
 } from 'lucide-react';
 import type React from 'react';
 import { toast } from 'sonner';
+import HTMLTextPreview from '@/components/editors/html-text-preview';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import type {
+  GetAllInstructorsResponse,
+  InstructorProfessionalMembership,
+} from '@/services/client';
+import {
+  getInstructorEducationOptions,
+  getInstructorExperienceOptions,
+  getInstructorMembershipsOptions,
+  getUserByUuidOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+
+type InstructorRecord = NonNullable<
+  NonNullable<GetAllInstructorsResponse['data']>['content']
+>[number];
 
 interface InstructorDetailsProps {
-  instructor: Instructor;
+  instructor: InstructorRecord;
   getStatusBadgeComponent?: (instructorId: string) => React.ReactElement;
   className?: string;
 }
@@ -271,21 +278,20 @@ export default function InstructorDetails({
           !membershipIsError &&
           Number(membership?.data?.content?.length) > 0 ? (
             <div className='grid grid-cols-2 justify-between gap-4'>
-              {/* @ts-ignore */}
-              {membership?.data?.content?.map((body: any, index) => (
+              {membership?.data?.content?.map((body: InstructorProfessionalMembership, index) => (
                 <div key={index} className='bg-card rounded-lg border p-4 shadow-sm'>
                   <div className='mb-2 flex items-center gap-4'>
                     <Badge variant='outline' className='text-xs'>
-                      {body?.organization_name || 'N/A'}
+                      {body.organisation_name || 'N/A'}
                     </Badge>
-                    <Badge variant={body?.is_active ? 'success' : 'secondary'}>
-                      {body?.is_active ? 'Active' : 'Inactive'}
+                    <Badge variant={body.is_active ? 'success' : 'secondary'}>
+                      {body.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
 
                   <div className='text-muted-foreground space-y-1 text-sm'>
-                    <p>Status: {body?.membership_status || 'Unknown'}</p>
-                    <p>Period: {body?.membership_period || 'N/A'}</p>
+                    <p>Status: {body.membership_status || 'Unknown'}</p>
+                    <p>Period: {body.membership_period || 'N/A'}</p>
                   </div>
                 </div>
               ))}
@@ -318,7 +324,7 @@ export default function InstructorDetails({
                       {exp.position || 'Position not specified'}
                     </p>
                     <p className='text-muted-foreground text-sm font-medium'>
-                      {exp.organization_name || 'Organization not specified'}
+                      {exp.organisation_name || 'Organization not specified'}
                     </p>
                     {exp.summary && (
                       <p className='text-muted-foreground mt-1 text-sm'>{exp.summary}</p>
@@ -348,12 +354,7 @@ export default function InstructorDetails({
           <CardTitle className='text-lg font-semibold'>Biography</CardTitle>
         </CardHeader>
         <CardContent>
-          {instructorInfo?.data?.bio ? (
-            <HTMLTextPreview
-              htmlContent={instructorInfo.data.bio}
-              className='prose prose-sm text-muted-foreground max-w-none'
-            />
-          ) : instructor.bio ? (
+          {instructor.bio ? (
             <HTMLTextPreview
               htmlContent={instructor.bio}
               className='prose prose-sm text-muted-foreground max-w-none'

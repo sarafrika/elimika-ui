@@ -1,14 +1,18 @@
-import { Button } from '@/components/ui/button';
-import type { Instructor } from '@/services/api/schema';
 import { Edit, Trash2, User } from 'lucide-react';
 import type React from 'react';
+import { Button } from '@/components/ui/button';
+import type { GetAllInstructorsResponse } from '@/services/client';
 import Spinner from '../../../../../components/ui/spinner';
 import InstructorDetails from './InstructorDetails';
 
+type InstructorRecord = NonNullable<
+  NonNullable<GetAllInstructorsResponse['data']>['content']
+>[number];
+
 interface InstructorDetailsPanelProps {
-  instructor: Instructor | null;
-  onApprove: (instructor: Instructor) => void;
-  onReject: (instructor: Instructor) => void;
+  instructor: InstructorRecord | null;
+  onApprove: (instructor: InstructorRecord) => void;
+  onReject: (instructor: InstructorRecord) => void;
   getStatusBadgeComponent: (instructorId: string) => React.ReactElement;
   isApprovePending: boolean;
   isRejectPending: boolean;

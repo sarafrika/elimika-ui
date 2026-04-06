@@ -30,6 +30,10 @@
         "app/dashboard/@student/_components/**",
         "app/class-invite/page.tsx",
         "app/dashboard/@admin/all-courses/**",
+        "app/dashboard/@admin/course-creators/_components/**",
+        "app/dashboard/@admin/financial-overview/_component/**",
+        "app/dashboard/@admin/instructors/_components/**",
+        "types/pdfjs-dist.d.ts",
         "hooks/use-course-classes.tsx",
         "hooks/use-program-classes.tsx",
         "hooks/use-search-training-instructors.tsx"

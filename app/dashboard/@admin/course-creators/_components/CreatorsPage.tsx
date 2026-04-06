@@ -1,8 +1,10 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import ErrorPage from '@/components/ErrorPage';
-import type { Instructor } from '@/services/api/schema';
 import type { CourseCreator } from '@/services/client';
 import {
   deleteCourseCreatorMutation,
@@ -11,9 +13,6 @@ import {
   unverifyCourseCreatorMutation,
   verifyCourseCreatorMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import CourseCreatorDetailsPanel from './CreatorDetailsPanel';
 import CourseCreatorMobileModal from './CreatorMobileModal';
 import CreatorsList from './CreatorsList';
@@ -24,7 +23,7 @@ export default function CourseCreatorsPage() {
   );
 
   const courseCreators = useMemo(() => data?.data?.content ?? [], [data?.data?.content]);
-  const [selectedCreator, setSelectedCreator] = useState<Instructor | null>(null);
+  const [selectedCreator, setSelectedCreator] = useState<CourseCreator | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -33,8 +32,10 @@ export default function CourseCreatorsPage() {
   const qc = useQueryClient();
 
   useEffect(() => {
-    if (courseCreators.length > 0 && !selectedCreator) {
-      setSelectedCreator(courseCreators[0] as any);
+    const firstCourseCreator = courseCreators[0];
+
+    if (firstCourseCreator && !selectedCreator) {
+      setSelectedCreator(firstCourseCreator);
     }
   }, [courseCreators, selectedCreator]);
 
@@ -84,7 +85,7 @@ export default function CourseCreatorsPage() {
   };
 
   const handeCourseCreatorSelect = (courseCreator: CourseCreator) => {
-    setSelectedCreator(courseCreator as any);
+    setSelectedCreator(courseCreator);
     // Open modal on small screens
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setIsModalOpen(true);
@@ -152,8 +153,8 @@ export default function CourseCreatorsPage() {
     <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
       {/* Left Sidebar - Instructor List */}
       <CreatorsList
-        courseCreators={filteredAndSortedCourseCreators as any}
-        selectedCourseCreator={selectedCreator as any}
+        courseCreators={filteredAndSortedCourseCreators}
+        selectedCourseCreator={selectedCreator}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         statusFilter={statusFilter}
@@ -167,7 +168,7 @@ export default function CourseCreatorsPage() {
 
       {/* Right Panel - Instructor Details (Desktop only) */}
       <CourseCreatorDetailsPanel
-        courseCreator={selectedCreator as any}
+        courseCreator={selectedCreator}
         onApprove={handleApproveCourseCreator}
         onUnverify={handleUnverifyCourseCreator}
         onDecline={handleDeclineCourseCreator}
@@ -178,7 +179,7 @@ export default function CourseCreatorsPage() {
 
       {/* Mobile Modal */}
       <CourseCreatorMobileModal
-        courseCreator={selectedCreator as any}
+        courseCreator={selectedCreator}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onApprove={handleApproveCourseCreator}

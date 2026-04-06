@@ -1,20 +1,24 @@
-import type { Instructor } from '@/services/api/schema';
 import type React from 'react';
+import type { GetAllInstructorsResponse } from '@/services/client';
 import { Skeleton } from '../../../../../components/ui/skeleton';
 import InstructorCard from './InstructorCard';
 import InstructorFilters from './InstructorFilters';
 
+type InstructorRecord = NonNullable<
+  NonNullable<GetAllInstructorsResponse['data']>['content']
+>[number];
+
 interface InstructorsListProps {
-  instructors: Instructor[];
-  selectedInstructor: Instructor | null;
+  instructors: InstructorRecord[];
+  selectedInstructor: InstructorRecord | null;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   statusFilter: string;
   setStatusFilter: (status: string) => void;
   sortOrder: 'asc' | 'desc';
   setSortOrder: (order: 'asc' | 'desc') => void;
-  onInstructorSelect: (instructor: Instructor) => void;
-  onInstructorDelete: (instructor: Instructor) => void;
+  onInstructorSelect: (instructor: InstructorRecord) => void;
+  onInstructorDelete: (instructor: InstructorRecord) => void;
   getStatusBadgeComponent: (instructorId: string) => React.ReactElement;
   isLoading: boolean;
 }
