@@ -30,6 +30,7 @@
         "app/dashboard/@student/_components/**",
         "app/class-invite/page.tsx",
         "app/dashboard/@admin/all-courses/**",
+        "app/dashboard/@parent/all-courses/**",
         "app/dashboard/@admin/course-creators/_components/**",
         "app/dashboard/@admin/financial-overview/_component/**",
         "app/dashboard/@admin/instructors/_components/**",
@@ -46,6 +47,7 @@
         "hooks/use-reverse-geocode.tsx",
         "hooks/use-throttled-callback.ts",
         "hooks/use-unmount.ts",
+        "hooks/use-admin-classes.tsx",
         "hooks/use-course-classes.tsx",
         "hooks/use-program-classes.tsx",
         "hooks/use-search-training-instructors.tsx"
