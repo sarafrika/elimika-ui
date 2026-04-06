@@ -11,7 +11,7 @@ function useStudentClassDefinitions(student?: any) {
   const { data: enrollmentsData } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: student?.uuid as string },
-      query: { start: '2024-10-10' as any, end: '2025-10-10' as any },
+      query: { start: '2024-10-10' as any, end: '2060-10-10' as any },
     }),
     enabled: !!student?.uuid,
   });
@@ -75,7 +75,7 @@ function useStudentClassDefinitions(student?: any) {
       classDetails,
       course,
       enrollments: enrollments.filter((en: any) => en.class_definition_uuid === uuid),
-      schedules: classScheduleArray,
+      schedules: classScheduleArray[i] ?? [],
     };
   });
 

@@ -22,11 +22,11 @@ import { BookOpen, MoreVertical, PenLine, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Card } from '../../../../../components/ui/card';
+import useInstructorClassesWithDetails from '../../../../../hooks/use-instructor-classes';
 import { AssignmentDialog } from '../../../@course_creator/_components/assignment-management-form';
 
 export default function AssignmentListPage() {
   const qc = useQueryClient();
-  const _instructor = useInstructor();
 
   // const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery({
   //   ...getCoursesByInstructorOptions({
@@ -44,6 +44,11 @@ export default function AssignmentListPage() {
 
   const [editingAssignmetId, setEditingAssignmentId] = useState();
   const [editingAssignmentData, setEditingAssignmentData] = useState();
+
+  const instructor = useInstructor();
+  const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
+    instructor?.uuid as string
+  );
 
   const { data, isLoading, isFetching, isFetched } = useQuery(
     getAllAssignmentsOptions({ query: { pageable: {} } })

@@ -101,16 +101,17 @@ export type Rubric = {
   max_score: number;
   min_passing_score: number;
   criteria: Criterion[];
-  scoringLevels: RubricScoringLevel[]; // Global scoring levels for the rubric
+  scoringLevels: RubricScoringLevel[];
 };
 
-export const useRubricsData = (courseCreatorUuid?: string) => {
+export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0) => {
   const {
     data: allRubrics,
     isLoading: isRubricsLoading,
     isFetching,
     isError: isRubricsError,
     isFetched: isRubricsFetched,
+    refetch: refetchRubrics,
   } = useQuery({
     ...searchAssessmentRubricsOptions({
       query: {
@@ -120,6 +121,16 @@ export const useRubricsData = (courseCreatorUuid?: string) => {
         },
       },
     }),
+    // Including refetchTrigger in the queryKey forces a fresh fetch whenever it changes
+    queryKey: [
+      ...searchAssessmentRubricsOptions({
+        query: {
+          pageable: {},
+          searchParams: { course_creator_uuid_eq: courseCreatorUuid as string },
+        },
+      }).queryKey,
+      refetchTrigger,
+    ],
   });
 
   const rubricList = allRubrics?.data?.content ?? [];
@@ -128,10 +139,13 @@ export const useRubricsData = (courseCreatorUuid?: string) => {
   // Fetch scoring levels for each rubric
   const scoringLevelsQueries = useQueries({
     queries: rubricUuids.map(rubricUuid => ({
-      queryKey: getScoringLevelsByRubricQueryKey({
-        path: { rubricUuid },
-        query: { pageable: {} },
-      }),
+      queryKey: [
+        ...getScoringLevelsByRubricQueryKey({
+          path: { rubricUuid },
+          query: { pageable: {} },
+        }),
+        refetchTrigger,
+      ],
       queryFn: () =>
         getScoringLevelsByRubric({
           path: { rubricUuid },
@@ -144,10 +158,13 @@ export const useRubricsData = (courseCreatorUuid?: string) => {
   // Fetch criteria for each rubric
   const criteriaQueries = useQueries({
     queries: rubricUuids.map(rubricUuid => ({
-      queryKey: getRubricCriteriaQueryKey({
-        path: { rubricUuid },
-        query: { pageable: {} },
-      }),
+      queryKey: [
+        ...getRubricCriteriaQueryKey({
+          path: { rubricUuid },
+          query: { pageable: {} },
+        }),
+        refetchTrigger,
+      ],
       queryFn: () =>
         getRubricCriteria({
           path: { rubricUuid },
@@ -170,10 +187,13 @@ export const useRubricsData = (courseCreatorUuid?: string) => {
   // Fetch scoring (links between criteria and scoring levels)
   const scoringQueries = useQueries({
     queries: criteriaPairs.map(({ rubricUuid, criteriaUuid }) => ({
-      queryKey: getRubricScoringQueryKey({
-        path: { rubricUuid, criteriaUuid },
-        query: { pageable: {} },
-      }),
+      queryKey: [
+        ...getRubricScoringQueryKey({
+          path: { rubricUuid, criteriaUuid },
+          query: { pageable: {} },
+        }),
+        refetchTrigger,
+      ],
       queryFn: () =>
         getRubricScoring({
           path: { rubricUuid, criteriaUuid },
@@ -183,13 +203,21 @@ export const useRubricsData = (courseCreatorUuid?: string) => {
     })),
   });
 
-  // Map rubrics to match new type with scoring levels
+  // ── refetchAll
+
+  const refetchAll = async () => {
+    await refetchRubrics();
+    await Promise.all([
+      ...scoringLevelsQueries.map(q => q.refetch()),
+      ...criteriaQueries.map(q => q.refetch()),
+    ]);
+    await Promise.all(scoringQueries.map(q => q.refetch()));
+  };
+
   const rubrics: Rubric[] = rubricList.map((rubric: any, rubricIndex: number) => {
-    // Get scoring levels for this rubric
     const scoringLevelsData: RubricScoringLevel[] =
       scoringLevelsQueries[rubricIndex]?.data?.data?.data?.content ?? [];
 
-    // Get criteria for this rubric
     const criteriaList = criteriaQueries[rubricIndex]?.data?.data?.data?.content ?? [];
 
     const criteria: Criterion[] = criteriaList.map((c: any) => {
@@ -234,7 +262,7 @@ export const useRubricsData = (courseCreatorUuid?: string) => {
       max_score: rubric.max_score,
       min_passing_score: rubric.min_passing_score,
       criteria,
-      scoringLevels: scoringLevelsData, // Add global scoring levels
+      scoringLevels: scoringLevelsData,
     };
   });
 
@@ -262,6 +290,7 @@ export const useRubricsData = (courseCreatorUuid?: string) => {
     isLoading,
     isError,
     isFetched,
+    refetchAll,
   };
 };
 
@@ -273,6 +302,7 @@ export const useRubricsWithCriteriaAndScoring = (courseCreatorUuid?: string) => 
     isFetching,
     isError: isRubricsError,
     isFetched: isRubricsFetched,
+    refetch: refetchRubrics,
   } = useQuery({
     ...searchAssessmentRubricsOptions({
       query: {

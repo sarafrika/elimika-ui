@@ -1,13 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -16,10 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
-import { ScrollArea } from '../ui/scroll-area';
 
 interface NotesModalProps {
   open: boolean;
@@ -68,6 +67,15 @@ export default function NotesModal({
   const [groupInpersonRate, setGroupInpersonRate] = useState<number | ''>(0);
   const [currency, setCurrency] = useState('KES');
 
+  const resetForm = () => {
+    setNotes('');
+    setPrivateOnlineRate(0);
+    setPrivateInpersonRate(0);
+    setGroupOnlineRate(0);
+    setGroupInpersonRate(0);
+    setCurrency('KES');
+  };
+
   const handleSave = () => {
     onSave({
       notes,
@@ -77,156 +85,139 @@ export default function NotesModal({
       group_inperson_rate: Number(groupInpersonRate),
       rate_currency: currency,
     });
-
-    setNotes('');
-    setNotes('');
-    setPrivateOnlineRate(0);
-    setPrivateInpersonRate(0);
-    setGroupOnlineRate(0);
-    setGroupInpersonRate(0);
-    setCurrency('KES');
+    resetForm();
   };
 
   const handleClose = () => {
     setOpen(false);
-    setNotes('');
-    // setRatePerHour(50);
-    setCurrency('KES');
+    resetForm();
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className='max-w-md space-y-2'>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+    <Sheet
+      open={open}
+      onOpenChange={open => {
+        setOpen(open);
+        if (!open) resetForm();
+      }}
+    >
+      <SheetContent className='flex w-full flex-col p-3 sm:max-w-[600px] sm:p-6'>
+        <SheetHeader className='border-border border-b pb-4'>
+          <SheetTitle>{title}</SheetTitle>
           {description && (
-            <DialogDescription className='text-muted-foreground my-2 text-sm'>
+            <SheetDescription className='text-muted-foreground text-sm'>
               {description}
-            </DialogDescription>
+            </SheetDescription>
           )}
-        </DialogHeader>
+        </SheetHeader>
 
-        <ScrollArea className='h-[calc(90vh-16rem)] sm:h-[calc(90vh-24rem)]'>
-          <div className='flex flex-col gap-3'>
-            <div className='space-y-1'>
-              <label className='text-muted-foreground text-sm font-medium'>Notes</label>
-              <Textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                placeholder={placeholder}
-                rows={6}
-              />
-            </div>
-
-            {userType === 'instructor' && (
-              <>
-                {/* Currency */}
-                <div className='space-y-1'>
-                  <label className='text-muted-foreground text-sm font-medium'>Currency</label>
-                  <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select currency' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='KES'>KES</SelectItem>
-                      <SelectItem value='USD'>USD</SelectItem>
-                      <SelectItem value='EUR'>EUR</SelectItem>
-                      <SelectItem value='GBP'>GBP</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Minimum rate note */}
-                <div className='mt-3'>
-                  <p className='text-muted-foreground text-sm'>
-                    Minimum rate set by course creator:{' '}
-                    <span className='font-semibold'>
-                      {minimum_rate} {currency}
-                    </span>{' '}
-                    per hour per head.
-                  </p>
-
-                  {/* PRIVATE SECTION */}
-                  <div className='mt-3 rounded-md border p-3'>
-                    <h3 className='mb-2 text-sm font-semibold'>
-                      Private Training Rates (Per Hour Per Head)
-                    </h3>
-
-                    <div className='flex gap-4'>
-                      {/* Private Online */}
-                      <div className='flex-1 space-y-1'>
-                        <label className='text-muted-foreground text-sm font-medium'>Online</label>
-                        <Input
-                          type='number'
-                          min={minimum_rate}
-                          value={privateOnlineRate}
-                          onChange={e =>
-                            setPrivateOnlineRate(e.target.value ? Number(e.target.value) : '')
-                          }
-                        />
-                      </div>
-
-                      {/* Private In-Person */}
-                      <div className='flex-1 space-y-1'>
-                        <label className='text-muted-foreground text-sm font-medium'>
-                          In-Person
-                        </label>
-                        <Input
-                          type='number'
-                          min={minimum_rate}
-                          value={privateInpersonRate}
-                          onChange={e =>
-                            setPrivateInpersonRate(e.target.value ? Number(e.target.value) : '')
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* GROUP SECTION */}
-                  <div className='mt-4 rounded-md border p-3'>
-                    <h3 className='mb-2 text-sm font-semibold'>
-                      Group Training Rates (Per Hour Per Head)
-                    </h3>
-
-                    <div className='flex gap-4'>
-                      {/* Group Online */}
-                      <div className='flex-1 space-y-1'>
-                        <label className='text-muted-foreground text-sm font-medium'>Online</label>
-                        <Input
-                          type='number'
-                          min={minimum_rate}
-                          value={groupOnlineRate}
-                          onChange={e =>
-                            setGroupOnlineRate(e.target.value ? Number(e.target.value) : '')
-                          }
-                        />
-                      </div>
-
-                      {/* Group In-Person */}
-                      <div className='flex-1 space-y-1'>
-                        <label className='text-muted-foreground text-sm font-medium'>
-                          In-Person
-                        </label>
-                        <Input
-                          type='number'
-                          min={minimum_rate}
-                          value={groupInpersonRate}
-                          onChange={e =>
-                            setGroupInpersonRate(e.target.value ? Number(e.target.value) : '')
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
+        {/* Scrollable body */}
+        <div className='flex-1 space-y-4 overflow-y-auto py-4 pr-1'>
+          {/* Notes */}
+          <div className='space-y-1'>
+            <label className='text-muted-foreground text-sm font-medium'>Notes</label>
+            <Textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder={placeholder}
+              rows={6}
+            />
           </div>
-        </ScrollArea>
 
-        {/* Footer buttons */}
-        <div className='flex justify-end gap-2 pt-2'>
+          {userType === 'instructor' && (
+            <>
+              {/* Currency */}
+              <div className='space-y-1'>
+                <label className='text-muted-foreground text-sm font-medium'>Currency</label>
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select currency' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='KES'>KES</SelectItem>
+                    <SelectItem value='USD'>USD</SelectItem>
+                    <SelectItem value='EUR'>EUR</SelectItem>
+                    <SelectItem value='GBP'>GBP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Minimum rate note */}
+              <p className='text-muted-foreground text-sm'>
+                Minimum rate set by course creator:{' '}
+                <span className='font-semibold'>
+                  {minimum_rate} {currency}
+                </span>{' '}
+                per hour per head.
+              </p>
+
+              {/* Private Training Rates */}
+              <div className='rounded-md border p-3'>
+                <h3 className='mb-3 text-sm font-semibold'>
+                  Private Training Rates (Per Hour Per Head)
+                </h3>
+                <div className='flex gap-4'>
+                  <div className='flex-1 space-y-1'>
+                    <label className='text-muted-foreground text-sm font-medium'>Online</label>
+                    <Input
+                      type='number'
+                      min={minimum_rate}
+                      value={privateOnlineRate}
+                      onChange={e =>
+                        setPrivateOnlineRate(e.target.value ? Number(e.target.value) : '')
+                      }
+                    />
+                  </div>
+                  <div className='flex-1 space-y-1'>
+                    <label className='text-muted-foreground text-sm font-medium'>In-Person</label>
+                    <Input
+                      type='number'
+                      min={minimum_rate}
+                      value={privateInpersonRate}
+                      onChange={e =>
+                        setPrivateInpersonRate(e.target.value ? Number(e.target.value) : '')
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Group Training Rates */}
+              <div className='rounded-md border p-3'>
+                <h3 className='mb-3 text-sm font-semibold'>
+                  Group Training Rates (Per Hour Per Head)
+                </h3>
+                <div className='flex gap-4'>
+                  <div className='flex-1 space-y-1'>
+                    <label className='text-muted-foreground text-sm font-medium'>Online</label>
+                    <Input
+                      type='number'
+                      min={minimum_rate}
+                      value={groupOnlineRate}
+                      onChange={e =>
+                        setGroupOnlineRate(e.target.value ? Number(e.target.value) : '')
+                      }
+                    />
+                  </div>
+                  <div className='flex-1 space-y-1'>
+                    <label className='text-muted-foreground text-sm font-medium'>In-Person</label>
+                    <Input
+                      type='number'
+                      min={minimum_rate}
+                      value={groupInpersonRate}
+                      onChange={e =>
+                        setGroupInpersonRate(e.target.value ? Number(e.target.value) : '')
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Sticky footer */}
+        <div className='border-border flex justify-end gap-2 border-t pt-4'>
           <Button
             variant='outline'
             onClick={handleClose}
@@ -238,20 +229,13 @@ export default function NotesModal({
           <Button
             onClick={handleSave}
             className='min-w-[100px]'
-            disabled={
-              isLoading || !notes.trim()
-              // !privateIndividualRate ||
-              // !privateGroupRate ||
-              // !publicIndividualRate ||
-              // !publicGroupRate ||
-              // !currency
-            }
+            disabled={isLoading || !notes.trim()}
             {...saveButtonProps}
           >
             {isLoading ? <Spinner /> : saveText}
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

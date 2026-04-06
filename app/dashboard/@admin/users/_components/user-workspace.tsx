@@ -120,11 +120,11 @@ export function AdminUserWorkspace({
   const { data, isLoading } = useQuery(
     useAdminEndpoint
       ? getAdminUsersOptions({
-        query: {
-          filters: {},
-          pageable: { page, size: 20, sort: ['created_date,desc'] },
-        },
-      })
+          query: {
+            filters: {},
+            pageable: { page, size: 20, sort: ['created_date,desc'] },
+          },
+        })
       : getAllUsersOptions({ query: { pageable: { page, size: 20, sort: ['created_date,desc'] } } })
   );
 
@@ -382,7 +382,7 @@ function UserListPanel({
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
 interface UserDetailsPanelProps {

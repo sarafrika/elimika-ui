@@ -48,7 +48,7 @@ function normaliseProfile(
         admin_verified: p.admin_verified,
         is_profile_complete: p.is_profile_complete,
         gender: user?.gender,
-        user_no: user?.user_no
+        user_no: user?.user_no,
       };
     }
 
@@ -70,12 +70,13 @@ function normaliseProfile(
         address: p.formatted_location || '',
         latitude: p.latitude,
         longitude: p.longitude,
+        bio: p.bio,
         professional_headline: p.professional_headline,
         admin_verified: p.admin_verified,
         is_profile_complete: p.is_profile_complete,
         gender: user?.gender,
         student_profile: p,
-        user_no: user?.user_no
+        user_no: user?.user_no,
       };
     }
 
@@ -98,7 +99,7 @@ function normaliseProfile(
         admin_verified: p.admin_verified,
         is_profile_complete: p.is_profile_complete,
         gender: user?.gender,
-        user_no: user?.user_no
+        user_no: user?.user_no,
       };
     }
 
@@ -116,7 +117,9 @@ function normaliseProfile(
         avatar_url: user?.profile_image_url,
         bio: p.bio,
         dob: user?.dob,
-        address: p.address || '',
+        address: (p as any)?.formatted_location || (p as any)?.location || p.address || '',
+        latitude: (p as any)?.latitude,
+        longitude: (p as any)?.longitude,
         profile_image_url: user?.profile_image_url,
         username: user?.username,
         website: p.website,
@@ -124,7 +127,7 @@ function normaliseProfile(
         is_profile_complete: p.is_profile_complete,
         is_online: true,
         gender: user?.gender,
-        user_no: user?.user_no
+        user_no: user?.user_no,
       };
     }
 
@@ -142,7 +145,7 @@ function normaliseProfile(
         avatar_url: user?.avatar_url,
         address: p.formatted_location || '',
         gender: user?.gender,
-        user_no: user?.user_no
+        user_no: user?.user_no,
       };
     }
   }
@@ -232,6 +235,8 @@ export default function UserProfilePage() {
     <ProfilePage
       tabs={tabs}
       profile={profile}
+      domain={domain}
+      profileSource={user}
       headerBadge={<DomainBadge domain={domain} user={user} />}
     />
   );

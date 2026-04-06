@@ -122,11 +122,11 @@ const MySkillsPage = () => {
   const overallProgress =
     skills.length > 0
       ? Math.round(
-        skills.reduce(
-          (acc: number, skill: any) => acc + (proficiencyScoreMap[skill.proficiency_level] || 0),
-          0
-        ) / skills.length
-      )
+          skills.reduce(
+            (acc: number, skill: any) => acc + (proficiencyScoreMap[skill.proficiency_level] || 0),
+            0
+          ) / skills.length
+        )
       : 0;
 
   // top 3 skills by proficiency
@@ -351,19 +351,18 @@ const MySkillsPage = () => {
                     className='hidden items-center gap-2'
                   >
                     <PlusCircle className='h-4 w-4' />
-                    Add Your First Skill
+                    Add New Skill
                   </Button>
 
                   <Button
                     size='default'
                     className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2'
-                    onClick={() => {
-                      setShowStudentProfileNotice(true);
-                    }}
+                    // onClick={() => {  setShowStudentProfileNotice(true);}}
+                    onClick={() => router.push('/dashboard/all-courses')}
                   >
                     {/* Browse Courses */}
                     <PlusCircle className='h-5 w-5' />
-                    Add Your First Skill
+                    Add New Skill
                   </Button>
                 </div>
               ) : (
@@ -525,12 +524,13 @@ const MySkillsPage = () => {
                           </div>
                           <div className='bg-background border-input h-2 w-full overflow-hidden rounded-full border'>
                             <div
-                              className={`h-2 rounded-full transition-all duration-500 ${en?.course?.status === 'complete' || en?.course?.status === 'passed'
-                                ? 'bg-primary'
-                                : en?.course?.status === 'failed'
-                                  ? 'bg-destructive'
-                                  : 'bg-muted-foreground'
-                                }`}
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                en?.course?.status === 'complete' || en?.course?.status === 'passed'
+                                  ? 'bg-primary'
+                                  : en?.course?.status === 'failed'
+                                    ? 'bg-destructive'
+                                    : 'bg-muted-foreground'
+                              }`}
                               style={{ width: `${en?.course?.progress || 0}%` }}
                             />
                           </div>

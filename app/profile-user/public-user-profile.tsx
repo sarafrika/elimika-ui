@@ -41,6 +41,13 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
     gender: user.gender,
     active: user.active,
     username: user.username,
+    user_no: user.user_no,
+  };
+
+  const privateLocationFields = {
+    address: undefined,
+    latitude: undefined,
+    longitude: undefined,
   };
 
   switch (domain) {
@@ -54,9 +61,7 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
         uuid: instructor.uuid,
         website: instructor.website,
         bio: instructor.bio,
-        address: instructor.formatted_location,
-        latitude: instructor.latitude,
-        longitude: instructor.longitude,
+        ...privateLocationFields,
         professional_headline: instructor.professional_headline,
         admin_verified: instructor.admin_verified,
         is_profile_complete: instructor.is_profile_complete,
@@ -72,9 +77,7 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
         ...baseProfile,
         uuid: student.uuid,
         bio: student.bio,
-        address: student.formatted_location || '',
-        latitude: student.latitude,
-        longitude: student.longitude,
+        ...privateLocationFields,
         professional_headline: student.professional_headline,
         admin_verified: student.admin_verified,
         is_profile_complete: student.is_profile_complete,
@@ -92,9 +95,7 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
         uuid: creator.uuid,
         bio: creator.bio,
         website: creator.website,
-        address: creator.address || creator.formatted_location || '',
-        latitude: creator.latitude,
-        longitude: creator.longitude,
+        ...privateLocationFields,
         professional_headline: creator.professional_headline,
         admin_verified: creator.admin_verified,
         is_profile_complete: creator.is_profile_complete,
@@ -109,9 +110,7 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
       return {
         ...baseProfile,
         uuid: admin.uuid,
-        address: admin.formatted_location || '',
-        latitude: admin.latitude,
-        longitude: admin.longitude,
+        ...privateLocationFields,
         professional_headline: admin.professional_headline,
         admin_verified: admin.admin_verified,
         is_profile_complete: admin.is_profile_complete,
@@ -127,9 +126,7 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
         ...baseProfile,
         uuid: org.uuid,
         full_name: org.org_name || org.full_name || user.full_name,
-        address: org.formatted_location || '',
-        latitude: org.latitude,
-        longitude: org.longitude,
+        ...privateLocationFields,
         admin_verified: org.admin_verified,
       };
     }
@@ -282,6 +279,7 @@ export default function PublicUserProfilePage() {
     <ProfilePage
       tabs={tabs}
       profile={profile}
+      domain={domain}
       headerBadge={<DomainBadge domain={domain} profile={profile} />}
       isPublic={true}
     />

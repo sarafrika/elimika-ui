@@ -18552,6 +18552,28 @@ export const getEnrollmentGradeBookOptions = (options: Options<GetEnrollmentGrad
   });
 };
 
+export const getEnrollmentGradeBookQueryKey = (options: Options<GetEnrollmentGradeBookData>) =>
+  createQueryKey('getEnrollmentGradeBook', options);
+
+/**
+ * Get enrollment gradebook
+ * Returns the weighted gradebook view for a learner in a course.
+ */
+export const getEnrollmentGradeBookOptions = (options: Options<GetEnrollmentGradeBookData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrollmentGradeBook({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrollmentGradeBookQueryKey(options),
+  });
+};
+
 export const getCourseEnrollmentsQueryKey = (options: Options<GetCourseEnrollmentsData>) =>
   createQueryKey('getCourseEnrollments', options);
 

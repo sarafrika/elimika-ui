@@ -8,10 +8,12 @@ import {
   getClassDefinitionsForInstructorQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PlusIcon } from 'lucide-react';
+import { ArrowRight, PlusIcon } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { cx, elimikaDesignSystem } from '../../../../../lib/design-system';
 import { TrainingClassList } from '../../../_components/training-class-list';
 import {
   ClassDialog,
@@ -74,16 +76,23 @@ export default function TrainingsPage({
 
   return (
     <div className='mb-20 space-y-6'>
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <div>
-          <h1 className='text-xl font-semibold'>Your Classes</h1>
-          <p className='text-muted-foreground'>Manage your classes and schedules</p>
-        </div>
 
+      <Link
+        href="/dashboard/new-class"
+        className={cx(
+          elimikaDesignSystem.components.header.badge,
+          'inline-flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity'
+        )}
+      >
+        <span>New Class Page</span>
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+
+      <div className='flex flex-col self-end'>
         <Button
           onClick={() => router.push(`/dashboard/trainings/create-new`)}
           size='lg'
-          className='w-full gap-2 sm:w-auto'
+          className='w-full max-w-fit gap-2 self-end'
         >
           <PlusIcon className='h-5 w-5' />
           Create New Class

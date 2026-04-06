@@ -354,7 +354,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
 
   if (isLoading) {
     return (
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
         {Array.from({ length: 11 }).map((_, i) => (
           <Card key={i}>
             <CardHeader className='flex flex-row items-center justify-between pb-2'>
@@ -376,7 +376,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
   }
 
   return (
-    <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+    <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
       {groupedKPIs.map((kpi, index) => (
         <Card
           key={index}

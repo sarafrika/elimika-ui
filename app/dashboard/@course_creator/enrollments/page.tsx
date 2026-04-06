@@ -23,7 +23,7 @@ import {
   Search,
   Send,
   TrendingUp,
-  Users
+  Users,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -103,13 +103,13 @@ const EnrollmentsPage = () => {
     };
   });
 
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState('');
   const filteredEnrollments = useMemo(() => {
     if (!searchValue.trim()) return enrichedEnrollments;
 
     const term = searchValue.toLowerCase();
 
-    return enrichedEnrollments.filter((enrollment) => {
+    return enrichedEnrollments.filter(enrollment => {
       return (
         enrollment.first_name?.toLowerCase().includes(term) ||
         enrollment.last_name?.toLowerCase().includes(term) ||
@@ -119,7 +119,6 @@ const EnrollmentsPage = () => {
       );
     });
   }, [enrichedEnrollments, searchValue]);
-
 
   // Filter courses by search
   const filteredCourses = courses.filter(course =>
@@ -157,7 +156,33 @@ const EnrollmentsPage = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className='grid gap-4 md:grid-cols-3'>
+        <div className='grid grid-cols-3 gap-2 md:hidden'>
+          <Card className='p-2'>
+            <CardContent className='flex flex-col items-center gap-1 p-2 text-center'>
+              <Users className='text-primary h-4 w-4' />
+              <p className='text-muted-foreground text-xs'>Total Enrollments</p>
+              <p className='text-sm font-semibold'>{totalEnrollments}</p>
+            </CardContent>
+          </Card>
+
+          <Card className='p-2'>
+            <CardContent className='flex flex-col items-center gap-1 p-2 text-center'>
+              <BookOpen className='text-primary h-4 w-4' />
+              <p className='text-muted-foreground text-xs'>Active Courses</p>
+              <p className='text-sm font-semibold'>{courses.length}</p>
+            </CardContent>
+          </Card>
+
+          <Card className='p-2'>
+            <CardContent className='flex flex-col items-center gap-1 p-2 text-center'>
+              <TrendingUp className='text-success h-4 w-4' />
+              <p className='text-muted-foreground text-xs'>Avg. per Course</p>
+              <p>{courses.length > 0 ? Math.round(totalEnrollments / courses.length) : 0}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className='hidden gap-4 md:flex md:grid-cols-3'>
           <Card className='p-0'>
             <CardContent className='flex items-center gap-4 p-6'>
               <div className='bg-primary/10 rounded-full p-3'>
@@ -238,10 +263,11 @@ const EnrollmentsPage = () => {
                       <button
                         key={course.uuid}
                         onClick={() => setSelectedCourseId(course.uuid)}
-                        className={`group flex w-full items-start gap-3 rounded-lg border p-4 text-left transition-all ${isSelected
-                          ? 'border-primary bg-primary/5 shadow-sm'
-                          : 'bg-muted/50 hover:border-border hover:bg-muted border-transparent hover:shadow-sm'
-                          }`}
+                        className={`group flex w-full items-start gap-3 rounded-lg border p-4 text-left transition-all ${
+                          isSelected
+                            ? 'border-primary bg-primary/5 shadow-sm'
+                            : 'bg-muted/50 hover:border-border hover:bg-muted border-transparent hover:shadow-sm'
+                        }`}
                       >
                         <div
                           className={`mt-1 rounded-md p-2 ${isSelected ? 'bg-primary/10' : 'bg-background'}`}
@@ -333,20 +359,20 @@ const EnrollmentsPage = () => {
                   </div>
                 ) : (
                   <div className='divide-y'>
-                    <div className="mx-3 relative">
+                    <div className='relative mx-3'>
                       <input
-                        type="text"
-                        placeholder="Search students..."
+                        type='text'
+                        placeholder='Search students...'
                         value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
-                        className="w-full border rounded-[8px] px-3 py-2 pr-10 mb-4 text-sm"
+                        onChange={e => setSearchValue(e.target.value)}
+                        className='mb-4 w-full rounded-[8px] border px-3 py-2 pr-10 text-sm'
                       />
 
                       {searchValue && (
                         <button
-                          type="button"
-                          onClick={() => setSearchValue("")}
-                          className="absolute right-3 top-2 text-muted-foreground text-sm"
+                          type='button'
+                          onClick={() => setSearchValue('')}
+                          className='text-muted-foreground absolute top-2 right-3 text-sm'
                         >
                           ✕
                         </button>
@@ -419,10 +445,11 @@ const EnrollmentsPage = () => {
                           No Enrollments Yet
                         </h3>
                         <p className='text-muted-foreground max-w-sm text-center text-sm'>
-                          This course doesn't have any enrolled students yet. Students who enroll will
-                          appear here.
+                          This course doesn't have any enrolled students yet. Students who enroll
+                          will appear here.
                         </p>
-                      </div>)}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

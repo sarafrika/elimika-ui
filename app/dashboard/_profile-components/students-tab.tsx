@@ -4,11 +4,17 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { FileText, Mail, Phone, Shield, Tag, User, Users, VenusIcon } from 'lucide-react';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
-import { searchEnrollmentsOptions } from '../../../services/client/@tanstack/react-query.gen';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  getClassDefinitionOptions,
+  getCourseByUuidOptions,
+  getStudentCertificatesOptions,
+  getStudentScheduleOptions,
+  getTrainingProgramByUuidOptions,
+} from '../../../services/client/@tanstack/react-query.gen';
 import type { DomainTabProps, TabDefinition } from './types';
 
 function TabShell({ children }: { children: React.ReactNode }) {
@@ -146,56 +152,238 @@ function StudentAboutTab({ sharedProfile, userUuid }: DomainTabProps) {
 interface EnrolledCourse {
   uuid: string;
   title: string;
-  instructor: string;
+  subtitle: string;
   progress: number;
-  status: 'active' | 'completed' | 'paused';
-  thumbnail_color: string;
+  status: 'ongoing' | 'completed';
+  type: 'Course' | 'Program';
 }
 
 const STATUS_VARIANT: Record<EnrolledCourse['status'], 'default' | 'secondary' | 'outline'> = {
-  active: 'default',
+  ongoing: 'default',
   completed: 'secondary',
-  paused: 'outline',
 };
 
 function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
-  const { data, isLoading } = useQuery({
-    ...searchEnrollmentsOptions({
-      query: {
-        pageable: {},
-        searchParams: {
-          student_uuid_eq: sharedProfile?.uuid,
-        },
-      },
+  const { data: scheduleData, isLoading: isLoadingSchedule } = useQuery({
+    ...getStudentScheduleOptions({
+      path: { studentUuid: sharedProfile?.uuid as string },
+      query: { start: '2000-01-01', end: '2100-12-31' },
     }),
     enabled: !!sharedProfile?.uuid,
   });
 
-  const enrollments = data?.data?.content || [];
-  const getUniqueBy = (array, key) => {
-    const seen = new Set();
-    return array.filter(item => {
-      if (!item[key] || seen.has(item[key])) return false;
-      seen.add(item[key]);
-      return true;
+  const { data: certificatesData, isLoading: isLoadingCertificates } = useQuery({
+    ...getStudentCertificatesOptions({ path: { studentUuid: sharedProfile?.uuid as string } }),
+    enabled: !!sharedProfile?.uuid,
+  });
+
+  const scheduleEntries = scheduleData?.data ?? [];
+  const certificates = certificatesData?.data ?? [];
+
+  const uniqueSchedules = useMemo(() => {
+    const scheduleMap = new Map<string, any>();
+
+    scheduleEntries.forEach((item: any) => {
+      const key =
+        item?.class_definition_uuid ?? item?.scheduled_instance_uuid ?? item?.enrollment_uuid;
+
+      if (key && !scheduleMap.has(key)) {
+        scheduleMap.set(key, item);
+      }
     });
-  };
 
-  const uniqueScheduledInstances = getUniqueBy(enrollments, 'scheduled_instance_uuid');
-  const uniqueCourses = getUniqueBy(enrollments, 'course_uuid');
-  const uniquePrograms = getUniqueBy(enrollments, 'program_uuid');
+    return Array.from(scheduleMap.values());
+  }, [scheduleEntries]);
 
-  // useEffect(() => {
-  //     // Replace with: fetch(`/api/students/${userUuid}/enrollments`)
-  //     setTimeout(() => {
-  //         setCourses([
-  //             { uuid: '1', title: 'Intro to Music Theory', instructor: 'Ayomhi Ayo', progress: 72, status: 'active', thumbnail_color: 'bg-success/50' },
-  //             { uuid: '2', title: 'Guitar Fundamentals', instructor: 'Jane Doe', progress: 100, status: 'completed', thumbnail_color: 'bg-success/50' },
-  //             { uuid: '3', title: 'Digital Audio Production', instructor: 'Mark Bell', progress: 30, status: 'paused', thumbnail_color: 'bg-success/50' },
-  //         ]);
-  //         setIsLoading(false);
-  //     }, 600);
-  // }, [userUuid]);
+  const classDefinitionUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(uniqueSchedules.map((item: any) => item?.class_definition_uuid).filter(Boolean))
+      ),
+    [uniqueSchedules]
+  );
+
+  const classDefinitionQueries = useQueries({
+    queries: classDefinitionUuids.map((uuid: string) => ({
+      ...getClassDefinitionOptions({ path: { uuid } }),
+      enabled: !!uuid,
+    })),
+  });
+
+  const classDefinitionsMap = useMemo(() => {
+    const map = new Map<string, any>();
+
+    classDefinitionQueries.forEach((query, index) => {
+      const classDefinition = query.data?.data?.class_definition;
+      const classDefinitionUuid = classDefinitionUuids[index];
+
+      if (classDefinition && classDefinitionUuid) {
+        map.set(classDefinitionUuid, classDefinition);
+      }
+    });
+
+    return map;
+  }, [classDefinitionQueries, classDefinitionUuids]);
+
+  const { courseUuids, programUuids } = useMemo(() => {
+    const courses = new Set<string>();
+    const programs = new Set<string>();
+
+    uniqueSchedules.forEach((item: any) => {
+      const classDefinition = classDefinitionsMap.get(item?.class_definition_uuid);
+
+      if (classDefinition?.course_uuid) {
+        courses.add(classDefinition.course_uuid);
+      }
+
+      if (classDefinition?.program_uuid) {
+        programs.add(classDefinition.program_uuid);
+      }
+    });
+
+    certificates.forEach((certificate: any) => {
+      if (certificate?.course_uuid) {
+        courses.add(certificate.course_uuid);
+      }
+
+      if (certificate?.program_uuid) {
+        programs.add(certificate.program_uuid);
+      }
+    });
+
+    return {
+      courseUuids: Array.from(courses),
+      programUuids: Array.from(programs),
+    };
+  }, [certificates, classDefinitionsMap, uniqueSchedules]);
+
+  const courseQueries = useQueries({
+    queries: courseUuids.map((uuid: string) => ({
+      ...getCourseByUuidOptions({ path: { uuid } }),
+      enabled: !!uuid,
+    })),
+  });
+
+  const programQueries = useQueries({
+    queries: programUuids.map((uuid: string) => ({
+      ...getTrainingProgramByUuidOptions({ path: { uuid } }),
+      enabled: !!uuid,
+    })),
+  });
+
+  const coursesMap = useMemo(() => {
+    const map = new Map<string, any>();
+
+    courseQueries.forEach((query, index) => {
+      const courseUuid = courseUuids[index];
+      if (courseUuid && query.data?.data) {
+        map.set(courseUuid, query.data.data);
+      }
+    });
+
+    return map;
+  }, [courseQueries, courseUuids]);
+
+  const programsMap = useMemo(() => {
+    const map = new Map<string, any>();
+
+    programQueries.forEach((query, index) => {
+      const programUuid = programUuids[index];
+      if (programUuid && query.data?.data) {
+        map.set(programUuid, query.data.data);
+      }
+    });
+
+    return map;
+  }, [programQueries, programUuids]);
+
+  const enrolledCourses = useMemo<EnrolledCourse[]>(() => {
+    const items = new Map<string, EnrolledCourse>();
+
+    uniqueSchedules.forEach((item: any) => {
+      const classDefinition = classDefinitionsMap.get(item?.class_definition_uuid);
+      const courseUuid = classDefinition?.course_uuid;
+      const programUuid = classDefinition?.program_uuid;
+      const course = courseUuid ? coursesMap.get(courseUuid) : null;
+      const program = programUuid ? programsMap.get(programUuid) : null;
+      const certificate = certificates.find(
+        (entry: any) =>
+          (courseUuid && entry?.course_uuid === courseUuid) ||
+          (programUuid && entry?.program_uuid === programUuid)
+      );
+      const itemId = courseUuid
+        ? `course-${courseUuid}`
+        : programUuid
+          ? `program-${programUuid}`
+          : null;
+
+      if (!itemId) {
+        return;
+      }
+
+      const topLine = course?.name || program?.title || classDefinition?.title || item?.title;
+      const supportingLine =
+        classDefinition?.title &&
+        classDefinition?.title !== course?.name &&
+        classDefinition?.title !== program?.title
+          ? classDefinition.title
+          : course?.total_duration_display ||
+            program?.total_duration_display ||
+            item?.timezone ||
+            'Enrollment in progress';
+
+      items.set(itemId, {
+        uuid: itemId,
+        title: topLine || 'Untitled learning item',
+        subtitle: supportingLine,
+        progress: certificate ? 100 : 35,
+        status: certificate?.is_valid ? 'completed' : 'ongoing',
+        type: courseUuid ? 'Course' : 'Program',
+      });
+    });
+
+    certificates.forEach((certificate: any) => {
+      const courseUuid = certificate?.course_uuid;
+      const programUuid = certificate?.program_uuid;
+      const itemId = courseUuid
+        ? `course-${courseUuid}`
+        : programUuid
+          ? `program-${programUuid}`
+          : null;
+
+      if (!itemId || items.has(itemId)) {
+        return;
+      }
+
+      const course = courseUuid ? coursesMap.get(courseUuid) : null;
+      const program = programUuid ? programsMap.get(programUuid) : null;
+
+      items.set(itemId, {
+        uuid: itemId,
+        title: course?.name || program?.title || 'Completed learning item',
+        subtitle:
+          course?.total_duration_display || program?.total_duration_display || 'Certificate earned',
+        progress: 100,
+        status: 'completed',
+        type: courseUuid ? 'Course' : 'Program',
+      });
+    });
+
+    return Array.from(items.values()).sort((left, right) => {
+      if (left.status === right.status) {
+        return left.title.localeCompare(right.title);
+      }
+
+      return left.status === 'ongoing' ? -1 : 1;
+    });
+  }, [certificates, classDefinitionsMap, coursesMap, programsMap, uniqueSchedules]);
+
+  const isLoading =
+    isLoadingSchedule ||
+    isLoadingCertificates ||
+    classDefinitionQueries.some(query => query.isLoading) ||
+    courseQueries.some(query => query.isLoading) ||
+    programQueries.some(query => query.isLoading);
 
   if (isLoading)
     return (
@@ -217,11 +405,11 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
 
   return (
     <TabShell>
-      {uniqueCourses.length === 0 && (
+      {enrolledCourses.length === 0 && (
         <Card>
           <CardContent className='flex flex-col items-center justify-center py-10 text-center'>
             <FileText className='text-muted-foreground mb-3 h-10 w-10' />
-            <p className='text-muted-foreground text-sm'>No courses registered yet.</p>
+            <p className='text-muted-foreground text-sm'>No enrolled courses yet.</p>
 
             <Link
               href='/dashboard/all-courses'
@@ -233,14 +421,11 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
         </Card>
       )}
 
-      {uniqueCourses?.map(course => (
+      {enrolledCourses.map(course => (
         <Card key={course.uuid}>
           <CardContent className='flex items-center gap-4 pt-4'>
-            <div
-              className='flex h-14 w-14 shrink-0 items-center justify-center rounded-lg text-lg font-bold text-white'
-              style={{ background: course.thumbnail_color }}
-            >
-              🎵
+            <div className='bg-primary/10 text-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-lg text-xs font-semibold'>
+              {course.type}
             </div>
             <div className='min-w-0 flex-1'>
               <div className='mb-1 flex items-center justify-between'>
@@ -252,7 +437,7 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
                   {course.status}
                 </Badge>
               </div>
-              <p className='text-muted-foreground mb-2 text-xs'>{course.instructor}</p>
+              <p className='text-muted-foreground mb-2 text-xs'>{course.subtitle}</p>
               <div className='flex items-center gap-2'>
                 <Progress value={course.progress} className='h-1.5 flex-1' />
                 <span className='text-muted-foreground w-8 text-right text-xs font-medium'>

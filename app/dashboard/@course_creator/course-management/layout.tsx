@@ -63,33 +63,40 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
       {/* Header */}
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          {currentType === 'courses' ? <h2 className='text-[22px] font-bold tracking-tight'>
-            Course Management
-          </h2> : <h2 className='text-[22px] font-bold tracking-tight'>
-            Training Programs
-          </h2>}
+          {currentType === 'courses' ? (
+            <h2 className='text-[22px] font-bold tracking-tight'>Course Management</h2>
+          ) : (
+            <h2 className='text-[22px] font-bold tracking-tight'>Training Programs</h2>
+          )}
 
-
-          {currentType === 'courses' ? <p className='text-muted-foreground text-[14px]'>
-            Manage your course drafts and published content.
-
-          </p> : <p className='text-muted-foreground text-[14px]'>
-
-            Bundle courses together to create certificate, diploma or degree training programs
-          </p>}
-
+          {currentType === 'courses' ? (
+            <p className='text-muted-foreground text-[14px]'>
+              Manage your course drafts and published content.
+            </p>
+          ) : (
+            <p className='text-muted-foreground text-[14px]'>
+              Bundle courses together to create certificate, diploma or degree training programs
+            </p>
+          )}
         </div>
 
         {/* Courses/Programs Toggle */}
         <Tabs value={currentType} onValueChange={handleTypeChange} className='w-fit'>
-          <TabsList className='grid w-full grid-cols-2'>
-            <TabsTrigger value='courses' className='flex items-center gap-2'>
+          <TabsList className='bg-muted grid w-full grid-cols-2'>
+            <TabsTrigger
+              value='courses'
+              className='data-[state=active]:bg-background flex items-center gap-2'
+            >
               <BookOpen className='h-4 w-4' />
-              <span className='hidden sm:inline'>Courses</span>
+              <span>Courses</span>
             </TabsTrigger>
-            <TabsTrigger value='programs' className='flex items-center gap-2'>
+
+            <TabsTrigger
+              value='programs'
+              className='data-[state=active]:bg-background flex items-center gap-2'
+            >
               <GraduationCap className='h-4 w-4' />
-              <span className='hidden sm:inline'>Programs</span>
+              <span>Programs</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -98,12 +105,12 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
       <Separator />
 
       {/* Status Filters */}
-      <div className='flex flex-col space-y-8 lg:flex-col lg:space-x-6 lg:space-y-0'>
+      <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6'>
         <div className='lg:auto w-full flex-1'>
-          {currentType === "courses" &&
+          {currentType === 'courses' && (
             <div className='mx-auto max-w-6xl'>
               {!hideNav && (
-                <div className='mb-6 flex w-full max-w-2xl flex-wrap gap-2 rounded-xl bg-muted/50 p-2 sm:gap-3'>
+                <div className='bg-muted/50 mb-6 flex w-full max-w-2xl flex-wrap gap-2 rounded-xl p-2 sm:gap-3'>
                   {statusFilters.map(filter => {
                     const isActive = currentStatus === filter.value;
 
@@ -113,10 +120,11 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
                         onClick={() => handleStatusChange(filter.value)}
                         variant='ghost'
                         className={cn(
-                          'flex-1 rounded-lg transition-colors sm:flex-none sm:min-w-[120px]',
-                          'bg-transparent hover:bg-muted',
+                          'flex-1 rounded-lg transition-colors sm:min-w-[120px] sm:flex-none',
+                          'hover:bg-muted bg-transparent',
                           'text-muted-foreground px-4 py-2 text-sm sm:px-5',
-                          isActive && 'bg-primary text-primary-foreground hover:bg-primary shadow-sm'
+                          isActive &&
+                            'bg-primary text-primary-foreground hover:bg-primary shadow-sm'
                         )}
                       >
                         {filter.label}
@@ -125,7 +133,8 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
                   })}
                 </div>
               )}
-            </div>}
+            </div>
+          )}
 
           {children}
         </div>

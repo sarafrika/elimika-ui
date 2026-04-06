@@ -1,11 +1,16 @@
+import { Mail } from 'lucide-react';
+
 function InvitesPage() {
   return (
-    <div>
-      <div className='flex flex-col gap-2 rounded-md border-l-4 border-yellow-500 bg-yellow-100 p-4 text-yellow-800 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-          <p className='font-medium'>🚧 This page is under construction.</p>
-          <p className='text-sm text-yellow-900'></p>
-        </div>
+    <div className='flex flex-col items-center justify-center gap-4 py-24 text-center'>
+      <div className='bg-muted rounded-full p-5'>
+        <Mail className='text-muted-foreground h-8 w-8' />
+      </div>
+      <div className='space-y-1'>
+        <h3 className='text-lg font-semibold'>No invites</h3>
+        <p className='text-muted-foreground max-w-xs text-sm'>
+          You don't have any pending invites right now. Check back later.
+        </p>
       </div>
     </div>
   );

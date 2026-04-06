@@ -1,15 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -17,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { elimikaDesignSystem } from '@/lib/design-system';
 import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import {
@@ -30,7 +21,7 @@ import {
   Send,
   ShoppingCart,
   TrendingUp,
-  Users
+  Users,
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useCourseCreator } from '../../../../context/course-creator-context';
@@ -40,6 +31,7 @@ import {
   listTransactionsOptions,
   transferMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import { TransferFundsSheet } from '../../_components/transfer-funds-sheet';
 
 // Status badge color map with semantic tokens
 const STATUS_BADGE_MAP = {
@@ -65,7 +57,7 @@ const RevenuePage = () => {
   const [sortBy, setSortBy] = useState('created_date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [isTransferSheetOpen, setIsTransferSheetOpen] = useState(false);
   const [targetUserUuid, setTargetUserUuid] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [transferCurrency, setTransferCurrency] = useState('KES');
@@ -76,24 +68,18 @@ const RevenuePage = () => {
   const transferFundsMut = useMutation({
     ...transferMutation(),
     onSuccess: () => {
-      // Reset form
       setTargetUserUuid('');
       setTransferAmount('');
       setTransferCurrency('KES');
       setTransferReference('');
       setTransferDescription('');
       setUserSearchQuery('');
-      setIsTransferModalOpen(false);
-
-      // Refresh transactions
-      // invalidate queries
+      setIsTransferSheetOpen(false);
     },
   });
 
   const handleTransferFunds = () => {
-    if (!targetUserUuid || !transferAmount || !transferCurrency) {
-      return;
-    }
+    if (!targetUserUuid || !transferAmount || !transferCurrency) return;
 
     transferFundsMut.mutate({
       body: {
@@ -107,6 +93,15 @@ const RevenuePage = () => {
       },
       path: { userUuid: targetUserUuid },
     });
+  };
+
+  const resetTransferForm = () => {
+    setTargetUserUuid('');
+    setTransferAmount('');
+    setTransferCurrency('KES');
+    setTransferReference('');
+    setTransferDescription('');
+    setUserSearchQuery('');
   };
 
   const courses = courseCreator?.courses;
@@ -140,11 +135,8 @@ const RevenuePage = () => {
     enabled: !!userUuid && !!walletData?.data?.currency_code,
   });
 
-  ///// GENERATE SAMPLE DATA
   const randomFrom = <T,>(arr: T[]): T => arr[Math?.floor(Math.random() * arr.length)];
-
   const randomAmount = () => Math.floor(Math.random() * 2000) + 100;
-
   const randomDate = (daysBack = 30) => {
     const date = new Date();
     date.setDate(date.getDate() - Math.floor(Math.random() * daysBack));
@@ -157,24 +149,14 @@ const RevenuePage = () => {
     currency = 'KES'
   ): WalletTransaction[] => {
     let balance = 50000;
-
     return Array.from({ length: count }).map((_, index) => {
       const transaction_type = randomFrom(TRANSACTION_TYPES);
       const amount = randomAmount();
       const balance_before = balance;
-
-      // Adjust balance logically
       if (transaction_type === 'DEPOSIT') balance += amount;
-      if (
-        transaction_type === 'WITHDRAWAL' ||
-        transaction_type === 'PAYMENT' ||
-        transaction_type === 'TRANSFER'
-      ) {
+      if (['WITHDRAWAL', 'PAYMENT', 'TRANSFER'].includes(transaction_type)) {
         balance = Math.max(balance - amount, 0);
       }
-
-      const balance_after = balance;
-
       return {
         uuid: `txn-${String(index + 1).padStart(3, '0')}`,
         wallet_uuid: walletUuid,
@@ -182,7 +164,7 @@ const RevenuePage = () => {
         amount,
         currency_code: currency,
         balance_before,
-        balance_after,
+        balance_after: balance,
         reference: `${transaction_type}-${2026}-${String(index + 1).padStart(4, '0')}`,
         description: randomFrom(DESCRIPTIONS[transaction_type]),
         counterparty_user_uuid:
@@ -193,26 +175,20 @@ const RevenuePage = () => {
       };
     });
   };
-  const transactions25 = generateTransactions(50);
-  /// GENERATE SAMPLE DATA
 
-  // const listAllTransactions = transactions25
   const listAllTransactions = useMemo(
     () => listTransactions?.data?.content || [],
     [listTransactions?.data?.content]
   );
 
-  // Calculate analytics from actual transactions
   const analyticsData = useMemo(() => {
     const totalCount = listAllTransactions.length;
     const totalRevenue = listAllTransactions
       .filter((t: any) => t.transaction_type === 'DEPOSIT' || t.transaction_type === 'PAYMENT')
       .reduce((sum, t) => sum + t.amount, 0);
-
     const totalWithdrawals = listAllTransactions
       .filter((t: any) => t.transaction_type === 'WITHDRAWAL')
       .reduce((sum, t) => sum + t.amount, 0);
-
     const completedCount = listAllTransactions.filter(
       (t: any) => getStatusFromType(t.transaction_type) === 'completed'
     ).length;
@@ -222,9 +198,7 @@ const RevenuePage = () => {
     const failedCount = listAllTransactions.filter(
       (t: any) => getStatusFromType(t.transaction_type) === 'failed'
     ).length;
-
     const avgTransactionValue = totalCount > 0 ? totalRevenue / totalCount : 0;
-
     return {
       totalRevenue,
       totalWithdrawals,
@@ -238,11 +212,8 @@ const RevenuePage = () => {
     };
   }, [listAllTransactions]);
 
-  // Filter transactions based on search query and status
   const filteredTransactions = useMemo(() => {
     let filtered = listAllTransactions;
-
-    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -252,23 +223,13 @@ const RevenuePage = () => {
           txn?.transaction_type?.toLowerCase().includes(query)
       );
     }
-
-    // Apply status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(
         (txn: any) => getStatusFromType(txn?.transaction_type) === statusFilter
       );
     }
-
     return filtered;
   }, [listAllTransactions, searchQuery, statusFilter]);
-
-  const revenueBySource = [
-    { source: 'Advanced React Masterclass', revenue: 15847.5, percentage: 35 },
-    { source: 'Python for Data Science', revenue: 12340.0, percentage: 27 },
-    { source: 'UI/UX Design Fundamentals', revenue: 9823.0, percentage: 22 },
-    { source: 'Marketing Strategy Bootcamp', revenue: 7219.5, percentage: 16 },
-  ];
 
   const handleSort = useCallback(
     (field: string) => {
@@ -308,32 +269,19 @@ const RevenuePage = () => {
   );
 
   const STATUS_OPTIONS = [
-    {
-      value: 'all',
-      label: 'All',
-      count: listAllTransactions.length,
-    },
-    {
-      value: 'completed',
-      label: 'Completed',
-      count: analyticsData.completedTransactions,
-    },
-    {
-      value: 'pending',
-      label: 'Pending',
-      count: analyticsData.pendingTransactions,
-    },
-    {
-      value: 'failed',
-      label: 'Failed',
-      count: analyticsData.failedTransactions,
-    },
+    { value: 'all', label: 'All', count: listAllTransactions.length },
+    { value: 'completed', label: 'Completed', count: analyticsData.completedTransactions },
+    { value: 'pending', label: 'Pending', count: analyticsData.pendingTransactions },
+    { value: 'failed', label: 'Failed', count: analyticsData.failedTransactions },
   ];
 
   const paginatedTransactions = useMemo(() => {
     const start = page * size;
     return filteredTransactions.slice(start, start + size);
   }, [filteredTransactions, page, size]);
+
+  const isInsufficientBalance =
+    !!transferAmount && parseFloat(transferAmount) > analyticsData.netRevenue;
 
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
@@ -347,7 +295,6 @@ const RevenuePage = () => {
               across courses and sessions.
             </p>
           </div>
-
           <div className='flex gap-3'>
             <select
               value={timeRange}
@@ -359,17 +306,13 @@ const RevenuePage = () => {
               <option value='90days'>Last 90 days</option>
               <option value='year'>This year</option>
             </select>
-            {/* <Button className='flex items-center gap-2'>
-              <Download size={16} />
-              Export
-            </Button> */}
           </div>
         </div>
       </section>
 
       <section className='mx-auto max-w-7xl space-y-6'>
         {/* Wallet Card */}
-        <div className='border-border bg-card max-w-[300px] rounded-xl border p-6 shadow-sm sm:max-w-2/5'>
+        <div className='border-border bg-card w-full max-w-[400px] rounded-xl border p-6 shadow-sm'>
           <div className='flex items-start justify-between'>
             <div>
               <p className='text-muted-foreground text-sm font-medium'>Available Balance</p>
@@ -382,7 +325,6 @@ const RevenuePage = () => {
               <Landmark className='text-primary' size={24} />
             </div>
           </div>
-
           <div className='mt-6 flex gap-3'>
             <Button className='flex-1 disabled:cursor-not-allowed disabled:opacity-50' disabled>
               Withdraw Funds
@@ -390,7 +332,7 @@ const RevenuePage = () => {
             <Button
               variant='outline'
               className='flex flex-1 items-center gap-2'
-              onClick={() => setIsTransferModalOpen(true)}
+              onClick={() => setIsTransferSheetOpen(true)}
             >
               <Send size={16} />
               Transfer
@@ -419,68 +361,41 @@ const RevenuePage = () => {
           </Button>
         </div>
 
-        {/* Analytics Grid - Conditionally Shown */}
+        {/* Analytics Grid */}
         {showStats && (
           <div className='animate-in fade-in-50 grid grid-cols-1 gap-4 duration-300 sm:grid-cols-2 lg:grid-cols-4'>
             <div className='border-border bg-card rounded-lg border p-5'>
-              <div className='flex items-center justify-between'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <TrendingUp className='text-primary' size={20} />
-                </div>
-                {/* <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
-                  <ArrowUpRight size={16} />
-                  +{analyticsData.successRate.toFixed(1)}%
-                </span> */}
+              <div className='bg-primary/10 mb-3 w-fit rounded-lg p-2'>
+                <TrendingUp className='text-primary' size={20} />
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Total Revenue</p>
+              <p className='text-muted-foreground text-sm'>Total Revenue</p>
               <p className='text-foreground mt-1 text-2xl font-bold'>
                 KES {analyticsData.totalRevenue.toLocaleString()}
               </p>
             </div>
-
             <div className='border-border bg-card rounded-lg border p-5'>
-              <div className='flex items-center justify-between'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <ShoppingCart className='text-primary' size={20} />
-                </div>
-                {/* <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
-                  <ArrowUpRight size={16} />
-                  {analyticsData.totalTransactions}
-                </span> */}
+              <div className='bg-primary/10 mb-3 w-fit rounded-lg p-2'>
+                <ShoppingCart className='text-primary' size={20} />
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Total Transactions</p>
+              <p className='text-muted-foreground text-sm'>Total Transactions</p>
               <p className='text-foreground mt-1 text-2xl font-bold'>
                 {analyticsData.totalTransactions}
               </p>
             </div>
-
             <div className='border-border bg-card rounded-lg border p-5'>
-              <div className='flex items-center justify-between'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <Users className='text-primary' size={20} />
-                </div>
-                {/* <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
-                  <ArrowUpRight size={16} />
-                  {analyticsData.completedTransactions}
-                </span> */}
+              <div className='bg-primary/10 mb-3 w-fit rounded-lg p-2'>
+                <Users className='text-primary' size={20} />
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Completed</p>
+              <p className='text-muted-foreground text-sm'>Completed</p>
               <p className='text-foreground mt-1 text-2xl font-bold'>
                 {analyticsData.completedTransactions}
               </p>
             </div>
-
             <div className='border-border bg-card rounded-lg border p-5'>
-              <div className='flex items-center justify-between'>
-                <div className='bg-primary/10 rounded-lg p-2'>
-                  <DollarSign className='text-primary' size={20} />
-                </div>
-                {/* <span className="flex items-center text-sm font-medium text-success dark:text-success-foreground">
-                  <ArrowUpRight size={16} />
-                  +5.2%
-                </span> */}
+              <div className='bg-primary/10 mb-3 w-fit rounded-lg p-2'>
+                <DollarSign className='text-primary' size={20} />
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Avg Transaction</p>
+              <p className='text-muted-foreground text-sm'>Avg Transaction</p>
               <p className='text-foreground mt-1 text-2xl font-bold'>
                 KES{' '}
                 {analyticsData.averageTransactionValue.toLocaleString('en-US', {
@@ -496,7 +411,6 @@ const RevenuePage = () => {
           <div className='border-border bg-card rounded-xl border shadow-sm lg:col-span-2'>
             <div className='flex flex-col gap-3 p-4'>
               <div className='flex flex-col gap-3 sm:flex-row'>
-                {/* Search */}
                 <div className='relative flex-1'>
                   <Search
                     className='text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2'
@@ -509,8 +423,6 @@ const RevenuePage = () => {
                     className='pl-9'
                   />
                 </div>
-
-                {/* Page Size */}
                 <Select value={size.toString()} onValueChange={handlePageSizeChange}>
                   <SelectTrigger className='w-full sm:w-32'>
                     <SelectValue />
@@ -522,8 +434,6 @@ const RevenuePage = () => {
                     <SelectItem value='50'>50 items</SelectItem>
                   </SelectContent>
                 </Select>
-
-                {/* Status Filter */}
                 <Select value={statusFilter} onValueChange={handleStatusFilter}>
                   <SelectTrigger className='w-full sm:w-48'>
                     <SelectValue placeholder='Status' />
@@ -582,7 +492,6 @@ const RevenuePage = () => {
                   {paginatedTransactions.length > 0 ? (
                     paginatedTransactions.map((txn: WalletTransaction) => {
                       const status = getStatusFromType(txn.transaction_type);
-
                       return (
                         <tr key={txn.uuid} className='hover:bg-muted/30 transition-colors'>
                           <td className='px-6 py-4'>
@@ -593,13 +502,11 @@ const RevenuePage = () => {
                               <span className='text-muted-foreground text-xs'>{txn.reference}</span>
                             </div>
                           </td>
-
                           <td className='text-muted-foreground px-6 py-4 text-sm'>
                             {txn.counterparty_user_uuid
                               ? txn.counterparty_user_uuid.substring(0, 8) + '...'
                               : '—'}
                           </td>
-
                           <td className='px-6 py-4'>
                             <div className='flex flex-col'>
                               <span className='text-foreground text-sm'>
@@ -610,11 +517,9 @@ const RevenuePage = () => {
                               </span>
                             </div>
                           </td>
-
                           <td className='text-foreground px-6 py-4 text-right text-sm font-medium'>
                             {txn.currency_code} {txn.amount.toLocaleString()}
                           </td>
-
                           <td className='px-6 py-4 text-right'>
                             <span
                               className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE_MAP[status]}`}
@@ -669,12 +574,11 @@ const RevenuePage = () => {
               <h3 className='text-foreground text-lg font-semibold'>Revenue by Course</h3>
               <p className='text-muted-foreground mt-1 text-sm'>Top performing courses</p>
             </div>
-
             <div className='space-y-5 p-6'>
-              {coursesWithEnrollments.slice(0, 5).map((item, index) => (
+              {coursesWithEnrollments?.slice(0, 5).map((item, index) => (
                 <div key={index}>
                   <div className='mb-2 flex items-center justify-between'>
-                    <div className='flex flex-col w-full' >
+                    <div className='flex w-full flex-col'>
                       <span className='text-foreground max-w-[60%] truncate pr-2 text-sm font-medium'>
                         {item.name}
                       </span>
@@ -682,22 +586,15 @@ const RevenuePage = () => {
                         {item?.enrollments?.length} enrollments
                       </span>
                     </div>
-                    <span className='text-foreground text-sm font-semibold'>
-                      {/* KES {item.revenue.toLocaleString()} */}
-                      KES {0}
-                    </span>
+                    <span className='text-foreground text-sm font-semibold'>KES {0}</span>
                   </div>
                   <div className='bg-muted h-2 w-full rounded-full'>
                     <div
                       className='bg-primary h-2 rounded-full transition-all duration-300'
-                      // style={{ width: `${item.percentage}%` }}
-                      style={{ width: `0%` }}
+                      style={{ width: '0%' }}
                     />
                   </div>
-                  <div className='text-muted-foreground mt-1 text-xs'>
-                    {/* {item.percentage}% of total */}
-                    {0}% of total
-                  </div>
+                  <div className='text-muted-foreground mt-1 text-xs'>0% of total</div>
                 </div>
               ))}
             </div>
@@ -705,186 +602,36 @@ const RevenuePage = () => {
         </div>
       </section>
 
-      {/* Transfer Funds Modal */}
-      <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
-        <DialogContent className='sm:max-w-[550px]'>
-          <DialogHeader>
-            <DialogTitle>Transfer Funds</DialogTitle>
-            <DialogDescription>
-              Transfer funds from your wallet to another user's wallet. All fields marked with * are
-              required.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className='space-y-5 py-4'>
-            {/* User Selection */}
-            <div className='space-y-2'>
-              <Label htmlFor='target-user'>
-                Recipient User UUID <span className='text-destructive'>*</span>
-              </Label>
-              <div className='space-y-2'>
-                <Input
-                  id='user-search'
-                  placeholder='Search for user...'
-                  value={userSearchQuery}
-                  onChange={e => setUserSearchQuery(e.target.value)}
-                  disabled={transferFundsMut.isPending}
-                />
-                <Input
-                  id='target-user'
-                  placeholder='Enter or select user UUID'
-                  value={targetUserUuid}
-                  onChange={e => setTargetUserUuid(e.target.value)}
-                  disabled={transferFundsMut.isPending}
-                />
-              </div>
-              <p className='text-muted-foreground text-xs'>
-                The selected user will receive the funds in their wallet
-              </p>
-            </div>
-
-            {/* Amount and Currency */}
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label htmlFor='transfer-amount'>
-                  Amount <span className='text-destructive'>*</span>
-                </Label>
-                <Input
-                  id='transfer-amount'
-                  type='number'
-                  placeholder='0.00'
-                  min='0'
-                  step='0.01'
-                  value={transferAmount}
-                  onChange={e => setTransferAmount(e.target.value)}
-                  disabled={transferFundsMut.isPending}
-                />
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='transfer-currency'>
-                  Currency <span className='text-destructive'>*</span>
-                </Label>
-                <Select
-                  value={transferCurrency}
-                  onValueChange={setTransferCurrency}
-                  disabled={transferFundsMut.isPending}
-                >
-                  <SelectTrigger id='transfer-currency'>
-                    <SelectValue placeholder='Select currency' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='KES'>KES - Kenyan Shilling</SelectItem>
-                    <SelectItem value='USD'>USD - US Dollar</SelectItem>
-                    <SelectItem value='EUR'>EUR - Euro</SelectItem>
-                    <SelectItem value='GBP'>GBP - British Pound</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Reference */}
-            <div className='space-y-2'>
-              <Label htmlFor='transfer-reference'>Reference (Optional)</Label>
-              <Input
-                id='transfer-reference'
-                placeholder='e.g., TRANSFER-2026-0001'
-                value={transferReference}
-                onChange={e => setTransferReference(e.target.value)}
-                disabled={transferFundsMut.isPending}
-              />
-              <p className='text-muted-foreground text-xs'>
-                Leave blank to auto-generate a reference number
-              </p>
-            </div>
-
-            {/* Description */}
-            <div className='space-y-2'>
-              <Label htmlFor='transfer-description'>Description (Optional)</Label>
-              <Textarea
-                id='transfer-description'
-                placeholder='e.g., Reward payout, Course payment, etc.'
-                rows={3}
-                value={transferDescription}
-                onChange={e => setTransferDescription(e.target.value)}
-                disabled={transferFundsMut.isPending}
-                className='resize-none'
-              />
-            </div>
-
-            {/* Error Display */}
-            {transferFundsMut.isError && (
-              <div className='bg-destructive/10 text-destructive rounded-md p-3 text-sm'>
-                Failed to transfer funds. Please check the details and try again.
-              </div>
-            )}
-
-            {/* Success Display */}
-            {transferFundsMut.isSuccess && (
-              <div className='bg-primary/10 text-primary rounded-md p-3 text-sm'>
-                Transfer completed successfully!
-              </div>
-            )}
-
-            {/* Available Balance Info */}
-            <div className='border-border bg-muted/50 rounded-lg border p-4'>
-              <div className='flex items-center justify-between'>
-                <span className='text-muted-foreground text-sm font-medium'>Available Balance</span>
-                <span className='text-foreground text-lg font-bold'>
-                  KES{' '}
-                  {analyticsData.netRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </span>
-              </div>
-              {transferAmount && parseFloat(transferAmount) > analyticsData.netRevenue && (
-                <p className='text-destructive mt-2 text-xs'>
-                  Insufficient balance. You cannot transfer more than your available balance.
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className='flex flex-col gap-3 sm:flex-row sm:justify-end'>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setIsTransferModalOpen(false);
-                setTargetUserUuid('');
-                setTransferAmount('');
-                setTransferCurrency('KES');
-                setTransferReference('');
-                setTransferDescription('');
-                setUserSearchQuery('');
-              }}
-              disabled={transferFundsMut.isPending}
-              className='w-full sm:w-auto'
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleTransferFunds}
-              disabled={
-                !targetUserUuid ||
-                !transferAmount ||
-                !transferCurrency ||
-                transferFundsMut.isPending ||
-                parseFloat(transferAmount) <= 0 ||
-                parseFloat(transferAmount) > analyticsData.netRevenue
-              }
-              className='w-full sm:w-auto'
-            >
-              {transferFundsMut.isPending ? (
-                <>Processing...</>
-              ) : (
-                <>
-                  <Send size={16} className='mr-2' />
-                  Transfer Funds
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* ── Transfer Funds Sheet ───────────────────────────────────────────── */}
+      <TransferFundsSheet
+        open={isTransferSheetOpen}
+        onOpenChange={open => {
+          setIsTransferSheetOpen(open);
+          if (!open) resetTransferForm();
+        }}
+        balance={analyticsData.netRevenue}
+        isInsufficientBalance={isInsufficientBalance}
+        targetUserUuid={targetUserUuid}
+        setTargetUserUuid={setTargetUserUuid}
+        transferAmount={transferAmount}
+        setTransferAmount={setTransferAmount}
+        transferCurrency={transferCurrency}
+        setTransferCurrency={setTransferCurrency}
+        transferReference={transferReference}
+        setTransferReference={setTransferReference}
+        transferDescription={transferDescription}
+        setTransferDescription={setTransferDescription}
+        userSearchQuery={userSearchQuery}
+        setUserSearchQuery={setUserSearchQuery}
+        isPending={transferFundsMut.isPending}
+        isError={transferFundsMut.isError}
+        isSuccess={transferFundsMut.isSuccess}
+        onSubmit={handleTransferFunds}
+        onCancel={() => {
+          setIsTransferSheetOpen(false);
+          resetTransferForm();
+        }}
+      />
     </div>
   );
 };
@@ -892,7 +639,6 @@ const RevenuePage = () => {
 export default RevenuePage;
 
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
-
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 

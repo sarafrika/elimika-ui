@@ -1,9 +1,20 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FileSpreadsheet, FileText, Image, PlusCircle, Trash2, Video } from 'lucide-react';
+import {
+  AlertTriangle,
+  FileSpreadsheet,
+  FileText,
+  Image,
+  PlusCircle,
+  Trash2,
+  Video,
+  X,
+} from 'lucide-react';
+import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { SimpleEditor } from '../../../../components/tiptap-templates/simple/simple-editor';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
@@ -17,13 +28,13 @@ import {
 import { Separator } from '../../../../components/ui/separator';
 import Spinner from '../../../../components/ui/spinner';
 import { Switch } from '../../../../components/ui/switch';
-import { Textarea } from '../../../../components/ui/textarea';
+import { useCourseCreator } from '../../../../context/course-creator-context';
 import { cn } from '../../../../lib/utils';
 import {
   deleteAssignmentAttachmentMutation,
   getAssignmentAttachmentsOptions,
   getAssignmentAttachmentsQueryKey,
-  getCourseRubricsOptions,
+  searchAssessmentRubricsOptions,
   searchAssignmentsOptions,
   uploadAssignmentAttachmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
@@ -48,6 +59,20 @@ export type AssignmentCreationFormProps = {
 
 const SUBMISSION_TYPES = ['DOCUMENT', 'AUDIO', 'TEXT'];
 
+const EMPTY_ASSIGNMENT = {
+  title: '',
+  description: '',
+  instructions: '',
+  max_points: 0,
+  rubric_uuid: '',
+  is_published: false,
+  active: false,
+  due_date: '',
+  assignment_category: '',
+  submission_types: [] as string[],
+  lesson_uuid: '',
+};
+
 export const AssignmentCreationForm = ({
   courseId,
   lessons,
@@ -63,14 +88,25 @@ export const AssignmentCreationForm = ({
   isPending,
 }: AssignmentCreationFormProps) => {
   const qc = useQueryClient();
+  const creator = useCourseCreator();
 
-  const { data: rubrics } = useQuery({
-    ...getCourseRubricsOptions({
-      path: { courseUuid: courseId as string },
-      query: { pageable: {} },
+  // ── Rubrics ───────────────────────────────────────────────────────────────
+  const { data: searchRubs, isLoading: isLoadingRubrics } = useQuery({
+    ...searchAssessmentRubricsOptions({
+      query: {
+        pageable: {},
+        searchParams: { course_creator_uuid_eq: creator?.profile?.uuid as string },
+      },
     }),
-    enabled: !!courseId,
+    enabled: !!creator?.profile?.uuid,
   });
+  const rubrics: any[] = searchRubs?.data?.content ?? [];
+
+  // ── Assignment state (must come before any derived values) ────────────────
+  const [assignmentData, setAssignmentData] = useState({ ...EMPTY_ASSIGNMENT });
+
+  // Now safe to derive selectedRubric from assignmentData
+  const selectedRubric = rubrics.find((r: any) => r.uuid === assignmentData.rubric_uuid);
 
   const { data: assignments } = useQuery({
     ...searchAssignmentsOptions({
@@ -84,31 +120,19 @@ export const AssignmentCreationForm = ({
   );
   const assignmentUuid = selectedAssignmentUuid;
 
-  const [assignmentData, setAssignmentData] = useState({
-    title: '',
-    description: '',
-    instructions: '',
-    max_points: 0,
-    rubric_uuid: '',
-    is_published: false,
-    active: false,
-    due_date: '',
-    assignment_category: '',
-    submission_types: [] as string[],
-    lesson_uuid: '',
-  });
-
   const { data: attachments } = useQuery({
     ...getAssignmentAttachmentsOptions({ path: { assignmentUuid: assignmentUuid as string } }),
     enabled: !!assignmentUuid,
   });
 
-  // File upload state
+  // ── File upload state ─────────────────────────────────────────────────────
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const uploadAssignmentMut = useMutation(uploadAssignmentAttachmentMutation());
+  const deleteAttachmentMut = useMutation(deleteAssignmentAttachmentMutation());
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleAssignmentInputChange = (field: string, value: any) => {
     setAssignmentData(prev => ({ ...prev, [field]: value }));
   };
@@ -135,19 +159,7 @@ export const AssignmentCreationForm = ({
         lesson_uuid: selectedLessonId as string,
       });
     } else {
-      setAssignmentData({
-        title: '',
-        description: '',
-        instructions: '',
-        max_points: 0,
-        rubric_uuid: '',
-        is_published: false,
-        active: false,
-        due_date: '',
-        assignment_category: '',
-        submission_types: [],
-        lesson_uuid: '',
-      });
+      setAssignmentData({ ...EMPTY_ASSIGNMENT });
     }
   };
 
@@ -177,30 +189,14 @@ export const AssignmentCreationForm = ({
 
   const handleDeleteAssignment = async () => {
     if (!assignmentUuid) return;
-
-    if (
-      !confirm('Are you sure you want to delete this assignment? This action cannot be undone.')
-    ) {
+    if (!confirm('Are you sure you want to delete this assignment? This action cannot be undone.'))
       return;
-    }
 
     try {
       await deleteAssignmentForLesson(assignmentUuid);
       setSelectedAssignmentUuid(null);
       onSelectAssignment?.(null);
-      setAssignmentData({
-        title: '',
-        description: '',
-        instructions: '',
-        max_points: 0,
-        rubric_uuid: '',
-        is_published: false,
-        active: false,
-        due_date: '',
-        assignment_category: '',
-        submission_types: [],
-        lesson_uuid: '',
-      });
+      setAssignmentData({ ...EMPTY_ASSIGNMENT });
       toast.success('Assignment deleted successfully');
     } catch (err) {
       toast.error('Failed to delete assignment.');
@@ -208,16 +204,12 @@ export const AssignmentCreationForm = ({
   };
 
   const toggleSubmissionType = (type: string) => {
-    setAssignmentData(prev => {
-      const exists = prev.submission_types.includes(type);
-
-      return {
-        ...prev,
-        submission_types: exists
-          ? prev.submission_types.filter(t => t !== type)
-          : [...prev.submission_types, type],
-      };
-    });
+    setAssignmentData(prev => ({
+      ...prev,
+      submission_types: prev.submission_types.includes(type)
+        ? prev.submission_types.filter(t => t !== type)
+        : [...prev.submission_types, type],
+    }));
   };
 
   const handleAttachmentUpload = () => {
@@ -227,22 +219,14 @@ export const AssignmentCreationForm = ({
     }
 
     uploadAssignmentMut.mutate(
-      {
-        body: { file: mediaFile },
-        path: { assignmentUuid },
-      },
+      { body: { file: mediaFile }, path: { assignmentUuid } },
       {
         onSuccess: () => {
           toast.success('Attachment uploaded successfully');
           setMediaFile(null);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-
+          if (fileInputRef.current) fileInputRef.current.value = '';
           qc.invalidateQueries({
-            queryKey: getAssignmentAttachmentsQueryKey({
-              path: { assignmentUuid },
-            }),
+            queryKey: getAssignmentAttachmentsQueryKey({ path: { assignmentUuid } }),
           });
         },
         onError: (err: any) => {
@@ -252,35 +236,32 @@ export const AssignmentCreationForm = ({
     );
   };
 
-  const deleteAttachmentMut = useMutation(deleteAssignmentAttachmentMutation());
-  const handleDeleteAttachment = async (attachmentUuid: string) => {
+  const handleDeleteAttachment = (attachmentUuid: string) => {
     if (!confirm('Are you sure you want to delete this attachment?')) return;
 
-    try {
-      deleteAttachmentMut.mutate(
-        { path: { assignmentUuid: assignmentUuid as string, attachmentUuid: attachmentUuid } },
-        {
-          onSuccess: () => {
-            toast.success('Deleted successfully');
-            qc.invalidateQueries({
-              queryKey: getAssignmentAttachmentsQueryKey({
-                path: { assignmentUuid: assignmentUuid as string },
-              }),
-            });
-          },
-          onError: error => {
-            toast.error(error?.message);
-          },
-        }
-      );
-    } catch (error) { }
+    deleteAttachmentMut.mutate(
+      { path: { assignmentUuid: assignmentUuid as string, attachmentUuid } },
+      {
+        onSuccess: () => {
+          toast.success('Deleted successfully');
+          qc.invalidateQueries({
+            queryKey: getAssignmentAttachmentsQueryKey({
+              path: { assignmentUuid: assignmentUuid as string },
+            }),
+          });
+        },
+        onError: error => {
+          toast.error(error?.message);
+        },
+      }
+    );
   };
 
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className='grid grid-cols-4 gap-6'>
-      {/* Lessons */}
-      <div className='bg-card rounded-xl border p-4 shadow-sm'>
+      {/* Lessons sidebar */}
+      <div className='shadow-sm'>
         <h3 className='text-foreground mb-4 text-lg font-semibold'>Lessons</h3>
 
         {lessons?.content?.length ? (
@@ -295,31 +276,17 @@ export const AssignmentCreationForm = ({
                     setSelectedLesson(lesson);
                     handleAssignmentSelect(null);
                     setSelectedAssignmentUuid(null);
-
-                    // Reset assignment form data when changing lessons
-                    setAssignmentData({
-                      title: '',
-                      description: '',
-                      instructions: '',
-                      max_points: 0,
-                      rubric_uuid: '',
-                      is_published: false,
-                      active: false,
-                      due_date: '',
-                      assignment_category: '',
-                      submission_types: [],
-                      lesson_uuid: '',
-                    });
+                    setAssignmentData({ ...EMPTY_ASSIGNMENT });
                   }}
                   className={cn(
-                    'flex cursor-pointer flex-row items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                    'flex cursor-pointer flex-col items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     selectedLessonId === lesson.uuid
                       ? 'bg-primary/10 border-primary text-primary border-2 shadow-sm'
                       : 'hover:bg-muted text-foreground border-2 border-transparent'
                   )}
                 >
-                  <p>{lesson.lesson_number}.</p>
-                  <p className='truncate'>{lesson.title}</p>
+                  <p className='text-xs'>LESSON {lesson.lesson_number}.</p>
+                  <p className='line-clamp-2'>{lesson.title}</p>
                 </li>
               ))}
           </ul>
@@ -331,7 +298,7 @@ export const AssignmentCreationForm = ({
         )}
       </div>
 
-      {/* Assignment creation form */}
+      {/* Assignment form */}
       {!selectedLessonId ? (
         <div className='border-border bg-muted col-span-3 flex min-h-[50vh] items-center justify-center rounded-xl border-2 border-dashed'>
           <div className='text-center'>
@@ -347,7 +314,6 @@ export const AssignmentCreationForm = ({
             <h3 className='text-foreground max-w-[70%] truncate text-lg font-bold uppercase'>
               ASSIGNMENT: {selectedLesson?.title || 'Select a lesson'}
             </h3>
-
             <Button
               size='sm'
               onClick={() => {
@@ -359,8 +325,8 @@ export const AssignmentCreationForm = ({
             </Button>
           </div>
 
+          {/* Existing assignments list */}
           <div className='flex flex-col gap-2'>
-            {/* Header */}
             <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
               <div className='flex flex-col'>
                 <h4 className='text-foreground text-base font-semibold'>Existing Assignments</h4>
@@ -370,12 +336,11 @@ export const AssignmentCreationForm = ({
               </div>
             </div>
 
-            {/* Assignments list */}
             {assignments?.data?.content?.length ? (
               <ul className='flex flex-col gap-2'>
                 {assignments.data.content
                   .filter((a: any) => a.assignment_category)
-                  .map((assignment: any, idx) => (
+                  .map((assignment: any, idx: number) => (
                     <li
                       key={assignment.uuid}
                       onClick={() => {
@@ -413,61 +378,60 @@ export const AssignmentCreationForm = ({
           {assignmentUuid !== null && (
             <div className='flex flex-col gap-6'>
               <Separator />
+
+              {/* Title */}
               <div className='flex flex-col gap-2'>
                 <Label className='text-foreground text-sm font-medium'>Assignment Title</Label>
                 <Input
                   type='text'
                   placeholder='Enter assignment title'
-                  className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
                   value={assignmentData.title}
                   onChange={e => handleAssignmentInputChange('title', e.target.value)}
                 />
               </div>
 
+              {/* Description */}
               <div className='flex flex-col gap-2'>
                 <Label className='text-foreground text-sm font-medium'>
                   Description (optional)
                 </Label>
-                <Textarea
-                  placeholder='Enter assignment description'
-                  className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full resize-none rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
-                  rows={3}
+                <SimpleEditor
                   value={assignmentData.description}
-                  onChange={e => handleAssignmentInputChange('description', e.target.value)}
+                  onChange={(value) =>
+                    handleAssignmentInputChange('description', value)
+                  }
                 />
               </div>
 
+              {/* Instructions */}
               <div className='flex flex-col gap-2'>
                 <Label className='text-foreground text-sm font-medium'>
                   Instructions (optional)
                 </Label>
-                <Textarea
-                  placeholder='Enter assignment instructions'
-                  className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full resize-none rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
-                  rows={3}
+                <SimpleEditor
                   value={assignmentData.instructions}
-                  onChange={e => handleAssignmentInputChange('instructions', e.target.value)}
+                  onChange={(value) =>
+                    handleAssignmentInputChange('instructions', value)
+                  }
                 />
               </div>
 
+              {/* Max points + Category */}
               <div className='grid grid-cols-2 gap-4'>
                 <div className='flex flex-col gap-2'>
                   <Label className='text-foreground text-sm font-medium'>Max Points</Label>
                   <Input
                     type='number'
-                    className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
                     value={assignmentData.max_points}
                     onChange={e =>
                       handleAssignmentInputChange('max_points', Number(e.target.value))
                     }
                   />
                 </div>
-
                 <div className='flex flex-col gap-2'>
                   <Label className='text-foreground text-sm font-medium'>Category (optional)</Label>
                   <Input
                     type='text'
-                    className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
                     placeholder='e.g., Homework, Project'
                     value={assignmentData.assignment_category}
                     onChange={e =>
@@ -477,41 +441,104 @@ export const AssignmentCreationForm = ({
                 </div>
               </div>
 
-              <div className='flex flex-col gap-2'>
-                <Label className='text-foreground text-sm font-medium'>Assign Rubric</Label>
+              {/* ── Rubric ─────────────────────────────────────────────────── */}
+              <div className='flex flex-col gap-1.5'>
+                <Label className='text-sm font-medium'>Evaluation Criteria</Label>
+                <p className='text-muted-foreground text-xs'>
+                  Associate a grading rubric with this assignment
+                </p>
 
-                <Select
-                  value={assignmentData.rubric_uuid || undefined}
-                  onValueChange={value => handleAssignmentInputChange('rubric_uuid', value)}
-                >
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='Select rubric' />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    {rubrics?.data?.content?.length ? (
-                      rubrics.data?.content?.map((rubric: any) => (
-                        <SelectItem key={rubric.rubric_uuid} value={rubric.rubric_uuid}>
-                          {/* {rubric.title} */}
-                          {rubric.rubric_uuid}
+                {isLoadingRubrics ? (
+                  <div className='flex items-center gap-2 py-2'>
+                    <Spinner className='h-4 w-4' />
+                    <span className='text-muted-foreground text-xs'>Loading evalutaion rubrics...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Select
+                      value={assignmentData.rubric_uuid || '__none__'}
+                      onValueChange={v =>
+                        handleAssignmentInputChange('rubric_uuid', v === '__none__' ? '' : v)
+                      }
+                    >
+                      <SelectTrigger className='w-full'>
+                        <SelectValue placeholder='Select a rubric (optional)' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='__none__'>
+                          <span className='text-muted-foreground'>None</span>
                         </SelectItem>
-                      ))
+                        {rubrics.map((r: any) => (
+                          <SelectItem key={r.uuid} value={r.uuid}>
+                            <div className='flex flex-col'>
+                              <span className='font-medium'>{r.title}</span>
+                              {r.description && (
+                                <span className='text-muted-foreground line-clamp-1 text-xs'>
+                                  {r.description}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {selectedRubric ? (
+                      <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
+                        <div className='min-w-0'>
+                          <p className='text-foreground truncate text-xs font-semibold'>
+                            {selectedRubric.title}
+                          </p>
+                          {selectedRubric.description && (
+                            <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
+                              {selectedRubric.description}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type='button'
+                          onClick={() => handleAssignmentInputChange('rubric_uuid', '')}
+                          className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
+                          title='Clear rubric'
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
                     ) : (
-                      <div className='text-muted-foreground px-3 py-2 text-center text-sm'>
-                        No rubrics available
+                      <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
+                        <div className='flex items-start gap-2'>
+                          <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
+                          <div className='text-sm'>
+                            <p className='text-warning-foreground font-medium'>
+                              No rubric selected
+                            </p>
+                            <p className='text-warning-foreground/80 text-xs'>
+                              If none of the available rubrics fit, you can create a new one.
+                            </p>
+                          </div>
+                        </div>
+                        <Link href='/dashboard/rubrics' target='_blank'>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            className='border-warning text-warning-foreground hover:bg-warning/100 w-fit self-center'
+                          >
+                            Create New Rubric
+                          </Button>
+                        </Link>
                       </div>
                     )}
-                  </SelectContent>
-                </Select>
+                  </>
+                )}
               </div>
 
+              {/* Submission types */}
               <div className='flex flex-col gap-2'>
                 <Label className='text-foreground text-sm font-medium'>Submission Types</Label>
-
                 <div className='border-border flex flex-wrap gap-2 rounded-lg border p-2'>
                   {SUBMISSION_TYPES.map(type => {
                     const selected = assignmentData.submission_types.includes(type);
-
                     return (
                       <button
                         key={type}
@@ -529,7 +556,6 @@ export const AssignmentCreationForm = ({
                     );
                   })}
                 </div>
-
                 {assignmentData.submission_types.length === 0 && (
                   <p className='text-muted-foreground text-xs'>
                     Select one or more submission types
@@ -537,11 +563,9 @@ export const AssignmentCreationForm = ({
                 )}
               </div>
 
+              {/* Status */}
               <div className='flex flex-col gap-2'>
-                <Label className='text-foreground text-sm font-medium'>
-                  Status
-                </Label>
-
+                <Label className='text-foreground text-sm font-medium'>Status</Label>
                 <Select
                   value={assignmentData.is_published ? 'PUBLISHED' : 'DRAFT'}
                   onValueChange={value =>
@@ -551,7 +575,6 @@ export const AssignmentCreationForm = ({
                   <SelectTrigger className='w-full'>
                     <SelectValue placeholder='Select status' />
                   </SelectTrigger>
-
                   <SelectContent>
                     <SelectItem value='DRAFT'>Draft</SelectItem>
                     <SelectItem value='PUBLISHED'>Published</SelectItem>
@@ -559,7 +582,7 @@ export const AssignmentCreationForm = ({
                 </Select>
               </div>
 
-
+              {/* Active toggle */}
               <div className='flex items-center gap-3'>
                 <Switch
                   checked={assignmentData.active}
@@ -570,7 +593,7 @@ export const AssignmentCreationForm = ({
 
               <Separator />
 
-              {/* Assignment Attachments Section */}
+              {/* Attachments */}
               <div className='flex flex-col gap-4'>
                 <div className='flex flex-col gap-1'>
                   <h4 className='text-foreground text-base font-semibold'>
@@ -582,53 +605,33 @@ export const AssignmentCreationForm = ({
                 </div>
 
                 <div className='space-y-3'>
-                  {attachments?.data?.map(file => (
+                  {attachments?.data?.map((file: any) => (
                     <div
                       key={file.uuid}
                       className='border-border hover:border-primary flex items-start justify-between rounded-lg border bg-white p-4 transition'
                     >
-                      {/* Left: File info */}
                       <div className='flex items-start gap-3'>
-                        <span className='text-2xl'>{getFileIcon(file.mime_type)}</span>
-
+                        <span className='flex h-8 w-8 items-center justify-center text-xl'>
+                          {getFileIcon(file.mime_type)}
+                        </span>
                         <div>
-                          <p className='text-muted-foreground font-medium'>
-                            {file.original_filename}
-                          </p>
-
+                          <p className='text-foreground font-medium'>{file.original_filename}</p>
                           <p className='text-muted-foreground max-w-xs truncate text-xs'>
                             {file.file_url}
                           </p>
-
                           <p className='text-muted-foreground text-xs'>
                             {formatFileSize(Number(file.file_size_bytes))} •{' '}
                             {new Date(file.created_date).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-
-                      {/* Right: Actions */}
-                      <div className='flex items-center gap-2'>
-                        {/* View */}
-                        {/* <a
-                          href={file.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-md border border-primary/20 px-2.5 py-1.5 text-sm font-medium text-primary hover:bg-primary/50"
-                        >
-                          <Eye className="h-4 w-4" />
-                          View
-                        </a> */}
-
-                        {/* Delete */}
-                        <button
-                          onClick={() => handleDeleteAttachment(file.uuid)}
-                          className='border-destructive/20 text-destructive hover:bg-destructive/5 inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm font-medium'
-                        >
-                          <Trash2 className='h-4 w-4' />
-                          Delete
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleDeleteAttachment(file.uuid)}
+                        className='border-destructive/20 text-destructive hover:bg-destructive/5 inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm font-medium'
+                      >
+                        <Trash2 className='h-4 w-4' />
+                        Delete
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -646,14 +649,10 @@ export const AssignmentCreationForm = ({
                   onDrop={e => {
                     e.preventDefault();
                     setIsDragging(false);
-
                     const file = e.dataTransfer.files?.[0];
-                    if (file) {
-                      setMediaFile(file);
-                    }
+                    if (file) setMediaFile(file);
                   }}
                 >
-                  {/* Hidden file input */}
                   <Input
                     ref={fileInputRef}
                     type='file'
@@ -662,7 +661,6 @@ export const AssignmentCreationForm = ({
                     onChange={e => setMediaFile(e.target.files?.[0] || null)}
                   />
 
-                  {/* Clickable drop area */}
                   <div
                     role='button'
                     tabIndex={0}
@@ -673,7 +671,6 @@ export const AssignmentCreationForm = ({
                     <p className='text-foreground text-sm font-medium'>
                       Drag & drop a file here, or click to browse
                     </p>
-
                     {mediaFile ? (
                       <p className='text-primary max-w-full truncate text-[13px]'>
                         {mediaFile.name}
@@ -685,13 +682,13 @@ export const AssignmentCreationForm = ({
                     )}
                   </div>
 
-                  <div className='self-center flex justify-center' >
+                  <div className='flex justify-center'>
                     <Button
                       type='button'
                       variant='secondary'
                       disabled={!mediaFile || uploadAssignmentMut.isPending}
                       onClick={handleAttachmentUpload}
-                      className='w-full bg-primary text-white max-w-fit self-center'
+                      className='bg-primary w-full max-w-fit text-white'
                     >
                       {uploadAssignmentMut.isPending ? (
                         <>
@@ -711,15 +708,14 @@ export const AssignmentCreationForm = ({
                 </div>
               </div>
 
+              {/* Save / delete */}
               <div className='flex items-end justify-end gap-4 pt-2'>
-                <div className='flex justify-end self-end'>
-                  {assignmentUuid && (
-                    <Button size={'sm'} variant='destructive' onClick={handleDeleteAssignment}>
-                      {isPending ? <Spinner /> : <Trash2 />}
-                    </Button>
-                  )}
-                </div>
-                <Button size={'sm'} onClick={handleSaveAssignment} disabled={isPending}>
+                {assignmentUuid && (
+                  <Button size='sm' variant='destructive' onClick={handleDeleteAssignment}>
+                    {isPending ? <Spinner /> : <Trash2 />}
+                  </Button>
+                )}
+                <Button size='sm' onClick={handleSaveAssignment} disabled={isPending}>
                   {isPending ? (
                     <>
                       <Spinner className='mr-2 h-4 w-4' />
@@ -738,6 +734,8 @@ export const AssignmentCreationForm = ({
   );
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -747,9 +745,9 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function getFileIcon(mime: string) {
-  if (mime.includes('pdf')) return <FileSpreadsheet />;
-  if (mime.includes('image')) return <Image />;
-  if (mime.includes('word')) return <FileText />;
-  if (mime.includes('video')) return <Video />;
-  return '📎';
+  if (mime?.includes('pdf')) return <FileSpreadsheet className='h-5 w-5' />;
+  if (mime?.includes('image')) return <Image className='h-5 w-5' />;
+  if (mime?.includes('word')) return <FileText className='h-5 w-5' />;
+  if (mime?.includes('video')) return <Video className='h-5 w-5' />;
+  return <FileText className='h-5 w-5' />;
 }

@@ -1,7 +1,17 @@
 'use client';
 
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { Award, BookOpen, CheckCircle, Clock, Download, PlusCircle, Star, TrendingUp, XCircle } from 'lucide-react';
+import {
+  Award,
+  BookOpen,
+  CheckCircle,
+  Clock,
+  Download,
+  PlusCircle,
+  Star,
+  TrendingUp,
+  XCircle,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { Badge } from '../../../../components/ui/badge';
@@ -10,16 +20,24 @@ import { Card, CardContent } from '../../../../components/ui/card';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { useStudent } from '../../../../context/student-context';
 import {
+  getClassDefinitionOptions,
   getCourseByUuidOptions,
   getStudentCertificatesOptions,
   getStudentScheduleOptions,
-  getTrainingProgramByUuidOptions
+  getTrainingProgramByUuidOptions,
 } from '../../../../services/client/@tanstack/react-query.gen';
 
 const elimikaDesignSystem = {
   components: {
     pageContainer: 'container mx-auto px-4 py-6 max-w-7xl',
   },
+};
+
+const stripHtml = (value?: string) => (value ? value.replace(/<[^>]+>/g, '').trim() : '');
+
+const truncateText = (value?: string, length = 140) => {
+  if (!value) return '';
+  return value.length > length ? `${value.slice(0, length).trim()}...` : value;
 };
 
 const MySkillsPage = () => {
@@ -29,7 +47,7 @@ const MySkillsPage = () => {
   // Fetch certificates
   const { data: certificatesData, isLoading: isLoadingCertificates } = useQuery({
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
-    enabled: !!student?.uuid
+    enabled: !!student?.uuid,
   });
 
   const certificates = certificatesData?.data || [];
@@ -38,24 +56,54 @@ const MySkillsPage = () => {
   const { data: enrollmentsData, isLoading: isLoadingEnrollments } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: student?.uuid as string },
-      query: { start: '2026-01-01', end: '2027-12-31' }
+      query: { start: '2026-01-01', end: '2027-12-31' },
     }),
-    enabled: !!student?.uuid
+    enabled: !!student?.uuid,
   });
 
   // Get unique enrollments (by class_definition_uuid)
   const uniqueEnrollments = useMemo(() => {
     if (!enrollmentsData?.data) return [];
 
-    const map = new Map();
+    const map = new Map<string, any>();
     enrollmentsData.data.forEach((item: any) => {
-      if (!map.has(item.class_definition_uuid)) {
+      if (item.class_definition_uuid && !map.has(item.class_definition_uuid)) {
         map.set(item.class_definition_uuid, item);
       }
     });
 
     return Array.from(map.values());
   }, [enrollmentsData?.data]);
+
+  const classDefinitionUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          uniqueEnrollments
+            .map((enrollment: any) => enrollment.class_definition_uuid)
+            .filter(Boolean)
+        )
+      ),
+    [uniqueEnrollments]
+  );
+
+  const classDefinitionQueries = useQueries({
+    queries: classDefinitionUuids.map((uuid: string) => ({
+      ...getClassDefinitionOptions({ path: { uuid } }),
+      enabled: !!uuid,
+    })),
+  });
+
+  const classDefinitionsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    classDefinitionQueries.forEach((query, index) => {
+      const classDefinition = query.data?.data?.class_definition;
+      if (classDefinition) {
+        map.set(classDefinitionUuids[index], classDefinition);
+      }
+    });
+    return map;
+  }, [classDefinitionQueries, classDefinitionUuids]);
 
   // Extract unique course/program UUIDs from certificates and enrollments
   const { courseUuids, programUuids } = useMemo(() => {
@@ -70,30 +118,31 @@ const MySkillsPage = () => {
 
     // From enrollments
     uniqueEnrollments.forEach((enroll: any) => {
-      if (enroll.course_uuid) courses.add(enroll.course_uuid);
-      if (enroll.program_uuid) programs.add(enroll.program_uuid);
+      const classDefinition = classDefinitionsMap.get(enroll.class_definition_uuid);
+      if (classDefinition?.course_uuid) courses.add(classDefinition.course_uuid);
+      if (classDefinition?.program_uuid) programs.add(classDefinition.program_uuid);
     });
 
     return {
       courseUuids: Array.from(courses),
-      programUuids: Array.from(programs)
+      programUuids: Array.from(programs),
     };
-  }, [certificates, uniqueEnrollments]);
+  }, [certificates, uniqueEnrollments, classDefinitionsMap]);
 
   // Fetch all courses
   const courseQueries = useQueries({
     queries: courseUuids.map((uuid: string) => ({
       ...getCourseByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid
-    }))
+      enabled: !!uuid,
+    })),
   });
 
   // Fetch all programs
   const programQueries = useQueries({
     queries: programUuids.map((uuid: string) => ({
       ...getTrainingProgramByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid
-    }))
+      enabled: !!uuid,
+    })),
   });
 
   // Create maps of courses and programs
@@ -136,7 +185,12 @@ const MySkillsPage = () => {
           certificateUrl: cert.certificate_url,
           isDownloadable: cert.is_downloadable,
           certificateType: cert.certificate_type,
-          level: cert.final_grade >= 90 ? 'Advanced' : cert.final_grade >= 75 ? 'Intermediate' : 'Beginner'
+          level:
+            cert.final_grade >= 90
+              ? 'Advanced'
+              : cert.final_grade >= 75
+                ? 'Intermediate'
+                : 'Beginner',
         };
       });
   }, [certificates, coursesMap, programsMap]);
@@ -151,7 +205,7 @@ const MySkillsPage = () => {
         level: skill.level,
         icon: index === 0 ? '🏆' : index === 1 ? '🥈' : '🥉',
         color: index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-500',
-        grade: skill.grade
+        grade: skill.grade,
       }));
   }, [skills]);
 
@@ -165,14 +219,18 @@ const MySkillsPage = () => {
   // Process enrollments into course cards
   const enrolledCourses = useMemo(() => {
     return uniqueEnrollments.map((enroll: any) => {
-      const courseOrProgram = enroll.course_uuid
-        ? coursesMap.get(enroll.course_uuid)
-        : programsMap.get(enroll.program_uuid);
+      const classDefinition = classDefinitionsMap.get(enroll.class_definition_uuid);
+      const courseUuid = classDefinition?.course_uuid;
+      const programUuid = classDefinition?.program_uuid;
+      const courseOrProgram = courseUuid
+        ? coursesMap.get(courseUuid)
+        : programsMap.get(programUuid);
 
       // Find matching certificate
-      const certificate = certificates.find((cert: any) =>
-        (cert.course_uuid && cert.course_uuid === enroll.course_uuid) ||
-        (cert.program_uuid && cert.program_uuid === enroll.program_uuid)
+      const certificate = certificates.find(
+        (cert: any) =>
+          (cert.course_uuid && cert.course_uuid === courseUuid) ||
+          (cert.program_uuid && cert.program_uuid === programUuid)
       );
 
       let status = 'incomplete';
@@ -190,7 +248,12 @@ const MySkillsPage = () => {
 
       return {
         id: enroll.enrollment_uuid,
-        title: courseOrProgram?.name || courseOrProgram?.title || enroll.title || 'Unknown Course',
+        title:
+          courseOrProgram?.name ||
+          courseOrProgram?.title ||
+          classDefinition?.title ||
+          enroll.title ||
+          'Unknown Course',
         status,
         progress,
         grade: certificate?.grade_letter || null,
@@ -198,11 +261,20 @@ const MySkillsPage = () => {
         category: Array.isArray(courseOrProgram?.category_names)
           ? courseOrProgram.category_names[0]
           : courseOrProgram?.category_names || 'General',
-        type: enroll.course_uuid ? 'Course' : 'Program',
-        enrollmentStatus: enroll.enrollment_status
+        type: courseUuid ? 'Course' : 'Program',
+        enrollmentStatus: enroll.enrollment_status,
+        classTitle: classDefinition?.title || null,
+        description: truncateText(stripHtml(courseOrProgram?.description), 180),
+        duration:
+          typeof courseOrProgram?.duration_hours === 'number'
+            ? `${courseOrProgram.duration_hours}h ${courseOrProgram?.duration_minutes || 0}m`
+            : null,
+        classLimit: courseOrProgram?.class_limit ?? null,
+        course_uuid: courseUuid || '',
+        program_uuid: programUuid || '',
       };
     });
-  }, [uniqueEnrollments, coursesMap, programsMap, certificates]);
+  }, [uniqueEnrollments, classDefinitionsMap, coursesMap, programsMap, certificates]);
 
   const getStatusBadge = (status: string) => {
     const badges: any = {
@@ -222,7 +294,7 @@ const MySkillsPage = () => {
         text: 'Failed',
         bg: 'bg-red-100',
         text_color: 'text-destructive',
-        icon: XCircle
+        icon: XCircle,
       },
       incomplete: {
         text: 'In Progress',
@@ -244,7 +316,9 @@ const MySkillsPage = () => {
   };
 
   const stats = useMemo(() => {
-    const completed = enrolledCourses.filter(c => c.status === 'complete' || c.status === 'passed').length;
+    const completed = enrolledCourses.filter(
+      c => c.status === 'complete' || c.status === 'passed'
+    ).length;
     const inProgress = enrolledCourses.filter(c => c.status === 'incomplete').length;
     const failed = enrolledCourses.filter(c => c.status === 'failed').length;
 
@@ -253,12 +327,16 @@ const MySkillsPage = () => {
       completed,
       inProgress,
       failed,
-      skillsEarned: skills.length
+      skillsEarned: skills.length,
     };
   }, [enrolledCourses, skills]);
 
-  const isLoading = isLoadingCertificates || isLoadingEnrollments ||
-    courseQueries.some(q => q.isLoading) || programQueries.some(q => q.isLoading);
+  const isLoading =
+    isLoadingCertificates ||
+    isLoadingEnrollments ||
+    classDefinitionQueries.some(q => q.isLoading) ||
+    courseQueries.some(q => q.isLoading) ||
+    programQueries.some(q => q.isLoading);
 
   if (isLoading) {
     return (
@@ -439,6 +517,16 @@ const MySkillsPage = () => {
                           </div>
                           <div className='flex-1'>
                             <h3 className='text-foreground mb-1 font-semibold'>{course.title}</h3>
+                            {course.classTitle && course.classTitle !== course.title && (
+                              <p className='text-muted-foreground mb-2 text-sm'>
+                                Class: {course.classTitle}
+                              </p>
+                            )}
+                            {course.description && (
+                              <p className='text-muted-foreground mb-3 text-sm'>
+                                {course.description}
+                              </p>
+                            )}
                             <div className='flex flex-wrap items-center gap-2'>
                               <Badge className={`${statusInfo.bg} ${statusInfo.text_color}`}>
                                 {statusInfo.text}
@@ -450,7 +538,10 @@ const MySkillsPage = () => {
                                 {course.category}
                               </Badge>
                               {course.grade && (
-                                <Badge variant='outline' className={`text-xs font-semibold ${getGradeColor(course.grade)}`}>
+                                <Badge
+                                  variant='outline'
+                                  className={`text-xs font-semibold ${getGradeColor(course.grade)}`}
+                                >
                                   Grade: {course.grade}
                                 </Badge>
                               )}
@@ -459,6 +550,11 @@ const MySkillsPage = () => {
                                   Completed: {new Date(course.completedDate).toLocaleDateString()}
                                 </span>
                               )}
+                            </div>
+                            <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs'>
+                              {course.duration && <span>Duration: {course.duration}</span>}
+                              {course.classLimit && <span>Class limit: {course.classLimit}</span>}
+                              <span>Status: {course.enrollmentStatus || 'ACTIVE'}</span>
                             </div>
                           </div>
                         </div>
@@ -473,12 +569,13 @@ const MySkillsPage = () => {
                           </div>
                           <div className='bg-muted h-2 w-full overflow-hidden rounded-full'>
                             <div
-                              className={`h-2 rounded-full transition-all duration-500 ${course.status === 'complete' || course.status === 'passed'
-                                ? 'bg-success'
-                                : course.status === 'failed'
-                                  ? 'bg-destructive'
-                                  : 'bg-yellow-500'
-                                }`}
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                course.status === 'complete' || course.status === 'passed'
+                                  ? 'bg-success'
+                                  : course.status === 'failed'
+                                    ? 'bg-destructive'
+                                    : 'bg-yellow-500'
+                              }`}
                               style={{ width: `${course.progress}%` }}
                             />
                           </div>
@@ -490,7 +587,10 @@ const MySkillsPage = () => {
                           variant='outline'
                           size='sm'
                           className='flex-1 sm:flex-none'
-                          onClick={() => router.push(`/dashboard/courses/${course.id}`)}
+                          disabled={!course.course_uuid}
+                          onClick={() =>
+                            window.open(`/dashboard/all-courses/${course.course_uuid}`, '_blank')
+                          }
                         >
                           View Course
                         </Button>
@@ -553,7 +653,9 @@ const MySkillsPage = () => {
                     </div>
                     <div className='flex items-center justify-between text-xs'>
                       <span className='text-muted-foreground'>Level</span>
-                      <Badge variant='secondary' className='text-xs'>{skill.level}</Badge>
+                      <Badge variant='secondary' className='text-xs'>
+                        {skill.level}
+                      </Badge>
                     </div>
                     <div className='flex items-center justify-between text-xs'>
                       <span className='text-muted-foreground'>Completed</span>

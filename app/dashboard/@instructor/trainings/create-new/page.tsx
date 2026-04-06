@@ -20,6 +20,14 @@ import { ClassInformationSection } from './ClassInfoSection';
 import { NotificationSection } from './NotificationSection';
 import { PreviewSection } from './PreviewSection';
 import { ScheduleSection } from './ScheduleSection';
+import {
+  buildUtcIsoDateTime,
+  generateScheduleInstances,
+  ScheduleMode,
+  ScheduledSessionInstance,
+} from './schedule-utils';
+
+const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new';
 
 // Types
 export interface ClassDetails {
@@ -179,6 +187,8 @@ const ClassBuilderPage = () => {
   const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
+  const [scheduleMode, setScheduleMode] = useState<ScheduleMode>('class');
+  const [customSessions, setCustomSessions] = useState<ScheduledSessionInstance[]>([]);
 
   const resolveId = classId || savedClassUuid;
   const { data: combinedClass, isLoading } = useClassDetails(resolveId as string);
@@ -247,6 +257,79 @@ const ClassBuilderPage = () => {
     classColour: '',
   });
 
+
+  useEffect(() => {
+    if (resolveId || isDataInitialized || typeof window === 'undefined') return;
+
+    const savedDraft = window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY);
+    if (!savedDraft) {
+      setIsDataInitialized(true);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(savedDraft) as {
+        classDetails?: Partial<ClassDetails>;
+        scheduleSettings?: Partial<ScheduleSettings>;
+        notificationSettings?: Partial<NotificationSettings>;
+        scheduleMode?: ScheduleMode;
+        customSessions?: ScheduledSessionInstance[];
+        savedAt?: string;
+      };
+
+      if (parsed.classDetails) {
+        setClassDetails(prev => ({ ...prev, ...parsed.classDetails }));
+      }
+
+      if (parsed.scheduleSettings) {
+        setScheduleSettings(prev => ({
+          ...prev,
+          ...parsed.scheduleSettings,
+          academicPeriod: {
+            ...prev.academicPeriod,
+            ...parsed.scheduleSettings?.academicPeriod,
+          },
+          registrationPeriod: {
+            ...prev.registrationPeriod,
+            ...parsed.scheduleSettings?.registrationPeriod,
+          },
+          startClass: {
+            ...prev.startClass,
+            ...parsed.scheduleSettings?.startClass,
+          },
+          repeat: {
+            ...prev.repeat,
+            ...parsed.scheduleSettings?.repeat,
+          },
+          timetable: {
+            ...prev.timetable,
+            ...parsed.scheduleSettings?.timetable,
+            time: {
+              ...prev.timetable.time,
+              ...parsed.scheduleSettings?.timetable?.time,
+            },
+          },
+        }));
+      }
+
+      if (parsed.notificationSettings) {
+        setNotificationSettings(prev => ({ ...prev, ...parsed.notificationSettings }));
+      }
+
+      if (parsed.scheduleMode) {
+        setScheduleMode(parsed.scheduleMode);
+      }
+
+      if (Array.isArray(parsed.customSessions)) {
+        setCustomSessions(parsed.customSessions);
+      }
+    } catch {
+      window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
+    } finally {
+      setIsDataInitialized(true);
+    }
+  }, [resolveId, isDataInitialized]);
+
   // Sync fetched data to state
   useEffect(() => {
     // Only initialize data if we're editing (have a resolveId) and data is loaded
@@ -275,7 +358,7 @@ const ClassBuilderPage = () => {
         allDay: false,
         class_color: '',
         classroom: '',
-        meeting_link: '',
+        meeting_link: classData?.meeting_link,
         reminder: '',
       });
 
@@ -299,6 +382,35 @@ const ClassBuilderPage = () => {
     }
   }, [classData, isLoading, courseDetail, resolveId, isDataInitialized, instructor?.full_name]);
 
+
+  useEffect(() => {
+    if (resolveId || !isDataInitialized || typeof window === 'undefined') return;
+
+    const timeout = window.setTimeout(() => {
+      window.localStorage.setItem(
+        LOCAL_CLASS_DRAFT_KEY,
+        JSON.stringify({
+          classDetails,
+          scheduleSettings,
+          notificationSettings,
+          scheduleMode,
+          customSessions,
+          savedAt: new Date().toISOString(),
+        })
+      );
+    }, 500);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    classDetails,
+    scheduleSettings,
+    notificationSettings,
+    scheduleMode,
+    customSessions,
+    resolveId,
+    isDataInitialized,
+  ]);
+
   // Calculate occurrence count
   const occurrenceCount = calculateOccurrences(
     scheduleSettings.startClass.date,
@@ -307,23 +419,31 @@ const ClassBuilderPage = () => {
     scheduleSettings.repeat.interval,
     scheduleSettings.repeat.unit === 'week' ? scheduleSettings.repeat.days : undefined
   );
+  const classScheduleInstances = generateScheduleInstances(scheduleSettings);
+  const sortedCustomSessions = customSessions
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   // Form Validation
   const isFormValid = (): boolean => {
-    const isFormValid = () => {
-      // ✅ Must have either program_uuid OR course_uuid
-      if (!classDetails?.program_uuid && !classDetails?.course_uuid) {
-        toast.error('Please select either a Program or a Course');
+    if (!classDetails?.program_uuid && !classDetails?.course_uuid) {
+      toast.error('Please select either a Program or a Course');
+      return false;
+    }
+
+    if (classDetails?.program_uuid && classDetails?.course_uuid) {
+      toast.error('Please select only one: Program or Course');
+      return false;
+    }
+
+    if (scheduleMode === 'custom') {
+      if (sortedCustomSessions.length === 0) {
+        toast.error('Please add at least one custom schedule session');
         return false;
       }
 
-      // ✅ Optional: prevent both at the same time (if that's a rule)
-      if (classDetails?.program_uuid && classDetails?.course_uuid) {
-        toast.error('Please select only one: Program or Course');
-        return false;
-      }
       return true;
-    };
+    }
 
     if (
       !scheduleSettings.startClass.date ||
@@ -348,6 +468,10 @@ const ClassBuilderPage = () => {
       toast.error('Invalid date range or recurrence settings');
       return false;
     }
+    if (classScheduleInstances.length === 0) {
+      toast.error('No class schedule instances could be generated');
+      return false;
+    }
     return true;
   };
 
@@ -358,18 +482,42 @@ const ClassBuilderPage = () => {
     if (!isFormValid()) return;
 
     try {
-      const start_time = new Date(
-        `${scheduleSettings.startClass.date}T${scheduleSettings.startClass.startTime}:00Z`
-      ).toISOString();
-      const end_time = new Date(
-        `${scheduleSettings.startClass.date}T${scheduleSettings.startClass.endTime}:00Z`
-      ).toISOString();
+      const sessionTemplates =
+        scheduleMode === 'custom'
+          ? sortedCustomSessions.map(session => ({
+              start_time: buildUtcIsoDateTime(session.date, session.startTime),
+              end_time: buildUtcIsoDateTime(session.date, session.endTime),
+              conflict_resolution: 'FAIL',
+            }))
+          : (() => {
+              const startTime = scheduleSettings.allDay
+                ? '00:00'
+                : (scheduleSettings.startClass.startTime as string);
+              const endTime = scheduleSettings.allDay
+                ? '23:59'
+                : (scheduleSettings.startClass.endTime as string);
+              const startTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, startTime);
+              const endTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, endTime);
+              const selectedDays = scheduleSettings.repeat.days || [];
+              const days_of_week = selectedDays
+                .sort()
+                .map(dayIndex => DAY_NAMES[dayIndex])
+                .join(',');
 
-      const selectedDays = scheduleSettings.repeat.days || [];
-      const days_of_week = selectedDays
-        .sort()
-        .map(dayIndex => DAY_NAMES[dayIndex])
-        .join(',');
+              return [
+                {
+                  start_time: startTimeIso,
+                  end_time: endTimeIso,
+                  recurrence: {
+                    recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
+                    interval_value: scheduleSettings.repeat.interval,
+                    days_of_week: days_of_week || undefined,
+                    occurrence_count: occurrenceCount,
+                  },
+                  conflict_resolution: 'FAIL',
+                },
+              ];
+            })();
 
       const payload = {
         course_uuid: classDetails.course_uuid,
@@ -386,22 +534,22 @@ const ClassBuilderPage = () => {
         max_participants: classDetails.class_limit,
         allow_waitlist: true,
         is_active: !isDraft,
-        default_start_time: start_time,
-        default_end_time: end_time,
-        meeting_link: '',
-        session_templates: [
-          {
-            start_time: start_time,
-            end_time: end_time,
-            recurrence: {
-              recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
-              interval_value: scheduleSettings.repeat.interval,
-              days_of_week: days_of_week || undefined,
-              occurrence_count: occurrenceCount,
-            },
-            conflict_resolution: 'FAIL',
-          },
-        ],
+        default_start_time:
+          scheduleMode === 'custom'
+            ? buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
+            : buildUtcIsoDateTime(
+                scheduleSettings.startClass.date,
+                scheduleSettings.allDay ? '00:00' : (scheduleSettings.startClass.startTime as string)
+              ),
+        default_end_time:
+          scheduleMode === 'custom'
+            ? buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
+            : buildUtcIsoDateTime(
+                scheduleSettings.startClass.date,
+                scheduleSettings.allDay ? '23:59' : (scheduleSettings.startClass.endTime as string)
+              ),
+        meeting_link: classDetails.meeting_link,
+        session_templates: sessionTemplates,
       };
 
       if (resolveId) {
@@ -446,6 +594,10 @@ const ClassBuilderPage = () => {
                   path: { instructorUuid: instructor?.uuid as string },
                 }),
               });
+
+              if (typeof window !== 'undefined') {
+                window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
+              }
 
               toast.success(isDraft ? 'Class saved as draft' : 'Class created successfully');
               router.push('/dashboard/trainings');
@@ -511,6 +663,10 @@ const ClassBuilderPage = () => {
                 data={scheduleSettings}
                 onChange={updates => setScheduleSettings(prev => ({ ...prev, ...updates }))}
                 occurrenceCount={occurrenceCount}
+                scheduleMode={scheduleMode}
+                onScheduleModeChange={setScheduleMode}
+                customSessions={customSessions}
+                onCustomSessionsChange={setCustomSessions}
               />
 
               {/* Class Information Section */}
@@ -530,6 +686,8 @@ const ClassBuilderPage = () => {
                 <PreviewSection
                   classDetails={classDetails}
                   scheduleSettings={scheduleSettings}
+                  scheduleMode={scheduleMode}
+                  customSessions={customSessions}
                   courseData={courseDetail?.data}
                   courseLessons={courseLessons?.data?.content}
                   occurrenceCount={occurrenceCount}

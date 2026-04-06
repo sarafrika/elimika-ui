@@ -75,7 +75,7 @@ const EnrollmentPage = () => {
           },
           onError: () => {
             toast.error(
-              "Enrollment requires a student account. Please log in as a student, or create a student profile to continue."
+              'Enrollment requires a student account. Please log in as a student, or create a student profile to continue.'
             );
             setOpenEnrollModal(false);
           },

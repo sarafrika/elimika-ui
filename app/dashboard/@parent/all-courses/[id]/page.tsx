@@ -12,9 +12,7 @@ export default function CourseDetailsPage({ params }: any) {
   return (
     <ReusableCourseDetailsPage
       courseId={data}
-      handleEnroll={() => {
-        router.push(`/dashboard/all-courses/enroll/${data}`);
-      }}
+      handleEnroll={() => {}}
       student_uuid={student?.uuid}
     />
   );

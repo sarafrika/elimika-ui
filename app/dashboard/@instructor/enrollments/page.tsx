@@ -12,13 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { elimikaDesignSystem } from '@/lib/design-system';
@@ -28,36 +21,67 @@ import {
   getStudentByIdOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import {
-  BookOpen,
-  ChevronRight,
-  ExternalLink,
-  GraduationCap,
-  Search,
-  TrendingUp,
-  Users,
-  X
-} from 'lucide-react';
+import { BookOpen, ExternalLink, GraduationCap, Search, TrendingUp, Users, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+
+type StudentCourseRecord = {
+  courseId: string;
+  courseName: string;
+  enrollmentId: string;
+  status: string;
+  progressPercentage?: number;
+};
+
+type StudentEnrollmentOverview = {
+  studentId: string;
+  studentName: string;
+  studentCode?: string;
+  avatarUrl?: string;
+  email?: string;
+  userUuid?: string;
+  courses: StudentCourseRecord[];
+};
+
+const ALL_COURSES_VALUE = 'all-courses';
+
+const getStatusBadgeVariant = (status?: string) => {
+  switch (status) {
+    case 'ENROLLED':
+    case 'ACTIVE':
+      return 'success' as const;
+    case 'PENDING':
+      return 'secondary' as const;
+    case 'CANCELLED':
+      return 'destructive' as const;
+    case 'COMPLETED':
+      return 'outline' as const;
+    default:
+      return 'outline' as const;
+  }
+};
+
+const formatStatusLabel = (status?: string) => {
+  if (!status) return 'Unknown';
+  return status
+    .toLowerCase()
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+};
 
 const EnrollmentsPage = () => {
   const router = useRouter();
   const instructor = useInstructor();
 
-  // State
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-  const [classSearchQuery, setClassSearchQuery] = useState('');
+  const [selectedCourseId, setSelectedCourseId] = useState<string>(ALL_COURSES_VALUE);
   const [studentSearchQuery, setStudentSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'enrollments'>('name');
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedStudentForSheet, setSelectedStudentForSheet] = useState<any>(null);
-  const [isStudentDetailsSheetOpen, setIsStudentDetailsSheetOpen] = useState(false);
-  const [isStudentsListSheetOpen, setIsStudentsListSheetOpen] = useState(false);
-  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
-  // Fetch classes
-  const { data: classesData, isLoading: isLoadingClasses } = useQuery({
+  const {
+    data: classesData,
+    isLoading: isLoadingClasses,
+    isError: isClassesError,
+  } = useQuery({
     ...getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructor?.uuid as string },
       query: { activeOnly: true },
@@ -65,9 +89,11 @@ const EnrollmentsPage = () => {
     enabled: !!instructor?.uuid,
   });
 
-  const instructorClasses = classesData?.data?.map((item: any) => item.class_definition) || [];
+  const instructorClasses = useMemo(
+    () => classesData?.data?.map((item: any) => item.class_definition).filter(Boolean) ?? [],
+    [classesData]
+  );
 
-  // Fetch enrollments for all classes
   const enrollmentQueries = useQueries({
     queries: instructorClasses.map((classItem: any) => ({
       ...getEnrollmentsForClassOptions({
@@ -77,68 +103,31 @@ const EnrollmentsPage = () => {
     })),
   });
 
-  // Calculate enrollment counts and KPIs
-  const { enrollmentCountsByClass, totalStudents, totalClasses, avgEnrollment } = useMemo(() => {
-    const counts: Record<string, number> = {};
-    let totalUniqueStudents = new Set<string>();
-    let totalEnrollments = 0;
-
-    instructorClasses.forEach((classItem: any, index: number) => {
-      const enrollments = enrollmentQueries[index]?.data?.data || [];
-      const uniqueStudents = new Set(enrollments.map((e: any) => e.student_uuid));
-
-      counts[classItem.uuid] = uniqueStudents.size;
-      totalEnrollments += uniqueStudents.size;
-
-      enrollments.forEach((e: any) => totalUniqueStudents.add(e.student_uuid));
-    });
-
-    return {
-      enrollmentCountsByClass: counts,
-      totalStudents: totalUniqueStudents.size,
-      totalClasses: instructorClasses.length,
-      avgEnrollment: instructorClasses.length > 0 ? totalEnrollments / instructorClasses.length : 0,
-    };
-  }, [instructorClasses, enrollmentQueries]);
-
-  // Filter and sort classes
-  const filteredClasses = useMemo(() => {
-    let filtered = instructorClasses.filter((classItem: any) =>
-      classItem.title?.toLowerCase().includes(classSearchQuery.toLowerCase())
-    );
-
-    if (sortBy === 'enrollments') {
-      filtered.sort(
-        (a: any, b: any) =>
-          (enrollmentCountsByClass[b.uuid] || 0) - (enrollmentCountsByClass[a.uuid] || 0)
-      );
-    } else {
-      filtered.sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''));
-    }
-
-    return filtered;
-  }, [instructorClasses, classSearchQuery, sortBy, enrollmentCountsByClass]);
-
-  // Set initial selected class
-  useEffect(() => {
-    if (!selectedClassId && filteredClasses.length > 0) {
-      setSelectedClassId(filteredClasses[0].uuid);
-    }
-  }, [filteredClasses, selectedClassId]);
-
-  // Get enrollments and students for selected class
-  const selectedClassIndex = instructorClasses.findIndex((c: any) => c.uuid === selectedClassId);
-  const enrollmentsForSelectedClass =
-    selectedClassIndex >= 0 ? enrollmentQueries[selectedClassIndex]?.data?.data || [] : [];
-  const isLoadingEnrollments =
-    selectedClassIndex >= 0 ? enrollmentQueries[selectedClassIndex]?.isLoading : false;
-
-  const uniqueStudentUuids: string[] = Array.from(
-    new Set(enrollmentsForSelectedClass.map((e: any) => e.student_uuid).filter(Boolean))
+  const classEnrollmentRows = useMemo(
+    () =>
+      instructorClasses.map((classItem: any, index: number) => ({
+        classItem,
+        enrollments: enrollmentQueries[index]?.data?.data ?? [],
+      })),
+    [instructorClasses, enrollmentQueries]
   );
 
+  const uniqueStudentIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    classEnrollmentRows.forEach(({ enrollments }) => {
+      enrollments.forEach((enrollment: any) => {
+        if (enrollment.student_uuid) {
+          ids.add(enrollment.student_uuid);
+        }
+      });
+    });
+
+    return Array.from(ids);
+  }, [classEnrollmentRows]);
+
   const studentQueries = useQueries({
-    queries: uniqueStudentUuids.map((studentUuid: string) => ({
+    queries: uniqueStudentIds.map(studentUuid => ({
       ...getStudentByIdOptions({
         path: { uuid: studentUuid },
       }),
@@ -146,64 +135,145 @@ const EnrollmentsPage = () => {
     })),
   });
 
-  const studentsData = studentQueries.map(q => q.data).filter(Boolean);
-  const students = studentsData?.map((item: any) => item.data) || [];
+  const studentMap = useMemo(() => {
+    const map = new Map<string, any>();
 
-  // Filter students by search query
+    uniqueStudentIds.forEach((studentUuid, index) => {
+      const student = studentQueries[index]?.data?.data;
+      if (student) {
+        map.set(studentUuid, student);
+      }
+    });
+
+    return map;
+  }, [studentQueries, uniqueStudentIds]);
+
+  const normalizedStudents = useMemo<StudentEnrollmentOverview[]>(() => {
+    const map = new Map<string, StudentEnrollmentOverview>();
+
+    classEnrollmentRows.forEach(({ classItem, enrollments }) => {
+      enrollments.forEach((enrollment: any) => {
+        const studentId = enrollment.student_uuid;
+        if (!studentId) return;
+
+        const student = studentMap.get(studentId);
+        const existing = map.get(studentId);
+        const nextCourse: StudentCourseRecord = {
+          courseId: classItem.uuid,
+          courseName: classItem.title || 'Untitled Course',
+          enrollmentId: enrollment.uuid || `${classItem.uuid}-${studentId}`,
+          status: enrollment.status || 'UNKNOWN',
+          progressPercentage: enrollment.progress_percentage,
+        };
+
+        if (existing) {
+          const hasCourse = existing.courses.some(
+            course => course.courseId === nextCourse.courseId
+          );
+
+          if (!hasCourse) {
+            existing.courses.push(nextCourse);
+          }
+          return;
+        }
+
+        map.set(studentId, {
+          studentId,
+          studentName: student?.full_name || 'Unknown Student',
+          studentCode: student?.student_id,
+          avatarUrl: student?.avatar_url,
+          email: student?.email,
+          userUuid: student?.user_uuid,
+          courses: [nextCourse],
+        });
+      });
+    });
+
+    return Array.from(map.values()).sort((a, b) => a.studentName.localeCompare(b.studentName));
+  }, [classEnrollmentRows, studentMap]);
+
+  const courseOptions = useMemo(
+    () =>
+      instructorClasses
+        .map((classItem: any) => ({
+          id: classItem.uuid as string,
+          name: classItem.title || 'Untitled Course',
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [instructorClasses]
+  );
+
   const filteredStudents = useMemo(() => {
-    return students.filter((student: any) =>
-      student?.full_name?.toLowerCase().includes(studentSearchQuery.toLowerCase())
-    );
-  }, [students, studentSearchQuery]);
+    const query = studentSearchQuery.trim().toLowerCase();
 
-  const selectedClass = instructorClasses.find((c: any) => c.uuid === selectedClassId);
-  const isLoadingStudents = studentQueries.some(q => q.isLoading);
+    return normalizedStudents.filter(student => {
+      const matchesCourse =
+        selectedCourseId === ALL_COURSES_VALUE ||
+        student.courses.some(course => course.courseId === selectedCourseId);
 
-  const handleViewProfile = (studentUuid: string) => {
-    router.push(`/dashboard/enrollments/${selectedClassId}?id=${studentUuid}`);
-  };
+      if (!matchesCourse) return false;
 
-  // const handleStudentClick = (student: any) => {
-  //   setSelectedStudentForSheet(student);
-  //   setIsStudentDetailsSheetOpen(true);
-  // };
-  const handleStudentClick = (student: any) => {
-    setExpandedStudentId(prev =>
-      prev === student.uuid ? null : student.uuid
-    );
-  };
+      if (!query) return true;
 
+      return (
+        student.studentName.toLowerCase().includes(query) ||
+        student.studentCode?.toLowerCase().includes(query) ||
+        student.email?.toLowerCase().includes(query)
+      );
+    });
+  }, [normalizedStudents, selectedCourseId, studentSearchQuery]);
 
-  const handleClassSelect = (classUuid: string) => {
-    setSelectedClassId(classUuid);
-    setShowFilters(false);
-    // On mobile, open students sheet when class is selected
-    if (window.innerWidth < 1024) {
-      setIsStudentsListSheetOpen(true);
+  const filteredEnrollmentsCount = useMemo(() => {
+    if (selectedCourseId === ALL_COURSES_VALUE) {
+      return normalizedStudents.reduce((count, student) => count + student.courses.length, 0);
     }
-  };
 
-  const getEnrollmentForStudent = (studentUuid: string) => {
-    return enrollmentsForSelectedClass.find((e: any) => e.student_uuid === studentUuid);
+    return normalizedStudents.reduce(
+      (count, student) =>
+        count + student.courses.filter(course => course.courseId === selectedCourseId).length,
+      0
+    );
+  }, [normalizedStudents, selectedCourseId]);
+
+  const selectedCourseLabel = useMemo(() => {
+    if (selectedCourseId === ALL_COURSES_VALUE) return 'All Courses';
+    return courseOptions.find(course => course.id === selectedCourseId)?.name || 'Selected Course';
+  }, [courseOptions, selectedCourseId]);
+
+  const isLoadingEnrollments =
+    isLoadingClasses || enrollmentQueries.some(query => query.isLoading || query.isFetching);
+  const isLoadingStudents = studentQueries.some(query => query.isLoading || query.isFetching);
+  const isLoading = isLoadingEnrollments || isLoadingStudents;
+
+  // const hasError =
+  //   isClassesError ||
+  //   enrollmentQueries.some(query => query.isError) ||
+  //   studentQueries.some(query => query.isError);
+  const hasError = false;
+
+  const handleViewEnrollment = (studentId: string) => {
+    const params =
+      selectedCourseId === ALL_COURSES_VALUE
+        ? ''
+        : `?courseId=${encodeURIComponent(selectedCourseId)}`;
+    router.push(`/dashboard/enrollments/${studentId}${params}`);
   };
 
   return (
     <div className={`${elimikaDesignSystem.components.pageContainer} space-y-4 px-4 py-4 sm:px-6`}>
-      {/* Header */}
       <section>
         <div className='flex flex-col gap-2'>
           <div>
             <h1 className='text-foreground text-lg font-bold sm:text-xl'>Enrollments</h1>
             <p className='text-muted-foreground mt-0.5 text-xs sm:text-sm'>
-              Manage and track student enrollments across all your classes
+              Review students enrolled across the courses you currently teach.
             </p>
           </div>
         </div>
       </section>
 
-      {/* KPI Cards */}
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
-        <Card className='border-border/50 bg-gradient-to-br from-primary/5 to-transparent p-0 transition-shadow hover:shadow-md'>
+        <Card className='border-border/50 from-primary/5 bg-gradient-to-br to-transparent p-0 transition-shadow hover:shadow-md dark:from-transparent'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-primary/10 rounded-lg p-2'>
@@ -211,496 +281,256 @@ const EnrollmentsPage = () => {
               </div>
               <div className='min-w-0 flex-1'>
                 <p className='text-muted-foreground text-xs'>Total Students</p>
-                <h3 className='text-foreground text-lg font-bold'>{totalStudents}</h3>
+                <h3 className='text-foreground text-lg font-bold'>{normalizedStudents.length}</h3>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className='border-border/50 bg-gradient-to-br from-chart-1/5 to-transparent p-0 transition-shadow hover:shadow-md'>
+        <Card className='border-border/50 from-chart-1/5 bg-gradient-to-br to-transparent p-0 transition-shadow hover:shadow-md dark:from-transparent'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-chart-1/10 rounded-lg p-2'>
                 <BookOpen className='text-chart-1 h-4 w-4' />
               </div>
               <div className='min-w-0 flex-1'>
-                <p className='text-muted-foreground text-xs'>Active Classes</p>
-                <h3 className='text-foreground text-lg font-bold'>{totalClasses}</h3>
+                <p className='text-muted-foreground text-xs'>Courses</p>
+                <h3 className='text-foreground text-lg font-bold'>{courseOptions.length}</h3>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className='border-border/50 bg-gradient-to-br from-chart-2/5 to-transparent p-0 transition-shadow hover:shadow-md'>
+        <Card className='border-border/50 from-chart-2/5 bg-gradient-to-br to-transparent p-0 transition-shadow hover:shadow-md dark:from-transparent'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-chart-2/10 rounded-lg p-2'>
                 <TrendingUp className='text-chart-2 h-4 w-4' />
               </div>
               <div className='min-w-0 flex-1'>
-                <p className='text-muted-foreground text-xs'>Avg per Class</p>
-                <h3 className='text-foreground text-lg font-bold'>{avgEnrollment.toFixed(0)}</h3>
+                <p className='text-muted-foreground text-xs'>Visible Students</p>
+                <h3 className='text-foreground text-lg font-bold'>{filteredStudents.length}</h3>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className='border-border/50 bg-gradient-to-br from-chart-3/5 to-transparent p-0 transition-shadow hover:shadow-md'>
+        <Card className='border-border/50 from-chart-3/5 bg-gradient-to-br to-transparent p-0 transition-shadow hover:shadow-md dark:from-transparent'>
           <CardContent className='p-3'>
             <div className='flex items-center gap-2.5'>
               <div className='bg-chart-3/10 rounded-lg p-2'>
                 <GraduationCap className='text-chart-3 h-4 w-4' />
               </div>
               <div className='min-w-0 flex-1'>
-                <p className='text-muted-foreground text-xs'>Current Class</p>
-                <h3 className='text-foreground text-lg font-bold'>
-                  {enrollmentCountsByClass[selectedClassId || ''] || 0}
-                </h3>
+                <p className='text-muted-foreground text-xs'>Visible Enrollments</p>
+                <h3 className='text-foreground text-lg font-bold'>{filteredEnrollmentsCount}</h3>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content */}
-      <div className='grid gap-4 lg:grid-cols-12'>
-        {/* Left Sidebar - Class List */}
-        <div className='space-y-3 lg:col-span-4'>
-          <Card className='border-border/50 p-3'>
-            {/* Search and Sort */}
-            <div className='space-y-2'>
-              <div className='relative'>
-                <Search className='text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2' />
-                <Input
-                  placeholder='Search classes...'
-                  value={classSearchQuery}
-                  onChange={e => setClassSearchQuery(e.target.value)}
-                  className='h-8 border-border/50 pl-8 pr-8 text-sm focus-visible:ring-primary/20'
-                />
-                {classSearchQuery && (
-                  <button
-                    onClick={() => setClassSearchQuery('')}
-                    className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors'
-                  >
-                    <X className='h-3.5 w-3.5' />
-                  </button>
-                )}
-              </div>
-
-              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                <SelectTrigger className='h-8 border-border/50 text-sm focus:ring-primary/20'>
-                  <SelectValue />
+      <Card className='border-border/50 p-4'>
+        <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+          <div className='grid gap-3 sm:grid-cols-2 lg:w-[32rem]'>
+            <div className='space-y-1'>
+              <p className='text-muted-foreground text-xs font-medium'>Filter by Course</p>
+              <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
+                <SelectTrigger className='h-9'>
+                  <SelectValue placeholder='Select course' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='name'>Sort by Name</SelectItem>
-                  <SelectItem value='enrollments'>Sort by Enrollments</SelectItem>
+                  <SelectItem value={ALL_COURSES_VALUE}>All Courses</SelectItem>
+                  {courseOptions.map(course => (
+                    <SelectItem key={course.id} value={course.id}>
+                      {course.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Class List */}
-            <div className='no-scrollbar mt-3 max-h-[calc(100vh-420px)] space-y-1.5 overflow-y-auto'>
-              {isLoadingClasses ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <Card key={i} className='p-2.5'>
-                    <div className='space-y-1.5'>
-                      <Skeleton className='h-3.5 w-3/4' />
-                      <Skeleton className='h-3 w-1/2' />
-                    </div>
-                  </Card>
-                ))
-              ) : filteredClasses.length === 0 ? (
-                <div className='text-muted-foreground py-6 text-center text-xs'>
-                  No classes found
-                </div>
-              ) : (
-                filteredClasses.map((classItem: any) => {
-                  const enrollmentCount = enrollmentCountsByClass[classItem.uuid] || 0;
-                  const isSelected = selectedClassId === classItem.uuid;
-
-                  return (
-                    <Card
-                      key={classItem.uuid}
-                      onClick={() => handleClassSelect(classItem.uuid)}
-                      className={`group cursor-pointer border-border/50 p-2.5 transition-all hover:shadow-md ${isSelected
-                        ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
-                        : 'hover:border-border hover:bg-accent/5'
-                        }`}
-                    >
-                      <div className='flex items-start justify-between gap-2'>
-                        <div className='min-w-0 flex-1'>
-                          <h4 className='text-foreground truncate text-sm font-semibold'>
-                            {classItem.title || 'Unnamed Class'}
-                          </h4>
-                          <p className='text-muted-foreground mt-0.5 truncate text-xs'>
-                            {classItem.course_title || 'No course'}
-                          </p>
-                        </div>
-                        <Badge
-                          variant={isSelected ? 'default' : 'secondary'}
-                          className='shrink-0 text-xs'
-                        >
-                          {enrollmentCount}
-                        </Badge>
-                      </div>
-                    </Card>
-                  );
-                })
-              )}
-            </div>
-          </Card>
-        </div>
-
-        {/* Right Content - Student List (Desktop Only) */}
-        <div className='hidden space-y-3 lg:col-span-8 lg:block'>
-          {/* Student Search and Info */}
-          {selectedClassId && (
-            <Card className='border-border/50 p-3'>
-              <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-                <div className='flex-1'>
-                  <h3 className='text-foreground text-base font-semibold'>
-                    {selectedClass?.title || 'Class Details'}
-                  </h3>
-                  <p className='text-muted-foreground mt-0.5 text-xs'>
-                    {filteredStudents.length}{' '}
-                    {filteredStudents.length === 1 ? 'student' : 'students'} enrolled
-                  </p>
-                </div>
-
-                <div className='relative w-full sm:w-56'>
-                  <Search className='text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2' />
-                  <Input
-                    placeholder='Search students...'
-                    value={studentSearchQuery}
-                    onChange={e => setStudentSearchQuery(e.target.value)}
-                    className='h-8 border-border/50 pl-8 pr-8 text-sm focus-visible:ring-primary/20'
-                  />
-                  {studentSearchQuery && (
-                    <button
-                      onClick={() => setStudentSearchQuery('')}
-                      className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors'
-                    >
-                      <X className='h-3.5 w-3.5' />
-                    </button>
-                  )}
-                </div>
+            <div className='space-y-1'>
+              <p className='text-muted-foreground text-xs font-medium'>Search Students</p>
+              <div className='relative'>
+                <Search className='text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2' />
+                <Input
+                  placeholder='Search by name or ID'
+                  value={studentSearchQuery}
+                  onChange={event => setStudentSearchQuery(event.target.value)}
+                  className='h-9 pr-8 pl-8 text-sm'
+                />
+                {studentSearchQuery ? (
+                  <button
+                    type='button'
+                    onClick={() => setStudentSearchQuery('')}
+                    className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 transition-colors'
+                  >
+                    <X className='h-3.5 w-3.5' />
+                  </button>
+                ) : null}
               </div>
-            </Card>
-          )}
-
-          {/* Students List */}
-          {selectedClassId === null ? (
-            <Card className='border-border/50 p-8 text-center sm:p-10'>
-              <div className='bg-muted/50 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
-                <BookOpen className='text-muted-foreground h-6 w-6 sm:h-7 sm:w-7' />
-              </div>
-              <h3 className='text-foreground mb-1.5 text-base font-semibold'>Select a Class</h3>
-              <p className='text-muted-foreground mx-auto max-w-sm text-xs sm:text-sm'>
-                Choose a class from the sidebar to view its enrolled students
-              </p>
-            </Card>
-          ) : isLoadingEnrollments || isLoadingStudents ? (
-            <Card className='border-border/50 overflow-hidden'>
-              <ul className='divide-y divide-border/50'>
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <li key={i} className='p-4'>
-                    <div className='flex items-center gap-3'>
-                      <Skeleton className='h-10 w-10 rounded-full' />
-                      <div className='flex-1 space-y-1.5'>
-                        <Skeleton className='h-3.5 w-32' />
-                        <Skeleton className='h-3 w-40' />
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : filteredStudents.length === 0 ? (
-            <Card className='border-border/50 p-8 text-center sm:p-10'>
-              <div className='bg-muted/50 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
-                <Users className='text-muted-foreground h-6 w-6 sm:h-7 sm:w-7' />
-              </div>
-              <h3 className='text-foreground mb-1.5 text-base font-semibold'>
-                {studentSearchQuery ? 'No Students Found' : 'No Enrollments Yet'}
-              </h3>
-              <p className='text-muted-foreground mx-auto max-w-sm text-xs sm:text-sm'>
-                {studentSearchQuery
-                  ? 'Try adjusting your search query'
-                  : 'Students will appear here once they enroll in this class'}
-              </p>
-            </Card>
-          ) : (
-            <Card className='border-border/50 overflow-hidden bg-card'>
-              <ul className='divide-y divide-border/50'>
-                {filteredStudents.map((student: any) => {
-                  const enrollment = getEnrollmentForStudent(student?.uuid);
-
-                  return (
-                    <li
-                      key={student?.uuid}
-                      className='group transition-colors hover:bg-accent/5'
-                    >
-                      <div className='flex items-center gap-3 p-3 sm:gap-4 sm:p-4'>
-                        {/* Avatar & Info */}
-                        <div className='flex min-w-0 flex-1 items-center gap-3'>
-                          <Avatar className='border-border h-10 w-10 border ring-2 ring-background'>
-                            <AvatarImage src={student?.avatar_url} />
-                            <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
-                              {student?.full_name
-                                ?.split(' ')
-                                .map((n: any) => n[0])
-                                .join('')
-                                .toUpperCase() || '??'}
-                            </AvatarFallback>
-                          </Avatar>
-
-                          <div className='min-w-0 flex-1'>
-                            <div className='flex items-center gap-2'>
-                              <h4 className='text-foreground truncate text-sm font-semibold'>
-                                {student?.full_name || 'Unknown Student'}
-                              </h4>
-                              <Badge
-                                variant='outline'
-                                className='border-success/30 bg-success/10 text-success hidden shrink-0 text-xs sm:inline-flex'
-                              >
-                                Active
-                              </Badge>
-                            </div>
-
-                            <p className='text-muted-foreground truncate text-xs'>
-                              ID: {student?.student_id || student?.uuid?.slice(0, 8)}
-                            </p>
-
-                            {student?.email && (
-                              <p className='text-muted-foreground hidden truncate text-xs sm:block'>
-                                {student.email}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Progress (Desktop) */}
-                        {enrollment?.progress_percentage !== undefined && (
-                          <div className='hidden w-32 shrink-0 lg:block'>
-                            <div className='mb-1 flex justify-between text-xs'>
-                              <span className='text-muted-foreground'>Progress</span>
-                              <span className='text-foreground font-medium'>
-                                {enrollment.progress_percentage}%
-                              </span>
-                            </div>
-                            <div className='bg-muted h-1.5 w-full overflow-hidden rounded-full'>
-                              <div
-                                className='bg-primary h-full rounded-full transition-all'
-                                style={{ width: `${enrollment.progress_percentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className='hidden shrink-0 items-center gap-2 md:flex'>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            onClick={() => handleViewProfile(student?.uuid as string)}
-                            className='text-primary hover:bg-primary/10 hover:text-primary h-8 text-xs'
-                          >
-                            View Enrollment
-                          </Button>
-
-                          <a
-                            href={`/profile-user/${student?.user_uuid}?domain=${'student'}`}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              className='text-primary hover:bg-primary/10 hover:text-primary h-8 text-xs'
-                            >
-                              <ExternalLink className='mr-1.5 h-3 w-3' />
-                              Profile
-                            </Button>
-                          </a>
-                        </div>
-
-                        {/* Mobile: Show Sheet Button */}
-                        <button
-                          onClick={() => handleStudentClick(student)}
-                          className='text-muted-foreground hover:text-foreground shrink-0 transition-colors md:hidden'
-                        >
-                          <ChevronRight className='h-5 w-5' />
-                        </button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile Students List Sheet */}
-      <Sheet open={isStudentsListSheetOpen} onOpenChange={setIsStudentsListSheetOpen}>
-        <SheetContent side='right' className='w-full sm:max-w-md'>
-          <SheetHeader className='mb-4'>
-            <SheetTitle className='text-foreground'>
-              {selectedClass?.title || 'Students'}
-            </SheetTitle>
-            <SheetDescription className='text-muted-foreground'>
-              {filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} enrolled
-            </SheetDescription>
-          </SheetHeader>
-
-          {/* Student Search */}
-          <div className='mb-4 mx-4'>
-            <div className='relative'>
-              <Search className='text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2' />
-              <Input
-                placeholder='Search students...'
-                value={studentSearchQuery}
-                onChange={e => setStudentSearchQuery(e.target.value)}
-                className='h-8 border-border/50 pl-8 pr-8 text-sm focus-visible:ring-primary/20'
-              />
-              {studentSearchQuery && (
-                <button
-                  onClick={() => setStudentSearchQuery('')}
-                  className='text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors'
-                >
-                  <X className='h-3.5 w-3.5' />
-                </button>
-              )}
             </div>
           </div>
 
-          {/* Students List */}
-          <div className='space-y-2 mx-4'>
-            {isLoadingEnrollments || isLoadingStudents ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className='flex items-center gap-3 rounded-lg border border-border/50 p-3'>
-                  <Skeleton className='h-10 w-10 rounded-full' />
-                  <div className='flex-1 space-y-1.5'>
-                    <Skeleton className='h-3.5 w-32' />
-                    <Skeleton className='h-3 w-40' />
-                  </div>
-                </div>
-              ))
-            ) : filteredStudents.length === 0 ? (
-              <div className='border-border/50 rounded-lg border p-8 text-center'>
-                <div className='bg-muted/50 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full'>
-                  <Users className='text-muted-foreground h-6 w-6' />
-                </div>
-                <h3 className='text-foreground mb-1.5 text-sm font-semibold'>
-                  {studentSearchQuery ? 'No Students Found' : 'No Enrollments Yet'}
-                </h3>
-                <p className='text-muted-foreground text-xs'>
-                  {studentSearchQuery
-                    ? 'Try adjusting your search query'
-                    : 'Students will appear here once they enroll'}
-                </p>
-              </div>
-            ) : (
-              filteredStudents.map((student: any) => {
-                const enrollment = getEnrollmentForStudent(student?.uuid);
-                const isExpanded = expandedStudentId === student?.uuid;
+          <div className='text-muted-foreground text-xs sm:text-sm'>
+            Showing <span className='text-foreground font-medium'>{filteredStudents.length}</span>{' '}
+            student{filteredStudents.length === 1 ? '' : 's'} in{' '}
+            <span className='text-foreground font-medium'>{selectedCourseLabel}</span>
+          </div>
+        </div>
+      </Card>
 
-                return (
-                  <div
-                    key={student?.uuid}
-                    className='rounded-lg border border-border/50 transition-colors'
-                  >
-                    <div
-                      onClick={() => handleStudentClick(student)}
-                      className='group flex cursor-pointer items-center gap-3 p-3 hover:bg-accent/5'
-                    >
-                      <Avatar className='border-border h-10 w-10 border ring-2 ring-background'>
-                        <AvatarImage src={student?.avatar_url} />
+      {hasError ? (
+        <Card className='border-border/50 p-8 text-center sm:p-10'>
+          <div className='bg-destructive/10 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
+            <Users className='text-destructive h-6 w-6 sm:h-7 sm:w-7' />
+          </div>
+          <h3 className='text-foreground mb-1.5 text-base font-semibold'>
+            Unable to load enrollments
+          </h3>
+          <p className='text-muted-foreground mx-auto max-w-md text-xs sm:text-sm'>
+            There was a problem loading your students and enrollment records.
+          </p>
+        </Card>
+      ) : isLoading ? (
+        <Card className='border-border/50 overflow-hidden'>
+          <ul className='divide-border/50 divide-y'>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <li key={index} className='p-4'>
+                <div className='flex items-center gap-3'>
+                  <Skeleton className='h-10 w-10 rounded-full' />
+                  <div className='flex-1 space-y-2'>
+                    <Skeleton className='h-4 w-40' />
+                    <Skeleton className='h-3 w-56' />
+                  </div>
+                  <Skeleton className='h-9 w-28' />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : courseOptions.length === 0 ? (
+        <Card className='border-border/50 p-8 text-center sm:p-10'>
+          <div className='bg-muted/50 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
+            <BookOpen className='text-muted-foreground h-6 w-6 sm:h-7 sm:w-7' />
+          </div>
+          <h3 className='text-foreground mb-1.5 text-base font-semibold'>No Courses Found</h3>
+          <p className='text-muted-foreground mx-auto max-w-sm text-xs sm:text-sm'>
+            You do not have any active instructor courses available yet.
+          </p>
+        </Card>
+      ) : normalizedStudents.length === 0 ? (
+        <Card className='border-border/50 p-8 text-center sm:p-10'>
+          <div className='bg-muted/50 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
+            <Users className='text-muted-foreground h-6 w-6 sm:h-7 sm:w-7' />
+          </div>
+          <h3 className='text-foreground mb-1.5 text-base font-semibold'>No Students Yet</h3>
+          <p className='text-muted-foreground mx-auto max-w-sm text-xs sm:text-sm'>
+            Students will appear here once they enroll in one of your courses.
+          </p>
+        </Card>
+      ) : filteredStudents.length === 0 ? (
+        <Card className='border-border/50 p-8 text-center sm:p-10'>
+          <div className='bg-muted/50 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14'>
+            <Search className='text-muted-foreground h-6 w-6 sm:h-7 sm:w-7' />
+          </div>
+          <h3 className='text-foreground mb-1.5 text-base font-semibold'>No Students Found</h3>
+          <p className='text-muted-foreground mx-auto max-w-sm text-xs sm:text-sm'>
+            Adjust the selected course or search term to find matching students.
+          </p>
+        </Card>
+      ) : (
+        <Card className='border-border/50 bg-card overflow-hidden py-0'>
+          <ul className='divide-border/50 divide-y'>
+            {filteredStudents.map(student => {
+              const visibleCourses =
+                selectedCourseId === ALL_COURSES_VALUE
+                  ? student.courses
+                  : student.courses.filter(course => course.courseId === selectedCourseId);
+
+              return (
+                <li key={student.studentId} className='group hover:bg-accent/5 transition-colors'>
+                  <div className='flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between'>
+                    <div className='flex min-w-0 items-start gap-3'>
+                      <Avatar className='border-border ring-background h-10 w-10 border ring-2'>
+                        <AvatarImage src={student.avatarUrl} />
                         <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
-                          {student?.full_name
-                            ?.split(' ')
-                            .map((n: any) => n[0])
+                          {student.studentName
+                            .split(' ')
+                            .map(part => part[0])
                             .join('')
-                            .toUpperCase() || '??'}
+                            .slice(0, 2)
+                            .toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
 
-                      <div className='min-w-0 flex-1'>
-                        <div className='flex items-center gap-2'>
-                          <h4 className='text-foreground truncate text-sm font-semibold'>
-                            {student?.full_name || 'Unknown Student'}
-                          </h4>
-                          <Badge
-                            variant='outline'
-                            className='border-success/30 bg-success/10 text-success shrink-0 text-xs sm:inline-flex'
-                          >
-                            Active
-                          </Badge>
+                      <div className='min-w-0 flex-1 space-y-2'>
+                        <div>
+                          <h3 className='text-foreground truncate text-sm font-semibold sm:text-base'>
+                            {student.studentName}
+                          </h3>
+                          <div className='text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
+                            <span>ID: {student.studentCode || student.studentId.slice(0, 8)}</span>
+                            {student.email ? <span>{student.email}</span> : null}
+                          </div>
                         </div>
 
-                        <p className='text-muted-foreground truncate text-xs'>
-                          ID: {student?.student_id || student?.uuid?.slice(0, 8)}
-                        </p>
+                        <div className='flex flex-wrap gap-2'>
+                          {visibleCourses.map(course => (
+                            <div
+                              key={course.courseId}
+                              className='bg-muted/50 rounded-lg px-3 py-2 text-xs sm:text-sm'
+                            >
+                              <p className='text-foreground font-medium'>{course.courseName}</p>
+                              <div className='mt-1 flex items-center gap-2'>
+                                <Badge
+                                  variant={getStatusBadgeVariant(course.status)}
+                                  className='text-[11px]'
+                                >
+                                  {formatStatusLabel(course.status)}
+                                </Badge>
+                                {typeof course.progressPercentage === 'number' ? (
+                                  <span className='text-muted-foreground'>
+                                    {course.progressPercentage}% progress
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-
-                      <ChevronRight
-                        className={`h-5 w-5 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''
-                          }`}
-                      />
                     </div>
 
-                    {isExpanded && (
-                      <div className='space-y-4 border-t border-border/50 px-4 pb-4'>
-                        {/* Progress */}
-                        {enrollment?.progress_percentage !== undefined && (
-                          <div>
-                            <div className='flex justify-between text-xs mb-1'>
-                              <span>Progress</span>
-                              <span>{enrollment.progress_percentage}%</span>
-                            </div>
-                            <div className='bg-muted h-2 w-full rounded-full overflow-hidden'>
-                              <div
-                                className='bg-primary h-full'
-                                style={{ width: `${enrollment.progress_percentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
+                    <div className='flex flex-wrap items-center gap-2 lg:justify-end'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => handleViewEnrollment(student.studentId)}
+                      >
+                        View Enrollment
+                      </Button>
 
-                        {/* Actions */}
-                        <div className='flex gap-2 pt-2'>
-                          <Button
-                            size='sm'
-                            className='flex-1 text-primary'
-                            variant="outline"
-                            onClick={() => handleViewProfile(student?.uuid)}
-                          >
-                            View Enrollment Info
+                      {student.userUuid ? (
+                        <a
+                          href={`/profile-user/${student.userUuid}?domain=student`}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          <Button variant='ghost' size='sm' className='text-primary'>
+                            <ExternalLink className='mr-1.5 h-3 w-3' />
+                            Profile
                           </Button>
-
-                          <a
-                            href={`/profile-user/${student?.user_uuid}?domain=student`}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            className='flex-1'
-                          >
-
-                            <Button size='sm' variant='outline' className='w-full text-primary'>
-                              <ExternalLink className='mr-1.5 h-3 w-3' />
-                              Profile
-                            </Button>
-                          </a>
-                        </div>
-                      </div>
-                    )}
+                        </a>
+                      ) : null}
+                    </div>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
     </div>
   );
 };

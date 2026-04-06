@@ -1,27 +1,5 @@
 'use client';
 
-import RichTextRenderer from '@/components/editors/richTextRenders';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import Spinner from '@/components/ui/spinner';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useClassRoster } from '@/hooks/use-class-roster';
-import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
-import { useInstructorInfo } from '@/hooks/use-instructor-info';
-import { getResourceIcon } from '@/lib/resources-icon';
-import { getCourseAssessmentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
@@ -46,6 +24,30 @@ import {
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useClassRoster } from '@/hooks/use-class-roster';
+import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import { useInstructorInfo } from '@/hooks/use-instructor-info';
+import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
+import { getResourceIcon } from '@/lib/resources-icon';
+import { getCourseAssessmentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
 import { useProgramLessonsWithContent } from '../../../../../../hooks/use-programlessonwithcontent';
@@ -60,6 +62,8 @@ export interface ContentItem {
   title: string;
   content_type_uuid: string;
   content_text?: string;
+  file_url?: string | null;
+  value?: string | null;
   description?: string;
 }
 
@@ -200,7 +204,8 @@ export default function ClassPreviewPage() {
   const registrationLink = getRegistrationLink();
   const inviteLink = getInviteLink();
 
-  const [copied, setCopied] = useState(false);
+  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
+  const [registrationLinkCopied, setRegistrationLinkCopied] = useState(false);
 
   // const totalLessons = classData.schedule.skills.reduce((acc, skill) => acc + skill.lessons.length, 0);
   // const totalHours = classData.schedule.skills.reduce((total, skill) => {
@@ -222,7 +227,7 @@ export default function ClassPreviewPage() {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const shareToSocial = (platform: SharePlatform, { title, links }: ShareOptions) => {
@@ -601,6 +606,12 @@ export default function ClassPreviewPage() {
                 </div>
               </div>
 
+              <CourseTrainingRequirements
+                requirements={course?.training_requirements}
+                viewerRole='instructor'
+                description='Course delivery requirements for students, organisations, instructors, and creators.'
+              />
+
               {/* Description Section - Full Width */}
               <div className='border-border bg-muted/50 rounded-lg border p-4'>
                 <span className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
@@ -829,12 +840,12 @@ export default function ClassPreviewPage() {
           <div className='flex gap-2'>
             <Input value={inviteLink} readOnly className='font-mono text-sm' />
             <Button
-              onClick={() => copyLink(inviteLink, setCopied)}
+              onClick={() => copyLink(inviteLink, setInviteLinkCopied)}
               variant='outline'
               className='gap-2'
             >
               <Copy className='h-4 w-4' />
-              {copied ? 'Copied!' : 'Copy'}
+              {inviteLinkCopied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
         </CardHeader>
@@ -847,12 +858,12 @@ export default function ClassPreviewPage() {
           <div className='flex gap-2'>
             <Input value={registrationLink} readOnly className='font-mono text-sm' />
             <Button
-              onClick={() => copyLink(registrationLink, setCopied)}
+              onClick={() => copyLink(registrationLink, setRegistrationLinkCopied)}
               variant='outline'
               className='gap-2'
             >
               <Copy className='h-4 w-4' />
-              {copied ? 'Copied!' : 'Copy'}
+              {registrationLinkCopied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
         </CardHeader>
@@ -940,7 +951,7 @@ export default function ClassPreviewPage() {
       <VideoPlayer
         isOpen={isPlaying && contentTypeName === 'video'}
         onClose={() => setIsPlaying(false)}
-        videoUrl={selectedLesson?.content_text || ''}
+        videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
         title={selectedLesson?.title}
       />
 
@@ -950,14 +961,14 @@ export default function ClassPreviewPage() {
         onClose={() => setIsReading(false)}
         title={selectedLesson?.title || ''}
         description={selectedLesson?.description}
-        content={selectedLesson?.content_text || ''}
+        content={resolveLessonContentSource(selectedLesson, contentTypeName)}
         contentType={contentTypeName as 'text' | 'pdf'}
       />
 
       <AudioPlayer
         isOpen={isAudioPlaying && contentTypeName === 'audio'}
         onClose={() => setIsAudioPlaying(false)}
-        audioUrl={selectedLesson?.content_text || ''}
+        audioUrl={resolveLessonContentSource(selectedLesson, 'audio')}
         title={selectedLesson?.title}
         description={selectedLesson?.description}
       />

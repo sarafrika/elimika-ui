@@ -246,7 +246,7 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
   }
 
   return (
-    <div className='max-w-6xl mx-auto mb-8'>
+    <div className='mx-auto mb-8 max-w-6xl'>
       <div className='mb-4 flex items-end justify-end md:mb-6'>
         <Button
           type='button'
@@ -264,8 +264,9 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
           {/* Step 1 */}
           <div className='flex w-full items-center gap-3 md:w-auto md:gap-4'>
             <div
-              className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold md:h-10 md:w-10 md:text-base ${step >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                }`}
+              className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold md:h-10 md:w-10 md:text-base ${
+                step >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+              }`}
             >
               {step > 1 ? '✓' : '1'}
             </div>
@@ -282,16 +283,18 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
           {/* Progress Bar - Hidden on mobile */}
           <div className='bg-muted hidden h-0.5 w-16 md:block lg:w-24'>
             <div
-              className={`h-full transition-all ${step >= 2 ? 'bg-primary w-full' : 'bg-muted w-0'
-                }`}
+              className={`h-full transition-all ${
+                step >= 2 ? 'bg-primary w-full' : 'bg-muted w-0'
+              }`}
             />
           </div>
 
           {/* Step 2 */}
           <div className='flex w-full items-center gap-3 md:w-auto md:gap-4'>
             <div
-              className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold md:h-10 md:w-10 md:text-base ${step >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                }`}
+              className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold md:h-10 md:w-10 md:text-base ${
+                step >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+              }`}
             >
               2
             </div>

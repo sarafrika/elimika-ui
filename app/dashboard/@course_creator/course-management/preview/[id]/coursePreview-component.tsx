@@ -1,27 +1,15 @@
 'use client';
 
-import HTMLTextPreview from '@/components/editors/html-text-preview';
-import RichTextRenderer from '@/components/editors/richTextRenders';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/ui/dialog';
-import Spinner from '@/components/ui/spinner';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useCourseRubrics } from '@/hooks/use-course-rubric';
-import {
-  getCourseByUuidOptions,
-  getCourseLessonsOptions,
-  getCourseReviewsOptions,
-  getCourseRubricsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
   BookOpen,
   BookOpenCheck,
   CheckCircle,
+  ChevronDown,
   Clock,
+  Eye,
   FileWarning,
   GraduationCap,
   Layers,
@@ -33,7 +21,29 @@ import {
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
+import HTMLTextPreview from '@/components/editors/html-text-preview';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/ui/dialog';
+import Spinner from '@/components/ui/spinner';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useCourseRubrics } from '@/hooks/use-course-rubric';
+import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
+import {
+  getCourseAssessmentsOptions,
+  getCourseByUuidOptions,
+  getCourseReviewsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useCourseLessonsWithContent } from '../../../../../../hooks/use-courselessonwithcontent';
+import { getResourceIcon } from '../../../../../../lib/resources-icon';
 import { ReviewCard } from '../../../../@instructor/reviews/review-card';
+import { ContentItem } from '../../../../@instructor/trainings/overview/[id]/page';
+import { AudioPlayer } from '../../../../@student/schedule/classes/[id]/AudioPlayer';
+import { ReadingMode } from '../../../../@student/schedule/classes/[id]/ReadingMode';
+import { VideoPlayer } from '../../../../@student/schedule/classes/[id]/VideoPlayer';
 
 export default function CoursePreviewComponent({ authorName }: { authorName?: string }) {
   const params = useParams();
@@ -63,6 +73,12 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
     router.push(`/dashboard/course-management/create-new-course?id=${courseId}`);
   };
 
+  const {
+    isLoading: isAllLessonsDataLoading,
+    lessons: lessonsWithContent,
+    contentTypeMap,
+  } = useCourseLessonsWithContent({ courseUuid: courseId as string });
+
   // FETCH COURSE DETAILS
   const { data: courseDetail, isLoading } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
@@ -70,24 +86,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
   });
   const course = courseDetail?.data;
 
-  // FETCH LESSONS
-  const { data: lessonsData } = useQuery({
-    ...getCourseLessonsOptions({
-      path: { courseUuid: courseId as string },
-      query: { pageable: { page: 0, size: 100 } },
-    }),
-    enabled: !!courseId,
-  });
-
   // FETCH ASSESSMENTS
-  const { data: assessmentRubrics } = useQuery({
-    ...getCourseRubricsOptions({
-      path: { courseUuid: courseId as string },
-      query: { pageable: {} },
-    }),
-    enabled: !!courseId,
-  });
-
   const { data: reviewsData } = useQuery({
     ...getCourseReviewsOptions({ path: { courseUuid: courseId as string } }),
     enabled: !!courseId,
@@ -97,6 +96,37 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
   const reviews = reviewsData?.data || [];
 
   const { data: courseRubrics, isLoading: rubric, errors } = useCourseRubrics(courseId as string);
+
+  const { data: assessmentsData } = useQuery({
+    ...getCourseAssessmentsOptions({
+      path: { courseUuid: courseId as string },
+      query: { pageable: {} },
+    }),
+    enabled: !!courseId,
+  });
+  const assessments: any[] = assessmentsData?.data?.content ?? [];
+
+  // State for video player and reading mode
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isReading, setIsReading] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+
+  const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
+  const [contentTypeName, setContentTypeName] = useState<string>('');
+
+  // Handle viewing content
+  const handleViewContent = (content: ContentItem, contentType: string) => {
+    setSelectedLesson(content);
+    setContentTypeName(contentType);
+
+    if (contentType === 'video') {
+      setIsPlaying(true);
+    } else if (contentType === 'pdf' || contentType === 'text') {
+      setIsReading(true);
+    } else if (contentType === 'audio') {
+      setIsAudioPlaying(true);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -172,6 +202,12 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         </div>
       </section>
 
+      <CourseTrainingRequirements
+        requirements={course?.training_requirements}
+        viewerRole='course_creator'
+        description='All training requirements grouped by the party responsible for providing them.'
+      />
+
       {/* Description */}
       <Card>
         <CardHeader>
@@ -206,24 +242,28 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
 
       {/* Lessons */}
       <Card>
-        <CardHeader>
-          <CardTitle>Lesson Content</CardTitle>
-          <CardDescription>All lessons included in this course.</CardDescription>
+        <CardHeader className='flex flex-row items-center justify-between'>
+          <div>
+            <CardTitle>Lesson Content</CardTitle>
+            <CardDescription>All lessons included in this course.</CardDescription>
+          </div>
+          {lessonsWithContent?.length > 0 && (
+            <Badge variant='secondary' className='text-xs'>
+              {lessonsWithContent.length} lesson{lessonsWithContent.length !== 1 ? 's' : ''}
+            </Badge>
+          )}
         </CardHeader>
-        <CardContent className='space-y-2'>
-          {lessonsData?.data?.content?.length ? (
-            lessonsData.data.content
-              .sort((a: any, b: any) => a.lesson_number - b.lesson_number)
-              .map((lesson: any) => (
-                <div key={lesson.uuid} className='border-b pb-4 last:border-0'>
-                  <div className='flex items-center gap-2'>
-                    <CheckCircle className='h-4 w-4 text-green-500' />
-                    <h3 className='font-semibold'>{lesson.title}</h3>
-                  </div>
-                  <RichTextRenderer htmlString={lesson.description ?? 'No description.'} />
-                </div>
-              ))
-          ) : (
+
+        <CardContent className='p-4'>
+          {/* Loading State */}
+          {(isAllLessonsDataLoading || isLoading) && (
+            <div className='flex items-center justify-center py-12'>
+              <Spinner />
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!isAllLessonsDataLoading && !isLoading && !lessonsWithContent?.length && (
             <EmptyState
               icon={BookOpen}
               title='No Lessons Available'
@@ -231,6 +271,93 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
               actionLabel='Add Lesson'
               onAction={handleConfirm}
             />
+          )}
+
+          {/* Lessons List */}
+          {!isAllLessonsDataLoading && !isLoading && lessonsWithContent?.length > 0 && (
+            <div className='space-y-2'>
+              {lessonsWithContent.map((skill, skillIndex) => {
+                const contentCount = skill?.content?.data?.length ?? 0;
+                return (
+                  <Collapsible key={skill?.lesson?.uuid ?? skillIndex}>
+                    {/* Lesson Header — always visible, acts as trigger */}
+                    <CollapsibleTrigger className='group w-full'>
+                      <div className='border-border bg-muted/40 hover:bg-muted flex items-center gap-3 rounded-md border px-4 py-3 transition-colors'>
+                        <span className='bg-primary/10 text-primary flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold'>
+                          {skillIndex + 1}
+                        </span>
+
+                        <div className='min-w-0 flex-1 text-left'>
+                          <p className='text-foreground text-sm leading-snug font-semibold'>
+                            {skill?.lesson?.title}
+                          </p>
+                          {contentCount > 0 && (
+                            <p className='text-muted-foreground text-xs'>
+                              {contentCount} item{contentCount !== 1 ? 's' : ''}
+                            </p>
+                          )}
+                        </div>
+                        <ChevronDown className='text-muted-foreground h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180' />
+                      </div>
+                    </CollapsibleTrigger>
+
+                    {/* Expandable content */}
+                    <CollapsibleContent>
+                      <div className='border-border mx-1 overflow-hidden rounded-b-xl border border-t-0'>
+                        {/* Description */}
+                        {skill?.lesson?.description && (
+                          <div className='border-border text-muted-foreground border-b px-4 py-3 text-sm'>
+                            <RichTextRenderer htmlString={skill.lesson.description} />
+                          </div>
+                        )}
+
+                        {/* Content Items */}
+                        {contentCount > 0 ? (
+                          <div className='divide-border divide-y'>
+                            {skill.content.data.map((c, cIndex) => {
+                              const contentTypeName = contentTypeMap[c.content_type_uuid] || 'file';
+                              return (
+                                <div
+                                  key={c.uuid}
+                                  className='hover:bg-accent/40 flex items-center justify-between px-4 py-2.5 transition-colors'
+                                >
+                                  <div className='flex items-center gap-3'>
+                                    <div className='bg-muted text-muted-foreground flex h-7 w-7 shrink-0 items-center justify-center rounded-md'>
+                                      {getResourceIcon(contentTypeName)}
+                                    </div>
+                                    <div>
+                                      <p className='text-foreground text-sm leading-snug font-medium'>
+                                        {cIndex + 1}. {c.title}
+                                      </p>
+                                      <p className='text-muted-foreground text-xs capitalize'>
+                                        {contentTypeName}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    onClick={() => handleViewContent(c, contentTypeName)}
+                                    variant='ghost'
+                                    size='sm'
+                                    className='gap-1.5 text-xs'
+                                  >
+                                    <Eye className='h-3.5 w-3.5' />
+                                    View
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className='text-muted-foreground px-4 py-3 text-xs'>
+                            No content items for this lesson.
+                          </p>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -241,7 +368,74 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
           <CardTitle>Course Assessment Rubrics</CardTitle>
           <CardDescription>Rubrics for Tests and quizzes included.</CardDescription>
         </CardHeader>
+
         <CardContent>
+          {assessments?.length ? (
+            assessments.map((assessment: any) => {
+              const hasRubric = Boolean(assessment?.rubric_uuid);
+
+              return (
+                <div key={assessment.uuid} className='border-b pt-2 pb-4 last:border-0'>
+                  <div className='flex items-center gap-2'>
+                    <BookOpenCheck className='text-primary h-4 w-4' />
+
+                    <h3 className='font-semibold'>{assessment?.title ?? 'Untitled Assessment'}</h3>
+                  </div>
+
+                  <RichTextRenderer htmlString={assessment?.description ?? 'No description.'} />
+
+                  <div className='mt-2 flex flex-wrap gap-6'>
+                    {/* {assessment?.assessment_type && (
+                      <p className="text-muted-foreground text-sm">
+                        Type: {assessment.assessment_type}
+                      </p>
+                    )} */}
+                    {/*
+                    {assessment?.assessment_category && (
+                      <p className="text-muted-foreground text-sm">
+                        Category: {assessment.assessment_category}
+                      </p>
+                    )} */}
+
+                    {assessment?.weight_percentage != null && (
+                      <p className='text-muted-foreground text-sm'>
+                        <Scale className='mr-1 inline-block h-4 w-4' />
+                        Weight: {assessment.weight_display ?? `${assessment.weight_percentage}%`}
+                      </p>
+                    )}
+
+                    {assessment?.is_required && (
+                      <p className='text-muted-foreground text-sm'>
+                        <CheckCircle className='mr-1 inline-block h-4 w-4' />
+                        Required
+                      </p>
+                    )}
+
+                    {/* {assessment?.is_major_assessment && (
+                      <p className="text-muted-foreground text-sm">
+                        Major Assessment
+                      </p>
+                    )} */}
+
+                    {!hasRubric && (
+                      <p className='text-destructive text-sm italic'>No rubric attached</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <EmptyState
+              icon={FileWarning}
+              title='No Assessments Yet'
+              description='You can create assessments once lessons are added.'
+              actionLabel='Add Assessment'
+              onAction={handleConfirm}
+            />
+          )}
+        </CardContent>
+
+        <CardContent className='hidden'>
           {courseRubrics?.length ? (
             courseRubrics.map((assessment: any) => (
               <div key={assessment.uuid} className='border-b pt-2 pb-4 last:border-0'>
@@ -383,6 +577,32 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Video Player Modal */}
+      <VideoPlayer
+        isOpen={isPlaying && contentTypeName === 'video'}
+        onClose={() => setIsPlaying(false)}
+        videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
+        title={selectedLesson?.title}
+      />
+
+      {/* Reading Mode Modal */}
+      <ReadingMode
+        isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
+        onClose={() => setIsReading(false)}
+        title={selectedLesson?.title || ''}
+        description={selectedLesson?.description}
+        content={resolveLessonContentSource(selectedLesson, contentTypeName)}
+        contentType={contentTypeName as 'text' | 'pdf'}
+      />
+
+      <AudioPlayer
+        isOpen={isAudioPlaying && contentTypeName === 'audio'}
+        onClose={() => setIsAudioPlaying(false)}
+        audioUrl={resolveLessonContentSource(selectedLesson, 'audio')}
+        title={selectedLesson?.title}
+        description={selectedLesson?.description}
+      />
     </div>
   );
 }

@@ -31,7 +31,7 @@ export function DomainOverviewShell({
   className,
 }: DomainOverviewShellProps) {
   return (
-    <div className={cn('mx-auto w-full max-w-6xl space-y-6 overflow-x-auto px-4 py-10', className)}>
+    <div className={cn('mx-auto w-full max-w-7xl space-y-6 overflow-x-auto px-4 py-10', className)}>
       <div className='border-border bg-card rounded-3xl border p-6 shadow-sm'>
         <div className='flex flex-col gap-6 md:flex-row md:items-center md:justify-between'>
           <div className='space-y-2'>
@@ -58,7 +58,7 @@ export function DomainOverviewShell({
         </div>
       </div>
 
-      <div className='grid gap-5 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]'>
+      <div className='grid gap-5 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]'>
         <section className='space-y-4'>{leftColumn}</section>
         <section className='space-y-4'>{rightColumn}</section>
       </div>

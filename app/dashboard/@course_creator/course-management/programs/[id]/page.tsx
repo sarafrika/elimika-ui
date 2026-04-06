@@ -61,16 +61,17 @@ const ProgramPreview = ({ onEdit }: any) => {
     enabled: !!programUuid,
   });
 
-  const publishProgramMut = useMutation(publishProgramMutation())
+  const publishProgramMut = useMutation(publishProgramMutation());
   const handlePublishProgram = () => {
-    publishProgramMut.mutate({ path: { uuid: programUuid as string } }, {
-      onSuccess: (data) => {
-        toast.success(data?.message)
+    publishProgramMut.mutate(
+      { path: { uuid: programUuid as string } },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+        },
       }
-    })
-  }
-
-
+    );
+  };
 
   if (programLoading) {
     return (
@@ -153,14 +154,16 @@ const ProgramPreview = ({ onEdit }: any) => {
             <Pen /> Edit
           </Button> */}
 
-          {!program.published && <Button
-            size={'sm'}
-            variant={'ghost'}
-            onClick={handlePublishProgram}
-            className='border border-border min-w-[120px]'
-          >
-            {publishProgramMut.isPending ? <Spinner /> : "Pubish"}
-          </Button>}
+          {!program.published && (
+            <Button
+              size={'sm'}
+              variant={'ghost'}
+              onClick={handlePublishProgram}
+              className='border-border min-w-[120px] border'
+            >
+              {publishProgramMut.isPending ? <Spinner /> : 'Pubish'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -189,10 +192,11 @@ const ProgramPreview = ({ onEdit }: any) => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`border-b-2 px-1 py-2 text-sm font-medium whitespace-nowrap md:py-3 md:text-base ${activeTab === tab
-                ? 'border-primary text-primary'
-                : 'text-muted-foreground hover:text-foreground border-transparent'
-                }`}
+              className={`border-b-2 px-1 py-2 text-sm font-medium whitespace-nowrap md:py-3 md:text-base ${
+                activeTab === tab
+                  ? 'border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground border-transparent'
+              }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === 'courses' && ` (${courses.length})`}

@@ -1,15 +1,12 @@
-import { elimikaDesignSystem, cx } from '@/lib/design-system';
-import { Badge } from '@/components/ui/badge';
+import { elimikaDesignSystem } from '@/lib/design-system';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
-  Building2,
   Users,
   GitBranch,
   BookOpen,
   TrendingUp,
   ShieldCheck,
-  ShieldAlert,
   Mail,
   FileText,
   ArrowRight,
@@ -72,7 +69,7 @@ export default async function OrganizationOverviewPage() {
       </section>
 
       {/* Two Column Layout: Main Content + Sidebar */}
-      <div className='grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]'>
+      <div className='grid gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]'>
         {/* Main Content Column */}
         <div className={elimikaDesignSystem.spacing.content}>
           {/* Quick Actions */}

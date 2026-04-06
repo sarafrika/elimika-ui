@@ -47,7 +47,7 @@ export const AttendanceRubricAssociationForm = ({
       path: { courseUuid },
       query: { pageable: {} },
     }),
-    enabled: !!courseUuid
+    enabled: !!courseUuid,
   });
 
   const [selectedRubricUuid, setSelectedRubricUuid] = useState<string>('');

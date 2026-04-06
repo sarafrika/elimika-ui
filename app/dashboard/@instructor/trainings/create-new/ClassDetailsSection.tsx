@@ -1,7 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, ChevronDown, ChevronUp, Edit2, GraduationCap, X } from 'lucide-react';
+import { BookOpen, GraduationCap } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Textarea } from '../../../../../components/ui/textarea';
 import { useInstructor } from '../../../../../context/instructor-context';
@@ -41,13 +39,6 @@ const CLASS_FOR_OPTIONS = [
   { label: 'Program', value: 'program', icon: GraduationCap },
 ];
 
-interface ScheduledSession {
-  date: Date;
-  startTime: string;
-  endTime: string;
-  hours: number;
-}
-
 export const ClassDetailsSection = ({
   data,
   onChange,
@@ -74,17 +65,6 @@ export const ClassDetailsSection = ({
       setClassFor('course');
     }
   }, [data.program_uuid, data.course_uuid]);
-
-  // Custom scheduler state
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
-  const [defaultStartTime, setDefaultStartTime] = useState('09:00');
-  const [defaultEndTime, setDefaultEndTime] = useState('17:00');
-  const [allDay, setAllDay] = useState(false);
-  const [scheduledSessions, setScheduledSessions] = useState<ScheduledSession[]>([]);
-  const [isSchedulerExpanded, setIsSchedulerExpanded] = useState(false);
-  const [editingSession, setEditingSession] = useState<number | null>(null);
-  const [editStartTime, setEditStartTime] = useState('');
-  const [editEndTime, setEditEndTime] = useState('');
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -161,41 +141,6 @@ export const ClassDetailsSection = ({
   }, [approvedPrograms, data.program_uuid]);
 
   const selectedItem = classFor === 'course' ? selectedCourse : selectedProgram;
-
-  // Calculate hours between times
-  const calculateHours = (start: string, end: string): number => {
-    if (!start || !end) return 0;
-    const [startHour, startMin] = start.split(':').map(Number);
-    const [endHour, endMin] = end.split(':').map(Number);
-    const startMinutes = startHour * 60 + startMin;
-    const endMinutes = endHour * 60 + endMin;
-    return Math.max(0, (endMinutes - startMinutes) / 60);
-  };
-
-  // Update scheduled sessions when dates or times change
-  useEffect(() => {
-    if (selectedDates.length > 0) {
-      const sessions = selectedDates.map(date => {
-        const existingSession = scheduledSessions.find(
-          s => s.date.toDateString() === date.toDateString()
-        );
-
-        if (existingSession) {
-          return existingSession;
-        }
-
-        return {
-          date,
-          startTime: allDay ? '00:00' : defaultStartTime,
-          endTime: allDay ? '23:59' : defaultEndTime,
-          hours: allDay ? 24 : calculateHours(defaultStartTime, defaultEndTime),
-        };
-      });
-      setScheduledSessions(sessions);
-    } else {
-      setScheduledSessions([]);
-    }
-  }, [selectedDates, defaultStartTime, defaultEndTime, allDay]);
 
   // Handle course selection and auto-populate categories
   useEffect(() => {
@@ -284,53 +229,6 @@ export const ClassDetailsSection = ({
       onChange({ course_uuid: undefined });
     }
   };
-
-  const handleDateSelect = (dates: Date[] | undefined) => {
-    setSelectedDates(dates || []);
-  };
-
-  const removeSession = (index: number) => {
-    const newSessions = [...scheduledSessions];
-    const removedDate = newSessions[index].date;
-    newSessions.splice(index, 1);
-    setScheduledSessions(newSessions);
-    setSelectedDates(prev => prev.filter(d => d.toDateString() !== removedDate.toDateString()));
-  };
-
-  const startEditSession = (index: number) => {
-    setEditingSession(index);
-    setEditStartTime(scheduledSessions[index].startTime);
-    setEditEndTime(scheduledSessions[index].endTime);
-  };
-
-  const saveEditSession = (index: number) => {
-    const newSessions = [...scheduledSessions];
-    newSessions[index] = {
-      ...newSessions[index],
-      startTime: editStartTime,
-      endTime: editEndTime,
-      hours: calculateHours(editStartTime, editEndTime),
-    };
-    setScheduledSessions(newSessions);
-    setEditingSession(null);
-  };
-
-  const cancelEdit = () => {
-    setEditingSession(null);
-    setEditStartTime('');
-    setEditEndTime('');
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const totalHours = scheduledSessions.reduce((sum, session) => sum + session.hours, 0);
 
   return (
     <Card className='overflow-hidden border pt-0 shadow-sm'>
@@ -544,183 +442,6 @@ export const ClassDetailsSection = ({
         </div>
       </div>
 
-      {/* Custom Scheduler Section */}
-      <div className='border-t'>
-        <button
-          onClick={() => setIsSchedulerExpanded(!isSchedulerExpanded)}
-          className='bg-muted/30 hover:bg-muted/50 flex w-full items-center justify-between px-6 py-4 transition-colors'
-        >
-          <h4 className='text-foreground font-semibold'>Use Custom Schedule</h4>
-          {isSchedulerExpanded ? (
-            <ChevronUp className='h-5 w-5' />
-          ) : (
-            <ChevronDown className='h-5 w-5' />
-          )}
-        </button>
-
-        {isSchedulerExpanded && (
-          <div className='space-y-6 p-6'>
-            {/* Time Settings */}
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <div className='space-y-4'>
-                <div>
-                  <label className='mb-2 block text-sm font-medium'>Default Start Time</label>
-                  <Input
-                    type='time'
-                    value={defaultStartTime}
-                    onChange={e => setDefaultStartTime(e.target.value)}
-                    disabled={allDay}
-                    className='w-full'
-                  />
-                </div>
-                <div>
-                  <label className='mb-2 block text-sm font-medium'>Default End Time</label>
-                  <Input
-                    type='time'
-                    value={defaultEndTime}
-                    onChange={e => setDefaultEndTime(e.target.value)}
-                    disabled={allDay}
-                    className='w-full'
-                  />
-                </div>
-                <label className='flex cursor-pointer items-center gap-3'>
-                  <input
-                    type='checkbox'
-                    checked={allDay}
-                    onChange={e => setAllDay(e.target.checked)}
-                    className='h-4 w-4 rounded'
-                  />
-                  <span className='text-sm font-medium'>All Day</span>
-                </label>
-                <div className='text-muted-foreground text-sm'>
-                  Duration:{' '}
-                  {allDay ? '24' : calculateHours(defaultStartTime, defaultEndTime).toFixed(1)}{' '}
-                  hours
-                </div>
-              </div>
-
-              {/* Calendar */}
-              <div>
-                <label className='mb-2 block text-sm font-medium'>Select Dates</label>
-                <Calendar
-                  mode='multiple'
-                  selected={selectedDates}
-                  onSelect={handleDateSelect}
-                  className='rounded-md border'
-                />
-              </div>
-            </div>
-
-            {/* Scheduled Sessions Table */}
-            {scheduledSessions.length > 0 && (
-              <div className='space-y-2'>
-                <div className='flex items-center justify-between'>
-                  <h5 className='text-sm font-semibold'>
-                    Scheduled Sessions ({scheduledSessions.length})
-                  </h5>
-                  <div className='text-muted-foreground text-sm'>
-                    Total: {totalHours.toFixed(1)} hours
-                  </div>
-                </div>
-                <div className='overflow-hidden rounded-lg border'>
-                  <div className='overflow-x-auto'>
-                    <table className='w-full'>
-                      <thead className='bg-muted/50'>
-                        <tr className='border-b'>
-                          <th className='p-3 text-left text-sm font-medium'>Date</th>
-                          <th className='p-3 text-left text-sm font-medium'>Start Time</th>
-                          <th className='p-3 text-left text-sm font-medium'>End Time</th>
-                          <th className='p-3 text-left text-sm font-medium'>Hours</th>
-                          <th className='p-3 text-left text-sm font-medium'>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {scheduledSessions.map((session, index) => (
-                          <tr key={index} className='hover:bg-muted/30 border-b last:border-0'>
-                            <td className='p-3 font-medium'>{formatDate(session.date)}</td>
-                            <td className='p-3'>
-                              {editingSession === index ? (
-                                <Input
-                                  type='time'
-                                  value={editStartTime}
-                                  onChange={e => setEditStartTime(e.target.value)}
-                                  className='w-full'
-                                />
-                              ) : (
-                                session.startTime
-                              )}
-                            </td>
-                            <td className='p-3'>
-                              {editingSession === index ? (
-                                <Input
-                                  type='time'
-                                  value={editEndTime}
-                                  onChange={e => setEditEndTime(e.target.value)}
-                                  className='w-full'
-                                />
-                              ) : (
-                                session.endTime
-                              )}
-                            </td>
-                            <td className='p-3'>
-                              {editingSession === index
-                                ? calculateHours(editStartTime, editEndTime).toFixed(1)
-                                : session.hours.toFixed(1)}
-                            </td>
-                            <td className='p-3'>
-                              <div className='flex gap-2'>
-                                {editingSession === index ? (
-                                  <>
-                                    <Button
-                                      size='sm'
-                                      variant='ghost'
-                                      onClick={() => saveEditSession(index)}
-                                      className='h-8 w-8 p-0'
-                                    >
-                                      ✓
-                                    </Button>
-                                    <Button
-                                      size='sm'
-                                      variant='ghost'
-                                      onClick={cancelEdit}
-                                      className='h-8 w-8 p-0'
-                                    >
-                                      ✕
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Button
-                                      size='sm'
-                                      variant='ghost'
-                                      onClick={() => startEditSession(index)}
-                                      className='h-8 w-8 p-0'
-                                    >
-                                      <Edit2 className='h-4 w-4' />
-                                    </Button>
-                                    <Button
-                                      size='sm'
-                                      variant='ghost'
-                                      onClick={() => removeSession(index)}
-                                      className='text-destructive hover:text-destructive h-8 w-8 p-0'
-                                    >
-                                      <X className='h-4 w-4' />
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
     </Card>
   );
 };

@@ -13,7 +13,7 @@ export default function CoursesLayout({ children }: CoursesLayoutProps) {
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Browse Courses and Programs</h2>
           <p className='text-muted-foreground mt-1'>
-            Discover courses and programs across various categories.
+            Discover and Enroll to courses and programs across various categories.
           </p>
         </div>
       </div>

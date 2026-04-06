@@ -260,7 +260,7 @@ export const ClassPreviewFormPage = ({
               <TableCell className='bg-card py-5 font-medium'>
                 {classDetails.location_type
                   ? classDetails.location_type.charAt(0).toUpperCase() +
-                  classDetails.location_type.slice(1).replace('_', ' ')
+                    classDetails.location_type.slice(1).replace('_', ' ')
                   : '-'}
               </TableCell>
             </TableRow>
@@ -288,11 +288,11 @@ export const ClassPreviewFormPage = ({
               <TableCell className='bg-card py-5 font-medium'>
                 {scheduleSettings.startClass.date
                   ? new Date(scheduleSettings.startClass.date).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
                   : '-'}
               </TableCell>
             </TableRow>
@@ -325,7 +325,7 @@ export const ClassPreviewFormPage = ({
                 {scheduleSettings.registrationPeriod.continuous
                   ? 'Continuous registration'
                   : scheduleSettings.registrationPeriod.start &&
-                    scheduleSettings.registrationPeriod.end
+                      scheduleSettings.registrationPeriod.end
                     ? `${new Date(scheduleSettings.registrationPeriod.start).toLocaleDateString()} - ${new Date(scheduleSettings.registrationPeriod.end).toLocaleDateString()}`
                     : 'Not set'}
               </TableCell>

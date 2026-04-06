@@ -310,9 +310,9 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 control={form.control}
                 name='is_free'
                 render={({ field }) => (
-                  <FormItem className='flex flex-row items-start space-x-3'>
+                  <FormItem className='flex flex-row items-start space-x-3 opacity-50'>
                     <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled />
                     </FormControl>
                     <div className='space-y-1 leading-none'>
                       <FormLabel>Free Course</FormLabel>
