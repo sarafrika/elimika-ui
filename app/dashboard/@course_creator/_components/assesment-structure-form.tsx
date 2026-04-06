@@ -28,6 +28,12 @@ import {
   searchAssessmentRubricsOptions,
   updateCourseAssessmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import type {
+  AssessmentRubric,
+  CourseAssessment,
+  CourseAssessmentLineItem,
+  ResponseDtoVoid,
+} from '../../../../services/client/types.gen';
 import { useRubricsData } from '../rubrics/rubric-chaining';
 import { CATEGORY_META, LinkItemsModal, TaskItemType } from './assesment-link-items';
 
@@ -38,24 +44,7 @@ export type CourseAssessmentStructureProps = {
   createdBy: string;
 };
 
-type Assessment = {
-  uuid: string;
-  title: string;
-  description?: string;
-  rubric_uuid?: string;
-  weight_percentage: number;
-  is_required: boolean;
-  assessment_type: string;
-  is_major_assessment: boolean;
-  course_uuid: string;
-  created_date?: string;
-  created_by?: string;
-  updated_date?: string;
-  updated_by?: string;
-  assessment_category?: string;
-  weight_display?: string;
-  contribution_level?: string;
-};
+type Assessment = CourseAssessment & { uuid: string };
 
 type AssessmentFormValues = {
   title: string;
@@ -88,6 +77,10 @@ const DEFAULT_FORM: AssessmentFormValues = {
   assessment_type: '',
   is_major_assessment: false,
 };
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  (error as ResponseDtoVoid | undefined)?.message ||
+  (error instanceof Error ? error.message : fallback);
 
 // ─── Badge helper ─────────────────────────────────────────────────────────────
 
@@ -133,7 +126,7 @@ function AssessmentLineItems({
   });
 
   // Handle both { data: { content: [] } } and { data: [] } response shapes
-  const lineItems: any[] = data?.data?.content ?? (Array.isArray(data?.data) ? data.data : []);
+  const lineItems: CourseAssessmentLineItem[] = Array.isArray(data?.data) ? data.data : [];
 
   const deleteLineItemMut = useMutation(deleteLineItemMutation());
 
@@ -147,7 +140,7 @@ function AssessmentLineItems({
             queryKey: getLineItemsQueryKey({ path: { courseUuid, assessmentUuid } }),
           });
         },
-        onError: (err: any) => toast.error(err?.message || 'Failed to remove item.'),
+        onError: err => toast.error(getErrorMessage(err, 'Failed to remove item.')),
       }
     );
   }
@@ -160,7 +153,7 @@ function AssessmentLineItems({
 
   return (
     <>
-      {lineItems.map((li: any) => {
+      {lineItems.map(li => {
         const itemType = (li.item_type?.toLowerCase() ?? 'assignment') as TaskItemType;
         const meta = CATEGORY_META[itemType] ?? CATEGORY_META['assignment'];
         const Icon = meta.icon;
@@ -177,7 +170,7 @@ function AssessmentLineItems({
               type='button'
               title='Remove this item'
               disabled={deleteLineItemMut.isPending}
-              onClick={() => handleRemove(li.uuid)}
+              onClick={() => li.uuid && handleRemove(li.uuid)}
               className='hover:text-destructive ml-0.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 disabled:cursor-not-allowed'
             >
               {deleteLineItemMut.isPending ? <Spinner className='h-2.5 w-2.5' /> : <X size={10} />}
@@ -212,36 +205,26 @@ function AssessmentSheet({
   onClose,
   onSuccess,
 }: AssessmentSheetProps) {
-  const [form, setForm] = useState<AssessmentFormValues>(() =>
-    initial
-      ? {
-        title: initial.title,
-        description: initial.description ?? '',
-        rubric_uuid: initial.rubric_uuid ?? '',
-        weight_percentage: initial.weight_percentage,
-        is_required: initial.is_required,
-        assessment_type: '',
-        is_major_assessment: initial.is_major_assessment,
-      }
-      : DEFAULT_FORM
-  );
+  const toFormValues = (assessment?: Assessment): AssessmentFormValues => {
+    if (!assessment) return DEFAULT_FORM;
+
+    return {
+      title: assessment.title,
+      description: assessment.description ?? '',
+      rubric_uuid: assessment.rubric_uuid ?? '',
+      weight_percentage: assessment.weight_percentage,
+      is_required: assessment.is_required ?? false,
+      assessment_type: '',
+      is_major_assessment: assessment.is_major_assessment ?? false,
+    };
+  };
+
+  const [form, setForm] = useState<AssessmentFormValues>(() => toFormValues(initial));
 
   const [prevInitial, setPrevInitial] = useState(initial);
   if (initial !== prevInitial) {
     setPrevInitial(initial);
-    setForm(
-      initial
-        ? {
-          title: initial.title,
-          description: initial.description ?? '',
-          rubric_uuid: initial.rubric_uuid ?? '',
-          weight_percentage: initial.weight_percentage,
-          is_required: initial.is_required,
-          assessment_type: '',
-          is_major_assessment: initial.is_major_assessment,
-        }
-        : DEFAULT_FORM
-    );
+    setForm(toFormValues(initial));
   }
 
   const [errors, setErrors] = useState<Partial<Record<keyof AssessmentFormValues, string>>>({});
@@ -257,8 +240,8 @@ function AssessmentSheet({
     enabled: !!creator?.profile?.uuid,
   });
 
-  const rubrics: any[] = searchRubs?.data?.content ?? [];
-  const selectedRubric = rubrics.find((r: any) => r.uuid === form.rubric_uuid);
+  const rubrics: AssessmentRubric[] = searchRubs?.data?.content ?? [];
+  const selectedRubric = rubrics.find(r => r.uuid === form.rubric_uuid);
 
   const createMut = useMutation(addCourseAssessmentMutation());
   const updateMut = useMutation(updateCourseAssessmentMutation());
@@ -300,7 +283,7 @@ function AssessmentSheet({
       createMut.mutate(
         {
           path: { courseUuid },
-          body: { ...body, course_uuid: courseUuid, created_by: createdBy } as any,
+          body: { ...body, course_uuid: courseUuid, created_by: createdBy } as never,
         },
         {
           onSuccess: () => {
@@ -311,7 +294,7 @@ function AssessmentSheet({
 
             onSuccess();
           },
-          onError: (err: any) => toast.error(err?.message || 'Failed to create assessment'),
+          onError: err => toast.error(getErrorMessage(err, 'Failed to create assessment')),
         }
       );
     } else if (initial) {
@@ -323,14 +306,14 @@ function AssessmentSheet({
             uuid: initial.uuid,
             course_uuid: courseUuid,
             updated_by: createdBy,
-          } as any,
+          } as never,
         },
         {
           onSuccess: () => {
             toast.success('Assessment updated successfully!');
             onSuccess();
           },
-          onError: (err: any) => toast.error(err?.message || 'Failed to update assessment'),
+          onError: err => toast.error(getErrorMessage(err, 'Failed to update assessment')),
         }
       );
     }
@@ -442,7 +425,7 @@ function AssessmentSheet({
                       <SelectItem value='__none__'>
                         <span className='text-muted-foreground'>None</span>
                       </SelectItem>
-                      {rubrics.map((r: any) => (
+                      {rubrics.map((r: unknown) => (
                         <SelectItem key={r.uuid} value={r.uuid}>
                           <div className='flex flex-col'>
                             <span className='font-medium'>{r.title}</span>
@@ -575,12 +558,12 @@ function DeleteConfirmSheet({
 
   function handleDelete() {
     if (!assessment) return;
-    deleteMut.mutate({ path: { courseUuid, assessmentUuid: assessment.uuid } } as any, {
+    deleteMut.mutate({ path: { courseUuid, assessmentUuid: assessment.uuid } } as never, {
       onSuccess: () => {
         toast.success('Assessment deleted successfully');
         onSuccess();
       },
-      onError: (err: any) => toast.error(err?.message || 'Failed to delete assessment'),
+      onError: err => toast.error(getErrorMessage(err, 'Failed to delete assessment')),
     });
   }
 
@@ -639,7 +622,9 @@ export const CourseAssessmentStructure = ({
     ...getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } }),
     enabled: !!courseUuid,
   });
-  const assessments: Assessment[] = assessmentsData?.data?.content ?? [];
+  const assessments: Assessment[] = (assessmentsData?.data?.content ?? []).filter(
+    (assessment): assessment is Assessment => Boolean(assessment.uuid)
+  );
 
   const { rubrics } = useRubricsData(creator?.data?.profile?.uuid as string);
   const filteredRubrics = rubrics.filter(rubric =>
@@ -757,10 +742,11 @@ export const CourseAssessmentStructure = ({
                           {a.weight_percentage}% (0–{a.weight_percentage})
                         </span>
                         <span
-                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
-                            ? 'bg-success/10 text-success/70'
-                            : 'bg-muted-foreground/10 text-muted-foreground'
-                            }`}
+                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            a.is_required
+                              ? 'bg-success/10 text-success/70'
+                              : 'bg-muted-foreground/10 text-muted-foreground'
+                          }`}
                         >
                           {a.is_required ? 'Required' : 'Not required'}
                         </span>
@@ -875,14 +861,14 @@ export const CourseAssessmentStructure = ({
         <div className='flex flex-col'>
           {filteredRubrics.map(rubric => {
             const sortedLevels = [...(rubric.scoringLevels ?? [])].sort(
-              (a: any, b: any) => (a.level_order ?? 0) - (b.level_order ?? 0)
+              (a: unknown, b: unknown) => (a.level_order ?? 0) - (b.level_order ?? 0)
             );
             const sortedCriteria = [...(rubric.criteria ?? [])].sort(
-              (a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0)
+              (a: unknown, b: unknown) => (a.display_order ?? 0) - (b.display_order ?? 0)
             );
-            const matrixCells: Record<string, any> = {};
-            sortedCriteria.forEach((crit: any) => {
-              (crit.scoring ?? []).forEach((cell: any) => {
+            const matrixCells: Record<string, unknown> = {};
+            sortedCriteria.forEach((crit: unknown) => {
+              (crit.scoring ?? []).forEach((cell: unknown) => {
                 matrixCells[`${crit.uuid}_${cell.rubric_scoring_level_uuid}`] = cell;
               });
             });
@@ -939,7 +925,7 @@ export const CourseAssessmentStructure = ({
                       <thead>
                         <tr className='bg-muted/40 border-b'>
                           <th className='text-foreground min-w-[200px] px-4 py-2.5 text-left text-xs font-semibold'>Criteria</th>
-                          {sortedLevels.map((level: any) => (
+                          {sortedLevels.map((level: unknown) => (
                             <th
                               key={level.uuid}
                               className='text-foreground min-w-[130px] border-l px-3 py-2.5 text-center text-xs font-semibold'
@@ -954,7 +940,7 @@ export const CourseAssessmentStructure = ({
                         </tr>
                       </thead>
                       <tbody className='divide-y'>
-                        {sortedCriteria.map((crit: any) => (
+                        {sortedCriteria.map((crit: unknown) => (
                           <tr key={crit.uuid} className='hover:bg-muted/20 transition-colors'>
                             <td className='px-4 py-3 align-top'>
                               <p className='text-foreground text-xs font-medium'>{crit.component_name}</p>
@@ -962,7 +948,7 @@ export const CourseAssessmentStructure = ({
                                 <p className='text-muted-foreground mt-0.5 whitespace-pre-wrap text-xs'>{crit.description}</p>
                               )}
                             </td>
-                            {sortedLevels.map((level: any) => {
+                            {sortedLevels.map((level: unknown) => {
                               const cell = matrixCells[`${crit.uuid}_${level.uuid}`] ?? null;
                               return (
                                 <td key={level.uuid} className='border-l px-3 py-3 align-top text-xs'>

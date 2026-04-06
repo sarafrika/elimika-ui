@@ -24,6 +24,10 @@ import {
   getCourseRubricsOptions,
   getCourseRubricsQueryKey,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import type {
+  AssessmentRubric,
+  CourseRubricAssociation,
+} from '../../../../services/client/types.gen';
 
 export type AttendanceRubricAssociationFormProps = {
   courseUuid: string;
@@ -58,7 +62,7 @@ export const AttendanceRubricAssociationForm = ({
 
   // Get the existing associated rubric for attendance
   const existingRubric = courseRubrics?.data?.content?.find(
-    (rubric: any) => rubric.usage_context === USAGE_CONTEXT
+    (rubric: CourseRubricAssociation) => rubric.usage_context === USAGE_CONTEXT
   );
 
   // Pre-fill form with existing rubric data
@@ -81,8 +85,8 @@ export const AttendanceRubricAssociationForm = ({
         await dissociateRubricMut.mutateAsync({
           path: { courseUuid, rubricUuid: existingRubric.rubric_uuid },
         });
-      } catch (err: any) {
-        toast.error(err?.message || 'Failed to remove previous rubric');
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to remove previous rubric');
         return;
       }
     }
@@ -114,15 +118,15 @@ export const AttendanceRubricAssociationForm = ({
               : 'Attendance rubric associated successfully!'
           );
         },
-        onError: (err: any) => {
-          toast.error(err?.message || 'Failed to save attendance rubric');
+        onError: err => {
+          toast.error(err instanceof Error ? err.message : 'Failed to save attendance rubric');
         },
       }
     );
   };
 
   const selectedRubricDetails = allRubrics?.data?.content?.find(
-    (r: any) => r.uuid === selectedRubricUuid
+    (r: AssessmentRubric) => r.uuid === selectedRubricUuid
   );
 
   const isLoading = isLoadingAllRubrics || isLoadingCourseRubrics;
@@ -179,8 +183,8 @@ export const AttendanceRubricAssociationForm = ({
 
               <SelectContent>
                 {allRubrics?.data?.content?.length ? (
-                  allRubrics.data.content.map((rubric: any) => (
-                    <SelectItem key={rubric.uuid} value={rubric.uuid}>
+                  allRubrics.data.content.map((rubric: AssessmentRubric) => (
+                    <SelectItem key={rubric.uuid} value={rubric.uuid ?? ''}>
                       <div className='flex flex-col'>
                         <span className='font-medium'>{rubric.title}</span>
                       </div>

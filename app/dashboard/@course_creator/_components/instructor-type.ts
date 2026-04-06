@@ -58,8 +58,8 @@ export type TLesson = {
   duration_display: string;
   is_published: boolean;
   lesson_sequence: string;
-  content?: any[];
-  resources?: any[];
+  content?: unknown[];
+  resources?: unknown[];
 
   // ✅ allows any other property
   [key: string]: unknown;
