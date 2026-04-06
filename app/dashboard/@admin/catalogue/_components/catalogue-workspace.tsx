@@ -39,6 +39,7 @@ import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { extractEntity } from '@/lib/api-helpers';
 import type {
+  ApiResponseListCommerceCatalogueItem,
   ClassDefinition,
   CommerceCatalogueItem,
   Course,
@@ -81,6 +82,11 @@ type TitleMaps = {
   classTitleMap: Map<string, string>;
   courseMap: Map<string, Course>;
   classMap: Map<string, ClassDefinition>;
+};
+
+type CatalogueDetailsQueryState = {
+  isLoading: boolean;
+  data?: ApiResponseListCommerceCatalogueItem;
 };
 
 const scopeCopy: Record<
@@ -196,8 +202,9 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     const map = new Map<string, string>();
     courseQueries.forEach((query, index) => {
       const course = extractEntity<Course>(query.data);
-      if (course?.title || course?.name) {
-        map.set(courseIds[index], course.title || course.name || '');
+      const courseId = courseIds[index];
+      if (course?.name && courseId) {
+        map.set(courseId, course.name);
       }
     });
     return map;
@@ -207,8 +214,9 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     const map = new Map<string, string>();
     classQueries.forEach((query, index) => {
       const classDef = extractEntity<ClassDefinition>(query.data);
-      if (classDef?.title || classDef?.name) {
-        map.set(classIds[index], classDef.title || classDef.name || '');
+      const classId = classIds[index];
+      if (classDef?.title && classId) {
+        map.set(classId, classDef.title);
       }
     });
     return map;
@@ -218,8 +226,9 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     const map = new Map<string, Course>();
     courseQueries.forEach((query, index) => {
       const course = extractEntity<Course>(query.data);
-      if (course) {
-        map.set(courseIds[index], course);
+      const courseId = courseIds[index];
+      if (course && courseId) {
+        map.set(courseId, course);
       }
     });
     return map;
@@ -229,8 +238,9 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     const map = new Map<string, ClassDefinition>();
     classQueries.forEach((query, index) => {
       const classDef = extractEntity<ClassDefinition>(query.data);
-      if (classDef) {
-        map.set(classIds[index], classDef);
+      const classId = classIds[index];
+      if (classDef && classId) {
+        map.set(classId, classDef);
       }
     });
     return map;
@@ -248,12 +258,7 @@ const attachTitles = (rows: CatalogueRow[], maps: TitleMaps): CatalogueRow[] =>
       return { ...row, displayTitle: maps.courseTitleMap.get(row.courseId) as string };
     }
     const fallback =
-      row.productCode ||
-      row.variantCode ||
-      row.courseId ||
-      row.classId ||
-      row.raw.title ||
-      'Catalogue item';
+      row.productCode || row.variantCode || row.courseId || row.classId || 'Catalogue item';
     return { ...row, displayTitle: fallback };
   });
 
@@ -639,7 +644,7 @@ function CatalogueDetailsSheet({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  catalogueQuery: any;
+  catalogueQuery: CatalogueDetailsQueryState;
   selectedRow: CatalogueRow | null;
   titleMaps: TitleMaps;
   handleCopy: (value?: string | null) => Promise<void>;
@@ -727,7 +732,7 @@ function CatalogueDetailsContent({
   titleMaps,
   handleCopy,
 }: {
-  catalogueQuery: any;
+  catalogueQuery: CatalogueDetailsQueryState;
   selectedRow: CatalogueRow | null;
   titleMaps: TitleMaps;
   handleCopy: (value?: string | null) => Promise<void>;
@@ -853,7 +858,7 @@ function CatalogueDetailsBody({
           : selectedRow.classId
             ? titleMaps.classMap.get(selectedRow.classId)
             : null;
-        const description = linkedEntity?.description || linkedEntity?.summary;
+        const description = linkedEntity?.description;
 
         return description ? (
           <div className='border-border/60 bg-muted/30 rounded-[16px] border p-5'>
@@ -986,10 +991,10 @@ function CatalogueItemCreatorInfo({
                   Course Creator
                 </p>
                 <p className='text-foreground mt-1 truncate text-sm font-semibold'>
-                  {creator.first_name} {creator.last_name}
+                  {creator.full_name}
                 </p>
-                {creator.email && (
-                  <p className='text-muted-foreground truncate text-xs'>{creator.email}</p>
+                {creator.website && (
+                  <p className='text-muted-foreground truncate text-xs'>{creator.website}</p>
                 )}
               </div>
             </div>
@@ -1006,10 +1011,10 @@ function CatalogueItemCreatorInfo({
                   Instructor
                 </p>
                 <p className='text-foreground mt-1 truncate text-sm font-semibold'>
-                  {instructor.first_name} {instructor.last_name}
+                  {instructor.full_name}
                 </p>
-                {instructor.email && (
-                  <p className='text-muted-foreground truncate text-xs'>{instructor.email}</p>
+                {instructor.website && (
+                  <p className='text-muted-foreground truncate text-xs'>{instructor.website}</p>
                 )}
               </div>
             </div>
@@ -1074,13 +1079,6 @@ function CatalogueItemPricing({
               </div>
             </div>
           )}
-
-        {/* Revenue Allocation Context */}
-        {course?.revenue_allocation_context && (
-          <div className='border-border/60 bg-muted/20 mt-3 rounded-[10px] border p-3'>
-            <p className='text-muted-foreground text-xs'>{course.revenue_allocation_context}</p>
-          </div>
-        )}
       </div>
     </div>
   );

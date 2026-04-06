@@ -1,5 +1,12 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import { Award, BookOpen, Loader2, Rocket } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,13 +39,6 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { type AdminCourse, useAdminCourses, useUpdateAdminCourse } from '@/services/admin';
 import { zCourse } from '@/services/client/zod.gen';
-import { format } from 'date-fns';
-import { Award, BookOpen, Loader2, Rocket } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
 
 const courseFormSchema = z.object({
   name: zCourse.shape.name,
@@ -54,17 +54,17 @@ const courseFormSchema = z.object({
 
 const statusOptions = [
   { label: 'All statuses', value: 'all' },
-  { label: 'Draft', value: 'DRAFT' },
-  { label: 'In review', value: 'IN_REVIEW' },
-  { label: 'Published', value: 'PUBLISHED' },
-  { label: 'Archived', value: 'ARCHIVED' },
+  { label: 'Draft', value: 'draft' },
+  { label: 'In review', value: 'in_review' },
+  { label: 'Published', value: 'published' },
+  { label: 'Archived', value: 'archived' },
 ];
 
 export default function AdminCoursesPage() {
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<
-    'all' | 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED'
+    'all' | 'draft' | 'in_review' | 'published' | 'archived'
   >('all');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -73,7 +73,10 @@ export default function AdminCoursesPage() {
     page,
     size: 20,
     search: searchQuery,
-    status: statusFilter,
+    status:
+      statusFilter === 'all'
+        ? 'all'
+        : (statusFilter.toUpperCase() as 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED'),
   });
 
   const courses = useMemo(() => data?.items ?? [], [data?.items]);
@@ -146,11 +149,11 @@ export default function AdminCoursesPage() {
   );
 
   const publishedCount = useMemo(
-    () => courses.filter(course => course.status === 'PUBLISHED').length,
+    () => courses.filter(course => course.status === 'published').length,
     [courses]
   );
   const draftCount = useMemo(
-    () => courses.filter(course => course.status === 'DRAFT').length,
+    () => courses.filter(course => course.status === 'draft').length,
     [courses]
   );
 
@@ -290,8 +293,27 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
       {
         path: { uuid: course.uuid },
         body: {
-          ...course,
-          ...values,
+          name: values.name,
+          course_creator_uuid: course.course_creator_uuid,
+          category_uuids: course.category_uuids,
+          difficulty_uuid: course.difficulty_uuid,
+          description: values.description,
+          objectives: course.objectives,
+          prerequisites: course.prerequisites,
+          duration_hours: course.duration_hours,
+          duration_minutes: course.duration_minutes,
+          class_limit: course.class_limit,
+          price: values.price,
+          minimum_training_fee: values.minimum_training_fee,
+          creator_share_percentage: values.creator_share_percentage,
+          instructor_share_percentage: values.instructor_share_percentage,
+          revenue_share_notes: values.revenue_share_notes,
+          age_lower_limit: course.age_lower_limit,
+          age_upper_limit: course.age_upper_limit,
+          thumbnail_url: course.thumbnail_url,
+          intro_video_url: course.intro_video_url,
+          banner_url: course.banner_url,
+          status: values.status,
           active: values.active ?? course.active ?? false,
         },
       },
@@ -543,7 +565,7 @@ function mapCourseToForm(course: AdminCourse): CourseFormValues {
   return {
     name: course.name ?? '',
     description: course.description ?? '',
-    status: course.status ?? 'DRAFT',
+    status: course.status ?? 'draft',
     price: course.price,
     minimum_training_fee: course.minimum_training_fee,
     creator_share_percentage: course.creator_share_percentage ?? 0,
@@ -577,11 +599,11 @@ function MetricCard({ icon, label, value }: MetricCardProps) {
 
 function statusBadgeVariant(status?: string) {
   switch (status) {
-    case 'PUBLISHED':
+    case 'published':
       return 'default';
-    case 'IN_REVIEW':
+    case 'in_review':
       return 'secondary';
-    case 'ARCHIVED':
+    case 'archived':
       return 'outline';
     default:
       return 'secondary';
