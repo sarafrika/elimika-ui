@@ -1,7 +1,3 @@
-'use client';
+import InstructorEducationPage from '@/src/features/profile/pages/instructor/InstructorEducationPage';
 
-import EducationSettings from './_component/EducationForm';
-
-export default function InstructoEducationPage() {
-  return <EducationSettings />;
-}
+export default InstructorEducationPage;
