@@ -1,5 +1,6 @@
 import React from 'react';
 import type { UserProfileType } from '@/lib/types';
+import type { Student } from '@/services/client/types.gen';
 
 export type UserDomain = 'instructor' | 'student' | 'admin' | 'course_creator' | 'organization';
 
@@ -25,7 +26,7 @@ export interface SharedUserProfile {
   active?: boolean;
   username?: string;
   user_no?: string;
-  student_profile?: any;
+  student_profile?: Student;
   demographic_tag?: string;
 }
 

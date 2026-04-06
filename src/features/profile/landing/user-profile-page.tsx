@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
+import type { UserProfileType } from '@/lib/types';
+import type { CourseCreator, Organisation, Student } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { creatorTabs } from './course-creator-tab';
@@ -25,22 +27,67 @@ function normalizeDob(value: unknown): string | undefined {
   return undefined;
 }
 
+type UserProfileContextValue = ReturnType<typeof useUserProfile>;
+type LocationProfileFields = {
+  formatted_location?: string;
+  location?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+type StudentProfile = Student &
+  LocationProfileFields & {
+    professional_headline?: string;
+    admin_verified?: boolean;
+    is_profile_complete?: boolean;
+  };
+
+type AdminProfile = LocationProfileFields & {
+  uuid?: string;
+  user_uuid?: string;
+  full_name?: string;
+  professional_headline?: string;
+  admin_verified?: boolean;
+  is_profile_complete?: boolean;
+};
+
+type OrganizationProfile = Organisation & {
+  user_uuid?: string;
+  org_name?: string;
+  full_name?: string;
+  formatted_location?: string;
+};
+
+type RawProfileUser = UserProfileType & {
+  avatar_url?: string;
+  admin?: AdminProfile;
+  organization?: OrganizationProfile;
+  student?: StudentProfile;
+  courseCreator?: CourseCreator & LocationProfileFields;
+  organizations?: OrganizationProfile[];
+};
+
+function getLocationProfileFields(value: unknown): LocationProfileFields | null {
+  return value && typeof value === 'object' ? (value as LocationProfileFields) : null;
+}
+
 // Profile normaliser
 function normaliseProfile(
   domain: UserDomain,
   user: ReturnType<typeof useUserProfile>
 ): SharedUserProfile | null {
-  const rawUser = user as any;
+  const rawUser = user as Partial<RawProfileUser> | null;
 
   switch (domain) {
     case 'instructor': {
-      const p = rawUser?.instructor as any;
+      const p = rawUser?.instructor;
 
       if (!p) return null;
       return {
-        uuid: p.uuid ?? rawUser?.uuid,
+        uuid: p.uuid ?? rawUser?.uuid ?? '',
         active: rawUser?.active,
-        user_uuid: p.user_uuid ?? rawUser?.uuid,
+        user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
         full_name: p.full_name ?? rawUser?.full_name ?? '',
         email: rawUser?.email,
         phone: rawUser?.phone_number,
@@ -62,13 +109,13 @@ function normaliseProfile(
     }
 
     case 'student': {
-      const p = rawUser?.student as any;
+      const p = rawUser?.student;
 
       if (!p) return null;
       return {
-        uuid: p.uuid ?? rawUser?.uuid,
+        uuid: p.uuid ?? rawUser?.uuid ?? '',
         active: rawUser?.active,
-        user_uuid: p.user_uuid ?? rawUser?.uuid,
+        user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
         full_name: p.full_name ?? rawUser?.full_name ?? '',
         email: rawUser?.email,
         phone: rawUser?.phone_number,
@@ -91,12 +138,12 @@ function normaliseProfile(
     }
 
     case 'admin': {
-      const p = rawUser?.admin as any;
+      const p = rawUser?.admin;
       if (!p) return null;
       return {
-        uuid: p.uuid ?? rawUser?.uuid,
+        uuid: p.uuid ?? rawUser?.uuid ?? '',
         active: rawUser?.active,
-        user_uuid: p.user_uuid ?? rawUser?.uuid,
+        user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
         full_name: p.full_name ?? rawUser?.full_name ?? '',
         email: rawUser?.email,
         phone: rawUser?.phone_number,
@@ -114,22 +161,23 @@ function normaliseProfile(
     }
 
     case 'course_creator': {
-      const p = rawUser?.courseCreator as any;
+      const p = rawUser?.courseCreator;
+      const location = getLocationProfileFields(p);
 
       if (!p) return null;
       return {
-        uuid: p.uuid ?? rawUser?.uuid,
+        uuid: p.uuid ?? rawUser?.uuid ?? '',
         active: rawUser?.active,
-        user_uuid: p.user_uuid ?? rawUser?.uuid,
+        user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
         full_name: p.full_name ?? rawUser?.full_name ?? '',
         email: rawUser?.email,
         phone: rawUser?.phone_number,
         avatar_url: rawUser?.profile_image_url,
         bio: p.bio,
         dob: normalizeDob(rawUser?.dob),
-        address: (p as any)?.formatted_location || (p as any)?.location || p.address || '',
-        latitude: (p as any)?.latitude,
-        longitude: (p as any)?.longitude,
+        address: location?.formatted_location || location?.location || location?.address || '',
+        latitude: location?.latitude,
+        longitude: location?.longitude,
         profile_image_url: rawUser?.profile_image_url,
         username: rawUser?.username,
         website: p.website,
@@ -143,12 +191,12 @@ function normaliseProfile(
 
     case 'organization': {
       const organizations = rawUser?.organizations;
-      const p = (Array.isArray(organizations) ? organizations[0] : rawUser?.organization) as any;
+      const p = Array.isArray(organizations) ? organizations[0] : rawUser?.organization;
       if (!p) return null;
       return {
-        uuid: p.uuid ?? rawUser?.uuid,
+        uuid: p.uuid ?? rawUser?.uuid ?? '',
         active: rawUser?.active,
-        user_uuid: p.user_uuid ?? rawUser?.uuid,
+        user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
         full_name: p.org_name ?? p.full_name ?? '',
         email: rawUser?.email,
         dob: normalizeDob(rawUser?.dob),
@@ -169,7 +217,7 @@ function DomainBadge({
   domain: UserDomain;
   user: ReturnType<typeof useUserProfile>;
 }) {
-  const rawUser = user as any;
+  const rawUser = user as Partial<RawProfileUser> | null;
 
   if (domain === 'instructor' && user?.instructor?.admin_verified) {
     return (

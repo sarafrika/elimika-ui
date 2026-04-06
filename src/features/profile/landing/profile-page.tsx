@@ -13,6 +13,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { updateCourseCreator, updateInstructor, updateStudent } from '@/services/client';
 import { uploadProfileImageMutation } from '@/services/client/@tanstack/react-query.gen';
+import type {
+  CourseCreator,
+  Instructor,
+  Student,
+  UpdateCourseCreatorData,
+  UpdateInstructorData,
+  UpdateStudentData,
+} from '@/services/client/types.gen';
 import type { ProfilePageProps } from './types';
 
 type EditableProfileDetails = {
@@ -103,17 +111,26 @@ function isValidUrl(value: string) {
 
 function stripHtml(value?: string) {
   if (!value) return '';
-  return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-function getErrorMessage(error: any) {
-  const apiError = error?.error;
+type ErrorWithDetails = {
+  message?: string;
+  error?: Record<string, unknown> | string;
+};
+
+function getErrorMessage(error: unknown) {
+  const typedError = error && typeof error === 'object' ? (error as ErrorWithDetails) : null;
+  const apiError = typedError?.error;
   if (typeof apiError === 'string') return apiError;
   if (apiError && typeof apiError === 'object') {
     const firstMessage = Object.values(apiError).find(value => typeof value === 'string');
     if (typeof firstMessage === 'string') return firstMessage;
   }
-  if (typeof error?.message === 'string') return error.message;
+  if (typeof typedError?.message === 'string') return typedError.message;
   return 'Failed to update profile details';
 }
 
@@ -160,8 +177,8 @@ export function ProfilePage({
       setPreviewUrl(null);
       queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to upload image');
+    onError: error => {
+      toast.error(getErrorMessage(error) || 'Failed to upload image');
     },
   });
 
@@ -176,12 +193,13 @@ export function ProfilePage({
       };
 
       if (domain === 'instructor' && profileSource?.instructor?.uuid) {
+        const body: UpdateInstructorData['body'] = {
+          ...(profileSource.instructor as Instructor),
+          ...sharedUpdates,
+        };
         const response = await updateInstructor({
           path: { uuid: profileSource.instructor.uuid },
-          body: {
-            ...profileSource.instructor,
-            ...sharedUpdates,
-          } as any,
+          body,
         });
 
         if (response.error) {
@@ -192,12 +210,13 @@ export function ProfilePage({
       }
 
       if (domain === 'course_creator' && profileSource?.courseCreator?.uuid) {
+        const body: UpdateCourseCreatorData['body'] = {
+          ...(profileSource.courseCreator as CourseCreator),
+          ...sharedUpdates,
+        };
         const response = await updateCourseCreator({
           path: { uuid: profileSource.courseCreator.uuid },
-          body: {
-            ...profileSource.courseCreator,
-            ...sharedUpdates,
-          } as any,
+          body,
         });
 
         if (response.error) {
@@ -208,12 +227,13 @@ export function ProfilePage({
       }
 
       if (domain === 'student' && profileSource?.student?.uuid) {
+        const body: UpdateStudentData['body'] = {
+          ...(profileSource.student as Student),
+          bio: sharedUpdates.bio,
+        };
         const response = await updateStudent({
           path: { uuid: profileSource.student.uuid },
-          body: {
-            ...profileSource.student,
-            bio: sharedUpdates.bio,
-          } as any,
+          body,
         });
 
         if (response.error) {
@@ -230,7 +250,7 @@ export function ProfilePage({
       setIsEditingDetails(false);
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error(getErrorMessage(error));
     },
   });
@@ -422,7 +442,7 @@ export function ProfilePage({
                 size='sm'
                 variant='outline'
                 onClick={() => fileInputRef.current?.click()}
-                className='mt-2 min-w-fit w-full text-xs sm:mt-3'
+                className='mt-2 w-full min-w-fit text-xs sm:mt-3'
               >
                 {/* <Camera className='mr-1.5 h-3 w-3' /> */}
                 Change Photo
@@ -478,8 +498,8 @@ export function ProfilePage({
         </div>
 
         {canEditProfileDetails && (
-          <div className='flex items-end self-end justify-end sm:mb-6'>
-            <div className='flex flex-col gap-3 items-end justify-end self-end max-w-fit'>
+          <div className='flex items-end justify-end self-end sm:mb-6'>
+            <div className='flex max-w-fit flex-col items-end justify-end gap-3 self-end'>
               {!isEditingDetails && (
                 <Button size='sm' variant='outline' onClick={() => setIsEditingDetails(true)}>
                   Edit details
@@ -487,13 +507,10 @@ export function ProfilePage({
               )}
             </div>
 
-
             {!isEditingDetails ? (
-              <div className='mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-
-              </div>
+              <div className='mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'></div>
             ) : (
-              <div className='w-full mt-4 rounded-2xl border p-4 sm:p-5'>
+              <div className='mt-4 w-full rounded-2xl border p-4 sm:p-5'>
                 <div className='space-y-5'>
                   {supportsExtendedDetails && (
                     <div className='grid gap-5 sm:grid-cols-2'>
@@ -535,7 +552,9 @@ export function ProfilePage({
                           onChange={event => handleDetailsChange('latitude', event.target.value)}
                           placeholder='-1.292100'
                         />
-                        <p className='text-muted-foreground text-xs'>Use a value between -90 and 90.</p>
+                        <p className='text-muted-foreground text-xs'>
+                          Use a value between -90 and 90.
+                        </p>
                         {detailsErrors.latitude ? (
                           <p className='text-destructive text-xs'>{detailsErrors.latitude}</p>
                         ) : null}
@@ -575,9 +594,8 @@ export function ProfilePage({
                         value={detailsValues.bio}
                         onChange={event => handleDetailsChange('bio', event.target.value)}
                         placeholder='Tell people a little about yourself'
-                        className='w-full max-w-none min-h-32 resize-y block'
+                        className='block min-h-32 w-full max-w-none resize-y'
                       />
-
                     )}
                     {detailsErrors.bio ? (
                       <p className='text-destructive text-xs'>{detailsErrors.bio}</p>

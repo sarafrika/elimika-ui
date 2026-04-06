@@ -15,13 +15,28 @@ import {
   getStudentScheduleOptions,
   getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type {
+  Certificate,
+  ClassDefinition,
+  Course,
+  StudentSchedule,
+  TrainingProgram,
+} from '@/services/client/types.gen';
 import type { DomainTabProps, TabDefinition } from './types';
 
 function TabShell({ children }: { children: React.ReactNode }) {
   return <div className='space-y-4 pt-5'>{children}</div>;
 }
 
-function InfoRow({ icon, label, value }: { icon: any; label: string; value?: string | null }) {
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value?: string | null;
+}) {
   if (!value) return null;
   return (
     <div className='border-border flex items-center gap-3 border-b py-2 last:border-0'>
@@ -181,9 +196,9 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
   const certificates = certificatesData?.data ?? [];
 
   const uniqueSchedules = useMemo(() => {
-    const scheduleMap = new Map<string, any>();
+    const scheduleMap = new Map<string, StudentSchedule>();
 
-    scheduleEntries.forEach((item: any) => {
+    scheduleEntries.forEach(item => {
       const key =
         item?.class_definition_uuid ?? item?.scheduled_instance_uuid ?? item?.enrollment_uuid;
 
@@ -198,7 +213,11 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
   const classDefinitionUuids = useMemo(
     () =>
       Array.from(
-        new Set(uniqueSchedules.map((item: any) => item?.class_definition_uuid).filter(Boolean))
+        new Set(
+          uniqueSchedules
+            .map(item => item.class_definition_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
+        )
       ),
     [uniqueSchedules]
   );
@@ -211,7 +230,7 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
   });
 
   const classDefinitionsMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, ClassDefinition>();
 
     classDefinitionQueries.forEach((query, index) => {
       const classDefinition = query.data?.data?.class_definition;
@@ -229,8 +248,11 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
     const courses = new Set<string>();
     const programs = new Set<string>();
 
-    uniqueSchedules.forEach((item: any) => {
-      const classDefinition = classDefinitionsMap.get(item?.class_definition_uuid);
+    uniqueSchedules.forEach(item => {
+      const classDefinitionUuid = item.class_definition_uuid;
+      const classDefinition = classDefinitionUuid
+        ? classDefinitionsMap.get(classDefinitionUuid)
+        : undefined;
 
       if (classDefinition?.course_uuid) {
         courses.add(classDefinition.course_uuid);
@@ -241,7 +263,7 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
       }
     });
 
-    certificates.forEach((certificate: any) => {
+    certificates.forEach(certificate => {
       if (certificate?.course_uuid) {
         courses.add(certificate.course_uuid);
       }
@@ -272,7 +294,7 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
   });
 
   const coursesMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, Course>();
 
     courseQueries.forEach((query, index) => {
       const courseUuid = courseUuids[index];
@@ -285,7 +307,7 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
   }, [courseQueries, courseUuids]);
 
   const programsMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, TrainingProgram>();
 
     programQueries.forEach((query, index) => {
       const programUuid = programUuids[index];
@@ -300,14 +322,17 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
   const enrolledCourses = useMemo<EnrolledCourse[]>(() => {
     const items = new Map<string, EnrolledCourse>();
 
-    uniqueSchedules.forEach((item: any) => {
-      const classDefinition = classDefinitionsMap.get(item?.class_definition_uuid);
+    uniqueSchedules.forEach(item => {
+      const classDefinitionUuid = item.class_definition_uuid;
+      const classDefinition = classDefinitionUuid
+        ? classDefinitionsMap.get(classDefinitionUuid)
+        : undefined;
       const courseUuid = classDefinition?.course_uuid;
       const programUuid = classDefinition?.program_uuid;
       const course = courseUuid ? coursesMap.get(courseUuid) : null;
       const program = programUuid ? programsMap.get(programUuid) : null;
       const certificate = certificates.find(
-        (entry: any) =>
+        entry =>
           (courseUuid && entry?.course_uuid === courseUuid) ||
           (programUuid && entry?.program_uuid === programUuid)
       );
@@ -342,7 +367,7 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
       });
     });
 
-    certificates.forEach((certificate: any) => {
+    certificates.forEach(certificate => {
       const courseUuid = certificate?.course_uuid;
       const programUuid = certificate?.program_uuid;
       const itemId = courseUuid

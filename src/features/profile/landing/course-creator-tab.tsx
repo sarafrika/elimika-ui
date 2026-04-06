@@ -62,10 +62,43 @@ import {
   updateCourseCreatorExperienceMutation,
   uploadCourseCreatorDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type {
+  CourseCreatorDocumentDto,
+  CourseCreatorEducation,
+  CourseCreatorExperience,
+} from '@/services/client/types.gen';
 import type { DomainTabProps, TabDefinition } from './types';
 
 function TabShell({ children }: { children: React.ReactNode }) {
   return <div className='space-y-4 pt-5'>{children}</div>;
+}
+
+type CourseCreatorDocumentRecord = CourseCreatorDocumentDto & {
+  title?: string;
+  description?: string;
+  status?: string;
+  expiry_date?: Date | string;
+  file_size_formatted?: string;
+};
+
+type CourseCreatorEducationRecord = CourseCreatorEducation & {
+  year_started?: number;
+  full_description?: string;
+  is_recent_qualification?: boolean;
+  document_url?: string;
+  document_name?: string;
+};
+
+type CourseCreatorExperienceRecord = CourseCreatorExperience & {
+  employment_period?: string;
+  formatted_duration?: string;
+  experience_level?: string;
+};
+
+function normaliseDateValue(value?: Date | string) {
+  if (!value) return undefined;
+  if (value instanceof Date) return value.toISOString();
+  return value;
 }
 
 function CreatorAboutTab({ sharedProfile }: DomainTabProps) {
@@ -251,7 +284,7 @@ function FileUploadField({
   );
 }
 
-function EducationViewCard({ edu }: { edu: any }) {
+function EducationViewCard({ edu }: { edu: CourseCreatorEducationRecord }) {
   return (
     <div className='border-border flex items-start gap-4 border-b py-4 last:border-0'>
       <div className='bg-primary/10 mt-0.5 shrink-0 rounded-lg p-2'>
@@ -508,7 +541,7 @@ function CreatorCertificateDocumentsSection({
     );
   };
 
-  const docs = data?.data ?? [];
+  const docs: CourseCreatorDocumentRecord[] = (data?.data ?? []) as CourseCreatorDocumentRecord[];
 
   if (isLoading) {
     return (
@@ -548,8 +581,8 @@ function CreatorCertificateDocumentsSection({
         </Card>
       ) : (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          {docs.map((cert: any) => (
-            <Card key={cert.uuid}>
+          {docs.map(cert => (
+            <Card key={cert.uuid ?? cert.original_filename}>
               <CardContent className='space-y-3 pt-4'>
                 <div className='flex items-start justify-between gap-2'>
                   <div className='flex flex-wrap items-center gap-2'>
@@ -570,20 +603,25 @@ function CreatorCertificateDocumentsSection({
                     variant='ghost'
                     size='icon'
                     className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 shrink-0'
-                    onClick={() => handleDelete(cert.uuid)}
+                    onClick={() => cert.uuid && handleDelete(cert.uuid)}
                   >
                     <Trash2 className='h-3.5 w-3.5' />
                   </Button>
                 </div>
 
                 <div>
-                  <p className='text-foreground text-sm font-semibold'>{cert.title}</p>
+                  <p className='text-foreground text-sm font-semibold'>
+                    {cert.title || cert.original_filename}
+                  </p>
                   {cert.description && (
                     <p className='text-muted-foreground mt-0.5 text-xs'>{cert.description}</p>
                   )}
                   {cert.expiry_date && (
                     <p className='text-muted-foreground/70 mt-0.5 text-xs'>
-                      Expiry: {cert.expiry_date}
+                      Expiry:{' '}
+                      {cert.expiry_date instanceof Date
+                        ? cert.expiry_date.toLocaleDateString()
+                        : cert.expiry_date}
                     </p>
                   )}
                 </div>
@@ -591,7 +629,7 @@ function CreatorCertificateDocumentsSection({
                 <button
                   type='button'
                   className='border-border bg-muted/30 hover:bg-muted/60 flex w-full flex-row items-center gap-3 rounded-lg border px-3 py-2 transition-colors'
-                  onClick={() => setSelectedPdf(cert.file_path)}
+                  onClick={() => cert.file_path && setSelectedPdf(cert.file_path)}
                 >
                   <div className='bg-destructive/5 shrink-0 rounded-lg p-2'>
                     <FileText className='text-destructive/50 h-4 w-4' />
@@ -637,8 +675,11 @@ function CreatorVerifiedDocumentsSection({ sharedProfile }: DomainTabProps) {
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    select: response => (response?.data ?? []).filter(doc => doc.is_verified),
+    select: response =>
+      ((response?.data ?? []) as CourseCreatorDocumentRecord[]).filter(doc => doc.is_verified),
   });
+
+  const verifiedDocuments = verifiedDocs ?? [];
 
   return (
     <>
@@ -659,15 +700,15 @@ function CreatorVerifiedDocumentsSection({ sharedProfile }: DomainTabProps) {
                 </div>
               ))}
             </div>
-          ) : !verifiedDocs || verifiedDocs.length === 0 ? (
+          ) : verifiedDocuments.length === 0 ? (
             <div className='flex flex-col items-center justify-center py-10 text-center'>
               <FileText className='text-muted-foreground/30 mb-3 h-10 w-10' />
               <p className='text-muted-foreground text-sm'>No verified documents yet.</p>
             </div>
           ) : (
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              {verifiedDocs.map((doc: any) => (
-                <Card key={doc.uuid}>
+              {verifiedDocuments.map(doc => (
+                <Card key={doc.uuid ?? doc.original_filename}>
                   <CardContent className='space-y-3 pt-4'>
                     <div className='flex items-start justify-between gap-2'>
                       <div className='min-w-0 flex-1'>
@@ -750,7 +791,7 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
     enabled: !!sharedProfile?.uuid,
   });
 
-  const serverEducations: any[] = data?.data?.content ?? [];
+  const serverEducations: CourseCreatorEducationRecord[] = data?.data?.content ?? [];
 
   const blankEntry = (): EdEntry => ({
     course_creator_uuid: sharedProfile?.uuid ?? '',
@@ -804,7 +845,7 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
       }));
       replace(mapped);
       setAttachments(
-        serverEducations.map((ed: any) =>
+        serverEducations.map(ed =>
           ed.document_url
             ? { remote: { name: ed.document_name ?? 'Document', url: ed.document_url } }
             : {}
@@ -853,22 +894,36 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
     }
   };
 
+  const toEducationBody = (education: EdEntry): CourseCreatorEducationRecord => ({
+    uuid: education.uuid,
+    course_creator_uuid: education.course_creator_uuid,
+    school_name: education.school_name,
+    qualification: education.qualification,
+    field_of_study: education.field_of_study || undefined,
+    certificate_number: education.certificate_number || undefined,
+    year_completed: education.year_completed ? Number(education.year_completed) : undefined,
+    year_started: education.year_started ? Number(education.year_started) : undefined,
+    is_recent_qualification: education.is_recent_qualification,
+    full_description: education.full_description || undefined,
+  });
+
   const onSubmit = async (values: EducationFormValues) => {
     setIsSaving(true);
     try {
       for (const [i, ed] of values.educations.entries()) {
         const attachment = attachments[i];
         let educationUuid = ed.uuid;
+        const educationBody = toEducationBody(ed);
 
         if (!ed.uuid) {
           const resp = await addEducationMut.mutateAsync({
-            body: { ...ed, course_creator_uuid: sharedProfile?.uuid } as any,
+            body: educationBody,
             path: { courseCreatorUuid: sharedProfile.uuid },
           });
           educationUuid = resp?.data?.uuid;
         } else {
           await updateEducationMut.mutateAsync({
-            body: { ...ed, course_creator_uuid: sharedProfile?.uuid } as any,
+            body: educationBody,
             path: { educationUuid: ed.uuid, courseCreatorUuid: sharedProfile.uuid },
           });
         }
@@ -1275,8 +1330,8 @@ const experienceFormSchema = z.object({ experiences: z.array(experienceSchema) }
 type ExperienceFormValues = z.infer<typeof experienceFormSchema>;
 type ExpEntry = z.infer<typeof experienceSchema>;
 
-function formatDateRange(startDate?: string, endDate?: string, isCurrent?: boolean) {
-  const fmt = (d?: string) => {
+function formatDateRange(startDate?: Date | string, endDate?: Date | string, isCurrent?: boolean) {
+  const fmt = (d?: Date | string) => {
     if (!d) return '';
     const date = new Date(d);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
@@ -1284,7 +1339,13 @@ function formatDateRange(startDate?: string, endDate?: string, isCurrent?: boole
   return `${fmt(startDate)} – ${isCurrent ? 'Present' : fmt(endDate)}`;
 }
 
-function ExperienceViewCard({ item, color }: { item: any; color: string }) {
+function ExperienceViewCard({
+  item,
+  color,
+}: {
+  item: CourseCreatorExperienceRecord;
+  color: string;
+}) {
   return (
     <div className='relative mb-8 last:mb-0'>
       <span
@@ -1356,16 +1417,19 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
       }),
     });
 
-  const serverExperiences: any[] = data?.data?.content ?? [];
+  const serverExperiences: CourseCreatorExperienceRecord[] = data?.data?.content ?? [];
 
   const experiencesWithColor = useMemo(() => {
     if (!serverExperiences?.length) return [];
 
     const sorted = [...serverExperiences].sort((a, b) => {
+      const leftStartDate = normaliseDateValue(a.start_date);
+      const rightStartDate = normaliseDateValue(b.start_date);
+
       if (a.is_current_position && !b.is_current_position) return -1;
       if (!a.is_current_position && b.is_current_position) return 1;
 
-      return new Date(b.start_date).getTime() - new Date(a.start_date).getTime();
+      return new Date(rightStartDate ?? 0).getTime() - new Date(leftStartDate ?? 0).getTime();
     });
 
     return sorted.map((item, i) => ({
@@ -1384,7 +1448,7 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
     is_current_position: false,
   });
 
-  const toFormEntry = (exp: any): ExpEntry => ({
+  const toFormEntry = (exp: CourseCreatorExperienceRecord): ExpEntry => ({
     uuid: exp.uuid,
     instructor_uuid: sharedProfile?.uuid ?? '',
     organisation_name: exp.organisation_name ?? '',
@@ -1393,6 +1457,17 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
     start_date: exp.start_date ? new Date(exp.start_date).toISOString().slice(0, 7) : '',
     end_date: exp.end_date ? new Date(exp.end_date).toISOString().slice(0, 7) : '',
     is_current_position: exp.is_current_position ?? false,
+  });
+
+  const toExperienceBody = (experience: ExpEntry): CourseCreatorExperienceRecord => ({
+    uuid: experience.uuid,
+    course_creator_uuid: sharedProfile?.uuid ?? '',
+    organisation_name: experience.organisation_name,
+    position: experience.position,
+    responsibilities: experience.responsibilities || undefined,
+    start_date: experience.start_date ? new Date(`${experience.start_date}-01`) : undefined,
+    end_date: experience.end_date ? new Date(`${experience.end_date}-01`) : undefined,
+    is_current_position: experience.is_current_position,
   });
 
   const form = useForm<ExperienceFormValues>({
@@ -1438,16 +1513,11 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
     setIsSaving(true);
     try {
       for (const [i, exp] of values.experiences.entries()) {
-        const body = {
-          ...exp,
-          course_creator_uuid: sharedProfile?.uuid,
-          start_date: new Date(`${exp.start_date}-01`),
-          end_date: exp.end_date ? new Date(`${exp.end_date}-01`) : undefined,
-        };
+        const body = toExperienceBody(exp);
 
         if (!exp.uuid) {
           const resp = await addExperienceMut.mutateAsync({
-            body: body as any,
+            body,
             path: { courseCreatorUuid: sharedProfile.uuid },
           });
           if (resp?.data) {
@@ -1457,7 +1527,7 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
           }
         } else {
           await updateExperienceMut.mutateAsync({
-            body: body as any,
+            body,
             path: { experienceUuid: exp.uuid, courseCreatorUuid: sharedProfile.uuid },
           });
         }
@@ -1536,7 +1606,11 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
               <div className='relative pl-8'>
                 <div className='bg-border absolute top-0 bottom-0 left-1.5 w-px' />
                 {experiencesWithColor.map(item => (
-                  <ExperienceViewCard key={item.uuid} item={item} color={item.color} />
+                  <ExperienceViewCard
+                    key={item.uuid ?? `${item.organisation_name}-${item.position}`}
+                    item={item}
+                    color={item.color ?? CAREER_COLORS[0] ?? '#0f172a'}
+                  />
                 ))}
               </div>
             )}
