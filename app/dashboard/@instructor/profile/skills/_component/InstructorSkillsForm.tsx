@@ -1,6 +1,12 @@
 'use client';
 
-import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '@/components/ui/dialog';
@@ -23,8 +29,6 @@ import {
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useUserProfile } from '@/context/profile-context';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import type { Instructor, InstructorSkill } from '@/services/api/schema';
 import { schemas } from '@/services/api/zod-client';
@@ -34,13 +38,9 @@ import {
   getInstructorSkillsQueryKey,
   updateInstructorSkillMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
+import { ProfileFormSection, ProfileFormShell } from '@/src/features/profile/components/profile-form-layout';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
 import { InstructorSkillCard } from './instructor-skill-card';
 
 const SkillSchema = schemas.InstructorSkill;

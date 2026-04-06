@@ -1,16 +1,5 @@
 'use client';
 
-import HTMLTextPreview from '@/components/editors/html-text-preview';
-import {
-  type ProfileSummaryMeta,
-  type ProfileSummarySection,
-  ProfileSummaryView,
-} from '@/components/profile/profile-summary-view';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import Spinner from '@/components/ui/spinner';
-import { useUserProfile } from '@/context/profile-context';
-import { domainBadgeClass, formatDomainLabel } from '@/lib/domain-utils';
 import { format } from 'date-fns';
 import {
   Ban,
@@ -25,6 +14,17 @@ import {
   UserCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
+import HTMLTextPreview from '@/components/editors/html-text-preview';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import Spinner from '@/components/ui/spinner';
+import { domainBadgeClass, formatDomainLabel } from '@/lib/domain-utils';
+import {
+  type ProfileSummaryMeta,
+  type ProfileSummarySection,
+  ProfileSummaryView,
+} from '@/src/features/profile/components/profile-summary-view';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 function toDate(value?: Date | string | null) {
   if (!value) return null;

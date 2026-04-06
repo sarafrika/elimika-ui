@@ -1,13 +1,12 @@
 'use client';
 
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
+import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
-
-import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
-import { ProfileViewList, ProfileViewListItem } from '@/components/profile/profile-view-field';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,8 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
-import { useUserProfile } from '@/context/profile-context';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import type { InstructorEducation } from '@/services/api/schema';
 import { deleteInstructorEducation } from '@/services/client';
@@ -39,9 +37,10 @@ import {
   updateInstructorEducationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zInstructorEducation } from '@/services/client/zod.gen';
-import { useMutation } from '@tanstack/react-query';
-import { Grip, PlusCircle, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { ProfileFormSection, ProfileFormShell } from '@/src/features/profile/components/profile-form-layout';
+import { ProfileViewList, ProfileViewListItem } from '@/src/features/profile/components/profile-view-field';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
 
 const DEGREE_OPTIONS = {
   'Ph.D.': 'Ph.D.',
