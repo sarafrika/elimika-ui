@@ -211,7 +211,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 price_amount: totalAmount,
                 purpose: reason,
                 rate_key: selectedRateKey as any,
-                rates: matchedCourse?.rate_card,
+                rates: matchedCourse?.rate_card as any,
               }}
             />
           </>
