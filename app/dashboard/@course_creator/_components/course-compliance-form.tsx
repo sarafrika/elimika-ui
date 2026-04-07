@@ -16,6 +16,7 @@ import {
   getCourseByUuidQueryKey,
   updateCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { CourseCreationFormValues } from './course-creation-types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle } from 'lucide-react';
@@ -26,14 +27,34 @@ import * as z from 'zod';
 import { Checkbox } from '../../../../components/ui/checkbox';
 import { courseCreationSchema } from './course-creation-types';
 
-type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & { [key: string]: any };
+type MutationVariables<T> = T extends {
+  mutationFn?: (variables: infer TVariables) => Promise<unknown>;
+}
+  ? TVariables
+  : never;
+type MutationResponse<T> = T extends { mutationFn?: (...args: never[]) => Promise<infer TResponse> }
+  ? TResponse
+  : never;
+type UpdateCourseVariables = MutationVariables<ReturnType<typeof updateCourseMutation>>;
+type UpdateCourseResponse = MutationResponse<ReturnType<typeof updateCourseMutation>>;
+type CourseUpdatePayload = Partial<CourseCreationFormValues> & {
+  course_creator_uuid: string;
+  status: string;
+  compliance: ComplianceFormValues['compliance'];
+};
+
+const getFormErrorMessage = (value: unknown) => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.find(item => typeof item === 'string');
+  return undefined;
+};
 
 export type CourseFormProps = {
   showSubmitButton?: boolean;
   initialValues?: Partial<CourseCreationFormValues>;
   editingCourseId?: string;
   courseId?: string;
-  successResponse?: (data: any) => void;
+  successResponse?: (data: unknown) => void;
 };
 
 export type CourseFormRef = {
@@ -84,7 +105,7 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
       if (!editingCourseId) return;
 
       if (editingCourseId) {
-        const editBody = {
+        const editBody: CourseUpdatePayload = {
           course_creator_uuid: authorUuid,
           status: 'draft',
           ...initialValues,
@@ -92,9 +113,9 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
         };
 
         updateCourse.mutate(
-          { body: editBody as any, path: { uuid: editingCourseId as string } },
+          { body: editBody as UpdateCourseVariables['body'], path: { uuid: editingCourseId } },
           {
-            onSuccess(data, _variables, _context) {
+            onSuccess(data: UpdateCourseResponse) {
               const respObj = data?.data;
               const errorObj = data?.error;
 
@@ -112,15 +133,14 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
 
               if (errorObj && typeof errorObj === 'object') {
                 Object.values(errorObj).forEach(errorMsg => {
-                  if (typeof errorMsg === 'string') {
-                    toast.error(errorMsg);
+                  const message = getFormErrorMessage(errorMsg);
+                  if (message) {
+                    toast.error(message);
                   }
                 });
                 return;
-                // @ts-expect-error
               } else if (data?.message) {
-                // @ts-expect-error
-                toast.error('Course updated successfully' || data.message);
+                toast.error(data.message || 'Failed to update course');
                 return;
               } else {
                 toast.error('An unknown error occurred.');
@@ -132,8 +152,8 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     };
 
-    const onError = (errors: any) => {
-      toast.error(errors);
+    const onError = () => {
+      toast.error('Please review the compliance fields and try again.');
     };
 
     return (
