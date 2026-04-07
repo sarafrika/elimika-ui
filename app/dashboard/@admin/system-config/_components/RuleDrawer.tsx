@@ -235,9 +235,8 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
     setErrorMessage(null);
 
     const parsePriority = (input: RuleFormValues['priority']) => {
-      if (input === null || input === undefined || input === '') return undefined;
-      const numeric = typeof input === 'number' ? input : Number(input);
-      return Number.isFinite(numeric) ? numeric : undefined;
+      if (input === null || input === undefined) return undefined;
+      return Number.isFinite(input) ? input : undefined;
     };
 
     const toIsoDateTime = (value?: string | null) => {
@@ -260,9 +259,6 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
       effectiveFrom: toIsoDateTime(values.effectiveFrom),
       effectiveTo: toIsoDateTime(values.effectiveTo),
     };
-    // strip any read-only fields in case of accidental carryover
-    delete (payload as any).createdDate;
-    delete (payload as any).updatedDate;
 
     try {
       if (isEdit && ruleId) {

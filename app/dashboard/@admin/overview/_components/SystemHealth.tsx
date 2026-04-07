@@ -159,7 +159,7 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
             </div>
             <div>
               <p className='text-muted-foreground text-xs'>Organisation Admins</p>
-              <p className='text-lg font-bold'>{adminMetrics?.organization_admins ?? '—'}</p>
+              <p className='text-lg font-bold'>{adminMetrics?.organisation_admins ?? '—'}</p>
             </div>
           </div>
         </div>
