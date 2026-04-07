@@ -46,6 +46,7 @@ import {
   searchTrainingProgramsOptions,
   searchTrainingProgramsQueryKey,
 } from '../../../../../services/client/@tanstack/react-query.gen';
+import type { TrainingProgram } from '../../../../../services/client/types.gen';
 
 type ProgramStatusFilter = 'all' | 'published' | 'draft' | 'archived';
 
@@ -65,23 +66,23 @@ const STATUS_BADGE: Record<
   ARCHIVED: { label: 'Archived', variant: 'outline' },
 };
 
-interface Program {
+type Program = TrainingProgram & {
   uuid: string;
   title: string;
-  description?: string;
   status: string;
   class_limit: number;
   price: number;
-  program_type?: string;
-  created_date?: string;
-  updated_date?: string;
-}
+};
 
 interface ProgramsListProps {
   onEdit: (program: Program) => void;
   onPreview: (uuid: string) => void;
   onCreate?: () => void;
-  creator: any;
+  creator: {
+    profile: {
+      uuid?: string;
+    } | null;
+  };
 }
 
 const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProps) => {
@@ -101,7 +102,14 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
     })
   );
 
-  const programs = programsData?.data?.content || [];
+  const programs = (programsData?.data?.content ?? []).filter(
+    (program): program is Program =>
+      typeof program.uuid === 'string' &&
+      typeof program.title === 'string' &&
+      typeof program.status === 'string' &&
+      typeof program.class_limit === 'number' &&
+      typeof program.price === 'number'
+  );
   const filteredPrograms = useMemo(() => {
     return programs.filter(program => {
       const matchesSearch =
@@ -131,7 +139,8 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
           setDeleteConfirm(null);
           toast.success('Program Deleted Successfully');
         },
-        onError: error => toast.error(error?.message),
+        onError: error =>
+          toast.error(error instanceof Error ? error.message : 'Failed to delete program.'),
       }
     );
   };

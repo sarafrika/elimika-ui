@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Course } from '@/services/client';
+import type { Course, CourseTrainingApplication } from '@/services/client';
 import {
   decideOnTrainingApplicationMutation,
   getInstructorSkillsOptions,
@@ -33,6 +33,21 @@ interface CourseDetailsProps {
   className?: string;
 }
 
+type TrainingApplicationListItem = Omit<
+  CourseTrainingApplication,
+  'uuid' | 'status' | 'applicant_uuid' | 'applicant_type' | 'created_date' | 'rate_card'
+> & {
+  uuid: string;
+  status: string;
+  applicant_uuid: string;
+  applicant_type: string;
+  created_date: string | Date;
+  rate_card: NonNullable<CourseTrainingApplication['rate_card']>;
+  instructor?: {
+    email?: string;
+  };
+};
+
 export default function CourseDetails({ course, className = '' }: CourseDetailsProps) {
   const [tab, setTab] = useState('pending');
   const qc = useQueryClient();
@@ -49,7 +64,8 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
     }),
     enabled: !!course?.uuid,
   });
-  const applicationData = applications?.data?.content ?? [];
+  const applicationData =
+    (applications?.data?.content as TrainingApplicationListItem[] | undefined) ?? [];
 
   const applicationAction = useMutation(decideOnTrainingApplicationMutation());
 
@@ -66,16 +82,19 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
     }
   }, [applicationData, tab]);
 
-  const [selectedApplication, setSelectedApplication] = useState<any | null>(null);
+  const [selectedApplication, setSelectedApplication] =
+    useState<TrainingApplicationListItem | null>(null);
   const instructorUuid = selectedApplication?.applicant_uuid;
   const applicantType = selectedApplication?.applicant_type;
 
   const { instructor } = useInstructorDetails(instructorUuid);
-  // @ts-ignore
-  const applicantDetails = instructor?.data;
+  const applicantDetails = instructor;
 
   const { data: skills } = useQuery({
-    ...getInstructorSkillsOptions({ query: { pageable: {} }, path: { instructorUuid } }),
+    ...getInstructorSkillsOptions({
+      query: { pageable: {} },
+      path: { instructorUuid: instructorUuid as string },
+    }),
     enabled: !!instructorUuid,
   });
   const instructorSkills = skills?.data?.content || [];
@@ -120,7 +139,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
   };
 
   const filteredApplications = (status: string) =>
-    status === 'all' ? applicationData : applicationData.filter((a: any) => a.status === status);
+    status === 'all' ? applicationData : applicationData.filter(a => a.status === status);
 
   const getStatusBadgeClasses = (status: string) => {
     const styles: Record<string, string> = {
@@ -192,7 +211,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Pricing:</p>
                 <p className='text-sm'>
-                  {course?.is_free ? 'Free Course' : `${course?.minimum_training_fee}`}
+                  {course?.minimum_training_fee ? `${course.minimum_training_fee}` : 'Free Course'}
                 </p>
               </div>
             </div>
@@ -233,7 +252,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                     value='revoked'
                     className='data-[state=active]:bg-primary data-[state=active]:text-white'
                   >
-                    Revoked ({applicationData.filter((a: any) => a.status === 'revoked').length})
+                    Revoked ({applicationData.filter(a => a.status === 'revoked').length})
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -247,7 +266,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                         No applications found for this filter.
                       </p>
                     ) : (
-                      filteredApplications(tab).map((app: any) => (
+                      filteredApplications(tab).map(app => (
                         <button
                           key={app.uuid}
                           onClick={() => setSelectedApplication(app)}

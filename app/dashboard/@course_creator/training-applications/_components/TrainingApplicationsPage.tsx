@@ -62,6 +62,17 @@ export const applicantTypeOptions = [
   { value: 'organisation', label: 'Organisation' },
 ];
 
+type TrainingApplicationListItem = Omit<
+  CourseTrainingApplication,
+  'uuid' | 'status' | 'applicant_type' | 'created_date'
+> & {
+  uuid: string;
+  status: string;
+  applicant_type: string;
+  applicant_name?: string;
+  created_date?: string | Date;
+};
+
 function getStatusBadgeVariant(status?: string) {
   switch (status?.toLowerCase()) {
     case 'approved':
@@ -98,9 +109,8 @@ export default function TrainingApplicationsPage() {
   const [applicantTypeFilter, setApplicantTypeFilter] = useState('');
   const [page, setPage] = useState(0);
   const [searchValue, setSearchValue] = useState('');
-  const [selectedApplication, setSelectedApplication] = useState<CourseTrainingApplication | null>(
-    null
-  );
+  const [selectedApplication, setSelectedApplication] =
+    useState<TrainingApplicationListItem | null>(null);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revoke'>('approve');
   const pageSize = 12;
@@ -116,7 +126,7 @@ export default function TrainingApplicationsPage() {
     }),
   });
 
-  const applicationsPage = extractPage<CourseTrainingApplication>(applicationsQuery.data);
+  const applicationsPage = extractPage<TrainingApplicationListItem>(applicationsQuery.data);
   const allApplications = applicationsPage.items;
 
   const instructorUuids = useMemo(
@@ -162,17 +172,17 @@ export default function TrainingApplicationsPage() {
   const applicantNameMap = useMemo(() => {
     const map = new Map<string, string>();
 
-    instructorQueries.forEach((q: any) => {
-      const instructor = q.data?.data;
-      if (instructor?.uuid) {
+    instructorQueries.forEach(q => {
+      const instructor = q.data;
+      if (instructor?.uuid && instructor.full_name) {
         map.set(instructor.uuid, instructor.full_name);
       }
     });
 
-    organisationQueries.forEach((q: any) => {
+    organisationQueries.forEach(q => {
       const org = q.data?.data;
       if (org?.uuid) {
-        map.set(org.uuid, org.full_name);
+        map.set(org.uuid, org.name);
       }
     });
 
@@ -232,7 +242,7 @@ export default function TrainingApplicationsPage() {
   const decideMutation = useMutation(decideOnTrainingApplicationMutation());
 
   const handleReview = (
-    application: CourseTrainingApplication,
+    application: TrainingApplicationListItem,
     action: 'approve' | 'reject' | 'revoke'
   ) => {
     setSelectedApplication(application);
@@ -271,8 +281,10 @@ export default function TrainingApplicationsPage() {
           setReviewDialogOpen(false);
           setSelectedApplication(null);
         },
-        onError: (error: any) => {
-          toast.error(error?.message || `Failed to ${reviewAction} application`);
+        onError: error => {
+          toast.error(
+            error instanceof Error ? error.message : `Failed to ${reviewAction} application`
+          );
         },
       }
     );
@@ -508,7 +520,7 @@ export function ApplicationCard({
   onReject,
   onRevoke,
 }: {
-  application: CourseTrainingApplication;
+  application: TrainingApplicationListItem;
   onApprove: () => void;
   onReject: () => void;
   onRevoke: () => void;
@@ -655,7 +667,7 @@ export function ReviewDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  application: CourseTrainingApplication | null;
+  application: TrainingApplicationListItem | null;
   action: 'approve' | 'reject' | 'revoke';
   onSubmit: (reviewNotes: string) => void;
   isLoading: boolean;
