@@ -9,7 +9,11 @@ import {
 
 type CourseLesson = NonNullable<NonNullable<GetCourseLessonsResponse['data']>['content']>[number];
 type CourseLessonWithUuid = CourseLesson & { uuid: string };
-type ProgramCourseLike = { uuid: string };
+type ProgramCourseLike = {
+  uuid: string;
+  name?: string;
+  description?: string;
+};
 
 export function useProgramLessonsWithContent({
   programUuid,

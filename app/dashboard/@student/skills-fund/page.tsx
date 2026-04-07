@@ -46,7 +46,92 @@ import {
 } from '../../../../services/client/@tanstack/react-query.gen';
 import { sampleWallet, SkillsFundWalletCard } from '../../_components/skill-fund-wallet';
 
-const skillsFundApplications: any[] = [
+const fundTypes = ['scholarship', 'grant', 'loan', 'training-support'] as const;
+
+type FundType = (typeof fundTypes)[number];
+
+type ApplicationStatus =
+  | 'draft'
+  | 'submitted'
+  | 'under-review'
+  | 'approved'
+  | 'rejected'
+  | 'disbursed';
+
+type SkillsFundDocument = {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+};
+
+type SkillsFundApplication = {
+  id: string;
+  applicantId: string;
+  applicantName: string;
+  applicantType: 'student' | 'instructor';
+  fundType: FundType;
+  program: string;
+  reason: string;
+  amount: number;
+  currency: string;
+  documents: SkillsFundDocument[];
+  status: ApplicationStatus;
+  submittedAt?: Date;
+  reviewedAt?: Date;
+  reviewedBy?: string;
+  disbursedAt?: Date;
+  linkedCourseId?: string;
+  rejectionReason?: string;
+};
+
+type CurrentUser = {
+  id: string;
+  name: string;
+};
+
+type WalletTransaction = {
+  id: string;
+  type: 'credit' | 'debit';
+  description: string;
+  date: Date | string;
+  category: string;
+  amount: number;
+  status: string;
+};
+
+type WalletData = {
+  transactions: WalletTransaction[];
+};
+
+type NewApplication = {
+  fundType: FundType;
+  currency: string;
+  documents: SkillsFundDocument[];
+  program?: string;
+  reason?: string;
+  amount?: number;
+};
+
+type ClassOption = {
+  id: string;
+  classTitle: string;
+};
+
+type AvailableFund = {
+  id: string;
+  type: FundType;
+  name: string;
+  description: string;
+  maxAmount: number;
+  eligibility: string[];
+  deadline: Date;
+};
+
+const isFundType = (value: string): value is FundType =>
+  fundTypes.some(fundType => fundType === value);
+
+const skillsFundApplications: SkillsFundApplication[] = [
   // {
   //   id: 'app-001',
   //   applicantId: 'student_001',
@@ -173,9 +258,9 @@ const skillsFundApplications: any[] = [
 ];
 
 type Props = {
-  currentUser: any;
-  wallet: any | null;
-  setWallet: (wallet: any | null) => void;
+  currentUser: CurrentUser;
+  wallet: WalletData | null;
+  setWallet: (wallet: WalletData | null) => void;
 };
 
 const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) => {
@@ -198,7 +283,7 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
   const uploadInstructorDocument = useMutation(uploadInstructorDocumentMutation());
 
   const studentApplications = skillsFundApplications;
-  const classes = [
+  const classes: ClassOption[] = [
     // { id: 'class-1', classTitle: 'Full Stack Development Bootcamp' },
     // { id: 'class-2', classTitle: 'Data Science with Python' },
     // { id: 'class-3', classTitle: 'Digital Marketing Essentials' },
@@ -207,13 +292,13 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
   ];
 
   const [showApplicationModal, setShowApplicationModal] = useState(false);
-  const [newApplication, setNewApplication] = useState<Partial<any>>({
+  const [newApplication, setNewApplication] = useState<NewApplication>({
     fundType: 'scholarship',
     currency: 'USD',
     documents: [],
   });
 
-  const availableFunds = [
+  const availableFunds: AvailableFund[] = [
     // {
     //   id: 'fund-1',
     //   type: 'scholarship',
@@ -249,12 +334,12 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
       return;
     }
 
-    const _application: any = {
+    const _application: SkillsFundApplication = {
       id: `app-${Date.now()}`,
       applicantId: currentUser.id,
       applicantName: currentUser.name,
       applicantType: 'student',
-      fundType: newApplication.fundType as any,
+      fundType: newApplication.fundType,
       program: newApplication.program,
       reason: newApplication.reason,
       amount: newApplication.amount,
@@ -273,7 +358,7 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
     });
   };
 
-  const getStatusIcon = (status: any['status']) => {
+  const getStatusIcon = (status: SkillsFundApplication['status']) => {
     switch (status) {
       case 'approved':
       case 'disbursed':
@@ -288,7 +373,7 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
     }
   };
 
-  const getStatusColor = (status: any['status']) => {
+  const getStatusColor = (status: SkillsFundApplication['status']) => {
     switch (status) {
       case 'approved':
       case 'disbursed':
@@ -305,7 +390,7 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
 
   return (
     <div className='space-y-6'>
-      <SkillsFundWalletCard wallet={sampleWallet} user={student} role='' />
+      {student && <SkillsFundWalletCard wallet={sampleWallet} user={student} role='' />}
 
       {/* Quick Stats */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
@@ -418,7 +503,7 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
                   size='sm'
                   className='w-full'
                   onClick={() => {
-                    setNewApplication({ ...newApplication, fundType: fund.type as any });
+                    setNewApplication({ ...newApplication, fundType: fund.type });
                     setShowApplicationModal(true);
                   }}
                 >
@@ -515,7 +600,7 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
         <Card className='p-6'>
           <h3 className='mb-6'>Fund Usage History</h3>
           <div className='space-y-3'>
-            {wallet.transactions.slice(0, 10).map((txn: any) => (
+            {wallet.transactions.slice(0, 10).map(txn => (
               <div
                 key={txn.id}
                 className='bg-muted flex items-center justify-between rounded-lg p-3'
@@ -533,7 +618,7 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
                   <div>
                     <p className='text-sm'>{txn.description}</p>
                     <p className='text-muted-foreground text-xs'>
-                      {txn.date.toLocaleDateString()} • {txn.category}
+                      {new Date(txn.date).toLocaleDateString()} • {txn.category}
                     </p>
                   </div>
                 </div>
@@ -566,9 +651,11 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
               <Label>Fund Type</Label>
               <Select
                 value={newApplication.fundType}
-                onValueChange={(value: any) =>
-                  setNewApplication({ ...newApplication, fundType: value })
-                }
+                onValueChange={value => {
+                  if (isFundType(value)) {
+                    setNewApplication({ ...newApplication, fundType: value });
+                  }
+                }}
               >
                 <SelectTrigger className='mt-2'>
                   <SelectValue />
@@ -704,7 +791,6 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
                           document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
                           education_uuid: '',
                           experience_uuid: '',
-                          expiry_date: '',
                           membership_uuid: '',
                         },
                       },
