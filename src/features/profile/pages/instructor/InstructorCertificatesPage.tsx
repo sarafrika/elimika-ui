@@ -228,7 +228,6 @@ export default function CertificatesPage() {
                   document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
                   education_uuid: '',
                   experience_uuid: '',
-                  expiry_date: undefined as any,
                   membership_uuid: '',
                 },
               },

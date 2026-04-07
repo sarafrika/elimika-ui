@@ -25,6 +25,7 @@ import {
   getStudentByIdQueryKey,
   updateStudentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { ResponseDtoVoid, Student, UpdateStudentResponse } from '@/services/client/types.gen';
 import {
   ProfileFormSection,
   ProfileFormShell,
@@ -45,6 +46,30 @@ const guardianInfoSchema = z.object({
 
 type GuardianInfoFormValues = z.infer<typeof guardianInfoSchema>;
 
+const getErrorMessage = (error: unknown) => {
+  if (typeof error === 'object' && error !== null) {
+    if ('errors' in error) {
+      const errors = (error as ResponseDtoVoid).errors;
+      const firstError = errors ? Object.values(errors)[0] : undefined;
+      if (firstError) return firstError;
+    }
+
+    if ('error' in error) {
+      const nestedError = error.error;
+      if (typeof nestedError === 'object' && nestedError !== null) {
+        const firstError = Object.values(nestedError)[0];
+        if (typeof firstError === 'string') return firstError;
+      }
+    }
+
+    if ('message' in error && typeof error.message === 'string') {
+      return error.message;
+    }
+  }
+
+  return 'An error occurred';
+};
+
 function CertificationsSettingsContent() {
   const qc = useQueryClient();
   const userProfile = useUserProfile();
@@ -54,8 +79,7 @@ function CertificationsSettingsContent() {
   const student = useStudent();
   const updateGuardianInfo = useMutation(updateStudentMutation());
   const { data } = useQuery(getStudentByIdOptions({ path: { uuid: student?.uuid as string } }));
-  // @ts-expect-error
-  const studentInfo = data?.data;
+  const studentInfo: Student | undefined = data;
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -101,26 +125,22 @@ function CertificationsSettingsContent() {
           await updateGuardianInfo.mutateAsync(
             {
               body: {
-                ...(data as any),
+                ...data,
                 user_uuid: student?.user_uuid as string,
                 updated_by: student?.user_uuid,
               },
               path: { uuid: student?.uuid as string },
             },
             {
-              onSuccess: (response: any) => {
+              onSuccess: (_response: UpdateStudentResponse) => {
                 qc.invalidateQueries({
                   queryKey: getStudentByIdQueryKey({ path: { uuid: student?.uuid as string } }),
                 });
-                toast.success(response?.message || 'Information updated successfully');
+                toast.success('Information updated successfully');
                 disableEditing();
               },
-              onError: (error: any) => {
-                const errorMessage = error?.error
-                  ? Object.values(error.error)[0]
-                  : error?.message || 'An error occurred';
-
-                toast.error(errorMessage);
+              onError: (error: unknown) => {
+                toast.error(getErrorMessage(error));
               },
             }
           );
