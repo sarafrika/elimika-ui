@@ -31,6 +31,7 @@
         "app/class-invite/page.tsx",
         "app/dashboard/@admin/all-courses/**",
         "app/dashboard/@admin/programs/programs-page.tsx",
+        "app/dashboard/@course_creator/course-management/**",
         "app/dashboard/@parent/all-courses/**",
         "app/dashboard/@student/skills-fund/page.tsx",
         "app/profile-user/public-user-profile.tsx",

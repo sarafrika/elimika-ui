@@ -21,6 +21,11 @@ import {
 import CourseBuilderPage from './CourseBuilderPage';
 import CoursePreviewPage from './CoursePreviewPage';
 
+const getErrorMessage = (error: unknown) =>
+  typeof error === 'object' && error !== null && 'message' in error
+    ? String(error.message)
+    : undefined;
+
 const CourseCreationPage = () => {
   const router = useRouter();
   const creator = useCourseCreator();
@@ -61,7 +66,7 @@ const CourseCreationPage = () => {
             router.push('/dashboard/course-management/all');
           },
           onError: error => {
-            toast.error(error?.message);
+            toast.error(getErrorMessage(error) || 'Failed to publish course');
           },
         }
       );
@@ -98,7 +103,7 @@ const CourseCreationPage = () => {
             });
           },
           onError: error => {
-            toast.error(error?.message || 'Failed to unpublish course');
+            toast.error(getErrorMessage(error) || 'Failed to unpublish course');
           },
         }
       );

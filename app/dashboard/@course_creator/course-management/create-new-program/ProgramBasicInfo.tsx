@@ -65,8 +65,9 @@ const ProgramBasicInfo = ({
   const categories = categoriesData?.data?.content ?? [];
 
   useEffect(() => {
-    setFormData({ ...initialData, category_uuid: selectedCategories[0] });
-    setSelectedCategories(initialData.categories ?? []);
+    const nextCategories = initialData.categories ?? [];
+    setFormData({ ...initialData, category_uuid: nextCategories[0] ?? '' });
+    setSelectedCategories(nextCategories);
   }, [initialData]);
 
   const handleChange = <K extends keyof ProgramFormData>(field: K, value: ProgramFormData[K]) => {
@@ -304,9 +305,9 @@ const ProgramBasicInfo = ({
 
                 <SelectContent className='w-full'>
                   {categories
-                    .filter(c => !selectedCategories.includes(c.uuid))
+                    .filter(c => c.uuid && !selectedCategories.includes(c.uuid))
                     .map(c => (
-                      <SelectItem key={c.uuid} value={c.uuid} className='md:text-md text-sm'>
+                      <SelectItem key={c.uuid} value={c.uuid ?? ''} className='md:text-md text-sm'>
                         {c.name}
                       </SelectItem>
                     ))}

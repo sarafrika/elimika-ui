@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
@@ -44,6 +44,39 @@ import { ContentItem } from '../../../../@instructor/trainings/overview/[id]/pag
 import { AudioPlayer } from '../../../../@student/schedule/classes/[id]/AudioPlayer';
 import { ReadingMode } from '../../../../@student/schedule/classes/[id]/ReadingMode';
 import { VideoPlayer } from '../../../../@student/schedule/classes/[id]/VideoPlayer';
+import type {
+  CourseAssessment,
+  CourseRubricAssociation,
+  LessonContent,
+} from '@/services/client/types.gen';
+import type { LucideIcon } from 'lucide-react';
+
+type PreviewContentItem = ContentItem & LessonContent;
+
+type CourseRubricWithDetails = CourseRubricAssociation & {
+  rubric: {
+    title?: string;
+    description?: string;
+    duration_display?: string;
+    total_weight?: number;
+    min_passing_score?: number;
+    is_published?: boolean;
+  } | null;
+};
+
+type DetailItemProps = {
+  icon: LucideIcon;
+  label: string;
+  value: ReactNode;
+};
+
+type EmptyStateProps = {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+};
 
 export default function CoursePreviewComponent({ authorName }: { authorName?: string }) {
   const params = useParams();
@@ -104,7 +137,8 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
     }),
     enabled: !!courseId,
   });
-  const assessments: any[] = assessmentsData?.data?.content ?? [];
+  const assessments: CourseAssessment[] = assessmentsData?.data?.content ?? [];
+  const safeLessonsWithContent = useMemo(() => lessonsWithContent ?? [], [lessonsWithContent]);
 
   // State for video player and reading mode
   const [isPlaying, setIsPlaying] = useState(false);
@@ -247,9 +281,9 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
             <CardTitle>Lesson Content</CardTitle>
             <CardDescription>All lessons included in this course.</CardDescription>
           </div>
-          {lessonsWithContent?.length > 0 && (
+          {safeLessonsWithContent.length > 0 && (
             <Badge variant='secondary' className='text-xs'>
-              {lessonsWithContent.length} lesson{lessonsWithContent.length !== 1 ? 's' : ''}
+              {safeLessonsWithContent.length} lesson{safeLessonsWithContent.length !== 1 ? 's' : ''}
             </Badge>
           )}
         </CardHeader>
@@ -263,7 +297,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
           )}
 
           {/* Empty State */}
-          {!isAllLessonsDataLoading && !isLoading && !lessonsWithContent?.length && (
+          {!isAllLessonsDataLoading && !isLoading && safeLessonsWithContent.length === 0 && (
             <EmptyState
               icon={BookOpen}
               title='No Lessons Available'
@@ -274,9 +308,9 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
           )}
 
           {/* Lessons List */}
-          {!isAllLessonsDataLoading && !isLoading && lessonsWithContent?.length > 0 && (
+          {!isAllLessonsDataLoading && !isLoading && safeLessonsWithContent.length > 0 && (
             <div className='space-y-2'>
-              {lessonsWithContent.map((skill, skillIndex) => {
+              {safeLessonsWithContent.map((skill, skillIndex) => {
                 const contentCount = skill?.content?.data?.length ?? 0;
                 return (
                   <Collapsible key={skill?.lesson?.uuid ?? skillIndex}>
@@ -314,7 +348,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                         {/* Content Items */}
                         {contentCount > 0 ? (
                           <div className='divide-border divide-y'>
-                            {skill.content.data.map((c, cIndex) => {
+                            {(skill.content?.data ?? []).map((c, cIndex) => {
                               const contentTypeName = contentTypeMap[c.content_type_uuid] || 'file';
                               return (
                                 <div
@@ -335,7 +369,9 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                                     </div>
                                   </div>
                                   <Button
-                                    onClick={() => handleViewContent(c, contentTypeName)}
+                                    onClick={() =>
+                                      handleViewContent(c as PreviewContentItem, contentTypeName)
+                                    }
                                     variant='ghost'
                                     size='sm'
                                     className='gap-1.5 text-xs'
@@ -371,7 +407,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
 
         <CardContent>
           {assessments?.length ? (
-            assessments.map((assessment: any) => {
+            assessments.map(assessment => {
               const hasRubric = Boolean(assessment?.rubric_uuid);
 
               return (
@@ -437,7 +473,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
 
         <CardContent className='hidden'>
           {courseRubrics?.length ? (
-            courseRubrics.map((assessment: any) => (
+            (courseRubrics as CourseRubricWithDetails[]).map(assessment => (
               <div key={assessment.uuid} className='border-b pt-2 pb-4 last:border-0'>
                 <div className='flex items-center gap-2'>
                   <BookOpenCheck className='text-primary h-4 w-4' />
@@ -610,7 +646,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
 /* -----------------------------
   🔹 REUSABLE COMPONENTS
 --------------------------------*/
-function DetailItem({ icon: Icon, label, value }: any) {
+function DetailItem({ icon: Icon, label, value }: DetailItemProps) {
   return (
     <div className='flex items-center text-sm'>
       <Icon className='text-muted-foreground mr-2 h-4 w-4' />
@@ -620,7 +656,7 @@ function DetailItem({ icon: Icon, label, value }: any) {
   );
 }
 
-function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: any) {
+function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: EmptyStateProps) {
   return (
     <div className='flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center'>
       <Icon className='text-muted-foreground mb-3 h-8 w-8' />
