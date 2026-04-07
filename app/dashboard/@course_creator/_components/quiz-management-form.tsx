@@ -44,6 +44,7 @@ import {
   updateQuizMutation,
   updateQuizQuestionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { Quiz } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -90,6 +91,31 @@ export const quizSchema = z.object({
 
 export type QuizFormValues = z.infer<typeof quizSchema>;
 
+type MutationVariables<T> = T extends {
+  mutationFn?: (variables: infer TVariables) => Promise<unknown>;
+}
+  ? TVariables
+  : never;
+type SubmitCallback = () => void;
+type QuestionSubmitCallback = () => void;
+type OptionSubmitCallback = () => void;
+type QuizListItem = Partial<Quiz> & { uuid?: string; lesson_uuid?: string; status?: string };
+type ErrorLike = { message?: string };
+
+const getErrorMessage = (error: unknown) =>
+  typeof error === 'object' && error !== null && 'message' in error
+    ? (error as ErrorLike).message
+    : undefined;
+
+type CreateQuizVariables = MutationVariables<ReturnType<typeof createQuizMutation>>;
+type UpdateQuizVariables = MutationVariables<ReturnType<typeof updateQuizMutation>>;
+type AddQuizQuestionVariables = MutationVariables<ReturnType<typeof addQuizQuestionMutation>>;
+type UpdateQuizQuestionVariables = MutationVariables<ReturnType<typeof updateQuizQuestionMutation>>;
+type AddQuestionOptionVariables = MutationVariables<ReturnType<typeof addQuestionOptionMutation>>;
+type UpdateQuestionOptionVariables = MutationVariables<
+  ReturnType<typeof updateQuestionOptionMutation>
+>;
+
 function QuizForm({
   onSuccess,
   initialValues,
@@ -102,10 +128,10 @@ function QuizForm({
   quizId?: string;
   lessonId: string;
   courseId: string;
-  initialValues?: QuizFormValues;
-  onSuccess: any;
+  initialValues?: Partial<QuizFormValues>;
+  onSuccess: SubmitCallback;
   onCancel: () => void;
-  className: any;
+  className?: string;
 }) {
   const form = useForm<QuizFormValues>({
     resolver: zodResolver(quizSchema),
@@ -142,7 +168,7 @@ function QuizForm({
 
     if (quizId) {
       updateQuiz.mutate(
-        { path: { uuid: quizId }, body: payload as any },
+        { path: { uuid: quizId }, body: payload as UpdateQuizVariables['body'] },
         {
           onSuccess: data => {
             toast.success(data?.message);
@@ -159,15 +185,15 @@ function QuizForm({
       );
     } else {
       createQuiz.mutate(
-        { body: payload as any },
+        { body: payload as CreateQuizVariables['body'] },
         {
-          onSuccess: (data: any) => {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: searchQuizzesQueryKey({
-                query: { pageable: {}, searchParams: { lesson_uuid_eq: data?.data?.lesson_uuid } },
+                query: { pageable: {}, searchParams: { lesson_uuid_eq: data.lesson_uuid } },
               }),
             });
-            toast.success(data?.message);
+            toast.success('Quiz created successfully');
             onCancel();
             onSuccess();
           },
@@ -380,10 +406,10 @@ function QuestionForm({
 }: {
   quizId?: string;
   questionId?: string;
-  initialValues?: QuestionFormValues;
-  onSuccess: any;
+  initialValues?: Partial<QuestionFormValues>;
+  onSuccess: QuestionSubmitCallback;
   onCancel: () => void;
-  className: any;
+  className?: string;
 }) {
   const form = useForm<QuestionFormValues>({
     resolver: zodResolver(questionSchema),
@@ -418,11 +444,11 @@ function QuestionForm({
     if (questionId) {
       updateQuizQuestion.mutate(
         {
-          body: payload as any,
+          body: payload as UpdateQuizQuestionVariables['body'],
           path: { quizUuid: quizId as string, questionUuid: questionId as string },
         },
         {
-          onSuccess: (data: any) => {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: getQuizQuestionsQueryKey({
                 path: { quizUuid: quizId as string },
@@ -436,9 +462,12 @@ function QuestionForm({
       );
     } else {
       addQuizQuestion.mutate(
-        { body: payload as any, path: { quizUuid: quizId as string } },
         {
-          onSuccess: (data: any) => {
+          body: payload as AddQuizQuestionVariables['body'],
+          path: { quizUuid: quizId as string },
+        },
+        {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: getQuizQuestionsQueryKey({
                 path: { quizUuid: quizId as string },
@@ -589,10 +618,10 @@ function OptionForm({
   quizId?: string;
   questionId?: string;
   optionId?: string;
-  initialValues?: OptionFormValues;
-  onSuccess: any;
+  initialValues?: Partial<OptionFormValues>;
+  onSuccess: OptionSubmitCallback;
   onCancel: () => void;
-  className: any;
+  className?: string;
 }) {
   const form = useForm<OptionFormValues>({
     resolver: zodResolver(optionSchema),
@@ -628,7 +657,7 @@ function OptionForm({
     if (optionId) {
       updateQuestionOption.mutate(
         {
-          body: payload as any,
+          body: payload as UpdateQuestionOptionVariables['body'],
           path: {
             quizUuid: quizId as string,
             questionUuid: questionId as string,
@@ -636,7 +665,7 @@ function OptionForm({
           },
         },
         {
-          onSuccess: (data: any) => {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: getQuestionOptionsQueryKey({
                 path: { quizUuid: quizId as string, questionUuid: questionId as string },
@@ -652,11 +681,11 @@ function OptionForm({
     } else {
       addQuestionOption.mutate(
         {
-          body: payload as any,
+          body: payload as AddQuestionOptionVariables['body'],
           path: { quizUuid: quizId as string, questionUuid: questionId as string },
         },
         {
-          onSuccess: (data: any) => {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: getQuestionOptionsQueryKey({
                 path: { quizUuid: quizId as string, questionUuid: questionId as string },
@@ -746,17 +775,17 @@ function OptionForm({
 
 type QuizListProps = {
   courseTitle: string;
-  quizzes: any;
+  quizzes: QuizListItem[];
   isLoading: boolean;
   courseId?: string;
   onAddQuiz: () => void;
 };
 
 function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: QuizListProps) {
-  const [selectedQuiz, setSelectedQuiz] = useState<any | null>(null);
+  const [selectedQuiz, setSelectedQuiz] = useState<QuizListItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleEditQuiz = (q: any) => {
+  const handleEditQuiz = (q: QuizListItem) => {
     setSelectedQuiz(q);
     setIsModalOpen(true);
   };
@@ -770,11 +799,11 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
   const queryClient = useQueryClient();
   const deleteQuiz = useMutation(deleteQuizMutation());
 
-  const [deletingQuizData, setDeletingQuizData] = useState<any | null>(null);
+  const [deletingQuizData, setDeletingQuizData] = useState<QuizListItem | null>(null);
   const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const handleDelete = (q: any) => {
+  const handleDelete = (q: QuizListItem) => {
     setDeletingQuizData(q);
     setDeletingQuizId(q.uuid as string);
     setOpenDeleteModal(true);
@@ -799,7 +828,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
           setOpenDeleteModal(false);
           setDeletingQuizId(null);
         },
-        onError: (error: any) => toast.error(error?.message || 'Failed to delete quiz'),
+        onError: error => toast.error(getErrorMessage(error) || 'Failed to delete quiz'),
       }
     );
   };
@@ -830,7 +859,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
         </div>
       ) : (
         <div className='w-full space-y-8'>
-          {quizzes?.map((q: any, index: any) => (
+          {quizzes?.map((q, index) => (
             <div
               key={q?.uuid || index}
               className='group border-border bg-card/90 relative flex w-full items-start gap-4 rounded-[20px] border p-4 shadow-xl backdrop-blur transition-all lg:p-8'
@@ -843,11 +872,12 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
                     <div className='flex w-full flex-row items-center justify-between'>
                       <h3 className='text-lg font-medium'>{q.title}</h3>
                       <span className='border-primary/40 bg-primary/10 text-primary mr-2 inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs font-semibold'>
-                        {q.status.charAt(0).toUpperCase() + q.status.slice(1)}
+                        {(q.status ?? 'draft').charAt(0).toUpperCase() +
+                          (q.status ?? 'draft').slice(1)}
                       </span>
                     </div>
                     <div className='text-muted-foreground text-sm'>
-                      <RichTextRenderer htmlString={q?.description} maxChars={400} />
+                      <RichTextRenderer htmlString={q.description ?? ''} maxChars={400} />
                     </div>
                   </div>
                   <DropdownMenu>
@@ -871,7 +901,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
                         className='text-destructive'
                         onClick={() => {
                           if (q.uuid) {
-                            handleDelete(q as any);
+                            handleDelete(q);
                           }
                         }}
                       >
@@ -922,7 +952,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
             {selectedQuiz && (
               <QuizForm
                 onCancel={handleCancel}
-                initialValues={selectedQuiz as any}
+                initialValues={selectedQuiz}
                 className='px-6 pb-6'
                 quizId={selectedQuiz?.uuid}
                 lessonId={''}
@@ -954,8 +984,8 @@ interface AddQuizDialogProps {
   courseId?: string;
   editingQuiz?: string;
   initialValues?: Partial<QuizFormValues>;
-  onSuccess?: any;
-  onCancel: () => any;
+  onSuccess?: SubmitCallback;
+  onCancel: () => void;
 }
 
 function QuizDialog({
@@ -981,12 +1011,12 @@ function QuizDialog({
         <ScrollArea className='h-[calc(90vh-12rem)]'>
           <QuizForm
             onCancel={onCancel}
-            initialValues={initialValues as any}
+            initialValues={initialValues}
             className='px-6 pb-6'
             quizId={editingQuiz}
             lessonId={lessonId as string}
             courseId={courseId as string}
-            onSuccess={onSuccess}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>
@@ -999,9 +1029,9 @@ interface QuestionDialogProps {
   setOpen: (open: boolean) => void;
   quizId?: string;
   questionId?: string;
-  initialValues?: Partial<QuizFormValues>;
-  onSuccess?: any;
-  onCancel: () => any;
+  initialValues?: Partial<QuestionFormValues>;
+  onSuccess?: QuestionSubmitCallback;
+  onCancel: () => void;
 }
 
 function QuestionDialog({
@@ -1028,12 +1058,12 @@ function QuestionDialog({
 
         <ScrollArea className='h-auto'>
           <QuestionForm
-            onSuccess={onSuccess}
+            onSuccess={onSuccess ?? (() => {})}
             onCancel={() => setOpen(false)}
             className='px-6 pb-6'
             quizId={quizId}
             questionId={questionId}
-            initialValues={initialValues as any}
+            initialValues={initialValues}
           />
         </ScrollArea>
       </DialogContent>
@@ -1047,9 +1077,9 @@ interface OptionsDialogProps {
   quizId?: string;
   questionId?: string;
   optionId?: string;
-  initialValues?: Partial<QuizFormValues>;
-  onSuccess?: any;
-  onCancel: () => any;
+  initialValues?: Partial<OptionFormValues>;
+  onSuccess?: OptionSubmitCallback;
+  onCancel: () => void;
 }
 
 function OptionDialog({
@@ -1075,12 +1105,12 @@ function OptionDialog({
 
         <ScrollArea className='h-auto'>
           <OptionForm
-            onSuccess={onSuccess}
+            onSuccess={onSuccess ?? (() => {})}
             onCancel={() => setOpen(false)}
             className='px-6 pb-6'
             quizId={quizId}
             questionId={questionId}
-            initialValues={initialValues as any}
+            initialValues={initialValues}
           />
         </ScrollArea>
       </DialogContent>
