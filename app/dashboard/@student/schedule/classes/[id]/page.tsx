@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { isAfter } from 'date-fns';
+import { format, isAfter } from 'date-fns';
 import { BookOpen, Calendar } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -15,6 +15,7 @@ import { useStudent } from '@/context/student-context';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
+import type { GetClassScheduleResponse, GetEnrollmentsForClassResponse } from '@/services/client';
 // Import your API functions
 import {
   getClassDefinitionOptions,
@@ -27,16 +28,74 @@ import {
 import { CustomLoadingState } from '../../../../@course_creator/_components/loading-state';
 import { FeedbackDialog } from '../../../../_components/review-instructor-modal';
 import { ClassPageHeader } from './ClassPageHeader';
-import { CourseProgramSection } from './CourseProgram';
+import { CourseProgramSection, type LessonContent, type LessonModule } from './CourseProgram';
 import { LessonDetailsSidebar } from './LessonDetailsSidebar';
 import { NextClassCard } from './NextClassCard';
 import { ReadingMode } from './ReadingMode';
-import { ScheduleDetailsDialog } from './StudentDetailsDialog';
-import { ClassScheduleCalendar } from './SudentClassSchedule';
+import {
+  ScheduleDetailsDialog,
+  type ClassScheduleItem as ScheduleDetailsItem,
+} from './StudentDetailsDialog';
+import { ClassScheduleCalendar, type ClassScheduleItem } from './SudentClassSchedule';
 import { VideoPlayer } from './VideoPlayer';
 import { WeeklyScheduleList } from './WeeklyScheduleList';
 
 // Import components
+
+type ClassEnrollment = NonNullable<GetEnrollmentsForClassResponse['data']>[number];
+type ApiClassScheduleItem = NonNullable<
+  NonNullable<GetClassScheduleResponse['data']>['content']
+>[number] & {
+  student_attended?: boolean | null;
+};
+
+function toScheduleDetailsItem(schedule: ClassScheduleItem): ScheduleDetailsItem {
+  return {
+    uuid: schedule.uuid,
+    start_time: schedule.start_time,
+    end_time: schedule.end_time,
+    title: schedule.title,
+    location_type: schedule.location_type,
+    status: schedule.status,
+    duration_formatted: schedule.duration_formatted,
+    instructor_name: schedule.instructor_name,
+    student_attended: schedule.student_attended,
+  };
+}
+
+function normalizeScheduleItem(
+  schedule: ApiClassScheduleItem,
+  instructorName?: string
+): ClassScheduleItem | null {
+  if (!schedule.uuid || !schedule.class_definition_uuid) {
+    return null;
+  }
+
+  const startTime = new Date(schedule.start_time);
+  const endTime = new Date(schedule.end_time);
+
+  return {
+    uuid: schedule.uuid,
+    class_definition_uuid: schedule.class_definition_uuid,
+    start_time: String(schedule.start_time),
+    end_time: String(schedule.end_time),
+    timezone: schedule.timezone,
+    title: schedule.title,
+    location_type: schedule.location_type === 'ONLINE' ? 'ONLINE' : 'PHYSICAL',
+    status: schedule.status === 'CANCELLED' ? 'CANCELLED' : 'SCHEDULED',
+    duration_minutes: Number(schedule.duration_minutes ?? 0),
+    duration_formatted:
+      schedule.duration_formatted ??
+      `${Math.max(0, Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)))} mins`,
+    time_range:
+      schedule.time_range ?? `${format(startTime, 'h:mm a')} - ${format(endTime, 'h:mm a')}`,
+    is_currently_active: Boolean(schedule.is_currently_active),
+    can_be_cancelled: Boolean(schedule.can_be_cancelled),
+    instructor_name: instructorName,
+    student_attended:
+      typeof schedule.student_attended === 'boolean' ? schedule.student_attended : null,
+  };
+}
 
 export default function ClassDetailsPage() {
   const params = useParams();
@@ -47,11 +106,11 @@ export default function ClassDetailsPage() {
 
   // State Management
   const [showCalendar, setShowCalendar] = useState(false);
-  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [selectedSchedule, setSelectedSchedule] = useState<ScheduleDetailsItem | null>(null);
   const [showCourseProgram, setShowCourseProgram] = useState(true);
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
-  const [selectedLesson, setSelectedLesson] = useState(null);
+  const [selectedLesson, setSelectedLesson] = useState<LessonContent | null>(null);
 
   // Feedback/Rating states
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
@@ -103,8 +162,16 @@ export default function ClassDetailsPage() {
     enabled: !!classDefinition?.uuid,
   });
 
+  const normalizedSchedules = useMemo(
+    () =>
+      (classSchedules?.data?.content ?? [])
+        .map(schedule => normalizeScheduleItem(schedule, instructor?.full_name))
+        .filter((schedule): schedule is ClassScheduleItem => schedule !== null),
+    [classSchedules?.data?.content, instructor?.full_name]
+  );
+
   const studentEnrollment = classEnrollments?.data?.find(
-    (enrollment: any) => enrollment?.student_uuid === student?.uuid
+    (enrollment: ClassEnrollment) => enrollment?.student_uuid === student?.uuid
   );
 
   const {
@@ -113,20 +180,57 @@ export default function ClassDetailsPage() {
     contentTypeMap,
   } = useCourseLessonsWithContent({ courseUuid: course?.data?.uuid as string });
 
+  const courseProgramLessons = useMemo(() => {
+    return (lessonsWithContent ?? []).flatMap(item => {
+      if (!item.lesson.uuid) {
+        return [];
+      }
+
+      const lesson: LessonModule = {
+        lesson: {
+          uuid: item.lesson.uuid,
+          title: item.lesson.title,
+          description: item.lesson.description,
+        },
+        content: {
+          data: (item.content?.data ?? []).flatMap(content => {
+            if (!content.uuid) {
+              return [];
+            }
+
+            const lessonContent: LessonContent = {
+              uuid: content.uuid,
+              title: content.title,
+              type: String(contentTypeMap[content.content_type_uuid] ?? 'content'),
+              content_type_uuid: content.content_type_uuid,
+              content_text: content.content_text,
+              file_url: content.file_url,
+              duration: content.file_size_display,
+              description: content.description,
+            };
+
+            return [lessonContent];
+          }),
+        },
+      };
+
+      return [lesson];
+    });
+  }, [contentTypeMap, lessonsWithContent]);
+
   // Mutations
   const reviewInstructor = useMutation(submitInstructorReviewMutation());
 
   // Computed Values
   const nextClass = useMemo(() => {
     const now = new Date();
-    const schedules = classSchedules?.data?.content || [];
-    const upcoming = schedules
-      .filter((s: any) => isAfter(new Date(s.start_time), now))
+    const upcoming = normalizedSchedules
+      .filter(schedule => isAfter(new Date(schedule.start_time), now))
       .sort(
-        (a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        (left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime()
       );
     return upcoming[0] || null;
-  }, [classSchedules]);
+  }, [normalizedSchedules]);
 
   const progress = useMemo(() => {
     const totalLessons =
@@ -160,26 +264,31 @@ export default function ClassDetailsPage() {
   }, [classDefinition, replaceBreadcrumbs]);
 
   useEffect(() => {
-    if (lessonsWithContent?.length > 0 && !selectedLesson) {
-      const firstLesson = lessonsWithContent[0];
-      setExpandedModules([firstLesson?.lesson?.uuid]);
-      setSelectedLesson(firstLesson?.content?.data[0]);
+    const firstLesson = courseProgramLessons[0];
+
+    if (firstLesson && !selectedLesson) {
+      setExpandedModules([firstLesson.lesson.uuid]);
+      setSelectedLesson(firstLesson.content.data[0] ?? null);
     }
-  }, [lessonsWithContent, selectedLesson]);
+  }, [courseProgramLessons, selectedLesson]);
 
   // Handlers
   const handleSubmitFeedback = () => {
-    if (!classDefinition || !studentEnrollment) {
+    if (!classDefinition || !studentEnrollment?.uuid || !instructor?.uuid || !student?.uuid) {
       toast.error('Class or student enrollment not found');
       return;
     }
 
+    const enrollmentUuid = studentEnrollment.uuid;
+    const instructorUuid = instructor.uuid;
+    const studentUuid = student.uuid;
+
     reviewInstructor.mutate(
       {
         body: {
-          enrollment_uuid: studentEnrollment.uuid,
-          instructor_uuid: instructor?.data?.uuid,
-          student_uuid: student?.uuid,
+          enrollment_uuid: enrollmentUuid,
+          instructor_uuid: instructorUuid,
+          student_uuid: studentUuid,
           comments: feedbackComment,
           headline: headline,
           is_anonymous: false,
@@ -188,7 +297,7 @@ export default function ClassDetailsPage() {
           engagement_rating: engagementRating,
           punctuality_rating: punctualityRating,
         },
-        path: { instructorUuid: instructor?.data?.uuid },
+        path: { instructorUuid },
       },
       {
         onSuccess: data => {
@@ -208,7 +317,7 @@ export default function ClassDetailsPage() {
     );
   };
 
-  const handleLessonSelect = (lesson: any) => {
+  const handleLessonSelect = (lesson: LessonContent) => {
     setSelectedLesson(lesson);
     setIsPlaying(false);
     setIsReading(false);
@@ -253,10 +362,10 @@ export default function ClassDetailsPage() {
         duration={classDefinition?.duration_formatted || ''}
         difficulty={
           difficultyMap && course?.data?.difficulty_uuid
-            ? difficultyMap[course.data.difficulty_uuid]
+            ? (difficultyMap[course.data.difficulty_uuid] ?? 'N/A')
             : 'N/A'
         }
-        instructorName={instructor?.data?.full_name || ''}
+        instructorName={instructor?.full_name || ''}
         onRateInstructor={() => setShowFeedbackDialog(true)}
       />
 
@@ -308,7 +417,7 @@ export default function ClassDetailsPage() {
               <CourseProgramSection
                 isVisible={showCourseProgram}
                 onToggleVisibility={() => setShowCourseProgram(false)}
-                lessons={lessonsWithContent || []}
+                lessons={courseProgramLessons}
                 expandedModuleId={expandedModuleId}
                 onToggleModule={handleToggleModule}
                 selectedLesson={selectedLesson}
@@ -335,8 +444,13 @@ export default function ClassDetailsPage() {
 
         {/* Weekly Schedule */}
         <WeeklyScheduleList
-          schedules={classSchedules?.data?.content || []}
-          onScheduleClick={setSelectedSchedule}
+          schedules={normalizedSchedules}
+          onScheduleClick={schedule => {
+            const selected = normalizedSchedules.find(item => item.uuid === schedule.uuid);
+            if (selected) {
+              setSelectedSchedule(toScheduleDetailsItem(selected));
+            }
+          }}
         />
       </div>
 
@@ -347,9 +461,9 @@ export default function ClassDetailsPage() {
             <DialogTitle className='text-base sm:text-lg'>Class Schedule Calendar</DialogTitle>
           </DialogHeader>
           <ClassScheduleCalendar
-            schedules={classSchedules?.data?.content || []}
+            schedules={normalizedSchedules}
             onScheduleClick={schedule => {
-              setSelectedSchedule(schedule);
+              setSelectedSchedule(toScheduleDetailsItem(schedule));
               setShowCalendar(false);
             }}
           />

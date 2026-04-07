@@ -46,7 +46,7 @@ export function AudioPlayer({ isOpen, onClose, audioUrl, title, description }: A
         if (url.hostname.includes('youtu.be')) {
           videoId = url.pathname.slice(1);
         } else if (url.pathname.includes('/embed/')) {
-          videoId = url.pathname.split('/embed/')[1]?.split('/')[0];
+          videoId = url.pathname.split('/embed/')[1]?.split('/')[0] ?? '';
         } else {
           videoId = url.searchParams.get('v') || '';
         }

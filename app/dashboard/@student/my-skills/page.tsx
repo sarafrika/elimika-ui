@@ -7,6 +7,7 @@ import {
   CheckCircle,
   Clock,
   Download,
+  type LucideIcon,
   PlusCircle,
   Star,
   TrendingUp,
@@ -26,6 +27,13 @@ import {
   getStudentScheduleOptions,
   getTrainingProgramByUuidOptions,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import type {
+  Certificate,
+  ClassDefinition,
+  Course,
+  StudentSchedule,
+  TrainingProgram,
+} from '../../../../services/client/types.gen';
 
 const elimikaDesignSystem = {
   components: {
@@ -39,6 +47,78 @@ const truncateText = (value?: string, length = 140) => {
   if (!value) return '';
   return value.length > length ? `${value.slice(0, length).trim()}...` : value;
 };
+
+type Enrollment = StudentSchedule;
+type CourseOrProgram = Course | TrainingProgram;
+type SkillLevel = 'Advanced' | 'Intermediate' | 'Beginner';
+type CourseStatus = 'complete' | 'passed' | 'failed' | 'incomplete';
+
+type Skill = {
+  uuid?: string;
+  name: string;
+  type: 'Course' | 'Program';
+  grade?: string;
+  finalGrade?: number;
+  completedDate: Date;
+  certificateUrl?: string;
+  isDownloadable?: boolean;
+  certificateType?: string;
+  level: SkillLevel;
+};
+
+type EnrolledCourse = {
+  id?: string;
+  title: string;
+  status: CourseStatus;
+  progress: number;
+  grade: string | null;
+  completedDate: Date | null;
+  category: string;
+  type: 'Course' | 'Program';
+  enrollmentStatus?: Enrollment['enrollment_status'];
+  classTitle: string | null;
+  description: string;
+  duration: string | null;
+  classLimit: number | null;
+  course_uuid: string;
+  program_uuid: string;
+};
+
+type StatusBadge = {
+  text: string;
+  bg: string;
+  text_color: string;
+  icon: LucideIcon;
+};
+
+const getCourseOrProgramName = (courseOrProgram?: CourseOrProgram) =>
+  !courseOrProgram
+    ? 'Unknown Skill'
+    : 'name' in courseOrProgram
+      ? courseOrProgram.name
+      : courseOrProgram.title;
+
+const getCourseOrProgramCategory = (courseOrProgram?: CourseOrProgram) =>
+  courseOrProgram && 'category_names' in courseOrProgram
+    ? courseOrProgram.category_names?.[0] || 'General'
+    : 'General';
+
+const getCourseOrProgramDuration = (courseOrProgram?: CourseOrProgram) => {
+  if (!courseOrProgram) return null;
+
+  if ('duration_hours' in courseOrProgram) {
+    return `${courseOrProgram.duration_hours}h ${courseOrProgram.duration_minutes || 0}m`;
+  }
+
+  return `${courseOrProgram.total_duration_hours}h ${courseOrProgram.total_duration_minutes || 0}m`;
+};
+
+const getSkillLevel = (finalGrade?: number): SkillLevel =>
+  finalGrade && finalGrade >= 90
+    ? 'Advanced'
+    : finalGrade && finalGrade >= 75
+      ? 'Intermediate'
+      : 'Beginner';
 
 const MySkillsPage = () => {
   const router = useRouter();
@@ -56,7 +136,7 @@ const MySkillsPage = () => {
   const { data: enrollmentsData, isLoading: isLoadingEnrollments } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: student?.uuid as string },
-      query: { start: '2026-01-01', end: '2027-12-31' },
+      query: { start: new Date('2026-01-01'), end: new Date('2027-12-31') },
     }),
     enabled: !!student?.uuid,
   });
@@ -65,8 +145,8 @@ const MySkillsPage = () => {
   const uniqueEnrollments = useMemo(() => {
     if (!enrollmentsData?.data) return [];
 
-    const map = new Map<string, any>();
-    enrollmentsData.data.forEach((item: any) => {
+    const map = new Map<string, Enrollment>();
+    enrollmentsData.data.forEach(item => {
       if (item.class_definition_uuid && !map.has(item.class_definition_uuid)) {
         map.set(item.class_definition_uuid, item);
       }
@@ -80,8 +160,8 @@ const MySkillsPage = () => {
       Array.from(
         new Set(
           uniqueEnrollments
-            .map((enrollment: any) => enrollment.class_definition_uuid)
-            .filter(Boolean)
+            .map(enrollment => enrollment.class_definition_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
         )
       ),
     [uniqueEnrollments]
@@ -95,11 +175,12 @@ const MySkillsPage = () => {
   });
 
   const classDefinitionsMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, ClassDefinition>();
     classDefinitionQueries.forEach((query, index) => {
       const classDefinition = query.data?.data?.class_definition;
-      if (classDefinition) {
-        map.set(classDefinitionUuids[index], classDefinition);
+      const classDefinitionUuid = classDefinitionUuids[index];
+      if (classDefinition && classDefinitionUuid) {
+        map.set(classDefinitionUuid, classDefinition);
       }
     });
     return map;
@@ -111,14 +192,16 @@ const MySkillsPage = () => {
     const programs = new Set<string>();
 
     // From certificates
-    certificates.forEach((cert: any) => {
+    certificates.forEach(cert => {
       if (cert.course_uuid) courses.add(cert.course_uuid);
       if (cert.program_uuid) programs.add(cert.program_uuid);
     });
 
     // From enrollments
-    uniqueEnrollments.forEach((enroll: any) => {
-      const classDefinition = classDefinitionsMap.get(enroll.class_definition_uuid);
+    uniqueEnrollments.forEach(enroll => {
+      const classDefinition = enroll.class_definition_uuid
+        ? classDefinitionsMap.get(enroll.class_definition_uuid)
+        : undefined;
       if (classDefinition?.course_uuid) courses.add(classDefinition.course_uuid);
       if (classDefinition?.program_uuid) programs.add(classDefinition.program_uuid);
     });
@@ -147,37 +230,41 @@ const MySkillsPage = () => {
 
   // Create maps of courses and programs
   const coursesMap = useMemo(() => {
-    const map = new Map();
+    const map = new Map<string, Course>();
     courseQueries.forEach((query, index) => {
-      if (query.data?.data) {
-        map.set(courseUuids[index], query.data.data);
+      const courseUuid = courseUuids[index];
+      if (query.data?.data && courseUuid) {
+        map.set(courseUuid, query.data.data);
       }
     });
     return map;
   }, [courseQueries, courseUuids]);
 
   const programsMap = useMemo(() => {
-    const map = new Map();
+    const map = new Map<string, TrainingProgram>();
     programQueries.forEach((query, index) => {
-      if (query.data?.data) {
-        map.set(programUuids[index], query.data.data);
+      const programUuid = programUuids[index];
+      if (query.data?.data && programUuid) {
+        map.set(programUuid, query.data.data);
       }
     });
     return map;
   }, [programQueries, programUuids]);
 
   // Calculate skills from certificates
-  const skills = useMemo(() => {
+  const skills = useMemo<Skill[]>(() => {
     return certificates
-      .filter((cert: any) => cert.is_valid)
-      .map((cert: any) => {
+      .filter(cert => cert.is_valid)
+      .map(cert => {
         const courseOrProgram = cert.course_uuid
           ? coursesMap.get(cert.course_uuid)
-          : programsMap.get(cert.program_uuid);
+          : cert.program_uuid
+            ? programsMap.get(cert.program_uuid)
+            : undefined;
 
         return {
           uuid: cert.uuid,
-          name: courseOrProgram?.name || courseOrProgram?.title || 'Unknown Skill',
+          name: getCourseOrProgramName(courseOrProgram),
           type: cert.course_uuid ? 'Course' : 'Program',
           grade: cert.grade_letter,
           finalGrade: cert.final_grade,
@@ -185,12 +272,7 @@ const MySkillsPage = () => {
           certificateUrl: cert.certificate_url,
           isDownloadable: cert.is_downloadable,
           certificateType: cert.certificate_type,
-          level:
-            cert.final_grade >= 90
-              ? 'Advanced'
-              : cert.final_grade >= 75
-                ? 'Intermediate'
-                : 'Beginner',
+          level: getSkillLevel(cert.final_grade),
         };
       });
   }, [certificates, coursesMap, programsMap]);
@@ -217,31 +299,35 @@ const MySkillsPage = () => {
   }, [skills]);
 
   // Process enrollments into course cards
-  const enrolledCourses = useMemo(() => {
-    return uniqueEnrollments.map((enroll: any) => {
-      const classDefinition = classDefinitionsMap.get(enroll.class_definition_uuid);
+  const enrolledCourses = useMemo<EnrolledCourse[]>(() => {
+    return uniqueEnrollments.map(enroll => {
+      const classDefinition = enroll.class_definition_uuid
+        ? classDefinitionsMap.get(enroll.class_definition_uuid)
+        : undefined;
       const courseUuid = classDefinition?.course_uuid;
       const programUuid = classDefinition?.program_uuid;
       const courseOrProgram = courseUuid
         ? coursesMap.get(courseUuid)
-        : programsMap.get(programUuid);
+        : programUuid
+          ? programsMap.get(programUuid)
+          : undefined;
 
       // Find matching certificate
       const certificate = certificates.find(
-        (cert: any) =>
+        cert =>
           (cert.course_uuid && cert.course_uuid === courseUuid) ||
           (cert.program_uuid && cert.program_uuid === programUuid)
       );
 
-      let status = 'incomplete';
+      let status: CourseStatus = 'incomplete';
       let progress = 0; // Default for in-progress
 
       if (certificate) {
         if (certificate.is_valid) {
-          status = certificate.final_grade >= 50 ? 'passed' : 'failed';
+          status = (certificate.final_grade || 0) >= 50 ? 'passed' : 'failed';
           progress = 100;
         }
-      } else if (enroll.enrollment_status === 'COMPLETED') {
+      } else if (String(enroll.enrollment_status) === 'COMPLETED') {
         status = 'complete';
         progress = 100;
       }
@@ -249,8 +335,7 @@ const MySkillsPage = () => {
       return {
         id: enroll.enrollment_uuid,
         title:
-          courseOrProgram?.name ||
-          courseOrProgram?.title ||
+          getCourseOrProgramName(courseOrProgram) ||
           classDefinition?.title ||
           enroll.title ||
           'Unknown Course',
@@ -258,17 +343,12 @@ const MySkillsPage = () => {
         progress,
         grade: certificate?.grade_letter || null,
         completedDate: certificate?.completion_date || null,
-        category: Array.isArray(courseOrProgram?.category_names)
-          ? courseOrProgram.category_names[0]
-          : courseOrProgram?.category_names || 'General',
+        category: getCourseOrProgramCategory(courseOrProgram),
         type: courseUuid ? 'Course' : 'Program',
         enrollmentStatus: enroll.enrollment_status,
         classTitle: classDefinition?.title || null,
         description: truncateText(stripHtml(courseOrProgram?.description), 180),
-        duration:
-          typeof courseOrProgram?.duration_hours === 'number'
-            ? `${courseOrProgram.duration_hours}h ${courseOrProgram?.duration_minutes || 0}m`
-            : null,
+        duration: getCourseOrProgramDuration(courseOrProgram),
         classLimit: courseOrProgram?.class_limit ?? null,
         course_uuid: courseUuid || '',
         program_uuid: programUuid || '',
@@ -276,8 +356,8 @@ const MySkillsPage = () => {
     });
   }, [uniqueEnrollments, classDefinitionsMap, coursesMap, programsMap, certificates]);
 
-  const getStatusBadge = (status: string) => {
-    const badges: any = {
+  const getStatusBadge = (status: CourseStatus): StatusBadge => {
+    const badges: Record<CourseStatus, StatusBadge> = {
       complete: {
         text: 'Completed',
         bg: 'bg-blue-100',
@@ -303,10 +383,10 @@ const MySkillsPage = () => {
         icon: Clock,
       },
     };
-    return badges[status] || badges.incomplete;
+    return badges[status];
   };
 
-  const getGradeColor = (grade: string) => {
+  const getGradeColor = (grade?: string | null) => {
     if (!grade) return 'text-muted-foreground';
     if (grade.startsWith('A')) return 'text-green-600';
     if (grade.startsWith('B')) return 'text-blue-600';

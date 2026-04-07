@@ -38,10 +38,14 @@ import {
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
-import { humanizeEnum, type StudentScheduleInstance } from './schedule-data';
+import {
+  humanizeEnum,
+  type StudentClassRecord,
+  type StudentScheduleInstance,
+} from './schedule-data';
 
 type Props = {
-  classDefinitions: any[];
+  classDefinitions: StudentClassRecord[];
   scheduleInstances: StudentScheduleInstance[];
   loading?: boolean;
 };
@@ -90,7 +94,7 @@ export default function TimetableManager({ classDefinitions, loading, scheduleIn
   );
 
   const activeClasses = classDefinitions.filter(
-    (classRecord: any) => (classRecord.schedules?.length ?? 0) > 0
+    classRecord => (classRecord.schedules?.length ?? 0) > 0
   ).length;
 
   if (loading) {

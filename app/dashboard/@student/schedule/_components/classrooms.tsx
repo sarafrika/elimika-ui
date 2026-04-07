@@ -12,11 +12,12 @@ import {
   formatClassroomLabel,
   getClassData,
   humanizeEnum,
+  type StudentClassRecord,
   type StudentScheduleInstance,
 } from './schedule-data';
 
 type Props = {
-  classDefinitions: any[];
+  classDefinitions: StudentClassRecord[];
   scheduleInstances: StudentScheduleInstance[];
   loading?: boolean;
 };
@@ -54,7 +55,7 @@ export default function ClassroomPage({ classDefinitions, loading, scheduleInsta
       classroom: classData?.classroom,
       baseLocation,
       nextSession,
-      schedules: (classRecord.schedules ?? []).map((schedule: any) => ({
+      schedules: (classRecord.schedules ?? []).map(schedule => ({
         uuid: schedule.uuid,
         title: schedule.title || classData?.title || 'Scheduled session',
         startTime: schedule.start_time,
