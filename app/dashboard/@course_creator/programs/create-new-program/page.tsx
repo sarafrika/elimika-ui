@@ -1,15 +1,16 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ComponentProps } from 'react';
 import { useEffect, useState } from 'react';
 
 import {
   createTrainingProgramMutation,
   getTrainingProgramByUuidOptions,
-  publishProgramMutation,
   searchTrainingProgramsQueryKey,
   updateTrainingProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { SchemaEnum4 } from '@/services/client/types.gen';
 
 import { X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -20,21 +21,28 @@ import { useCourseCreator } from '../../../../../context/course-creator-context'
 import ProgramBasicInfo from './ProgramBasicInfo';
 import ProgramCourseManagement from './ProgramCourseManagement';
 
-interface ProgramFormData {
-  title: string;
-  description: string;
-  objectives: string;
-  prerequisites: string;
-  class_limit: number;
-  price: number;
-  program_type: string;
+type ProgramBasicInfoData = ComponentProps<typeof ProgramBasicInfo>['initialData'];
+
+interface ProgramFormData extends ProgramBasicInfoData {
   course_creator_uuid: string;
   category_uuid: string;
   total_duration_hours: number;
   total_duration_minutes: number;
-  status: string;
+  status: SchemaEnum4;
+  published: boolean;
   active: boolean;
 }
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = error.message;
+    if (typeof message === 'string' && message.length > 0) {
+      return message;
+    }
+  }
+
+  return fallback;
+};
 
 const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
   const qc = useQueryClient();
@@ -68,7 +76,9 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
     total_duration_hours: 0,
     total_duration_minutes: 0,
     status: 'draft',
+    published: false,
     active: true,
+    categories: [],
   });
 
   // Initialize form data when editing
@@ -88,7 +98,9 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
       total_duration_hours: editingProgram.total_duration_hours ?? 0,
       total_duration_minutes: editingProgram.total_duration_minutes ?? 0,
       status: editingProgram.status ?? 'draft',
+      published: editingProgram.published ?? false,
       active: editingProgram.active ?? false,
+      categories: editingProgram.category_uuid ? [editingProgram.category_uuid] : [],
     });
 
     setIsInitialized(true);
@@ -102,8 +114,6 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
 
   const createProgramMut = useMutation(createTrainingProgramMutation());
   const updateProgramMut = useMutation(updateTrainingProgramMutation());
-  const publishProgramMut = useMutation(publishProgramMutation());
-
   const onCancel = () => {
     router.push('/dashboard/programs');
   };
@@ -119,34 +129,40 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
     });
   };
 
-  const handleStep1Submit = (data: ProgramFormData) => {
-    setFormData(data);
+  const handleStep1Submit = (data: ProgramBasicInfoData) => {
+    const nextFormData: ProgramFormData = {
+      ...formData,
+      ...data,
+      category_uuid: data.categories[0] ?? '',
+    };
+
+    setFormData(nextFormData);
 
     if (programUuid) {
       // UPDATE existing program
       updateProgramMut.mutate(
         {
-          body: data,
+          body: nextFormData,
           path: { uuid: programUuid },
         },
         {
-          onSuccess: response => {
+          onSuccess: () => {
             invalidateProgramQueries();
-            toast.success(response?.message || 'Program updated successfully');
+            toast.success('Program updated successfully');
             setStep(2);
           },
-          onError: (error: any) => {
-            toast.error(error?.message || 'Failed to update program');
+          onError: error => {
+            toast.error(getErrorMessage(error, 'Failed to update program'));
           },
         }
       );
     } else {
       // CREATE new program
       createProgramMut.mutate(
-        { body: data },
+        { body: nextFormData },
         {
           onSuccess: response => {
-            const newProgramUuid = response?.data?.uuid || response?.uuid;
+            const newProgramUuid = response?.uuid;
 
             if (!newProgramUuid) {
               toast.error('Program created but UUID not returned');
@@ -164,8 +180,8 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
             invalidateProgramQueries();
             setStep(2);
           },
-          onError: (error: any) => {
-            toast.error(error?.message || 'Failed to create program');
+          onError: error => {
+            toast.error(getErrorMessage(error, 'Failed to create program'));
           },
         }
       );
@@ -183,6 +199,7 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
         body: {
           ...formData,
           status: 'published',
+          published: true,
         },
         path: { uuid: programUuid },
       },
@@ -192,8 +209,8 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
           toast.success(response?.message || 'Program published successfully');
           onComplete?.();
         },
-        onError: (error: any) => {
-          toast.error(error?.message || 'Failed to publish program');
+        onError: error => {
+          toast.error(getErrorMessage(error, 'Failed to publish program'));
         },
       }
     );
@@ -210,6 +227,7 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
         body: {
           ...formData,
           status: 'draft',
+          published: false,
         },
         path: { uuid: programUuid },
       },
@@ -219,8 +237,8 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
           toast.success(response?.message || 'Draft saved successfully');
           onComplete?.();
         },
-        onError: (error: any) => {
-          toast.error(error?.message || 'Failed to save draft');
+        onError: error => {
+          toast.error(getErrorMessage(error, 'Failed to save draft'));
         },
       }
     );

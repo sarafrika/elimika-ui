@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import type { TrainingProgram } from '@/services/client/types.gen';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import ProgramsList from './_components/ProgramList';
 
@@ -16,8 +17,9 @@ const ProgramsPage = () => {
     setView('create');
   };
 
-  const handleEdit = (program: any) => {
-    router.push(`/dashboard/course-management/create-new-program?id=${program?.uuid}`);
+  const handleEdit = (program: Pick<TrainingProgram, 'uuid'>) => {
+    if (!program.uuid) return;
+    router.push(`/dashboard/course-management/create-new-program?id=${program.uuid}`);
   };
 
   const handlePreview = (programUuid: string) => {

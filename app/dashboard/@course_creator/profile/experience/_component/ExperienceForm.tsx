@@ -2,6 +2,7 @@
 
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { UseMutationResult } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -38,6 +39,7 @@ import {
   getCourseCreatorExperienceQueryKey,
   updateCourseCreatorExperienceMutation,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
+import type { UserDomainEnum } from '../../../../../../services/client/types.gen';
 import { zCourseCreatorExperience } from '../../../../../../services/client/zod.gen';
 
 const ExperienceSchema = zCourseCreatorExperience
@@ -60,6 +62,43 @@ const profileExperienceSchema = z.object({
 
 type ExperienceType = z.infer<typeof ExperienceSchema>;
 type ProfileExperienceFormValues = z.infer<typeof profileExperienceSchema>;
+
+const formatDomainBadge = (domain: UserDomainEnum) =>
+  domain
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+const getMutationErrorMessage = (error: unknown) => {
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = error.message;
+    if (typeof message === 'string' && message.length > 0) {
+      return message;
+    }
+  }
+
+  return 'An unexpected error occurred.';
+};
+
+const toMonthInputValue = (value?: Date | string) => {
+  if (!value) return '';
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return date.toISOString().slice(0, 7);
+};
+
+const formatDisplayDate = (value?: Date | string) => {
+  if (!value) return 'N/A';
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return typeof value === 'string' ? value : 'N/A';
+  }
+
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+};
 
 export default function ProfessionalExperienceSettings() {
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -92,7 +131,7 @@ export default function ProfessionalExperienceSettings() {
   const courseCreatorExperience = data?.data?.content || [];
 
   const defaultExperience: ExperienceType = {
-    organization_name: 'Google',
+    organisation_name: 'Google',
     position: 'Software Engineer',
     responsibilities: 'Worked on the search algorithm.',
     start_date: '2020-01',
@@ -104,21 +143,13 @@ export default function ProfessionalExperienceSettings() {
   const passExperiences = (exp: CourseCreatorExperience) => ({
     ...defaultExperience,
     ...exp,
-    start_date: new Date(exp.start_date ?? Date.now())
-      .toISOString()
-      .split('-')
-      .slice(0, 2)
-      .join('-'),
-    end_date: new Date(exp.end_date ?? Date.now()).toISOString().split('-').slice(0, 2).join('-'),
-    updated_by: exp.updated_by ?? 'self',
-    updated_date: new Date(exp.updated_date ?? Date.now()).toISOString(),
-    years_of_experience: exp.years_of_experience ? exp.years_of_experience.toString() : '',
+    start_date: toMonthInputValue(exp.start_date),
+    end_date: toMonthInputValue(exp.end_date),
   });
 
   const form = useForm<ProfileExperienceFormValues>({
     resolver: zodResolver(profileExperienceSchema),
     defaultValues: {
-      //@ts-expect-error
       experiences:
         courseCreatorExperience && courseCreatorExperience.length > 0
           ? courseCreatorExperience.map(passExperiences)
@@ -134,7 +165,10 @@ export default function ProfessionalExperienceSettings() {
 
   const updateExpMutation = useMutation(updateCourseCreatorExperienceMutation());
   const addExpMutation = useMutation(addCourseCreatorExperienceMutation());
-  const { errors, submitting } = useMultiMutations([updateExpMutation, addExpMutation]);
+  const { errors, submitting } = useMultiMutations([
+    updateExpMutation,
+    addExpMutation,
+  ] as readonly UseMutationResult<unknown, unknown, unknown, unknown>[]);
 
   const saveExperiences = async (data: ProfileExperienceFormValues) => {
     for (const [index, exp] of data.experiences.entries()) {
@@ -258,14 +292,10 @@ export default function ProfessionalExperienceSettings() {
     return `${start} - ${end}`;
   };
 
-  const domainBadges =
-    // @ts-expect-error
-    user?.data?.user_domain?.map((domain: any) =>
-      domain
-        .split('_')
-        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
-    ) ?? [];
+  const rawUserDomains = user?.user_domain;
+  const domainBadges = (
+    Array.isArray(rawUserDomains) ? rawUserDomains : rawUserDomains ? [rawUserDomains] : []
+  ).map(formatDomainBadge);
 
   return (
     <ProfileFormShell
@@ -282,7 +312,7 @@ export default function ProfessionalExperienceSettings() {
               <AlertDescription>
                 <ul className='ml-4 list-disc space-y-1 text-sm'>
                   {errors.map((error, index) => (
-                    <li key={index}>{error.message}</li>
+                    <li key={index}>{getMutationErrorMessage(error)}</li>
                   ))}
                 </ul>
               </AlertDescription>
@@ -298,12 +328,12 @@ export default function ProfessionalExperienceSettings() {
                   <ProfileViewListItem
                     key={exp.uuid}
                     title={exp.position || 'Position not specified'}
-                    subtitle={exp.organization_name}
+                    subtitle={exp.organisation_name}
                     description={exp.responsibilities}
                     badge={exp.is_current_position ? 'Current' : undefined}
                     dateRange={formatDateRange(
-                      exp.start_date,
-                      exp.end_date,
+                      exp.start_date?.toISOString(),
+                      exp.end_date?.toISOString(),
                       exp.is_current_position
                     )}
                   />
@@ -339,7 +369,7 @@ export default function ProfessionalExperienceSettings() {
                         <Grip className='text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100' />
                         <div>
                           <h3 className='text-base font-medium'>
-                            {form.watch(`experiences.${index}.organization_name`) ||
+                            {form.watch(`experiences.${index}.organisation_name`) ||
                               'New experience'}
                           </h3>
                           <p className='text-muted-foreground text-sm'>
@@ -361,7 +391,7 @@ export default function ProfessionalExperienceSettings() {
                     <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
                       <FormField
                         control={form.control}
-                        name={`experiences.${index}.organization_name`}
+                        name={`experiences.${index}.organisation_name`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Organisation</FormLabel>
