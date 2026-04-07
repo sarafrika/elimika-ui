@@ -35,11 +35,11 @@ import { AvailabilityTypeEnum } from '../../../../services/client';
 export const availabilitySlotSchema = z.object({
   availability_type: z.string(),
   day_of_week: z.number(),
-  day_of_month: z.any().optional(),
-  specific_date: z.any().optional(),
-  start_time: z.any().optional(),
-  end_time: z.any().optional(),
-  custom_pattern: z.any().nullable().optional(),
+  day_of_month: z.coerce.number().optional(),
+  specific_date: z.string().optional(),
+  start_time: z.string().optional(),
+  end_time: z.string().optional(),
+  custom_pattern: z.string().nullable().optional(),
   is_available: z.boolean().optional(),
   recurrence_interval: z.number().optional(),
   effective_start_date: z.string().optional(),
@@ -47,6 +47,7 @@ export const availabilitySlotSchema = z.object({
 });
 
 export type AvailabilitySlotFormValues = z.infer<typeof availabilitySlotSchema>;
+type SubmitCallback = () => void;
 
 function AvailabilitySlotForm({
   onSuccess,
@@ -55,11 +56,11 @@ function AvailabilitySlotForm({
   onCancel,
   className,
 }: {
-  onSuccess: any;
+  onSuccess: SubmitCallback;
   slotId?: string;
   onCancel: () => void;
-  initialValues: any;
-  className: any;
+  initialValues?: Partial<AvailabilitySlotFormValues>;
+  className?: string;
 }) {
   const form = useForm<AvailabilitySlotFormValues>({
     resolver: zodResolver(availabilitySlotSchema),
@@ -82,28 +83,28 @@ function AvailabilitySlotForm({
 
     // if (slotId) {
     //     updateSlot.mutate(
-    //         { path: { uuid: slotId as string }, body: payload as any },
+    //         { path: { uuid: slotId as string }, body: payload },
     //         {
-    //             onSuccess: (data: any) => {
+    //             onSuccess: data => {
     //                 qc.invalidateQueries({ queryKey: getInstructorAvailabilityQueryKey({ path: { instructorUuid: instructor?.uuid as string } }) })
     //                 toast.success(data?.message);
     //                 onSuccess();
     //             },
-    //             onError: (error: any) => {
+    //             onError: error => {
     //                 toast.error(error?.message)
     //             }
     //         }
     //     );
     // } else {
     //     createSlot.mutate(
-    //         { body: payload as any },
+    //         { body: payload },
     //         {
-    //             onSuccess: (data: any) => {
+    //             onSuccess: data => {
     //                 qc.invalidateQueries({ queryKey: getInstructorAvailabilityQueryKey({ path: { instructorUuid: instructor?.uuid as string } }) })
     //                 toast.success(data?.message);
     //                 onSuccess();
     //             },
-    //             onError: (error: any) => {
+    //             onError: error => {
     //                 toast.error(error?.message)
     //             }
     //         }
@@ -346,10 +347,10 @@ function AvailabilitySlotForm({
 interface AvailabilitySlotDialogProps {
   isOpen: boolean;
   setOpen: (open: boolean) => void;
-  onSuccess?: any;
+  onSuccess?: SubmitCallback;
   slotId?: string;
-  initialValues?: any;
-  onCancel: () => any;
+  initialValues?: Partial<AvailabilitySlotFormValues>;
+  onCancel: () => void;
 }
 
 function AvailabilitySlotDialog({
@@ -375,10 +376,10 @@ function AvailabilitySlotDialog({
         <ScrollArea className='h-auto'>
           <AvailabilitySlotForm
             onCancel={onCancel}
-            initialValues={initialValues as any}
+            initialValues={initialValues}
             className='px-6 pb-6'
             slotId={slotId}
-            onSuccess={onSuccess}
+            onSuccess={onSuccess ?? (() => {})}
           />
         </ScrollArea>
       </DialogContent>

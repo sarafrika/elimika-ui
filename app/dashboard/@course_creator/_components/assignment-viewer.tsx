@@ -21,8 +21,10 @@ interface Assignment {
   instructions?: string;
   due_date?: string;
   due_date_display?: string;
-  points?: number;
+  max_points?: number;
   submission_type?: string;
+  submission_types?: string[];
+  submission_summary?: string;
   max_attempts?: number;
   time_limit?: number;
   time_limit_display?: string;
@@ -34,7 +36,7 @@ interface AssignmentViewerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // TODO: Add when API is ready
-  // getAssignmentQuestionsOptions: any;
+  // getAssignmentQuestionsOptions: unknown;
 }
 
 export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentViewerProps) {
@@ -154,7 +156,8 @@ export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentV
                                         </div>
                                     )} */}
 
-                  {(assignment.submission_summary || assignment.submission_types?.length > 0) && (
+                  {(assignment.submission_summary ||
+                    (assignment.submission_types?.length ?? 0) > 0) && (
                     <div className='flex items-center gap-3'>
                       <div className='bg-muted/10 rounded-full p-2'>
                         <FileText className='text-muted-foreground h-4 w-4' />
@@ -164,7 +167,7 @@ export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentV
                         <p className='font-semibold capitalize'>
                           {assignment.submission_summary
                             ? assignment.submission_summary
-                            : assignment.submission_types
+                            : (assignment.submission_types ?? [])
                                 .map((type: string) => type.replace(/_/g, ' '))
                                 .join(', ')}
                         </p>
@@ -208,7 +211,7 @@ export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentV
             {/* TODO: Uncomment when API is ready */}
             {/* Questions Display */}
             {/* {!isLoading &&
-                            assignmentQuestions?.data?.map((question: any, index: number) => (
+                            assignmentQuestions?.data?.map((question, index: number) => (
                                 <Card key={question.uuid} className="border-2">
                                     <CardHeader>
                                         <div className="flex items-start justify-between gap-4">
