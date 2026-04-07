@@ -104,6 +104,9 @@ export type Rubric = {
   scoringLevels: RubricScoringLevel[];
 };
 
+type RubricListItem = Omit<Rubric, 'criteria' | 'scoringLevels'>;
+type CriterionListItem = Omit<Criterion, 'scoring'>;
+
 export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0) => {
   const {
     data: allRubrics,
@@ -112,40 +115,24 @@ export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0) =
     isError: isRubricsError,
     isFetched: isRubricsFetched,
     refetch: refetchRubrics,
-  } = useQuery({
-    ...searchAssessmentRubricsOptions({
+  } = useQuery(
+    searchAssessmentRubricsOptions({
       query: {
         pageable: {},
         searchParams: {
           course_creator_uuid_eq: courseCreatorUuid as string,
         },
       },
-    }),
-    // Including refetchTrigger in the queryKey forces a fresh fetch whenever it changes
-    queryKey: [
-      ...searchAssessmentRubricsOptions({
-        query: {
-          pageable: {},
-          searchParams: { course_creator_uuid_eq: courseCreatorUuid as string },
-        },
-      }).queryKey,
-      refetchTrigger,
-    ],
-  });
+    })
+  );
 
-  const rubricList = allRubrics?.data?.content ?? [];
-  const rubricUuids = rubricList.map((rubric: any) => rubric.uuid);
+  const rubricList = (allRubrics?.data?.content ?? []) as unknown as RubricListItem[];
+  const rubricUuids = rubricList.map(rubric => rubric.uuid);
 
   // Fetch scoring levels for each rubric
   const scoringLevelsQueries = useQueries({
     queries: rubricUuids.map(rubricUuid => ({
-      queryKey: [
-        ...getScoringLevelsByRubricQueryKey({
-          path: { rubricUuid },
-          query: { pageable: {} },
-        }),
-        refetchTrigger,
-      ],
+      queryKey: ['rubric-scoring-levels', rubricUuid, refetchTrigger],
       queryFn: () =>
         getScoringLevelsByRubric({
           path: { rubricUuid },
@@ -158,13 +145,7 @@ export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0) =
   // Fetch criteria for each rubric
   const criteriaQueries = useQueries({
     queries: rubricUuids.map(rubricUuid => ({
-      queryKey: [
-        ...getRubricCriteriaQueryKey({
-          path: { rubricUuid },
-          query: { pageable: {} },
-        }),
-        refetchTrigger,
-      ],
+      queryKey: ['rubric-criteria', rubricUuid, refetchTrigger],
       queryFn: () =>
         getRubricCriteria({
           path: { rubricUuid },
@@ -177,8 +158,9 @@ export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0) =
   // Create pairs of rubric + criteria for scoring queries
   const criteriaPairs = criteriaQueries.flatMap((criteriaQuery, rubricIndex) => {
     const rubricUuid = rubricUuids[rubricIndex];
-    const criteriaList = criteriaQuery.data?.data?.data?.content ?? [];
-    return criteriaList.map((criteria: any) => ({
+    const criteriaList = (criteriaQuery.data?.data?.data?.content ??
+      []) as unknown as CriterionListItem[];
+    return criteriaList.map(criteria => ({
       rubricUuid,
       criteriaUuid: criteria.uuid,
     }));
@@ -187,16 +169,10 @@ export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0) =
   // Fetch scoring (links between criteria and scoring levels)
   const scoringQueries = useQueries({
     queries: criteriaPairs.map(({ rubricUuid, criteriaUuid }) => ({
-      queryKey: [
-        ...getRubricScoringQueryKey({
-          path: { rubricUuid, criteriaUuid },
-          query: { pageable: {} },
-        }),
-        refetchTrigger,
-      ],
+      queryKey: ['rubric-scoring', rubricUuid ?? '', criteriaUuid ?? '', refetchTrigger],
       queryFn: () =>
         getRubricScoring({
-          path: { rubricUuid, criteriaUuid },
+          path: { rubricUuid: rubricUuid ?? '', criteriaUuid: criteriaUuid ?? '' },
           query: { pageable: {} },
         }),
       enabled: !!rubricUuid && !!criteriaUuid,
@@ -214,18 +190,19 @@ export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0) =
     await Promise.all(scoringQueries.map(q => q.refetch()));
   };
 
-  const rubrics: Rubric[] = rubricList.map((rubric: any, rubricIndex: number) => {
-    const scoringLevelsData: RubricScoringLevel[] =
-      scoringLevelsQueries[rubricIndex]?.data?.data?.data?.content ?? [];
+  const rubrics: Rubric[] = rubricList.map((rubric, rubricIndex: number) => {
+    const scoringLevelsData = (scoringLevelsQueries[rubricIndex]?.data?.data?.data?.content ??
+      []) as unknown as RubricScoringLevel[];
 
-    const criteriaList = criteriaQueries[rubricIndex]?.data?.data?.data?.content ?? [];
+    const criteriaList = (criteriaQueries[rubricIndex]?.data?.data?.data?.content ??
+      []) as unknown as CriterionListItem[];
 
-    const criteria: Criterion[] = criteriaList.map((c: any) => {
+    const criteria: Criterion[] = criteriaList.map(c => {
       const scoringQueryIndex = criteriaPairs.findIndex(
         p => p.rubricUuid === rubric.uuid && p.criteriaUuid === c.uuid
       );
-      const criteriaScoringLevels: CriteriaScoring[] =
-        scoringQueries[scoringQueryIndex]?.data?.data?.data?.content ?? [];
+      const criteriaScoringLevels = (scoringQueries[scoringQueryIndex]?.data?.data?.data?.content ??
+        []) as unknown as CriteriaScoring[];
 
       return {
         component_name: c.component_name,
@@ -314,8 +291,8 @@ export const useRubricsWithCriteriaAndScoring = (courseCreatorUuid?: string) => 
     }),
   });
 
-  const rubricList = allRubrics?.data?.content ?? [];
-  const rubricUuids = rubricList.map((rubric: any) => rubric.uuid);
+  const rubricList = (allRubrics?.data?.content ?? []) as unknown as RubricListItem[];
+  const rubricUuids = rubricList.map(rubric => rubric.uuid);
 
   const getRubricMatrixOptions = (rubricUuid: string) => ({
     queryKey: getRubricMatrixQueryKey({ path: { rubricUuid } }),
@@ -341,9 +318,9 @@ export const useRubricsWithCriteriaAndScoring = (courseCreatorUuid?: string) => 
 
   const criteriaPairs = criteriaQueries.flatMap((criteriaQuery, i) => {
     const rubricUuid = rubricUuids[i];
-    const criteriaList = criteriaQuery.data?.data?.data?.content ?? [];
+    const criteriaList = (criteriaQuery.data?.data?.data?.content ?? []) as CriterionListItem[];
 
-    return criteriaList.map((criteria: any) => ({
+    return criteriaList.map(criteria => ({
       rubricUuid,
       criteriaUuid: criteria.uuid,
       criteriaData: criteria,
@@ -353,25 +330,26 @@ export const useRubricsWithCriteriaAndScoring = (courseCreatorUuid?: string) => 
   const scoringQueries = useQueries({
     queries: criteriaPairs.map(({ rubricUuid, criteriaUuid }) => ({
       queryKey: getRubricScoringQueryKey({
-        path: { rubricUuid, criteriaUuid },
+        path: { rubricUuid: rubricUuid ?? '', criteriaUuid: criteriaUuid ?? '' },
         query: { pageable: {} },
       }),
       queryFn: () =>
         getRubricScoring({
-          path: { rubricUuid, criteriaUuid },
+          path: { rubricUuid: rubricUuid ?? '', criteriaUuid: criteriaUuid ?? '' },
           query: { pageable: {} },
         }),
       enabled: !!rubricUuid && !!criteriaUuid,
     })),
   });
 
-  const rubricsWithDetails = rubricList.map((rubric: any, index: number) => {
+  const rubricsWithDetails = rubricList.map((rubric, index: number) => {
     const rubricUuid = rubric.uuid;
 
     const criteriaQuery = criteriaQueries[index];
-    const criteriaList = criteriaQuery?.data?.data?.data?.content ?? [];
+    const criteriaList = (criteriaQuery?.data?.data?.data?.content ??
+      []) as unknown as CriterionListItem[];
 
-    const enrichedCriteria = criteriaList.map((criteria: any) => {
+    const enrichedCriteria = criteriaList.map(criteria => {
       const scoringQuery = scoringQueries.find(
         (_q, idx) =>
           criteriaPairs[idx]?.criteriaUuid === criteria.uuid &&
@@ -447,10 +425,11 @@ export const useRubricDetails = (rubricUuid?: string) => {
     enabled: !!rubricUuid,
   });
 
-  const criteriaList = criteriaResponse?.data?.data?.content ?? [];
+  const criteriaList = (criteriaResponse?.data?.data?.content ??
+    []) as unknown as CriterionListItem[];
 
   const scoringQueries = useQueries({
-    queries: criteriaList.map((criteria: any) => ({
+    queries: criteriaList.map(criteria => ({
       queryKey: getRubricScoringQueryKey({
         path: { rubricUuid: rubricUuid as string, criteriaUuid: criteria.uuid },
         query: { pageable: {} },
@@ -464,7 +443,7 @@ export const useRubricDetails = (rubricUuid?: string) => {
     })),
   });
 
-  const enrichedCriteria = criteriaList.map((criteria: any, index: number) => {
+  const enrichedCriteria = criteriaList.map((criteria, index: number) => {
     const scoringList = scoringQueries[index]?.data?.data?.data?.content ?? [];
 
     return {

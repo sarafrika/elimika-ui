@@ -63,6 +63,9 @@ const generalProfileSchema = z.object({
     .merge(
       z.object({
         location: z.string().optional(),
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
+        formatted_location: z.string().optional(),
       })
     )
     .omit({
@@ -73,6 +76,9 @@ const generalProfileSchema = z.object({
 });
 
 type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>;
+
+const hasOwnKey = <T extends object>(value: T, key: string): key is Extract<keyof T, string> =>
+  Object.prototype.hasOwnProperty.call(value, key);
 
 export default function CourseCreatorProfile() {
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -92,6 +98,9 @@ export default function CourseCreatorProfile() {
 
   const user = useUserProfile();
   const { courseCreator, invalidateQuery } = user!;
+  const courseCreatorProfile = courseCreator as
+    | GeneralProfileFormValues['courseCreator']
+    | undefined;
 
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
@@ -116,7 +125,7 @@ export default function CourseCreatorProfile() {
         profile_image_url: user?.profile_image_url ?? 'https://profilepic.jpg',
       },
       courseCreator: {
-        ...courseCreator,
+        ...courseCreatorProfile,
         latitude: -1.2921,
         longitude: 36.8219,
         full_name: `${user?.first_name} ${user?.last_name}`,
@@ -206,13 +215,33 @@ export default function CourseCreatorProfile() {
           ]);
 
           let hasErrors = false;
+          const userValues = form.getValues('user');
+          const courseCreatorValues = form.getValues('courseCreator');
 
           response.forEach((resp, i) => {
             if (resp.error) {
               const { error } = resp.error as { error: Record<string, string> };
-              Object.keys(error).forEach(key => {
-                const fieldName = `${i === 0 ? 'user' : 'courseCreator'}.${key}` as any;
-                form.setError(fieldName, error[key] as any);
+              Object.entries(error).forEach(([key, message]) => {
+                if (i === 0) {
+                  if (!hasOwnKey(userValues, key)) {
+                    return;
+                  }
+
+                  form.setError(`user.${key}`, {
+                    type: 'server',
+                    message,
+                  });
+                  return;
+                }
+
+                if (!hasOwnKey(courseCreatorValues, key)) {
+                  return;
+                }
+
+                form.setError(`courseCreator.${key}`, {
+                  type: 'server',
+                  message,
+                });
               });
               hasErrors = true;
             }
@@ -255,7 +284,7 @@ export default function CourseCreatorProfile() {
                       alt={`${user?.first_name} ${user?.last_name}`}
                     />
                     <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
-                      {`${user?.first_name?.length > 0 ? user?.first_name?.[0]?.toUpperCase() : ''}${user?.last_name?.length > 0 ? user?.last_name?.[0]?.toUpperCase() : ''}` ||
+                      {`${user?.first_name?.length ? user.first_name[0]?.toUpperCase() : ''}${user?.last_name?.length ? user.last_name[0]?.toUpperCase() : ''}` ||
                         'CC'}
                     </AvatarFallback>
                   </Avatar>
@@ -289,7 +318,7 @@ export default function CourseCreatorProfile() {
                     alt={`${user?.first_name} ${user?.last_name}`}
                   />
                   <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
-                    {`${user?.first_name?.length > 0 ? user?.first_name?.[0]?.toUpperCase() : ''}${user?.last_name?.length > 0 ? user?.last_name?.[0]?.toUpperCase() : ''}` ||
+                    {`${user?.first_name?.length ? user.first_name[0]?.toUpperCase() : ''}${user?.last_name?.length ? user.last_name[0]?.toUpperCase() : ''}` ||
                       'CC'}
                   </AvatarFallback>
                 </Avatar>
@@ -471,23 +500,25 @@ export default function CourseCreatorProfile() {
                 <ProfileViewGrid>
                   <ProfileViewField
                     label='Primary location'
-                    value={courseCreator?.formatted_location || courseCreator?.location}
+                    value={
+                      courseCreatorProfile?.formatted_location || courseCreatorProfile?.location
+                    }
                   />
                   <ProfileViewField
                     label='Professional headline'
-                    value={courseCreator?.professional_headline}
+                    value={courseCreatorProfile?.professional_headline}
                   />
                   <ProfileViewField
                     label='Website or portfolio'
                     value={
-                      courseCreator?.website ? (
+                      courseCreatorProfile?.website ? (
                         <a
-                          href={courseCreator.website}
+                          href={courseCreatorProfile.website}
                           target='_blank'
                           rel='noopener noreferrer'
                           className='text-primary hover:underline'
                         >
-                          {courseCreator.website}
+                          {courseCreatorProfile.website}
                         </a>
                       ) : undefined
                     }
@@ -496,9 +527,9 @@ export default function CourseCreatorProfile() {
 
                 <div className='space-y-2'>
                   <h4 className='text-muted-foreground text-sm font-medium'>About you</h4>
-                  {courseCreator?.bio ? (
+                  {courseCreatorProfile?.bio ? (
                     <HTMLTextPreview
-                      htmlContent={courseCreator.bio}
+                      htmlContent={courseCreatorProfile.bio}
                       className='prose prose-sm dark:prose-invert max-w-none'
                     />
                   ) : (
@@ -541,8 +572,8 @@ export default function CourseCreatorProfile() {
                           typeof coords?.latitude === 'number' &&
                           typeof coords?.longitude === 'number'
                         ) {
-                          form.setValue('courseCreator.latitude', coords.latitude as any);
-                          form.setValue('courseCreator.longitude', coords.longitude as any);
+                          form.setValue('courseCreator.latitude', coords.latitude);
+                          form.setValue('courseCreator.longitude', coords.longitude);
                         }
                       }}
                     />
