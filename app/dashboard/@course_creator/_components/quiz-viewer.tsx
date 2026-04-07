@@ -42,6 +42,23 @@ interface QuizViewerProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type QuizQuestionItem = {
+  uuid?: string;
+  question_text: string;
+  question_type: string;
+  points?: number;
+};
+type QuizOptionItem = {
+  uuid?: string;
+  option_text?: string;
+  is_correct?: boolean;
+  left_text?: string;
+  right_text?: string;
+};
+
+const isQuestionType = (value: string): value is QuestionType =>
+  ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'ESSAY', 'MATCHING', 'SHORT_ANSWER'].includes(value);
+
 export function QuizViewer({ quiz, open, onOpenChange }: QuizViewerProps) {
   const [questionsData, setQuestionsData] = useState<Question[]>([]);
 
@@ -54,13 +71,13 @@ export function QuizViewer({ quiz, open, onOpenChange }: QuizViewerProps) {
   // Fetch options for each question
   const questionOptionsQueries = useQueries({
     queries:
-      quizquestions?.data?.map((q: any) => ({
+      quizquestions?.data?.map((q: QuizQuestionItem) => ({
         queryKey: ['questionOptions', quiz?.uuid, q.uuid],
         queryFn: () =>
           getQuestionOptions({
             path: {
               quizUuid: quiz?.uuid!,
-              questionUuid: q.uuid,
+              questionUuid: q.uuid as string,
             },
             query: { pageable: {} },
           }),
@@ -94,35 +111,44 @@ export function QuizViewer({ quiz, open, onOpenChange }: QuizViewerProps) {
     }
 
     try {
-      const questionsWithOptions: Question[] = quizquestions.data.map((q: any, index: number) => {
-        const optionsData = questionOptionsQueries[index]?.data?.data?.data?.content ?? [];
+      const questionsWithOptions: Question[] = quizquestions.data.map(
+        (q: QuizQuestionItem, index: number) => {
+          const optionsData =
+            (questionOptionsQueries[index]?.data?.data?.data?.content as
+              | QuizOptionItem[]
+              | undefined) ?? [];
 
-        const options = optionsData.map((opt: any) => ({
-          uuid: opt.uuid,
-          text: opt.option_text,
-          isCorrect: opt.is_correct,
-        }));
+          const options = optionsData.map((opt: QuizOptionItem) => ({
+            uuid: opt.uuid,
+            text: opt.option_text ?? '',
+            isCorrect: opt.is_correct ?? false,
+          }));
 
-        return {
-          uuid: q.uuid,
-          text: q.question_text,
-          type: q.question_type.toUpperCase() as QuestionType,
-          points: q.points,
-          options:
-            q.question_type === 'multiple_choice' || q.question_type === 'true_false'
-              ? options
-              : undefined,
-          pairs:
-            q.question_type === 'matching'
-              ? options.map((pair: any) => ({
-                  left: pair.left_text,
-                  right: pair.right_text,
-                }))
-              : undefined,
-          answer:
-            q.question_type === 'essay' || q.question_type === 'short_answer' ? '' : undefined,
-        };
-      });
+          const normalizedType = q.question_type.toUpperCase();
+          const questionType: QuestionType = isQuestionType(normalizedType)
+            ? normalizedType
+            : 'SHORT_ANSWER';
+
+          return {
+            uuid: q.uuid,
+            text: q.question_text,
+            type: questionType,
+            points: q.points,
+            options:
+              questionType === 'MULTIPLE_CHOICE' || questionType === 'TRUE_FALSE'
+                ? options
+                : undefined,
+            pairs:
+              questionType === 'MATCHING'
+                ? optionsData.map((pair: QuizOptionItem) => ({
+                    left: pair.left_text ?? '',
+                    right: pair.right_text ?? '',
+                  }))
+                : undefined,
+            answer: questionType === 'ESSAY' || questionType === 'SHORT_ANSWER' ? '' : undefined,
+          };
+        }
+      );
 
       setQuestionsData(questionsWithOptions);
     } catch (error) {}
@@ -233,7 +259,7 @@ export function QuizViewer({ quiz, open, onOpenChange }: QuizViewerProps) {
                   <CardContent className='space-y-2'>
                     {/* Multiple Choice / True False Options */}
                     {question.options && question.options.length > 0 ? (
-                      question.options.map((option: any, optIndex: number) => (
+                      question.options.map((option, optIndex: number) => (
                         <div
                           key={option.uuid || optIndex}
                           className={`flex items-start gap-3 rounded-lg border-2 p-3 transition-colors ${
@@ -263,7 +289,7 @@ export function QuizViewer({ quiz, open, onOpenChange }: QuizViewerProps) {
                     ) : question.type === 'MATCHING' && question.pairs ? (
                       /* Matching Pairs */
                       <div className='space-y-2'>
-                        {question.pairs.map((pair: any, pairIndex: number) => (
+                        {question.pairs.map((pair, pairIndex: number) => (
                           <div
                             key={pairIndex}
                             className='border-muted bg-muted/30 flex items-center gap-4 rounded-lg border-2 p-3'
