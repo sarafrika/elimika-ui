@@ -11,7 +11,10 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useQuizDetails } from '@/hooks/use-quiz-details'; // adjust path as needed
+import {
+  useQuizDetails,
+  type QuizQuestionWithOptions,
+} from '@/hooks/use-quiz-details'; // adjust path as needed
 import {
   AlertCircle,
   Award,
@@ -34,7 +37,27 @@ const QUESTION_TYPE_STYLES: Record<string, string> = {
   ESSAY: 'bg-muted text-muted-foreground',
 };
 
-function QuestionCard({ question, index }: { question: any; index: number }) {
+type QuizWithSummary = {
+  uuid?: string;
+  title?: string;
+  status?: string;
+  description?: string;
+  time_limit_minutes?: number;
+  attempts_allowed?: number;
+  passing_score?: number;
+};
+
+type ScheduledQuizItem = {
+  uuid?: string;
+  quiz_uuid?: string;
+  due_at?: Date | string | null;
+  time_limit_override?: number | null;
+  attempt_limit_override?: number | null;
+  passing_score_override?: number | null;
+  quiz: QuizWithSummary | null;
+};
+
+function QuestionCard({ question, index }: { question: QuizQuestionWithOptions; index: number }) {
   const typeStyle =
     QUESTION_TYPE_STYLES[question.question_type] ?? 'bg-muted text-muted-foreground';
 
@@ -74,8 +97,8 @@ function QuestionCard({ question, index }: { question: any; index: number }) {
           </p>
           <div className='space-y-2'>
             {question.options
-              .sort((a: any, b: any) => a.display_order - b.display_order)
-              .map((option: any) => (
+              .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+              .map(option => (
                 <div
                   key={option.uuid}
                   className={`flex items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
@@ -127,7 +150,7 @@ export function QuizDetailPanel({
   scheduleItem,
 }: {
   quizUuid: string;
-  scheduleItem: any;
+  scheduleItem: ScheduledQuizItem;
 }) {
   const { questions, isLoading, isError } = useQuizDetails(quizUuid, true);
 
@@ -150,7 +173,7 @@ export function QuizDetailPanel({
     );
   }
 
-  const totalPoints = questions.reduce((sum: number, q: any) => sum + (q.points ?? 0), 0);
+  const totalPoints = questions.reduce((sum: number, question) => sum + (question.points ?? 0), 0);
   const questionCount = questions.length;
 
   return (
@@ -180,8 +203,8 @@ export function QuizDetailPanel({
         ) : (
           <div className='space-y-3'>
             {questions
-              .sort((a: any, b: any) => a.display_order - b.display_order)
-              .map((question: any, index: number) => (
+              .sort((a, b) => a.display_order - b.display_order)
+              .map((question, index: number) => (
                 <QuestionCard key={question.uuid} question={question} index={index} />
               ))}
           </div>
@@ -200,8 +223,8 @@ export function QuizzesSheet({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  mergedQuizzes: any[];
-  deleteQuizScheduleMut: any;
+  mergedQuizzes: ScheduledQuizItem[];
+  deleteQuizScheduleMut: { isPending: boolean };
   onRemoveQuiz: (scheduleUuid: string) => void;
 }) {
   const [expandedQuizUuid, setExpandedQuizUuid] = useState<string | null>(null);
@@ -236,7 +259,7 @@ export function QuizzesSheet({
               </div>
             ) : (
               <div className='space-y-4'>
-                {mergedQuizzes.map((item: any) => {
+                {mergedQuizzes.map(item => {
                   const { quiz, due_at, uuid: scheduleUuid } = item;
                   const isExpanded = expandedQuizUuid === scheduleUuid;
 

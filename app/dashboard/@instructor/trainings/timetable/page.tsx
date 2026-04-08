@@ -1,5 +1,6 @@
 'use client';
 
+import type { DashboardClass } from '@/app/dashboard/_components/types';
 import { useInstructor } from '@/context/instructor-context';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +13,7 @@ import {
 import TimetableManager from './timetable-manager';
 
 interface TimetablePageProps {
-  classesWithCourseAndInstructor: any;
+  classesWithCourseAndInstructor: DashboardClass[];
   loading: boolean;
 }
 
@@ -26,7 +27,10 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
   } = useQuery({
     ...getInstructorCalendarOptions({
       path: { instructorUuid: instructor?.uuid as string },
-      query: { start_date: '2024-09-10' as any, end_date: '2026-11-11' as any },
+      query: {
+        start_date: new Date('2024-09-10'),
+        end_date: new Date('2026-11-11'),
+      },
     }),
     enabled: !!instructor?.uuid,
   });
@@ -51,7 +55,7 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
       ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])
       : [];
 
-    setAvailabilityData((prev: any) => ({
+    setAvailabilityData(prev => ({
       ...prev,
       events: eventsFromSchedule,
     }));
@@ -74,7 +78,7 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
 
   return (
     <TimetableManager
-      availabilityData={availabilityData || []}
+      availabilityData={availabilityData}
       onAvailabilityUpdate={handleAvailabilityUpdate}
     />
   );

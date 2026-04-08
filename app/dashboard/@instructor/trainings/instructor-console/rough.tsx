@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useClassRoster } from '@/hooks/use-class-roster';
+import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useInstructorInfo } from '@/hooks/use-instructor-info';
 import {
@@ -127,15 +127,15 @@ export default function ClassPreviewPage() {
     ...getInstructorScheduleOptions({
       path: { instructorUuid: classData?.default_instructor_uuid as string },
       query: {
-        start: '2026-11-02' as any,
-        end: '2026-12-19' as any,
+        start: new Date('2026-11-02'),
+        end: new Date('2026-12-19'),
       },
     }),
     enabled: !!classData?.default_instructor_uuid,
   });
 
   // --- UI state for the 3-column page
-  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<RosterEntry | null>(null);
   const [grade, setGrade] = useState<number | ''>('');
   const [status, setStatus] = useState<'Submitted' | 'Excused' | 'Missing'>('Submitted');
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
@@ -148,7 +148,10 @@ export default function ClassPreviewPage() {
   const { data: classSchedule } = useQuery({
     ...getInstructorCalendarOptions({
       path: { instructorUuid: classData?.default_instructor_uuid as string },
-      query: { start_date: '2025-09-11' as any, end_date: '2026-11-11' as any },
+      query: {
+        start_date: new Date('2025-09-11'),
+        end_date: new Date('2026-11-11'),
+      },
     }),
     enabled: !!classData?.default_instructor_uuid,
   });
@@ -226,10 +229,10 @@ export default function ClassPreviewPage() {
         </div>
 
         <ScrollArea className='h-[calc(100vh-80px)] flex-1 px-2 py-1'>
-          {roster?.map((entry: any, idx: number) => {
+          {roster?.map((entry: RosterEntry, idx: number) => {
             const name = entry?.user?.full_name ?? 'Unknown';
             const isActive = entry?.enrollment?.status === 'ENROLLED';
-            const isSelected = selectedStudent === name;
+            const isSelected = selectedStudent?.user?.uuid === entry?.user?.uuid;
 
             return (
               <Button

@@ -42,11 +42,9 @@ const CLASS_FOR_OPTIONS = [
 export const ClassDetailsSection = ({
   data,
   onChange,
-  courseDetail,
 }: {
   data: ClassDetails;
   onChange: (updates: Partial<ClassDetails>) => void;
-  courseDetail?: any;
 }) => {
   const instructor = useInstructor();
   const prevCourseRef = useRef<string | null>(null);

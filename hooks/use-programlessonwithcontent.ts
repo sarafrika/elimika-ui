@@ -9,10 +9,18 @@ import {
 
 type CourseLesson = NonNullable<NonNullable<GetCourseLessonsResponse['data']>['content']>[number];
 type CourseLessonWithUuid = CourseLesson & { uuid: string };
-type ProgramCourseLike = {
+export type ProgramCourseLike = {
   uuid: string;
   name?: string;
   description?: string;
+};
+export type ProgramCourseLessonWithContent = {
+  lesson: CourseLesson;
+  content: unknown;
+};
+export type ProgramCourseWithLessons = {
+  course: ProgramCourseLike;
+  lessons: ProgramCourseLessonWithContent[];
 };
 
 export function useProgramLessonsWithContent({
@@ -74,7 +82,7 @@ export function useProgramLessonsWithContent({
 
   // Map lessons with content per course
   let contentIndex = 0; // keep track of content query index
-  const coursesWithLessons = courseList.map((course, courseIndex) => {
+  const coursesWithLessons = courseList.map((course, courseIndex): ProgramCourseWithLessons => {
     const lessons = courseLessonsQueries[courseIndex]?.data?.data?.content || [];
     const lessonsWithContent = lessons.map(lesson => {
       const content = allLessonContentQueries[contentIndex]?.data;

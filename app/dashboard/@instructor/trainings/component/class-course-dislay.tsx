@@ -8,10 +8,11 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, Clock, MapPin, Users } from 'lucide-react';
+import type { DashboardClass } from '@/app/dashboard/_components/types';
 
 type Props = {
   courseUuid: string;
-  classInfo: any;
+  classInfo: DashboardClass;
 };
 
 export default function ClassCourseDisplay({ courseUuid, classInfo }: Props) {

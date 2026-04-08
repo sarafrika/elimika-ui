@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FormEvent } from 'react';
 import { toast } from 'sonner';
+import type { CreateClassDefinitionData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { cn } from '../../../../../lib/utils';
 import {
@@ -42,7 +43,7 @@ export const ClassScheduleFormPage = ({
 }: {
   data: ScheduleSettings;
   resolvedId: string;
-  classDetails: any;
+  classDetails: ClassDetails;
   onChange: (updates: Partial<ScheduleSettings>) => void;
   onClassCreated: (uuid: string) => void;
   onNext: () => void;
@@ -51,6 +52,15 @@ export const ClassScheduleFormPage = ({
   const instructor = useInstructor();
   const createClassDefinition = useMutation(createClassDefinitionMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'message' in error) {
+      const { message } = error as { message?: unknown };
+      if (typeof message === 'string' && message.trim().length > 0) {
+        return message;
+      }
+    }
+    return fallback;
+  };
 
   const isFormValid = () => {
     // ✅ Must have either program_uuid OR course_uuid
@@ -86,12 +96,8 @@ export const ClassScheduleFormPage = ({
     if (!isFormValid()) return;
 
     try {
-      const start_time = new Date(
-        `${data.startClass.date}T${data.startClass.startTime}:00Z`
-      ).toISOString();
-      const end_time = new Date(
-        `${data.startClass.date}T${data.startClass.endTime}:00Z`
-      ).toISOString();
+      const start_time = new Date(`${data.startClass.date}T${data.startClass.startTime}:00Z`);
+      const end_time = new Date(`${data.startClass.date}T${data.startClass.endTime}:00Z`);
 
       const selectedDays = data.repeat.days || [];
       const days_of_week = selectedDays
@@ -99,14 +105,16 @@ export const ClassScheduleFormPage = ({
         .map(dayIndex => DAY_NAMES[dayIndex])
         .join(',');
 
-      const payload = {
-        course_uuid: classDetails.course_uuid,
+      const payload: CreateClassDefinitionData['body'] = {
+        course_uuid: classDetails.course_uuid ?? undefined,
+        program_uuid: classDetails.program_uuid ?? undefined,
         title: classDetails.title,
         description: '',
         default_instructor_uuid: instructor?.uuid as string,
         class_visibility: 'PUBLIC',
         session_format: 'GROUP',
-        location_type: classDetails.location_type,
+        location_type:
+          classDetails.location_type as CreateClassDefinitionData['body']['location_type'],
         location_name: classDetails.location_name,
         location_latitude: -1.292066,
         location_longitude: 36.821945,
@@ -132,7 +140,7 @@ export const ClassScheduleFormPage = ({
 
       if (resolvedId) {
         updateClassDefinition.mutate(
-          { path: { uuid: resolvedId }, body: payload as any },
+          { path: { uuid: resolvedId }, body: payload },
           {
             onSuccess: response => {
               qc.invalidateQueries({
@@ -150,14 +158,14 @@ export const ClassScheduleFormPage = ({
               toast.success(response?.message || 'Class updated successfully');
               onNext();
             },
-            onError: (error: any) => {
-              toast.error(error?.message || 'Failed to update class');
+            onError: error => {
+              toast.error(getErrorMessage(error, 'Failed to update class'));
             },
           }
         );
       } else {
         createClassDefinition.mutate(
-          { body: payload as any },
+          { body: payload },
           {
             onSuccess: response => {
               const savedUuid = response?.data?.class_definition?.uuid;
@@ -175,8 +183,8 @@ export const ClassScheduleFormPage = ({
               toast.success(response?.message || 'Class created successfully');
               onNext();
             },
-            onError: (error: any) => {
-              toast.error(error?.message || 'Failed to create class');
+            onError: error => {
+              toast.error(getErrorMessage(error, 'Failed to create class'));
             },
           }
         );

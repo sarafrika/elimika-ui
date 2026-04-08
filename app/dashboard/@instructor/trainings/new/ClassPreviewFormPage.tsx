@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Calendar, CheckCircle2, Clock, Copy, Users } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import type { ClassDetailsCourse, ClassDetailsLesson } from '@/hooks/use-class-details';
 import { getAllDifficultyLevelsOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import { ClassDetails, ScheduleSettings } from './page';
 
@@ -27,8 +28,8 @@ export const ClassPreviewFormPage = ({
   classDetails: ClassDetails;
   classUuid: string;
   scheduleSettings: ScheduleSettings;
-  courseData?: any;
-  courseLessons?: any[];
+  courseData?: ClassDetailsCourse;
+  courseLessons?: ClassDetailsLesson[];
 }) => {
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;

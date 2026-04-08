@@ -1,5 +1,6 @@
 'use client';
 
+import type { DashboardClass } from '@/app/dashboard/_components/types';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { Button } from '@/components/ui/button';
 import { useInstructor } from '@/context/instructor-context';
@@ -22,7 +23,7 @@ import {
 } from '../../_components/class-management-form';
 
 interface TrainingPageProps {
-  classesWithCourseAndInstructor: any;
+  classesWithCourseAndInstructor: DashboardClass[];
   loading: boolean;
 }
 
@@ -38,20 +39,20 @@ export default function TrainingsPage({
   const [editingClassId, setEditingClassId] = useState<string | null>(null);
 
   const [scheduleModal, setScheduleModal] = useState(false);
-  const openRecurrentSchedule = (id: any) => {
+  const openRecurrentSchedule = (id: string) => {
     setEditingClassId(id);
     setScheduleModal(true);
   };
 
   const [timetableModal, setTimetableModal] = useState(false);
-  const openTimetableSchedule = (id: any) => {
+  const openTimetableSchedule = (id: string) => {
     setEditingClassId(id);
     setTimetableModal(true);
   };
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState(false);
-  const openDeleteModal = (id: any) => {
+  const openDeleteModal = (id: string) => {
     setDeleteId(id);
     setDeleteModal(true);
   };
@@ -100,7 +101,7 @@ export default function TrainingsPage({
       </div>
 
       <TrainingClassList
-        onEdit={(id: any) => router.push(`/dashboard/trainings?id=${id}`)}
+        onEdit={id => router.push(`/dashboard/trainings?id=${id}`)}
         onDelete={openDeleteModal}
         onOpenTimetable={openTimetableSchedule}
         onOpenRecurring={openRecurrentSchedule}

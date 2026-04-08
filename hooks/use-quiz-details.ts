@@ -14,6 +14,9 @@ type QuizQuestionOption = NonNullable<
   NonNullable<GetQuestionOptionsResponse['data']>['content']
 >[number];
 type QuizQuestionWithUuid = QuizQuestion & { uuid: string };
+export type QuizQuestionWithOptions = QuizQuestionWithUuid & {
+  options: QuizQuestionOption[];
+};
 
 export function useQuizDetails(quizUuid: string, enabled = true) {
   const {
@@ -44,10 +47,10 @@ export function useQuizDetails(quizUuid: string, enabled = true) {
   const optionsError = optionQueries.some(q => q.isError);
 
   // Merge questions ← options
-  const mergedQuestions = useMemo(() => {
+  const mergedQuestions = useMemo<QuizQuestionWithOptions[]>(() => {
     return questions.map((question, index: number) => ({
       ...question,
-      options: (optionQueries[index]?.data?.data?.content ?? []) as QuizQuestionOption[],
+      options: optionQueries[index]?.data?.data?.content ?? [],
     }));
   }, [questions, optionQueries]);
 

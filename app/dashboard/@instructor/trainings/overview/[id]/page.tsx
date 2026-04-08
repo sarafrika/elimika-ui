@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import type { ClassDetailsScheduleItem } from '@/hooks/use-class-details';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useInstructorInfo } from '@/hooks/use-instructor-info';
@@ -54,7 +55,10 @@ import { useProgramLessonsWithContent } from '../../../../../../hooks/use-progra
 import { useScheduleStats } from '../../../../../../hooks/use-schedule-stats';
 import { AudioPlayer } from '../../../../@student/schedule/classes/[id]/AudioPlayer';
 import { ReadingMode } from '../../../../@student/schedule/classes/[id]/ReadingMode';
-import { ClassScheduleCalendar } from '../../../../@student/schedule/classes/[id]/SudentClassSchedule';
+import {
+  ClassScheduleCalendar,
+  type ClassScheduleItem as CalendarScheduleItem,
+} from '../../../../@student/schedule/classes/[id]/SudentClassSchedule';
 import { VideoPlayer } from '../../../../@student/schedule/classes/[id]/VideoPlayer';
 
 export interface ContentItem {
@@ -112,8 +116,35 @@ export default function ClassPreviewPage() {
   const course = combinedClass?.course;
   const programCourses = combinedClass?.pCourses;
   const program = combinedClass?.program;
-  const schedules = combinedClass?.schedule;
-  const scheduleStats = useScheduleStats(schedules as any);
+  const schedules = combinedClass?.schedule ?? [];
+  const scheduleStats = useScheduleStats(
+    useMemo(
+      () =>
+        schedules.map(schedule => ({
+          duration_minutes: Number(schedule.duration_minutes ?? 0),
+        })),
+      [schedules]
+    )
+  );
+  const calendarSchedules = useMemo<CalendarScheduleItem[]>(
+    () =>
+      schedules.map((schedule: ClassDetailsScheduleItem) => ({
+        uuid: schedule.uuid ?? '',
+        class_definition_uuid: schedule.class_definition_uuid ?? classId,
+        start_time: new Date(schedule.start_time).toISOString(),
+        end_time: new Date(schedule.end_time).toISOString(),
+        timezone: schedule.timezone ?? 'UTC',
+        title: schedule.title ?? classData?.title ?? 'Class session',
+        location_type: schedule.location_type === 'ONLINE' ? 'ONLINE' : 'PHYSICAL',
+        status: schedule.status === 'CANCELLED' ? 'CANCELLED' : 'SCHEDULED',
+        duration_minutes: Number(schedule.duration_minutes ?? 0),
+        duration_formatted: String(schedule.duration_formatted ?? ''),
+        time_range: String(schedule.time_range ?? ''),
+        is_currently_active: Boolean(schedule.is_currently_active),
+        can_be_cancelled: Boolean(schedule.can_be_cancelled),
+      })),
+    [classData?.title, classId, schedules]
+  );
   const totalAmount = (classData?.training_fee! * scheduleStats?.totalHours) as number;
   const amountPayable = totalAmount;
 
@@ -631,7 +662,7 @@ export default function ClassPreviewPage() {
 
         <TabsContent value='schedule' className='space-y-4'>
           <CardContent>
-            <ClassScheduleCalendar schedules={schedules as any} />
+            <ClassScheduleCalendar schedules={calendarSchedules} />
           </CardContent>
         </TabsContent>
 

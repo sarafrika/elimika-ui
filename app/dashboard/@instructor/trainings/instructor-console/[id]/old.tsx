@@ -7,8 +7,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useClassRoster } from '@/hooks/use-class-roster';
-import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
+import {
+  useCourseLessonsWithContent,
+  type CourseLessonContent,
+} from '@/hooks/use-courselessonwithcontent';
 import {
   getClassDefinitionOptions,
   getCourseByUuidOptions,
@@ -135,7 +138,7 @@ export default function ClassPreviewPage() {
     }
   };
 
-  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<RosterEntry | null>(null);
   const [grade, setGrade] = useState<number | ''>('');
   const [status, setStatus] = useState<'Submitted' | 'Excused' | 'Missing'>('Submitted');
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
@@ -148,7 +151,10 @@ export default function ClassPreviewPage() {
   const { data: classSchedule } = useQuery({
     ...getInstructorCalendarOptions({
       path: { instructorUuid: classData?.default_instructor_uuid as string },
-      query: { start_date: '2025-09-11' as any, end_date: '2026-11-11' as any },
+      query: {
+        start_date: new Date('2025-09-11'),
+        end_date: new Date('2026-11-11'),
+      },
     }),
     enabled: !!classData?.default_instructor_uuid,
   });
@@ -165,9 +171,9 @@ export default function ClassPreviewPage() {
   const [isReading, setIsReading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const firstLesson = lessonsWithContent?.[0]?.lesson;
+  const firstLesson = lessonsWithContent?.[0]?.content?.data?.[0] ?? null;
   const [expandedModules, setExpandedModules] = useState<string[]>([firstLesson?.uuid as string]);
-  const [selectedLesson, setSelectedLesson] = useState<any>(firstLesson);
+  const [selectedLesson, setSelectedLesson] = useState<CourseLessonContent | null>(firstLesson);
   const contentTypeName = contentTypeMap[selectedLesson?.content_type_uuid] || 'text';
 
   const toggleModule = (skillId: string) => {
@@ -176,7 +182,7 @@ export default function ClassPreviewPage() {
     );
   };
 
-  const handleLessonSelect = (lesson: any) => {
+  const handleLessonSelect = (lesson: CourseLessonContent) => {
     setSelectedLesson(lesson);
     setIsPlaying(false);
   };
@@ -198,7 +204,7 @@ export default function ClassPreviewPage() {
     }
   };
 
-  const getLessonIcon = (type: any['type'], completed: boolean, locked: boolean) => {
+  const getLessonIcon = (type: string | undefined, completed: boolean, locked: boolean) => {
     if (locked) return <Lock className='text-muted-foreground h-4 w-4' />;
     if (completed) return <CheckCircle className='text-success h-4 w-4' />;
 
@@ -254,7 +260,7 @@ export default function ClassPreviewPage() {
         {/* Students Scroll Area */}
         <ScrollArea className='flex-1'>
           <div className='space-y-1 p-2'>
-            {roster?.map((entry: any) => {
+            {roster?.map((entry: RosterEntry) => {
               const name = entry?.user?.full_name ?? 'Unknown';
               const isActive = entry?.enrollment?.status === 'ENROLLED';
               const isSelected = selectedStudent?.user?.uuid === entry?.user?.uuid;
@@ -409,7 +415,7 @@ export default function ClassPreviewPage() {
 
                             <CollapsibleContent>
                               <CardContent className='space-y-2 pt-0'>
-                                {skill?.content?.data?.map((content: any) => (
+                                {skill?.content?.data?.map(content => (
                                   <button
                                     key={content.uuid}
                                     onClick={() => handleLessonSelect(content)}

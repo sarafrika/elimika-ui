@@ -18,9 +18,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
-import { useClassDetails } from '@/hooks/use-class-details';
-import { useClassRoster } from '@/hooks/use-class-roster';
-import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import {
+  useClassDetails,
+  type ClassDetailsScheduleItem,
+} from '@/hooks/use-class-details';
+import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
+import {
+  useCourseLessonsWithContent,
+  type CourseLesson,
+  type CourseLessonContent,
+  type CourseLessonWithContent,
+} from '@/hooks/use-courselessonwithcontent';
 import {
   cx,
   elimikaDesignSystem,
@@ -41,6 +49,14 @@ import {
   getQuizSchedulesQueryKey,
   markAttendanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type {
+  Assignment,
+  ClassAssignmentSchedule,
+  ClassQuizSchedule,
+  CreateAssignmentScheduleData,
+  CreateQuizScheduleData,
+  Quiz,
+} from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
@@ -69,52 +85,23 @@ import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-type RosterEntry = {
-  enrollment?: {
-    uuid?: string;
-    status?: string;
-    is_attendance_marked?: boolean;
-    did_attend?: boolean;
-    scheduled_instance_uuid?: string;
-  };
-  student?: {
-    uuid?: string;
-  };
-  user?: {
-    uuid?: string;
-    full_name?: string;
-    email?: string;
-  };
+type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
+type LessonItem = CourseLesson;
+type LessonContentItem = CourseLessonContent;
+type LessonModule = CourseLessonWithContent;
+type AssignmentScheduleItem = ClassAssignmentSchedule & {
+  class_lesson_plan_uuid?: string;
+  assignment?: Assignment | null;
 };
-
-type LessonItem = {
-  uuid?: string;
-  title?: string;
-  description?: string;
-  lesson_sequence?: number;
-  lesson_number?: number;
-  duration?: string;
-  duration_display?: string;
-  resources?: Array<{ uuid?: string; title?: string; file_name?: string; type?: string }>;
+type QuizScheduleItem = ClassQuizSchedule & {
+  class_lesson_plan_uuid?: string;
+  quiz?: Quiz | null;
 };
-
-type LessonContentItem = {
-  uuid?: string;
-  title?: string;
-  description?: string;
-  type?: string;
-  duration?: string;
-  content_type_uuid?: string;
-  content_text?: string | null;
-  file_url?: string | null;
-  value?: string | null;
+type AssignmentSchedulePayload = CreateAssignmentScheduleData['body'] & {
+  class_lesson_plan_uuid?: string;
 };
-
-type LessonModule = {
-  lesson: LessonItem;
-  content?: {
-    data?: LessonContentItem[];
-  };
+type QuizSchedulePayload = CreateQuizScheduleData['body'] & {
+  class_lesson_plan_uuid?: string;
 };
 
 function formatDateTime(value?: string | Date | null) {
@@ -410,11 +397,9 @@ export default function InstructorTrainingConsole() {
     contentTypeMap,
   } = useCourseLessonsWithContent({ courseUuid: course?.uuid as string });
 
-  const sortedSchedules = useMemo(
+  const sortedSchedules = useMemo<TrainingSchedule[]>(
     () =>
-      [...schedules].sort((left: any, right: any) =>
-        moment(left.start_time).diff(moment(right.start_time))
-      ),
+      [...schedules].sort((left, right) => moment(left.start_time).diff(moment(right.start_time))),
     [schedules]
   );
 
@@ -433,8 +418,7 @@ export default function InstructorTrainingConsole() {
     }
   }, [activeScheduleId, sortedSchedules]);
 
-  const activeSchedule =
-    sortedSchedules.find((schedule: any) => schedule.uuid === activeScheduleId) ?? null;
+  const activeSchedule = sortedSchedules.find(schedule => schedule.uuid === activeScheduleId) ?? null;
 
   useEffect(() => {
     if (!assignmentDueAt && activeSchedule?.end_time) {
@@ -518,9 +502,7 @@ export default function InstructorTrainingConsole() {
     null;
 
   const progress = useMemo(() => {
-    const completed = sortedSchedules.filter((schedule: any) =>
-      moment(schedule.end_time).isBefore(moment())
-    ).length;
+    const completed = sortedSchedules.filter(schedule => moment(schedule.end_time).isBefore(moment())).length;
     const total = sortedSchedules.length;
 
     return {
@@ -531,9 +513,7 @@ export default function InstructorTrainingConsole() {
   }, [sortedSchedules]);
 
   const nextSession = useMemo(
-    () =>
-      sortedSchedules.find((schedule: any) => moment(schedule.start_time).isAfter(moment())) ??
-      null,
+    () => sortedSchedules.find(schedule => moment(schedule.start_time).isAfter(moment())) ?? null,
     [sortedSchedules]
   );
 
@@ -588,7 +568,7 @@ export default function InstructorTrainingConsole() {
 
   const scheduleItems = useMemo<ManagedScheduleItem[]>(
     () =>
-      sortedSchedules.map((schedule: any) => ({
+      sortedSchedules.map(schedule => ({
         uuid: schedule.uuid,
         classId,
         classTitle: classData?.title || 'Untitled class',
@@ -622,31 +602,32 @@ export default function InstructorTrainingConsole() {
     enabled: !!classId,
   });
 
-  const assignmentOptions = allAssignments?.data?.content ?? [];
-  const quizOptions = allQuizzes?.data?.content ?? [];
+  const assignmentOptions: Assignment[] = allAssignments?.data?.content ?? [];
+  const quizOptions: Quiz[] = allQuizzes?.data?.content ?? [];
+  const assignmentScheduleItems: AssignmentScheduleItem[] = assignmentSchedules?.data ?? [];
+  const quizScheduleItems: QuizScheduleItem[] = quizSchedules?.data ?? [];
 
   const activeScheduleAssignments = useMemo(
     () =>
-      (assignmentSchedules?.data ?? [])
-        .filter((item: any) => item.class_lesson_plan_uuid === activeSchedule?.uuid)
-        .map((item: any) => ({
+      assignmentScheduleItems
+        .filter(item => item.class_lesson_plan_uuid === activeSchedule?.uuid)
+        .map(item => ({
           ...item,
           assignment:
-            assignmentOptions.find((assignment: any) => assignment.uuid === item.assignment_uuid) ??
-            null,
+            assignmentOptions.find(assignment => assignment.uuid === item.assignment_uuid) ?? null,
         })),
-    [activeSchedule?.uuid, assignmentOptions, assignmentSchedules]
+    [activeSchedule?.uuid, assignmentOptions, assignmentScheduleItems]
   );
 
   const activeScheduleQuizzes = useMemo(
     () =>
-      (quizSchedules?.data ?? [])
-        .filter((item: any) => item.class_lesson_plan_uuid === activeSchedule?.uuid)
-        .map((item: any) => ({
+      quizScheduleItems
+        .filter(item => item.class_lesson_plan_uuid === activeSchedule?.uuid)
+        .map(item => ({
           ...item,
-          quiz: quizOptions.find((quiz: any) => quiz.uuid === item.quiz_uuid) ?? null,
+          quiz: quizOptions.find(quiz => quiz.uuid === item.quiz_uuid) ?? null,
         })),
-    [activeSchedule?.uuid, quizOptions, quizSchedules]
+    [activeSchedule?.uuid, quizOptions, quizScheduleItems]
   );
 
   const markAttendanceMut = useMutation(markAttendanceMutation());
@@ -677,25 +658,27 @@ export default function InstructorTrainingConsole() {
   const createAssignment = () => {
     if (!activeSchedule || !selectedAssignmentUuid) return;
 
-    const assignment = assignmentOptions.find((item: any) => item.uuid === selectedAssignmentUuid);
+    const assignment = assignmentOptions.find(item => item.uuid === selectedAssignmentUuid);
     if (!assignment) return;
+
+    const assignmentPayload: AssignmentSchedulePayload = {
+      class_definition_uuid: classId,
+      lesson_uuid: assignment.lesson_uuid,
+      assignment_uuid: selectedAssignmentUuid,
+      class_lesson_plan_uuid: activeSchedule.uuid,
+      visible_at: activeSchedule.start_time,
+      due_at: assignmentDueAt ? new Date(assignmentDueAt) : activeSchedule.end_time,
+      grading_due_at: assignmentDueAt ? new Date(assignmentDueAt) : activeSchedule.end_time,
+      timezone: 'Africa/Lagos',
+      release_strategy: 'CUSTOM',
+      max_attempts: 1,
+      instructor_uuid: instructor?.uuid as string,
+    };
 
     addAssignmentScheduleMut.mutate(
       {
         path: { classUuid: classId },
-        body: {
-          class_definition_uuid: classId,
-          lesson_uuid: assignment.lesson_uuid,
-          assignment_uuid: selectedAssignmentUuid,
-          class_lesson_plan_uuid: activeSchedule.uuid,
-          visible_at: activeSchedule.start_time,
-          due_at: assignmentDueAt || activeSchedule.end_time,
-          grading_due_at: assignmentDueAt || activeSchedule.end_time,
-          timezone: 'Africa/Lagos',
-          release_strategy: 'CUSTOM',
-          max_attempts: 1,
-          instructor_uuid: instructor?.uuid as string,
-        } as any,
+        body: assignmentPayload,
       },
       {
         onSuccess: () => {
@@ -712,23 +695,25 @@ export default function InstructorTrainingConsole() {
   const createQuiz = () => {
     if (!activeSchedule || !selectedQuizUuid) return;
 
-    const quiz = quizOptions.find((item: any) => item.uuid === selectedQuizUuid);
+    const quiz = quizOptions.find(item => item.uuid === selectedQuizUuid);
     if (!quiz) return;
+
+    const quizPayload: QuizSchedulePayload = {
+      class_definition_uuid: classId,
+      lesson_uuid: quiz.lesson_uuid,
+      quiz_uuid: selectedQuizUuid,
+      class_lesson_plan_uuid: activeSchedule.uuid,
+      visible_at: activeSchedule.start_time,
+      due_at: quizDueAt ? new Date(quizDueAt) : activeSchedule.end_time,
+      timezone: 'Africa/Lagos',
+      release_strategy: 'CUSTOM',
+      instructor_uuid: instructor?.uuid as string,
+    };
 
     addQuizScheduleMut.mutate(
       {
         path: { classUuid: classId },
-        body: {
-          class_definition_uuid: classId,
-          lesson_uuid: quiz.lesson_uuid,
-          quiz_uuid: selectedQuizUuid,
-          class_lesson_plan_uuid: activeSchedule.uuid,
-          visible_at: activeSchedule.start_time,
-          due_at: quizDueAt || activeSchedule.end_time,
-          timezone: 'Africa/Lagos',
-          release_strategy: 'CUSTOM',
-          instructor_uuid: instructor?.uuid as string,
-        } as any,
+        body: quizPayload,
       },
       {
         onSuccess: () => {
@@ -1131,9 +1116,7 @@ export default function InstructorTrainingConsole() {
                   onChange={event => {
                     const nextId = event.target.value;
                     setActiveScheduleId(nextId);
-                    const nextSchedule = sortedSchedules.find(
-                      (schedule: any) => schedule.uuid === nextId
-                    );
+                    const nextSchedule = sortedSchedules.find(schedule => schedule.uuid === nextId);
                     setAssignmentDueAt(
                       nextSchedule?.end_time
                         ? moment(nextSchedule.end_time).format('YYYY-MM-DDTHH:mm')
@@ -1146,7 +1129,7 @@ export default function InstructorTrainingConsole() {
                     );
                   }}
                 >
-                  {sortedSchedules.map((schedule: any) => (
+                  {sortedSchedules.map(schedule => (
                     <option key={schedule.uuid} value={schedule.uuid}>
                       {moment(schedule.start_time).format('ddd, MMM D · h:mm A')} ·{' '}
                       {formatEnum(getScheduleState(schedule))}
@@ -1467,7 +1450,7 @@ export default function InstructorTrainingConsole() {
                             onChange={event => setSelectedAssignmentUuid(event.target.value)}
                           >
                             <option value=''>Select assignment</option>
-                            {assignmentOptions.map((assignment: any) => (
+                            {assignmentOptions.map(assignment => (
                               <option key={assignment.uuid} value={assignment.uuid}>
                                 {assignment.title}
                               </option>
@@ -1496,7 +1479,7 @@ export default function InstructorTrainingConsole() {
                         </Button>
                         <div className='space-y-2'>
                           {activeScheduleAssignments.length > 0 ? (
-                            activeScheduleAssignments.map((item: any) => (
+                            activeScheduleAssignments.map(item => (
                               <div
                                 key={item.uuid ?? item.assignment_uuid}
                                 className='border-border/60 bg-background rounded-2xl border p-3'
@@ -1535,7 +1518,7 @@ export default function InstructorTrainingConsole() {
                             onChange={event => setSelectedQuizUuid(event.target.value)}
                           >
                             <option value=''>Select quiz</option>
-                            {quizOptions.map((quiz: any) => (
+                            {quizOptions.map(quiz => (
                               <option key={quiz.uuid} value={quiz.uuid}>
                                 {quiz.title}
                               </option>
@@ -1562,7 +1545,7 @@ export default function InstructorTrainingConsole() {
                         </Button>
                         <div className='space-y-2'>
                           {activeScheduleQuizzes.length > 0 ? (
-                            activeScheduleQuizzes.map((item: any) => (
+                            activeScheduleQuizzes.map(item => (
                               <div
                                 key={item.uuid ?? item.quiz_uuid}
                                 className='border-border/60 bg-background rounded-2xl border p-3'

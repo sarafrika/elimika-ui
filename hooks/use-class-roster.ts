@@ -14,6 +14,11 @@ import type {
 type Enrollment = NonNullable<GetEnrollmentsForClassResponse['data']>[number];
 type Student = GetStudentByIdResponse;
 type User = NonNullable<GetUserByUuidResponse['data']>;
+export type RosterEntry = {
+  enrollment: Enrollment;
+  student: Student | undefined;
+  user: User | null | undefined;
+};
 
 export function useClassRoster(classId: string | undefined) {
   const enrollmentQuery = useQuery(
@@ -57,7 +62,7 @@ export function useClassRoster(classId: string | undefined) {
 
   const users = userQueries.map(q => q.data?.data).filter((user): user is User => Boolean(user));
 
-  const roster = useMemo(() => {
+  const roster = useMemo<RosterEntry[]>(() => {
     return uniqueEnrollments.map((enrollment, index) => ({
       enrollment,
       student: studentQueries[index]?.data,
@@ -65,7 +70,7 @@ export function useClassRoster(classId: string | undefined) {
     }));
   }, [uniqueEnrollments, studentQueries, userQueries]);
 
-  const rosterAllEnrollments = useMemo(() => {
+  const rosterAllEnrollments = useMemo<RosterEntry[]>(() => {
     return allEnrollments.map(enrollment => {
       const student = students.find(s => s.uuid === enrollment.student_uuid);
       const user = student ? users.find(u => u.uuid === student.user_uuid) : null;

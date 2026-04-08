@@ -13,11 +13,19 @@ import {
   getInstructorByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
-type InstructorClass = NonNullable<
+export type InstructorClass = NonNullable<
   NonNullable<GetClassDefinitionsForInstructorResponse['data']>[number]['class_definition']
 >;
-type CourseDetails = NonNullable<GetCourseByUuidResponse['data']>;
-type InstructorDetails = GetInstructorByUuidResponse;
+export type CourseDetails = NonNullable<GetCourseByUuidResponse['data']>;
+export type InstructorDetails = GetInstructorByUuidResponse;
+export type ClassScheduleInstance = NonNullable<
+  NonNullable<GetClassScheduleResponse['data']>['content']
+>[number];
+export type InstructorClassWithDetails = InstructorClass & {
+  course: CourseDetails | null;
+  instructor: InstructorDetails | null;
+  schedule: ClassScheduleInstance[] | null;
+};
 
 function useInstructorClassesWithDetails(instructorUuid?: string) {
   const { data, isLoading, isPending, isFetching } = useQuery({
@@ -128,7 +136,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     [scheduleQueries]
   );
 
-  const classesWithCourseAndInstructor = useMemo(() => {
+  const classesWithCourseAndInstructor = useMemo<InstructorClassWithDetails[]>(() => {
     return classes.map((cls: InstructorClass, i: number) => ({
       ...cls,
       course: cls.course_uuid ? (courseMap.get(cls.course_uuid) ?? null) : null,

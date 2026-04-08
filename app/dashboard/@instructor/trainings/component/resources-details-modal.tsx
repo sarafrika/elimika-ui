@@ -11,10 +11,24 @@ import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import type React from 'react';
 
+type TrainingResource = {
+  title?: string;
+  content_type_uuid?: string;
+  content_category?: string;
+  created_date?: Date | string | null;
+  updated_date?: Date | string | null;
+  is_required?: boolean;
+  content_text?: string | null;
+  description?: string | null;
+  file_url?: string | null;
+  mime_type?: string | null;
+  file_size_display?: string | null;
+};
+
 interface ResourceDetailsModalProps {
   open: boolean;
   onClose: () => void;
-  resource?: any;
+  resource?: TrainingResource;
   contentTypeMap?: Record<string, string>;
 }
 
