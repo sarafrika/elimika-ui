@@ -19,9 +19,31 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+type UploadedDocument = {
+  id: string;
+  type: string;
+  filename: string;
+  uploadDate: string;
+  status: string;
+};
+
+type ComplianceData = {
+  uploadedDocs?: Record<string, UploadedDocument[]>;
+  complianceAgreements?: string[];
+  accreditationDetails?: string;
+  dataHandling?: string;
+  gdprCompliant?: boolean;
+  insuranceProvider?: string;
+  policyNumber?: string;
+  coverageAmount?: string;
+  insuranceExpiry?: string;
+  additionalCertifications?: string;
+  complianceNotes?: string;
+} | null;
+
 interface ComplianceRequirementsProps {
-  data: any;
-  onDataChange: (data: any) => void;
+  data: ComplianceData;
+  onDataChange: (data: Record<string, unknown> | null) => void;
 }
 
 // Compliance categories
@@ -116,7 +138,9 @@ const DOCUMENT_TYPES = {
 };
 
 export function ComplianceRequirements({ data, onDataChange }: ComplianceRequirementsProps) {
-  const [uploadedDocs, setUploadedDocs] = useState<Record<string, any[]>>(data?.uploadedDocs || {});
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDocument[]>>(
+    data?.uploadedDocs || {}
+  );
   const [complianceAgreements, setComplianceAgreements] = useState<string[]>(
     data?.complianceAgreements || []
   );
@@ -327,7 +351,9 @@ export function ComplianceRequirements({ data, onDataChange }: ComplianceRequire
                     <Checkbox
                       id='gdprCompliant'
                       checked={data?.gdprCompliant || false}
-                      onCheckedChange={checked => onDataChange({ ...data, gdprCompliant: checked })}
+                      onCheckedChange={checked =>
+                        onDataChange({ ...data, gdprCompliant: checked === true })
+                      }
                     />
                     <Label htmlFor='gdprCompliant' className='text-sm'>
                       I confirm compliance with GDPR and local data protection regulations

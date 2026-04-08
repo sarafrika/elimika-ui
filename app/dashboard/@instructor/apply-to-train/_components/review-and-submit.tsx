@@ -25,10 +25,65 @@ import RichTextRenderer from '../../../../../components/editors/richTextRenders'
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { getTotalExperienceYears } from './apply-to-train';
 
+type SoftwareSelection = {
+  name: string;
+};
+
+type UploadedDocument = {
+  id: string;
+  type: string;
+  filename: string;
+  uploadDate: string;
+  status: string;
+};
+
+type ReviewData = {
+  experience?: Array<{ calculated_years?: number | null }>;
+  finalConfirmations?: string[];
+  full_name?: string;
+  organizationName?: string;
+  organizationEmail?: string;
+  organizationType?: string;
+  contactName?: string;
+  registrationNumber?: string;
+  skills?: string[];
+  trainingMode?: string;
+  minStudents?: number | string;
+  maxStudents?: number | string;
+  trainingCity?: string;
+  trainingCountry?: string;
+  minLeadTime?: string;
+  availableDates?: Date[];
+  selectedEquipment?: string[];
+  selectedSoftware?: SoftwareSelection[];
+  supportNeeded?: string[];
+  costEstimate?: string;
+  uploadedDocs?: Record<string, UploadedDocument[]>;
+  complianceAgreements?: string[];
+  gdprCompliant?: boolean;
+} | null;
+
+type ReviewProfile = {
+  user_domain?: string[];
+  email?: string;
+  phone_number?: string;
+  profile_image_url?: string;
+} | null;
+
+type CourseSummary = {
+  uuid?: string;
+  name?: string;
+  description?: string;
+  category_names?: string[];
+  difficulty_uuid?: string | null;
+  total_duration_display?: string;
+  class_limit?: number | string | null;
+} | null;
+
 interface ReviewAndSubmitProps {
-  data: any;
-  profile: any;
-  selectedCourse: any;
+  data: ReviewData;
+  profile: ReviewProfile;
+  selectedCourse: CourseSummary | undefined;
 }
 
 export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubmitProps) {
@@ -144,7 +199,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
           {/* Applicant Information */}
           <div>
             <h4 className='mb-3 flex items-center gap-2'>
-              {profile.user_domain?.includes('organisation') ? (
+              {profile?.user_domain?.includes('organisation') ? (
                 <Building className='h-4 w-4' />
               ) : (
                 <User className='h-4 w-4' />
@@ -152,7 +207,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
               Applicant Information
             </h4>
             <div className='bg-muted/20 rounded-lg p-4'>
-              {profile.user_domain?.includes('organisation') ? (
+              {profile?.user_domain?.includes('organisation') ? (
                 <div className='space-y-2'>
                   <div className='flex items-center gap-3'>
                     <div className='bg-background flex h-12 w-12 items-center justify-center rounded-lg border'>
@@ -240,12 +295,15 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
                   <h4>{selectedCourse.name}</h4>
 
                   <div className='text-muted-foreground mb-2 text-sm'>
-                    <RichTextRenderer htmlString={selectedCourse.description} maxChars={150} />{' '}
+                    <RichTextRenderer
+                      htmlString={selectedCourse.description || ''}
+                      maxChars={150}
+                    />{' '}
                   </div>
 
                   <div className='flex flex-wrap gap-2'>
                     <div>
-                      {selectedCourse.category_names.map((category: string, index: number) => (
+                      {selectedCourse.category_names?.map((category: string, index: number) => (
                         <Badge key={index} variant='outline' className='mr-1 text-xs'>
                           {category}
                         </Badge>
@@ -336,7 +394,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
               {data?.selectedSoftware && data.selectedSoftware.length > 0 && (
                 <div>
                   <span className='text-muted-foreground'>Software Platforms:</span>
-                  <p>{data.selectedSoftware.map((s: any) => s.name).join(', ')}</p>
+                  <p>{data.selectedSoftware.map(s => s.name).join(', ')}</p>
                 </div>
               )}
               {data?.supportNeeded && data.supportNeeded.length > 0 && (
@@ -500,7 +558,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
             <strong>Missing Requirements:</strong> Please complete all required fields and
             confirmations before submitting your application.
             <ul className='mt-2 list-inside list-disc text-sm'>
-              {!data?.selectedCourse && <li>Select a course to train</li>}
+              {!selectedCourse && <li>Select a course to train</li>}
               {!finalConfirmations.includes('accuracy') && <li>Confirm information accuracy</li>}
               {!finalConfirmations.includes('terms') && <li>Accept terms and conditions</li>}
             </ul>

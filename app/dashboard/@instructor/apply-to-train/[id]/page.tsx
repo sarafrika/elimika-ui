@@ -30,7 +30,13 @@ const STEPS = [
   { id: 5, title: 'Review & Submit', component: ReviewAndSubmit },
 ];
 
-export function getTotalExperienceYears(experiences: any[]): number {
+type ExperienceRecord = {
+  calculated_years?: number | null;
+};
+
+type StepData = Record<string, unknown> | null;
+
+export function getTotalExperienceYears(experiences: ExperienceRecord[]): number {
   const totalYears = experiences.reduce((sum, exp) => {
     return sum + (exp.calculated_years ?? 0);
   }, 0);
@@ -102,7 +108,7 @@ export default function ApplyToTrain() {
     setCurrentStep(stepId);
   };
 
-  const handleDataChange = (_stepData: any) => {
+  const handleDataChange = (_stepData: StepData) => {
     // setApplicationData(prev => ({ ...prev, ...stepData }));
   };
 

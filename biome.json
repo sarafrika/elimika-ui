@@ -52,6 +52,8 @@
         "app/dashboard/@course_creator/rubrics/rubric-chaining.tsx",
         "app/dashboard/@course_creator/training-applications/_components/CoursesPage.tsx",
         "app/dashboard/@course_creator/training-applications/_components/InstructorDetailsModal.tsx",
+        "app/dashboard/@course_creator/instructors/_comonent/InstructorPage.tsx",
+        "app/dashboard/@instructor/apply-to-train/**",
         "app/dashboard/@course_creator/training-applications/_components/CourseDetails.tsx",
         "app/dashboard/@course_creator/training-applications/_components/TrainingApplicationsPage.tsx",
         "app/dashboard/@parent/all-courses/**",
