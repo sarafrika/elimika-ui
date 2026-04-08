@@ -1,8 +1,15 @@
+import type {
+  EntryTypeEnum,
+  ScheduledInstance,
+  StatusEnum4,
+  StatusEnum13,
+} from '@/services/client/types.gen';
+
 export type CalendarEvent = {
   id: string;
   title: string;
   description?: string;
-  entry_type?: 'BLOCKED' | 'AVAILABILITY' | 'SCHEDULED_INSTANCE' | 'BOOKING';
+  entry_type?: EntryTypeEnum | 'BOOKING';
   startTime: string; // HH:mm
   endTime: string; // HH:mm
   startDateTime: string; // ISO YYYY-MM-DDTHH:mm:ss
@@ -13,7 +20,7 @@ export type CalendarEvent = {
   attendees?: number;
   isRecurring?: boolean;
   recurringDays?: string[];
-  status: 'SCHEDULED' | 'CANCELLED' | 'COMPLETED' | 'ONGOING';
+  status: StatusEnum4 | StatusEnum13;
   color?: string;
   reminders?: number[];
   notes?: string;
@@ -21,7 +28,6 @@ export type CalendarEvent = {
 };
 
 export type AvailabilityData = {
-  // slots: AvailabilitySlot[];
   events: CalendarEvent[];
   settings: {
     timezone: string;
@@ -39,15 +45,29 @@ export type ClassScheduleItem = {
   title: string;
   start_time: Date;
   end_time: Date;
-  status: string;
+  status: ScheduledInstance['status'];
   location_type: string;
   max_participants: number;
   cancellation_reason?: string | null;
-  entry_type?: any;
+  entry_type?: EntryTypeEnum;
   is_available?: boolean;
 };
 
-// export function transformAvailabilityArray(dataArray: any[]): AvailabilitySlot[] {
+export type AvailabilityClassData = {
+  status?: string;
+  classTitle: string;
+  timetable: {
+    timeSlots: Array<{
+      day: string;
+    }>;
+  };
+  academicPeriod: {
+    startDate: string;
+    endDate: string;
+  };
+};
+
+// export function transformAvailabilityArray(dataArray: unknown[]): AvailabilitySlot[] {
 //   const dayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 //   return dataArray?.map(data => {
@@ -122,7 +142,7 @@ export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarE
       attendees: item.max_participants,
       isRecurring: false,
       recurringDays: [],
-      status: item.status as any,
+      status: item.status ?? 'SCHEDULED',
       color: colorMap[statusKey] || defaultEventColor,
       reminders: [15],
       notes: item.cancellation_reason || '',
