@@ -8,11 +8,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import type { CourseTrainingApplication } from '@/services/client';
+
+type InstructorApplicationDetails = Pick<
+  CourseTrainingApplication,
+  'applicant_uuid' | 'applicant_type' | 'application_notes' | 'review_notes' | 'status' | 'created_date'
+>;
 
 interface InstructorDetailsModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  instructor: any | null;
+  instructor: InstructorApplicationDetails | null;
 }
 
 export default function InstructorDetailsModal({

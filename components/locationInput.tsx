@@ -23,12 +23,19 @@ type MapboxRetrieveFeature = {
   geometry?: {
     coordinates?: [number, number];
   };
-  properties?: Record<string, any>;
+  properties?: MapboxRetrieveProperties;
 };
 
 export type MapboxRetrieveResponse = {
   features: MapboxRetrieveFeature[];
 };
+
+type MapboxRetrieveProperties = {
+  coordinates?: {
+    latitude?: number;
+    longitude?: number;
+  };
+} & Record<string, unknown>;
 
 type CoordinatesInput = {
   latitude?: number | string | null;
@@ -37,7 +44,7 @@ type CoordinatesInput = {
 
 type LocationInputProps = {
   value?: string;
-  onChange?: (value: any) => void;
+  onChange?: (value: string) => void;
   onBlur?: () => void;
   name?: string;
   id?: string;

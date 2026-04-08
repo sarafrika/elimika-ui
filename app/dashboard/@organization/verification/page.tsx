@@ -16,14 +16,14 @@ import {
   isOrganisationVerifiedOptions,
   moderateOrganisationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Organisation } from '@/services/client';
+import type { Organisation, SchemaEnum3 } from '@/services/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Loader2, ShieldAlert, ShieldCheck, ShieldQuestion, Workflow } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-const actions = [
+const actions: Array<{ value: SchemaEnum3; label: string }> = [
   { value: 'approve', label: 'Approve' },
   { value: 'reject', label: 'Reject' },
   { value: 'revoke', label: 'Revoke' },
@@ -37,7 +37,7 @@ export default function OrganisationVerificationPage() {
   const organisationUuid = organisationContext?.uuid ?? '';
   const [page, setPage] = useState(0);
   const [selectedOrg, setSelectedOrg] = useState<Organisation | null>(null);
-  const [action, setAction] = useState(actions[0]?.value ?? 'approve');
+  const [action, setAction] = useState<SchemaEnum3>('approve');
   const [reason, setReason] = useState('');
 
   const isAdmin = profile?.user_domain?.includes('admin');
@@ -121,7 +121,7 @@ export default function OrganisationVerificationPage() {
     moderate.mutate(
       {
         path: { uuid: selectedOrg.uuid },
-        query: { action: action as any, reason: reason || undefined },
+        query: { action, reason: reason || undefined },
       },
       {
         onSuccess: () => {

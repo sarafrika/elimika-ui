@@ -18,7 +18,10 @@ import {
 } from '@/components/ui/select';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
-import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import {
+  useInstructorClassesWithSchedules,
+  type InstructorClassWithSchedule,
+} from '@/hooks/use-instructor-classes-with-schedules';
 import { cx, elimikaDesignSystem, getHeaderClasses, getStatCardClasses } from '@/lib/design-system';
 import {
   CalendarDays,
@@ -34,6 +37,7 @@ import moment from 'moment';
 import { useEffect, useMemo, useState } from 'react';
 
 const ALL_CLASSES = 'all-classes';
+type InstructorSchedule = InstructorClassWithSchedule['schedule'][number];
 
 const isSameDay = (left: Date, right: Date) =>
   left.getFullYear() === right.getFullYear() &&
@@ -59,7 +63,7 @@ export default function InstructorSchedulePage() {
   const allSchedules = useMemo<ManagedScheduleItem[]>(
     () =>
       classes.flatMap(classItem =>
-        (classItem.schedule ?? []).map((schedule: any) => ({
+        (classItem.schedule ?? []).map((schedule: InstructorSchedule) => ({
           uuid: schedule.uuid,
           classId: classItem.uuid,
           classTitle: classItem.title || 'Untitled class',

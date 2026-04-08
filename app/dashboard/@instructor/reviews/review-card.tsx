@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getStudentByIdOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { InstructorReview } from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
 import moment from 'moment';
 
@@ -28,7 +29,7 @@ function Rating({ label, value }: { label: string; value: number }) {
 }
 
 interface ReviewCardProps {
-  review: any;
+  review: InstructorReview;
   type?: 'instructor' | 'others'; // new type prop
 }
 
@@ -40,14 +41,14 @@ export function ReviewCard({ review, type = 'instructor' }: ReviewCardProps) {
     enabled: !review.is_anonymous,
   });
 
-  const fullName = student?.data?.full_name;
+  const fullName = student?.full_name;
 
   return (
     <Card>
       <CardHeader className='flex flex-row items-center justify-between space-y-0'>
         <div className='flex items-center gap-3'>
           <Avatar>
-            {!review.is_anonymous && <AvatarImage src={student?.data?.profile_image_url} />}
+            {!review.is_anonymous && <AvatarImage src={student?.profile_image_url} />}
             <AvatarFallback>
               {review.is_anonymous ? 'AS' : isLoading ? '…' : getInitials(fullName)}
             </AvatarFallback>

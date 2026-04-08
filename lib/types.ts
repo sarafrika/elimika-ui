@@ -28,7 +28,7 @@ export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message: string;
-  error?: any;
+  error?: unknown;
 }
 
 export interface PageMetadata {
@@ -42,7 +42,7 @@ export interface PageMetadata {
   last: boolean;
 }
 
-export type SchemaType = any;
+export type SchemaType = unknown;
 
 export interface PagedData<T> {
   content: T[];

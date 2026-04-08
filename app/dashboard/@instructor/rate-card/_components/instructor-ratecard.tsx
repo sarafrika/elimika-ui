@@ -34,8 +34,54 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useInstructor } from '../../../../../context/instructor-context';
 
+type RateCardStatus = 'published' | 'draft' | 'paused';
+
+type RateCardExtra = {
+  name: string;
+  price: number;
+};
+
+type RateCardPackage = {
+  name: string;
+  duration: string;
+  price: number;
+  features: string[];
+};
+
+type RateCard = {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  hourlyRate: number;
+  halfDayRate: number;
+  fullDayRate: number;
+  features: string[];
+  extras: RateCardExtra[];
+  packages: RateCardPackage[];
+  status: RateCardStatus;
+  createdDate: string;
+  lastUpdated: string;
+  bookings: number;
+  revenue: number;
+  avgRating: number;
+  isPopular: boolean;
+};
+
+type RateCardsData = {
+  instructor: {
+    name: string;
+    title: string;
+    rating: number;
+    totalBookings: number;
+    totalRevenue: number;
+    activeRates: number;
+  };
+  rateCards: RateCard[];
+};
+
 // Mock rate card data
-const RATE_CARDS_DATA = {
+const RATE_CARDS_DATA: RateCardsData = {
   instructor: {
     name: 'John Smith',
     title: 'Senior Software Developer & Instructor',
@@ -192,7 +238,7 @@ export function InstructorRateCard() {
   const _instructorData = useInstructor();
 
   const [activeTab, setActiveTab] = useState('overview');
-  const [editingCard, setEditingCard] = useState<any>(null);
+  const [editingCard, setEditingCard] = useState<RateCard | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -223,11 +269,17 @@ export function InstructorRateCard() {
       extras: [],
       packages: [],
       status: 'draft',
+      createdDate: '',
+      lastUpdated: '',
+      bookings: 0,
+      revenue: 0,
+      avgRating: 0,
+      isPopular: false,
     });
     setIsCreating(true);
   };
 
-  const handleEdit = (card: any) => {
+  const handleEdit = (card: RateCard) => {
     setEditingCard({ ...card });
     setIsCreating(false);
   };
@@ -423,9 +475,7 @@ export function InstructorRateCard() {
                           variant='outline'
                           size='icon'
                           onClick={() => {
-                            const newFeatures = editingCard.features.filter(
-                              (_: any, i: number) => i !== index
-                            );
+                            const newFeatures = editingCard.features.filter((_: string, i: number) => i !== index);
                             setEditingCard({ ...editingCard, features: newFeatures });
                           }}
                         >
@@ -456,7 +506,7 @@ export function InstructorRateCard() {
                 </CardHeader>
                 <CardContent className='space-y-4'>
                   <div className='space-y-3'>
-                    {editingCard.extras?.map((extra: any, index: number) => (
+                    {editingCard.extras?.map((extra: RateCardExtra, index: number) => (
                       <div key={index} className='grid grid-cols-2 gap-2'>
                         <Input
                           value={extra.name}
@@ -486,9 +536,7 @@ export function InstructorRateCard() {
                             variant='outline'
                             size='icon'
                             onClick={() => {
-                              const newExtras = editingCard.extras.filter(
-                                (_: any, i: number) => i !== index
-                              );
+                              const newExtras = editingCard.extras.filter((_: RateCardExtra, i: number) => i !== index);
                               setEditingCard({ ...editingCard, extras: newExtras });
                             }}
                           >
@@ -575,8 +623,8 @@ export function InstructorRateCard() {
                       <h4 className='mb-2 text-sm font-medium'>Optional Extras:</h4>
                       <ul className='space-y-1'>
                         {editingCard.extras
-                          .filter((e: any) => e.name.trim())
-                          .map((extra: any, index: number) => (
+                          .filter((e: RateCardExtra) => e.name.trim())
+                          .map((extra: RateCardExtra, index: number) => (
                             <li key={index} className='flex justify-between text-sm'>
                               <span>{extra.name}</span>
                               <span>{formatCurrency(extra.price)}</span>
@@ -597,7 +645,9 @@ export function InstructorRateCard() {
                     <Label htmlFor='status'>Status</Label>
                     <Select
                       value={editingCard.status}
-                      onValueChange={value => setEditingCard({ ...editingCard, status: value })}
+                      onValueChange={value =>
+                        setEditingCard({ ...editingCard, status: value as RateCardStatus })
+                      }
                     >
                       <SelectTrigger className='w-32'>
                         <SelectValue />

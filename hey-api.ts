@@ -1,4 +1,5 @@
 import type { CreateClientConfig } from '@/services/client/client';
+import { createQuerySerializer } from '@/services/client/client/utils.gen';
 import { API_BASE_URL } from './services/api/base-url';
 import { getAuthToken } from './services/auth/get-token';
 
@@ -7,17 +8,5 @@ export const createClientConfig: CreateClientConfig = config => ({
   baseUrl: API_BASE_URL,
   auth: async () => await getAuthToken(),
   next: { revalidate: process.env.PRODUCTION ? 1000 * 60 * 15 : 0.5 },
-  querySerializer: qp => {
-    const serialize = (obj: { [key: string]: string }): string =>
-      Object.keys(obj)
-        .map((key: string) => {
-          return typeof obj[key] === 'object'
-            ? serialize(obj[key])
-            : `${encodeURIComponent(key)}=${encodeURIComponent(obj[key] as string)}`;
-        })
-        .join('&');
-
-    const queryString = serialize(qp as { [key: string]: any });
-    return queryString;
-  },
+  querySerializer: createQuerySerializer(),
 });

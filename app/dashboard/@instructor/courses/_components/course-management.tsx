@@ -16,7 +16,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserDomain } from '@/context/user-domain-context';
-import type { ApplicantTypeEnum } from '@/services/client';
+import type {
+  ApplicantTypeEnum,
+  CourseTrainingApplication,
+  ProgramTrainingApplication,
+  TrainingProgram,
+} from '@/services/client';
 import {
   getAllCoursesOptions,
   getAllTrainingProgramsOptions,
@@ -32,8 +37,13 @@ import { BookOpen, Filter, GraduationCap, Layers, Search, SortAsc, SortDesc } fr
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import type { CourseWithApplication } from '../../../_components/types';
 import { TrainCourseCard } from '../../../_components/train-course-card';
 import { TrainProgramCard } from '../../../_components/train-program-card';
+
+type ManagedProgram = TrainingProgram & {
+  application: ProgramTrainingApplication | null;
+};
 
 export default function CourseMangementPage() {
   const qc = useQueryClient();
@@ -52,9 +62,9 @@ export default function CourseMangementPage() {
   // Application modal states
   const [applyModal, setApplyModal] = useState(false);
   const [applyingCourseId, setApplyingCourseId] = useState<string | null>(null);
-  const [applyingCourse, setApplyingCourse] = useState<any | null>(null);
+  const [applyingCourse, setApplyingCourse] = useState<CourseWithApplication | null>(null);
   const [applyingProgramId, setApplyingProgramId] = useState<string | null>(null);
-  const [applyingProgram, setApplyingProgram] = useState<any | null>(null);
+  const [applyingProgram, setApplyingProgram] = useState<ManagedProgram | null>(null);
 
   // Separate pagination for courses and programs
   const size = 20;
@@ -80,15 +90,18 @@ export default function CourseMangementPage() {
     enabled: !!instructor?.uuid,
   });
 
-  const combinedPrograms = React.useMemo(() => {
+  const combinedPrograms = React.useMemo<ManagedProgram[]>(() => {
     if (!allPrograms?.data?.content || !appliedPrograms?.data?.content) return [];
-    const appliedMap = new Map(
-      appliedPrograms?.data?.content.map((app: any) => [app.program_uuid, app])
-    );
+    const appliedMap = new Map<string, ProgramTrainingApplication>();
+    appliedPrograms.data.content.forEach(application => {
+      if (application.program_uuid) {
+        appliedMap.set(application.program_uuid, application);
+      }
+    });
 
-    return allPrograms.data.content.map((program: any) => ({
+    return allPrograms.data.content.map(program => ({
       ...program,
-      application: appliedMap.get(program.uuid) || null,
+      application: program.uuid ? appliedMap.get(program.uuid) ?? null : null,
     }));
   }, [allPrograms, appliedPrograms]);
 
@@ -139,15 +152,18 @@ export default function CourseMangementPage() {
     enabled: !!instructor?.uuid,
   });
 
-  const combinedCourses = React.useMemo(() => {
+  const combinedCourses = React.useMemo<CourseWithApplication[]>(() => {
     if (!allCourses?.data?.content || !appliedCourses?.data?.content) return [];
-    const appliedMap = new Map(
-      appliedCourses.data.content.map((app: any) => [app.course_uuid, app])
-    );
+    const appliedMap = new Map<string, CourseTrainingApplication>();
+    appliedCourses.data.content.forEach(application => {
+      if (application.course_uuid) {
+        appliedMap.set(application.course_uuid, application);
+      }
+    });
 
-    return allCourses.data.content.map((course: any) => ({
+    return allCourses.data.content.map(course => ({
       ...course,
-      application: appliedMap.get(course.uuid) || null,
+      application: course.uuid ? appliedMap.get(course.uuid) ?? null : null,
     }));
   }, [allCourses, appliedCourses]);
 
@@ -415,19 +431,21 @@ export default function CourseMangementPage() {
                 {filteredCourses.map(course => (
                   <TrainCourseCard
                     key={course.uuid}
-                    course={course as any}
+                    course={course}
                     applicationStatus={course.application?.status || null}
                     applicationReviewNote={course.application?.review_notes || null}
                     handleClick={() => router.push(`/dashboard/courses/${course.uuid}`)}
                     handleQuickApply={() => {
+                      if (!course.uuid) return;
                       setApplyModal(true);
-                      setApplyingCourseId(course?.uuid as string);
-                      setApplyingCourse(course as any);
+                      setApplyingCourseId(course.uuid);
+                      setApplyingCourse(course);
                     }}
                     handleReapplyToTrain={() => {
+                      if (!course.uuid) return;
                       setApplyModal(true);
-                      setApplyingCourseId(course?.uuid as string);
-                      setApplyingCourse(course as any);
+                      setApplyingCourseId(course.uuid);
+                      setApplyingCourse(course);
                     }}
                   />
                 ))}
@@ -501,19 +519,21 @@ export default function CourseMangementPage() {
                 {filteredPrograms.map(program => (
                   <TrainProgramCard
                     key={program.uuid}
-                    program={program as any}
+                    program={program}
                     applicationStatus={program.application?.status || null}
                     applicationReviewNote={program.application?.review_notes || null}
                     handleClick={() => router.push(`/dashboard/programs/${program.uuid}`)}
                     handleQuickApply={() => {
+                      if (!program.uuid) return;
                       setApplyModal(true);
-                      setApplyingProgramId(program?.uuid as string);
-                      setApplyingProgram(program as any);
+                      setApplyingProgramId(program.uuid);
+                      setApplyingProgram(program);
                     }}
                     handleReapplyToTrain={() => {
+                      if (!program.uuid) return;
                       setApplyModal(true);
-                      setApplyingProgramId(program?.uuid as string);
-                      setApplyingProgram(program as any);
+                      setApplyingProgramId(program.uuid);
+                      setApplyingProgram(program);
                     }}
                   />
                 ))}

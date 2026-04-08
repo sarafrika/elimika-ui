@@ -18,6 +18,10 @@ interface WeeklyAvailabilityGridProps {
   studentBookingData?: StudentBookingData;
 }
 
+type AvailabilitySlot = CalendarEvent & {
+  recurring?: boolean;
+};
+
 export const mapEventTypeToStatus = (entry_type: EventType) => {
   switch (entry_type) {
     case 'AVAILABILITY':
@@ -68,7 +72,7 @@ export function WeeklyAvailabilityGrid({
   const timeSlots = generateTimeSlots();
 
   function generateTimeSlots() {
-    const slots = [];
+    const slots: string[] = [];
     for (let hour = 5; hour < 24; hour++) {
       slots.push(`${hour.toString().padStart(2, '0')}:00`);
     }
@@ -76,7 +80,7 @@ export function WeeklyAvailabilityGrid({
   }
 
   const getWeekDates = (baseDate: Date) => {
-    const dates = [];
+    const dates: Date[] = [];
     const startOfWeek = new Date(baseDate);
     const day = startOfWeek.getDay();
     const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
@@ -122,8 +126,8 @@ export function WeeklyAvailabilityGrid({
   };
 
   const getAvailabilityForSlot = (day: string, time: string) => {
-    return availabilityData?.events?.find((slot: any) => {
-      if (slot?.day?.toLowerCase() !== day.toLowerCase()) return false;
+    return availabilityData.events.find((slot: AvailabilitySlot) => {
+      if (slot.day.toLowerCase() !== day.toLowerCase()) return false;
       const slotTime = new Date(`2000-01-01T${time}:00`);
       const start = new Date(`2000-01-01T${slot.startTime}:00`);
       const end = new Date(`2000-01-01T${slot.endTime}:00`);
@@ -132,15 +136,16 @@ export function WeeklyAvailabilityGrid({
   };
 
   const isAvailabilityStartSlot = (day: string, time: string) => {
-    return availabilityData.events.some(
-      (slot: any) =>
-        slot?.day?.toLowerCase() === day.toLowerCase() &&
-        slot?.startTime === time &&
+    return availabilityData.events.some((slot: AvailabilitySlot) => {
+      return (
+        slot.day.toLowerCase() === day.toLowerCase() &&
+        slot.startTime === time &&
         slot.entry_type === 'AVAILABILITY'
-    );
+      );
+    });
   };
 
-  function doesSlotApplyToDate(slot: any, date: Date) {
+  function doesSlotApplyToDate(slot: AvailabilitySlot, date: Date) {
     if (slot.recurring || slot.isRecurring) {
       const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
       return weekday.toLowerCase() === slot.day.toLowerCase();
@@ -241,7 +246,6 @@ export function WeeklyAvailabilityGrid({
         date: event.date ? new Date(event.date) : date,
         startTime: event.startTime,
         endTime: event.endTime,
-        status: event.entry_type as any,
       };
       setSelectedEvent(hydrated);
       setSelectedSlot(null);
@@ -416,14 +420,15 @@ export function WeeklyAvailabilityGrid({
               </div>
               {days.map((day, dayIndex) => {
                 const date = weekDates[dayIndex];
-                const status = getSlotStatus(day, time, date as any);
-                const eventInSlot = getEventForSlot(day, time, date as any);
-                const isEventStart = isEventStartSlot(day, time, date as any);
-                const skipSlot = shouldSkipSlot(day, time, date as any);
+                if (!date) return null;
+                const status = getSlotStatus(day, time, date);
+                const eventInSlot = getEventForSlot(day, time, date);
+                const isEventStart = isEventStartSlot(day, time, date);
+                const skipSlot = shouldSkipSlot(day, time, date);
                 const availabilitySlot = getAvailabilityForSlot(day, time);
                 const isAvailabilityStart = isAvailabilityStartSlot(day, time);
-                const blockedSlot = getBlockedSlot(day, time, date as any);
-                const isBlockedStart = isBlockedStartSlot(day, time, date as any);
+                const blockedSlot = getBlockedSlot(day, time, date);
+                const isBlockedStart = isBlockedStartSlot(day, time, date);
 
                 return (
                   <TooltipProvider key={`${day}-${time}`}>
@@ -435,7 +440,7 @@ export function WeeklyAvailabilityGrid({
                           ) : (
                             <button
                               className={getSlotClass(status, eventInSlot && isEventStart)}
-                              onClick={() => handleSlotClick(day, time, date as any)}
+                              onClick={() => handleSlotClick(day, time, date)}
                               onMouseDown={() => handleMouseDown(day, time)}
                               onMouseEnter={() => handleMouseEnter(day, time)}
                               style={

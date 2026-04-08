@@ -1,4 +1,5 @@
 import { fetchClient } from '@/services/api/fetch-client';
+import type { paths } from '@/services/api/schema';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
@@ -89,6 +90,10 @@ export type GuardianProgramProgress = z.infer<typeof guardianProgramProgressSche
 export type GuardianComplianceNotice = z.infer<typeof guardianComplianceNoticeSchema>;
 export type GuardianDashboardSnapshot = z.infer<typeof guardianDashboardSchema>;
 
+const GUARDIAN_STUDENTS_PATH = '/api/v1/guardians/me/students' as keyof paths;
+const GUARDIAN_DASHBOARD_PATH =
+  '/api/v1/guardians/students/{studentUuid}/dashboard' as keyof paths;
+
 function normalizeGuardianStudents(payload: unknown): GuardianLinkedStudent[] {
   const arrayResult = z.array(guardianStudentSchema).safeParse(payload);
   if (arrayResult.success) {
@@ -110,7 +115,7 @@ function normalizeGuardianStudents(payload: unknown): GuardianLinkedStudent[] {
 }
 
 export async function fetchGuardianStudents(): Promise<GuardianLinkedStudent[]> {
-  const response = await fetchClient.GET('/api/v1/guardians/me/students' as any);
+  const response = await fetchClient.GET(GUARDIAN_STUDENTS_PATH);
 
   if (response.error) {
     throw new Error(
@@ -126,14 +131,11 @@ export async function fetchGuardianStudents(): Promise<GuardianLinkedStudent[]> 
 export async function fetchGuardianDashboard(
   studentUuid: string
 ): Promise<GuardianDashboardSnapshot> {
-  const response = await fetchClient.GET(
-    '/api/v1/guardians/students/{studentUuid}/dashboard' as any,
-    {
-      params: {
-        path: { studentUuid },
-      },
-    }
-  );
+  const response = await fetchClient.GET(GUARDIAN_DASHBOARD_PATH, {
+    params: {
+      path: { studentUuid },
+    },
+  });
 
   if (response.error) {
     const message =
