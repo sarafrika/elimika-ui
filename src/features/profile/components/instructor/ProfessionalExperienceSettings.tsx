@@ -231,7 +231,7 @@ export default function ProfessionalExperienceSettings() {
   ).map(domain =>
     domain
       .split('_')
-      .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ')
   );
 

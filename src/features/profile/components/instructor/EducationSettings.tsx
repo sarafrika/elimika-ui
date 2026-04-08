@@ -208,14 +208,18 @@ export default function EducationSettings() {
     return `${endYear}`;
   };
 
-  const domainBadges =
-    // @ts-expect-error
-    user?.data?.user_domain?.map((domain: any) =>
-      domain
-        .split('_')
-        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
-    ) ?? [];
+  const domainBadges = (
+    Array.isArray(user?.user_domain)
+      ? user.user_domain
+      : user?.user_domain
+        ? [user.user_domain]
+        : []
+  ).map(domain =>
+    domain
+      .split('_')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
+  );
 
   return (
     <ProfileFormShell
@@ -247,7 +251,7 @@ export default function EducationSettings() {
                 {instructorEducation?.map(edu => (
                   <ProfileViewListItem
                     key={edu.uuid}
-                    title={`${edu.qualification} in ${(edu as any).field_of_study ?? 'General studies'}`}
+                    title={`${edu.qualification} in ${edu.field_of_study ?? 'General studies'}`}
                     subtitle={edu.school_name}
                     description={edu.full_description}
                     badge={edu.is_recent_qualification ? 'Current' : undefined}

@@ -15,7 +15,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
-import menu from '@/src/features/dashboard/config/menu';
+import menu, { type MenuItem } from '@/src/features/dashboard/config/menu';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
@@ -33,10 +33,12 @@ export function AppSidebar({
   const isAdmin = profile?.user_domain?.includes('admin');
 
   // Helper to get menu items for a domain
-  const getMenuItems = (domain: UserDomain) => {
+  const getMenuItems = (domain: UserDomain): MenuItem[] => {
     // Map 'organisation' domain to 'organisation_user' menu items
-    const menuKey = domain === 'organisation' ? 'organisation_user' : domain;
-    return (menu as any)[menuKey] || [];
+    const menuKey: Exclude<keyof typeof menu, 'main' | 'secondary' | 'user'> =
+      domain === 'organisation' ? 'organisation_user' : domain;
+
+    return menu[menuKey] ?? [];
   };
 
   const formatDomainName = (domain: string) =>
