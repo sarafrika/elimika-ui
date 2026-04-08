@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import { asRecord, getErrorMessage } from '@/lib/error-utils';
 import { createOrganisation } from '@/services/client';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
@@ -32,6 +33,20 @@ const _organizationTypes = [
   { value: 'TRADE_ORGANIZATION', label: 'Trade Organization' },
   { value: 'OTHER', label: 'Other' },
 ] as const;
+
+const getContextCountryName = (context: unknown): string | undefined => {
+  const contextRecord = asRecord(context);
+  if (!contextRecord) {
+    return undefined;
+  }
+
+  return (
+    (typeof contextRecord.country_name === 'string' ? contextRecord.country_name : undefined) ??
+    (typeof asRecord(contextRecord.country)?.name === 'string'
+      ? asRecord(contextRecord.country)?.name
+      : undefined)
+  );
+};
 
 export function OrganizationOnboardingForm() {
   const router = useRouter();
@@ -59,20 +74,6 @@ export function OrganizationOnboardingForm() {
     longitude: normalizeCoordinateValue(longitudeWatch),
   };
 
-  const getApiErrorMessage = (error: unknown, fallback: string) => {
-    if (!error || typeof error !== 'object') return fallback;
-    if ('message' in error && typeof (error as { message?: unknown }).message === 'string') {
-      return (error as { message: string }).message;
-    }
-    if ('error' in error && typeof (error as any).error?.message === 'string') {
-      return (error as any).error.message;
-    }
-    if ('data' in error && typeof (error as any).data?.message === 'string') {
-      return (error as any).data.message;
-    }
-    return fallback;
-  };
-
   const handleSubmit = async (data: OrganisationProfileFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
@@ -97,7 +98,7 @@ export function OrganizationOnboardingForm() {
       toast.success(successMessage);
       router.replace(buildDashboardSwitchPath('organisation_user'));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to register organization. Please try again.'));
+      toast.error(getErrorMessage(error, 'Failed to register organization. Please try again.'));
     }
     setIsSubmitting(false);
   };
@@ -144,9 +145,7 @@ export function OrganizationOnboardingForm() {
                 onSuggest={result => {
                   const feature = result.features[0];
                   const coordinates = feature?.properties?.coordinates;
-                  const contextCountry =
-                    (feature?.properties?.context as any)?.country?.name ??
-                    feature?.properties?.context?.country_name;
+                  const contextCountry = getContextCountryName(feature?.properties?.context);
 
                   if (
                     typeof coordinates?.latitude === 'number' &&

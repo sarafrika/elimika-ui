@@ -1,19 +1,19 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Course } from '@/services/client';
 import CourseCard from './CourseCard';
 import CourseFilters from './CourseFilters';
+import type { CourseWithApplication } from './types';
 
 interface CreatorsListProps {
-  courses: Course[];
-  selectedCourse: Course | null;
+  courses: CourseWithApplication[];
+  selectedCourse: CourseWithApplication | null;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   statusFilter: string;
   setStatusFilter: (status: string) => void;
   sortOrder: 'asc' | 'desc';
   setSortOrder: (order: 'asc' | 'desc') => void;
-  onCourseSelect: (course: Course) => void;
-  onCourseDelete: (course: Course) => void;
+  onCourseSelect: (course: CourseWithApplication) => void;
+  onCourseDelete: (course: CourseWithApplication) => void;
   isLoading: boolean;
 }
 

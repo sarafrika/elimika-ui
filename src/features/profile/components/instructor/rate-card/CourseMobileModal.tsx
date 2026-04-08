@@ -1,14 +1,14 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { Course } from '@/services/client';
 import CourseDetails from './CourseDetails';
+import type { CourseWithApplication } from './types';
 
 interface CourseMobileModalProps {
-  course: Course | null;
+  course: CourseWithApplication | null;
   isOpen: boolean;
   onClose: () => void;
-  onApprove: (course: Course) => void;
-  onUnverify: (course: Course) => void;
-  onDecline: (course: Course) => void;
+  onApprove: (course: CourseWithApplication) => void;
+  onUnverify: (course: CourseWithApplication) => void;
+  onDecline: (course: CourseWithApplication) => void;
 }
 
 export default function CourseMobileModal({ course, isOpen, onClose }: CourseMobileModalProps) {

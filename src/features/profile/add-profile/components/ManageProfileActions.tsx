@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
+import { getErrorMessage } from '@/lib/error-utils';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
@@ -65,9 +66,8 @@ export default function ManageProfileActions({ className = '' }: { className?: s
         await remover();
         toast.success(`${domainLabel(domain)} profile removed.`);
         await profile?.invalidateQuery?.();
-      } catch (error: any) {
-        const message = error?.message ?? 'Unable to remove profile. Please try again.';
-        toast.error(message);
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'Unable to remove profile. Please try again.'));
         throw error;
       }
     },
@@ -180,9 +180,8 @@ export default function ManageProfileActions({ className = '' }: { className?: s
       toast.success('Your account has been deleted.');
       setAccountDialogOpen(false);
       await signOut({ callbackUrl: '/' });
-    } catch (error: any) {
-      const message = error?.message ?? 'Unable to delete account. Please try again.';
-      toast.error(message);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to delete account. Please try again.'));
     }
   };
 

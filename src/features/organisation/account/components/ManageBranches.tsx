@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { type Path, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import LocationInput from '@/components/locationInput';
@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { asRecord, getFieldErrorMessage } from '@/lib/error-utils';
 import { queryClient } from '@/lib/query-client';
 import { type ApiResponse, createTrainingBranch, updateTrainingBranch } from '@/services/client';
 import { zTrainingBranch } from '@/services/client/zod.gen';
@@ -132,11 +133,16 @@ export default function ManageBranch() {
 
           let hasError = false;
           responses.forEach((response: ApiResponse, i) => {
-            if (response.error) {
-              Object.keys(response.error).forEach((key: string) => {
-                const fieldName = `branches.${i}.${key}` as any;
-                const { error } = response.error as any;
-                form.setError(fieldName, error[key]);
+            const responseErrors = asRecord(asRecord(response.error)?.error ?? response.error);
+
+            if (responseErrors) {
+              Object.keys(responseErrors).forEach(key => {
+                const fieldName = `branches.${i}.${key}` as Path<BranchesFormValues>;
+
+                form.setError(fieldName, {
+                  type: 'server',
+                  message: getFieldErrorMessage(response.error, key) ?? 'Invalid value',
+                });
               });
               hasError = true;
             }

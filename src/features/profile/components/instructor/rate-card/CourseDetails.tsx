@@ -3,16 +3,16 @@
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Course } from '@/services/client';
+import type { CourseTrainingRateCard } from '@/services/client';
+import type { CourseWithApplication } from './types';
 
 interface CourseDetailsProps {
-  course: Course;
+  course: CourseWithApplication;
   className?: string;
 }
 
 export default function CourseDetails({ course, className = '' }: CourseDetailsProps) {
-  // @ts-ignore
-  const rates = course?.application?.rate_card || {};
+  const rates: Partial<CourseTrainingRateCard> = course.application?.rate_card ?? {};
 
   return (
     <div className={`space-y-6 ${className}`}>

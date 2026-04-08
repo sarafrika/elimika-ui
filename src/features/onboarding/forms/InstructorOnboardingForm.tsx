@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import { getErrorMessage } from '@/lib/error-utils';
 import { createInstructor } from '@/services/client';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
@@ -82,10 +83,8 @@ export function InstructorOnboardingForm() {
 
       toast.success('Instructor account created successfully!');
       router.replace(buildDashboardSwitchPath('instructor'));
-    } catch (error: any) {
-      const errorMessage =
-        error?.message || 'Failed to create instructor account. Please try again.';
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to create instructor account. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }

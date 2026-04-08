@@ -8,11 +8,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import type { CourseTrainingApplication } from '@/services/client';
 
 interface InstructorDetailsModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  instructor: any | null;
+  instructor: CourseTrainingApplication | null;
 }
 
 export default function InstructorDetailsModal({

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { type Path, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import CustomLoader from '@/components/custom-loader';
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { asRecord, getFieldErrorMessage } from '@/lib/error-utils';
 import { queryClient } from '@/lib/query-client';
 import { profilePicSvg } from '@/lib/utils';
 import { type User, updateOrganisation, updateUser } from '@/services/client';
@@ -52,6 +53,20 @@ const trainingCenterSchema = organisationProfileSchema.merge(
 );
 
 type TrainingCenterFormValues = z.infer<typeof trainingCenterSchema>;
+
+const getContextCountryName = (context: unknown): string | undefined => {
+  const contextRecord = asRecord(context);
+  if (!contextRecord) {
+    return undefined;
+  }
+
+  return (
+    (typeof contextRecord.country_name === 'string' ? contextRecord.country_name : undefined) ??
+    (typeof asRecord(contextRecord.country)?.name === 'string'
+      ? asRecord(contextRecord.country)?.name
+      : undefined)
+  );
+};
 
 export default function TrainingCenterForm() {
   useOrganisationAccountBreadcrumb(
@@ -108,8 +123,18 @@ export default function TrainingCenterForm() {
 
           if (updateResponse.error) {
             toast.error('Error while updating institution');
-            const error = updateResponse.error as Record<string, any>;
-            Object.keys(error).forEach((key: any) => form.setError(key, error[key]));
+            const responseErrors = asRecord(
+              asRecord(updateResponse.error)?.error ?? updateResponse.error
+            );
+
+            if (responseErrors) {
+              Object.keys(responseErrors).forEach(key => {
+                form.setError(key as Path<TrainingCenterFormValues>, {
+                  type: 'server',
+                  message: getFieldErrorMessage(updateResponse.error, key) ?? 'Invalid value',
+                });
+              });
+            }
             return;
           }
 
@@ -263,9 +288,7 @@ export default function TrainingCenterForm() {
                 const feature = result.features[0];
                 if (!feature) return;
                 const coordinates = feature.properties?.coordinates;
-                const countryName =
-                  (feature.properties?.context as any)?.country?.name ??
-                  feature.properties?.context?.country_name;
+                const countryName = getContextCountryName(feature.properties?.context);
                 if (
                   typeof coordinates?.latitude === 'number' &&
                   typeof coordinates?.longitude === 'number'
