@@ -8,7 +8,16 @@ interface AddressComponents {
   postcode?: string;
   country?: string;
   country_code?: string;
-  [key: string]: any;
+  [key: string]: unknown;
+}
+
+interface ReverseGeocodeApiResponse {
+  address?: AddressComponents;
+  display_name?: string;
+}
+
+function isReverseGeocodeApiResponse(value: unknown): value is ReverseGeocodeApiResponse {
+  return typeof value === 'object' && value !== null;
 }
 
 interface ReverseGeocodeResult {
@@ -43,10 +52,14 @@ export function useReverseGeocode(lat: number, lon: number): ReverseGeocodeResul
 
         if (!response.ok) throw new Error('Failed to fetch address');
 
-        const data = await response.json();
+        const rawData: unknown = await response.json();
 
-        setAddressComponents(data.address || null);
-        setDisplayName(data.display_name || null);
+        if (!isReverseGeocodeApiResponse(rawData)) {
+          throw new Error('Unexpected reverse geocode response');
+        }
+
+        setAddressComponents(rawData.address || null);
+        setDisplayName(rawData.display_name || null);
       } catch (_err) {
         setError('Error retrieving address');
         setAddressComponents(null);

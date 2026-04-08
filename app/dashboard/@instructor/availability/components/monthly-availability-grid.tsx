@@ -6,17 +6,23 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import type { ClassData } from '../../trainings/create-new/academic-period-form';
-import type { AvailabilityData, CalendarEvent } from './types';
+import type { AvailabilityClassData, AvailabilityData, CalendarEvent } from './types';
 
 interface MonthlyAvailabilityGridProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
   isEditing: boolean;
-  classes: ClassData[];
+  classes: AvailabilityClassData[];
 }
 
-const eventColorMap = {
+const eventColorMap: Record<
+  NonNullable<CalendarEvent['entry_type']>,
+  {
+    badge: string;
+    dot: string;
+    gradient: string;
+  }
+> = {
   SCHEDULED_INSTANCE: {
     badge: 'bg-info/10 text-info border-info/20',
     dot: 'bg-info',
@@ -33,12 +39,17 @@ const eventColorMap = {
     dot: 'bg-success',
     gradient: 'from-success/5 to-success/10 dark:from-success/20 dark:to-success/15',
   },
+  BOOKING: {
+    badge: 'bg-info/10 text-info border-info/20',
+    dot: 'bg-info',
+    gradient: 'from-info/5 to-info/10 dark:from-info/20 dark:to-info/15',
+  },
 };
 
 export function MonthlyAvailabilityGrid({
   availabilityData,
-  onAvailabilityUpdate,
-  isEditing,
+  onAvailabilityUpdate: _onAvailabilityUpdate,
+  isEditing: _isEditing,
   classes,
 }: MonthlyAvailabilityGridProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -96,11 +107,12 @@ export function MonthlyAvailabilityGrid({
     const dayClasses = classes.filter(classItem => {
       if (classItem.status !== 'published') return false;
       return classItem.timetable.timeSlots.some(timeSlot => {
+        const currentSlotDay = timeSlot.day;
         const isCorrectDay = timeSlot.day.toLowerCase() === dayName.toLowerCase();
         const isWithinPeriod =
           date >= new Date(classItem.academicPeriod.startDate) &&
           date <= new Date(classItem.academicPeriod.endDate);
-        return isCorrectDay && isWithinPeriod;
+        return Boolean(currentSlotDay) && isCorrectDay && isWithinPeriod;
       });
     });
 
@@ -155,7 +167,7 @@ export function MonthlyAvailabilityGrid({
     });
 
     if (eventsForDay.length > 0) {
-      setSelectedEvent(eventsForDay[0] as any);
+      setSelectedEvent(eventsForDay[0] ?? null);
       setSelectedSlot(null);
     } else {
       setSelectedEvent(null);

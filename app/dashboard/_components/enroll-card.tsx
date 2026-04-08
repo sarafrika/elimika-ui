@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Calendar, Clock, MapPin, Star, Users } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import type { ClassDefinition, Course, CreateCartData } from '@/services/client';
 import ConfirmModal from '../../../components/custom-modals/confirm-modal';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
@@ -18,14 +19,29 @@ import {
 
 const stripHtml = (html: string) => html.replace(/<[^>]+>/g, '');
 
+type EnrollmentCardData = ClassDefinition;
+
+type EnrollmentCardCourse = Pick<Course, 'category_names'>;
+
+const getErrorMessage = (error: unknown) => {
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = error.message;
+    if (typeof message === 'string') {
+      return message;
+    }
+  }
+
+  return 'Something went wrong';
+};
+
 export const EnrollmentCards = ({
   classData,
   course,
   onViewClass,
 }: {
-  classData: any;
-  course: any;
-  onViewClass: (classData: any) => void;
+  classData: EnrollmentCardData;
+  course?: EnrollmentCardCourse | null;
+  onViewClass: (classData: EnrollmentCardData) => void;
 }) => {
   const {
     title,
@@ -105,7 +121,7 @@ export const EnrollmentCards = ({
         <div className='text-muted-foreground flex items-center gap-2 text-sm'>
           <Calendar className='h-4 w-4' />
           <span>
-            {default_start_time} - {default_end_time}
+            {String(default_start_time)} - {String(default_end_time)}
           </span>
         </div>
 
@@ -131,7 +147,7 @@ export const EnrollmentCards = ({
         {capacity_info && <div className='text-muted-foreground text-sm'>{capacity_info}</div>}
 
         <div className='flex flex-wrap gap-1'>
-          {course?.category_names?.map((category: any, index: any) => (
+          {course?.category_names?.map((category, index) => (
             <Badge key={index} variant='outline' className='text-xs'>
               {category}
             </Badge>
@@ -142,31 +158,32 @@ export const EnrollmentCards = ({
         <div className='mt-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center'>
           <Button
             onClick={() => {
+              const cartRequest = {
+                region_code: 'sdfsd',
+                currency_code: 'sdfsd',
+                items: [
+                  {
+                    variant_id: 'sdfsd',
+                    quantity: 1,
+                    metadata: {
+                      course_uuid,
+                      class_definition_uuid: uuid,
+                      student_uuid: student?.uuid,
+                    },
+                  },
+                ],
+              } as unknown as CreateCartData['body'];
+
               createCart.mutate(
                 {
-                  body: {
-                    region_code: 'sdfsd',
-                    currency_code: 'sdfsd',
-                    metadata: {} as any,
-                    items: [
-                      {
-                        variant_id: 'sdfsd',
-                        quantity: 1,
-                        metadata: {
-                          course_uuid: course_uuid,
-                          class_definition_uuid: uuid,
-                          student_uuid: student?.uuid,
-                        } as any,
-                      },
-                    ],
-                  },
+                  body: cartRequest,
                 },
                 {
                   onSuccess: _data => {
                     toast.success('Success!');
                   },
-                  onError: (error: any) => {
-                    toast.error(error.message);
+                  onError: error => {
+                    toast.error(getErrorMessage(error));
                   },
                 }
               );

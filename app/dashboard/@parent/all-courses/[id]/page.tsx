@@ -1,12 +1,16 @@
 'use client';
 
 import ReusableCourseDetailsPage from '@/app/dashboard/_components/reusable-course-details';
-import { useRouter } from 'next/navigation';
 import { useStudent } from '../../../../../context/student-context';
 
-export default function CourseDetailsPage({ params }: any) {
+type ParentCourseDetailsPageProps = {
+  params: {
+    id: string;
+  };
+};
+
+export default function CourseDetailsPage({ params }: ParentCourseDetailsPageProps) {
   const data = params?.id;
-  const router = useRouter();
   const student = useStudent();
 
   return (

@@ -1,17 +1,16 @@
 'use client';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { signIn, useSession } from 'next-auth/react';
 import { useState } from 'react';
-import { useUserProfile } from '../context/profile-context';
 import { Button } from './ui/button';
 import Spinner from './ui/spinner';
 
 export default function LoginButton() {
-  const user = useUserProfile();
+  const { data: session } = useSession();
   const router = useRouter();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
-  if (user?.email) {
+  if (session?.user?.email) {
     return <Button onClick={() => router.push('/dashboard/all-courses')}>Go to Dashboard</Button>;
   }
 

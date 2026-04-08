@@ -8,10 +8,10 @@ import { cx, getCardClasses } from '@/lib/design-system';
 import { format, isAfter, isBefore } from 'date-fns';
 import { ArrowRight, BookOpen, Calendar, Clock, MapPin, User, Video } from 'lucide-react';
 import Link from 'next/link';
-import { formatClassroomLabel, getClassData } from './schedule-data';
+import { formatClassroomLabel, getClassData, type StudentClassRecord } from './schedule-data';
 
 interface EnrolledClassCardProps {
-  classRecord: any;
+  classRecord: StudentClassRecord;
   href: string;
 }
 
@@ -45,10 +45,9 @@ const EnrolledClassCard = ({ classRecord, href }: EnrolledClassCardProps) => {
   })();
 
   const nextSchedule = schedules
-    .filter((schedule: any) => new Date(schedule.end_time).getTime() >= now.getTime())
+    .filter(schedule => new Date(schedule.end_time).getTime() >= now.getTime())
     .sort(
-      (left: any, right: any) =>
-        new Date(left.start_time).getTime() - new Date(right.start_time).getTime()
+      (left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime()
     )[0];
 
   const locationLabel = formatClassroomLabel({

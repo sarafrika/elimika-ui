@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Award, BookOpen, FileText, Play, Video } from 'lucide-react';
 
+import type { ContentTypeMap } from './CourseProgram';
+
 export type LessonContent = {
   uuid: string;
   title: string;
@@ -21,7 +23,7 @@ interface LessonDetailsSidebarProps {
   completedLessons: number;
   overallProgress: number;
   timeSpent?: string;
-  contentTypeMap: any;
+  contentTypeMap: ContentTypeMap;
 }
 
 // Lesson type styling map with semantic tokens

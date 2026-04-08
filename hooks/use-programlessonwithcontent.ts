@@ -1,20 +1,39 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import type { GetAllContentTypesResponse, GetCourseLessonsResponse } from '../services/client';
 import {
   getAllContentTypesOptions,
   getCourseLessonsOptions,
   getLessonContentOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
+type CourseLesson = NonNullable<NonNullable<GetCourseLessonsResponse['data']>['content']>[number];
+type CourseLessonWithUuid = CourseLesson & { uuid: string };
+export type ProgramCourseLike = {
+  uuid: string;
+  name?: string;
+  description?: string;
+};
+export type ProgramCourseLessonWithContent = {
+  lesson: CourseLesson;
+  content: unknown;
+};
+export type ProgramCourseWithLessons = {
+  course: ProgramCourseLike;
+  lessons: ProgramCourseLessonWithContent[];
+};
+
 export function useProgramLessonsWithContent({
   programUuid,
   programCourses,
 }: {
   programUuid: string;
-  programCourses: any;
+  programCourses: ProgramCourseLike[] | undefined;
 }) {
   // Flatten all courses in the program
-  const courseList = programCourses || [];
+  const courseList = (programCourses || []).filter((course): course is ProgramCourseLike =>
+    Boolean(course?.uuid)
+  );
 
   // Fetch lessons for each course
   const courseLessonsQueries = useQueries({
@@ -24,23 +43,29 @@ export function useProgramLessonsWithContent({
         query: { pageable: {} },
       }),
       enabled: !!course.uuid,
-      queryKey: ['courseLessons', course.uuid],
     })),
   });
 
   // For each course, fetch content for each lesson
   const allLessonContentQueries = useQueries({
     queries: courseLessonsQueries.flatMap((q, courseIndex) => {
-      const lessons = q.data?.data?.content || [];
+      const lessons = (q.data?.data?.content || []).filter(
+        (lesson): lesson is CourseLessonWithUuid => Boolean(lesson?.uuid)
+      );
+      const course = courseList[courseIndex];
+
+      if (!course) {
+        return [];
+      }
+
       return lessons.map(lesson => ({
         ...getLessonContentOptions({
           path: {
-            courseUuid: courseList[courseIndex].uuid,
+            courseUuid: course.uuid,
             lessonUuid: lesson.uuid,
           },
         }),
         enabled: !!lesson.uuid,
-        queryKey: ['lessonContent', lesson.uuid],
       }));
     }),
   });
@@ -57,8 +82,8 @@ export function useProgramLessonsWithContent({
 
   // Map lessons with content per course
   let contentIndex = 0; // keep track of content query index
-  const coursesWithLessons = courseList.map((course, courseIndex) => {
-    const lessons = courseLessonsQueries[courseIndex].data?.data?.content || [];
+  const coursesWithLessons = courseList.map((course, courseIndex): ProgramCourseWithLessons => {
+    const lessons = courseLessonsQueries[courseIndex]?.data?.data?.content || [];
     const lessonsWithContent = lessons.map(lesson => {
       const content = allLessonContentQueries[contentIndex]?.data;
       contentIndex += 1;

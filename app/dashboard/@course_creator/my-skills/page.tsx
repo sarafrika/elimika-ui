@@ -1,6 +1,7 @@
 'use client';
 
 import { useUserDomain } from '@/context/user-domain-context';
+import type { CourseCreatorSkill, Student, StudentSchedule } from '@/services/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, CheckCircle, Clock, PlusCircle, Star, TrendingUp, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -25,7 +26,6 @@ import {
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import { useMultipleClassDetails } from '../../../../hooks/use-class-multiple-details';
 import { useUserDomains } from '../../../../hooks/use-user-query';
-import { ProficiencyLevelEnum } from '../../../../services/client';
 import {
   addCourseCreatorSkillMutation,
   getCourseCreatorSkillsOptions,
@@ -50,6 +50,55 @@ const proficiencyScoreMap: Record<string, number> = {
 
 const skillColorMap = ['bg-primary', 'bg-secondary', 'bg-accent', 'bg-muted', 'bg-primary/80'];
 
+type SkillProficiency = CourseCreatorSkill['proficiency_level'];
+
+const skillProficiencyOptions: SkillProficiency[] = [
+  'beginner',
+  'intermediate',
+  'advanced',
+  'expert',
+];
+
+const isSkillProficiency = (value: string): value is SkillProficiency => {
+  return skillProficiencyOptions.includes(value as SkillProficiency);
+};
+
+const getSkillColor = (index: number) =>
+  skillColorMap[index % skillColorMap.length] ?? 'bg-primary';
+
+type SkillCard = {
+  name: string;
+  level: CourseCreatorSkill['proficiency_level'];
+  icon: string;
+  color: string;
+};
+
+type CourseView = {
+  name?: string;
+  status?: string;
+  category_names?: string[];
+  grade?: string;
+  completedDate?: string | Date;
+  progress?: number;
+};
+
+type ClassWithCourse = {
+  class?: {
+    uuid?: string;
+    title?: string;
+  } | null;
+  course?: CourseView | null;
+};
+
+type CourseStatus = 'complete' | 'passed' | 'failed' | 'incomplete';
+
+type StatusBadge = {
+  text: string;
+  bg: string;
+  text_color: string;
+  icon: typeof CheckCircle | typeof XCircle | typeof Clock;
+};
+
 const MySkillsPage = () => {
   const router = useRouter();
   const creator = useCourseCreator();
@@ -57,12 +106,13 @@ const MySkillsPage = () => {
   const uuid = creator?.profile?.uuid as string;
   const { domains } = useUserDomains();
   const userDomain = useUserDomain();
-  const hasStudentProfile = Array.isArray(domains) && domains.includes('student');
+  const userDomains = Array.isArray(domains) ? domains : domains ? [domains] : [];
+  const hasStudentProfile = userDomains.includes('student');
 
   const [showStudentProfileNotice, setShowStudentProfileNotice] = useState(false);
   const [isAddSkillModalOpen, setIsAddSkillModalOpen] = useState(false);
   const [newSkillName, setNewSkillName] = useState('');
-  const [newSkillProficiency, setNewSkillProficiency] = useState<string>('');
+  const [newSkillProficiency, setNewSkillProficiency] = useState<SkillProficiency | ''>('');
 
   const addSkillMutation = useMutation({
     ...addCourseCreatorSkillMutation(),
@@ -89,7 +139,7 @@ const MySkillsPage = () => {
       body: {
         course_creator_uuid: uuid,
         skill_name: newSkillName.trim(),
-        proficiency_level: newSkillProficiency.toUpperCase(),
+        proficiency_level: newSkillProficiency,
       },
       path: { courseCreatorUuid: uuid },
     });
@@ -104,8 +154,8 @@ const MySkillsPage = () => {
     }),
     enabled: !!creator?.profile?.user_uuid,
   });
-  // @ts-ignore
-  const studentInfo = studentSearch?.data?.content[0];
+  const studentSearchResults = (studentSearch?.content ?? []) as Student[];
+  const studentInfo = studentSearchResults[0];
 
   const { data, isLoading: skillsIsLoading } = useQuery({
     ...getCourseCreatorSkillsOptions({
@@ -114,8 +164,7 @@ const MySkillsPage = () => {
     }),
     enabled: !!uuid,
   });
-  const [useMockData, setUseMockData] = useState(false);
-  const apiSkills = data?.data?.content ?? [];
+  const apiSkills: CourseCreatorSkill[] = data?.data?.content ?? [];
   const skills = apiSkills;
 
   // overall progress = average proficiency score
@@ -123,50 +172,54 @@ const MySkillsPage = () => {
     skills.length > 0
       ? Math.round(
           skills.reduce(
-            (acc: number, skill: any) => acc + (proficiencyScoreMap[skill.proficiency_level] || 0),
+            (acc, skill) => acc + (proficiencyScoreMap[skill.proficiency_level.toLowerCase()] || 0),
             0
           ) / skills.length
         )
       : 0;
 
   // top 3 skills by proficiency
-  const topSkills = [...skills]
+  const topSkills: SkillCard[] = [...skills]
     .sort(
-      (a: any, b: any) =>
-        (proficiencyScoreMap[b.proficiency_level] || 0) -
-        (proficiencyScoreMap[a.proficiency_level] || 0)
+      (a, b) =>
+        (proficiencyScoreMap[b.proficiency_level.toLowerCase()] || 0) -
+        (proficiencyScoreMap[a.proficiency_level.toLowerCase()] || 0)
     )
     .slice(0, 3)
-    .map((skill: any, index: number) => ({
+    .map((skill, index) => ({
       name: skill.skill_name,
       level: skill.proficiency_level,
       icon: '⭐',
-      color: skillColorMap[index % skillColorMap.length],
+      color: getSkillColor(index),
     }));
 
   const { data: studentEnrollmentData } = useQuery({
     ...getStudentScheduleOptions({
-      path: { studentUuid: studentInfo?.uuid },
-      query: { start: '2026-01-20' as any, end: '2027-01-20' as any },
+      path: { studentUuid: studentInfo?.uuid ?? '' },
+      query: { start: new Date('2026-01-20'), end: new Date('2027-01-20') },
     }),
     enabled: !!studentInfo?.uuid,
   });
 
-  const [useMockEnrollment, setUseMockEnrollment] = useState(false);
-  const studentEnrollmentsApi = studentEnrollmentData?.data;
+  const studentEnrollmentsApi: StudentSchedule[] = studentEnrollmentData?.data ?? [];
   // const studentEnrollments = useMockEnrollment ? mockStudentEnrollments : studentEnrollmentsApi;
   const studentEnrollments = studentEnrollmentsApi;
 
   const uniqueClassDefinitionUuids = [
-    ...new Set(studentEnrollments?.map(e => e.class_definition_uuid)),
+    ...new Set(
+      studentEnrollments
+        .map(enrollment => enrollment.class_definition_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid))
+    ),
   ];
 
   const { data: allClasses, isLoading: enrollmentIsLoading } = useMultipleClassDetails(
-    uniqueClassDefinitionUuids as any
+    uniqueClassDefinitionUuids
   );
+  const classDetails = allClasses as ClassWithCourse[];
 
-  const getStatusBadge = (status: any) => {
-    const badges = {
+  const getStatusBadge = (status?: string): StatusBadge => {
+    const badges: Record<CourseStatus, StatusBadge> = {
       complete: {
         text: 'Completed',
         bg: 'bg-primary/10',
@@ -192,11 +245,15 @@ const MySkillsPage = () => {
         icon: Clock,
       },
     };
-    // @ts-ignore
-    return badges[status] || badges.incomplete;
+
+    if (status === 'complete' || status === 'passed' || status === 'failed') {
+      return badges[status];
+    }
+
+    return badges.incomplete;
   };
 
-  const getGradeColor = (grade: any) => {
+  const getGradeColor = (grade?: string | null) => {
     if (!grade) return 'text-muted-foreground';
     if (grade.startsWith('A')) return 'text-primary';
     if (grade.startsWith('B')) return 'text-primary/80';
@@ -206,7 +263,7 @@ const MySkillsPage = () => {
   };
 
   const stats = {
-    total: allClasses.length,
+    total: classDetails.length,
     // completed: courses.filter(c => c.status === 'complete' || c.status === 'passed').length,
     // inProgress: courses.filter(c => c.status === 'incomplete').length,
     // failed: courses.filter(c => c.status === 'failed').length,
@@ -456,13 +513,13 @@ const MySkillsPage = () => {
         ) : (
           <>
             <div className='space-y-4'>
-              {allClasses.map((en: any) => {
+              {classDetails.map((en, index) => {
                 const statusInfo = getStatusBadge(en?.course?.status);
                 const StatusIcon = statusInfo.icon;
 
                 return (
                   <div
-                    key={en?.class?.uuid}
+                    key={en?.class?.uuid ?? `class-${index}`}
                     className='bg-card border-input rounded-lg border p-5 shadow-sm transition-shadow hover:shadow-md'
                   >
                     <div className='flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
@@ -485,7 +542,7 @@ const MySkillsPage = () => {
                                 {statusInfo.text}
                               </span>
                               <span className='bg-muted text-muted-foreground rounded-full px-2 py-1 text-xs'>
-                                {en?.course?.category_names?.map((i: any) => i)}
+                                {en?.course?.category_names?.join(', ') || 'Uncategorized'}
                               </span>
                               {en?.course?.grade ? (
                                 <span
@@ -548,7 +605,7 @@ const MySkillsPage = () => {
               })}
             </div>
 
-            {allClasses.length === 0 && (
+            {classDetails.length === 0 && (
               <div className='bg-muted border-input rounded-lg border p-8 text-center'>
                 <BookOpen className='text-muted-foreground mx-auto mb-3 h-12 w-12' />
                 <h3 className='text-foreground mb-2 text-lg font-semibold'>
@@ -598,17 +655,19 @@ const MySkillsPage = () => {
               <Label htmlFor='proficiency-level'>Proficiency Level</Label>
               <Select
                 value={newSkillProficiency}
-                onValueChange={setNewSkillProficiency}
+                onValueChange={value => {
+                  setNewSkillProficiency(isSkillProficiency(value) ? value : '');
+                }}
                 disabled={addSkillMutation.isPending}
               >
                 <SelectTrigger id='proficiency-level'>
                   <SelectValue placeholder='Select proficiency level' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ProficiencyLevelEnum.BEGINNER}>Beginner</SelectItem>
-                  <SelectItem value={ProficiencyLevelEnum.INTERMEDIATE}>Intermediate</SelectItem>
-                  <SelectItem value={ProficiencyLevelEnum.ADVANCED}>Advanced</SelectItem>
-                  <SelectItem value={ProficiencyLevelEnum.EXPERT}>Expert</SelectItem>
+                  <SelectItem value='beginner'>Beginner</SelectItem>
+                  <SelectItem value='intermediate'>Intermediate</SelectItem>
+                  <SelectItem value='advanced'>Advanced</SelectItem>
+                  <SelectItem value='expert'>Expert</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -646,109 +705,3 @@ const MySkillsPage = () => {
 };
 
 export default MySkillsPage;
-
-const mockSkills = [
-  {
-    uuid: 'skill234-1111-22aa-bbbb-1234567890ab',
-    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-    skill_name: 'Curriculum Development',
-    proficiency_level: 'ADVANCED',
-    created_date: '2024-06-10T10:12:45',
-    created_by: 'creator@example.com',
-    updated_date: '2024-06-18T08:40:10',
-    updated_by: 'creator@example.com',
-  },
-  {
-    uuid: 'skill345-2222-33bb-cccc-2345678901bc',
-    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-    skill_name: 'Learning Experience Design (LXD)',
-    proficiency_level: 'EXPERT',
-    created_date: '2024-05-22T16:05:30',
-    created_by: 'creator@example.com',
-    updated_date: '2024-06-01T11:20:00',
-    updated_by: 'creator@example.com',
-  },
-  {
-    uuid: 'skill456-3333-44cc-dddd-3456789012cd',
-    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-    skill_name: 'Assessment Design',
-    proficiency_level: 'ADVANCED',
-    created_date: '2024-04-18T09:45:12',
-    created_by: 'creator@example.com',
-    updated_date: '2024-05-02T14:10:55',
-    updated_by: 'creator@example.com',
-  },
-  {
-    uuid: 'skill567-4444-55dd-eeee-4567890123de',
-    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-    skill_name: 'eLearning Development',
-    proficiency_level: 'EXPERT',
-    created_date: '2024-03-12T13:00:00',
-    created_by: 'creator@example.com',
-    updated_date: '2024-06-05T17:25:40',
-    updated_by: 'creator@example.com',
-  },
-  {
-    uuid: 'skill678-5555-66ee-ffff-5678901234ef',
-    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-    skill_name: 'Storyboarding',
-    proficiency_level: 'INTERMEDIATE',
-    created_date: '2024-02-28T08:35:18',
-    created_by: 'creator@example.com',
-    updated_date: '2024-03-15T10:00:00',
-    updated_by: 'creator@example.com',
-  },
-];
-const mockStudentEnrollments = [
-  {
-    enrollment_uuid: 'en123456-7890-abcd-ef01-234567890abc',
-    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
-    class_definition_uuid: '49958252-fb3e-4a48-a693-972111cb1390',
-    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-    title: 'Introduction to Java Programming',
-    start_time: '2024-09-15T09:00:00',
-    end_time: '2024-09-15T10:30:00',
-    timezone: 'UTC',
-    location_type: 'IN_PERSON',
-    location_name: 'Nairobi HQ – Room 101',
-    location_latitude: -1.292066,
-    location_longitude: 36.821945,
-    scheduling_status: 'SCHEDULED',
-    enrollment_status: 'ENROLLED',
-    attendance_marked_at: null,
-  },
-  {
-    enrollment_uuid: 'en123456-7890-abcd-ef01-234567890abc',
-    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
-    class_definition_uuid: '30fb8f5e-8ce7-4871-923c-de6316a2d9b8',
-    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-    title: 'Introduction to Java Programming',
-    start_time: '2024-09-15T09:00:00',
-    end_time: '2024-09-15T10:30:00',
-    timezone: 'UTC',
-    location_type: 'IN_PERSON',
-    location_name: 'Nairobi HQ – Room 101',
-    location_latitude: -1.292066,
-    location_longitude: 36.821945,
-    scheduling_status: 'SCHEDULED',
-    enrollment_status: 'ENROLLED',
-    attendance_marked_at: null,
-  },
-  {
-    enrollment_uuid: 'en123456-7890-abcd-ef01-234567890abc',
-    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
-    class_definition_uuid: 'e1fa19fc-1bd3-4cdb-9c35-564ac56dd071',
-    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-    title: 'Introduction to Java Programming',
-    start_time: '2024-09-15T09:00:00',
-    end_time: '2024-09-15T10:30:00',
-    timezone: 'UTC',
-    location_type: 'IN_PERSON',
-    location_name: 'Nairobi HQ – Room 101',
-    location_latitude: -1.292066,
-    location_longitude: 36.821945,
-    scheduling_status: 'SCHEDULED',
-    enrollment_status: 'ENROLLED',
-    attendance_marked_at: null,
-  },
-];

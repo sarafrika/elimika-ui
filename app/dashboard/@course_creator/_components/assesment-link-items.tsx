@@ -30,6 +30,13 @@ import {
   searchQuizzesOptions,
   updateLineItemMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import type {
+  Assignment,
+  CourseAssessmentLineItem,
+  Lesson,
+  Quiz,
+  ResponseDtoVoid,
+} from '../../../../services/client/types.gen';
 
 export type TaskItemType =
   | 'assignment'
@@ -75,6 +82,15 @@ type CategoryMeta = {
   color: string;
 };
 
+type ExtendedLineItem = CourseAssessmentLineItem & {
+  project_uuid?: string;
+  attendance_uuid?: string;
+  discussion_uuid?: string;
+  lab_uuid?: string;
+  presentation_uuid?: string;
+  reflection_uuid?: string;
+};
+
 export const CATEGORY_META: Record<TaskItemType, CategoryMeta> = {
   attendance: {
     label: 'Attendance',
@@ -117,6 +133,10 @@ export const CATEGORY_META: Record<TaskItemType, CategoryMeta> = {
     color: 'bg-muted text-muted-foreground',
   },
 };
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  (error as ResponseDtoVoid | undefined)?.message ||
+  (error instanceof Error ? error.message : fallback);
 
 const CATEGORY_ORDER: TaskItemType[] = [
   'attendance',
@@ -257,8 +277,9 @@ export function LinkItemsModal({
   const { data: lineItemsData } = useQuery({
     ...getLineItemsOptions({ path: { courseUuid, assessmentUuid } }),
   });
-  const lineItems: any[] =
-    lineItemsData?.data?.content ?? (Array.isArray(lineItemsData?.data) ? lineItemsData.data : []);
+  const lineItems: ExtendedLineItem[] = Array.isArray(lineItemsData?.data)
+    ? lineItemsData.data
+    : [];
 
   const taskUuidToLineItemUuid = useMemo(() => {
     const map = new Map<string, string>();
@@ -273,7 +294,7 @@ export function LinkItemsModal({
         li.presentation_uuid ??
         li.reflection_uuid ??
         null;
-      if (sourceUuid) map.set(sourceUuid, li.uuid);
+      if (sourceUuid && li.uuid) map.set(sourceUuid, li.uuid);
     }
     return map;
   }, [lineItems]);
@@ -294,19 +315,21 @@ export function LinkItemsModal({
   });
 
   // Sorted lessons so numbering is stable
-  const lessons: any[] = useMemo(
+  const lessons: Lesson[] = useMemo(
     () =>
       [...(cLessons?.data?.content ?? [])].sort(
         (a, b) => (a.lesson_number ?? 0) - (b.lesson_number ?? 0)
       ),
     [cLessons]
   );
-  const lessonUUIDs = lessons.map(l => l.uuid);
+  const lessonUUIDs = lessons.map(l => l.uuid).filter((uuid): uuid is string => Boolean(uuid));
 
   // Build a lookup: uuid → lesson object (for labels)
   const lessonMap = useMemo(() => {
-    const m = new Map<string, any>();
-    lessons.forEach(l => m.set(l.uuid, l));
+    const m = new Map<string, Lesson>();
+    lessons.forEach(l => {
+      if (l.uuid) m.set(l.uuid, l);
+    });
     return m;
   }, [lessons]);
 
@@ -335,7 +358,8 @@ export function LinkItemsModal({
   const availableTasks: TaskItem[] = useMemo(() => {
     const assignments: TaskItem[] = assignmentQueries
       .flatMap(q => q.data?.data?.content ?? [])
-      .map((a: any) => ({
+      .filter((a): a is Assignment & { uuid: string } => Boolean(a.uuid))
+      .map(a => ({
         uuid: a.uuid,
         title: a.title,
         description: a.description ?? undefined,
@@ -347,7 +371,8 @@ export function LinkItemsModal({
 
     const quizzes: TaskItem[] = quizQueries
       .flatMap(q => q.data?.data?.content ?? [])
-      .map((q: any) => ({
+      .filter((q): q is Quiz & { uuid: string } => Boolean(q.uuid))
+      .map(q => ({
         uuid: q.uuid,
         title: q.title,
         description: q.description ?? undefined,
@@ -408,7 +433,7 @@ export function LinkItemsModal({
           invalidateLineItems();
           onSuccess?.();
         },
-        onError: (err: any) => toast.error(err?.message || 'Failed to unlink item.'),
+        onError: err => toast.error(getErrorMessage(err, 'Failed to unlink item.')),
       }
     );
   }
@@ -425,7 +450,7 @@ export function LinkItemsModal({
         tasks.map((task, i) =>
           createLineItemMut.mutateAsync({
             path: { courseUuid, assessmentUuid },
-            body: buildLineItemBody(task, assessmentUuid, i) as any,
+            body: buildLineItemBody(task, assessmentUuid, i) as never,
           })
         )
       );

@@ -1,9 +1,13 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import ErrorPage from '@/components/ErrorPage';
 import { Badge } from '@/components/ui/badge';
-import type { Instructor } from '@/services/api/schema';
+import type { GetAllInstructorsResponse } from '@/services/client';
 import {
   deleteInstructorMutation,
   getAllInstructorsOptions,
@@ -11,13 +15,13 @@ import {
   unverifyInstructorMutation,
   verifyInstructorMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import InstructorDetailsPanel from './InstructorDetailsPanel';
 import InstructorMobileModal from './InstructorMobileModal';
 import InstructorsList from './InstructorsList';
+
+type InstructorRecord = NonNullable<
+  NonNullable<GetAllInstructorsResponse['data']>['content']
+>[number];
 
 export default function InstructorsPage() {
   const { data, error, isLoading } = useQuery(
@@ -25,7 +29,7 @@ export default function InstructorsPage() {
   );
 
   const instructors = useMemo(() => data?.data?.content ?? [], [data?.data?.content]);
-  const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
+  const [selectedInstructor, setSelectedInstructor] = useState<InstructorRecord | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -43,15 +47,17 @@ export default function InstructorsPage() {
   }, []);
 
   useEffect(() => {
-    if (instructors.length > 0 && !selectedInstructor) {
-      setSelectedInstructor(instructors[0] as any);
+    const firstInstructor = instructors[0];
+
+    if (firstInstructor && !selectedInstructor) {
+      setSelectedInstructor(firstInstructor);
     }
   }, [instructors, selectedInstructor]);
 
   const approveInstrucor = useMutation(verifyInstructorMutation());
   const rejectInstructor = useMutation(unverifyInstructorMutation());
 
-  const handleApproveInstructor = async (instructor: Instructor) => {
+  const handleApproveInstructor = async (instructor: InstructorRecord) => {
     try {
       approveInstrucor.mutate(
         { path: { uuid: instructor.uuid! }, query: { reason: '' } },
@@ -67,7 +73,7 @@ export default function InstructorsPage() {
     } catch (_error) {}
   };
 
-  const handleRejectInstructor = async (instructor: Instructor) => {
+  const handleRejectInstructor = async (instructor: InstructorRecord) => {
     try {
       rejectInstructor.mutate(
         { path: { uuid: instructor.uuid! }, query: { reason: '' } },
@@ -102,7 +108,7 @@ export default function InstructorsPage() {
     );
   };
 
-  const handleInstructorSelect = (instructor: Instructor) => {
+  const handleInstructorSelect = (instructor: InstructorRecord) => {
     setSelectedInstructor(instructor);
     // Open modal on small screens
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
@@ -114,7 +120,7 @@ export default function InstructorsPage() {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
   const deleteInstructor = useMutation(deleteInstructorMutation());
-  const handleInstructorDelete = (instructor: Instructor) => {
+  const handleInstructorDelete = (instructor: InstructorRecord) => {
     setDeletingId(instructor.uuid as string);
     setOpenDeleteModal(true);
   };
@@ -175,7 +181,7 @@ export default function InstructorsPage() {
       <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
         {/* Left Sidebar - Instructor List */}
         <InstructorsList
-          instructors={filteredAndSortedInstructors as any}
+          instructors={filteredAndSortedInstructors}
           selectedInstructor={selectedInstructor}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}

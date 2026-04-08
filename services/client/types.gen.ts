@@ -1384,11 +1384,11 @@ export type InstructorProfessionalMembership = {
    */
   instructor_uuid: string;
   /**
-   * **[REQUIRED]** Full name of the professional organization, association, or certification body.
+   * **[REQUIRED]** Full name of the professional organisation, association, or certification body.
    */
-  organization_name: string;
+  organisation_name: string;
   /**
-   * **[OPTIONAL]** Official membership number or identifier issued by the organization.
+   * **[OPTIONAL]** Official membership number or identifier issued by the organisation.
    */
   membership_number?: string;
   /**
@@ -1447,7 +1447,7 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if the membership has a membership number documented.
    */
   readonly has_membership_number?: boolean;
-  organization_type?: OrganizationTypeEnum;
+  organisation_type?: OrganisationTypeEnum;
   /**
    * **[READ-ONLY]** Years of membership calculated with decimal precision.
    */
@@ -1489,9 +1489,9 @@ export type InstructorExperience = {
    */
   position: string;
   /**
-   * **[REQUIRED]** Name of the organization, company, or institution where the instructor worked.
+   * **[REQUIRED]** Name of the organisation, company, or institution where the instructor worked.
    */
-  organization_name: string;
+  organisation_name: string;
   /**
    * **[OPTIONAL]** Detailed description of key responsibilities, achievements, and duties performed in this position.
    */
@@ -2226,9 +2226,9 @@ export type LessonContent = {
    */
   file_url?: string;
   /**
-   * **[REQUIRED]** Display order of content within the lesson for sequential presentation.
+   * **[OPTIONAL]** Display order of content within the lesson for sequential presentation. If omitted, the system appends the content at the end.
    */
-  display_order: number;
+  display_order?: number;
   /**
    * **[OPTIONAL]** Indicates if this content is required for lesson completion.
    */
@@ -2334,6 +2334,10 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if this is a major assessment component.
+   */
+  readonly is_major_assessment?: boolean;
+  /**
    * **[READ-ONLY]** Level of contribution to final grade based on weight.
    */
   readonly contribution_level?: string;
@@ -2349,10 +2353,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable format of the weight percentage.
    */
   readonly weight_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is a major assessment component.
-   */
-  readonly is_major_assessment?: boolean;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -2554,7 +2554,7 @@ export type ApiResponseCourseCreatorSkill = {
 export type CourseCreatorProfessionalMembership = {
   readonly uuid?: string;
   course_creator_uuid: string;
-  organization_name: string;
+  organisation_name: string;
   membership_number?: string;
   start_date?: Date;
   end_date?: Date;
@@ -2582,7 +2582,7 @@ export type CourseCreatorExperience = {
   readonly uuid?: string;
   course_creator_uuid: string;
   position: string;
-  organization_name: string;
+  organisation_name: string;
   responsibilities?: string;
   years_of_experience?: number;
   start_date?: Date;
@@ -2668,7 +2668,7 @@ export type CourseCreatorCertification = {
   readonly uuid?: string;
   course_creator_uuid: string;
   certification_name: string;
-  issuing_organization: string;
+  issuing_organisation: string;
   issued_date?: Date;
   expiry_date?: Date;
   credential_id?: string;
@@ -3041,7 +3041,7 @@ export type ClassDefinition = {
    */
   default_instructor_uuid: string;
   /**
-   * **[OPTIONAL]** Reference to the organization UUID that owns this class definition.
+   * **[OPTIONAL]** Reference to the organisation UUID that owns this class definition.
    */
   organisation_uuid?: string;
   /**
@@ -3762,6 +3762,10 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -3773,10 +3777,6 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 /**
@@ -4168,10 +4168,6 @@ export type Enrollment = {
    */
   readonly can_be_cancelled?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
-   */
-  readonly is_attendance_marked?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
@@ -4179,6 +4175,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
+   */
+  readonly is_attendance_marked?: boolean;
 };
 
 export type ApiResponse = {
@@ -6013,13 +6013,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the program.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -6420,13 +6420,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponsePagedDtoEnrollment = {
@@ -6798,13 +6798,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the course.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -7301,9 +7301,9 @@ export type AdminDashboardStats = {
    */
   user_metrics?: UserMetrics;
   /**
-   * Organization-related metrics
+   * Organisation-related metrics
    */
-  organization_metrics?: OrganizationMetrics;
+  organisation_metrics?: OrganizationMetrics;
   /**
    * Content-related metrics
    */
@@ -7350,7 +7350,7 @@ export type AdminMetrics = {
   active_admin_sessions?: bigint;
   admin_actions_today?: bigint;
   system_admins?: bigint;
-  organization_admins?: bigint;
+  organisation_admins?: bigint;
 };
 
 export type ApiResponseAdminDashboardStats = {
@@ -7444,13 +7444,13 @@ export type LearningMetrics = {
 };
 
 /**
- * Organization metrics for dashboard
+ * Organisation metrics for dashboard
  */
 export type OrganizationMetrics = {
-  total_organizations?: bigint;
+  total_organisations?: bigint;
   pending_approvals?: bigint;
-  active_organizations?: bigint;
-  suspended_organizations?: bigint;
+  active_organisations?: bigint;
+  suspended_organisations?: bigint;
 };
 
 /**
@@ -7834,9 +7834,9 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
- * **[READ-ONLY]** Classification of organization type based on name keywords.
+ * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
-export const OrganizationTypeEnum = {
+export const OrganisationTypeEnum = {
   PROFESSIONAL_INSTITUTE: 'PROFESSIONAL_INSTITUTE',
   CERTIFICATION_BODY: 'CERTIFICATION_BODY',
   INDUSTRY_ASSOCIATION: 'INDUSTRY_ASSOCIATION',
@@ -7846,9 +7846,9 @@ export const OrganizationTypeEnum = {
 } as const;
 
 /**
- * **[READ-ONLY]** Classification of organization type based on name keywords.
+ * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
-export type OrganizationTypeEnum = (typeof OrganizationTypeEnum)[keyof typeof OrganizationTypeEnum];
+export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
 
 /**
  * **[READ-ONLY]** Current status of the membership.
@@ -8423,7 +8423,7 @@ export type DeleteUserData = {
   body?: never;
   path: {
     /**
-     * UUID of the user to delete. This will remove the user and all their organization relationships.
+     * UUID of the user to delete. This will remove the user and all their organisation relationships.
      */
     uuid: string;
   };
@@ -9723,7 +9723,7 @@ export type DeleteTrainingBranch1Data = {
   body?: never;
   path: {
     /**
-     * UUID of the organization that owns the training branch. Must be an existing organization.
+     * UUID of the organisation that owns the training branch. Must be an existing organisation.
      */
     uuid: string;
     /**
@@ -9763,11 +9763,11 @@ export type GetTrainingBranchByUuid1Data = {
   body?: never;
   path: {
     /**
-     * UUID of the organization that owns the training branch. Must be an existing organization.
+     * UUID of the organisation that owns the training branch. Must be an existing organisation.
      */
     uuid: string;
     /**
-     * UUID of the training branch to retrieve. Must be a branch within the specified organization.
+     * UUID of the training branch to retrieve. Must be a branch within the specified organisation.
      */
     branchUuid: string;
   };
@@ -9803,11 +9803,11 @@ export type UpdateTrainingBranch1Data = {
   body: TrainingBranch;
   path: {
     /**
-     * UUID of the organization that owns the training branch. Must be an existing organization.
+     * UUID of the organisation that owns the training branch. Must be an existing organisation.
      */
     uuid: string;
     /**
-     * UUID of the training branch to update. Must be a branch within the specified organization.
+     * UUID of the training branch to update. Must be a branch within the specified organisation.
      */
     branchUuid: string;
   };
@@ -13709,7 +13709,7 @@ export type CreateTrainingBranch1Data = {
   body: TrainingBranch;
   path: {
     /**
-     * UUID of the organization to create the training branch in. Must be an existing organization.
+     * UUID of the organisation to create the training branch in. Must be an existing organisation.
      */
     uuid: string;
   };
@@ -13749,11 +13749,11 @@ export type RemoveUserFromBranchData = {
   body?: never;
   path: {
     /**
-     * UUID of the organization that owns the training branch. Must be an existing organization.
+     * UUID of the organisation that owns the training branch. Must be an existing organisation.
      */
     uuid: string;
     /**
-     * UUID of the training branch to remove the user from. Must be a branch within the specified organization.
+     * UUID of the training branch to remove the user from. Must be a branch within the specified organisation.
      */
     branchUuid: string;
     /**
@@ -13793,11 +13793,11 @@ export type AssignUserToBranchData = {
   body?: never;
   path: {
     /**
-     * UUID of the organization that owns the training branch. Must be an existing organization.
+     * UUID of the organisation that owns the training branch. Must be an existing organisation.
      */
     uuid: string;
     /**
-     * UUID of the training branch to assign the user to. Must be a branch within the specified organization.
+     * UUID of the training branch to assign the user to. Must be a branch within the specified organisation.
      */
     branchUuid: string;
     /**
@@ -17871,59 +17871,6 @@ export type ModerateProgramResponses = {
 
 export type ModerateProgramResponse = ModerateProgramResponses[keyof ModerateProgramResponses];
 
-export type ModerateOrganisationData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the organization to moderate. Must be an existing organization identifier.
-     */
-    uuid: string;
-  };
-  query: {
-    /**
-     * Moderation action to perform
-     */
-    action: SchemaEnum3;
-    /**
-     * Optional reason for the chosen moderation action
-     */
-    reason?: string;
-  };
-  url: '/api/v1/admin/organizations/{uuid}/moderate';
-};
-
-export type ModerateOrganisationErrors = {
-  /**
-   * Invalid moderation action supplied
-   */
-  400: ApiResponseOrganisation;
-  /**
-   * Insufficient privileges - system admin required
-   */
-  403: ApiResponseOrganisation;
-  /**
-   * Organization not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ModerateOrganisationError =
-  ModerateOrganisationErrors[keyof ModerateOrganisationErrors];
-
-export type ModerateOrganisationResponses = {
-  /**
-   * Organization moderation completed successfully
-   */
-  200: ApiResponseOrganisation;
-};
-
-export type ModerateOrganisationResponse =
-  ModerateOrganisationResponses[keyof ModerateOrganisationResponses];
-
 export type CreateOrganisationUserData = {
   body: OrganisationUserCreateRequestDto;
   path: {
@@ -17963,6 +17910,59 @@ export type CreateOrganisationUserResponses = {
 
 export type CreateOrganisationUserResponse =
   CreateOrganisationUserResponses[keyof CreateOrganisationUserResponses];
+
+export type ModerateOrganisationData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation to moderate. Must be an existing organisation identifier.
+     */
+    uuid: string;
+  };
+  query: {
+    /**
+     * Moderation action to perform
+     */
+    action: SchemaEnum3;
+    /**
+     * Optional reason for the chosen moderation action
+     */
+    reason?: string;
+  };
+  url: '/api/v1/admin/organisations/{uuid}/moderate';
+};
+
+export type ModerateOrganisationErrors = {
+  /**
+   * Invalid moderation action supplied
+   */
+  400: ApiResponseOrganisation;
+  /**
+   * Insufficient privileges - system admin required
+   */
+  403: ApiResponseOrganisation;
+  /**
+   * Organisation not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ModerateOrganisationError =
+  ModerateOrganisationErrors[keyof ModerateOrganisationErrors];
+
+export type ModerateOrganisationResponses = {
+  /**
+   * Organisation moderation completed successfully
+   */
+  200: ApiResponseOrganisation;
+};
+
+export type ModerateOrganisationResponse =
+  ModerateOrganisationResponses[keyof ModerateOrganisationResponses];
 
 export type VerifyInstructorData = {
   body?: never;
@@ -20690,11 +20690,11 @@ export type GetBranchUsersData = {
   body?: never;
   path: {
     /**
-     * UUID of the organization that owns the training branch. Must be an existing organization.
+     * UUID of the organisation that owns the training branch. Must be an existing organisation.
      */
     uuid: string;
     /**
-     * UUID of the training branch to get users for. Must be a branch within the specified organization.
+     * UUID of the training branch to get users for. Must be a branch within the specified organisation.
      */
     branchUuid: string;
   };
@@ -20728,11 +20728,11 @@ export type GetBranchUsersByDomainData = {
   body?: never;
   path: {
     /**
-     * UUID of the organization that owns the training branch. Must be an existing organization.
+     * UUID of the organisation that owns the training branch. Must be an existing organisation.
      */
     uuid: string;
     /**
-     * UUID of the training branch to get users for. Must be a branch within the specified organization.
+     * UUID of the training branch to get users for. Must be a branch within the specified organisation.
      */
     branchUuid: string;
     /**
@@ -22100,6 +22100,42 @@ export type GetCoursesByInstructorResponses = {
 
 export type GetCoursesByInstructorResponse =
   GetCoursesByInstructorResponses[keyof GetCoursesByInstructorResponses];
+
+export type GetCourseContentMediaData = {
+  body?: never;
+  path: {
+    /**
+     * Stored relative path of the lesson content media file.
+     */
+    filePath: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/content-media/{filePath}';
+};
+
+export type GetCourseContentMediaErrors = {
+  /**
+   * Lesson content media not found
+   */
+  404: ApiResponse;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseContentMediaError =
+  GetCourseContentMediaErrors[keyof GetCourseContentMediaErrors];
+
+export type GetCourseContentMediaResponses = {
+  /**
+   * Lesson content media retrieved successfully
+   */
+  200: Blob | File;
+};
+
+export type GetCourseContentMediaResponse =
+  GetCourseContentMediaResponses[keyof GetCourseContentMediaResponses];
 
 export type GetCoursesByCategoryData = {
   body?: never;
@@ -23863,7 +23899,7 @@ export type GetOrganizationAdminUsersData = {
   query: {
     pageable: Pageable;
   };
-  url: '/api/v1/admin/users/organization-admins';
+  url: '/api/v1/admin/users/organisation-admins';
 };
 
 export type GetOrganizationAdminUsersErrors = {
@@ -23886,7 +23922,7 @@ export type GetOrganizationAdminUsersError =
 
 export type GetOrganizationAdminUsersResponses = {
   /**
-   * Organization admin users retrieved successfully
+   * Organisation admin users retrieved successfully
    */
   200: ApiResponsePagedDtoUser;
 };
@@ -24004,17 +24040,17 @@ export type IsOrganisationVerifiedData = {
   body?: never;
   path: {
     /**
-     * UUID of the organization to check verification status for.
+     * UUID of the organisation to check verification status for.
      */
     uuid: string;
   };
   query?: never;
-  url: '/api/v1/admin/organizations/{uuid}/verification-status';
+  url: '/api/v1/admin/organisations/{uuid}/verification-status';
 };
 
 export type IsOrganisationVerifiedErrors = {
   /**
-   * Organization not found
+   * Organisation not found
    */
   404: ResponseDtoVoid;
   /**
@@ -24042,7 +24078,7 @@ export type GetPendingOrganisationsData = {
   query: {
     pageable: Pageable;
   };
-  url: '/api/v1/admin/organizations/pending';
+  url: '/api/v1/admin/organisations/pending';
 };
 
 export type GetPendingOrganisationsErrors = {
@@ -24061,7 +24097,7 @@ export type GetPendingOrganisationsError =
 
 export type GetPendingOrganisationsResponses = {
   /**
-   * Pending organizations retrieved successfully
+   * Pending organisations retrieved successfully
    */
   200: ApiResponsePagedDtoOrganisation;
 };

@@ -41,9 +41,9 @@ const tabs = [
 
 const Page = () => {
   const student = useStudent();
-  const { classDefinitions, isError, loading } = useStudentClassDefinitions(student);
+  const { classDefinitions, isError, loading } = useStudentClassDefinitions(student ?? undefined);
   const scheduleInstances = useMemo(
-    () => buildStudentScheduleInstances(classDefinitions as any),
+    () => buildStudentScheduleInstances(classDefinitions),
     [classDefinitions]
   );
 
@@ -220,22 +220,18 @@ const Page = () => {
 
       <div className='animate-in fade-in-50 duration-300'>
         {activeTab === 'classes' && (
-          <MyClassesPage
-            classDefinitions={classDefinitions as any}
-            isError={isError}
-            loading={loading}
-          />
+          <MyClassesPage classDefinitions={classDefinitions} isError={isError} loading={loading} />
         )}
         {activeTab === 'timetable' && (
           <TimetableManager
-            classDefinitions={classDefinitions as any}
+            classDefinitions={classDefinitions}
             loading={loading}
             scheduleInstances={filteredScheduleInstances}
           />
         )}
         {activeTab === 'classroom' && (
           <ClassroomPage
-            classDefinitions={classDefinitions as any}
+            classDefinitions={classDefinitions}
             loading={loading}
             scheduleInstances={scheduleInstances}
           />

@@ -33,6 +33,7 @@ import {
   type SystemRuleCategory,
   type SystemRuleStatus,
 } from '@/services/admin/system-config';
+import type { User } from '@/services/client/types.gen';
 import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -68,6 +69,10 @@ const statusFilters: { value: SystemRuleStatus | 'all'; label: string }[] = [
 
 const pageSizeOptions = [10, 20, 50];
 
+type AuditUserRecord = Partial<User> & {
+  displayName?: string;
+};
+
 const statusBadgeVariant: Record<string, 'success' | 'secondary' | 'outline' | 'warning'> = {
   ACTIVE: 'success',
   DRAFT: 'secondary',
@@ -94,6 +99,18 @@ const formatWindow = (rule: SystemRule) => {
 const formatScope = (rule: SystemRule) => {
   if (rule.scope === 'GLOBAL') return 'Global';
   return [rule.scope, rule.scopeReference].filter(Boolean).join(' · ') || 'Scope not set';
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getAuditUser = (value: unknown): AuditUserRecord | null => {
+  if (!isRecord(value)) return null;
+
+  const nested = isRecord(value.data) ? value.data : value;
+  if (!isRecord(nested)) return null;
+
+  return nested as AuditUserRecord;
 };
 
 export function SystemConfigContent() {
@@ -152,7 +169,6 @@ export function SystemConfigContent() {
   const userQueries = useQueries({
     queries: auditUserIds.map(id => ({
       ...getUserByUuidOptions({ path: { uuid: id } }),
-      queryKey: ['user-by-uuid', id],
       enabled: Boolean(id),
       staleTime: 5 * 60 * 1000,
     })),
@@ -161,7 +177,7 @@ export function SystemConfigContent() {
   const userNameMap = useMemo(() => {
     const map = new Map<string, string>();
     userQueries.forEach((query, index) => {
-      const data: any = (query.data as any)?.data ?? (query.data as any);
+      const data = getAuditUser(query.data);
       const id = auditUserIds[index];
       if (!id || !data) return;
       const name =

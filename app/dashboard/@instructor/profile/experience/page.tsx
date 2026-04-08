@@ -1,7 +1,3 @@
-'use client';
+import InstructorExperiencePage from '@/src/features/profile/pages/instructor/InstructorExperiencePage';
 
-import ProfessionalExperienceSettings from './_component/InstructorExperienceForm';
-
-export default function InstructoEducationPage() {
-  return <ProfessionalExperienceSettings />;
-}
+export default InstructorExperiencePage;

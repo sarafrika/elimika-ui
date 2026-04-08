@@ -29,6 +29,7 @@ import {
   getAllAssignmentsOptions,
   getAssignmentSubmissionsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { AssignmentSubmission } from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Eye, MoreVertical, PenLine, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -36,6 +37,12 @@ import {
   CustomEmptyState,
   CustomLoadingState,
 } from '../../../@course_creator/_components/loading-state';
+
+type SubmissionRow = AssignmentSubmission & {
+  studentName?: string;
+  submittedAt?: string | Date;
+  grade?: string | number;
+};
 
 const AssignmentSubmissionPage = () => {
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -72,7 +79,7 @@ const AssignmentSubmissionPage = () => {
     enabled: !!selectedAssignment,
   });
 
-  const submissions = submissionsData?.data || [];
+  const submissions: SubmissionRow[] = submissionsData?.data || [];
 
   // 🌀 Loading state for assignments
   if (isAssignmentsLoading) {
@@ -96,11 +103,13 @@ const AssignmentSubmissionPage = () => {
           </SelectTrigger>
           <SelectContent>
             {assignments.length > 0 ? (
-              assignments.map((assignment: any) => (
-                <SelectItem key={assignment.uuid} value={assignment.uuid}>
-                  {assignment.title}
-                </SelectItem>
-              ))
+              assignments.map(assignment =>
+                assignment.uuid ? (
+                  <SelectItem key={assignment.uuid} value={assignment.uuid}>
+                    {assignment.title}
+                  </SelectItem>
+                ) : null
+              )
             ) : (
               <div className='text-muted-foreground p-2 text-sm'>No assignments available</div>
             )}
@@ -143,12 +152,20 @@ const AssignmentSubmissionPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {submissions.map((submission: any) => (
+              {submissions.map(submission => (
                 <TableRow key={submission.uuid}>
-                  <TableCell>{submission.studentName}</TableCell>
-                  <TableCell>{new Date(submission.submittedAt).toLocaleString()}</TableCell>
+                  <TableCell>
+                    {submission.studentName ?? submission.created_by ?? 'Unknown student'}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(
+                      submission.submittedAt ?? submission.submitted_at ?? ''
+                    ).toLocaleString()}
+                  </TableCell>
                   <TableCell>{submission.status}</TableCell>
-                  <TableCell>{submission.grade ?? '—'}</TableCell>
+                  <TableCell>
+                    {submission.grade ?? submission.grade_display ?? submission.score ?? '—'}
+                  </TableCell>
                   <TableCell className='text-center'>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

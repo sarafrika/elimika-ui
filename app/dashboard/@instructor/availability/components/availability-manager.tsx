@@ -27,10 +27,9 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import Spinner from '../../../../../components/ui/spinner';
-import type { ClassData } from '../../trainings/create-new/academic-period-form';
 import { AvailabilityBooking } from './availability-booking';
 import { MonthlyAvailabilityGrid } from './monthly-availability-grid';
-import type { AvailabilityData } from './types';
+import type { AvailabilityClassData, AvailabilityData } from './types';
 import { WeeklyAvailabilityGrid } from './weekly-availability-grid';
 import { YearlyAvailabilityGrid } from './yearly-availability-grid';
 
@@ -41,7 +40,7 @@ const availabilitySettings = {
   workingHours: {
     start: '08:00',
     end: '18:00',
-    startDate: Date.now(),
+    startDate: '',
     endDate: '',
   },
 };
@@ -49,23 +48,26 @@ const availabilitySettings = {
 interface AvailabilityManagerProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
-  classes: ClassData[];
+  classes: AvailabilityClassData[];
 }
 
 export default function AvailabilityManager({
   availabilityData,
   onAvailabilityUpdate,
-  classes,
+  classes: _classes,
 }: AvailabilityManagerProps) {
   const user = useUserProfile();
   const qc = useQueryClient();
 
   // data points
   // const [availability, setAvailability] = useState<DayAvailability[]>([]);
-  const { data: availabilitySlots, refetch } = useQuery(
+  useQuery(
     getInstructorCalendarOptions({
       path: { instructorUuid: user?.instructor?.uuid as string },
-      query: { start_date: '2025-09-11' as any, end_date: '2026-11-11' as any },
+      query: {
+        start_date: new Date('2025-09-11'),
+        end_date: new Date('2026-11-11'),
+      },
     })
   );
 
@@ -127,7 +129,10 @@ export default function AvailabilityManager({
             qc.invalidateQueries({
               queryKey: getInstructorCalendarQueryKey({
                 path: { instructorUuid: user?.instructor?.uuid as string },
-                query: { start_date: '2025-09-11' as any, end_date: '2026-11-11' as any },
+                query: {
+                  start_date: new Date('2025-09-11'),
+                  end_date: new Date('2026-11-11'),
+                },
               }),
             });
           },
@@ -154,7 +159,7 @@ export default function AvailabilityManager({
 
     // weeklyAvailabilityMutation.mutate(
     //     {
-    //         body: payload as any,
+    //         body: payload,
     //         path: { instructorUuid: user?.instructor?.uuid as string },
     //     },
     //     {

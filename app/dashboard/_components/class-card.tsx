@@ -1,30 +1,35 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Calendar, Clock, MapPin, Users } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import ConfirmModal from '@/components/custom-modals/confirm-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useStudent } from '@/context/student-context';
+import type { ClassDefinition, Course } from '@/services/client';
 import {
   enrollStudentMutation,
   getInstructorByUuidOptions,
   getStudentScheduleQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Clock, MapPin, Users } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 const stripHtml = (html: string) => html.replace(/<[^>]+>/g, '');
+
+type ClassCardData = ClassDefinition;
+
+type ClassCardCourse = Pick<Course, 'category_names'>;
 
 export const ClassCard = ({
   classData,
   course,
   onViewClass,
 }: {
-  classData: any;
-  course: any;
-  onViewClass: (classData: any) => void;
+  classData: ClassCardData;
+  course?: ClassCardCourse | null;
+  onViewClass: (classData: ClassCardData) => void;
 }) => {
   const {
     title,
@@ -101,7 +106,7 @@ export const ClassCard = ({
         <div className='text-muted-foreground flex items-center gap-2 text-sm'>
           <Calendar className='h-4 w-4' />
           <span>
-            {default_start_time} - {default_end_time}
+            {String(default_start_time)} - {String(default_end_time)}
           </span>
         </div>
 
@@ -127,7 +132,7 @@ export const ClassCard = ({
         {capacity_info && <div className='text-muted-foreground text-sm'>{capacity_info}</div>}
 
         <div className='flex flex-wrap gap-1'>
-          {course?.category_names?.map((category: any, index: any) => (
+          {course?.category_names?.map((category, index) => (
             <Badge key={index} variant='outline' className='text-xs'>
               {category}
             </Badge>

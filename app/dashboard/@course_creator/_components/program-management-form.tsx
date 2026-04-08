@@ -31,7 +31,8 @@ import {
   updateProgramRequirementMutation,
   updateTrainingProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { RequirementTypeEnum, SchemaEnum } from '@/services/client/types.gen';
+import type { ProgramRequirement, TrainingProgram } from '@/services/client/types.gen';
+import { RequirementTypeEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { AddCategoryFormItem } from '@/components/add-category-formfield';
@@ -58,16 +59,56 @@ const programFormSchema = z.object({
   objectives: z.string().optional(),
   prerequisites: z.string().optional(),
   categories: z.string(),
-  total_duration_hours: z.any(),
-  total_duration_minutes: z.any(),
+  total_duration_hours: z.coerce.number(),
+  total_duration_minutes: z.coerce.number(),
   class_limit: z.coerce.number().min(1, 'Class limit must be at least 1'),
   price: z.coerce.number().optional(),
   is_free: z.boolean(),
   program_type: z.string().min(1, 'Program type is required'),
-  initialValues: z.any(),
+  initialValues: z.unknown(),
 });
 
 export type ProgramFormValues = z.infer<typeof programFormSchema>;
+type MutationVariables<T> = T extends {
+  mutationFn?: (variables: infer TVariables) => Promise<unknown>;
+}
+  ? TVariables
+  : never;
+type ProgramPayload = Partial<TrainingProgram> & {
+  instructor_uuid?: string;
+  is_free?: boolean;
+  is_published?: boolean;
+  total_duration_display?: string;
+  program_type?: string;
+};
+type ProgramCourseFormValues = z.infer<typeof addCourseToProgramSchema>;
+type CourseOption = { uuid?: string; name?: string };
+type ProgramRequirementDialogValues = Partial<ProgramRequirementFormValues>;
+type AddProgramCourseVariables = MutationVariables<ReturnType<typeof addProgramCourseMutation>>;
+type AddProgramRequirementVariables = MutationVariables<
+  ReturnType<typeof addProgramRequirementMutation>
+>;
+type UpdateProgramRequirementVariables = MutationVariables<
+  ReturnType<typeof updateProgramRequirementMutation>
+>;
+
+const getMutationMessage = (value: unknown, fallback: string) => {
+  if (typeof value === 'object' && value !== null && 'message' in value) {
+    const message = (value as { message?: string }).message;
+    if (message) return message;
+  }
+  return fallback;
+};
+const getErrorMessage = (error: unknown) => {
+  if (typeof error !== 'object' || error === null) return undefined;
+  const message = 'message' in error ? (error as { message?: string }).message : undefined;
+  const nestedError = 'error' in error ? (error as { error?: unknown }).error : undefined;
+  const firstNested =
+    nestedError && typeof nestedError === 'object' ? Object.values(nestedError)[0] : undefined;
+  return [message, typeof firstNested === 'string' ? firstNested : undefined]
+    .filter(Boolean)
+    .join(' - ');
+};
 
 interface ProgramCreationFormProps {
   onCancel: () => void;
@@ -100,11 +141,6 @@ function ProgramCreationForm({
     },
   });
 
-  const { append: appendCategory, remove: removeCategory } = useFieldArray({
-    control: form.control,
-    name: 'categories',
-  });
-
   const queryClient = useQueryClient();
   const instructor = useInstructor();
   const { data: session } = useSession();
@@ -112,11 +148,13 @@ function ProgramCreationForm({
   const createTrainingProgram = useMutation(createTrainingProgramMutation());
   const updateTrainingProgram = useMutation(updateTrainingProgramMutation());
 
-  const onSubmit = (values: ProgramFormValues, initialValues: any) => {
-    const isEditing = !!initialValues?.uuid || !!programId;
+  const onSubmit = (values: ProgramFormValues) => {
+    const initialProgramUuid = (initialValues as { uuid?: string } | undefined)?.uuid;
+    const isEditing = !!initialProgramUuid || !!programId;
 
     const trainingProgramBody = {
       title: values.title,
+      course_creator_uuid: instructor?.uuid || '',
       instructor_uuid: instructor?.uuid || '',
       category_uuid: values.categories,
       description: values.description,
@@ -134,15 +172,14 @@ function ProgramCreationForm({
       is_published: false,
       published: false,
       active: false,
-      status: SchemaEnum.DRAFT,
-    };
+      status: 'draft',
+    } as ProgramPayload;
 
-    const commonOnSuccess = (data: any) => {
+    const commonOnSuccess = () => {
       toast.success(
-        data?.message ||
-          (isEditing
-            ? 'Training program updated successfully'
-            : 'Training program created successfully')
+        isEditing
+          ? 'Training program updated successfully'
+          : 'Training program created successfully'
       );
       onCancel();
 
@@ -156,25 +193,23 @@ function ProgramCreationForm({
     if (isEditing) {
       updateTrainingProgram.mutate(
         {
-          body: trainingProgramBody,
-          path: { uuid: programId || initialValues.uuid },
+          body: trainingProgramBody as never,
+          path: { uuid: (programId || initialProgramUuid) as string },
         },
         {
           onSuccess: commonOnSuccess,
           onError: error => {
-            //@ts-expect-error
-            toast.error(`${error?.message} - ${Object.values(error?.error)[0]}`);
+            toast.error(getErrorMessage(error) || 'Failed to update program');
           },
         }
       );
     } else {
       createTrainingProgram.mutate(
-        { body: trainingProgramBody },
+        { body: trainingProgramBody as never },
         {
           onSuccess: commonOnSuccess,
           onError: error => {
-            //@ts-expect-error
-            toast.error(`${error?.message} - ${Object.values(error?.error)[0]}`);
+            toast.error(getErrorMessage(error) || 'Failed to create program');
           },
         }
       );
@@ -407,9 +442,9 @@ function AddCourseToProgramForm({
   programUuid: string;
   onCancel: () => void;
   onSuccess?: () => void;
-  className: any;
+  className?: string;
 }) {
-  const form = useForm({
+  const form = useForm<ProgramCourseFormValues>({
     resolver: zodResolver(addCourseToProgramSchema),
     defaultValues: {
       course_uuid: '',
@@ -434,7 +469,7 @@ function AddCourseToProgramForm({
 
   const addProgramCourses = useMutation(addProgramCourseMutation());
 
-  const onSubmit = (values: any) => {
+  const onSubmit = (values: ProgramCourseFormValues) => {
     // const selectedCourse = allCourses?.data?.content?.find(c => c.uuid === values.course_uuid);
     // const prerequisiteCourse = allCourses?.data?.content?.find(c => c.uuid === values.prerequisite_course_uuid);
 
@@ -455,7 +490,7 @@ function AddCourseToProgramForm({
     };
 
     addProgramCourses.mutate(
-      { body: body, path: { programUuid: programUuid } },
+      { body: body as AddProgramCourseVariables['body'], path: { programUuid: programUuid } },
       {
         onSuccess: data => {
           toast.success(data?.message || 'Course added to program successfully');
@@ -464,8 +499,8 @@ function AddCourseToProgramForm({
             queryKey: getProgramCoursesQueryKey({ path: { programUuid } }),
           });
         },
-        onError: (error: any) => {
-          const message = error?.error?.toLowerCase?.() || '';
+        onError: error => {
+          const message = getErrorMessage(error)?.toLowerCase() || '';
           if (message.includes('duplicate key')) {
             toast.error(
               'This course has already been added, or the sequence number is already in use.'
@@ -496,16 +531,18 @@ function AddCourseToProgramForm({
                 </FormControl>
 
                 <SelectContent className='w-full max-w-[462px]'>
-                  {allCourses?.data?.content?.map((c: any) => (
-                    <SelectItem
-                      key={c.uuid}
-                      value={c.uuid}
-                      className='w-full max-w-full truncate'
-                      title={c.name}
-                    >
-                      <span className='block truncate'>{c.name}</span>
-                    </SelectItem>
-                  ))}
+                  {(allCourses?.data?.content as CourseOption[] | undefined)?.map(
+                    (c: CourseOption) => (
+                      <SelectItem
+                        key={c.uuid}
+                        value={c.uuid as string}
+                        className='w-full max-w-full truncate'
+                        title={c.name}
+                      >
+                        <span className='block truncate'>{c.name}</span>
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -531,16 +568,18 @@ function AddCourseToProgramForm({
                 </FormControl>
 
                 <SelectContent className='w-full max-w-[462px]'>
-                  {allCourses?.data?.content?.map((c: any) => (
-                    <SelectItem
-                      key={c.uuid}
-                      value={c.uuid}
-                      className='w-full max-w-full truncate'
-                      title={c.name}
-                    >
-                      <span className='block truncate'>{c.name}</span>
-                    </SelectItem>
-                  ))}
+                  {(allCourses?.data?.content as CourseOption[] | undefined)?.map(
+                    (c: CourseOption) => (
+                      <SelectItem
+                        key={c.uuid}
+                        value={c.uuid as string}
+                        className='w-full max-w-full truncate'
+                        title={c.name}
+                      >
+                        <span className='block truncate'>{c.name}</span>
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -616,7 +655,7 @@ function ProgramRequirementForm({
 }: {
   programUuid: string;
   requirementUuid?: string;
-  initialValues?: ProgramRequirementFormValues;
+  initialValues?: Partial<ProgramRequirementFormValues>;
   onSuccess?: () => void;
   onCancel: () => void;
   className?: string;
@@ -659,7 +698,10 @@ function ProgramRequirementForm({
 
     if (requirementUuid) {
       updateProgramRequirement.mutate(
-        { path: { programUuid, requirementUuid }, body: payload as any },
+        {
+          path: { programUuid, requirementUuid },
+          body: payload as UpdateProgramRequirementVariables['body'],
+        },
         {
           onSuccess: data => {
             qc.invalidateQueries({
@@ -676,7 +718,10 @@ function ProgramRequirementForm({
       );
     } else {
       addProgramRequirement.mutate(
-        { path: { programUuid: programUuid as string }, body: payload as any },
+        {
+          path: { programUuid: programUuid as string },
+          body: payload as AddProgramRequirementVariables['body'],
+        },
         {
           onSuccess: data => {
             qc.invalidateQueries({
@@ -846,7 +891,7 @@ interface AddProgramCourseDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   programId?: string;
-  onSuccess?: () => any;
+  onSuccess?: () => void;
 }
 
 function AddProgramCourseDialog({
@@ -885,7 +930,7 @@ interface ProgramRequirementDialogProps {
   programId?: string;
   requirementId?: string;
   onSuccess?: () => void;
-  initialValues: any;
+  initialValues: ProgramRequirementDialogValues;
 }
 
 function ProgramRequirementDialog({

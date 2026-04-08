@@ -1,9 +1,10 @@
 'use client';
 
+import type { ApiResponseCourse } from '../../../../services/client/types.gen';
 import { CourseAssessmentStructure } from './assesment-structure-form';
 
 type CriteriaCreationFormProps = {
-  course: any;
+  course: ApiResponseCourse | undefined;
 };
 
 const CriteriaCreationForm = ({ course }: CriteriaCreationFormProps) => {

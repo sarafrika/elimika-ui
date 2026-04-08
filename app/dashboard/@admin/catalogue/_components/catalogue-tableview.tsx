@@ -211,8 +211,9 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     const map = new Map<string, string>();
     courseQueries.forEach((query, index) => {
       const course = extractEntity<Course>(query.data);
-      if (course?.title || course?.name) {
-        map.set(courseIds[index], course.title || course.name || '');
+      const courseId = courseIds[index];
+      if (course?.name && courseId) {
+        map.set(courseId, course.name);
       }
     });
     return map;
@@ -222,8 +223,9 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     const map = new Map<string, string>();
     classQueries.forEach((query, index) => {
       const classDef = extractEntity<ClassDefinition>(query.data);
-      if (classDef?.title || classDef?.name) {
-        map.set(classIds[index], classDef.title || classDef.name || '');
+      const classId = classIds[index];
+      if (classDef?.title && classId) {
+        map.set(classId, classDef.title);
       }
     });
     return map;
@@ -233,8 +235,9 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     const map = new Map<string, Course>();
     courseQueries.forEach((query, index) => {
       const course = extractEntity<Course>(query.data);
-      if (course) {
-        map.set(courseIds[index], course);
+      const courseId = courseIds[index];
+      if (course && courseId) {
+        map.set(courseId, course);
       }
     });
     return map;
@@ -244,8 +247,9 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     const map = new Map<string, ClassDefinition>();
     classQueries.forEach((query, index) => {
       const classDef = extractEntity<ClassDefinition>(query.data);
-      if (classDef) {
-        map.set(classIds[index], classDef);
+      const classId = classIds[index];
+      if (classDef && classId) {
+        map.set(classId, classDef);
       }
     });
     return map;
@@ -263,12 +267,7 @@ const attachTitles = (rows: CatalogueRow[], maps: TitleMaps): CatalogueRow[] =>
       return { ...row, displayTitle: maps.courseTitleMap.get(row.courseId) as string };
     }
     const fallback =
-      row.productCode ||
-      row.variantCode ||
-      row.courseId ||
-      row.classId ||
-      row.raw.title ||
-      'Catalogue item';
+      row.productCode || row.variantCode || row.courseId || row.classId || 'Catalogue item';
     return { ...row, displayTitle: fallback };
   });
 
@@ -770,7 +769,7 @@ function CatalogueDetailsBody({
           : selectedRow.classId
             ? titleMaps.classMap.get(selectedRow.classId)
             : null;
-        const description = linkedEntity?.description || linkedEntity?.summary;
+        const description = linkedEntity?.description;
 
         return description ? (
           <div className='border-border/60 bg-muted/30 rounded-xl border p-4'>

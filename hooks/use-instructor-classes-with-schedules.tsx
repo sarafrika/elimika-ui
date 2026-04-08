@@ -5,22 +5,23 @@ import {
   getClassScheduleOptions,
   getCourseByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type {
+  GetClassDefinitionsForInstructorResponse,
+  GetClassScheduleResponse,
+  GetCourseByUuidResponse,
+} from '@/services/client/types.gen';
 
-export type InstructorClassWithSchedule = {
-  uuid: string;
-  title: string;
-  description?: string;
-  course_uuid?: string;
-  default_instructor_uuid: string;
-  location_name?: string;
-  location_type?: string;
-  session_format?: string;
-  meeting_link?: string;
-  max_participants?: number;
-  training_fee?: number;
-  duration_formatted?: string;
-  course?: any;
-  schedule: any[];
+type InstructorClass = NonNullable<
+  NonNullable<GetClassDefinitionsForInstructorResponse['data']>[number]['class_definition']
+>;
+type InstructorCourse = NonNullable<GetCourseByUuidResponse['data']>;
+type InstructorSchedule = NonNullable<
+  NonNullable<GetClassScheduleResponse['data']>['content']
+>[number];
+
+export type InstructorClassWithSchedule = InstructorClass & {
+  course?: InstructorCourse | null;
+  schedule: InstructorSchedule[];
 };
 
 export function useInstructorClassesWithSchedules(instructorUuid?: string) {
@@ -38,12 +39,15 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
   });
 
   const classes = useMemo(
-    () => classesQuery.data?.data?.map((item: any) => item.class_definition).filter(Boolean) ?? [],
+    () =>
+      classesQuery.data?.data
+        ?.map(item => item.class_definition)
+        .filter((item): item is InstructorClass => Boolean(item)) ?? [],
     [classesQuery.data]
   );
 
   const courseQueries = useQueries({
-    queries: classes.map((classItem: any) => ({
+    queries: classes.map(classItem => ({
       ...getCourseByUuidOptions({
         path: { uuid: classItem.course_uuid as string },
       }),
@@ -57,7 +61,7 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
   });
 
   const scheduleQueries = useQueries({
-    queries: classes.map((classItem: any) => ({
+    queries: classes.map(classItem => ({
       ...getClassScheduleOptions({
         path: { uuid: classItem.uuid as string },
         query: { pageable: {} },
@@ -73,7 +77,7 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
 
   const data = useMemo<InstructorClassWithSchedule[]>(
     () =>
-      classes.map((classItem: any, index: number) => ({
+      classes.map((classItem, index) => ({
         ...classItem,
         course: courseQueries[index]?.data?.data ?? null,
         schedule: scheduleQueries[index]?.data?.data?.content ?? [],

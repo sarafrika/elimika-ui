@@ -9,10 +9,10 @@ import {
   type ClassScheduleItem,
   convertToCalendarEvents,
 } from '../../availability/components/types';
-import NewTimetableManager from './NewTimeTableManager';
+import NewTimetableManager, { type TimetableClass } from './NewTimeTableManager';
 
 interface TimetablePageProps {
-  classesWithCourseAndInstructor: any;
+  classesWithCourseAndInstructor: TimetableClass[];
   loading: boolean;
 }
 
@@ -26,7 +26,10 @@ const NewTimeTablePage = ({ classesWithCourseAndInstructor, loading }: Timetable
   } = useQuery({
     ...getInstructorCalendarOptions({
       path: { instructorUuid: instructor?.uuid as string },
-      query: { start_date: '2024-09-10' as any, end_date: '2026-11-11' as any },
+      query: {
+        start_date: new Date('2024-09-10'),
+        end_date: new Date('2026-11-11'),
+      },
     }),
     enabled: !!instructor?.uuid,
   });
@@ -51,7 +54,7 @@ const NewTimeTablePage = ({ classesWithCourseAndInstructor, loading }: Timetable
       ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])
       : [];
 
-    setAvailabilityData((prev: any) => ({
+    setAvailabilityData(prev => ({
       ...prev,
       events: eventsFromSchedule,
     }));
@@ -74,7 +77,7 @@ const NewTimeTablePage = ({ classesWithCourseAndInstructor, loading }: Timetable
 
   return (
     <NewTimetableManager
-      availabilityData={availabilityData || []}
+      availabilityData={availabilityData}
       onAvailabilityUpdate={handleAvailabilityUpdate}
       classes={classesWithCourseAndInstructor}
     />

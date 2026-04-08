@@ -22,19 +22,52 @@ import {
 } from '../../../../services/client/@tanstack/react-query.gen';
 import { FormSection } from './course-creation-form';
 import {
+  type CourseCreationFormValues,
   courseCreationSchema,
   MAX_VIDEO_SIZE_BYTES,
   MAX_VIDEO_SIZE_MB,
 } from './course-creation-types';
 
-type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & { [key: string]: any };
+type MutationVariables<T> = T extends {
+  mutationFn?: (variables: infer TVariables) => Promise<unknown>;
+}
+  ? TVariables
+  : never;
+type MutationResponse<T> = T extends { mutationFn?: (...args: never[]) => Promise<infer TResponse> }
+  ? TResponse
+  : never;
+type UploadResponse = unknown;
+type UploadError = unknown;
+type UpdateCourseVariables = MutationVariables<ReturnType<typeof updateCourseMutation>>;
+type UpdateCourseResponse = MutationResponse<ReturnType<typeof updateCourseMutation>>;
+type CourseUpdatePayload = Partial<CourseCreationFormValues> & {
+  course_creator_uuid: string;
+  status: string;
+};
+
+const isString = (value: unknown): value is string => typeof value === 'string';
+const getUploadedUrl = (value: unknown, key: `${UploadKey}_url`) => {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const urlValue = (value as Record<string, unknown>)[key];
+  return isString(urlValue) ? urlValue : undefined;
+};
+const getFormErrorMessage = (value: unknown) => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.find(isString);
+  return undefined;
+};
+const getErrorStatus = (value: unknown) => {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const response = (value as { response?: { status?: number } }).response;
+  return response?.status;
+};
 
 export type CourseFormProps = {
   showSubmitButton?: boolean;
   initialValues?: Partial<CourseCreationFormValues>;
   editingCourseId?: string;
   courseId?: string;
-  successResponse?: (data: any) => void;
+  successResponse?: (data: unknown) => void;
 };
 
 export type CourseFormRef = {
@@ -46,13 +79,22 @@ type UploadKey = 'thumbnail' | 'banner' | 'intro_video';
 type UploadOptions = {
   key: UploadKey;
   setPreview: (val: string) => void;
-  mutation: ReturnType<typeof tanstackClient.useMutation>['mutate'];
+  upload: (
+    file: File,
+    callbacks: {
+      onSuccess?: (data: UploadResponse) => void;
+      onError?: (error: UploadError) => void;
+    }
+  ) => void;
   onChange: (val: string) => void;
 };
 
-export const brandingSchema = z.object({
-  welcome_message: z.string().max(300).optional(),
-  theme_color: z.string().optional(),
+export const brandingSchema = courseCreationSchema.pick({
+  welcome_message: true,
+  theme_color: true,
+  intro_video_url: true,
+  banner_url: true,
+  thumbnail_url: true,
 });
 
 type BrandingFormValues = z.infer<typeof brandingSchema>;
@@ -95,7 +137,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     const handleFileUpload = async (
       e: React.ChangeEvent<HTMLInputElement>,
-      { key, setPreview, mutation, onChange }: UploadOptions
+      { key, setPreview, upload, onChange }: UploadOptions
     ) => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -116,38 +158,32 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       const previewUrl = URL.createObjectURL(file);
       setPreview(previewUrl);
 
-      const formData = new FormData();
-      formData.append(key, file);
+      upload(file, {
+        onSuccess: (data: UploadResponse) => {
+          const urlKey = `${key}_url` as const;
+          const uploadedUrl = getUploadedUrl(data, urlKey);
 
-      mutation(
-        { body: formData, params: { path: { uuid: editingCourseId as string } } },
-        {
-          onSuccess: (data: any) => {
-            const urlKey = `${key}_url` as const;
-            const uploadedUrl = data?.data?.[urlKey];
+          if (!uploadedUrl) {
+            toast.error('Upload succeeded, but no URL returned.');
+            return;
+          }
 
-            if (!uploadedUrl) {
-              toast.error('Upload succeeded, but no URL returned.');
-              return;
-            }
+          onChange(uploadedUrl);
+          toast.success('Upload successful');
 
-            onChange(uploadedUrl);
-            toast.success(data?.message);
-
-            queryClient.invalidateQueries({
-              queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
-            });
-          },
-          onError: (error: any) => {
-            const status = error?.response?.status;
-            if (status === 413) {
-              toast.error('File too large.');
-            } else {
-              toast.error('Upload failed.');
-            }
-          },
-        }
-      );
+          queryClient.invalidateQueries({
+            queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
+          });
+        },
+        onError: (error: UploadError) => {
+          const status = getErrorStatus(error);
+          if (status === 413) {
+            toast.error('File too large.');
+          } else {
+            toast.error('Upload failed.');
+          }
+        },
+      });
     };
 
     const updateCourse = useMutation(updateCourseMutation());
@@ -156,7 +192,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       if (!editingCourseId) return;
 
       if (editingCourseId) {
-        const editBody = {
+        const editBody: CourseUpdatePayload = {
           course_creator_uuid: authorUuid,
           status: 'draft',
           ...initialValues,
@@ -165,15 +201,16 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
         };
 
         updateCourse.mutate(
-          { body: editBody as any, path: { uuid: editingCourseId as string } },
+          { body: editBody as UpdateCourseVariables['body'], path: { uuid: editingCourseId } },
           {
-            onSuccess(data, _variables, _context) {
+            onSuccess(data: UpdateCourseResponse) {
               const respObj = data?.data;
               const errorObj = data?.error;
 
               if (respObj) {
-                // @ts-expect-error
-                toast.success(data?.data?.message || 'Course updated successfully');
+                toast.success(
+                  (respObj as { message?: string }).message || 'Course updated successfully'
+                );
 
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
@@ -184,15 +221,14 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
               if (errorObj && typeof errorObj === 'object') {
                 Object.values(errorObj).forEach(errorMsg => {
-                  if (typeof errorMsg === 'string') {
-                    toast.error(errorMsg);
+                  const message = getFormErrorMessage(errorMsg);
+                  if (message) {
+                    toast.error(message);
                   }
                 });
                 return;
-                // @ts-expect-error
               } else if (data?.message) {
-                // @ts-expect-error
-                toast.error('Course updated successfully' || data.message);
+                toast.error(data.message || 'Failed to update course');
                 return;
               } else {
                 toast.error('An unknown error occurred.');
@@ -204,24 +240,24 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     };
 
-    const onError = (error: any) => {
-      toast.error(error);
+    const onError = () => {
+      toast.error('Please review the branding fields and try again.');
     };
 
     useEffect(() => {
-      const thumbnail = initialValues?.thumbnail_url || form.getValues('thumbnail');
-      const banner = initialValues?.banner_url || form.getValues('banner');
-      const video = initialValues?.intro_video_url || form.getValues('intro_video');
+      const thumbnail = initialValues?.thumbnail_url || form.getValues('thumbnail_url');
+      const banner = initialValues?.banner_url || form.getValues('banner_url');
+      const video = initialValues?.intro_video_url || form.getValues('intro_video_url');
 
-      if (thumbnail && !thumbnailPreview) {
+      if (isString(thumbnail) && !thumbnailPreview) {
         setThumbnailPreview(thumbnail);
       }
 
-      if (banner && !bannerPreview) {
+      if (isString(banner) && !bannerPreview) {
         setBannerPreview(banner);
       }
 
-      if (video && !videoPreview) {
+      if (isString(video) && !videoPreview) {
         setVideoPreview(video);
       }
     }, [form, thumbnailPreview, bannerPreview, videoPreview, initialValues]);
@@ -323,7 +359,14 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             handleFileUpload(e, {
                               key: 'intro_video',
                               setPreview: setVideoPreview,
-                              mutation: courseIntroVideoMutation.mutate,
+                              upload: (file, callbacks) =>
+                                courseIntroVideoMutation.mutate(
+                                  {
+                                    body: { intro_video: file.name },
+                                    params: { path: { uuid: editingCourseId as string } },
+                                  },
+                                  callbacks
+                                ),
                               onChange: field.onChange,
                             })
                           }
@@ -334,7 +377,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                       <Input
                         type='text'
                         placeholder='Or paste video link (e.g. Vimeo, YouTube)'
-                        value={field.value}
+                        value={isString(field.value) ? field.value : ''}
                         onChange={field.onChange}
                       />
 
@@ -404,7 +447,14 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             handleFileUpload(e, {
                               key: 'banner',
                               setPreview: setBannerPreview,
-                              mutation: courseBannerMutation.mutate,
+                              upload: (file, callbacks) =>
+                                courseBannerMutation.mutate(
+                                  {
+                                    body: { banner: file.name },
+                                    params: { path: { uuid: editingCourseId as string } },
+                                  },
+                                  callbacks
+                                ),
                               onChange: field.onChange,
                             })
                           }
@@ -479,7 +529,14 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             handleFileUpload(e, {
                               key: 'thumbnail',
                               setPreview: setThumbnailPreview,
-                              mutation: courseThumbnailMutation.mutate,
+                              upload: (file, callbacks) =>
+                                courseThumbnailMutation.mutate(
+                                  {
+                                    body: { thumbnail: file.name },
+                                    params: { path: { uuid: editingCourseId as string } },
+                                  },
+                                  callbacks
+                                ),
                               onChange: field.onChange,
                             })
                           }

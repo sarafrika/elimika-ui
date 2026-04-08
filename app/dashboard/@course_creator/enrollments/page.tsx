@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { elimikaDesignSystem } from '@/lib/design-system';
+import type { CourseEnrollment, Student, User } from '@/services/client';
 import {
   getCourseEnrollmentsOptions,
   getStudentByIdOptions,
@@ -28,16 +29,21 @@ import {
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+type EnrichedEnrollment = CourseEnrollment &
+  Partial<Student> &
+  Partial<User> & { user_uuid?: string };
+
+const isDefined = <T,>(value: T | null | undefined): value is T => value != null;
+
 const EnrollmentsPage = () => {
   const creator = useCourseCreator();
   const courses = creator?.courses;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-  const courseUuids = courses.map(course => course.uuid);
+  const courseUuids = courses.map(course => course.uuid).filter(isDefined);
 
   const enrollmentQueries = useQueries({
     queries: courseUuids.map(courseUuid => ({
-      queryKey: ['course-enrollments', courseUuid],
       ...getCourseEnrollmentsOptions({
         path: { courseUuid },
         query: { pageable: {} },
@@ -50,8 +56,13 @@ const EnrollmentsPage = () => {
   const isEnrollmentsLoading = enrollmentQueries.some(q => q.isLoading);
 
   const enrollmentsByCourse = useMemo(() => {
-    return enrollmentQueries.reduce<Record<string, any[]>>((acc, query, index) => {
-      acc[courseUuids[index]] = query.data?.data?.content ?? [];
+    return enrollmentQueries.reduce<Record<string, CourseEnrollment[]>>((acc, query, index) => {
+      const courseUuid = courseUuids[index];
+
+      if (courseUuid) {
+        acc[courseUuid] = query.data?.data?.content ?? [];
+      }
+
       return acc;
     }, {});
   }, [enrollmentQueries, courseUuids]);
@@ -62,7 +73,6 @@ const EnrollmentsPage = () => {
 
   const studentQueries = useQueries({
     queries: enrollmentsForSelectedCourse.map(enrollment => ({
-      queryKey: ['student', enrollment.student_uuid],
       ...getStudentByIdOptions({
         path: { uuid: enrollment.student_uuid },
       }),
@@ -72,7 +82,7 @@ const EnrollmentsPage = () => {
   });
   const isStudentsLoading = studentQueries.some(q => q.isLoading);
 
-  const students = studentQueries.map(q => q.data?.data).filter(Boolean);
+  const students = studentQueries.map(q => q.data).filter(isDefined);
 
   const userUuids = students.map(student => student.user_uuid).filter(Boolean);
 
@@ -80,7 +90,6 @@ const EnrollmentsPage = () => {
 
   const userQueries = useQueries({
     queries: uniqueUserUuids.map(uuid => ({
-      queryKey: ['user', uuid],
       ...getUserByUuidOptions({
         path: { uuid },
       }),
@@ -91,17 +100,32 @@ const EnrollmentsPage = () => {
 
   const isUserLoading = userQueries.some(q => q.isLoading);
 
-  const enrichedEnrollments = enrollmentsForSelectedCourse.map((enrollment, index) => {
-    const studentData = studentQueries[index]?.data?.data;
-    const userData = userQueries[index]?.data?.data;
+  const usersByUuid = useMemo(() => {
+    return userQueries.reduce<Record<string, User>>((acc, query) => {
+      const user = query.data?.data;
+      const userUuid = user?.uuid;
 
-    return {
-      ...enrollment,
-      ...userData,
-      ...studentData,
-      user_uuid: studentData?.user_uuid,
-    };
-  });
+      if (user && userUuid) {
+        acc[userUuid] = user;
+      }
+
+      return acc;
+    }, {});
+  }, [userQueries]);
+
+  const enrichedEnrollments: EnrichedEnrollment[] = enrollmentsForSelectedCourse.map(
+    (enrollment, index) => {
+      const studentData = studentQueries[index]?.data;
+      const userData = studentData?.user_uuid ? usersByUuid[studentData.user_uuid] : undefined;
+
+      return {
+        ...enrollment,
+        ...userData,
+        ...studentData,
+        user_uuid: studentData?.user_uuid,
+      };
+    }
+  );
 
   const [searchValue, setSearchValue] = useState('');
   const filteredEnrollments = useMemo(() => {
@@ -115,7 +139,7 @@ const EnrollmentsPage = () => {
         enrollment.last_name?.toLowerCase().includes(term) ||
         enrollment.email?.toLowerCase().includes(term) ||
         enrollment.full_name?.toLowerCase().includes(term) ||
-        enrollment.display_name?.toString().includes(term)
+        enrollment.display_name?.toLowerCase().includes(term)
       );
     });
   }, [enrichedEnrollments, searchValue]);
@@ -137,6 +161,9 @@ const EnrollmentsPage = () => {
   const handleExportEnrollments = () => {
     toast.success('Enrollment data exported successfully');
   };
+
+  void isUserLoading;
+  void handleExportEnrollments;
 
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
@@ -256,13 +283,19 @@ const EnrollmentsPage = () => {
                   </div>
                 ) : (
                   filteredCourses.map(course => {
-                    const enrollmentCount = enrollmentsByCourse[course.uuid]?.length ?? 0;
+                    const enrollmentCount = course.uuid
+                      ? (enrollmentsByCourse[course.uuid]?.length ?? 0)
+                      : 0;
                     const isSelected = selectedCourseId === course.uuid;
 
                     return (
                       <button
-                        key={course.uuid}
-                        onClick={() => setSelectedCourseId(course.uuid)}
+                        key={course.uuid ?? course.name}
+                        onClick={() => {
+                          if (course.uuid) {
+                            setSelectedCourseId(course.uuid);
+                          }
+                        }}
                         className={`group flex w-full items-start gap-3 rounded-lg border p-4 text-left transition-all ${
                           isSelected
                             ? 'border-primary bg-primary/5 shadow-sm'
@@ -381,13 +414,16 @@ const EnrollmentsPage = () => {
 
                     {filteredEnrollments.map((enrollment, index) => (
                       <div
-                        key={enrollment.uuid}
+                        key={enrollment.uuid ?? `${enrollment.student_uuid}-${index}`}
                         className='group hover:bg-muted/50 flex items-center gap-4 p-4 transition-colors'
                       >
                         <Avatar className='border-background h-12 w-12 border-2 shadow-sm'>
                           <AvatarImage src={enrollment.profile_image_url} />
                           <AvatarFallback className='bg-primary/10 text-primary font-semibold'>
-                            {enrollment.full_name
+                            {(
+                              enrollment.full_name ??
+                              `${enrollment.first_name ?? ''} ${enrollment.last_name ?? ''}`
+                            )
                               .split(' ')
                               .map(n => n[0])
                               .join('')
@@ -398,7 +434,11 @@ const EnrollmentsPage = () => {
 
                         <div className='min-w-0 flex-1'>
                           <div className='mb-1 flex items-center gap-2'>
-                            <p className='text-foreground font-semibold'>{enrollment.full_name}</p>
+                            <p className='text-foreground font-semibold'>
+                              {enrollment.full_name ??
+                                (`${enrollment.first_name ?? ''} ${enrollment.last_name ?? ''}`.trim() ||
+                                  'Unknown student')}
+                            </p>
                             <Badge variant='outline' className='text-xs'>
                               #{index + 1}
                             </Badge>
@@ -408,9 +448,11 @@ const EnrollmentsPage = () => {
                               <Clock className='h-3 w-3' />
                               <span>
                                 Enrolled{' '}
-                                {formatDistanceToNow(new Date(enrollment.enrollment_date), {
-                                  addSuffix: true,
-                                })}
+                                {enrollment.enrollment_date
+                                  ? formatDistanceToNow(new Date(enrollment.enrollment_date), {
+                                      addSuffix: true,
+                                    })
+                                  : 'date unavailable'}
                               </span>
                             </div>
                             {enrollment.email && (

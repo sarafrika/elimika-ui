@@ -45,9 +45,9 @@ export function VideoPlayer({ isOpen, onClose, videoUrl, title }: VideoPlayerPro
         if (url.hostname.includes('youtu.be')) {
           videoId = url.pathname.slice(1);
         } else if (url.pathname.includes('/shorts/')) {
-          videoId = url.pathname.split('/shorts/')[1]?.split('/')[0];
+          videoId = url.pathname.split('/shorts/')[1]?.split('/')[0] ?? '';
         } else if (url.pathname.includes('/embed/')) {
-          videoId = url.pathname.split('/embed/')[1]?.split('/')[0];
+          videoId = url.pathname.split('/embed/')[1]?.split('/')[0] ?? '';
         } else {
           videoId = url.searchParams.get('v') || '';
         }
@@ -61,7 +61,7 @@ export function VideoPlayer({ isOpen, onClose, videoUrl, title }: VideoPlayerPro
 
       // Vimeo detection
       if (url.hostname.includes('vimeo.com')) {
-        const videoId = url.pathname.split('/').filter(Boolean)[0];
+        const videoId = url.pathname.split('/').filter(Boolean)[0] ?? '';
         if (videoId) {
           setEmbedUrl(`https://player.vimeo.com/video/${videoId}?autoplay=0`);
           setVideoSource('vimeo');

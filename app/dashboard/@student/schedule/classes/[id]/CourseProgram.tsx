@@ -13,13 +13,17 @@ import {
   X,
 } from 'lucide-react';
 
+export type ContentTypeMap = Record<string, string>;
+
 export type LessonContent = {
   uuid: string;
   title: string;
   type: string;
   content_type_uuid: string;
   content_text?: string;
+  file_url?: string;
   duration?: string;
+  description?: string;
 };
 
 export type LessonModule = {
@@ -43,7 +47,7 @@ interface CourseProgramSectionProps {
   onLessonSelect: (lesson: LessonContent) => void;
   completedLessons?: Set<string>;
   lockedLessons?: Set<string>;
-  contentTypeMap: any;
+  contentTypeMap: ContentTypeMap;
 }
 
 export function CourseProgramSection({

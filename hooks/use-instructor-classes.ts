@@ -1,11 +1,31 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import type {
+  GetClassDefinitionsForInstructorResponse,
+  GetClassScheduleResponse,
+  GetCourseByUuidResponse,
+  GetInstructorByUuidResponse,
+} from '../services/client';
 import {
   getClassDefinitionsForInstructorOptions,
   getClassScheduleOptions,
   getCourseByUuidOptions,
   getInstructorByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
+
+export type InstructorClass = NonNullable<
+  NonNullable<GetClassDefinitionsForInstructorResponse['data']>[number]['class_definition']
+>;
+export type CourseDetails = NonNullable<GetCourseByUuidResponse['data']>;
+export type InstructorDetails = GetInstructorByUuidResponse;
+export type ClassScheduleInstance = NonNullable<
+  NonNullable<GetClassScheduleResponse['data']>['content']
+>[number];
+export type InstructorClassWithDetails = InstructorClass & {
+  course: CourseDetails | null;
+  instructor: InstructorDetails | null;
+  schedule: ClassScheduleInstance[] | null;
+};
 
 function useInstructorClassesWithDetails(instructorUuid?: string) {
   const { data, isLoading, isPending, isFetching } = useQuery({
@@ -22,11 +42,17 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
 
   const classesData = data?.data ?? [];
 
-  const classes = useMemo(() => classesData.map(item => item.class_definition), [classesData]);
+  const classes = useMemo(
+    () =>
+      classesData
+        .map(item => item.class_definition)
+        .filter((item): item is InstructorClass => Boolean(item)),
+    [classesData]
+  );
 
   const uniqueCourseUuids = useMemo(() => {
     const set = new Set<string>();
-    classes.forEach((cls: any) => {
+    classes.forEach(cls => {
       if (cls.course_uuid) set.add(cls.course_uuid);
     });
     return Array.from(set);
@@ -34,7 +60,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
 
   const uniqueInstructorUuids = useMemo(() => {
     const set = new Set<string>();
-    classes.forEach((cls: any) => {
+    classes.forEach(cls => {
       if (cls.default_instructor_uuid) set.add(cls.default_instructor_uuid);
     });
     return Array.from(set);
@@ -58,7 +84,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   );
 
   const courseMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, CourseDetails>();
     uniqueCourseUuids.forEach((uuid, index) => {
       const course = courseDataArray[index];
       if (course) map.set(uuid, course);
@@ -78,12 +104,12 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   });
 
   const instructorDataArray = useMemo(
-    () => instructorQueries.map(q => q.data?.data ?? null),
+    () => instructorQueries.map(q => q.data ?? null),
     [instructorQueries]
   );
 
   const instructorMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, InstructorDetails>();
     uniqueInstructorUuids.forEach((uuid, index) => {
       const instructor = instructorDataArray[index];
       if (instructor) map.set(uuid, instructor);
@@ -92,7 +118,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   }, [uniqueInstructorUuids, instructorDataArray]);
 
   const scheduleQueries = useQueries({
-    queries: classes.map((cls: any) => ({
+    queries: classes.map(cls => ({
       ...getClassScheduleOptions({
         path: { uuid: cls.uuid as string },
         query: { pageable: {} },
@@ -110,8 +136,8 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     [scheduleQueries]
   );
 
-  const classesWithCourseAndInstructor = useMemo(() => {
-    return classes.map((cls: any, i: number) => ({
+  const classesWithCourseAndInstructor = useMemo<InstructorClassWithDetails[]>(() => {
+    return classes.map((cls: InstructorClass, i: number) => ({
       ...cls,
       course: cls.course_uuid ? (courseMap.get(cls.course_uuid) ?? null) : null,
       instructor: cls.default_instructor_uuid

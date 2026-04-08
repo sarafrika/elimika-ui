@@ -7,6 +7,27 @@ import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, Clock, Play, Target, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import type { CourseTrainingRequirement } from '@/services/client/types.gen';
+
+type CoursePreviewRecord = {
+  status?: string;
+  banner_url?: string;
+  difficulty_uuid?: string;
+  is_free?: boolean;
+  name?: string;
+  class_limit?: number;
+  age_lower_limit?: number;
+  age_upper_limit?: number;
+  thumbnail_url?: string;
+  intro_video_url?: string;
+  training_requirements?: CourseTrainingRequirement[];
+  description?: string;
+  objectives?: string;
+  prerequisites?: string;
+  minimum_training_fee?: number;
+  creator_share_percentage?: number;
+  instructor_share_percentage?: number;
+};
 
 export default function CustomCoursePreview() {
   const searchParams = useSearchParams();
@@ -17,6 +38,7 @@ export default function CustomCoursePreview() {
     ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
     enabled: !!courseId,
   });
+  const course = data?.data as CoursePreviewRecord | undefined;
   const [activeTab, setActiveTab] = useState('overview');
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -24,7 +46,7 @@ export default function CustomCoursePreview() {
   return (
     <div className='bg-background mx-auto min-h-screen max-w-7xl'>
       {/* Status Banner */}
-      {data?.data?.status === 'draft' && (
+      {course?.status === 'draft' && (
         <div className='bg-warning text-warning-foreground mb-2 rounded-md px-4 py-2 text-center font-medium'>
           <AlertCircle className='mr-2 inline-block h-4 w-4' />
           This course is currently in draft mode. Publish your course to enable other users to
@@ -35,7 +57,7 @@ export default function CustomCoursePreview() {
       {/* Hero Section with Banner */}
       <div className='relative mt-4 h-96 overflow-hidden rounded-lg'>
         <img
-          src={data?.data?.banner_url}
+          src={course?.banner_url || '/illustration.png'}
           alt='Course Banner'
           className='h-full w-full object-cover opacity-40'
         />
@@ -45,19 +67,19 @@ export default function CustomCoursePreview() {
           <div className='mx-auto max-w-6xl'>
             <div className='mb-4 flex items-center gap-2'>
               <span className='bg-primary text-primary-foreground rounded-full px-3 py-1 text-sm font-semibold'>
-                {difficultyMap[data?.data?.difficulty_uuid as string]}
+                {difficultyMap[course?.difficulty_uuid as string]}
               </span>
-              {!data?.data?.is_free && (
+              {!course?.is_free && (
                 <span className='bg-success text-success-foreground rounded-full px-3 py-1 text-sm font-semibold'>
                   Premium
                 </span>
               )}
             </div>
-            <h1 className='mb-4 text-5xl font-bold text-white'>{data?.data?.name}</h1>
+            <h1 className='mb-4 text-5xl font-bold text-white'>{course?.name}</h1>
             <div className='flex items-center gap-6 text-white/90'>
               <div className='flex items-center gap-2'>
                 <Users className='h-5 w-5' />
-                <span>{data?.data?.class_limit} seats available</span>
+                <span>{course?.class_limit} seats available</span>
               </div>
               <div className='flex items-center gap-2'>
                 <Clock className='h-5 w-5' />
@@ -66,7 +88,7 @@ export default function CustomCoursePreview() {
               <div className='flex items-center gap-2'>
                 <Target className='h-5 w-5' />
                 <span>
-                  Ages {data?.data?.age_lower_limit}-{data?.data?.age_upper_limit}
+                  Ages {course?.age_lower_limit}-{course?.age_upper_limit}
                 </span>
               </div>
             </div>
@@ -85,7 +107,7 @@ export default function CustomCoursePreview() {
                 {!isPlaying ? (
                   <div className='absolute inset-0 flex items-center justify-center'>
                     <img
-                      src={data?.data?.thumbnail_url}
+                      src={course?.thumbnail_url || '/illustration.png'}
                       alt='Course Thumbnail'
                       className='h-full w-full object-cover opacity-60'
                     />
@@ -101,7 +123,7 @@ export default function CustomCoursePreview() {
                   </div>
                 ) : (
                   <video
-                    src={data?.data?.intro_video_url}
+                    src={course?.intro_video_url}
                     controls
                     autoPlay
                     className='h-full w-full'
@@ -111,7 +133,7 @@ export default function CustomCoursePreview() {
             </div>
 
             <CourseTrainingRequirements
-              requirements={data?.data?.training_requirements}
+              requirements={course?.training_requirements}
               viewerRole='course_creator'
               description='Preview every requirement grouped by who is expected to provide it.'
             />
@@ -143,7 +165,7 @@ export default function CustomCoursePreview() {
                     <div
                       className='prose prose-sm text-foreground dark:prose-invert max-w-none'
                       dangerouslySetInnerHTML={{
-                        __html: data?.data?.description,
+                        __html: course?.description ?? '',
                       }}
                     />
                   </div>
@@ -155,7 +177,7 @@ export default function CustomCoursePreview() {
                     <div
                       className='prose prose-sm text-foreground dark:prose-invert max-w-none'
                       dangerouslySetInnerHTML={{
-                        __html: data?.data?.objectives,
+                        __html: course?.objectives ?? '',
                       }}
                     />
                   </div>
@@ -167,7 +189,7 @@ export default function CustomCoursePreview() {
                     <div
                       className='prose prose-sm text-foreground dark:prose-invert max-w-none'
                       dangerouslySetInnerHTML={{
-                        __html: data?.data?.prerequisites,
+                        __html: course?.prerequisites ?? '',
                       }}
                     />
                   </div>
@@ -181,25 +203,25 @@ export default function CustomCoursePreview() {
                       <div className='bg-muted/50 rounded-lg p-4'>
                         <p className='text-muted-foreground text-sm'>Difficulty Level</p>
                         <p className='text-foreground text-lg font-semibold'>
-                          {difficultyMap[data?.data?.difficulty_uuid as string]}
+                          {difficultyMap[course?.difficulty_uuid as string]}
                         </p>
                       </div>
                       <div className='bg-muted/50 rounded-lg p-4'>
                         <p className='text-muted-foreground text-sm'>Price</p>
                         <p className='text-foreground text-lg font-semibold'>
-                          {data?.data?.is_free ? 'Free' : `KES ${data?.data?.minimum_training_fee}`}
+                          {course?.is_free ? 'Free' : `KES ${course?.minimum_training_fee}`}
                         </p>
                       </div>
                       <div className='bg-muted/50 rounded-lg p-4'>
                         <p className='text-muted-foreground text-sm'>Class Size</p>
                         <p className='text-foreground text-lg font-semibold'>
-                          Max {data?.data?.class_limit} students
+                          Max {course?.class_limit} students
                         </p>
                       </div>
                       <div className='bg-muted/50 rounded-lg p-4'>
                         <p className='text-muted-foreground text-sm'>Age Range</p>
                         <p className='text-foreground text-lg font-semibold'>
-                          {data?.data?.age_lower_limit}-{data?.data?.age_upper_limit} years
+                          {course?.age_lower_limit}-{course?.age_upper_limit} years
                         </p>
                       </div>
                     </div>
@@ -255,12 +277,12 @@ export default function CustomCoursePreview() {
             <div className='border-border bg-card sticky top-6 space-y-4 rounded-2xl border p-6 shadow-lg'>
               <div className='space-y-4'>
                 <div className='text-center'>
-                  {data?.data?.is_free ? (
+                  {course?.is_free ? (
                     <p className='text-success text-4xl font-bold'>FREE</p>
                   ) : (
                     <div>
                       <p className='text-foreground text-4xl font-bold'>
-                        KES {data?.data?.minimum_training_fee}
+                        KES {course?.minimum_training_fee}
                       </p>
                     </div>
                   )}
@@ -277,7 +299,7 @@ export default function CustomCoursePreview() {
                   </div> */}
                   <div className='flex items-center gap-3'>
                     <Users className='text-primary h-5 w-5' />
-                    <span>{data?.data?.class_limit} seats available</span>
+                    <span>{course?.class_limit} seats available</span>
                   </div>
                   {/* <div className='flex items-center gap-3'>
                     <Award className='text-primary h-5 w-5' />
@@ -288,20 +310,20 @@ export default function CustomCoursePreview() {
             </div>
 
             {/* Revenue Share Info (if applicable) */}
-            {data?.data?.creator_share_percentage && (
+            {course?.creator_share_percentage && (
               <div className='border-border bg-card space-y-3 rounded-2xl border p-6 shadow-lg'>
                 <h3 className='text-foreground mb-4 text-lg font-semibold'>Revenue Share</h3>
                 <div className='space-y-3'>
                   <div className='flex items-center justify-between'>
                     <span className='text-muted-foreground'>Creator Share</span>
                     <span className='text-primary font-semibold'>
-                      {data?.data?.creator_share_percentage}%
+                      {course?.creator_share_percentage}%
                     </span>
                   </div>
                   <div className='flex items-center justify-between'>
                     <span className='text-muted-foreground'>Instructor Share</span>
                     <span className='text-primary font-semibold'>
-                      {data?.data?.instructor_share_percentage}%
+                      {course?.instructor_share_percentage}%
                     </span>
                   </div>
                 </div>

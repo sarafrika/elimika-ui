@@ -1,5 +1,5 @@
-import InstructorProfile from './_component/InstructorProfile';
+import InstructorGeneralProfilePage from '@/src/features/profile/pages/instructor/InstructorGeneralProfilePage';
 
 export default function InstructorProfilePage() {
-  return <InstructorProfile />;
+  return <InstructorGeneralProfilePage />;
 }

@@ -14,6 +14,11 @@ import { elimikaDesignSystem } from '@/lib/design-system';
 import {
   CourseTrainingApplication,
   getInstructorByUuid,
+  Instructor,
+  InstructorDocument,
+  InstructorEducation,
+  InstructorReview,
+  InstructorSkill,
   ProgramTrainingApplication,
 } from '@/services/client';
 import {
@@ -62,7 +67,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { format } from 'path';
+import { format } from 'date-fns';
 import { useEffect, useMemo, useState } from 'react';
 import { Label } from 'recharts';
 import { toast } from 'sonner';
@@ -75,6 +80,39 @@ import {
   DialogTitle,
 } from '../../../../../components/ui/dialog';
 import { Textarea } from '../../../../../components/ui/textarea';
+
+type TrainingApplication = CourseTrainingApplication | ProgramTrainingApplication;
+type InstructorListItem = {
+  uuid: string;
+  data: InstructorProfile;
+  isLoading: boolean;
+  isError: boolean;
+};
+type InstructorProfile = Instructor & {
+  email?: string;
+  location?: string;
+  organization?: string;
+  phone?: string;
+  profile_picture_url?: string;
+  status?: string;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return typeof error.message === 'string' ? error.message : undefined;
+  }
+
+  return undefined;
+};
+
+const isCourseApplication = (
+  application: TrainingApplication | null
+): application is CourseTrainingApplication => application !== null && 'course_uuid' in application;
+
+const isProgramApplication = (
+  application: TrainingApplication | null
+): application is ProgramTrainingApplication =>
+  application !== null && 'program_uuid' in application;
 
 const InstructorsApplicationPage = () => {
   const [tabs, setTabs] = useState('profile');
@@ -89,9 +127,7 @@ const InstructorsApplicationPage = () => {
   const [page, setPage] = useState(0);
   const pageSize = 12;
   const [searchValue, setSearchValue] = useState('');
-  const [selectedApplication, setSelectedApplication] = useState<CourseTrainingApplication | null>(
-    null
-  );
+  const [selectedApplication, setSelectedApplication] = useState<TrainingApplication | null>(null);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revoke'>('approve');
 
@@ -158,27 +194,29 @@ const InstructorsApplicationPage = () => {
     return instructorQueries
       .map((query, index) => ({
         uuid: instructorUuids[index] as string,
-        data: query.data?.data,
+        data: query.data?.data as InstructorProfile | undefined,
         isLoading: query.isLoading,
         isError: query.isError,
       }))
-      .filter(instructor => instructor.data); // Only include successfully loaded instructors
+      .filter((instructor): instructor is InstructorListItem => Boolean(instructor.data));
   }, [instructorQueries, instructorUuids]);
 
   const isLoadingInstructors = instructorQueries.some(query => query.isLoading);
 
   // Auto-select first instructor if none selected
   useMemo(() => {
-    if (instructors.length > 0 && !selectedInstructorUuid) {
-      setSelectedInstructorUuid(instructors[0].uuid);
+    const firstInstructor = instructors[0];
+
+    if (firstInstructor && !selectedInstructorUuid) {
+      setSelectedInstructorUuid(firstInstructor.uuid);
     }
   }, [instructors, selectedInstructorUuid]);
 
   // const instructorCategories = ['Music', 'Engineer', "Programming", "Java"]
   const instructorCategories = useMemo(() => {
     const categories = instructors
-      .map(instructorItem => instructorItem.data?.data?.professional_headline)
-      .filter(Boolean);
+      .map(instructorItem => instructorItem.data.professional_headline)
+      .filter((category): category is string => Boolean(category));
 
     return [...new Set(categories)].sort();
   }, [instructors]);
@@ -198,7 +236,7 @@ const InstructorsApplicationPage = () => {
     // Approved / Pending filter
     if (verificationFilter !== 'all') {
       filtered = filtered.filter(instructorItem => {
-        const instructorData = instructorItem.data?.data;
+        const instructorData = instructorItem.data;
         const isVerified = instructorData?.admin_verified ?? false;
         return verificationFilter === 'approved' ? isVerified : !isVerified;
       });
@@ -209,7 +247,7 @@ const InstructorsApplicationPage = () => {
       const categoryLower = selectedCategory.toLowerCase();
 
       filtered = filtered.filter(instructorItem => {
-        const instructorData = instructorItem.data?.data;
+        const instructorData = instructorItem.data;
         const headline = instructorData?.professional_headline || '';
 
         return headline.toLowerCase().includes(categoryLower);
@@ -220,7 +258,7 @@ const InstructorsApplicationPage = () => {
     if (instructorSearchQuery) {
       const searchLower = instructorSearchQuery.toLowerCase();
       filtered = filtered.filter(instructorItem => {
-        const instructorData = instructorItem.data?.data;
+        const instructorData = instructorItem.data;
         const fullName = instructorData?.full_name || '';
         const email = instructorData?.email || '';
         const bio = instructorData?.bio || '';
@@ -246,8 +284,10 @@ const InstructorsApplicationPage = () => {
 
   // Auto-select first instructor
   useEffect(() => {
-    if (filteredInstructors.length > 0 && !selectedInstructorUuid) {
-      setSelectedInstructorUuid(filteredInstructors[0].uuid);
+    const firstInstructor = filteredInstructors[0];
+
+    if (firstInstructor && !selectedInstructorUuid) {
+      setSelectedInstructorUuid(firstInstructor.uuid);
     }
   }, [filteredInstructors, selectedInstructorUuid]);
 
@@ -255,8 +295,7 @@ const InstructorsApplicationPage = () => {
   const selectedInstructor = useMemo(() => {
     return instructors.find(i => i.uuid === selectedInstructorUuid);
   }, [instructors, selectedInstructorUuid]);
-  // @ts-ignore
-  const instructor = selectedInstructor?.data?.data;
+  const instructor = selectedInstructor?.data;
 
   const { data: skillsData } = useQuery({
     ...getInstructorSkillsOptions({
@@ -288,18 +327,18 @@ const InstructorsApplicationPage = () => {
   });
 
   // const instructor = instructorData?.data;
-  const skills = skillsData?.data?.content || [];
-  const education = educationData?.data || [];
-  const documents = documentsData?.data?.content || [];
-  const reviews = reviewsData?.data || [];
+  const skills: InstructorSkill[] = skillsData?.data?.content ?? [];
+  const education: InstructorEducation[] = educationData?.data ?? [];
+  const documents: InstructorDocument[] = documentsData?.data ?? [];
+  const reviews: InstructorReview[] = reviewsData?.data ?? [];
 
   const applicantNameMap = useMemo(() => {
     const map = new Map<string, string>();
 
-    instructorQueries.forEach((q: any) => {
+    instructorQueries.forEach(q => {
       const instructor = q.data?.data;
       if (instructor?.uuid) {
-        map.set(instructor.uuid, instructor.full_name);
+        map.set(instructor.uuid, instructor.full_name ?? '');
       }
     });
 
@@ -415,7 +454,7 @@ const InstructorsApplicationPage = () => {
 
   // Mutation
   const handleReview = (
-    application: CourseTrainingApplication,
+    application: TrainingApplication,
     action: 'approve' | 'reject' | 'revoke'
   ) => {
     setSelectedApplication(application);
@@ -425,7 +464,11 @@ const InstructorsApplicationPage = () => {
 
   const decideMutation = useMutation(decideOnTrainingApplicationMutation());
   const handleSubmitReview = (reviewNotes: string) => {
-    if (!selectedApplication?.uuid || !selectedApplication?.course_uuid) {
+    if (
+      !selectedApplication?.uuid ||
+      !isCourseApplication(selectedApplication) ||
+      !selectedApplication.course_uuid
+    ) {
       toast.error('Missing application details');
       return;
     }
@@ -455,8 +498,8 @@ const InstructorsApplicationPage = () => {
           setReviewDialogOpen(false);
           setSelectedApplication(null);
         },
-        onError: (error: any) => {
-          toast.error(error?.message || `Failed to ${reviewAction} application`);
+        onError: (error: unknown) => {
+          toast.error(getErrorMessage(error) || `Failed to ${reviewAction} application`);
         },
       }
     );
@@ -464,7 +507,11 @@ const InstructorsApplicationPage = () => {
 
   const decideProgramMutation = useMutation(decideOnProgramTrainingApplicationMutation());
   const handleSubmitProgramReview = (reviewNotes: string) => {
-    if (!selectedApplication?.uuid || !selectedApplication?.program_uuid) {
+    if (
+      !selectedApplication?.uuid ||
+      !isProgramApplication(selectedApplication) ||
+      !selectedApplication.program_uuid
+    ) {
       toast.error('Missing application details');
       return;
     }
@@ -494,10 +541,10 @@ const InstructorsApplicationPage = () => {
           setReviewDialogOpen(false);
           setSelectedApplication(null);
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           const errorDuration = 8000;
 
-          toast.error(error?.message || `Failed to ${reviewAction} application`, {
+          toast.error(getErrorMessage(error) || `Failed to ${reviewAction} application`, {
             duration: errorDuration,
           });
 
@@ -658,7 +705,7 @@ const InstructorsApplicationPage = () => {
               </p>
             ) : (
               filteredInstructors.map(instructorItem => {
-                const instructorData = instructorItem.data?.data;
+                const instructorData = instructorItem.data;
                 const fullName = instructorData?.full_name || 'Unknown Instructor';
                 const bio =
                   instructorData?.bio ||
@@ -667,7 +714,7 @@ const InstructorsApplicationPage = () => {
                 const initials =
                   fullName
                     .split(' ')
-                    .map(n => n[0])
+                    .map((namePart: string) => namePart[0])
                     .join('')
                     .toUpperCase() || 'IN';
 
@@ -761,7 +808,7 @@ const InstructorsApplicationPage = () => {
                         <AvatarFallback className='text-xl md:text-2xl'>
                           {instructor?.full_name
                             ?.split(' ')
-                            .map(n => n[0])
+                            .map((namePart: string) => namePart[0])
                             .join('')}
                         </AvatarFallback>
                       </Avatar>
@@ -845,7 +892,7 @@ const InstructorsApplicationPage = () => {
                       <EmptyStateCard message='No skill found' />
                     ) : (
                       <div className='flex flex-col flex-wrap gap-2'>
-                        {skills.map((skill: any) => {
+                        {skills.map(skill => {
                           return (
                             <div key={skill.uuid} className='flex flex-row items-center gap-2'>
                               <p className='text-sm md:text-base'>{skill.skill_name}</p>
@@ -869,7 +916,7 @@ const InstructorsApplicationPage = () => {
                       <EmptyStateCard message='No education found' />
                     ) : (
                       <div className='space-y-3 md:space-y-4'>
-                        {education.map((edu: any) => (
+                        {education.map(edu => (
                           <div
                             key={edu.uuid}
                             className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4'
@@ -917,7 +964,7 @@ const InstructorsApplicationPage = () => {
                       <EmptyStateCard message='No document found' />
                     ) : (
                       <div className='space-y-2'>
-                        {documents.map((doc: any) => (
+                        {documents.map(doc => (
                           <div
                             key={doc.uuid}
                             className='flex items-center justify-between rounded-lg border p-2.5 md:p-3'
@@ -926,10 +973,10 @@ const InstructorsApplicationPage = () => {
                               <FileText className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
                               <div>
                                 <p className='text-xs font-medium md:text-sm'>
-                                  {doc.document_name || doc.name}
+                                  {doc.title || doc.original_filename}
                                 </p>
                                 <p className='text-muted-foreground text-[10px] md:text-xs'>
-                                  {doc.document_type || doc.type}
+                                  {doc.verification_status || doc.status || 'Document'}
                                 </p>
                               </div>
                             </div>
@@ -950,7 +997,7 @@ const InstructorsApplicationPage = () => {
                       <EmptyStateCard message='No review found' />
                     ) : (
                       <div className='space-y-3 md:space-y-4'>
-                        {reviews?.map((review: any) => (
+                        {reviews?.map(review => (
                           <div
                             key={review.uuid}
                             className='border-b pb-3 last:border-0 last:pb-0 md:pb-4'
@@ -1388,7 +1435,7 @@ const InstructorsApplicationPage = () => {
                     ) : (
                       <>
                         <div className='grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3'>
-                          {filteredProgramApplications.map((application: any) => (
+                          {filteredProgramApplications.map(application => (
                             <ApplicationCard
                               type='program'
                               key={application.uuid}
@@ -1567,7 +1614,7 @@ const InstructorsApplicationPage = () => {
                             <AvatarFallback className='text-xl md:text-2xl'>
                               {instructor?.full_name
                                 ?.split(' ')
-                                .map(n => n[0])
+                                .map((namePart: string) => namePart[0])
                                 .join('')}
                             </AvatarFallback>
                           </Avatar>
@@ -1651,7 +1698,7 @@ const InstructorsApplicationPage = () => {
                           <EmptyStateCard message='No skill found' />
                         ) : (
                           <div className='flex flex-col flex-wrap gap-2'>
-                            {skills.map((skill: any) => {
+                            {skills.map(skill => {
                               return (
                                 <div key={skill.uuid} className='flex flex-row items-center gap-2'>
                                   <p className='text-sm md:text-base'>{skill.skill_name}</p>
@@ -1675,7 +1722,7 @@ const InstructorsApplicationPage = () => {
                           <EmptyStateCard message='No education found' />
                         ) : (
                           <div className='space-y-3 md:space-y-4'>
-                            {education.map((edu: any) => (
+                            {education.map(edu => (
                               <div
                                 key={edu.uuid}
                                 className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4'
@@ -1723,7 +1770,7 @@ const InstructorsApplicationPage = () => {
                           <EmptyStateCard message='No document found' />
                         ) : (
                           <div className='space-y-2'>
-                            {documents.map((doc: any) => (
+                            {documents.map(doc => (
                               <div
                                 key={doc.uuid}
                                 className='flex items-center justify-between rounded-lg border p-2.5 md:p-3'
@@ -1732,10 +1779,10 @@ const InstructorsApplicationPage = () => {
                                   <FileText className='text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4' />
                                   <div>
                                     <p className='text-xs font-medium md:text-sm'>
-                                      {doc.document_name || doc.name}
+                                      {doc.title || doc.original_filename}
                                     </p>
                                     <p className='text-muted-foreground text-[10px] md:text-xs'>
-                                      {doc.document_type || doc.type}
+                                      {doc.verification_status || doc.status || 'Document'}
                                     </p>
                                   </div>
                                 </div>
@@ -1756,7 +1803,7 @@ const InstructorsApplicationPage = () => {
                           <EmptyStateCard message='No review found' />
                         ) : (
                           <div className='space-y-3 md:space-y-4'>
-                            {reviews?.map((review: any) => (
+                            {reviews?.map(review => (
                               <div
                                 key={review.uuid}
                                 className='border-b pb-3 last:border-0 last:pb-0 md:pb-4'
@@ -2214,7 +2261,7 @@ const InstructorsApplicationPage = () => {
                         ) : (
                           <>
                             <div className='grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3'>
-                              {filteredProgramApplications.map((application: any) => (
+                              {filteredProgramApplications.map(application => (
                                 <ApplicationCard
                                   type='program'
                                   key={application.uuid}
@@ -2328,11 +2375,11 @@ function ApplicationCard({
   onRevoke,
   type = 'course',
 }: {
-  application: any;
+  application: TrainingApplication;
   onApprove: () => void;
   onReject: () => void;
   onRevoke: () => void;
-  type: string;
+  type: 'course' | 'program';
 }) {
   const isPending = application.status?.toLowerCase() === 'pending';
   const isApproved = application.status?.toLowerCase() === 'approved';
@@ -2351,19 +2398,23 @@ function ApplicationCard({
   });
 
   const isCourse = type === 'course';
+  const courseUuid =
+    isCourse && isCourseApplication(application) ? application.course_uuid : undefined;
+  const programUuid =
+    !isCourse && isProgramApplication(application) ? application.program_uuid : undefined;
 
   const { data: courseData } = useQuery({
     ...getCourseByUuidOptions({
-      path: { uuid: application?.course_uuid },
+      path: { uuid: courseUuid as string },
     }),
-    enabled: isCourse && !!application?.course_uuid,
+    enabled: !!courseUuid,
   });
 
   const { data: programData } = useQuery({
     ...getTrainingProgramByUuidOptions({
-      path: { uuid: application?.program_uuid },
+      path: { uuid: programUuid as string },
     }),
-    enabled: !isCourse && !!application?.program_uuid,
+    enabled: !!programUuid,
   });
 
   const name = isCourse ? courseData?.data?.name : programData?.data?.title;
@@ -2471,7 +2522,7 @@ function ReviewDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  application: any | null;
+  application: TrainingApplication | null;
   action: 'approve' | 'reject' | 'revoke';
   onSubmit: (reviewNotes: string) => void;
   isLoading: boolean;

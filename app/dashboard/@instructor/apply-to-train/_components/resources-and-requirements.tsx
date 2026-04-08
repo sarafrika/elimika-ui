@@ -39,9 +39,35 @@ import {
   X,
 } from 'lucide-react';
 
+type SoftwarePlatform = {
+  name: string;
+  type: string;
+  link: string;
+  description: string;
+};
+
+type ResourcesAndRequirementsData = {
+  selectedEquipment?: string[];
+  selectedSoftware?: SoftwarePlatform[];
+  customEquipment?: string[];
+  equipmentNotes?: string;
+  customSoftware?: string;
+  minBandwidth?: string;
+  deviceRequirements?: string;
+  supportNeeded?: string[];
+  fundingDetails?: string;
+  facilitiesDetails?: string;
+  marketingSupport?: string;
+  administrativeSupport?: string;
+  accessibilityRequirements?: string;
+  specialRequirements?: string;
+  preparationTime?: string;
+  costEstimate?: string;
+} | null;
+
 interface ResourcesAndRequirementsProps {
-  data: any;
-  onDataChange: (data: any) => void;
+  data: ResourcesAndRequirementsData;
+  onDataChange: (data: Record<string, unknown> | null) => void;
 }
 
 // Predefined equipment categories
@@ -126,12 +152,21 @@ const SOFTWARE_PLATFORMS = [
     link: 'https://canvas.instructure.com',
     description: 'Educational technology platform',
   },
-];
+] satisfies SoftwarePlatform[];
 
 // Simple zod schema — all optional (keeps validation minimal)
 const resourcesSchema = z.object({
   selectedEquipment: z.array(z.string()).optional(),
-  selectedSoftware: z.array(z.any()).optional(),
+  selectedSoftware: z
+    .array(
+      z.object({
+        name: z.string(),
+        type: z.string(),
+        link: z.string(),
+        description: z.string(),
+      })
+    )
+    .optional(),
   customEquipment: z.array(z.string()).optional(),
 
   equipmentNotes: z.string().optional(),
@@ -158,7 +193,9 @@ export function ResourcesAndRequirements({ data, onDataChange }: ResourcesAndReq
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>(
     data?.selectedEquipment || []
   );
-  const [selectedSoftware, setSelectedSoftware] = useState<any[]>(data?.selectedSoftware || []);
+  const [selectedSoftware, setSelectedSoftware] = useState<SoftwarePlatform[]>(
+    data?.selectedSoftware || []
+  );
   const [customEquipment, setCustomEquipment] = useState<string[]>(data?.customEquipment || []);
 
   // supportNeeded may be an array of ids
@@ -220,7 +257,7 @@ export function ResourcesAndRequirements({ data, onDataChange }: ResourcesAndReq
     // form state is synced via effect
   };
 
-  const handleSoftwareToggle = (software: any) => {
+  const handleSoftwareToggle = (software: SoftwarePlatform) => {
     const isSelected = selectedSoftware.find(s => s.name === software.name);
     const newSelection = isSelected
       ? selectedSoftware.filter(s => s.name !== software.name)
@@ -379,7 +416,7 @@ export function ResourcesAndRequirements({ data, onDataChange }: ResourcesAndReq
               <h4>Recommended Platforms</h4>
               <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 {SOFTWARE_PLATFORMS.map(software => {
-                  const isSelected = selectedSoftware.find((s: any) => s.name === software.name);
+                  const isSelected = selectedSoftware.find(s => s.name === software.name);
                   return (
                     <div
                       key={software.name}

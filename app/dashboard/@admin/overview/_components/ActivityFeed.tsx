@@ -169,11 +169,11 @@ const buildDerivedEventsFromStatistics = (
 ): AdminActivityEvent[] => {
   if (!statistics) return [];
 
-  const occurredAt = statistics.timestamp ?? undefined;
+  const occurredAt = statistics.timestamp ? statistics.timestamp.toISOString() : undefined;
   const events: AdminActivityEvent[] = [];
 
   const userMetrics = statistics.user_metrics;
-  const organizationMetrics = statistics.organization_metrics;
+  const organizationMetrics = statistics.organisation_metrics;
   const complianceMetrics = statistics.compliance_metrics;
   const communicationMetrics = statistics.communication_metrics;
   const adminMetrics = statistics.admin_metrics;
@@ -205,8 +205,8 @@ const buildDerivedEventsFromStatistics = (
       status: pending > 0 ? 'warning' : 'success',
       occurred_at: occurredAt,
       metadata: {
-        total: toNumber(organizationMetrics.total_organizations),
-        active: toNumber(organizationMetrics.active_organizations),
+        total: toNumber(organizationMetrics.total_organisations),
+        active: toNumber(organizationMetrics.active_organisations),
       },
     });
   }

@@ -1,4 +1,13 @@
-const RecurringDisplay = ({ data }: { data: any }) => {
+type RecurringData = {
+  days_of_week?: string | null;
+  day_of_month?: number | null;
+  end_date?: Date | string | null;
+  occurrence_count?: number | null;
+  is_active?: boolean | null;
+  pattern_description?: string | null;
+};
+
+const RecurringDisplay = ({ data }: { data: RecurringData | null | undefined }) => {
   if (!data) return null;
 
   return (

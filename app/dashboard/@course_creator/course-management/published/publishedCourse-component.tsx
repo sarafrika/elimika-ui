@@ -36,6 +36,16 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+type PublishedCourseItem = {
+  uuid?: string;
+  name: string;
+  thumbnail_url?: string;
+  description?: string;
+  category_names?: string[];
+  class_limit?: number;
+  updated_date?: string | Date;
+};
+
 export default function PublishedCoursesComponent({
   courseCreatorId,
 }: {
@@ -230,7 +240,7 @@ export default function PublishedCoursesComponent({
                       </TableHeader>
 
                       <TableBody>
-                        {publishedCourses?.map((course: any) => (
+                        {publishedCourses?.map((course: PublishedCourseItem) => (
                           <TableRow key={course.uuid}>
                             {/* <TableHead>
                     <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
@@ -238,7 +248,7 @@ export default function PublishedCoursesComponent({
 
                             <TableCell className='py-1'>
                               <Image
-                                src={course?.thumbnail_url as string}
+                                src={course?.thumbnail_url || '/illustration.png'}
                                 alt='thumbnail'
                                 width={48}
                                 height={48}
@@ -251,7 +261,7 @@ export default function PublishedCoursesComponent({
                                 <h1 className='max-w-[270px] truncate'>{course.name}</h1>
                                 <div className='text-muted-foreground text-xs'>
                                   <RichTextRenderer
-                                    htmlString={course?.description}
+                                    htmlString={course?.description ?? ''}
                                     maxChars={42}
                                   />
                                 </div>
@@ -271,7 +281,13 @@ export default function PublishedCoursesComponent({
                               </div>
                             </TableCell>
                             <TableCell>{course.class_limit || 'Unlimited'}</TableCell>
-                            <TableCell>{formatCourseDate(course.updated_date)}</TableCell>
+                            <TableCell>
+                              {formatCourseDate(
+                                typeof course.updated_date === 'string'
+                                  ? course.updated_date
+                                  : course.updated_date?.toISOString()
+                              )}
+                            </TableCell>
                             <TableCell className='text-center'>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -293,7 +309,7 @@ export default function PublishedCoursesComponent({
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     variant='destructive'
-                                    onClick={() => handleUnpublish(course.uuid)}
+                                    onClick={() => course.uuid && handleUnpublish(course.uuid)}
                                   >
                                     <TrashIcon className='mr-2 h-4 w-4' />
                                     Unpublish

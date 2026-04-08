@@ -1,18 +1,5 @@
-'use client';
+import CourseDetailsPage from '@/src/features/dashboard/courses/pages/CourseDetailsPage';
 
-import ReusableCourseDetailsPage from '@/app/dashboard/_components/reusable-course-details';
-import { useStudent } from '../../../../../context/student-context';
-
-export default function CourseDetailsPage({ params }: any) {
-  const data = params?.id;
-  const student = useStudent();
-
-  return (
-    <ReusableCourseDetailsPage
-      courseId={data}
-      handleEnroll={() => {}}
-      userRole='instructor'
-      student_uuid={student?.uuid}
-    />
-  );
+export default function InstructorCourseDetailsRoute({ params }: { params: { id: string } }) {
+  return <CourseDetailsPage courseId={params.id} />;
 }

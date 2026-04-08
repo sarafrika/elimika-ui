@@ -12,10 +12,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
 import EnrolledClassCard from './enrolled-class-card';
-import { getClassData } from './schedule-data';
+import { getClassData, type StudentClassRecord } from './schedule-data';
 
 type Props = {
-  classDefinitions: any[];
+  classDefinitions: StudentClassRecord[];
   loading?: boolean;
   isError?: boolean;
 };
@@ -44,7 +44,7 @@ export default function MyClassesPage({ classDefinitions, isError, loading }: Pr
     ]);
   }, [replaceBreadcrumbs]);
 
-  const getClassStatus = (classDetails: any) => {
+  const getClassStatus = (classDetails: StudentClassRecord['classDetails']) => {
     const classData = getClassData({ classDetails });
     const startDate = classData?.default_start_time ? new Date(classData.default_start_time) : null;
     const endDate = classData?.default_end_time ? new Date(classData.default_end_time) : null;

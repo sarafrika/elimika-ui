@@ -1,10 +1,5 @@
 'use client';
 
-import { PublicTopNav } from '@/components/PublicTopNav';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   addDays,
   addWeeks,
@@ -28,9 +23,21 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { PublicTopNav } from '@/components/PublicTopNav';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useClassDetails } from '../../hooks/use-class-details';
 import { useDifficultyLevels } from '../../hooks/use-difficultyLevels';
 import { useUserDomains } from '../../hooks/use-user-query';
+
+type ClassInviteData = ReturnType<typeof useClassDetails>['data'];
+type ClassInviteCourse = NonNullable<ClassInviteData['course']>;
+type ClassInviteEnrollment = ClassInviteData['enrollments'][number];
+type ClassInviteProgram = NonNullable<ClassInviteData['program']>;
+type ClassInviteProgramCourse = ClassInviteData['pCourses'][number] & { title?: string };
+type ClassInviteSchedule = ClassInviteData['schedule'][number];
 
 function ClassInviteContent() {
   const searchParams = useSearchParams();
@@ -49,9 +56,9 @@ function ClassInviteContent() {
   const uniqueEnrollments = useMemo(() => {
     if (!enrollments) return [];
 
-    const map = new Map();
+    const map = new Map<string, ClassInviteEnrollment>();
 
-    enrollments.forEach((enrollment: any) => {
+    enrollments.forEach(enrollment => {
       if (enrollment.student_uuid && !map.has(enrollment.student_uuid)) {
         map.set(enrollment.student_uuid, enrollment);
       }
@@ -130,9 +137,7 @@ function ClassInviteContent() {
                 ) : null}
               </CardHeader>
 
-              <div>
-                <CourseDetailedCard course={course as any} />
-              </div>
+              <div>{course && <CourseDetailedCard course={course} />}</div>
 
               <CardContent className='space-y-6'>
                 {/* DETAILS */}
@@ -181,7 +186,7 @@ function ClassInviteContent() {
               </CardContent>
 
               <CardContent>
-                <ClassScheduleCalendar schedules={schedules as any} />
+                <ClassScheduleCalendar schedules={schedules} />
               </CardContent>
 
               {/* CTA */}
@@ -234,9 +239,7 @@ function ClassInviteContent() {
                 ) : null}
               </CardHeader>
 
-              <div>
-                <ProgramDetailsCard program={program as any} />
-              </div>
+              <div>{program && <ProgramDetailsCard program={program} />}</div>
 
               {/* Courses Card */}
               <CardContent className='bg-primary/5 mx-6 space-y-3 rounded-lg p-6'>
@@ -247,7 +250,7 @@ function ClassInviteContent() {
                     <li className='text-muted-foreground text-sm'>No courses available</li>
                   )}
 
-                  {programCourses?.map((course: any) => (
+                  {programCourses?.map((course: ClassInviteProgramCourse) => (
                     <li key={course.uuid} className='flex items-start gap-2'>
                       <BookOpen className='text-primary mt-0.5 h-4 w-4' />
                       <span>{course.title || course.name}</span>
@@ -303,7 +306,7 @@ function ClassInviteContent() {
               </CardContent>
 
               <CardContent>
-                <ClassScheduleCalendar schedules={schedules as any} />
+                <ClassScheduleCalendar schedules={schedules} />
               </CardContent>
 
               {/* CTA */}
@@ -348,7 +351,15 @@ export default function PublicClassInvitePage() {
   );
 }
 
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+}) {
   return (
     <div className='flex items-start gap-3'>
       <div className='text-primary mt-0.5'>{icon}</div>
@@ -360,27 +371,11 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
-export type ClassScheduleItem = {
-  uuid: string;
-  class_definition_uuid: string;
-  start_time: string;
-  end_time: string;
-  timezone: string;
-  title: string;
-  location_type: 'ONLINE' | 'PHYSICAL';
-  status: 'SCHEDULED' | 'CANCELLED';
-  duration_minutes: number;
-  duration_formatted: string;
-  time_range: string;
-  is_currently_active: boolean;
-  can_be_cancelled: boolean;
-};
-
 interface Props {
-  schedules: ClassScheduleItem[];
+  schedules: ClassInviteSchedule[];
 }
 
-function getCalendarBounds(schedules: ClassScheduleItem[]) {
+function getCalendarBounds(schedules: ClassInviteSchedule[]) {
   if (!schedules?.length) {
     const now = new Date();
     return {
@@ -393,9 +388,20 @@ function getCalendarBounds(schedules: ClassScheduleItem[]) {
     ?.map(s => new Date(s.start_time))
     ?.sort((a, b) => a.getTime() - b.getTime());
 
+  const firstSchedule = sorted[0];
+  const lastSchedule = sorted[sorted.length - 1];
+
+  if (!firstSchedule || !lastSchedule) {
+    const now = new Date();
+    return {
+      minMonth: startOfMonth(now),
+      maxMonth: endOfMonth(now),
+    };
+  }
+
   return {
-    minMonth: startOfMonth(addWeeks(sorted[0], -2)),
-    maxMonth: endOfMonth(addWeeks(sorted[sorted.length - 1], 2)),
+    minMonth: startOfMonth(addWeeks(firstSchedule, -2)),
+    maxMonth: endOfMonth(addWeeks(lastSchedule, 2)),
   };
 }
 
@@ -424,9 +430,9 @@ export function ClassScheduleCalendar({ schedules }: Props) {
   const canGoNext = nextMonth <= maxMonth;
 
   const sessionsByDay = useMemo(() => {
-    const map = new Map<string, ClassScheduleItem[]>();
+    const map = new Map<string, ClassInviteSchedule[]>();
 
-    schedules?.forEach((s: any) => {
+    schedules?.forEach(s => {
       const key = format(new Date(s.start_time), 'yyyy-MM-dd');
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(s);
@@ -509,23 +515,8 @@ export function ClassScheduleCalendar({ schedules }: Props) {
   );
 }
 
-interface Course {
-  name: string;
-  category_names: string[];
-  difficulty_uuid?: string;
-  total_duration_display: string;
-  class_limit: number;
-  age_lower_limit: number;
-  age_upper_limit: number;
-  thumbnail_url?: string;
-  banner_url?: string;
-  intro_video_url?: string;
-  prerequisites?: string;
-  objectives?: string;
-}
-
 interface CourseProps {
-  course: Course;
+  course: ClassInviteCourse;
 }
 
 export function CourseDetailedCard({ course }: CourseProps) {
@@ -539,7 +530,7 @@ export function CourseDetailedCard({ course }: CourseProps) {
           <div className='space-y-1'>
             <h2 className='text-2xl font-bold'>{course?.name}</h2>
             <p className='text-muted-foreground text-sm'>
-              <strong>Category:</strong> {course?.category_names.join(', ')}
+              <strong>Category:</strong> {course.category_names?.join(', ') || 'Uncategorized'}
             </p>
             {course?.difficulty_uuid && (
               <p className='text-muted-foreground text-sm'>
@@ -596,7 +587,7 @@ export function CourseDetailedCard({ course }: CourseProps) {
   );
 }
 
-export function ProgramDetailsCard({ program }: any) {
+export function ProgramDetailsCard({ program }: { program: ClassInviteProgram }) {
   return (
     <CardContent className='space-y-6'>
       <div className='flex flex-row items-start justify-between gap-8'>

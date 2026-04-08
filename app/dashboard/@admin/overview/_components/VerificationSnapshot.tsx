@@ -12,7 +12,7 @@ interface VerificationSnapshotProps {
 
 export function VerificationSnapshot({ statistics }: VerificationSnapshotProps) {
   const compliance = statistics?.compliance_metrics;
-  const organization = statistics?.organization_metrics;
+  const organization = statistics?.organisation_metrics;
 
   const items = [
     {
@@ -36,7 +36,7 @@ export function VerificationSnapshot({ statistics }: VerificationSnapshotProps) 
     {
       label: 'Pending organization approvals',
       value: formatCount(organization?.pending_approvals),
-      sublabel: `${formatCount(organization?.total_organizations)} total orgs`,
+      sublabel: `${formatCount(organization?.total_organisations)} total orgs`,
       accent: 'outline' as const,
     },
   ];

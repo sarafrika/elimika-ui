@@ -17,10 +17,37 @@ import { useState } from 'react';
 import { EventModal, StudentBookingData } from '../../availability/components/event-modal';
 import type { AvailabilityData, CalendarEvent } from '../../availability/components/types';
 
+export type TimetableTimeSlot = {
+  day: string;
+  startTime: string;
+  room?: string | null;
+  recurring?: boolean;
+  date?: Date | string;
+};
+
+export type TimetableClass = {
+  uuid?: string;
+  classTitle?: string;
+  className?: string;
+  status?: string;
+  equipment?: string[];
+  instructor?: {
+    display_name?: string;
+    username?: string;
+  } | null;
+  timetable?: {
+    timeSlots?: TimetableTimeSlot[];
+  } | null;
+  academicPeriod?: {
+    startDate?: string;
+    endDate?: string;
+  } | null;
+};
+
 interface TimetableManagerProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
-  classes?: any[];
+  classes?: TimetableClass[];
   studentBookingData?: StudentBookingData;
 }
 
@@ -57,7 +84,9 @@ export default function NewTimetableManager({
   const uniqueClasses = classes || [];
   const uniqueRooms = [
     ...new Set(
-      classes.flatMap(c => c.timetable?.timeSlots?.map((ts: any) => ts.room).filter(Boolean) || [])
+      classes.flatMap(
+        c => c.timetable?.timeSlots?.map((ts: TimetableTimeSlot) => ts.room).filter(Boolean) || []
+      )
     ),
   ];
   const uniqueEquipment = [...new Set(classes.flatMap(c => c.equipment || []))];
@@ -126,7 +155,7 @@ export default function NewTimetableManager({
     }
   };
 
-  const doesSlotApplyToDate = (slot: any, date: Date) => {
+  const doesSlotApplyToDate = (slot: TimetableTimeSlot, date: Date) => {
     if (slot.recurring) {
       const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
       return weekday.toLowerCase() === slot.day.toLowerCase();
@@ -167,15 +196,17 @@ export default function NewTimetableManager({
 
     const hasClass = classes.some(classItem => {
       if (classItem.status !== 'published') return false;
-      return classItem.timetable.timeSlots.some((timeSlot: any) => {
-        const classDate = new Date(date);
-        const isCorrectDay = timeSlot.day.toLowerCase() === day.toLowerCase();
-        const isCorrectTime = timeSlot.startTime === time;
-        const isWithinPeriod =
-          classDate >= new Date(classItem.academicPeriod.startDate) &&
-          classDate <= new Date(classItem.academicPeriod.endDate);
-        return isCorrectDay && isCorrectTime && isWithinPeriod;
-      });
+      return (
+        classItem.timetable?.timeSlots?.some(timeSlot => {
+          const classDate = new Date(date);
+          const isCorrectDay = timeSlot.day.toLowerCase() === day.toLowerCase();
+          const isCorrectTime = timeSlot.startTime === time;
+          const isWithinPeriod =
+            classDate >= new Date(classItem.academicPeriod?.startDate ?? date) &&
+            classDate <= new Date(classItem.academicPeriod?.endDate ?? date);
+          return isCorrectDay && isCorrectTime && isWithinPeriod;
+        }) ?? false
+      );
     });
 
     if (hasClass) return 'booked';
@@ -212,7 +243,7 @@ export default function NewTimetableManager({
         date: event.date ? new Date(event.date) : date,
         startTime: event.startTime,
         endTime: event.endTime,
-        status: event.entry_type as any,
+        status: event.status,
       };
       setSelectedEvent(hydrated);
       setSelectedSlot(null);

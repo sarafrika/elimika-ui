@@ -42,6 +42,7 @@ import {
   updateUserMutation,
   uploadProfileImageMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { UserDomainEnum } from '@/services/client/types.gen';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { CalendarIcon } from 'lucide-react';
 
@@ -68,6 +69,12 @@ const generalProfileSchema = z.object({
 });
 
 type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>;
+
+const formatDomainBadge = (domain: UserDomainEnum) =>
+  domain
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 
 export default function CourseCreatorProfile() {
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -96,14 +103,10 @@ export default function CourseCreatorProfile() {
     url: user?.data?.profile_image_url || profilePicSvg,
   });
 
-  const domainBadges =
-    // @ts-expect-error
-    user?.data?.user_domain?.map((domain: any) =>
-      domain
-        .split('_')
-        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
-    ) ?? [];
+  const rawUserDomains = user?.data?.user_domain;
+  const domainBadges = (
+    Array.isArray(rawUserDomains) ? rawUserDomains : rawUserDomains ? [rawUserDomains] : []
+  ).map(formatDomainBadge);
 
   const form = useForm<z.infer<typeof generalProfileSchema>>({
     resolver: zodResolver(generalProfileSchema),
@@ -413,7 +416,7 @@ export default function CourseCreatorProfile() {
             viewContent={
               <div className='space-y-6'>
                 <ProfileViewGrid>
-                  <ProfileViewField label='Primary location' value={profile?.location} />
+                  <ProfileViewField label='Primary location' value={form.watch('location')} />
                   <ProfileViewField
                     label='Professional headline'
                     value={profile?.professional_headline}

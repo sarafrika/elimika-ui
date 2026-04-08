@@ -60,46 +60,22 @@ import {
   getProgramEnrollmentsOptions,
   moderateProgramMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import {
+  type Course,
+  type ProgramEnrollment,
+  type SchemaEnum4,
+  type TrainingProgram,
+} from '../../../../services/client/types.gen';
 
-// Course type based on the example data
-interface Course {
+type ProgramListItem = TrainingProgram & {
   uuid: string;
-  title: string;
-  course_creator_uuid: string;
-  category_uuids: string[];
-  difficulty_uuid: string;
-  description: string;
-  objectives: string;
-  prerequisites: string;
-  duration_hours: number;
-  duration_minutes: number;
-  class_limit: number;
-  minimum_training_fee: number;
-  creator_share_percentage: number;
-  instructor_share_percentage: number;
-  revenue_share_notes: string;
-  age_lower_limit: number;
-  age_upper_limit: number;
-  thumbnail_url: string;
-  intro_video_url: string;
-  banner_url: string;
-  status: 'published' | 'draft' | 'in_review' | 'archived';
-  active: boolean;
-  category_names: string[];
-  created_date: string;
-  created_by: string;
-  updated_date: string;
-  updated_by: string;
-  accepts_new_enrollments: boolean;
-  is_published: boolean;
-  is_draft: boolean;
-  is_archived: boolean;
-  is_in_review: boolean;
-  total_duration_display: string;
-  has_multiple_categories: boolean;
-  category_count: number;
-  lifecycle_stage: string;
-}
+  creator_share_percentage?: number;
+  instructor_share_percentage?: number;
+  is_published?: boolean;
+  is_draft?: boolean;
+  is_archived?: boolean;
+  is_in_review?: boolean;
+};
 
 const programFormSchema = z.object({
   title: z.string().min(1, 'Program name is required'),
@@ -132,6 +108,22 @@ const adminApprovalOptions = [
   { label: 'Pending Approval', value: 'not_approved' },
 ];
 
+type ProgramFormStatus = z.infer<typeof programFormSchema>['status'];
+type ProgramEnrollmentRecord = ProgramEnrollment & { progressPercentage?: number };
+type ProgramCourseRecord = Course & { uuid: string };
+type ProgramContentPreviewItem = PreviewableLessonContent & {
+  title?: string;
+  description?: string;
+};
+type UpdateProgramPayload = {
+  uuid: string;
+  data: ProgramFormValues;
+};
+type UpdateProgramCallbacks = {
+  onSuccess: () => void;
+  onError?: (error: Error) => void;
+};
+
 export default function AdminProgramsPage() {
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -153,8 +145,14 @@ export default function AdminProgramsPage() {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
-  const allPrograms = programsData?.data?.content || [];
-  const programUuids = useMemo(() => allPrograms.map(c => c.uuid).filter(Boolean), [allPrograms]);
+  const allPrograms = useMemo(
+    () =>
+      (programsData?.data?.content ?? []).filter((program): program is ProgramListItem =>
+        Boolean(program?.uuid)
+      ),
+    [programsData?.data?.content]
+  );
+  const programUuids = useMemo(() => allPrograms.map(program => program.uuid), [allPrograms]);
 
   const enrollmentQueries = useQueries({
     queries: programUuids.map(uuid => ({
@@ -181,13 +179,16 @@ export default function AdminProgramsPage() {
 
     enrollmentQueries.forEach((query, index) => {
       const uuid = programUuids[index];
+      if (!uuid) {
+        return;
+      }
       const content = query.data?.data?.content ?? [];
       const metadata = query.data?.data?.metadata;
 
       map[uuid] = {
-        total: metadata?.totalElements ?? 0,
+        total: Number(metadata?.totalElements ?? 0),
         active: Array.isArray(content)
-          ? content.filter((e: any) => e?.status === 'active').length
+          ? content.filter((e: ProgramEnrollment) => e.status === 'ACTIVE').length
           : 0,
         isLoading: query.isLoading || query.isFetching,
       };
@@ -281,7 +282,7 @@ export default function AdminProgramsPage() {
 
   const selectedProgram = allPrograms.find(program => program.uuid === selectedProgramId) ?? null;
 
-  const columns: AdminDataTableColumn<Course>[] = useMemo(
+  const columns: AdminDataTableColumn<ProgramListItem>[] = useMemo(
     () => [
       {
         id: 'title',
@@ -736,7 +737,7 @@ export default function AdminProgramsPage() {
 type ProgramFormValues = z.infer<typeof programFormSchema>;
 
 interface ProgramDetailSheetProps {
-  program: any | null;
+  program: ProgramListItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -754,8 +755,11 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
     reason: '',
   });
 
-  const updateProgram = {
-    mutate: (data: any, callbacks: any) => {
+  const updateProgram: {
+    mutate: (data: UpdateProgramPayload, callbacks: UpdateProgramCallbacks) => void;
+    isPending: boolean;
+  } = {
+    mutate: (_data, callbacks) => {
       setTimeout(() => callbacks.onSuccess(), 500);
     },
     isPending: false,
@@ -829,7 +833,7 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
             toast.success(data?.message);
             closeModerationDialog();
           },
-          onError: (error: Error) => {
+          onError: error => {
             toast.error(error.message || `Failed to ${moderationDialog.action} program`);
           },
         }
@@ -1112,13 +1116,17 @@ function ProgramDetailSheet({ program, open, onOpenChange }: ProgramDetailSheetP
                             <div>
                               <span className='text-muted-foreground'>Created:</span>
                               <p className='mt-0.5'>
-                                {format(new Date(program.created_date), 'dd MMM yyyy, HH:mm')}
+                                {program.created_date
+                                  ? format(new Date(program.created_date), 'dd MMM yyyy, HH:mm')
+                                  : '—'}
                               </p>
                             </div>
                             <div>
                               <span className='text-muted-foreground'>Updated:</span>
                               <p className='mt-0.5'>
-                                {format(new Date(program.updated_date), 'dd MMM yyyy, HH:mm')}
+                                {program.updated_date
+                                  ? format(new Date(program.updated_date), 'dd MMM yyyy, HH:mm')
+                                  : '—'}
                               </p>
                             </div>
                             <div>
@@ -1227,19 +1235,21 @@ import {
 import { Label } from '../../../../components/ui/label';
 import { useProgramLessonsWithContent } from '../../../../hooks/use-programlessonwithcontent';
 import { useStudentsMap } from '../../../../hooks/use-studentsMap';
-import { resolveLessonContentSource } from '../../../../lib/lesson-content-preview';
+import {
+  type PreviewableLessonContent,
+  resolveLessonContentSource,
+} from '../../../../lib/lesson-content-preview';
 import { getResourceIcon } from '../../../../lib/resources-icon';
-import { ContentItem } from '../../@instructor/trainings/overview/[id]/page';
 import { AudioPlayer } from '../../@student/schedule/classes/[id]/AudioPlayer';
 import { ReadingMode } from '../../@student/schedule/classes/[id]/ReadingMode';
 import { VideoPlayer } from '../../@student/schedule/classes/[id]/VideoPlayer';
 
 // Helper function to map program to form values
-function mapProgramToForm(program: any): ProgramFormValues {
+function mapProgramToForm(program: ProgramListItem): ProgramFormValues {
   return {
     title: program.title || '',
     description: stripHtml(program.description || ''),
-    status: program.status || 'draft',
+    status: toProgramFormStatus(program.status),
     price: program.price,
     prerequisites: program.prerequisites || '',
     objectives: program.objectives || '',
@@ -1249,11 +1259,11 @@ function mapProgramToForm(program: any): ProgramFormValues {
 }
 
 // Update the content placeholder to work with programs
-function ProgramContentPlaceholder({ program }: { program: any }) {
+function ProgramContentPlaceholder({ program }: { program: ProgramListItem }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isReading, setIsReading] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<ProgramContentPreviewItem | null>(null);
   const [contentTypeName, setContentTypeName] = useState<string>('');
 
   const { data: pCourses, isLoading: isPCoursesLoading } = useQuery({
@@ -1263,7 +1273,13 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
     enabled: !!program?.uuid,
   });
 
-  const programCourses = pCourses?.data || [];
+  const programCourses = useMemo(
+    () =>
+      (pCourses?.data ?? []).filter((course): course is ProgramCourseRecord =>
+        Boolean(course?.uuid)
+      ),
+    [pCourses?.data]
+  );
 
   const {
     isLoading: isLessonsLoading,
@@ -1274,7 +1290,7 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
     programCourses: programCourses,
   });
 
-  const handleViewContent = (content: ContentItem, contentType: string) => {
+  const handleViewContent = (content: ProgramContentPreviewItem, contentType: string) => {
     setSelectedLesson(content);
     setContentTypeName(contentType);
 
@@ -1403,8 +1419,8 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
                     ) : (
                       <div className='ml-4 space-y-4'>
                         {courseData.lessons.map((skill, skillIndex) => {
-                          const hasLessonContent =
-                            skill?.content?.data && skill.content.data.length > 0;
+                          const contentItems = skill.content?.data ?? [];
+                          const hasLessonContent = contentItems.length > 0;
 
                           return (
                             <div key={skill.lesson.uuid} className='space-y-3'>
@@ -1426,8 +1442,8 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
                                 {hasLessonContent ? (
                                   <Badge variant='outline' className='gap-1 text-xs'>
                                     <FileText className='h-3 w-3' />
-                                    {skill.content.data.length}{' '}
-                                    {skill.content.data.length === 1 ? 'item' : 'items'}
+                                    {contentItems.length}{' '}
+                                    {contentItems.length === 1 ? 'item' : 'items'}
                                   </Badge>
                                 ) : (
                                   <Badge
@@ -1448,7 +1464,7 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
                                 </div>
                               ) : (
                                 <div className='space-y-2'>
-                                  {skill.content.data.map((c, cIndex) => {
+                                  {contentItems.map(c => {
                                     const contentType =
                                       programContentTypeMap[c.content_type_uuid] || 'file';
 
@@ -1609,7 +1625,7 @@ function ProgramContentPlaceholder({ program }: { program: any }) {
 }
 
 // Update enrollments placeholder for programs
-function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
+function ProgramEnrollmentsPlaceholder({ program }: { program: ProgramListItem }) {
   const size = 10;
   const [page, setPage] = useState(0);
 
@@ -1630,7 +1646,7 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
     enabled: !!program?.uuid,
   });
 
-  const enrollments = data?.data?.content || [];
+  const enrollments: ProgramEnrollmentRecord[] = data?.data?.content ?? [];
   const pagination = data?.data?.metadata;
 
   const handlePageChange = (newPage: number) => {
@@ -1638,18 +1654,18 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
   };
 
   const studentUuids = useMemo(() => {
-    return Array.from(new Set(enrollments.map((e: any) => e.student_uuid).filter(Boolean)));
+    return Array.from(new Set(enrollments.map(e => e.student_uuid).filter(Boolean)));
   }, [enrollments]);
 
   const { studentsMap, isLoading: isLoadingStudents } = useStudentsMap(studentUuids);
 
-  const activeEnrollments = enrollments.filter((i: any) => i?.status === 'active');
+  const activeEnrollments = enrollments.filter(i => i.status === 'ACTIVE');
   const activeStudents = activeEnrollments.length;
   const averageProgress =
     activeStudents === 0
       ? 0
       : activeEnrollments.reduce(
-          (sum: number, student: any) => sum + (student?.progressPercentage || 0),
+          (sum, student) => sum + (student.progressPercentage ?? student.progress_percentage ?? 0),
           0
         ) / activeStudents;
 
@@ -1769,7 +1785,7 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
                               </td>
                             </tr>
                           ))
-                        : enrollments.map((enrollment: any) => {
+                        : enrollments.map(enrollment => {
                             const student = studentsMap[enrollment.student_uuid];
 
                             return (
@@ -1782,7 +1798,7 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
                                 <td className='p-4'>
                                   <Badge
                                     variant={
-                                      enrollment.status === 'active' ? 'default' : 'secondary'
+                                      enrollment.status === 'ACTIVE' ? 'default' : 'secondary'
                                     }
                                     className='capitalize'
                                   >
@@ -1810,7 +1826,7 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
                 {pagination && !isTableLoading && (
                   <div className='flex items-center justify-between border-t p-4'>
                     <p className='text-muted-foreground text-sm'>
-                      Page {pagination?.pageNumber + 1} of {pagination.totalPages}
+                      Page {(pagination.pageNumber ?? 0) + 1} of {pagination.totalPages ?? 1}
                     </p>
 
                     <div className='flex gap-2'>
@@ -1826,7 +1842,7 @@ function ProgramEnrollmentsPlaceholder({ program }: { program: any }) {
                       <Button
                         variant='outline'
                         size='sm'
-                        disabled={page + 1 >= pagination?.totalPages}
+                        disabled={page + 1 >= (pagination.totalPages ?? 1)}
                         onClick={() => handlePageChange(page + 1)}
                       >
                         Next
@@ -1900,4 +1916,16 @@ function truncateText(value: string, length: number) {
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();
+}
+
+function toProgramFormStatus(status: SchemaEnum4): ProgramFormStatus {
+  switch (status) {
+    case 'published':
+    case 'draft':
+    case 'in_review':
+    case 'archived':
+      return status;
+    default:
+      return 'draft';
+  }
 }

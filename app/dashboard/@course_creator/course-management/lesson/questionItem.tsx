@@ -31,12 +31,15 @@ import {
   QuestionDialog,
   type QuestionFormValues,
 } from '../../_components/quiz-management-form';
+import type { QuizQuestion, QuizQuestionOption } from '@/services/client/types.gen';
+
+type QuizQuestionRecord = QuizQuestion & { uuid: string; quiz_uuid: string };
 
 type QuestionItemProps = {
   quizUuid: string;
-  question: any;
+  question: QuizQuestionRecord;
   qIndex: number;
-  userDomain: any;
+  userDomain: string | null;
 };
 
 const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemProps) => {
@@ -61,29 +64,38 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editingOptionId, setEditingoptionId] = useState<string | null>(null);
 
-  const handleEditQuestion = (question: any) => {
-    setEditingQuestionData(question);
-    setEditingQuizId(question?.quiz_uuid);
-    setEditingQuestionId(question?.uuid);
+  const handleEditQuestion = (question: QuizQuestionRecord) => {
+    setEditingQuestionData({
+      quiz_uuid: question.quiz_uuid,
+      question_text: question.question_text,
+      question_type: question.question_type,
+      points: question.points,
+      display_order: question.display_order,
+      question_number: question.question_number,
+      requires_option: Boolean(question.requires_options),
+    });
+    setEditingQuizId(question.quiz_uuid);
+    setEditingQuestionId(question.uuid);
     setOpenEditQuestionModal(true);
   };
 
-  const handleDeleteQuestion = (question: any) => {
-    setEditingQuestionId(question?.uuid);
-    setEditingQuizId(question?.quiz_uuid);
+  const handleDeleteQuestion = (question: QuizQuestionRecord) => {
+    setEditingQuestionId(question.uuid);
+    setEditingQuizId(question.quiz_uuid);
     setOpenDeleteQuestionModal(true);
   };
 
-  const handleAddOptions = (question: any) => {
-    setEditingQuestionId(question?.uuid);
-    setEditingQuizId(question?.quiz_uuid);
+  const handleAddOptions = (question: QuizQuestionRecord) => {
+    setEditingQuestionId(question.uuid);
+    setEditingQuizId(question.quiz_uuid);
     setOpenAddOptionsModal(true);
   };
 
-  const handleDeleteOption = (option: any, quizId: string) => {
+  const handleDeleteOption = (option: QuizQuestionOption, quizId: string) => {
+    if (!option.uuid) return;
     setEditingQuizId(quizId);
     setEditingQuestionId(option?.question_uuid);
-    setEditingoptionId(option?.uuid);
+    setEditingoptionId(option.uuid);
     setOpenDeleteOptionModal(true);
   };
 
@@ -196,7 +208,7 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
               </TableRow>
             </TableHeader>
             <TableBody>
-              {options.map((option: any, index: number) => (
+              {options.map((option, index: number) => (
                 <TableRow
                   key={option.uuid}
                   className={`group transition-colors ${
@@ -274,7 +286,7 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
         setOpen={setOpenEditQuestionModal}
         quizId={editingQuizId as string}
         questionId={editingQuestionId as string}
-        initialValues={editingQuestionData as any}
+        initialValues={editingQuestionData ?? undefined}
         onCancel={() => {
           setOpenEditQuestionModal(false);
         }}
@@ -286,7 +298,7 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
         quizId={editingQuizId as string}
         questionId={editingQuestionId as string}
         optionId={editingOptionId ?? ''}
-        // initialValues={editingQuestionData as any}
+        // initialValues={editingQuestionData}
         onCancel={() => {
           setOpenAddOptionsModal(false);
         }}

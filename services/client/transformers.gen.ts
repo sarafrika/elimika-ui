@@ -226,8 +226,8 @@ import type {
   GetAdminUsersResponse,
   CreateAdminUserResponse,
   ModerateProgramResponse,
-  ModerateOrganisationResponse,
   CreateOrganisationUserResponse,
+  ModerateOrganisationResponse,
   VerifyInstructorResponse,
   UnverifyInstructorResponse,
   ModerateCourseResponse,
@@ -4034,17 +4034,17 @@ export const moderateProgramResponseTransformer = async (
   return data;
 };
 
-export const moderateOrganisationResponseTransformer = async (
-  data: any
-): Promise<ModerateOrganisationResponse> => {
-  data = apiResponseOrganisationSchemaResponseTransformer(data);
-  return data;
-};
-
 export const createOrganisationUserResponseTransformer = async (
   data: any
 ): Promise<CreateOrganisationUserResponse> => {
   data = apiResponseUserSchemaResponseTransformer(data);
+  return data;
+};
+
+export const moderateOrganisationResponseTransformer = async (
+  data: any
+): Promise<ModerateOrganisationResponse> => {
+  data = apiResponseOrganisationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -5698,17 +5698,17 @@ const userMetricsSchemaResponseTransformer = (data: any) => {
 };
 
 const organizationMetricsSchemaResponseTransformer = (data: any) => {
-  if (data.total_organizations) {
-    data.total_organizations = BigInt(data.total_organizations.toString());
+  if (data.total_organisations) {
+    data.total_organisations = BigInt(data.total_organisations.toString());
   }
   if (data.pending_approvals) {
     data.pending_approvals = BigInt(data.pending_approvals.toString());
   }
-  if (data.active_organizations) {
-    data.active_organizations = BigInt(data.active_organizations.toString());
+  if (data.active_organisations) {
+    data.active_organisations = BigInt(data.active_organisations.toString());
   }
-  if (data.suspended_organizations) {
-    data.suspended_organizations = BigInt(data.suspended_organizations.toString());
+  if (data.suspended_organisations) {
+    data.suspended_organisations = BigInt(data.suspended_organisations.toString());
   }
   return data;
 };
@@ -5739,8 +5739,8 @@ const adminMetricsSchemaResponseTransformer = (data: any) => {
   if (data.system_admins) {
     data.system_admins = BigInt(data.system_admins.toString());
   }
-  if (data.organization_admins) {
-    data.organization_admins = BigInt(data.organization_admins.toString());
+  if (data.organisation_admins) {
+    data.organisation_admins = BigInt(data.organisation_admins.toString());
   }
   return data;
 };
@@ -5906,9 +5906,9 @@ const adminDashboardStatsSchemaResponseTransformer = (data: any) => {
   if (data.user_metrics) {
     data.user_metrics = userMetricsSchemaResponseTransformer(data.user_metrics);
   }
-  if (data.organization_metrics) {
-    data.organization_metrics = organizationMetricsSchemaResponseTransformer(
-      data.organization_metrics
+  if (data.organisation_metrics) {
+    data.organisation_metrics = organizationMetricsSchemaResponseTransformer(
+      data.organisation_metrics
     );
   }
   if (data.content_metrics) {

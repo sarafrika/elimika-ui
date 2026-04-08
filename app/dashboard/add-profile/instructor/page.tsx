@@ -1,9 +1,5 @@
-import AddInstructorProfileForm from '../_components/add-instructor-profile-form';
+import { AddInstructorProfilePage as AddInstructorProfileView } from '@/src/features/profile/add-profile/pages/AddInstructorProfilePage';
 
 export default function AddInstructorProfilePage() {
-  return (
-    <div className='bg-background min-h-screen py-8'>
-      <AddInstructorProfileForm />
-    </div>
-  );
+  return <AddInstructorProfileView />;
 }

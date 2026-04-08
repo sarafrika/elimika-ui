@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { elimikaDesignSystem } from '@/lib/design-system';
 import { formatDistanceToNow } from 'date-fns';
+import type { LucideIcon } from 'lucide-react';
 import {
   AlertCircle,
   Bell,
@@ -75,8 +76,16 @@ interface Notification {
 
 const SAMPLE_NOTIFICATIONS: Notification[] = [];
 
+const notificationTabs = ['all', 'unread', 'messages', 'requests'] as const;
+
+type NotificationTab = (typeof notificationTabs)[number];
+
+const isNotificationTab = (value: string): value is NotificationTab => {
+  return notificationTabs.includes(value as NotificationTab);
+};
+
 const getNotificationIcon = (type: NotificationType) => {
-  const iconMap: Record<NotificationType, any> = {
+  const iconMap: Record<NotificationType, LucideIcon> = {
     message: MessageSquare,
     request: UserPlus,
     enrollment: CheckCircle2,
@@ -120,7 +129,7 @@ const getPriorityBadgeVariant = (priority: NotificationPriority) => {
 
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState<Notification[]>(SAMPLE_NOTIFICATIONS);
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'messages' | 'requests'>('all');
+  const [activeTab, setActiveTab] = useState<NotificationTab>('all');
 
   const unreadCount = notifications.filter(n => n.status === 'unread').length;
   const messageCount = notifications.filter(
@@ -152,7 +161,7 @@ const NotificationsPage = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const handleAction = (notificationId: string, actionType: string) => {
+  const handleAction = (notificationId: string, actionType: NotificationAction['type']) => {
     toast.message(`Action: ${actionType} on notification: ${notificationId}`);
     // Implement action logic here
     handleMarkAsRead(notificationId);
@@ -183,7 +192,15 @@ const NotificationsPage = () => {
       </section>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)} className='mb-6'>
+      <Tabs
+        value={activeTab}
+        onValueChange={value => {
+          if (isNotificationTab(value)) {
+            setActiveTab(value);
+          }
+        }}
+        className='mb-6'
+      >
         <TabsList>
           <TabsTrigger value='all'>
             All

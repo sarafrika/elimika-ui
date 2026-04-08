@@ -1,4 +1,10 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
+import type {
+  GetClassDefinitionResponse,
+  GetClassScheduleResponse,
+  GetCourseByUuidResponse,
+  GetStudentScheduleResponse,
+} from '../services/client';
 import {
   getClassDefinitionOptions,
   getClassScheduleOptions,
@@ -6,12 +12,27 @@ import {
   getStudentScheduleOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
-function useStudentClassDefinitions(student?: any) {
+type StudentLike = {
+  uuid?: string;
+};
+
+type StudentEnrollment = NonNullable<GetStudentScheduleResponse['data']>[number];
+type ClassDetails = NonNullable<
+  NonNullable<GetClassDefinitionResponse['data']>['class_definition']
+>;
+type CourseDetails = NonNullable<GetCourseByUuidResponse['data']>;
+
+const isDefined = <T,>(value: T | null | undefined): value is T => value != null;
+
+function useStudentClassDefinitions(student?: StudentLike) {
   // 1️⃣ Fetch student enrollments
   const { data: enrollmentsData } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: student?.uuid as string },
-      query: { start: '2024-10-10' as any, end: '2060-10-10' as any },
+      query: {
+        start: '2024-10-10' as unknown as Date,
+        end: '2060-10-10' as unknown as Date,
+      },
     }),
     enabled: !!student?.uuid,
   });
@@ -20,7 +41,7 @@ function useStudentClassDefinitions(student?: any) {
 
   // 2️⃣ Extract all unique class definition UUIDs
   const classDefinitionUuids = Array.from(
-    new Set(enrollments.map((en: any) => en.class_definition_uuid))
+    new Set(enrollments.map(en => en.class_definition_uuid).filter(isDefined))
   );
 
   // 3️⃣ Fetch each class definition
@@ -42,15 +63,11 @@ function useStudentClassDefinitions(student?: any) {
   });
 
   // Extract class details after fetching
-  const classDetailsArray = classQueries.map(q => q.data?.data ?? null);
+  const classDetailsArray = classQueries.map(q => q.data?.data?.class_definition ?? null);
 
   // 4️⃣ Extract unique course UUIDs from the resolved class details
   const courseUuids = Array.from(
-    new Set(
-      classDetailsArray
-        .map((cls: any) => cls?.course_uuid)
-        .filter((uuid: string | undefined) => !!uuid)
-    )
+    new Set(classDetailsArray.map(cls => cls?.course_uuid).filter(isDefined))
   );
 
   // 5️⃣ Fetch courses associated with these class definitions
@@ -68,13 +85,15 @@ function useStudentClassDefinitions(student?: any) {
   // 6️⃣ Merge class + course + enrollment data
   const classDefinitions = classDefinitionUuids.map((uuid: string, i: number) => {
     const classDetails = classDetailsArray[i];
-    const course = courseDetailsArray.find((c: any) => c?.uuid === classDetails?.course_uuid);
+    const course = courseDetailsArray.find(
+      (c): c is CourseDetails => c?.uuid === classDetails?.course_uuid
+    );
 
     return {
       uuid,
       classDetails,
       course,
-      enrollments: enrollments.filter((en: any) => en.class_definition_uuid === uuid),
+      enrollments: enrollments.filter((en: StudentEnrollment) => en.class_definition_uuid === uuid),
       schedules: classScheduleArray[i] ?? [],
     };
   });

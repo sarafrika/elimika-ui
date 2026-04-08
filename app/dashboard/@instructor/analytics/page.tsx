@@ -30,6 +30,12 @@ import {
   getStudentByIdOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type {
+  CourseEnrollment,
+  ScheduledInstance,
+  Student,
+  User,
+} from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -73,6 +79,9 @@ const timeRangeOptions: { value: TimeRangeValue; label: string }[] = [
 const formatPercent = (value: number) => `${Math.round(value)}%`;
 
 const getRevenueAmount = (values?: Array<{ amount?: number }>) => values?.[0]?.amount ?? 0;
+
+const hasUserUuid = (student: Student | null): student is Student & { user_uuid: string } =>
+  Boolean(student?.uuid && student.user_uuid);
 
 function buildDateRange(days: number) {
   const end = new Date();
@@ -253,7 +262,7 @@ export default function AnalyticsPage() {
   const uniqueStudentIds = useMemo(() => {
     const ids = new Set<string>();
     filteredCourseEnrollments.forEach(({ enrollments }) => {
-      enrollments.forEach((enrollment: any) => {
+      enrollments.forEach((enrollment: CourseEnrollment) => {
         if (enrollment.student_uuid) {
           ids.add(enrollment.student_uuid);
         }
@@ -274,33 +283,35 @@ export default function AnalyticsPage() {
   });
 
   const students = useMemo(
-    () => uniqueStudentIds.map((studentUuid, index) => studentQueries[index]?.data?.data ?? null),
+    () => uniqueStudentIds.map((studentUuid, index) => studentQueries[index]?.data ?? null),
     [studentQueries, uniqueStudentIds]
   );
 
+  const studentsWithUsers = useMemo(() => students.filter(hasUserUuid), [students]);
+
   const userQueries = useQueries({
-    queries: students.filter(Boolean).map((student: any) => ({
+    queries: studentsWithUsers.map(student => ({
       ...getUserByUuidOptions({
-        path: { uuid: student.user_uuid as string },
+        path: { uuid: student.user_uuid },
       }),
-      enabled: !!student?.user_uuid,
+      enabled: !!student.user_uuid,
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
     })),
   });
 
   const userMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, User>();
 
-    students.filter(Boolean).forEach((student: any, index) => {
+    studentsWithUsers.forEach((student, index) => {
       const user = userQueries[index]?.data?.data;
-      if (student?.uuid && user) {
+      if (student.uuid && user) {
         map.set(student.uuid, user);
       }
     });
 
     return map;
-  }, [students, userQueries]);
+  }, [studentsWithUsers, userQueries]);
 
   const ratingSummaryQuery = useQuery({
     ...getInstructorRatingSummaryOptions({
@@ -342,7 +353,7 @@ export default function AnalyticsPage() {
   const uniqueStudentsCount = uniqueStudentIds.length;
   const activeCoursesCount = filteredCourseEnrollments.length;
   const completedEnrollments = relevantEnrollments.filter(
-    (enrollment: any) =>
+    (enrollment: CourseEnrollment) =>
       enrollment.completion_date || enrollment.status?.toLowerCase().includes('completed')
   ).length;
   const completionRate =
@@ -353,7 +364,7 @@ export default function AnalyticsPage() {
   const scheduleItems = useMemo(
     () =>
       (scheduleQuery.data?.data ?? []).filter(
-        (item: any) =>
+        (item: ScheduledInstance) =>
           selectedCourseId === ALL_COURSES ||
           filteredClasses.some(classItem => classItem.uuid === item.class_definition_uuid)
       ),
@@ -363,7 +374,7 @@ export default function AnalyticsPage() {
   const enrollmentTrendData = useMemo(() => {
     const groups = new Map<string, number>();
 
-    relevantEnrollments.forEach((enrollment: any) => {
+    relevantEnrollments.forEach((enrollment: CourseEnrollment) => {
       const dateValue = enrollment.enrollment_date || enrollment.created_date;
       if (!dateValue) return;
       const date = new Date(dateValue);
@@ -382,7 +393,7 @@ export default function AnalyticsPage() {
   const teachingLoadData = useMemo(() => {
     const groups = new Map<string, number>();
 
-    scheduleItems.forEach((item: any) => {
+    scheduleItems.forEach((item: ScheduledInstance) => {
       if (!item?.start_time) return;
       const date = new Date(item.start_time);
       const key = date.toISOString().slice(0, 10);
@@ -402,7 +413,7 @@ export default function AnalyticsPage() {
     let inProgress = 0;
     let notStarted = 0;
 
-    relevantEnrollments.forEach((enrollment: any) => {
+    relevantEnrollments.forEach((enrollment: CourseEnrollment) => {
       const progress = Number(enrollment.progress_percentage ?? 0);
       const status = enrollment.status?.toLowerCase();
 
@@ -427,11 +438,11 @@ export default function AnalyticsPage() {
       filteredCourseEnrollments.map(({ course, enrollments }) => {
         const enrolled = enrollments.length;
         const completed = enrollments.filter(
-          (enrollment: any) =>
+          (enrollment: CourseEnrollment) =>
             enrollment.completion_date || enrollment.status?.toLowerCase().includes('completed')
         ).length;
         const grades = enrollments
-          .map((enrollment: any) => Number(enrollment.final_grade))
+          .map((enrollment: CourseEnrollment) => Number(enrollment.final_grade))
           .filter((grade: number) => !Number.isNaN(grade) && grade > 0);
 
         const averageGrade =
@@ -462,7 +473,7 @@ export default function AnalyticsPage() {
     >();
 
     filteredCourseEnrollments.forEach(({ enrollments }) => {
-      enrollments.forEach((enrollment: any) => {
+      enrollments.forEach((enrollment: CourseEnrollment) => {
         const studentId = enrollment.student_uuid;
         if (!studentId) return;
 
@@ -518,14 +529,14 @@ export default function AnalyticsPage() {
   const grossRevenue = getRevenueAmount(revenueSummary?.gross_totals);
   const sessionsTaught = scheduleItems.length;
   const upcomingSessions = scheduleItems.filter(
-    (item: any) => new Date(item.start_time) > new Date()
+    (item: ScheduledInstance) => new Date(item.start_time) > new Date()
   ).length;
 
   const chartMotion = {
     initial: { opacity: 0, y: 18 },
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.5, ease: 'easeOut' },
-  };
+  } as const;
 
   const isLoading =
     classesLoading ||
@@ -1023,7 +1034,7 @@ export default function AnalyticsPage() {
                     <BarChart
                       data={Object.entries(
                         relevantEnrollments.reduce(
-                          (acc: Record<string, number>, enrollment: any) => {
+                          (acc: Record<string, number>, enrollment: CourseEnrollment) => {
                             const key = formatStatusLabel(enrollment.status);
                             acc[key] = (acc[key] ?? 0) + 1;
                             return acc;

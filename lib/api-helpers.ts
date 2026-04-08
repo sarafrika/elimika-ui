@@ -30,6 +30,12 @@ export function extractEntity<T>(apiResponse: unknown): T | null {
   return entity as T;
 }
 
+export function extractList<T>(apiResponse: unknown): T[] {
+  const payload = unwrapPayload(apiResponse);
+
+  return Array.isArray(payload) ? (payload as T[]) : [];
+}
+
 export function extractPage<T>(apiResponse: unknown): { items: T[]; metadata: PageMetadataLike } {
   const firstLayer = unwrapPayload(apiResponse);
   const dataLayer = unwrapPayload(firstLayer);

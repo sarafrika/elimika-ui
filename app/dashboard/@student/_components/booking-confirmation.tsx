@@ -1,14 +1,19 @@
+import { Calendar, CheckCircle, Clock, Download, Mail, MapPin, Share2, Video } from 'lucide-react';
+import type React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, CheckCircle, Clock, Download, Mail, MapPin, Share2, Video } from 'lucide-react';
-import type React from 'react';
-import type { Booking, Instructor } from '../all-courses/instructor/page';
+import type { Booking } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
+
+type BookingInstructor = {
+  full_name?: string;
+  professional_headline?: string;
+};
 
 type Props = {
   booking: Booking;
-  instructor: Instructor;
+  instructor: BookingInstructor;
   onClose: () => void;
 };
 
@@ -50,8 +55,10 @@ export const BookingConfirmation: React.FC<Props> = ({ booking, instructor, onCl
 
         <div>
           <p className='text-muted-foreground mb-1 text-sm'>Instructor</p>
-          <p>{instructor.name}</p>
-          <p className='text-muted-foreground text-sm'>{instructor.title}</p>
+          <p>{instructor.full_name ?? 'Instructor'}</p>
+          <p className='text-muted-foreground text-sm'>
+            {instructor.professional_headline ?? 'Training instructor'}
+          </p>
         </div>
 
         <div>
@@ -66,7 +73,7 @@ export const BookingConfirmation: React.FC<Props> = ({ booking, instructor, onCl
       <div className='space-y-3'>
         <p className='text-muted-foreground text-sm'>Session Details</p>
 
-        {booking.slots.map((slot, index) => (
+        {booking.slots.map((slot, index: number) => (
           <Card key={index} className='bg-muted p-4'>
             <div className='space-y-2'>
               <div className='flex items-center gap-2'>

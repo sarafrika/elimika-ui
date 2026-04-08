@@ -8,11 +8,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import type { CourseTrainingApplication, ProgramTrainingApplication } from '@/services/client';
+
+type InstructorApplication = CourseTrainingApplication | ProgramTrainingApplication;
 
 interface InstructorDetailsModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  instructor: any | null;
+  instructor: InstructorApplication | null;
 }
 
 export default function InstructorDetailsModal({
@@ -60,7 +63,11 @@ export default function InstructorDetailsModal({
 
           <div>
             <p className='text-muted-foreground text-sm font-medium'>Submitted</p>
-            <p className='text-sm'>{new Date(instructor.created_date).toLocaleString()}</p>
+            <p className='text-sm'>
+              {instructor.created_date
+                ? new Date(instructor.created_date).toLocaleString()
+                : 'Unknown'}
+            </p>
           </div>
         </div>
       </DialogContent>

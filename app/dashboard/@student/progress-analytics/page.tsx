@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import React, { useMemo, useState } from 'react';
 import { useStudent } from '../../../../context/student-context';
 import { getStudentScheduleOptions } from '../../../../services/client/@tanstack/react-query.gen';
+import type { StudentSchedule } from '../../../../services/client/types.gen';
 
 type LessonProgress = {
   id: string;
@@ -91,16 +92,19 @@ const StudentProgressAnalytics: React.FC = () => {
   const { data } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: student?.uuid as string },
-      query: { start: '2025-10-01' as any, end: '2030-12-31' as any },
+      query: { start: new Date('2025-10-01'), end: new Date('2030-12-31') },
     }),
     enabled: !!student?.uuid,
   });
 
-  const detailedEnrollments = data?.data ?? [];
+  const detailedEnrollments: StudentSchedule[] = data?.data ?? [];
 
   const enrolledClasses = detailedEnrollments.filter(
-    (enrollment: any, index: number, self: any[]) =>
-      index === self.findIndex(e => e.class_definition_uuid === enrollment.class_definition_uuid)
+    (enrollment, index, self) =>
+      index ===
+      self.findIndex(
+        candidate => candidate.class_definition_uuid === enrollment.class_definition_uuid
+      )
   );
 
   // flatten lessons when needed

@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Trash2,
   UserPlus,
+  type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -38,6 +39,7 @@ type NotificationType =
 type NotificationPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 type NotificationStatus = 'unread' | 'read' | 'archived';
+type NotificationTab = 'all' | 'unread' | 'messages' | 'requests';
 
 interface NotificationAction {
   label: string;
@@ -74,9 +76,13 @@ interface Notification {
 }
 
 const SAMPLE_NOTIFICATIONS: Notification[] = [];
+const NOTIFICATION_TABS: NotificationTab[] = ['all', 'unread', 'messages', 'requests'];
+
+const isNotificationTab = (value: string): value is NotificationTab =>
+  NOTIFICATION_TABS.includes(value as NotificationTab);
 
 const getNotificationIcon = (type: NotificationType) => {
-  const iconMap: Record<NotificationType, any> = {
+  const iconMap: Record<NotificationType, LucideIcon> = {
     message: MessageSquare,
     request: UserPlus,
     enrollment: CheckCircle2,
@@ -120,7 +126,7 @@ const getPriorityBadgeVariant = (priority: NotificationPriority) => {
 
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState<Notification[]>(SAMPLE_NOTIFICATIONS);
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'messages' | 'requests'>('all');
+  const [activeTab, setActiveTab] = useState<NotificationTab>('all');
 
   const unreadCount = notifications.filter(n => n.status === 'unread').length;
   const messageCount = notifications.filter(
@@ -139,13 +145,11 @@ const NotificationsPage = () => {
   });
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, status: 'read' as NotificationStatus } : n))
-    );
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, status: 'read' } : n)));
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, status: 'read' as NotificationStatus })));
+    setNotifications(prev => prev.map(n => ({ ...n, status: 'read' })));
   };
 
   const handleDelete = (id: string) => {
@@ -192,7 +196,15 @@ const NotificationsPage = () => {
       </div> */}
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)} className='mb-6'>
+      <Tabs
+        value={activeTab}
+        onValueChange={value => {
+          if (isNotificationTab(value)) {
+            setActiveTab(value);
+          }
+        }}
+        className='mb-6'
+      >
         <TabsList>
           <TabsTrigger value='all'>
             All

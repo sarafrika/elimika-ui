@@ -1,16 +1,20 @@
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { Instructor } from '@/services/api/schema';
 import { Edit, Trash2 } from 'lucide-react';
 import type React from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import type { GetAllInstructorsResponse } from '@/services/client';
 import InstructorDetails from './InstructorDetails';
 
+type InstructorRecord = NonNullable<
+  NonNullable<GetAllInstructorsResponse['data']>['content']
+>[number];
+
 interface InstructorMobileModalProps {
-  instructor: Instructor | null;
+  instructor: InstructorRecord | null;
   isOpen: boolean;
   onClose: () => void;
-  onApprove: (instructor: Instructor) => void;
-  onReject: (instructor: Instructor) => void;
+  onApprove: (instructor: InstructorRecord) => void;
+  onReject: (instructor: InstructorRecord) => void;
   getStatusBadgeComponent: (instructorId: string) => React.ReactElement;
 }
 

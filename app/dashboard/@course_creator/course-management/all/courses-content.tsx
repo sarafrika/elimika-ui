@@ -48,6 +48,10 @@ import {
 import { CatalogueWorkspace } from '../../../@admin/catalogue/_components/catalogue-workspace';
 import ProgramsList from '../../programs/_components/ProgramList';
 
+type ProgramListItem = {
+  uuid: string;
+};
+
 type CourseStatusFilter = 'all' | 'draft' | 'in_review' | 'published' | 'archived';
 
 const STATUS_OPTIONS: { label: string; value: CourseStatusFilter }[] = [
@@ -106,7 +110,7 @@ export default function CourseCreatorCoursesContent() {
     setView('create');
   };
 
-  const handleEdit = (program: any) => {
+  const handleEdit = (program: ProgramListItem) => {
     router.push(`/dashboard/course-management/create-new-program?id=${program?.uuid}`);
   };
 

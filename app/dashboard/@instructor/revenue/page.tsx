@@ -193,8 +193,25 @@ const RevenuePage = () => {
 
   // const listAllTransactions = transactions25
   const listAllTransactions = useMemo(
-    () => listTransactions?.data?.content || [],
-    [listTransactions?.data?.content]
+    (): RevenueTransaction[] =>
+      (listTransactions?.data?.content ?? []).map(txn => ({
+        uuid: txn.uuid ?? '',
+        wallet_uuid: txn.wallet_uuid ?? '',
+        transaction_type: (txn.transaction_type as TransactionType) ?? 'DEPOSIT',
+        amount: txn.amount ?? 0,
+        currency_code: txn.currency_code ?? walletData?.data?.currency_code ?? 'KES',
+        balance_before: txn.balance_before ?? 0,
+        balance_after: txn.balance_after ?? 0,
+        reference: txn.reference ?? '',
+        description: txn.description ?? '',
+        transfer_reference: txn.transfer_reference,
+        counterparty_user_uuid: txn.counterparty_user_uuid,
+        created_date:
+          txn.created_date instanceof Date
+            ? txn.created_date.toISOString()
+            : new Date(txn.created_date ?? Date.now()).toISOString(),
+      })),
+    [listTransactions?.data?.content, walletData?.data?.currency_code]
   );
 
   const { data: revenueData } = useQuery({
@@ -207,21 +224,21 @@ const RevenuePage = () => {
   const analyticsData = useMemo(() => {
     const totalCount = listAllTransactions.length;
     const totalRevenue = listAllTransactions
-      .filter((t: any) => t.transaction_type === 'DEPOSIT' || t.transaction_type === 'PAYMENT')
+      .filter(t => t.transaction_type === 'DEPOSIT' || t.transaction_type === 'PAYMENT')
       .reduce((sum, t) => sum + t.amount, 0);
 
     const totalWithdrawals = listAllTransactions
-      .filter((t: any) => t.transaction_type === 'WITHDRAWAL')
+      .filter(t => t.transaction_type === 'WITHDRAWAL')
       .reduce((sum, t) => sum + t.amount, 0);
 
     const completedCount = listAllTransactions.filter(
-      (t: any) => getStatusFromType(t.transaction_type) === 'completed'
+      t => getStatusFromType(t.transaction_type) === 'completed'
     ).length;
     const pendingCount = listAllTransactions.filter(
-      (t: any) => getStatusFromType(t.transaction_type) === 'pending'
+      t => getStatusFromType(t.transaction_type) === 'pending'
     ).length;
     const failedCount = listAllTransactions.filter(
-      (t: any) => getStatusFromType(t.transaction_type) === 'failed'
+      t => getStatusFromType(t.transaction_type) === 'failed'
     ).length;
 
     const avgTransactionValue = totalCount > 0 ? totalRevenue / totalCount : 0;
@@ -247,7 +264,7 @@ const RevenuePage = () => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (txn: any) =>
+        txn =>
           txn?.description?.toLowerCase().includes(query) ||
           txn?.reference?.toLowerCase().includes(query) ||
           txn?.transaction_type?.toLowerCase().includes(query)
@@ -256,9 +273,7 @@ const RevenuePage = () => {
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(
-        (txn: any) => getStatusFromType(txn?.transaction_type) === statusFilter
-      );
+      filtered = filtered.filter(txn => getStatusFromType(txn?.transaction_type) === statusFilter);
     }
 
     return filtered;
@@ -734,7 +749,7 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-const getStatusFromType = (type: string): 'completed' | 'pending' | 'failed' => {
+const getStatusFromType = (type?: string | null): 'completed' | 'pending' | 'failed' => {
   switch (type) {
     case 'DEPOSIT':
     case 'PAYMENT':
@@ -748,7 +763,7 @@ const getStatusFromType = (type: string): 'completed' | 'pending' | 'failed' => 
   }
 };
 
-export type WalletTransaction = {
+export type RevenueTransaction = {
   uuid: string;
   wallet_uuid: string;
   transaction_type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'PAYMENT';

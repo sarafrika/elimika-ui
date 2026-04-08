@@ -16,10 +16,29 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import Spinner from '../../../../../../components/ui/spinner';
 
-const ProgramPreview = ({ onEdit }: any) => {
+type ProgramCourseItem = {
+  uuid?: string;
+  name?: string;
+  description?: string;
+  is_required?: boolean;
+};
+
+type ProgramEnrollmentItem = {
+  uuid?: string;
+  student_uuid: string;
+  student_name?: string;
+  status?: string;
+  enrollment_date?: string | Date;
+};
+
+type ProgramPreviewProps = {
+  onEdit?: () => void;
+};
+
+const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
   const router = useRouter();
   const params = useParams();
-  const programUuid = params?.id;
+  const programUuid = typeof params?.id === 'string' ? params.id : undefined;
 
   const { replaceBreadcrumbs } = useBreadcrumb();
 
@@ -49,13 +68,13 @@ const ProgramPreview = ({ onEdit }: any) => {
   }, [replaceBreadcrumbs]);
 
   const { data: programCourses, isLoading: coursesLoading } = useQuery({
-    ...getProgramCoursesOptions({ path: { programUuid } }),
+    ...getProgramCoursesOptions({ path: { programUuid: programUuid as string } }),
     enabled: !!programUuid,
   });
 
   const { data: enrollmentsData, isLoading: enrollmentsLoading } = useQuery({
     ...getProgramEnrollmentsOptions({
-      path: { programUuid },
+      path: { programUuid: programUuid as string },
       query: { pageable: {} },
     }),
     enabled: !!programUuid,
@@ -174,7 +193,7 @@ const ProgramPreview = ({ onEdit }: any) => {
           { label: 'Enrolled Students', value: enrollments.length },
           {
             label: 'Available Spots',
-            value: program?.class_limit - enrollments.length,
+            value: (program?.class_limit ?? 0) - enrollments.length,
           },
           { label: 'Price', value: `KES ${program?.price}` },
         ].map(stat => (
@@ -241,7 +260,7 @@ const ProgramPreview = ({ onEdit }: any) => {
             </div>
           ) : (
             <div className='space-y-2 md:space-y-3'>
-              {courses.map((course, index) => (
+              {(courses as ProgramCourseItem[]).map((course, index) => (
                 <div
                   key={course.uuid}
                   className='border-border bg-card rounded-lg border p-3 md:p-5'
@@ -263,7 +282,7 @@ const ProgramPreview = ({ onEdit }: any) => {
 
                         <span
                           className='text-muted-foreground line-clamp-3'
-                          dangerouslySetInnerHTML={{ __html: course.description }}
+                          dangerouslySetInnerHTML={{ __html: course.description ?? '' }}
                         />
                       </div>
                     </div>
@@ -293,7 +312,7 @@ const ProgramPreview = ({ onEdit }: any) => {
             <>
               {/* Mobile Card View */}
               <div className='space-y-2 md:hidden'>
-                {enrollments.map((e: any) => (
+                {(enrollments as ProgramEnrollmentItem[]).map(e => (
                   <div key={e.uuid} className='border-border bg-card rounded-lg border p-3'>
                     <div className='mb-2 flex items-start justify-between gap-2'>
                       <div className='min-w-0 flex-1'>
@@ -306,7 +325,7 @@ const ProgramPreview = ({ onEdit }: any) => {
                       </span>
                     </div>
                     <p className='text-muted-foreground text-xs'>
-                      Enrolled: {e.enrollment_date || 'N/A'}
+                      Enrolled: {e.enrollment_date ? String(e.enrollment_date) : 'N/A'}
                     </p>
                   </div>
                 ))}
@@ -328,7 +347,7 @@ const ProgramPreview = ({ onEdit }: any) => {
                     </tr>
                   </thead>
                   <tbody className='divide-border divide-y'>
-                    {enrollments.map((e: any) => (
+                    {(enrollments as ProgramEnrollmentItem[]).map(e => (
                       <tr key={e.uuid}>
                         <td className='text-foreground px-6 py-4 text-sm'>
                           {e.student_name || e.student_uuid}
@@ -339,7 +358,7 @@ const ProgramPreview = ({ onEdit }: any) => {
                           </span>
                         </td>
                         <td className='text-muted-foreground px-6 py-4 text-sm'>
-                          {e.enrollment_date || 'N/A'}
+                          {e.enrollment_date ? String(e.enrollment_date) : 'N/A'}
                         </td>
                       </tr>
                     ))}

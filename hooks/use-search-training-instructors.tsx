@@ -1,10 +1,18 @@
+import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   getAllInstructorsOptions,
   getInstructorExperienceOptions,
   getInstructorSkillsOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import type {
+  Instructor,
+  InstructorExperience,
+  InstructorSkill,
+  PagedDtoInstructorExperience,
+  User,
+} from '@/services/client/types.gen';
+import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 
 function useSearchTrainingInstructors() {
   const {
@@ -17,24 +25,24 @@ function useSearchTrainingInstructors() {
       query: { pageable: { page: 0, size: 20 } },
     }),
   });
-  const instructors = data?.data?.content || [];
+  const instructors: Instructor[] = data?.data?.content ?? [];
 
   // Fetch profiles
   const profileQueries = useQueries({
     queries:
-      instructors.map((instructor: any) => ({
+      instructors.map(instructor => ({
         ...getUserByUuidOptions({
           path: { uuid: instructor.user_uuid },
         }),
         enabled: !!instructor.user_uuid,
       })) || [],
   });
-  const profiles = profileQueries.map(q => q.data?.data ?? null);
+  const profiles: Array<User | null> = profileQueries.map(q => q.data?.data ?? null);
 
   // Fetch experiences
   const experienceQueries = useQueries({
     queries:
-      instructors.map((instructor: any) => ({
+      instructors.map(instructor => ({
         ...getInstructorExperienceOptions({
           query: { pageable: {} },
           path: { instructorUuid: instructor?.uuid as string },
@@ -42,12 +50,14 @@ function useSearchTrainingInstructors() {
         enabled: !!instructor.uuid,
       })) || [],
   });
-  const experiences = experienceQueries.map(q => q.data?.data ?? []);
+  const experiences: Array<PagedDtoInstructorExperience['content']> = experienceQueries.map(
+    q => q.data?.data?.content ?? []
+  );
 
   // Fetch skills
   const skillQueries = useQueries({
     queries:
-      instructors.map((instructor: any) => ({
+      instructors.map(instructor => ({
         ...getInstructorSkillsOptions({
           query: { pageable: {} },
           path: { instructorUuid: instructor?.uuid as string },
@@ -55,22 +65,20 @@ function useSearchTrainingInstructors() {
         enabled: !!instructor.uuid,
       })) || [],
   });
-  const skills = skillQueries.map(q => q.data?.data?.content ?? []);
+  const skills: InstructorSkill[][] = skillQueries.map(q => q.data?.data?.content ?? []);
 
   // Combine data
-  const instructorsWithProfiles = instructors.map((instructor: any, i: number) => {
+  const instructorsWithProfiles: SearchInstructor[] = instructors.map((instructor, i) => {
     const profile = profiles[i];
     const expArray = experiences[i] ?? [];
-    const totalExperience = Array.isArray(expArray)
-      ? expArray.reduce(
-          (sum, exp: any) => sum + (exp?.years_of_experience ?? exp?.calculated_years ?? 0),
-          0
-        )
-      : 0;
+    const totalExperience = expArray.reduce(
+      (sum, exp) => sum + (exp?.years_of_experience ?? exp?.calculated_years ?? 0),
+      0
+    );
 
-    const skillArray = Array.isArray(skills[i]) ? skills[i] : [];
-    const skillCategories = skillArray.reduce((acc: Record<string, any[]>, skill: any) => {
-      const category = skill.skill_category || 'UNCATEGORIZED';
+    const skillArray = skills[i] ?? [];
+    const skillCategories = skillArray.reduce<Record<string, InstructorSkill[]>>((acc, skill) => {
+      const category = skill.proficiency_level || 'UNCATEGORIZED';
       if (!acc[category]) {
         acc[category] = [];
       }

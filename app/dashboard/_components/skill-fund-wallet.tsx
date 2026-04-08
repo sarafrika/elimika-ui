@@ -1,7 +1,8 @@
+import { Wallet } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Wallet } from 'lucide-react';
+import type { User } from '@/services/client';
 
 type WalletProps = {
   currency_code: string;
@@ -11,7 +12,7 @@ type WalletProps = {
 
 type SkillsFundWalletCardProps = {
   wallet: WalletProps | null;
-  user: any;
+  user: User;
   role: string;
 };
 

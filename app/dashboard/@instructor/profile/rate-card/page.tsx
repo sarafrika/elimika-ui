@@ -1,5 +1,3 @@
-import CoursesPage from './_components/CoursesPage';
+import InstructorRateCardPage from '@/src/features/profile/pages/instructor/InstructorRateCardPage';
 
-export default function Page() {
-  return <CoursesPage />;
-}
+export default InstructorRateCardPage;

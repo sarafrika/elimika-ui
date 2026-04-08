@@ -1,19 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getRevenueDashboardOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
@@ -43,6 +29,21 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import type { ValueType } from 'recharts/types/component/DefaultTooltipContent';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getRevenueDashboardOptions } from '@/services/client/@tanstack/react-query.gen';
 
 // Mock data for features not yet supported by API
 const paymentMethodData = [
@@ -59,9 +60,22 @@ const revenueByCategory = [
   { category: 'Others', amount: 40000, percentage: 7, trend: 5.7 },
 ];
 
-const topInstructors = [
+const topInstructors: Array<{
+  name: string;
+  revenue: number;
+  courses: number;
+  students: number;
+}> = [
   // { name: 'Sarah Johnson', revenue: 45000, courses: 8, students: 1250 },
 ];
+
+const formatCurrencyTooltipValue = (primaryCurrency: string, value: ValueType) => {
+  if (Array.isArray(value)) {
+    return `${primaryCurrency} ${value.join(', ')}`;
+  }
+
+  return `${primaryCurrency} ${value.toLocaleString()}`;
+};
 
 export default function AdminFinancialOverview() {
   const [timeRange, setTimeRange] = useState('12');
@@ -87,11 +101,11 @@ export default function AdminFinancialOverview() {
         break;
     }
 
-    return {
-      startDate: start.toISOString().split('T')[0],
-      endDate: end.toISOString().split('T')[0],
-    };
+    return { startDate: start, endDate: end };
   }, [timeRange]);
+
+  const formattedStartDate = startDate.toISOString().split('T')[0];
+  const formattedEndDate = endDate.toISOString().split('T')[0];
 
   const { data, isLoading, error } = useQuery(
     getRevenueDashboardOptions({
@@ -123,12 +137,14 @@ export default function AdminFinancialOverview() {
     // Process daily series for charts
     const dailyData =
       apiData.daily_series?.map(day => ({
-        date: new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: day.date
+          ? new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          : 'N/A',
         revenue: day.gross_totals?.find(g => g.currency_code === primaryCurrency)?.amount || 0,
         earnings:
           day.estimated_earnings?.find(e => e.currency_code === primaryCurrency)?.amount || 0,
-        orders: day.order_count || 0,
-        units: day.units_sold || 0,
+        orders: Number(day.order_count || 0),
+        units: Number(day.units_sold || 0),
       })) || [];
 
     // Process scope breakdown
@@ -138,8 +154,8 @@ export default function AdminFinancialOverview() {
         revenue: scope.gross_totals?.find(g => g.currency_code === primaryCurrency)?.amount || 0,
         earnings:
           scope.estimated_earnings?.find(e => e.currency_code === primaryCurrency)?.amount || 0,
-        items: scope.line_item_count || 0,
-        units: scope.units_sold || 0,
+        items: Number(scope.line_item_count || 0),
+        units: Number(scope.units_sold || 0),
       })) || [];
 
     // Calculate growth rate (comparing first and last data points)
@@ -157,9 +173,9 @@ export default function AdminFinancialOverview() {
       totalRevenue,
       estimatedEarnings,
       avgOrderValue,
-      orderCount: apiData.order_count || 0,
-      lineItemCount: apiData.line_item_count || 0,
-      unitsSold: apiData.units_sold || 0,
+      orderCount: Number(apiData.order_count || 0),
+      lineItemCount: Number(apiData.line_item_count || 0),
+      unitsSold: Number(apiData.units_sold || 0),
       dailyData,
       scopeData,
       growthRate,
@@ -473,7 +489,7 @@ export default function AdminFinancialOverview() {
                         />
                         <YAxis className='fill-muted-foreground' tick={{ fontSize: 12 }} />
                         <Tooltip
-                          formatter={(value: any) => `${primaryCurrency} ${value.toLocaleString()}`}
+                          formatter={value => formatCurrencyTooltipValue(primaryCurrency, value)}
                           contentStyle={{
                             backgroundColor: 'hsl(var(--card))',
                             border: '1px solid hsl(var(--border))',
@@ -648,7 +664,7 @@ export default function AdminFinancialOverview() {
                         />
                         <YAxis className='fill-muted-foreground' tick={{ fontSize: 12 }} />
                         <Tooltip
-                          formatter={(value: any) => `${primaryCurrency} ${value.toLocaleString()}`}
+                          formatter={value => formatCurrencyTooltipValue(primaryCurrency, value)}
                           contentStyle={{
                             backgroundColor: 'hsl(var(--card))',
                             border: '1px solid hsl(var(--border))',
@@ -759,7 +775,7 @@ export default function AdminFinancialOverview() {
                         />
                         <YAxis className='fill-muted-foreground' tick={{ fontSize: 12 }} />
                         <Tooltip
-                          formatter={(value: any) => `${primaryCurrency} ${value.toLocaleString()}`}
+                          formatter={value => formatCurrencyTooltipValue(primaryCurrency, value)}
                           contentStyle={{
                             backgroundColor: 'hsl(var(--card))',
                             border: '1px solid hsl(var(--border))',
@@ -963,7 +979,7 @@ export default function AdminFinancialOverview() {
                       <div>
                         <p className='text-muted-foreground text-xs sm:text-sm'>Date Range</p>
                         <p className='text-sm font-medium sm:text-base'>
-                          {startDate} to {endDate}
+                          {formattedStartDate} to {formattedEndDate}
                         </p>
                       </div>
                       <div>

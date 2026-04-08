@@ -15,6 +15,7 @@ import {
   ShoppingCart,
   UserCheck,
   Users,
+  type LucideIcon,
 } from 'lucide-react';
 
 interface KPICardsProps {
@@ -31,7 +32,7 @@ interface SubMetric {
 
 interface GroupedKPI {
   title: string;
-  icon: any;
+  icon: LucideIcon;
   primaryMetric: {
     label: string;
     value: number | bigint | string | undefined;
@@ -43,7 +44,7 @@ interface GroupedKPI {
 
 export default function KPICards({ statistics, isLoading }: KPICardsProps) {
   const userMetrics = statistics?.user_metrics;
-  const organizationMetrics = statistics?.organization_metrics;
+  const organizationMetrics = statistics?.organisation_metrics;
   const learningMetrics = statistics?.learning_metrics;
   const adminMetrics = statistics?.admin_metrics;
   const commerceMetrics = statistics?.commerce_metrics;
@@ -93,12 +94,12 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
       icon: Building2,
       primaryMetric: {
         label: 'Total',
-        value: organizationMetrics?.total_organizations,
+        value: organizationMetrics?.total_organisations,
       },
       subMetrics: [
         {
           label: 'Active',
-          value: organizationMetrics?.active_organizations,
+          value: organizationMetrics?.active_organisations,
         },
         {
           label: 'Pending Approval',
@@ -107,8 +108,8 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
         },
         {
           label: 'Suspended',
-          value: organizationMetrics?.suspended_organizations,
-          highlight: Number(organizationMetrics?.suspended_organizations) > 0,
+          value: organizationMetrics?.suspended_organisations,
+          highlight: Number(organizationMetrics?.suspended_organisations) > 0,
         },
       ],
       description: 'Organization management overview',
@@ -175,21 +176,21 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
       icon: UserCheck,
       primaryMetric: {
         label: 'Total Enrollments',
-        value: learningMetrics?.total_enrollments,
+        value: learningMetrics?.total_course_enrollments,
       },
       subMetrics: [
         {
           label: 'Active',
-          value: learningMetrics?.active_enrollments,
+          value: learningMetrics?.active_course_enrollments,
         },
         {
-          label: 'Completed',
-          value: learningMetrics?.completed_enrollments,
+          label: 'Completed (30d)',
+          value: learningMetrics?.completed_course_enrollments_30d,
         },
         {
-          label: 'Completion Rate',
-          value: learningMetrics?.completion_rate
-            ? `${Number(learningMetrics.completion_rate).toFixed(1)}%`
+          label: 'Avg Progress',
+          value: learningMetrics?.average_course_progress
+            ? `${Number(learningMetrics.average_course_progress).toFixed(1)}%`
             : '0%',
         },
       ],
@@ -211,7 +212,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
         },
         {
           label: 'Org Admins',
-          value: adminMetrics?.organization_admins,
+          value: adminMetrics?.organisation_admins,
         },
         {
           label: 'Active Sessions',

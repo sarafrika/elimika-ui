@@ -1,28 +1,5 @@
 'use client';
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-
-import RichTextRenderer from '@/components/editors/richTextRenders';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useInstructor } from '@/context/instructor-context';
-import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { getEnrollmentsForClassOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -41,7 +18,31 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useInstructor } from '@/context/instructor-context';
+import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
+import type { Enrollment } from '@/services/client';
+import { getEnrollmentsForClassOptions } from '@/services/client/@tanstack/react-query.gen';
 import { CustomLoadingState } from '../@course_creator/_components/loading-state';
+import type { DashboardClass } from './types';
 
 export const getLocationBadgeColor = (location: string) => {
   switch (location) {
@@ -74,7 +75,7 @@ interface TrainingClassListProps {
   onDelete?: (id: string) => void;
   onOpenTimetable?: (id: string) => void;
   onOpenRecurring?: (id: string) => void;
-  classesWithCourseAndInstructor: any;
+  classesWithCourseAndInstructor: DashboardClass[];
   loading: boolean;
 }
 
@@ -98,19 +99,26 @@ export function TrainingClassList({
   const normalizeText = (value?: string | null) =>
     typeof value === 'string' ? value.toLowerCase() : '';
 
-  const filteredClasses = classesWithCourseAndInstructor?.filter((cls: any) => {
+  const classesWithUuid = classesWithCourseAndInstructor.filter(
+    (cls): cls is DashboardClass & { uuid: string } => typeof cls.uuid === 'string'
+  );
+
+  const filteredClasses = classesWithUuid.filter(cls => {
     const normalizedQuery = normalizeText(searchQuery);
     const matchesSearch =
       normalizeText(cls?.title).includes(normalizedQuery) ||
       normalizeText(cls?.course?.name).includes(normalizedQuery) ||
       normalizeText(cls?.instructor?.full_name).includes(normalizedQuery);
 
+    const currentEnrollments = cls.current_enrollments ?? 0;
+    const maxParticipants = cls.max_participants ?? 0;
+
     const matchesLocation = locationFilter === 'all' || cls.location_type === locationFilter;
 
     const matchesStatus =
       statusFilter === 'all' ||
-      (statusFilter === 'available' && cls.current_enrollments < cls.max_participants) ||
-      (statusFilter === 'full' && cls.current_enrollments >= cls.max_participants);
+      (statusFilter === 'available' && currentEnrollments < maxParticipants) ||
+      (statusFilter === 'full' && currentEnrollments >= maxParticipants);
 
     const matchesActive =
       activeFilter === 'all' ||
@@ -120,18 +128,14 @@ export function TrainingClassList({
     return matchesSearch && matchesLocation && matchesStatus && matchesActive;
   });
 
-  const publishedClasses = classesWithCourseAndInstructor?.filter((item: any) => item.is_active);
-  const draftClasses = classesWithCourseAndInstructor?.filter((item: any) => !item.is_active);
+  const publishedClasses = classesWithUuid.filter(item => item.is_active);
+  const draftClasses = classesWithUuid.filter(item => !item.is_active);
 
   // 1. Prepare all roster hooks BEFORE rendering
   const enrollmentQueries = useQueries({
-    queries: filteredClasses.map((cls: any) => ({
-      ...getEnrollmentsForClassOptions({
-        path: { uuid: cls.uuid },
-      }),
-      queryKey: ['class-enrollments', cls.uuid], // ensure unique
-      enabled: !!cls.uuid,
-    })),
+    queries: filteredClasses.map(cls =>
+      getEnrollmentsForClassOptions({ path: { uuid: cls.uuid } })
+    ),
   });
 
   if (loading) {
@@ -220,17 +224,20 @@ export function TrainingClassList({
 
       {/* Classes Grid */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
-        {filteredClasses.map((cls: any, index: any) => {
-          const isFull = cls.current_enrollments >= cls.max_participants;
-          const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'N/A';
+        {filteredClasses.map((cls, index) => {
+          const isFull = (cls.current_enrollments ?? 0) >= (cls.max_participants ?? 0);
+          const difficultyName = cls.course?.difficulty_uuid
+            ? difficultyMap[cls.course.difficulty_uuid] || 'N/A'
+            : 'N/A';
 
           const enrollmentQuery = enrollmentQueries[index];
-          // @ts-ignore
-          const enrollmentData = enrollmentQuery?.data?.data || [];
+          const enrollmentData: Enrollment[] = enrollmentQuery?.data?.data ?? [];
 
-          const uniqueStudentIds = new Set(enrollmentData.map((e: any) => e.student_uuid));
+          const uniqueStudentIds = new Set(
+            enrollmentData.map(enrollment => enrollment.student_uuid)
+          );
           const enrolledCount = uniqueStudentIds.size;
-          const max = cls.max_participants;
+          const max = cls.max_participants ?? 0;
           const enrolledPercentage = (enrolledCount / max) * 100;
 
           return (
@@ -331,12 +338,12 @@ export function TrainingClassList({
 
                     {/* Description */}
                     <div className='text-muted-foreground line-clamp-2 text-sm'>
-                      <RichTextRenderer htmlString={cls?.description} maxChars={50} />
+                      <RichTextRenderer htmlString={cls?.description ?? ''} maxChars={50} />
                     </div>
 
                     {/* Categories */}
                     <div className='flex flex-wrap gap-1.5'>
-                      {cls?.course?.category_names?.slice(0, 2).map((category: any, idx: any) => (
+                      {cls?.course?.category_names?.slice(0, 2).map((category, idx) => (
                         <Badge
                           key={idx}
                           variant='outline'
