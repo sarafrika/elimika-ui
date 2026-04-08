@@ -37,7 +37,81 @@ import {
 } from '../../../../services/client/@tanstack/react-query.gen';
 import { SkillsFundWalletCard } from '../../_components/skill-fund-wallet';
 
-const skillsFundApplications: any[] = [
+type FundType = 'scholarship' | 'training-support' | 'loan' | 'grant';
+type ApplicationStatus = 'draft' | 'submitted' | 'under-review' | 'approved' | 'disbursed' | 'rejected';
+type ApplicantType = 'student' | 'instructor';
+type ContributionTargetGroup = 'students' | 'instructors' | 'specific-program';
+
+type SkillsFundDocument = {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+};
+
+type SkillsFundApplication = {
+  id: string;
+  applicantId: string;
+  applicantName: string;
+  applicantType: ApplicantType;
+  fundType: FundType;
+  program: string;
+  reason: string;
+  amount: number;
+  currency: string;
+  documents: SkillsFundDocument[];
+  status: ApplicationStatus;
+  submittedAt?: Date;
+  reviewedAt?: Date;
+  reviewedBy?: string;
+  disbursedAt?: Date;
+  linkedCourseId?: string;
+  rejectionReason?: string;
+  targetGroup?: ContributionTargetGroup;
+};
+
+type SkillsFundWalletTransaction = {
+  id: string;
+  type: 'credit' | 'debit';
+  amount: number;
+  description: string;
+  category: string;
+  date: Date;
+  status: 'completed' | 'pending' | 'failed';
+  relatedId?: string;
+};
+
+type SkillsFundWallet = {
+  balance: number;
+  lockedBalance?: number;
+  transactions: SkillsFundWalletTransaction[];
+};
+
+type CurrentUser = {
+  id: string;
+  name: string;
+};
+
+type SkillsFundApplicationDraft = {
+  fundType: FundType;
+  currency: string;
+  documents: SkillsFundDocument[];
+  program?: string;
+  reason?: string;
+  amount?: number;
+  targetGroup?: ContributionTargetGroup;
+  targetProgramId?: string;
+};
+
+type TrainingOpportunity = {
+  id: string;
+  title: string;
+  description: string;
+  maxAmount: number;
+  requirements: string[];
+};
+
+const skillsFundApplications: SkillsFundApplication[] = [
   // {
   //   id: 'app-001',
   //   applicantId: 'student_001',
@@ -164,9 +238,9 @@ const skillsFundApplications: any[] = [
 ];
 
 type Props = {
-  currentUser: any;
-  wallet: any | null;
-  setWallet: (wallet: any | null) => void;
+  currentUser: CurrentUser;
+  wallet: SkillsFundWallet | null;
+  setWallet: (wallet: SkillsFundWallet | null) => void;
 };
 
 const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) => {
@@ -190,13 +264,13 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
 
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [newApplication, setNewApplication] = useState<Partial<any>>({
+  const [newApplication, setNewApplication] = useState<SkillsFundApplicationDraft>({
     fundType: 'training-support',
     currency: 'USD',
     documents: [],
   });
 
-  const trainingOpportunities = [
+  const trainingOpportunities: TrainingOpportunity[] = [
     // {
     //   id: 'opp-1',
     //   title: 'Workshop Facilitation Grant',
@@ -226,7 +300,7 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
       return;
     }
 
-    const _application: any = {
+    const _application: SkillsFundApplication = {
       id: `app-${Date.now()}`,
       applicantId: currentUser.id,
       applicantName: currentUser.name,
@@ -254,7 +328,7 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
     if (wallet) {
       const application = instructorApplications?.find(a => a.id === applicationId);
       if (application && application.status === 'disbursed') {
-        const updatedWallet: any = {
+        const updatedWallet: SkillsFundWallet = {
           ...wallet,
           balance: wallet.balance + application.amount / 2, // Unlock 50% per class
           lockedBalance: (wallet.lockedBalance || 0) - application.amount / 2,

@@ -3,6 +3,7 @@
 import { toast } from 'sonner';
 import { fetchClient } from '../api/fetch-client';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import type { CreateCategoryData } from '../client/types.gen';
 
 type CategoryQuery = {
   page?: number;
@@ -42,9 +43,9 @@ export const useGetCategories = (query?: CategoryQuery) => {
   });
 };
 
-const createCategory = async ({ body }: { body: any }) => {
+const createCategory = async ({ body }: { body: CreateCategoryData['body'] }) => {
   const res = await fetchClient.POST('/api/v1/config/categories', {
-    body: body,
+    body,
   });
 
   if (res.error) {
@@ -56,9 +57,9 @@ const createCategory = async ({ body }: { body: any }) => {
 
 export const useCreateCategory = () => {
   return useMutation({
-    onError: (error: any) => {
-      toast.error('Error creating category:', error);
+    onError: (error: unknown) => {
+      toast.error(error instanceof Error ? error.message : 'Error creating category');
     },
-    mutationFn: (body: any) => createCategory(body),
+    mutationFn: (body: { body: CreateCategoryData['body'] }) => createCategory(body),
   });
 };

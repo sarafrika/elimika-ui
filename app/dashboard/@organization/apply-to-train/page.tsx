@@ -110,8 +110,8 @@ export default function ApplyToTrainPage() {
 
       toast.success('Application submitted successfully!');
       router.push('/dashboard/my-applications');
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to submit application');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to submit application');
     } finally {
       setSubmitting(false);
     }

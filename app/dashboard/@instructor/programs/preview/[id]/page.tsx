@@ -19,6 +19,7 @@ import {
   publishProgramMutation,
   removeProgramCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { Course } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, Check, CheckCheck, Clock, CoinsIcon, Trash, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -77,10 +78,10 @@ export default function ProgramPreviewPage() {
     setIsAddClassCourseDialog(true);
   };
 
-  const [courseToDelete, setCourseToDelete] = useState<any>(null);
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const confirmDelete = (course: any) => {
+  const confirmDelete = (course: Course) => {
     setCourseToDelete(course);
     setIsDialogOpen(true);
   };
@@ -109,7 +110,7 @@ export default function ProgramPreviewPage() {
   };
 
   const deleteRequirement = useMutation(deleteProgramRequirementMutation());
-  const handleDeleteRequirement = (requirementId: any) => {
+  const handleDeleteRequirement = (requirementId: string) => {
     deleteRequirement.mutate(
       { path: { programUuid: programId, requirementUuid: requirementId } },
       {
@@ -283,7 +284,7 @@ export default function ProgramPreviewPage() {
                         {c?.name}
                       </h3>
                       <button
-                        onClick={() => confirmDelete(c as any)}
+                        onClick={() => confirmDelete(c)}
                         className='text-destructive hover:text-destructive/80 mx-2 cursor-pointer'
                         aria-label='Remove course'
                       >

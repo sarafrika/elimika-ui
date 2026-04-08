@@ -22,6 +22,7 @@ import { Plus } from 'lucide-react';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import type { Category } from '../services/client';
 import {
   createCategoryMutation,
   getAllCategoriesOptions,
@@ -52,8 +53,9 @@ export const AddCategoryFormItem: React.FC<AddCategoryFormItemProps> = ({ field 
   );
 
   const createCategory = useMutation(createCategoryMutation());
+  const categoryOptions: Category[] = categories?.data?.content ?? [];
 
-  const selectedCategory = categories?.data?.content?.find((c: any) => c.uuid === field.value);
+  const selectedCategory = categoryOptions.find(category => category.uuid === field.value);
 
   return (
     <FormItem>
@@ -68,7 +70,7 @@ export const AddCategoryFormItem: React.FC<AddCategoryFormItemProps> = ({ field 
           </FormControl>
           <SelectContent>
             <div className='max-h-[250px] overflow-auto'>
-              {categories?.data?.content?.map((cat: any) => (
+              {categoryOptions.map(cat => (
                 <SelectItem key={cat.uuid} value={cat.uuid}>
                   {cat.name}
                 </SelectItem>
@@ -115,17 +117,8 @@ export const AddCategoryFormItem: React.FC<AddCategoryFormItemProps> = ({ field 
                     createCategory.mutate(
                       { body: { name: categoryInput.trim() } },
                       {
-                        onSuccess: (data: any) => {
-                          if (data?.error) {
-                            if (data.error.error?.toLowerCase().includes('duplicate key')) {
-                              toast.error('Category already exists');
-                            } else {
-                              toast.error('Failed to add category');
-                            }
-                          } else {
-                            toast.success(data?.message || 'Category added');
-                          }
-
+                        onSuccess: data => {
+                          toast.success(data?.message || 'Category added');
                           dialogCloseRef.current?.click();
                           setCategoryInput('');
                         },

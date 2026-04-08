@@ -47,6 +47,8 @@ import {
   getHeaderClasses,
   getStatCardClasses,
 } from '@/lib/design-system';
+import type { AsignmentFormValues } from '@/app/dashboard/@course_creator/_components/assignment-management-form';
+import type { QuizFormValues } from '@/app/dashboard/@course_creator/_components/quiz-management-form';
 import {
   deleteAssignmentMutation,
   deleteQuizMutation,
@@ -67,6 +69,17 @@ import {
   searchSubmissionsOptions,
   searchSubmissionsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
+import type {
+  Assignment,
+  AssignmentAttachment,
+  GetStudentByIdResponse,
+  GetUserByUuidResponse,
+  Quiz,
+  SearchAssignmentsResponse,
+  SearchAttemptsResponse,
+  SearchQuizzesResponse,
+  SearchSubmissionsResponse,
+} from '@/services/client';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
@@ -109,18 +122,33 @@ type CourseOption = {
   classTitles: string[];
 };
 
-type EnrichedAssignment = any & {
-  attachments?: any[];
+type AssignmentSearchItem = NonNullable<
+  NonNullable<SearchAssignmentsResponse['data']>['content']
+>[number];
+
+type QuizSearchItem = NonNullable<NonNullable<SearchQuizzesResponse['data']>['content']>[number];
+
+type SubmissionSearchItem = NonNullable<
+  NonNullable<SearchSubmissionsResponse['data']>['content']
+>[number];
+
+type AttemptSearchItem = NonNullable<NonNullable<SearchAttemptsResponse['data']>['content']>[number];
+
+type StudentRecord = GetStudentByIdResponse;
+type UserRecord = NonNullable<NonNullable<GetUserByUuidResponse['data']>['data']>;
+
+type EnrichedAssignment = AssignmentSearchItem & {
+  attachments: AssignmentAttachment[];
   courseId: string;
   courseTitle: string;
 };
 
-type EnrichedQuiz = any & {
+type EnrichedQuiz = QuizSearchItem & {
   courseId: string;
   courseTitle: string;
 };
 
-type EnrichedSubmission = any & {
+type EnrichedSubmission = SubmissionSearchItem & {
   assignmentTitle: string;
   courseId: string;
   courseTitle: string;
@@ -128,7 +156,7 @@ type EnrichedSubmission = any & {
   classTitle: string;
 };
 
-type EnrichedAttempt = any & {
+type EnrichedAttempt = AttemptSearchItem & {
   quizTitle: string;
   courseId: string;
   courseTitle: string;
@@ -169,6 +197,43 @@ const formatEnum = (value?: string | null) => {
 };
 
 const normalizeIdentity = (value?: string | null) => value?.trim().toLowerCase() ?? '';
+
+const toAssignmentFormValues = (
+  assignment: EnrichedAssignment | null
+): Partial<AsignmentFormValues> | undefined => {
+  if (!assignment) return undefined;
+
+  return {
+    title: assignment.title,
+    lesson_uuid: assignment.lesson_uuid,
+    description: assignment.description,
+    instructions: assignment.instructions,
+    max_points: assignment.max_points,
+    rubric_uuid: assignment.rubric_uuid,
+    status: assignment.status,
+    active: assignment.is_published ?? false,
+    due_date: assignment.due_date,
+  };
+};
+
+const toQuizFormValues = (
+  quiz: EnrichedQuiz | null
+): Partial<QuizFormValues> | undefined => {
+  if (!quiz) return undefined;
+
+  return {
+    title: quiz.title,
+    lesson_uuid: quiz.lesson_uuid,
+    description: quiz.description,
+    instructions: quiz.instructions,
+    time_limit_minutes: quiz.time_limit_minutes,
+    attempts_allowed: quiz.attempts_allowed,
+    passing_score: quiz.passing_score,
+    rubric_uuid: quiz.rubric_uuid,
+    status: quiz.status,
+    active: quiz.active ?? false,
+  };
+};
 
 function SectionIntro({
   badge,
@@ -329,7 +394,7 @@ function SubmissionDetailDialog({
                 <p className='text-muted-foreground text-sm'>No attachment uploaded.</p>
               ) : (
                 <div className='space-y-2'>
-                  {attachments.map((attachment: any) => (
+                  {attachments.map(attachment => (
                     <a
                       key={attachment.uuid}
                       href={attachment.file_url}
@@ -577,11 +642,8 @@ function QuizPreviewSheet({
               <div className='space-y-4'>
                 {questions
                   .slice()
-                  .sort(
-                    (left: any, right: any) =>
-                      (left.display_order ?? 0) - (right.display_order ?? 0)
-                  )
-                  .map((question: any, index: number) => (
+                  .sort((left, right) => (left.display_order ?? 0) - (right.display_order ?? 0))
+                  .map((question, index: number) => (
                     <Card key={question.uuid} className='border-border/60'>
                       <CardContent className='space-y-4 p-5'>
                         <div className='flex items-start justify-between gap-4'>
@@ -603,11 +665,8 @@ function QuizPreviewSheet({
                           <div className='space-y-2'>
                             {question.options
                               .slice()
-                              .sort(
-                                (left: any, right: any) =>
-                                  (left.display_order ?? 0) - (right.display_order ?? 0)
-                              )
-                              .map((option: any) => (
+                              .sort((left, right) => (left.display_order ?? 0) - (right.display_order ?? 0))
+                              .map(option => (
                                 <div
                                   key={option.uuid}
                                   className={cx(
@@ -686,7 +745,7 @@ export function InstructorAssessmentWorkspace({
   const courseOptions = useMemo<CourseOption[]>(() => {
     const map = new Map<string, CourseOption>();
 
-    classes.forEach((classItem: any) => {
+    classes.forEach(classItem => {
       const courseId = classItem.course?.uuid;
       const courseTitle = classItem.course?.name;
 
@@ -725,7 +784,7 @@ export function InstructorAssessmentWorkspace({
 
     courseOptions.forEach((course, index) => {
       const lessons = lessonQueries[index]?.data?.data?.content ?? [];
-      lessons.forEach((lesson: any) => {
+      lessons.forEach(lesson => {
         if (lesson.uuid) {
           map.set(lesson.uuid, { courseId: course.id, courseTitle: course.title });
         }
@@ -736,7 +795,7 @@ export function InstructorAssessmentWorkspace({
   }, [courseOptions, lessonQueries]);
 
   const classEnrollmentQueries = useQueries({
-    queries: classes.map((classItem: any) => ({
+    queries: classes.map(classItem => ({
       ...getEnrollmentsForClassOptions({
         path: { uuid: classItem.uuid as string },
       }),
@@ -748,7 +807,7 @@ export function InstructorAssessmentWorkspace({
 
   const classEnrollmentRows = useMemo(
     () =>
-      classes.map((classItem: any, index: number) => ({
+      classes.map((classItem, index: number) => ({
         classItem,
         enrollments: classEnrollmentQueries[index]?.data?.data ?? [],
       })),
@@ -759,7 +818,7 @@ export function InstructorAssessmentWorkspace({
     const ids = new Set<string>();
 
     classEnrollmentRows.forEach(({ enrollments }) => {
-      enrollments.forEach((enrollment: any) => {
+      enrollments.forEach(enrollment => {
         if (enrollment.student_uuid) {
           ids.add(enrollment.student_uuid);
         }
@@ -781,10 +840,10 @@ export function InstructorAssessmentWorkspace({
   });
 
   const studentMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, StudentRecord>();
 
     uniqueStudentIds.forEach((studentUuid, index) => {
-      const student = studentQueries[index]?.data?.data;
+      const student = studentQueries[index]?.data;
       if (student) {
         map.set(studentUuid, student);
       }
@@ -794,9 +853,9 @@ export function InstructorAssessmentWorkspace({
   }, [studentQueries, uniqueStudentIds]);
 
   const userQueries = useQueries({
-    queries: Array.from(studentMap.values()).map((student: any) => ({
+    queries: Array.from(studentMap.values()).map(student => ({
       ...getUserByUuidOptions({
-        path: { uuid: student.user_uuid as string },
+        path: { uuid: student.user_uuid ?? '' },
       }),
       enabled: !!student?.user_uuid,
       staleTime: 5 * 60 * 1000,
@@ -805,9 +864,9 @@ export function InstructorAssessmentWorkspace({
   });
 
   const userMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, UserRecord>();
 
-    Array.from(studentMap.values()).forEach((student: any, index: number) => {
+    Array.from(studentMap.values()).forEach((student, index: number) => {
       const user = userQueries[index]?.data?.data;
       if (user && student?.uuid) {
         map.set(student.uuid, user);
@@ -824,7 +883,7 @@ export function InstructorAssessmentWorkspace({
     >();
 
     classEnrollmentRows.forEach(({ classItem, enrollments }) => {
-      enrollments.forEach((enrollment: any) => {
+      enrollments.forEach(enrollment => {
         if (!enrollment.uuid) return;
 
         const student = studentMap.get(enrollment.student_uuid);
@@ -847,7 +906,7 @@ export function InstructorAssessmentWorkspace({
     const uniqueIds = new Set<string>();
 
     classEnrollmentRows.forEach(({ enrollments }) => {
-      enrollments.forEach((enrollment: any) => {
+      enrollments.forEach(enrollment => {
         const student = studentMap.get(enrollment.student_uuid);
         if (student?.uuid) {
           uniqueIds.add(student.uuid);
@@ -902,23 +961,24 @@ export function InstructorAssessmentWorkspace({
   const assignments = useMemo<EnrichedAssignment[]>(
     () =>
       (assignmentsData?.data?.content ?? [])
-        .map((assignment: any) => {
+        .map(assignment => {
           const course = lessonMap.get(assignment.lesson_uuid);
           if (!course) return null;
           return {
             ...assignment,
             courseId: course.courseId,
             courseTitle: course.courseTitle,
+            attachments: [],
           };
         })
-        .filter(Boolean) as EnrichedAssignment[],
+        .filter((assignment): assignment is EnrichedAssignment => assignment !== null),
     [assignmentsData, lessonMap]
   );
 
   const quizzes = useMemo<EnrichedQuiz[]>(
     () =>
       (quizzesData?.data?.content ?? [])
-        .map((quiz: any) => {
+        .map(quiz => {
           const course = lessonMap.get(quiz.lesson_uuid);
           if (!course) return null;
           return {
@@ -927,7 +987,7 @@ export function InstructorAssessmentWorkspace({
             courseTitle: course.courseTitle,
           };
         })
-        .filter(Boolean) as EnrichedQuiz[],
+        .filter((quiz): quiz is EnrichedQuiz => quiz !== null),
     [lessonMap, quizzesData]
   );
 
@@ -953,7 +1013,7 @@ export function InstructorAssessmentWorkspace({
   });
 
   const assignmentAttachmentsMap = useMemo(() => {
-    const map = new Map<string, any[]>();
+    const map = new Map<string, AssignmentAttachment[]>();
 
     assignments.forEach((assignment, index) => {
       if (assignment.uuid) {
@@ -977,7 +1037,7 @@ export function InstructorAssessmentWorkspace({
   const allSubmissions = useMemo<EnrichedSubmission[]>(
     () =>
       (submissionsData?.data?.content ?? [])
-        .map((submission: any) => {
+        .map(submission => {
           const assignment = assignmentMap.get(submission.assignment_uuid);
           if (!assignment) return null;
           const enrollmentMeta = enrollmentMetaMap.get(submission.enrollment_uuid);
@@ -991,14 +1051,14 @@ export function InstructorAssessmentWorkspace({
             classTitle: enrollmentMeta?.classTitle || 'Assigned class',
           };
         })
-        .filter(Boolean) as EnrichedSubmission[],
+        .filter((submission): submission is EnrichedSubmission => submission !== null),
     [assignmentMap, enrollmentMetaMap, submissionsData]
   );
 
   const allAttempts = useMemo<EnrichedAttempt[]>(
     () =>
       (attemptsData?.data?.content ?? [])
-        .map((attempt: any) => {
+        .map(attempt => {
           const quiz = quizMap.get(attempt.quiz_uuid);
           if (!quiz) return null;
           const enrollmentMeta = enrollmentMetaMap.get(attempt.enrollment_uuid);
@@ -1012,14 +1072,14 @@ export function InstructorAssessmentWorkspace({
             classTitle: enrollmentMeta?.classTitle || 'Assigned class',
           };
         })
-        .filter(Boolean) as EnrichedAttempt[],
+        .filter((attempt): attempt is EnrichedAttempt => attempt !== null),
     [attemptsData, enrollmentMetaMap, quizMap]
   );
 
   const pendingGrading = useMemo<EnrichedSubmission[]>(
     () =>
       (pendingGradingData?.data ?? [])
-        .map((submission: any) => {
+        .map(submission => {
           const assignment = assignmentMap.get(submission.assignment_uuid);
           if (!assignment) return null;
           const enrollmentMeta = enrollmentMetaMap.get(submission.enrollment_uuid);
@@ -1033,7 +1093,7 @@ export function InstructorAssessmentWorkspace({
             classTitle: enrollmentMeta?.classTitle || 'Assigned class',
           };
         })
-        .filter(Boolean) as EnrichedSubmission[],
+        .filter((submission): submission is EnrichedSubmission => submission !== null),
     [assignmentMap, enrollmentMetaMap, pendingGradingData]
   );
 
@@ -2174,7 +2234,7 @@ export function InstructorAssessmentWorkspace({
         isOpen={assignmentDialogOpen}
         setOpen={setAssignmentDialogOpen}
         editingAssignmetId={editingAssignment?.uuid}
-        initialValues={editingAssignment as any}
+        initialValues={toAssignmentFormValues(editingAssignment)}
         courseId={activeCourseIdForDialogs}
         onCancel={resetAssignmentDialog}
         onSuccess={() => {
@@ -2189,7 +2249,7 @@ export function InstructorAssessmentWorkspace({
         isOpen={quizDialogOpen}
         setOpen={setQuizDialogOpen}
         editingQuiz={editingQuiz?.uuid}
-        initialValues={editingQuiz as any}
+        initialValues={toQuizFormValues(editingQuiz)}
         courseId={activeCourseIdForDialogs}
         onCancel={resetQuizDialog}
         onSuccess={() => {

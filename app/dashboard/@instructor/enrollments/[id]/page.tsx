@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { useInstructor } from '@/context/instructor-context';
 import { elimikaDesignSystem } from '@/lib/design-system';
+import type { ClassDefinition, Enrollment } from '@/services/client';
 import {
   getClassDefinitionsForInstructorOptions,
   getClassScheduleOptions,
@@ -50,6 +51,9 @@ type StudentEnrollmentDetail = {
   markedSessions: number;
   pendingSessions: number;
 };
+
+type InstructorClass = ClassDefinition;
+type EnrollmentRecord = Enrollment;
 
 const formatStatusLabel = (status?: string) => {
   if (!status) return 'Unknown';
@@ -148,12 +152,15 @@ const EnrollmentDetails = () => {
   });
 
   const instructorClasses = useMemo(
-    () => classesData?.data?.map((item: any) => item.class_definition).filter(Boolean) ?? [],
+    () =>
+      classesData?.data
+        ?.map(item => item.class_definition)
+        .filter((item): item is InstructorClass => Boolean(item)) ?? [],
     [classesData]
   );
 
   const enrollmentQueries = useQueries({
-    queries: instructorClasses.map((classItem: any) => ({
+    queries: instructorClasses.map(classItem => ({
       ...getEnrollmentsForClassOptions({
         path: { uuid: classItem.uuid },
       }),
@@ -162,7 +169,7 @@ const EnrollmentDetails = () => {
   });
 
   const scheduleQueries = useQueries({
-    queries: instructorClasses.map((classItem: any) => ({
+    queries: instructorClasses.map(classItem => ({
       ...getClassScheduleOptions({
         path: { uuid: classItem.uuid },
         query: { pageable: {} },
@@ -173,9 +180,9 @@ const EnrollmentDetails = () => {
 
   const enrollmentDetails = useMemo<StudentEnrollmentDetail[]>(() => {
     return instructorClasses
-      .map((classItem: any, index: number) => {
-        const enrollments = (enrollmentQueries[index]?.data?.data ?? []).filter(
-          (enrollment: any) => enrollment.student_uuid === studentId
+      .map((classItem, index: number) => {
+        const enrollments = ((enrollmentQueries[index]?.data?.data ?? []) as EnrollmentRecord[]).filter(
+          enrollment => enrollment.student_uuid === studentId
         );
 
         if (enrollments.length === 0) {
@@ -184,7 +191,7 @@ const EnrollmentDetails = () => {
 
         const uniqueSessions = Array.from(
           new Map(
-            enrollments.map((enrollment: any) => [
+            enrollments.map(enrollment => [
               enrollment.scheduled_instance_uuid,
               {
                 uuid: enrollment.uuid,

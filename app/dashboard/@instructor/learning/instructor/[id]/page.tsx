@@ -12,6 +12,7 @@ import { useParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useBreadcrumb } from '../../../../../../context/breadcrumb-provider';
+import type { SearchInstructor } from '@/app/dashboard/_components/types';
 import type { ClassData } from '../../../../@instructor/trainings/create-new/academic-period-form';
 import { InstructorDirectory } from '../../../../_components/instructor-directory';
 import { ManageBookings } from '../../../../_components/manage-bookings';
@@ -129,6 +130,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const { data } = useQuery(
     getAllInstructorsOptions({ query: { pageable: { page: 0, size: 20 } } })
   );
+  const instructorDirectoryInstructors: SearchInstructor[] = data?.data?.content ?? [];
 
   useEffect(() => {
     if (courseId) {
@@ -474,14 +476,12 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   }, [instructors?.length]);
 
   const handleBookingComplete = (_newBooking: Booking) => {
-    // setBookings((prev: any) => [...prev, newBooking]);
+    // Booking state updates are handled by the backing query data.
     setActiveTab('bookings');
   };
 
   const handleBookingUpdate = (_updatedBooking: Booking) => {
-    // setBookings((prev: any) =>
-    //     prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b))
-    // );
+    // Booking state updates are handled by the backing query data.
   };
 
   return (
@@ -560,7 +560,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
         <TabsContent value='browse' className='mt-6'>
           <InstructorDirectory
-            instructors={data?.data?.content as any}
+            instructors={instructorDirectoryInstructors}
             classes={classes}
             onBookingComplete={handleBookingComplete}
             courseId={courseId as string}
@@ -570,7 +570,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
         <TabsContent value='bookings' className='mt-6'>
           <ManageBookings
             bookings={bookings}
-            instructors={data?.data?.content as any}
+            instructors={instructorDirectoryInstructors}
             onBookingUpdate={handleBookingUpdate}
             refetchBookings={() => bookingQueries.forEach(q => q.refetch())}
           />
@@ -582,7 +582,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
 export default InstructorBookingDashboard;
 
-const exampleBookings: any[] = [
+const exampleBookings: Booking[] = [
   {
     id: 'booking-001',
     studentId: 'student_001',

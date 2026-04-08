@@ -14,6 +14,7 @@ import { BookOpen, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import type { BookingRecord, BundledClass, SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { InstructorDirectory } from '../_components/instructor-directory';
 import { ManageBookings } from '../_components/manage-bookings';
 
@@ -102,7 +103,7 @@ export type Booking = {
 };
 
 type Props = {
-  classes: any[];
+  classes: BundledClass[];
 };
 
 export const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
@@ -117,9 +118,7 @@ export const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
     }),
     enabled: !!student?.uuid,
   });
-  const studentsBookings = studentsBookingsData?.data?.content;
-
-  const bookings = studentsBookings || [];
+  const bookings: BookingRecord[] = studentsBookingsData?.data?.content ?? [];
   const [activeTab, setActiveTab] = useState('browse');
   const { data: trainingInstructors, loading } = useSearchTrainingInstructors();
 
@@ -135,9 +134,9 @@ export const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       ?.filter(app => app?.applicant_type === 'instructor')
       ?.map(app => app?.applicant_uuid) ?? [];
 
-  const filteredInstructors = trainingInstructors?.filter(instructor =>
-    approvedInstructorUuids.includes(instructor.uuid)
-  );
+  const filteredInstructors: SearchInstructor[] =
+    trainingInstructors?.filter(instructor => approvedInstructorUuids.includes(instructor.uuid)) ??
+    [];
 
   const { replaceBreadcrumbs } = useBreadcrumb();
 
@@ -158,12 +157,12 @@ export const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   }, [replaceBreadcrumbs]);
 
   const handleBookingComplete = (_newBooking: Booking) => {
-    // setBookings((prev: any) => [...prev, newBooking]);
+    // setBookings(prev => [...prev, newBooking]);
     setActiveTab('bookings');
   };
 
   const handleBookingUpdate = (_updatedBooking: Booking) => {
-    // setBookings((prev: any) =>
+    // setBookings(prev =>
     //     prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b))
     // );
   };
@@ -244,7 +243,7 @@ export const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
         <TabsContent value='browse' className='mt-6'>
           <InstructorDirectory
-            instructors={filteredInstructors as any}
+            instructors={filteredInstructors}
             classes={classes}
             onBookingComplete={handleBookingComplete}
             courseId={courseId as string}
@@ -254,7 +253,7 @@ export const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
         <TabsContent value='bookings' className='mt-6'>
           <ManageBookings
             bookings={bookings}
-            instructors={filteredInstructors as any}
+            instructors={filteredInstructors}
             onBookingUpdate={handleBookingUpdate}
             refetchBookings={() => refetch()}
           />

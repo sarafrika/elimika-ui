@@ -29,7 +29,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { useClassRoster } from '@/hooks/use-class-roster';
+import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
 import { useInstructor } from '@/context/instructor-context';
 import { cx, getCardClasses, getEmptyStateClasses } from '@/lib/design-system';
 import {
@@ -78,6 +78,14 @@ import moment from 'moment';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { QuizzesSheet } from '@/app/dashboard/@instructor/trainings/instructor-console/[id]/quiz-sheet';
+import type {
+  Assignment,
+  AssignmentAttachment,
+  ClassAssignmentSchedule,
+  ClassQuizSchedule,
+  Enrollment,
+  Quiz,
+} from '@/services/client';
 
 export type ManagedScheduleItem = {
   uuid: string;
@@ -104,6 +112,19 @@ type Props = {
   loading?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
+};
+
+type ScheduleRosterMap = Record<string, RosterEntry[]>;
+type EnrollmentMap = Record<string, Enrollment[]>;
+type AssignmentDetailsMap = Record<string, Assignment>;
+type AssignmentAttachmentsMap = Record<string, AssignmentAttachment[]>;
+type QuizDetailsMap = Record<string, Quiz>;
+type AssignmentScheduleWithDetails = ClassAssignmentSchedule & {
+  assignment: Assignment | null;
+  attachments: AssignmentAttachment[];
+};
+type QuizScheduleWithDetails = ClassQuizSchedule & {
+  quiz: Quiz | null;
 };
 
 function getFileIcon(filename: string) {
@@ -194,7 +215,7 @@ export function ClassScheduleManager({
   const [expandedAssignmentUuid, setExpandedAssignmentUuid] = useState<string | null>(null);
 
   const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState('');
-  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [visibleAt, setVisibleAt] = useState('');
   const [assignmentDueDate, setAssignmentDueDate] = useState('');
   const [gradingDueAt, setGradingDueAt] = useState('');
@@ -202,7 +223,7 @@ export function ClassScheduleManager({
   const [assignmentNotes, setAssignmentNotes] = useState('');
 
   const [selectedQuizUuid, setSelectedQuizUuid] = useState('');
-  const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [quizVisibleAt, setQuizVisibleAt] = useState('');
   const [quizDueDate, setQuizDueDate] = useState('');
   const [timeLimitOverride, setTimeLimitOverride] = useState('');
@@ -223,28 +244,28 @@ export function ClassScheduleManager({
     [groupBy, schedules]
   );
 
-  const studentsByScheduleInstance = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    rosterAllEnrollments.forEach(({ enrollment, student, user }) => {
-      const uuid = enrollment.scheduled_instance_uuid;
+  const studentsByScheduleInstance = useMemo<ScheduleRosterMap>(() => {
+    const map: ScheduleRosterMap = {};
+    rosterAllEnrollments.forEach(entry => {
+      const uuid = entry.enrollment.scheduled_instance_uuid;
       if (!uuid) return;
       if (!map[uuid]) {
         map[uuid] = [];
       }
-      map[uuid].push({ enrollment, student, user });
+      map[uuid].push(entry);
     });
     return map;
   }, [rosterAllEnrollments]);
 
-  const enrollmentsByStudent = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    rosterAllEnrollments.forEach((entry: any) => {
-      const studentId = entry?.user?.uuid;
+  const enrollmentsByStudent = useMemo<EnrollmentMap>(() => {
+    const map: EnrollmentMap = {};
+    rosterAllEnrollments.forEach(entry => {
+      const studentId = entry.user?.uuid;
       if (!studentId) return;
       if (!map[studentId]) {
         map[studentId] = [];
       }
-      if (entry?.enrollment?.scheduled_instance_uuid) {
+      if (entry.enrollment.scheduled_instance_uuid) {
         map[studentId].push(entry.enrollment);
       }
     });
@@ -257,8 +278,8 @@ export function ClassScheduleManager({
 
   const filteredScheduleStudents = useMemo(
     () =>
-      selectedScheduleStudents.filter((entry: any) =>
-        entry?.user?.full_name?.toLowerCase().includes(attendanceSearch.toLowerCase())
+      selectedScheduleStudents.filter(entry =>
+        entry.user?.full_name?.toLowerCase().includes(attendanceSearch.toLowerCase())
       ),
     [attendanceSearch, selectedScheduleStudents]
   );
@@ -266,8 +287,8 @@ export function ClassScheduleManager({
   const calculateStudentAttendance = (studentId: string) => {
     const enrollments = enrollmentsByStudent[studentId] ?? [];
     const totalSessions = schedules.filter(schedule => schedule.classId === activeClassId).length;
-    const markedSessions = enrollments.filter((item: any) => item.is_attendance_marked);
-    const presentSessions = markedSessions.filter((item: any) => item.did_attend === true);
+    const markedSessions = enrollments.filter(item => item.is_attendance_marked);
+    const presentSessions = markedSessions.filter(item => item.did_attend === true);
 
     return {
       totalSessions,
@@ -298,17 +319,23 @@ export function ClassScheduleManager({
     () =>
       [
         ...new Set(
-          (assignmentSchedules?.data ?? []).map((item: any) => item.assignment_uuid).filter(Boolean)
+          (assignmentSchedules?.data ?? [])
+            .map(item => item.assignment_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
         ),
-      ] as string[],
+      ],
     [assignmentSchedules]
   );
 
   const quizUuids = useMemo(
     () =>
       [
-        ...new Set((quizSchedules?.data ?? []).map((item: any) => item.quiz_uuid).filter(Boolean)),
-      ] as string[],
+        ...new Set(
+          (quizSchedules?.data ?? [])
+            .map(item => item.quiz_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
+        ),
+      ],
     [quizSchedules]
   );
 
@@ -333,8 +360,8 @@ export function ClassScheduleManager({
     })),
   });
 
-  const assignmentDetailsMap = useMemo(() => {
-    const map: Record<string, any> = {};
+  const assignmentDetailsMap = useMemo<AssignmentDetailsMap>(() => {
+    const map: AssignmentDetailsMap = {};
     assignmentDetailQueries.forEach(query => {
       const data = query.data?.data;
       if (data?.uuid) {
@@ -344,8 +371,8 @@ export function ClassScheduleManager({
     return map;
   }, [assignmentDetailQueries]);
 
-  const assignmentAttachmentsMap = useMemo(() => {
-    const map: Record<string, any[]> = {};
+  const assignmentAttachmentsMap = useMemo<AssignmentAttachmentsMap>(() => {
+    const map: AssignmentAttachmentsMap = {};
     assignmentAttachmentQueries.forEach((query, index) => {
       const uuid = assignmentUuids[index];
       if (uuid) {
@@ -355,8 +382,8 @@ export function ClassScheduleManager({
     return map;
   }, [assignmentAttachmentQueries, assignmentUuids]);
 
-  const quizDetailsMap = useMemo(() => {
-    const map: Record<string, any> = {};
+  const quizDetailsMap = useMemo<QuizDetailsMap>(() => {
+    const map: QuizDetailsMap = {};
     quizDetailQueries.forEach(query => {
       const data = query.data?.data;
       if (data?.uuid) {
@@ -366,26 +393,32 @@ export function ClassScheduleManager({
     return map;
   }, [quizDetailQueries]);
 
-  const mergedAssignments = useMemo(
+  const mergedAssignments = useMemo<AssignmentScheduleWithDetails[]>(
     () =>
       (assignmentSchedules?.data ?? [])
-        .map((item: any) => ({
+        .map(item => ({
           ...item,
           assignment: assignmentDetailsMap[item.assignment_uuid] ?? null,
           attachments: assignmentAttachmentsMap[item.assignment_uuid] ?? [],
         }))
-        .filter((item: any) => item.assignment),
+        .filter(
+          (item): item is AssignmentScheduleWithDetails =>
+            item.assignment !== null && item.assignment !== undefined
+        ),
     [assignmentAttachmentsMap, assignmentDetailsMap, assignmentSchedules]
   );
 
-  const mergedQuizzes = useMemo(
+  const mergedQuizzes = useMemo<QuizScheduleWithDetails[]>(
     () =>
       (quizSchedules?.data ?? [])
-        .map((item: any) => ({
+        .map(item => ({
           ...item,
           quiz: quizDetailsMap[item.quiz_uuid] ?? null,
         }))
-        .filter((item: any) => item.quiz),
+        .filter(
+          (item): item is QuizScheduleWithDetails =>
+            item.quiz !== null && item.quiz !== undefined
+        ),
     [quizDetailsMap, quizSchedules]
   );
 
@@ -408,7 +441,7 @@ export function ClassScheduleManager({
       {
         onSuccess: () => {
           const name = selectedScheduleStudents.find(
-            (entry: any) => entry?.user?.uuid === studentId
+            entry => entry.user?.uuid === studentId
           )?.user?.full_name;
           toast.success(`Marked ${isPresent ? 'present' : 'absent'}${name ? ` for ${name}` : ''}.`);
         },
@@ -460,6 +493,10 @@ export function ClassScheduleManager({
   const createAssignment = () => {
     if (!selectedSchedule || !selectedAssignmentUuid) return;
 
+    const visibleAtDate = visibleAt ? new Date(visibleAt) : undefined;
+    const assignmentDueDateValue = assignmentDueDate ? new Date(assignmentDueDate) : undefined;
+    const gradingDueAtDate = gradingDueAt ? new Date(gradingDueAt) : undefined;
+
     addAssignmentScheduleMut.mutate(
       {
         path: { classUuid: selectedSchedule.classId },
@@ -468,15 +505,15 @@ export function ClassScheduleManager({
           lesson_uuid: selectedAssignment?.lesson_uuid,
           assignment_uuid: selectedAssignmentUuid,
           class_lesson_plan_uuid: selectedSchedule.uuid,
-          visible_at: visibleAt,
-          due_at: assignmentDueDate,
-          grading_due_at: gradingDueAt,
+          visible_at: visibleAtDate,
+          due_at: assignmentDueDateValue,
+          grading_due_at: gradingDueAtDate,
           timezone: 'Africa/Lagos',
           release_strategy: 'CUSTOM',
           max_attempts: Number(maxAttempts),
-          instructor_uuid: instructor?.uuid as string,
+          instructor_uuid: instructor?.uuid,
           notes: assignmentNotes,
-        } as any,
+        },
       },
       {
         onSuccess: () => {
@@ -495,6 +532,9 @@ export function ClassScheduleManager({
   const createQuiz = () => {
     if (!selectedSchedule || !selectedQuizUuid) return;
 
+    const quizVisibleAtDate = quizVisibleAt ? new Date(quizVisibleAt) : undefined;
+    const quizDueDateValue = quizDueDate ? new Date(quizDueDate) : undefined;
+
     addQuizScheduleMut.mutate(
       {
         path: { classUuid: selectedSchedule.classId },
@@ -503,16 +543,16 @@ export function ClassScheduleManager({
           lesson_uuid: selectedQuiz?.lesson_uuid,
           quiz_uuid: selectedQuizUuid,
           class_lesson_plan_uuid: selectedSchedule.uuid,
-          visible_at: quizVisibleAt,
-          due_at: quizDueDate,
+          visible_at: quizVisibleAtDate,
+          due_at: quizDueDateValue,
           timezone: 'Africa/Lagos',
           release_strategy: 'CUSTOM',
           time_limit_override: timeLimitOverride ? Number(timeLimitOverride) : undefined,
           attempt_limit_override: attemptLimitOverride ? Number(attemptLimitOverride) : undefined,
           passing_score_override: passingScoreOverride ? Number(passingScoreOverride) : undefined,
-          instructor_uuid: instructor?.uuid as string,
+          instructor_uuid: instructor?.uuid,
           notes: quizNotes,
-        } as any,
+        },
       },
       {
         onSuccess: () => {
@@ -822,7 +862,7 @@ export function ClassScheduleManager({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredScheduleStudents.map((entry: any) => {
+                        {filteredScheduleStudents.map(entry => {
                           const name = entry?.user?.full_name ?? 'Unknown student';
                           const enrollmentUuid = entry?.enrollment?.uuid;
                           const studentId = entry?.user?.uuid;
@@ -954,12 +994,12 @@ export function ClassScheduleManager({
                     const uuid = event.target.value;
                     setSelectedAssignmentUuid(uuid);
                     setSelectedAssignment(
-                      allAssignments?.data?.content?.find((item: any) => item.uuid === uuid) ?? null
+                      allAssignments?.data?.content?.find(item => item.uuid === uuid) ?? null
                     );
                   }}
                 >
                   <option value=''>Select assignment</option>
-                  {allAssignments?.data?.content?.map((assignment: any) => (
+                  {allAssignments?.data?.content?.map(assignment => (
                     <option key={assignment.uuid} value={assignment.uuid}>
                       {assignment.title}
                     </option>
@@ -1053,7 +1093,7 @@ export function ClassScheduleManager({
                   value={selectedQuizUuid}
                   onChange={event => {
                     const uuid = event.target.value;
-                    const quiz = allQuizzes?.data?.content?.find((item: any) => item.uuid === uuid);
+                    const quiz = allQuizzes?.data?.content?.find(item => item.uuid === uuid);
                     setSelectedQuizUuid(uuid);
                     setSelectedQuiz(quiz ?? null);
                     setTimeLimitOverride(
@@ -1066,7 +1106,7 @@ export function ClassScheduleManager({
                   }}
                 >
                   <option value=''>Select quiz</option>
-                  {allQuizzes?.data?.content?.map((quiz: any) => (
+                  {allQuizzes?.data?.content?.map(quiz => (
                     <option key={quiz.uuid} value={quiz.uuid}>
                       {quiz.title}
                     </option>
@@ -1174,7 +1214,7 @@ export function ClassScheduleManager({
                 </div>
               ) : (
                 <div className='space-y-4'>
-                  {mergedAssignments.map((item: any) => {
+                  {mergedAssignments.map(item => {
                     const isExpanded = expandedAssignmentUuid === item.uuid;
 
                     return (
@@ -1251,7 +1291,7 @@ export function ClassScheduleManager({
                               ) : null}
 
                               <div className='grid gap-3 sm:grid-cols-2'>
-                                {item.attachments.map((attachment: any) => {
+                                {item.attachments.map(attachment => {
                                   const { icon: FileIcon, color } = getFileIcon(
                                     attachment.original_filename
                                   );

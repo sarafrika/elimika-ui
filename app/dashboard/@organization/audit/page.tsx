@@ -43,7 +43,7 @@ export default function AuditActivityPage() {
     );
   }
 
-  const statistics = (statsQuery.data as any)?.data ?? {};
+  const statistics = statsQuery.data?.data ?? {};
   const organisationMetrics = statistics.organization_metrics ?? {};
   const adminMetrics = statistics.admin_metrics ?? {};
 

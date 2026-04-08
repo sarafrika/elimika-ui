@@ -30,6 +30,26 @@ function decodeJWT(token: string) {
   }
 }
 
+type SessionWithUser = {
+  user?: {
+    id_token?: string | null;
+  };
+};
+
+function getSessionIdToken(session: unknown): string | undefined {
+  if (!session || typeof session !== 'object') {
+    return undefined;
+  }
+
+  const user = (session as SessionWithUser).user;
+  if (!user || typeof user !== 'object') {
+    return undefined;
+  }
+
+  const idToken = user.id_token;
+  return typeof idToken === 'string' ? idToken : undefined;
+}
+
 const config: NextAuthConfig = {
   session: { strategy: 'jwt' },
   providers: [
@@ -119,8 +139,7 @@ const config: NextAuthConfig = {
       }
       // Check if event has session property (database strategy)
       else if ('session' in event && event.session) {
-        const customSession = event.session as any;
-        idToken = customSession.user?.id_token;
+        idToken = getSessionIdToken(event.session);
       }
 
       if (!idToken) {

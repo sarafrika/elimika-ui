@@ -11,6 +11,7 @@ import {
   getProgramEnrollmentsOptions,
   getTrainingProgramByUuidOptions,
 } from '../../../../../services/client/@tanstack/react-query.gen';
+import type { ProgramEnrollment } from '../../../../../services/client/types.gen';
 
 export default function CourseDetailsPage() {
   const params = useParams();
@@ -83,7 +84,7 @@ export default function CourseDetailsPage() {
     );
   }
 
-  const enrollments = enrollmentsData?.data?.content || [];
+  const enrollments: ProgramEnrollment[] = enrollmentsData?.data?.content ?? [];
   const courses = programCourses?.data || [];
 
   const getStatusClasses = (status: string) => {
@@ -252,7 +253,7 @@ export default function CourseDetailsPage() {
                   </tr>
                 </thead>
                 <tbody className='divide-border divide-y'>
-                  {enrollments.map((e: any) => (
+                  {enrollments.map(e => (
                     <tr key={e.uuid}>
                       <td className='text-foreground px-6 py-4 text-sm'>
                         {e.student_name || e.student_uuid}

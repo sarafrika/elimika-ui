@@ -29,6 +29,13 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import type { CourseTrainingApplication } from '@/services/client';
+
+type TrainingApplicationRow = CourseTrainingApplication & {
+  course_name?: string;
+  course_description?: string;
+  applicant_name?: string;
+};
 
 export default function MyApplicationsPage() {
   const router = useRouter();
@@ -59,12 +66,12 @@ export default function MyApplicationsPage() {
     enabled: !!organisation?.uuid,
   });
 
-  const applications = data?.data?.content || [];
+  const applications: TrainingApplicationRow[] = data?.data?.content ?? [];
   const totalApplications = data?.data?.totalElements || 0;
   const totalPages = Math.ceil(totalApplications / pageSize);
 
   // Filter by search query (client-side)
-  const filteredApplications = applications.filter((app: any) => {
+  const filteredApplications = applications.filter(app => {
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -76,9 +83,9 @@ export default function MyApplicationsPage() {
   // Stats
   const stats = {
     total: totalApplications,
-    pending: applications.filter((app: any) => app.status === 'PENDING').length,
-    approved: applications.filter((app: any) => app.status === 'APPROVED').length,
-    rejected: applications.filter((app: any) => app.status === 'REJECTED').length,
+    pending: applications.filter(app => app.status === 'PENDING').length,
+    approved: applications.filter(app => app.status === 'APPROVED').length,
+    rejected: applications.filter(app => app.status === 'REJECTED').length,
   };
 
   const getStatusConfig = (status: string) => {
@@ -225,7 +232,7 @@ export default function MyApplicationsPage() {
       ) : (
         <>
           <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-            {filteredApplications.map((application: any) => {
+            {filteredApplications.map(application => {
               const statusConfig = getStatusConfig(application.status);
               const StatusIcon = statusConfig.icon;
 
@@ -309,10 +316,10 @@ export default function MyApplicationsPage() {
                     )}
 
                     {/* Submission Date */}
-                    {application.created_at && (
+                    {application.created_date && (
                       <div className='text-muted-foreground mt-auto flex items-center gap-2 pt-2 text-xs'>
                         <Calendar className='h-3 w-3' />
-                        Submitted {new Date(application.created_at).toLocaleDateString()}
+                        Submitted {new Date(application.created_date).toLocaleDateString()}
                       </div>
                     )}
                   </CardContent>

@@ -30,6 +30,7 @@ import {
   searchTrainingProgramsOptions,
   searchTrainingProgramsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { Category, SearchTrainingProgramsResponse } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BadgeCheck,
@@ -52,6 +53,8 @@ import {
   type ProgramFormValues,
   ProgramRequirementDialog,
 } from '../../@course_creator/_components/program-management-form';
+
+type ProgramListItem = NonNullable<NonNullable<SearchTrainingProgramsResponse['data']>['content']>[number];
 
 export default function ClassesPage() {
   const queryClient = useQueryClient();
@@ -100,8 +103,9 @@ export default function ClassesPage() {
     })
   );
 
-  const programs = data?.data?.content || [];
+  const programs: ProgramListItem[] = data?.data?.content ?? [];
   const paginationMetadata = data?.data?.metadata;
+  const categoryOptions: Category[] = categories?.data?.content ?? [];
 
   // DELETE PROGRAM
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -141,7 +145,7 @@ export default function ClassesPage() {
     }
   };
 
-  const selectedProgram = programs.find((program: any) => program.uuid === editProgramId);
+  const selectedProgram = programs.find(program => program.uuid === editProgramId);
 
   const programInitialValues: Partial<ProgramFormValues> = {
     title: selectedProgram?.title || '',
@@ -211,7 +215,7 @@ export default function ClassesPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                programs.map((program: any) => (
+                programs.map(program => (
                   <TableRow key={program.uuid}>
                     <TableHead>
                       <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
@@ -228,7 +232,7 @@ export default function ClassesPage() {
                       <div className='flex flex-wrap gap-1'>
                         <Badge variant='outline' className='capitalize'>
                           {categories?.data?.content?.find(
-                            (p: any) => p.uuid === program.category_uuid
+                            category => category.uuid === program.category_uuid
                           )?.name || 'Unknown'}
                         </Badge>
                       </div>
@@ -302,10 +306,9 @@ export default function ClassesPage() {
         </div>
       )}
 
-      {/* @ts-ignore */}
-      {paginationMetadata?.totalPages >= 1 && (
+      {typeof paginationMetadata?.totalPages === 'number' && paginationMetadata.totalPages >= 1 && (
         <CustomPagination
-          totalPages={paginationMetadata?.totalPages as number}
+          totalPages={paginationMetadata.totalPages}
           onPageChange={page => {
             setPage(page - 1);
           }}

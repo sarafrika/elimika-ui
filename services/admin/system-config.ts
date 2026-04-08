@@ -6,6 +6,7 @@ import type {
   SchemaEnum,
   SchemaEnum2,
   ScopeEnum,
+  SystemRuleResponse,
   ValueTypeEnum,
 } from '@/services/client/types.gen';
 import {
@@ -21,7 +22,9 @@ import {
 } from '@tanstack/react-query';
 import { z } from 'zod';
 
-export type SystemRule = Record<string, any>;
+type UnknownRecord = Record<string, unknown>;
+
+export type SystemRule = SystemRuleResponse;
 export type SystemRulePayload = z.infer<typeof zSystemRuleRequest>;
 export type SystemRuleCategory = SchemaEnum;
 export type SystemRuleStatus = SchemaEnum2;
@@ -78,29 +81,45 @@ const buildListRulesOptions = (params: SystemRuleListParams) => {
   return listRulesOptions({ query });
 };
 
+function asRecord(value: unknown): UnknownRecord | null {
+  return typeof value === 'object' && value !== null ? (value as UnknownRecord) : null;
+}
+
+function unwrapData(value: unknown): unknown {
+  return asRecord(value)?.data ?? value;
+}
+
+function unwrapSystemRule(value: unknown): SystemRule | null {
+  const payload = unwrapData(value);
+  return asRecord(payload) ? (payload as SystemRule) : null;
+}
+
 const deriveListResult = (
   data: unknown,
   fallback: Required<SystemRuleListParams>
 ): SystemRuleListResult => {
   // Use the raw response payload to avoid losing items if schemas drift
-  const base: any = (data as any)?.data ?? data ?? {};
-  const payload = base?.data ?? base; // handle possible double nesting
+  const base = unwrapData(data);
+  const payload = unwrapData(base);
+  const baseRecord = asRecord(base);
+  const payloadRecord = asRecord(payload);
 
   const items =
-    (Array.isArray(payload?.content) && payload.content) ||
-    (Array.isArray(payload?.items) && payload.items) ||
-    (Array.isArray(base?.content) && base.content) ||
-    [];
+    (Array.isArray(payloadRecord?.content) && payloadRecord.content) ||
+    (Array.isArray(payloadRecord?.items) && payloadRecord.items) ||
+    (Array.isArray(baseRecord?.content) && baseRecord.content) ||
+    ([] as unknown[]);
 
-  const metadata = payload?.metadata ?? payload?.page ?? base?.metadata ?? {};
+  const metadata =
+    asRecord(payloadRecord?.metadata ?? payloadRecord?.page ?? baseRecord?.metadata) ?? {};
 
   const page =
     Number.isFinite(metadata.pageNumber) || Number.isFinite(metadata.page)
-      ? (Number(metadata.pageNumber ?? metadata.page) as number)
+      ? Number(metadata.pageNumber ?? metadata.page)
       : fallback.page;
   const size =
     Number.isFinite(metadata.pageSize) || Number.isFinite(metadata.size)
-      ? (Number(metadata.pageSize ?? metadata.size) as number)
+      ? Number(metadata.pageSize ?? metadata.size)
       : fallback.size;
   const totalItems = toNumber(
     metadata.totalElements ?? metadata.totalItems ?? items.length,
@@ -110,7 +129,7 @@ const deriveListResult = (
     metadata.totalPages ?? (totalItems > 0 && size > 0 ? Math.ceil(totalItems / size) : 0);
 
   return {
-    items,
+    items: items as SystemRule[],
     page,
     size,
     totalItems,
@@ -148,7 +167,7 @@ export function useSystemRule(
       path: { uuid: uuid ?? '' },
     }),
     enabled: Boolean(uuid),
-    select: data => (data as any)?.data ?? data ?? null,
+    select: data => unwrapSystemRule(data),
     ...options,
   });
 }
@@ -166,7 +185,7 @@ export function useCreateSystemRule(
         body,
         throwOnError: true,
       });
-      return (data as any)?.data ?? data ?? null;
+      return unwrapSystemRule(data);
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: [{ _id: 'listRules' }] });
@@ -195,7 +214,7 @@ export function useUpdateSystemRule(
         body,
         throwOnError: true,
       });
-      return (data as any)?.data ?? data ?? null;
+      return unwrapSystemRule(data);
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: [{ _id: 'listRules' }] });

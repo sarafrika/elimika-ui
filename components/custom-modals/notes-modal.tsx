@@ -41,7 +41,7 @@ interface NotesModalProps {
   saveButtonProps?: React.ComponentProps<typeof Button>;
   cancelButtonProps?: React.ComponentProps<typeof Button>;
   userType?: 'course_creator' | 'instructor';
-  minimum_rate: any;
+  minimum_rate: number | string;
 }
 
 export default function NotesModal({

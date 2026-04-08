@@ -128,7 +128,7 @@ function normalizeActivityFeedPayload(payload: unknown): AdminActivityFeedResult
 }
 
 export async function fetchAdminActivityFeed(): Promise<AdminActivityFeedResult> {
-  const response = await fetchClient.GET('/api/v1/admin/dashboard/activity-feed' as any);
+  const response = await fetchClient.GET('/api/v1/admin/dashboard/activity-feed');
 
   if (response.error) {
     if (response.response && 'status' in response.response && response.response.status === 404) {

@@ -18,6 +18,10 @@ interface DailyAvailabilityGridProps {
   classes: ClassData[];
 }
 
+type AvailabilitySlot = CalendarEvent & {
+  recurring?: boolean;
+};
+
 // Slot color map with semantic tokens
 const SLOT_COLOR_MAP = {
   availability: {
@@ -45,7 +49,11 @@ export function DailyAvailabilityGrid({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<{ time: string; date: Date } | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<{
+    day: string;
+    time: string;
+    date: Date;
+  } | null>(null);
 
   const timeSlots = generateTimeSlots();
 
@@ -92,8 +100,8 @@ export function DailyAvailabilityGrid({
   };
 
   const getAvailabilityForSlot = (day: string, time: string) => {
-    return availabilityData?.events?.find((slot: any) => {
-      if (slot?.day?.toLowerCase() !== day.toLowerCase()) return false;
+    return availabilityData.events.find((slot: AvailabilitySlot) => {
+      if (slot.day.toLowerCase() !== day.toLowerCase()) return false;
       const slotTime = new Date(`2000-01-01T${time}:00`);
       const start = new Date(`2000-01-01T${slot.startTime}:00`);
       const end = new Date(`2000-01-01T${slot.endTime}:00`);
@@ -102,15 +110,16 @@ export function DailyAvailabilityGrid({
   };
 
   const isAvailabilityStartSlot = (day: string, time: string) => {
-    return availabilityData.events.some(
-      (slot: any) =>
-        slot?.day?.toLowerCase() === day.toLowerCase() &&
-        slot?.startTime === time &&
+    return availabilityData.events.some((slot: AvailabilitySlot) => {
+      return (
+        slot.day.toLowerCase() === day.toLowerCase() &&
+        slot.startTime === time &&
         slot.entry_type === 'AVAILABILITY'
-    );
+      );
+    });
   };
 
-  function doesSlotApplyToDate(slot: any, date: Date) {
+  function doesSlotApplyToDate(slot: AvailabilitySlot, date: Date) {
     if (slot.recurring) {
       const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
       return weekday.toLowerCase() === slot.day.toLowerCase();
@@ -184,6 +193,7 @@ export function DailyAvailabilityGrid({
     } else {
       setSelectedEvent(null);
       setSelectedSlot({
+        day: currentDate.toLocaleDateString('en-US', { weekday: 'long' }),
         time,
         date: new Date(currentDate),
       });
@@ -423,7 +433,7 @@ export function DailyAvailabilityGrid({
         isOpen={isEventModalOpen}
         onClose={() => setIsEventModalOpen(false)}
         event={selectedEvent}
-        selectedSlot={selectedSlot as any}
+        selectedSlot={selectedSlot}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
       />

@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import ConfirmModal from '../../../../../../components/custom-modals/confirm-modal';
 import { useInstructor } from '../../../../../../context/instructor-context';
+import type { BundledClass } from '../../../../../../src/features/dashboard/courses/types';
 import {
   enrollStudentMutation,
   getStudentScheduleQueryKey,
@@ -20,10 +21,9 @@ import {
 import EnrollCourseCard from '../../../../_components/enroll-course-card';
 
 const EnrollmentPage = () => {
-  const params = useParams();
+  const { id: courseId } = useParams<{ id: string }>();
   const qc = useQueryClient();
   const instructor = useInstructor();
-  const courseId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -45,7 +45,7 @@ const EnrollmentPage = () => {
   }, [replaceBreadcrumbs, courseId]);
 
   const [openEnrollModal, setOpenEnrollModal] = useState(false);
-  const [enrollingClass, setEnrollingClass] = useState<any | null>(null);
+  const [enrollingClass, setEnrollingClass] = useState<BundledClass | null>(null);
   const { classes, loading, isError } = useCourseClassesWithDetails(
     courseId,
     '2025-09-12',
@@ -108,11 +108,11 @@ const EnrollmentPage = () => {
         />
       ) : (
         <div className='flex flex-row flex-wrap gap-4'>
-          {classes.map((cls: any) => (
+          {classes.map(cls => (
             <EnrollCourseCard
               href='#'
               key={cls?.uuid}
-              cls={cls as any}
+              cls={cls}
               isFull={false}
               disableEnroll={cls?.enrollments?.length > 0}
               handleEnroll={() => {

@@ -1,5 +1,6 @@
 import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
+import type { paths } from '@/services/api/schema';
 import {
   zApiResponsePagedDtoTrainingBranch,
   zApiResponsePagedDtoUser,
@@ -29,12 +30,16 @@ export interface AdminBranchListResult {
   totalPages: number;
 }
 
+const ORGANIZATION_BRANCHES_PATH = '/api/v1/organisations/{uuid}/training-branches' as keyof paths;
+const BRANCH_USERS_PATH =
+  '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/users' as keyof paths;
+
 export async function fetchAdminBranches(
   params: AdminBranchListParams
 ): Promise<AdminBranchListResult> {
   const { organizationUuid, page = 0, size = 10, search, active = 'all' } = params;
 
-  const response = await fetchClient.GET('/api/v1/organisations/{uuid}/training-branches' as any, {
+  const response = await fetchClient.GET(ORGANIZATION_BRANCHES_PATH, {
     params: {
       path: { uuid: organizationUuid },
       query: {
@@ -113,18 +118,15 @@ export async function fetchBranchUsers(
 ): Promise<BranchUserListResult> {
   const { organizationUuid, branchUuid, page = 0, size = 20 } = params;
 
-  const response = await fetchClient.GET(
-    '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/users' as any,
-    {
-      params: {
-        path: { uuid: organizationUuid, branchUuid },
-        query: {
-          page,
-          size,
-        },
+  const response = await fetchClient.GET(BRANCH_USERS_PATH, {
+    params: {
+      path: { uuid: organizationUuid, branchUuid },
+      query: {
+        page,
+        size,
       },
-    }
-  );
+    },
+  });
 
   if (response.error) {
     throw new Error(
