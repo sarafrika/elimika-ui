@@ -48,7 +48,9 @@ function DashboardLayoutContent(dashboardProps: DashboardChildrenTypes) {
       return false;
     }
 
-    return pathname.startsWith('/dashboard/add-profile');
+    return (
+      pathname.startsWith('/dashboard/add-profile') || pathname.startsWith('/dashboard/workspace/')
+    );
   }, [defaultSlot, pathname]);
 
   const domainSlot = useMemo<ReactNode | null>(() => {
