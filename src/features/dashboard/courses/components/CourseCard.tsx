@@ -1,9 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +10,10 @@ import {
   getAllDifficultyLevelsOptions,
   getCourseCreatorByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface CourseCardProps {
   course: Course | TrainingProgram;

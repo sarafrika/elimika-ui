@@ -265,7 +265,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 //   successResponse(data?.data)
                 // }
 
-                setActiveStep(6);
+                // setActiveStep(6);
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
                 });

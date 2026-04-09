@@ -52,8 +52,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Plus, XIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
+  type Dispatch,
   forwardRef,
   type ReactNode,
+  type SetStateAction,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -66,7 +68,12 @@ import {
   courseCreationSchema,
   emptyRequirement,
 } from './course-creation-types';
-import { TrainingRequirementsSection } from './training-requirement-section';
+import {
+  createEmptyDraftsByProvider,
+  type DraftsByProvider,
+  type Provider,
+  TrainingRequirementsSection,
+} from './training-requirement-section';
 
 type MutationPayload = Record<string, unknown>;
 type CategoryItem = { uuid?: string; name?: string };
@@ -113,7 +120,11 @@ export type CourseFormProps = {
   initialValues?: Partial<CourseCreationFormValues>;
   editingCourseId?: string;
   courseId?: string;
-  successResponse?: (data: unknown) => void;
+  requirementDrafts?: DraftsByProvider;
+  setRequirementDrafts?: Dispatch<SetStateAction<DraftsByProvider>>;
+  activeRequirementProvider?: Provider | null;
+  setActiveRequirementProvider?: Dispatch<SetStateAction<Provider | null>>;
+  successResponse?: (data: any) => void;
 };
 
 export type CourseFormRef = {
@@ -149,9 +160,8 @@ function SavingOverlay({ stage }: { stage: SaveStage }) {
             return (
               <div
                 key={step.key}
-                className={`flex items-center gap-3 transition-opacity duration-300 ${
-                  isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
-                }`}
+                className={`flex items-center gap-3 transition-opacity duration-300 ${isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
+                  }`}
               >
                 {isDone ? (
                   <CheckCircle2 className='h-4 w-4 shrink-0 text-green-500' />
@@ -182,7 +192,17 @@ type RequirementFormMode = 'add' | 'edit';
 
 export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
   function CourseCreationForm(
-    { showSubmitButton, initialValues, editingCourseId, courseId, successResponse },
+    {
+      showSubmitButton,
+      initialValues,
+      editingCourseId,
+      courseId,
+      requirementDrafts,
+      setRequirementDrafts,
+      activeRequirementProvider,
+      setActiveRequirementProvider,
+      successResponse,
+    },
     ref
   ) {
     const qc = useQueryClient();
@@ -197,7 +217,13 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const [editingRequirementId, setEditingRequirementId] = useState<string | null>(null);
     const requirementMode: RequirementFormMode = editingRequirementId ? 'edit' : 'add';
 
-    const [existingRequirements, setExistingRequirements] = useState<RequirementRecord[]>([]);
+    const [existingRequirements, setExistingRequirements] = useState<any[]>([]);
+    const controlledRequirementDrafts = requirementDrafts ?? createEmptyDraftsByProvider();
+    const controlledSetRequirementDrafts =
+      setRequirementDrafts ?? (() => undefined);
+    const controlledActiveRequirementProvider = activeRequirementProvider ?? null;
+    const controlledSetActiveRequirementProvider =
+      setActiveRequirementProvider ?? (() => undefined);
 
     const form = useForm<CourseCreationFormValues>({
       resolver: zodResolver(courseCreationSchema),
@@ -860,6 +886,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 setExistingRequirements={setExistingRequirements}
                 editingCourseId={editingCourseId}
                 courseId={courseId}
+                draftsByProvider={controlledRequirementDrafts}
+                setDraftsByProvider={controlledSetRequirementDrafts}
+                activeProvider={controlledActiveRequirementProvider}
+                setActiveProvider={controlledSetActiveRequirementProvider}
                 addTrainingReqMut={addTrainingReqMut}
                 updateTrainingReqMut={updateTrainingReqMut}
                 deleteTrainingReqMut={deleteTrainingReqMut}

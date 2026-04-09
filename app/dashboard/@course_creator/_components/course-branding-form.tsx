@@ -215,7 +215,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
                 });
-                setActiveStep(5);
+                setActiveStep(7);
                 return;
               }
 

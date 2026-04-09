@@ -39,6 +39,17 @@ const CLASS_FOR_OPTIONS = [
   { label: 'Program', value: 'program', icon: GraduationCap },
 ];
 
+const RATE_CARD_CLASS_TYPE_MAP: Record<string, string> = {
+  PUBLIC: 'group',
+  PRIVATE: 'private',
+};
+
+const RATE_CARD_LOCATION_TYPE_MAP: Record<string, string> = {
+  ONLINE: 'online',
+  IN_PERSON: 'inperson',
+  HYBRID: 'inperson',
+};
+
 export const ClassDetailsSection = ({
   data,
   onChange,
@@ -49,8 +60,6 @@ export const ClassDetailsSection = ({
   const instructor = useInstructor();
   const prevCourseRef = useRef<string | null>(null);
   const prevProgramRef = useRef<string | null>(null);
-  const prevClassTypeRef = useRef<string | null>(null);
-  const prevLectureTypeRef = useRef<string | null>(null);
 
   // State for class type selection (course or program)
   const [classFor, setClassFor] = useState<'course' | 'program'>('course');
@@ -85,6 +94,7 @@ export const ClassDetailsSection = ({
     }),
     enabled: !!instructor?.uuid,
   });
+
   const approvedCourses = useMemo(() => {
     if (!courses?.data?.content || !appliedCourses?.data?.content) return [];
 
@@ -95,7 +105,7 @@ export const ClassDetailsSection = ({
     );
 
     return courses.data.content
-      .filter(course => approvedApplicationMap.has(course.uuid))
+      .filter(course => approvedApplicationMap.has(course.uuid) && course.admin_approved)
       .map(course => ({
         ...course,
         application: approvedApplicationMap.get(course.uuid),
@@ -123,7 +133,7 @@ export const ClassDetailsSection = ({
     );
 
     return programs.data.content
-      .filter(program => approvedApplicationMap.has(program.uuid))
+      .filter(program => approvedApplicationMap.has(program.uuid) && program.admin_approved)
       .map(program => ({
         ...program,
         application: approvedApplicationMap.get(program.uuid),
@@ -139,6 +149,28 @@ export const ClassDetailsSection = ({
   }, [approvedPrograms, data.program_uuid]);
 
   const selectedItem = classFor === 'course' ? selectedCourse : selectedProgram;
+  const selectedRate = useMemo(() => {
+    if (!data.class_type || !data.location_type) {
+      return undefined;
+    }
+
+    const rateCard = selectedItem?.application?.rate_card;
+
+    if (!rateCard) {
+      return undefined;
+    }
+
+    const classType = RATE_CARD_CLASS_TYPE_MAP[data.class_type];
+    const locationType = RATE_CARD_LOCATION_TYPE_MAP[data.location_type];
+
+    if (!classType || !locationType) {
+      return undefined;
+    }
+
+    const rateCardKey = `${classType}_${locationType}_rate`;
+
+    return rateCard[rateCardKey as keyof typeof rateCard];
+  }, [data.class_type, data.location_type, selectedItem]);
 
   // Handle course selection and auto-populate categories
   useEffect(() => {
@@ -158,65 +190,13 @@ export const ClassDetailsSection = ({
     onChange({ class_limit: selectedProgram.class_limit });
   }, [selectedProgram, data.program_uuid, onChange]);
 
-  // Handle class type & lecture type change to update rate card for COURSES
   useEffect(() => {
-    if (
-      classFor !== 'course' ||
-      !data.class_type ||
-      !data.location_type ||
-      !selectedCourse?.application?.rate_card
-    )
-      return;
+    const nextRate = selectedRate === undefined ? '' : String(selectedRate);
 
-    const shouldUpdate =
-      prevClassTypeRef.current !== data.class_type ||
-      prevLectureTypeRef.current !== data.location_type;
-
-    if (!shouldUpdate) return;
-
-    prevClassTypeRef.current = data.class_type;
-    prevLectureTypeRef.current = data.location_type;
-
-    const rateCardKey = `${data.class_type}_${data.location_type}_rate`;
-    const rate =
-      selectedCourse.application.rate_card[
-        rateCardKey as keyof typeof selectedCourse.application.rate_card
-      ];
-
-    if (rate !== undefined) {
-      onChange({ rate_card: String(rate) });
+    if (data.rate_card !== nextRate) {
+      onChange({ rate_card: nextRate });
     }
-  }, [data.class_type, data.location_type, selectedCourse, onChange, classFor]);
-
-  // Handle class type & lecture type change to update rate card for PROGRAMS
-  useEffect(() => {
-    if (
-      classFor !== 'program' ||
-      !data.class_type ||
-      !data.location_type ||
-      !selectedProgram?.application?.rate_card
-    )
-      return;
-
-    const shouldUpdate =
-      prevClassTypeRef.current !== data.class_type ||
-      prevLectureTypeRef.current !== data.location_type;
-
-    if (!shouldUpdate) return;
-
-    prevClassTypeRef.current = data.class_type;
-    prevLectureTypeRef.current = data.location_type;
-
-    const rateCardKey = `${data.class_type}_${data.location_type}_rate`;
-    const rate =
-      selectedProgram.application.rate_card[
-        rateCardKey as keyof typeof selectedProgram.application.rate_card
-      ];
-
-    if (rate !== undefined) {
-      onChange({ rate_card: String(rate) });
-    }
-  }, [data.class_type, data.location_type, selectedProgram, onChange, classFor]);
+  }, [data.rate_card, onChange, selectedRate]);
 
   // Handle classFor toggle - clear the opposite selection
   const handleClassForChange = (value: 'course' | 'program') => {
@@ -247,21 +227,18 @@ export const ClassDetailsSection = ({
                     <button
                       key={option.value}
                       onClick={() => handleClassForChange(option.value as 'course' | 'program')}
-                      className={`flex flex-1 items-center gap-3 rounded-lg border-2 p-4 transition-all ${
-                        classFor === option.value
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
+                      className={`flex flex-1 items-center gap-3 rounded-lg border-2 p-4 transition-all ${classFor === option.value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                        }`}
                     >
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                          classFor === option.value ? 'bg-primary/20' : 'bg-muted'
-                        }`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${classFor === option.value ? 'bg-primary/20' : 'bg-muted'
+                          }`}
                       >
                         <Icon
-                          className={`h-5 w-5 ${
-                            classFor === option.value ? 'text-primary' : 'text-muted-foreground'
-                          }`}
+                          className={`h-5 w-5 ${classFor === option.value ? 'text-primary' : 'text-muted-foreground'
+                            }`}
                         />
                       </div>
                       <div className='text-left'>
@@ -419,22 +396,22 @@ export const ClassDetailsSection = ({
           </div>
         </div>
 
-        {/* Rate Card */}
+        {/* Class Fee */}
         <div className='grid grid-cols-3 hover:bg-transparent'>
-          <div className='bg-muted/30 px-6 py-4 font-semibold'>Rate Card</div>
+          <div className='bg-muted/30 px-6 py-4 font-semibold'>Class Fee</div>
           <div className='bg-card col-span-2 px-6 py-4'>
             <div className='border-input bg-muted flex h-10 w-full cursor-not-allowed items-center gap-2 rounded-md border px-3 text-sm'>
               <span>
-                {data.rate_card ||
-                  `Auto-calculated from ${classFor === 'course' ? 'course' : 'program'}`}
+                {data.rate_card || 'Select class type and lecture type to view class fee'}
               </span>
               <span className='text-muted-foreground'>
                 ({selectedItem?.application?.rate_card?.currency || 'N/A'})
               </span>
+              <span className='text-muted-foreground'>
+                per hour per head</span>
             </div>
             <p className='text-muted-foreground mt-2 text-xs'>
-              Rate is automatically set based on {classFor === 'course' ? 'course' : 'program'} and
-              class type
+              Class fee is automatically set from the approved {classFor === 'course' ? 'course' : 'program'} rate card once class type and lecture type are selected.
             </p>
           </div>
         </div>

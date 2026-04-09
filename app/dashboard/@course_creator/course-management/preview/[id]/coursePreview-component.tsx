@@ -452,10 +452,6 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                         Major Assessment
                       </p>
                     )} */}
-
-                    {!hasRubric && (
-                      <p className='text-destructive text-sm italic'>No rubric attached</p>
-                    )}
                   </div>
                 </div>
               );

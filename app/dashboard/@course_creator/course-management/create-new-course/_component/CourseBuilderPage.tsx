@@ -17,6 +17,7 @@ import {
   publishCourseMutation,
   publishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { Lesson } from '@/services/client/types.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BadgeDollarSign,
@@ -40,14 +41,16 @@ import type { CourseCreationFormValues } from '../../../_components/course-creat
 import CourseGradingSection from '../../../_components/course-grading-section';
 import { CoursePricingForm } from '../../../_components/course-pricing-form';
 import CriteriaCreationForm from '../../../_components/criteria-creation-form';
-import type { TLesson } from '../../../_components/instructor-type';
 import { ContentCreationForm } from '../../../_components/lesson-content-creation-form';
 import { LessonCreationForm } from '../../../_components/lesson-creation-form';
 import {
   CourseCreatorEmptyState,
   CourseCreatorLoadingState,
 } from '../../../_components/loading-state';
-import type { Lesson } from '@/services/client/types.gen';
+import {
+  createEmptyDraftsByProvider,
+  type Provider,
+} from '../../../_components/training-requirement-section';
 
 type CourseLessonPreview = Lesson & { duration_display?: string };
 
@@ -61,6 +64,10 @@ export default function CourseBuilderPage() {
   const searchParams = useSearchParams();
   const courseId = searchParams.get('id');
   const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
+  const [requirementDrafts, setRequirementDrafts] = useState(createEmptyDraftsByProvider);
+  const [activeRequirementProvider, setActiveRequirementProvider] = useState<Provider | null>(
+    null
+  );
   const resolveId = courseId ? (courseId as string) : (createdCourseId as string);
   const { isLoading: creatorLoading, profile: creatorProfile } = useCourseCreator();
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -198,7 +205,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   if (creatorLoading) {
@@ -279,7 +286,11 @@ export default function CourseBuilderPage() {
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={courseId as string}
-                initialValues={courseInitialValues}
+                initialValues={courseInitialValues as any}
+                requirementDrafts={requirementDrafts}
+                setRequirementDrafts={setRequirementDrafts}
+                activeRequirementProvider={activeRequirementProvider}
+                setActiveRequirementProvider={setActiveRequirementProvider}
                 successResponse={data => {
                   const uuid = getResponseUuid(data);
                   if (uuid) {

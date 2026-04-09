@@ -1,5 +1,11 @@
 'use client';
 
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
+import { PublicTopNav } from '@/components/PublicTopNav';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   addDays,
   addWeeks,
@@ -23,11 +29,6 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { PublicTopNav } from '@/components/PublicTopNav';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useClassDetails } from '../../hooks/use-class-details';
 import { useDifficultyLevels } from '../../hooks/use-difficultyLevels';
 import { useUserDomains } from '../../hooks/use-user-query';
@@ -186,126 +187,15 @@ function ClassInviteContent() {
               </CardContent>
 
               <CardContent>
-                <ClassScheduleCalendar schedules={schedules} />
-              </CardContent>
-
-              {/* CTA */}
-              <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
-                <div className='text-muted-foreground text-sm'>
-                  Open to the public • Limited seats
-                </div>
-
-                <div className='flex items-center gap-3'>
-                  <Button onClick={handleRegister} size='lg' className='rounded-full px-10'>
-                    Register for Class
-                  </Button>
-
-                  <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
-                    {copied ? 'Copied!' : 'Copy link'}
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {data?.program_uuid && (
-            <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
-              <CardHeader className='space-y-4'>
-                <div className='flxe-row flex items-center justify-between'>
-                  <div className='flex flex-wrap gap-2'>
-                    <Badge className='rounded-full'>{data?.session_format}</Badge>
-                    <Badge variant='outline' className='rounded-full'>
-                      {data?.class_visibility}
-                    </Badge>
-                    <Badge
-                      variant='outline'
-                      className='border-primary/30 bg-primary/10 text-primary rounded-full'
-                    >
-                      {data?.duration_formatted}
-                    </Badge>
-                  </div>
-
-                  <span className='text-on-accent bg-accent rounded-full px-3 py-1 text-xs font-semibold shadow-sm'>
-                    PROGRAM
-                  </span>
-                </div>
-
-                <CardTitle className='text-3xl font-semibold'>{data?.title}</CardTitle>
-
-                {data?.description ? (
-                  <CardDescription className='text-muted-foreground'>
-                    {data?.description}
-                  </CardDescription>
-                ) : null}
-              </CardHeader>
-
-              <div>{program && <ProgramDetailsCard program={program} />}</div>
-
-              {/* Courses Card */}
-              <CardContent className='bg-primary/5 mx-6 space-y-3 rounded-lg p-6'>
-                <h3 className='font-semibold'>Courses Included in This Training</h3>
-
-                <ul className='text-muted-foreground space-y-2 text-sm'>
-                  {programCourses?.length === 0 && (
-                    <li className='text-muted-foreground text-sm'>No courses available</li>
-                  )}
-
-                  {programCourses?.map((course: ClassInviteProgramCourse) => (
-                    <li key={course.uuid} className='flex items-start gap-2'>
-                      <BookOpen className='text-primary mt-0.5 h-4 w-4' />
-                      <span>{course.title || course.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-
-              <CardContent className='space-y-6'>
-                {/* DETAILS */}
-                <div className='grid gap-4 sm:grid-cols-2'>
-                  <InfoRow
-                    icon={<Clock className='h-4 w-4' />}
-                    label='CLASS BEGINS'
-                    value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
-                      data?.default_end_time
-                    ).toLocaleTimeString()}`}
-                  />
-
-                  <InfoRow
-                    icon={<MapPin className='h-4 w-4' />}
-                    label='Location'
-                    value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
-                  />
-
-                  <InfoRow
-                    icon={<Users className='h-4 w-4' />}
-                    label='Capacity'
-                    value={data?.capacity_info}
-                  />
-
-                  <InfoRow
-                    icon={<Layers className='h-4 w-4' />}
-                    label='Fee'
-                    value={
-                      typeof data?.training_fee === 'number'
-                        ? `KES ${data?.training_fee.toLocaleString()}`
-                        : 'Free'
-                    }
-                  />
-
-                  <InfoRow
-                    icon={<Armchair className='h-4 w-4' />}
-                    label='Available Seats'
-                    value={
-                      <div>
-                        {Number(data?.max_participants) - uniqueEnrollments?.length} of{' '}
-                        {data?.max_participants}
-                      </div>
-                    }
-                  />
-                </div>
-              </CardContent>
+                <CourseTrainingRequirements
+                  requirements={course?.training_requirements}
+                  title='Course Training Requirements'
+                  description='Review what you need to prepare before registering for this class.'
+                />
+              </CardContent >
 
               <CardContent>
+                <ClassScheduleCalendar schedules={schedules as any} />
                 <ClassScheduleCalendar schedules={schedules} />
               </CardContent>
 
@@ -325,11 +215,134 @@ function ClassInviteContent() {
                   </Button>
                 </div>
               </div>
-            </Card>
-          )}
+            </Card >
+          )
+          }
+
+          {
+            data?.program_uuid && (
+              <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
+                <CardHeader className='space-y-4'>
+                  <div className='flxe-row flex items-center justify-between'>
+                    <div className='flex flex-wrap gap-2'>
+                      <Badge className='rounded-full'>{data?.session_format}</Badge>
+                      <Badge variant='outline' className='rounded-full'>
+                        {data?.class_visibility}
+                      </Badge>
+                      <Badge
+                        variant='outline'
+                        className='border-primary/30 bg-primary/10 text-primary rounded-full'
+                      >
+                        {data?.duration_formatted}
+                      </Badge>
+                    </div>
+
+                    <span className='text-on-accent bg-accent rounded-full px-3 py-1 text-xs font-semibold shadow-sm'>
+                      PROGRAM
+                    </span>
+                  </div>
+
+                  <CardTitle className='text-3xl font-semibold'>{data?.title}</CardTitle>
+
+                  {data?.description ? (
+                    <CardDescription className='text-muted-foreground'>
+                      {data?.description}
+                    </CardDescription>
+                  ) : null}
+                </CardHeader>
+
+                <div>{program && <ProgramDetailsCard program={program} />}</div>
+
+                {/* Courses Card */}
+                <CardContent className='bg-primary/5 mx-6 space-y-3 rounded-lg p-6'>
+                  <h3 className='font-semibold'>Courses Included in This Training</h3>
+
+                  <ul className='text-muted-foreground space-y-2 text-sm'>
+                    {programCourses?.length === 0 && (
+                      <li className='text-muted-foreground text-sm'>No courses available</li>
+                    )}
+
+                    {programCourses?.map((course: ClassInviteProgramCourse) => (
+                      <li key={course.uuid} className='flex items-start gap-2'>
+                        <BookOpen className='text-primary mt-0.5 h-4 w-4' />
+                        <span>{course.title || course.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+
+                <CardContent className='space-y-6'>
+                  {/* DETAILS */}
+                  <div className='grid gap-4 sm:grid-cols-2'>
+                    <InfoRow
+                      icon={<Clock className='h-4 w-4' />}
+                      label='CLASS BEGINS'
+                      value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
+                        data?.default_end_time
+                      ).toLocaleTimeString()}`}
+                    />
+
+                    <InfoRow
+                      icon={<MapPin className='h-4 w-4' />}
+                      label='Location'
+                      value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
+                    />
+
+                    <InfoRow
+                      icon={<Users className='h-4 w-4' />}
+                      label='Capacity'
+                      value={data?.capacity_info}
+                    />
+
+                    <InfoRow
+                      icon={<Layers className='h-4 w-4' />}
+                      label='Fee'
+                      value={
+                        typeof data?.training_fee === 'number'
+                          ? `KES ${data?.training_fee.toLocaleString()}`
+                          : 'Free'
+                      }
+                    />
+
+                    <InfoRow
+                      icon={<Armchair className='h-4 w-4' />}
+                      label='Available Seats'
+                      value={
+                        <div>
+                          {Number(data?.max_participants) - uniqueEnrollments?.length} of{' '}
+                          {data?.max_participants}
+                        </div>
+                      }
+                    />
+                  </div>
+                </CardContent>
+
+                <CardContent>
+                  <ClassScheduleCalendar schedules={schedules} />
+                </CardContent>
+
+                {/* CTA */}
+                <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
+                  <div className='text-muted-foreground text-sm'>
+                    Open to the public • Limited seats
+                  </div>
+
+                  <div className='flex items-center gap-3'>
+                    <Button onClick={handleRegister} size='lg' className='rounded-full px-10'>
+                      Register for Class
+                    </Button>
+
+                    <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
+                      {copied ? 'Copied!' : 'Copy link'}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )
+          }
         </>
       )}
-    </div>
+    </div >
   );
 }
 

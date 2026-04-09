@@ -27,7 +27,6 @@ import {
 } from '../../../../components/ui/select';
 import { Separator } from '../../../../components/ui/separator';
 import Spinner from '../../../../components/ui/spinner';
-import { Switch } from '../../../../components/ui/switch';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import { cn } from '../../../../lib/utils';
 import {
@@ -155,6 +154,10 @@ export const AssignmentCreationForm = ({
   const [isDragging, setIsDragging] = useState(false);
   const uploadAssignmentMut = useMutation(uploadAssignmentAttachmentMutation());
   const deleteAttachmentMut = useMutation(deleteAssignmentAttachmentMutation());
+  const isCreatingNewAssignment = !assignmentUuid;
+  const isSavingWithAttachment = isCreatingNewAssignment && !!mediaFile;
+  const isSavingAssignment =
+    isPending || uploadAssignmentMut.isPending || deleteAttachmentMut.isPending;
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleAssignmentInputChange = <K extends keyof AssignmentFormState>(
@@ -193,6 +196,29 @@ export const AssignmentCreationForm = ({
     }
   };
 
+  const uploadAttachmentForAssignment = (targetAssignmentUuid: string, file: File) =>
+    new Promise<void>((resolve, reject) => {
+      uploadAssignmentMut.mutate(
+        { body: { file }, path: { assignmentUuid: targetAssignmentUuid } },
+        {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getAssignmentAttachmentsQueryKey({
+                path: { assignmentUuid: targetAssignmentUuid },
+              }),
+            });
+            resolve();
+          },
+          onError: (err: any) => reject(err),
+        }
+      );
+    });
+
+  const resetSelectedMediaFile = () => {
+    setMediaFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSaveAssignment = async () => {
     if (!selectedLessonId || !assignmentData.title.trim()) {
       toast.error('Please select a lesson and enter an assignment title');
@@ -210,10 +236,23 @@ export const AssignmentCreationForm = ({
         );
         setSelectedAssignmentUuid(createdAssignmentUuid);
         onSelectAssignment?.(createdAssignmentUuid);
-        toast.success('Assignment created successfully!');
+
+        if (mediaFile) {
+          await uploadAttachmentForAssignment(createdAssignmentUuid, mediaFile);
+          resetSelectedMediaFile();
+          toast.success('Assignment created and attachment uploaded successfully!');
+        } else {
+          toast.success('Assignment created successfully!');
+        }
       }
     } catch (err) {
-      toast.error(`Failed to ${assignmentUuid ? 'update' : 'create'} assignment.`);
+      toast.error(
+        assignmentUuid
+          ? 'Failed to update assignment.'
+          : mediaFile
+            ? 'Failed to save assignment and upload attachment.'
+            : 'Failed to create assignment.'
+      );
     }
   };
 
@@ -253,8 +292,7 @@ export const AssignmentCreationForm = ({
       {
         onSuccess: () => {
           toast.success('Attachment uploaded successfully');
-          setMediaFile(null);
-          if (fileInputRef.current) fileInputRef.current.value = '';
+          resetSelectedMediaFile();
           qc.invalidateQueries({
             queryKey: getAssignmentAttachmentsQueryKey({ path: { assignmentUuid } }),
           });
@@ -613,13 +651,13 @@ export const AssignmentCreationForm = ({
               </div>
 
               {/* Active toggle */}
-              <div className='flex items-center gap-3'>
+              {/* <div className='flex items-center gap-3'>
                 <Switch
                   checked={assignmentData.active}
                   onCheckedChange={checked => handleAssignmentInputChange('active', checked)}
                 />
                 <Label className='text-foreground text-sm font-medium'>Active</Label>
-              </div>
+              </div> */}
 
               <Separator />
 
@@ -718,7 +756,11 @@ export const AssignmentCreationForm = ({
                     <Button
                       type='button'
                       variant='secondary'
-                      disabled={!mediaFile || uploadAssignmentMut.isPending}
+                      disabled={
+                        !mediaFile ||
+                        uploadAssignmentMut.isPending ||
+                        isCreatingNewAssignment
+                      }
                       onClick={handleAttachmentUpload}
                       className='bg-primary w-full max-w-fit text-white'
                     >
@@ -733,6 +775,12 @@ export const AssignmentCreationForm = ({
                     </Button>
                   </div>
 
+                  {isCreatingNewAssignment && mediaFile ? (
+                    <p className='text-muted-foreground text-center text-xs'>
+                      Save the assignment first to upload this file automatically.
+                    </p>
+                  ) : null}
+
                   <p className='text-muted-foreground text-xs'>
                     Supported formats: PDF, Images (JPG, PNG), Audio (MP3, WAV), Video (MP4),
                     Documents
@@ -743,18 +791,24 @@ export const AssignmentCreationForm = ({
               {/* Save / delete */}
               <div className='flex items-end justify-end gap-4 pt-2'>
                 {assignmentUuid && (
-                  <Button size='sm' variant='destructive' onClick={handleDeleteAssignment}>
-                    {isPending ? <Spinner /> : <Trash2 />}
-                  </Button>
-                )}
-                <Button size='sm' onClick={handleSaveAssignment} disabled={isPending}>
-                  {isPending ? (
+                <Button size='sm' variant='destructive' onClick={handleDeleteAssignment}>
+                  {isPending ? <Spinner /> : <Trash2 />}
+                </Button>
+              )}
+                <Button size='sm' onClick={handleSaveAssignment} disabled={isSavingAssignment}>
+                  {isSavingAssignment ? (
                     <>
                       <Spinner className='mr-2 h-4 w-4' />
-                      Saving...
+                      {isSavingWithAttachment ? 'Saving and uploading...' : 'Saving...'}
                     </>
                   ) : (
-                    <>{assignmentUuid ? 'Update Assignment' : 'Save Assignment'}</>
+                    <>
+                      {assignmentUuid
+                        ? 'Update Assignment'
+                        : isSavingWithAttachment
+                          ? 'Save Assignment and Upload Attachment'
+                          : 'Save Assignment'}
+                    </>
                   )}
                 </Button>
               </div>
