@@ -148,17 +148,9 @@ export function CourseCard({
             {course?.name || course?.title}
           </h3>
 
-          <div
-            className='text-muted-foreground mb-3 overflow-hidden text-sm leading-5'
-            style={{
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              maxHeight: '2.5rem', // 2 lines × line-height (leading-5 ≈ 1.25rem)
-            }}
-          >
+          <p className='text-muted-foreground mb-3 line-clamp-2 min-h-10 text-sm leading-5'>
             {stripHtml(course?.description)}
-          </div>
+          </p>
 
           {/* Instructor */}
           <div className='mb-3 flex min-w-0 items-center gap-2'>
