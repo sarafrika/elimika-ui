@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import DeleteModal from '@/components/custom-modals/delete-modal';
-import type { Course } from '@/services/client';
+import type { Course, CourseTrainingApplication } from '@/services/client';
 import {
   deleteCourseMutation,
   getAllCourseCreatorsQueryKey,
@@ -19,6 +19,7 @@ import { useProfileFormMode } from '@/src/features/profile/context/profile-form-
 import CourseDetailsPanel from './CourseDetailsPanel';
 import CourseList from './CourseList';
 import CourseMobileModal from './CourseMobileModal';
+import type { CourseWithApplication } from './types';
 
 export default function CoursesPage() {
   const user = useUserProfile();
@@ -51,24 +52,28 @@ export default function CoursesPage() {
   //     application: appliedMap.get(course.uuid) || null,
   //   }));
   // }, [allCourses, appliedCourses]);
-  const combinedCourses = React.useMemo(() => {
+  const combinedCourses = React.useMemo<CourseWithApplication[]>(() => {
     if (!allCourses?.data?.content || !appliedCourses?.data?.content) return [];
 
-    const appliedMap = new Map(
-      appliedCourses.data.content.map((app: any) => [app.course_uuid, app])
+    const appliedMap = new Map<string, CourseTrainingApplication>(
+      appliedCourses.data.content.flatMap(app =>
+        app.course_uuid ? ([[app.course_uuid, app]] as const) : []
+      )
     );
 
     // Only return courses that have an application
-    return allCourses.data.content
-      .filter((course: any) => appliedMap.has(course.uuid))
-      .map((course: any) => ({
-        ...course,
-        application: appliedMap.get(course.uuid),
-      }));
+    return allCourses.data.content.flatMap(course => {
+      if (!course.uuid) {
+        return [];
+      }
+
+      const application = appliedMap.get(course.uuid);
+      return application ? [{ ...course, application }] : [];
+    });
   }, [allCourses, appliedCourses]);
 
   const courses = useMemo(() => combinedCourses ?? [], [combinedCourses]);
-  const [selectedCourse, setSelectedCourses] = useState<Course | null>(null);
+  const [selectedCourse, setSelectedCourses] = useState<CourseWithApplication | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -78,14 +83,14 @@ export default function CoursesPage() {
 
   useEffect(() => {
     if (courses.length > 0 && !selectedCourse) {
-      setSelectedCourses(courses[0] as any);
+      setSelectedCourses(courses[0]);
     }
   }, [courses, selectedCourse]);
 
   const approveCourseCreator = useMutation(verifyCourseCreatorMutation());
   const unVerifyCourseCreator = useMutation(unverifyCourseCreatorMutation());
 
-  const handleApproveCourse = async (course: Course) => {
+  const handleApproveCourse = async (course: CourseWithApplication) => {
     try {
       approveCourseCreator.mutate(
         { path: { uuid: course.uuid! }, query: { reason: '' } },
@@ -102,7 +107,7 @@ export default function CoursesPage() {
     } catch (_error) {}
   };
 
-  const handleUnverifyCourse = async (_course: Course) => {
+  const handleUnverifyCourse = async (_course: CourseWithApplication) => {
     // try {
     //   unVerifyCourseCreator.mutate(
     //     { path: { uuid: course.uuid! }, query: { reason: '' } },
@@ -119,12 +124,12 @@ export default function CoursesPage() {
     // } catch (error) { }
   };
 
-  const handleDeclineCourse = async (_course: Course) => {
+  const handleDeclineCourse = async (_course: CourseWithApplication) => {
     toast.message('Implement reject/decline here');
   };
 
-  const handeCourseCreatorSelect = (course: Course) => {
-    setSelectedCourses(course as any);
+  const handeCourseCreatorSelect = (course: CourseWithApplication) => {
+    setSelectedCourses(course);
     // Open modal on small screens
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setIsModalOpen(true);
@@ -187,8 +192,8 @@ export default function CoursesPage() {
   return (
     <div className='bg-background border-border flex h-[calc(100vh-120px)] flex-col overflow-hidden rounded-lg border lg:flex-row'>
       <CourseList
-        courses={filteredAndSortedCourses as any}
-        selectedCourse={selectedCourse as any}
+        courses={filteredAndSortedCourses}
+        selectedCourse={selectedCourse}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         statusFilter={statusFilter}
@@ -203,7 +208,7 @@ export default function CoursesPage() {
 
       {/* Right Panel - Instructor Details (Desktop only) */}
       <CourseDetailsPanel
-        course={selectedCourse as any}
+        course={selectedCourse}
         onApprove={handleApproveCourse}
         onUnverify={handleUnverifyCourse}
         onDecline={handleDeclineCourse}
@@ -214,7 +219,7 @@ export default function CoursesPage() {
 
       {/* Mobile Modal */}
       <CourseMobileModal
-        course={selectedCourse as any}
+        course={selectedCourse}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onApprove={handleApproveCourse}

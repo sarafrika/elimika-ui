@@ -1,12 +1,12 @@
 import { BadgeCheckIcon } from 'lucide-react';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
-import type { Course } from '@/services/client';
+import type { CourseWithApplication } from './types';
 
 interface CourseCardProps {
-  course: Course;
+  course: CourseWithApplication;
   isSelected: boolean;
-  onSelect: (course: Course) => void;
+  onSelect: (course: CourseWithApplication) => void;
 }
 
 export default function CourseCard({ course, isSelected, onSelect }: CourseCardProps) {

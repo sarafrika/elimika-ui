@@ -1,12 +1,12 @@
 import { FileText } from 'lucide-react';
-import type { Course } from '@/services/client';
 import CourseDetails from './CourseDetails';
+import type { CourseWithApplication } from './types';
 
 interface CourseDetailsPanelProps {
-  course: Course | null;
-  onApprove: (course: Course) => void;
-  onUnverify: (course: Course) => void;
-  onDecline: (course: Course) => void;
+  course: CourseWithApplication | null;
+  onApprove: (course: CourseWithApplication) => void;
+  onUnverify: (course: CourseWithApplication) => void;
+  onDecline: (course: CourseWithApplication) => void;
   isApprovePending: boolean;
   isUnverifyPending: boolean;
   isDeclinePending: boolean;

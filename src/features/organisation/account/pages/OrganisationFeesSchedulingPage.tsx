@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { type ControllerRenderProps, useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,14 +41,21 @@ const feesSchedulingSchema = z.object({
 
 type FeesSchedulingFormValues = z.infer<typeof feesSchedulingSchema>;
 
-const rateCardHeaders: EditableFieldArrayColumn<keyof FeesSchedulingFormValues['rateCard'][0]>[] = [
+type RateCardFieldKey = keyof FeesSchedulingFormValues['rateCard'][number];
+type ScheduleFieldKey = keyof FeesSchedulingFormValues['schedule'][number];
+type FeesFieldKey = RateCardFieldKey | ScheduleFieldKey;
+type FeesFieldPath =
+  | `rateCard.${number}.${RateCardFieldKey}`
+  | `schedule.${number}.${ScheduleFieldKey}`;
+
+const rateCardHeaders: EditableFieldArrayColumn<RateCardFieldKey>[] = [
   { key: 'course', label: 'Course' },
   { key: 'classType', label: 'Class Type' },
   { key: 'method', label: 'Method' },
   { key: 'rate', label: 'Rate/Hr (USD)' },
 ];
 
-const scheduleHeaders: EditableFieldArrayColumn<keyof FeesSchedulingFormValues['schedule'][0]>[] = [
+const scheduleHeaders: EditableFieldArrayColumn<ScheduleFieldKey>[] = [
   { key: 'course', label: 'Course/Program' },
   { key: 'instructor', label: 'Instructor' },
   { key: 'lessons', label: 'No. Lessons' },
@@ -111,10 +118,8 @@ export default function FeesSchedulingPage() {
   };
 
   const renderInput = (
-    field: any,
-    headerKey:
-      | keyof FeesSchedulingFormValues['rateCard'][0]
-      | keyof FeesSchedulingFormValues['schedule'][0]
+    field: ControllerRenderProps<FeesSchedulingFormValues, FeesFieldPath>,
+    headerKey: FeesFieldKey
   ) => {
     const isNumeric = [
       'rate',

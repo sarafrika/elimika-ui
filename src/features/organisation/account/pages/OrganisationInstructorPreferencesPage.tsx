@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { type ControllerRenderProps, useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,9 +50,11 @@ const instructorPrefsSchema = z.object({
 });
 
 type InstructorPrefsFormValues = z.infer<typeof instructorPrefsSchema>;
+type PreferenceFieldKey = keyof InstructorPrefsFormValues['preferences'][number];
+type PreferenceFieldPath = `preferences.${number}.${PreferenceFieldKey}`;
 
 const preferenceHeaders: EditableFieldArrayColumn<
-  keyof InstructorPrefsFormValues['preferences'][0]
+  PreferenceFieldKey
 >[] = [
   { key: 'course', label: 'Course' },
   { key: 'type', label: 'Type' },
@@ -97,8 +99,8 @@ export default function InstructorPreferencesPage() {
   };
 
   const renderInput = (
-    field: any,
-    headerKey: keyof InstructorPrefsFormValues['preferences'][0]
+    field: ControllerRenderProps<InstructorPrefsFormValues, PreferenceFieldPath>,
+    headerKey: PreferenceFieldKey
   ) => {
     const isNumeric = ['experienceYears', 'maxFee'].includes(headerKey);
     return (

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getErrorMessage } from '@/lib/error-utils';
 import { createCourseCreator } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -86,10 +87,10 @@ export default function AddCourseCreatorProfileForm() {
 
       userDomain.setActiveDomain('course_creator');
       router.replace(buildDashboardSwitchPath('course_creator'));
-    } catch (error: any) {
-      const errorMessage =
-        error?.message || 'Failed to create course creator profile. Please try again.';
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(
+        getErrorMessage(error, 'Failed to create course creator profile. Please try again.')
+      );
     } finally {
       setIsSubmitting(false);
     }

@@ -4,55 +4,84 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import type { Instructor, InstructorSkill, ProficiencyLevelEnum } from '@/services/client';
 
-const normalizeSkill = (skill: any) => {
-  const proficiencyMap: Record<string, number> = {
-    BEGINNER: 25,
-    INTERMEDIATE: 50,
-    ADVANCED: 75,
-    EXPERT: 90,
-  };
+type InstructorSummary = Pick<Instructor, 'full_name' | 'professional_headline'> & {
+  profile_image_url?: string | null;
+};
 
-  const level = (skill.proficiency_level || '').toUpperCase();
+type NormalizedSkill = {
+  uuid?: string;
+  skill_name: string;
+  proficiency_level: ProficiencyLevelEnum;
+  proficiency_description: string;
+  summary: string;
+  proficiency_percentage: number;
+  is_core_skill: boolean;
+  is_teaching_qualified: boolean;
+  market_demand: string;
+  updated_date: Date | string;
+};
+
+const proficiencyMap: Record<ProficiencyLevelEnum, number> = {
+  BEGINNER: 25,
+  INTERMEDIATE: 50,
+  ADVANCED: 75,
+  EXPERT: 90,
+};
+
+const normalizeProficiencyLevel = (level?: string | null): ProficiencyLevelEnum => {
+  switch ((level ?? '').toUpperCase()) {
+    case 'INTERMEDIATE':
+      return 'INTERMEDIATE';
+    case 'ADVANCED':
+      return 'ADVANCED';
+    case 'EXPERT':
+      return 'EXPERT';
+    case 'BEGINNER':
+    default:
+      return 'BEGINNER';
+  }
+};
+
+const normalizeSkill = (skill: InstructorSkill): NormalizedSkill => {
+  const level = normalizeProficiencyLevel(skill.proficiency_level);
 
   return {
     uuid: skill.uuid,
-    instructor_uuid: skill.instructor_uuid,
     skill_name: skill.skill_name,
     proficiency_level: level,
     proficiency_description: skill.proficiency_description ?? '',
     summary: skill.summary ?? '',
-
     proficiency_percentage: proficiencyMap[level] ?? 50,
     is_core_skill: true,
     is_teaching_qualified: true,
-    skill_category: 'GENERAL',
     market_demand: 'HIGH',
-
-    created_date: skill.created_date,
-    updated_date: skill.updated_date ?? skill.created_date,
+    updated_date: skill.updated_date ?? skill.created_date ?? new Date(),
   };
 };
 
 interface InstructorSkillCardProps {
-  instructor: any;
-  skills: any[];
+  instructor: InstructorSummary;
+  skills: InstructorSkill[];
 }
 
-export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({ instructor, skills }) => {
+export function InstructorSkillCard({ instructor, skills }: InstructorSkillCardProps) {
   // Normalize incoming API data
   const normalizedSkills = skills.map(normalizeSkill);
+  const fullName = instructor.full_name ?? 'Instructor';
+  const profileImageUrl = instructor.profile_image_url ?? undefined;
 
   return (
     <Card className='border-border bg-card rounded-[12px] border p-4 shadow-xl'>
       <CardHeader className='flex flex-row items-center gap-4 p-0'>
         <Avatar className='h-14 w-14'>
-          <AvatarImage src={instructor.profile_image_url} alt={instructor.full_name} />
-          <AvatarFallback>{instructor.full_name?.charAt(0)}</AvatarFallback>
+          <AvatarImage src={profileImageUrl} alt={fullName} />
+          <AvatarFallback>{fullName.charAt(0)}</AvatarFallback>
         </Avatar>
 
         <div className='flex-1'>
-          <CardTitle className='text-lg font-semibold'>{instructor.full_name}</CardTitle>
+          <CardTitle className='text-lg font-semibold'>{fullName}</CardTitle>
           <p className='text-muted-foreground text-sm'>{instructor.professional_headline}</p>
           <p className='text-muted-foreground mt-1 text-xs'>
             Total Skills: {normalizedSkills.length}
@@ -67,7 +96,7 @@ export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({ instru
 
         {normalizedSkills.map(skill => (
           <div
-            key={skill.uuid}
+            key={skill.uuid ?? skill.skill_name}
             className='border-border rounded-[20px] border p-2 backdrop-blur lg:p-4'
           >
             <div className='flex items-center justify-between'>
@@ -114,4 +143,4 @@ export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({ instru
       </CardContent>
     </Card>
   );
-};
+}

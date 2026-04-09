@@ -62,11 +62,13 @@ export type MenuItem = {
 export function markActiveMenuItem(items: MenuItem[], currentPath: string): MenuItem[] {
   return items.map(item => {
     const newItem: MenuItem = { ...item };
+    const itemUrl = item.url;
 
     // ==> Mark as active only if exact match // newItem.isActive = item.url === currentPath;
 
     // == Mark as active only if exact match or path starts with item.url
-    newItem.isActive = currentPath.startsWith(item?.url as any);
+    newItem.isActive =
+      typeof itemUrl === 'string' && (currentPath === itemUrl || currentPath.startsWith(itemUrl));
 
     if (item.items && item.items.length > 0) {
       newItem.items = markActiveMenuItem(item.items, currentPath);
@@ -92,6 +94,7 @@ type Menu = {
   instructor?: MenuItem[];
   organisation_user?: MenuItem[];
   course_creator?: MenuItem[];
+  parent?: MenuItem[];
 };
 
 export default {

@@ -30,8 +30,8 @@ import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useMultiMutations from '@/hooks/use-multi-mutations';
-import type { Instructor, InstructorSkill } from '@/services/api/schema';
 import { schemas } from '@/services/api/zod-client';
+import type { Instructor, InstructorSkill, ProficiencyLevelEnum } from '@/services/client';
 import {
   addInstructorSkillMutation,
   deleteInstructorSkillMutation,
@@ -51,7 +51,26 @@ const skillsSchema = z.object({
 type SkillType = z.infer<typeof SkillSchema>;
 type SkillsFormValues = z.infer<typeof skillsSchema>;
 
-const proficiencyLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert', 'Native'];
+const proficiencyLevels: Array<{ label: string; value: ProficiencyLevelEnum }> = [
+  { label: 'Beginner', value: 'BEGINNER' },
+  { label: 'Intermediate', value: 'INTERMEDIATE' },
+  { label: 'Advanced', value: 'ADVANCED' },
+  { label: 'Expert', value: 'EXPERT' },
+];
+
+const normalizeProficiencyLevel = (level?: string | null): ProficiencyLevelEnum => {
+  switch ((level ?? '').toUpperCase()) {
+    case 'INTERMEDIATE':
+      return 'INTERMEDIATE';
+    case 'ADVANCED':
+      return 'ADVANCED';
+    case 'EXPERT':
+      return 'EXPERT';
+    case 'BEGINNER':
+    default:
+      return 'BEGINNER';
+  }
+};
 
 export default function SkillsSettings({
   instructor,
@@ -92,9 +111,7 @@ export default function SkillsSettings({
     skill_name: skill.skill_name ?? '',
     summary: skill.summary ?? '',
     proficiency_description: skill.proficiency_description ?? '',
-
-    // IMPORTANT: normalize case
-    proficiency_level: (skill.proficiency_level ?? 'BEGINNER').toUpperCase() as any,
+    proficiency_level: normalizeProficiencyLevel(skill.proficiency_level),
   });
 
   const form = useForm<SkillsFormValues>({
@@ -203,14 +220,18 @@ export default function SkillsSettings({
     );
   };
 
-  const domainBadges =
-    // @ts-expect-error
-    user?.user_domain?.map(domain =>
-      domain
-        .split('_')
-        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
-    ) ?? [];
+  const domainBadges = (
+    Array.isArray(user?.user_domain)
+      ? user.user_domain
+      : user?.user_domain
+        ? [user.user_domain]
+        : []
+  ).map(domain =>
+    domain
+      .split('_')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
+  );
 
   const [_showSkillCard, _setShowSkillCard] = useState(false);
 
@@ -342,8 +363,8 @@ export default function SkillsSettings({
                                 </FormControl>
                                 <SelectContent>
                                   {proficiencyLevels.map(level => (
-                                    <SelectItem key={level} value={level.toUpperCase()}>
-                                      {level}
+                                    <SelectItem key={level.value} value={level.value}>
+                                      {level.label}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
