@@ -2,10 +2,11 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
@@ -105,6 +106,88 @@ const RECURRENCE_TYPE_MAP: Record<string, string> = {
   year: 'YEARLY',
 };
 
+type ScheduleConflict = {
+  proposed: ScheduledSessionInstance;
+  existing: {
+    classUuid: string;
+    classTitle: string;
+    startTime: string;
+    endTime: string;
+  };
+};
+
+const normalizeDateTimeValue = (value: string | Date | undefined | null) => {
+  if (!value) {
+    return null;
+  }
+
+  const parsedValue = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(parsedValue.getTime())) {
+    return null;
+  }
+
+  return parsedValue;
+};
+
+const findScheduleConflicts = (
+  sessions: ScheduledSessionInstance[],
+  instructorClasses: any[],
+  resolveId: string | null,
+  instructorUuid?: string
+): ScheduleConflict[] => {
+  if (!instructorUuid || sessions.length === 0) {
+    return [];
+  }
+
+  const existingSchedules = instructorClasses
+    .filter(classItem => classItem.uuid && classItem.uuid !== resolveId)
+    .flatMap(classItem =>
+      (classItem.schedule ?? []).map((schedule: any) => ({
+        classUuid: classItem.uuid,
+        classTitle: classItem.title || 'Existing class',
+        startTime: schedule.start_time,
+        endTime: schedule.end_time,
+      }))
+    )
+    .map(schedule => {
+      const startTime = normalizeDateTimeValue(schedule.startTime);
+      const endTime = normalizeDateTimeValue(schedule.endTime);
+
+      if (!startTime || !endTime) {
+        return null;
+      }
+
+      return {
+        ...schedule,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+      };
+    })
+    .filter(Boolean);
+
+  return sessions.flatMap(session => {
+    const proposedStart = new Date(buildUtcIsoDateTime(session.date, session.startTime)).getTime();
+    const proposedEnd = new Date(buildUtcIsoDateTime(session.date, session.endTime)).getTime();
+
+    if (Number.isNaN(proposedStart) || Number.isNaN(proposedEnd) || proposedStart >= proposedEnd) {
+      return [];
+    }
+
+    return existingSchedules
+      .filter(existingSchedule => {
+        const existingStart = new Date(existingSchedule.startTime).getTime();
+        const existingEnd = new Date(existingSchedule.endTime).getTime();
+
+        return proposedStart < existingEnd && existingStart < proposedEnd;
+      })
+      .map(existingSchedule => ({
+        proposed: session,
+        existing: existingSchedule,
+      }));
+  });
+};
+
 // Utility function to calculate occurrences
 const calculateOccurrences = (
   startDate: string,
@@ -199,6 +282,7 @@ const ClassBuilderPage = () => {
 
   const createClassDefinition = useMutation(createClassDefinitionMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
+  const { classes: instructorClasses = [] } = useInstructorClassesWithSchedules(instructor?.uuid);
 
   // Class Details State
   const [classDetails, setClassDetails] = useState<ClassDetails>({
@@ -423,6 +507,16 @@ const ClassBuilderPage = () => {
   const sortedCustomSessions = customSessions
     .slice()
     .sort((a, b) => a.date.localeCompare(b.date));
+  const classScheduleConflicts = useMemo(
+    () => findScheduleConflicts(classScheduleInstances, instructorClasses, resolveId, instructor?.uuid),
+    [classScheduleInstances, instructorClasses, instructor?.uuid, resolveId]
+  );
+  const customScheduleConflicts = useMemo(
+    () => findScheduleConflicts(sortedCustomSessions, instructorClasses, resolveId, instructor?.uuid),
+    [sortedCustomSessions, instructorClasses, instructor?.uuid, resolveId]
+  );
+  const activeScheduleConflicts =
+    scheduleMode === 'custom' ? customScheduleConflicts : classScheduleConflicts;
 
   // Form Validation
   const isFormValid = (): boolean => {
@@ -439,6 +533,11 @@ const ClassBuilderPage = () => {
     if (scheduleMode === 'custom') {
       if (sortedCustomSessions.length === 0) {
         toast.error('Please add at least one custom schedule session');
+        return false;
+      }
+
+      if (customScheduleConflicts.length > 0) {
+        toast.error('Selected custom schedule conflicts with an existing class');
         return false;
       }
 
@@ -470,6 +569,10 @@ const ClassBuilderPage = () => {
     }
     if (classScheduleInstances.length === 0) {
       toast.error('No class schedule instances could be generated');
+      return false;
+    }
+    if (classScheduleConflicts.length > 0) {
+      toast.error('Selected class schedule conflicts with an existing class');
       return false;
     }
     return true;
@@ -667,6 +770,9 @@ const ClassBuilderPage = () => {
                 onScheduleModeChange={setScheduleMode}
                 customSessions={customSessions}
                 onCustomSessionsChange={setCustomSessions}
+                classScheduleConflicts={classScheduleConflicts}
+                customScheduleConflicts={customScheduleConflicts}
+                activeScheduleConflicts={activeScheduleConflicts}
               />
 
               {/* Class Information Section */}

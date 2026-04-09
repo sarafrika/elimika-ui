@@ -1,7 +1,9 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { Edit2, X } from 'lucide-react';
 import { calculateSessionHours, formatSessionDate, ScheduledSessionInstance } from './schedule-utils';
 
@@ -20,6 +22,7 @@ interface ScheduleInstancesTableProps {
   onSave?: (index: number) => void;
   onCancel?: () => void;
   onRemove?: (index: number) => void;
+  getConflictMessage?: (session: ScheduledSessionInstance) => string | null;
 }
 
 export const ScheduleInstancesTable = ({
@@ -37,6 +40,7 @@ export const ScheduleInstancesTable = ({
   onSave,
   onCancel,
   onRemove,
+  getConflictMessage,
 }: ScheduleInstancesTableProps) => {
   if (sessions.length === 0) {
     return (
@@ -73,9 +77,19 @@ export const ScheduleInstancesTable = ({
               {sessions.map((session, index) => (
                 <tr
                   key={`${session.date}-${index}`}
-                  className='hover:bg-muted/30 border-b last:border-0'
+                  className={cn(
+                    'border-b last:border-0 hover:bg-muted/30',
+                    getConflictMessage?.(session) && 'bg-destructive/5'
+                  )}
                 >
-                  <td className='p-3 font-medium'>{formatSessionDate(session.date)}</td>
+                  <td className='p-3 font-medium'>
+                    <div className='space-y-1'>
+                      <div>{formatSessionDate(session.date)}</div>
+                      {getConflictMessage?.(session) && (
+                        <Badge variant='destructive'>Conflict</Badge>
+                      )}
+                    </div>
+                  </td>
                   <td className='p-3'>
                     {editable && editingIndex === index ? (
                       <Input
@@ -101,9 +115,16 @@ export const ScheduleInstancesTable = ({
                     )}
                   </td>
                   <td className='p-3'>
-                    {editable && editingIndex === index
-                      ? calculateSessionHours(editStartTime, editEndTime).toFixed(1)
-                      : session.hours.toFixed(1)}
+                    <div className='space-y-1'>
+                      <div>
+                        {editable && editingIndex === index
+                          ? calculateSessionHours(editStartTime, editEndTime).toFixed(1)
+                          : session.hours.toFixed(1)}
+                      </div>
+                      {getConflictMessage?.(session) && (
+                        <p className='text-destructive text-xs'>{getConflictMessage(session)}</p>
+                      )}
+                    </div>
                   </td>
                   {editable && (
                     <td className='p-3'>

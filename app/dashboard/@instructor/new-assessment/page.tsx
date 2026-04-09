@@ -2,9 +2,8 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { BrandPill } from '@/components/ui/brand-pill';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     Pagination,
@@ -58,7 +57,8 @@ import {
     Trophy,
     Users,
 } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 
 type AssessmentTab = 'overview' | 'attendance' | 'formative' | 'performance' | 'summative';
 type StudentSortOption =
@@ -87,6 +87,8 @@ type StudentAssessmentCard = {
 
 type StudentRosterProps = {
     isLoading: boolean;
+    isLoadingClasses: boolean;
+    selectedClassUuid: string | null;
     selectedClassTitle: string;
     totalStudents: number;
     searchTerm: string;
@@ -95,6 +97,8 @@ type StudentRosterProps = {
     totalPages: number;
     selectedStudentUuid: string | null;
     students: StudentAssessmentCard[];
+    classOptions: Array<{ uuid: string; title: string }>;
+    onClassChange: (value: string) => void;
     onSearchChange: (value: string) => void;
     onSortChange: (value: StudentSortOption) => void;
     onPageChange: (page: number) => void;
@@ -230,29 +234,6 @@ function PlaceholderTab({
     );
 }
 
-function MetricTile({
-    icon,
-    label,
-    value,
-    hint,
-}: {
-    icon: ReactNode;
-    label: string;
-    value: string;
-    hint: string;
-}) {
-    return (
-        <div className='rounded-[24px] border border-border/70 bg-background/80 p-4'>
-            <div className='text-muted-foreground flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em]'>
-                {icon}
-                <span>{label}</span>
-            </div>
-            <p className='text-foreground mt-3 text-lg font-semibold leading-tight'>{value}</p>
-            <p className='text-muted-foreground mt-1 text-sm'>{hint}</p>
-        </div>
-    );
-}
-
 function MiniBarChart({ values }: { values: number[] }) {
     return (
         <div className='flex h-28 items-end gap-3 rounded-[24px] border border-border/70 bg-background/80 p-4'>
@@ -270,6 +251,8 @@ function MiniBarChart({ values }: { values: number[] }) {
 
 function StudentRoster({
     isLoading,
+    isLoadingClasses,
+    selectedClassUuid,
     selectedClassTitle,
     totalStudents,
     searchTerm,
@@ -278,6 +261,8 @@ function StudentRoster({
     totalPages,
     selectedStudentUuid,
     students,
+    classOptions,
+    onClassChange,
     onSearchChange,
     onSortChange,
     onPageChange,
@@ -287,22 +272,36 @@ function StudentRoster({
 
     return (
         <Card className='border-border/70 bg-card shadow-sm'>
-            <CardHeader className='space-y-4 pb-4'>
-                <div className='flex items-start justify-between gap-3'>
-                    <div className='space-y-2'>
-                        <BrandPill
-                            icon={<Users className='h-3.5 w-3.5' />}
-                            className='px-3 py-1 text-[10px]'
+            <CardHeader className='space-y-4 p-4'>
+                <div className='space-y-2'>
+                    <p>Select Class</p>
+                    {isLoadingClasses ? (
+                        <Skeleton className='h-10 w-full rounded-full' />
+                    ) : (
+                        <Select
+                            value={selectedClassUuid ?? undefined}
+                            onValueChange={onClassChange}
+                            disabled={!classOptions.length}
                         >
-                            Learners
-                        </BrandPill>
-                        <div>
-                            <CardTitle className='text-lg'>Class roster</CardTitle>
-                            <p className='text-muted-foreground mt-1 text-sm'>
-                                {students.length} of {totalStudents} learners in {selectedClassTitle}
-                            </p>
-                        </div>
-                    </div>
+                            <SelectTrigger className='bg-background h-10 max-w-[280px] w-full overflow-hidden rounded-full border border-border/70 text-sm'>
+                                <span className='block min-w-0 flex-1 truncate text-left'>
+                                    {selectedClassUuid
+                                        ? (classOptions.find(c => c.uuid === selectedClassUuid)?.title ?? 'Choose a class')
+                                        : 'Choose a class'}
+                                </span>
+                            </SelectTrigger>
+
+                            <SelectContent className='w-[var(--radix-select-trigger-width)]'>
+                                {classOptions.map(classItem => (
+                                    <SelectItem key={classItem.uuid} value={classItem.uuid}>
+                                        <span className='block truncate' title={classItem.title}>
+                                            {classItem.title}
+                                        </span>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
 
                 <div className='flex flex-col gap-2'>
@@ -346,6 +345,7 @@ function StudentRoster({
                     </div>
                 </div>
             </CardHeader>
+
             <CardContent className='space-y-2.5'>
                 {isLoading ? (
                     Array.from({ length: 9 }).map((_, index) => (
@@ -373,8 +373,8 @@ function StudentRoster({
                                     type='button'
                                     onClick={() => onSelectStudent(student.studentUuid)}
                                     className={`w-full rounded-[20px] border px-3 py-3 text-left transition-colors ${isActive
-                                            ? 'border-primary bg-primary/10 shadow-sm'
-                                            : 'border-border/70 bg-background/80 hover:bg-primary/10'
+                                        ? 'border-primary bg-primary/10 shadow-sm'
+                                        : 'border-border/70 bg-background/80 hover:bg-primary/10'
                                         }`}
                                 >
                                     <div className='flex items-center gap-3'>
@@ -475,6 +475,7 @@ function StudentRoster({
 export default function NewAssessmentPage() {
     const instructor = useInstructor();
     const { replaceBreadcrumbs } = useBreadcrumb();
+    const router = useRouter();
     const { difficultyMap } = useDifficultyLevels();
     const [selectedClassUuid, setSelectedClassUuid] = useState<string | null>(null);
     const [selectedStudentUuid, setSelectedStudentUuid] = useState<string | null>(null);
@@ -900,83 +901,7 @@ export default function NewAssessmentPage() {
     const hasError = hasClassesError || hasEnrollmentsError || hasAssessmentsError;
 
     return (
-        <div className='flex min-h-full flex-col gap-6 pb-8'>
-            <Card className='border-border/70 bg-card shadow-sm'>
-                <CardContent className='space-y-6 p-5 sm:p-6'>
-                    <div className='flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between'>
-                        <div className='space-y-3'>
-                            <BrandPill
-                                icon={<NotebookPen className='h-3.5 w-3.5' />}
-                                className='px-3 py-1 text-[10px]'
-                            >
-                                Assessment Console
-                            </BrandPill>
-                            <div className='space-y-2'>
-                                <h1 className='text-foreground text-2xl font-semibold sm:text-3xl'>
-                                    New assessment workspace
-                                </h1>
-                                <p className='text-muted-foreground max-w-3xl text-sm sm:text-base'>
-                                    Review class performance, switch between learners, and inspect the current
-                                    assessment breakdown from one dashboard surface.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className='w-full max-w-xl space-y-2'>
-                            <label className='text-foreground text-sm font-semibold'>Select class</label>
-                            {isLoadingClasses ? (
-                                <Skeleton className='h-11 rounded-xl' />
-                            ) : (
-                                <Select
-                                    value={selectedClassUuid ?? undefined}
-                                    onValueChange={value => setSelectedClassUuid(value)}
-                                    disabled={!classes.length}
-                                >
-                                    <SelectTrigger className='w-full rounded-2xl border-border/70 bg-background/80'>
-                                        <SelectValue placeholder='Choose a class' />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {classes.map(classItem => (
-                                            <SelectItem key={classItem.uuid} value={classItem.uuid}>
-                                                {classItem.title}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-                        <MetricTile
-                            icon={<BookOpen className='h-3.5 w-3.5' />}
-                            label='Course'
-                            value={selectedClass?.course?.name || 'No linked course'}
-                            hint='Current course connected to this class'
-                        />
-                        <MetricTile
-                            icon={<Users className='h-3.5 w-3.5' />}
-                            label='Learners'
-                            value={`${studentCards.length}${selectedClass?.max_participants ? ` / ${selectedClass.max_participants}` : ''
-                                }`}
-                            hint='Active learners visible in the roster'
-                        />
-                        <MetricTile
-                            icon={<GraduationCap className='h-3.5 w-3.5' />}
-                            label='Delivery'
-                            value={formatLabel(selectedClass?.session_format)}
-                            hint='Class format for this assessment view'
-                        />
-                        <MetricTile
-                            icon={<BarChart3 className='h-3.5 w-3.5' />}
-                            label='Attendance'
-                            value={`${attendedSessions}/${totalSessions}`}
-                            hint='Sessions attended by the selected learner'
-                        />
-                    </div>
-                </CardContent>
-            </Card>
-
+        <div className='flex min-h-full flex-col gap-6 py-10 pb-8'>
             {hasError ? (
                 <Card className='border-destructive/40'>
                     <CardContent className='flex min-h-48 flex-col items-center justify-center gap-3 p-8 text-center'>
@@ -993,10 +918,12 @@ export default function NewAssessmentPage() {
             ) : null}
 
             {selectedClass ? (
-                <div className='grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
+                <div className='grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)] '>
                     <aside className='space-y-4'>
                         <StudentRoster
                             isLoading={isLoadingRoster}
+                            isLoadingClasses={isLoadingClasses}
+                            selectedClassUuid={selectedClassUuid}
                             selectedClassTitle={selectedClass.title}
                             totalStudents={studentCards.length}
                             searchTerm={studentSearchTerm}
@@ -1005,6 +932,14 @@ export default function NewAssessmentPage() {
                             totalPages={studentTotalPages}
                             selectedStudentUuid={selectedStudentUuid}
                             students={paginatedStudentCards}
+                            classOptions={classes.map(classItem => ({
+                                uuid: classItem.uuid,
+                                title: classItem.title,
+                            }))}
+                            onClassChange={value => {
+                                setSelectedClassUuid(value);
+                                setStudentCurrentPage(1);
+                            }}
                             onSearchChange={value => {
                                 setStudentSearchTerm(value);
                                 setStudentCurrentPage(1);
@@ -1019,7 +954,7 @@ export default function NewAssessmentPage() {
                     </aside>
 
                     <Tabs defaultValue='overview' className='space-y-4'>
-                        <TabsList className='bg-card h-auto w-full flex-wrap justify-start rounded-[28px] border border-border/70 p-2'>
+                        <TabsList className='bg-card h-auto w-full flex-wrap justify-start rounded-[28px] p-2'>
                             {tabs.map(tab => (
                                 <TabsTrigger
                                     key={tab.value}
@@ -1078,9 +1013,9 @@ export default function NewAssessmentPage() {
                                                     </div>
 
                                                     <Button
-                                                        type='button'
-                                                        variant='secondary'
-                                                        className='rounded-full border-border/70 bg-background/90'
+                                                        type="button"
+                                                        onClick={() => router.push("/dashboard/trainings/create-new")}
+                                                        className="rounded-md border border-border/70 bg-primary hover:bg-accent cursor-pointer"
                                                     >
                                                         Add classes
                                                     </Button>

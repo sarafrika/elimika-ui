@@ -1,5 +1,6 @@
 'use client';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import { cn } from '../../../../../lib/utils';
 import { ScheduleSettings } from './page';
 import {
   calculateSessionHours,
+  formatSessionDate,
   generateScheduleInstances,
   ScheduledSessionInstance,
   ScheduleMode,
@@ -40,6 +42,9 @@ export const ScheduleSection = ({
   onScheduleModeChange,
   customSessions,
   onCustomSessionsChange,
+  classScheduleConflicts,
+  customScheduleConflicts,
+  activeScheduleConflicts,
 }: {
   data: ScheduleSettings;
   onChange: (updates: Partial<ScheduleSettings>) => void;
@@ -48,6 +53,30 @@ export const ScheduleSection = ({
   onScheduleModeChange: (value: ScheduleMode) => void;
   customSessions: ScheduledSessionInstance[];
   onCustomSessionsChange: (sessions: ScheduledSessionInstance[]) => void;
+  classScheduleConflicts: Array<{
+    proposed: ScheduledSessionInstance;
+    existing: {
+      classTitle: string;
+      startTime: string;
+      endTime: string;
+    };
+  }>;
+  customScheduleConflicts: Array<{
+    proposed: ScheduledSessionInstance;
+    existing: {
+      classTitle: string;
+      startTime: string;
+      endTime: string;
+    };
+  }>;
+  activeScheduleConflicts: Array<{
+    proposed: ScheduledSessionInstance;
+    existing: {
+      classTitle: string;
+      startTime: string;
+      endTime: string;
+    };
+  }>;
 }) => {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [defaultStartTime, setDefaultStartTime] = useState('09:00');
@@ -65,6 +94,23 @@ export const ScheduleSection = ({
   }, [data.repeat.unit, data.repeat.interval, data.repeat.days]);
 
   const scheduleInstances = useMemo(() => generateScheduleInstances(data), [data]);
+  const getConflictMessage = (
+    session: ScheduledSessionInstance,
+    conflicts: typeof activeScheduleConflicts
+  ) => {
+    const conflict = conflicts.find(
+      item =>
+        item.proposed.date === session.date &&
+        item.proposed.startTime === session.startTime &&
+        item.proposed.endTime === session.endTime
+    );
+
+    if (!conflict) {
+      return null;
+    }
+
+    return `Conflicts with ${conflict.existing.classTitle}`;
+  };
 
   useEffect(() => {
     setSelectedDates(customSessions.map(session => new Date(`${session.date}T00:00:00`)));
@@ -212,6 +258,43 @@ export const ScheduleSection = ({
           </RadioGroup>
         </div>
       </div>
+
+      {activeScheduleConflicts.length > 0 && (
+        <div className='border-b px-6 py-5'>
+          <Alert variant='destructive'>
+            <AlertTitle>Schedule conflict detected</AlertTitle>
+            <AlertDescription>
+              <p>
+                One or more selected sessions overlap with this instructor&apos;s existing class
+                schedule. Adjust the times below before publishing.
+              </p>
+              <ul className='list-disc space-y-1 pl-5'>
+                {activeScheduleConflicts.slice(0, 5).map(conflict => (
+                  <li
+                    key={`${conflict.proposed.date}-${conflict.proposed.startTime}-${conflict.existing.classTitle}-${conflict.existing.startTime}`}
+                  >
+                    {formatSessionDate(conflict.proposed.date)} {conflict.proposed.startTime} -{' '}
+                    {conflict.proposed.endTime} overlaps with {conflict.existing.classTitle} (
+                    {new Date(conflict.existing.startTime).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}{' '}
+                    -{' '}
+                    {new Date(conflict.existing.endTime).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                    ).
+                  </li>
+                ))}
+                {activeScheduleConflicts.length > 5 && (
+                  <li>{activeScheduleConflicts.length - 5} more conflict(s) not shown.</li>
+                )}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       {scheduleMode === 'class' ? (
         <>
@@ -533,6 +616,9 @@ export const ScheduleSection = ({
               sessions={scheduleInstances}
               title={`Class Schedule Instances (${scheduleInstances.length})`}
               emptyMessage='Complete the recurring schedule fields to preview generated class instances.'
+              getConflictMessage={session =>
+                getConflictMessage(session, classScheduleConflicts)
+              }
             />
           </div>
         </>
@@ -610,6 +696,9 @@ export const ScheduleSection = ({
               onSave={handleSaveEdit}
               onCancel={handleCancelEdit}
               onRemove={handleRemoveSession}
+              getConflictMessage={session =>
+                getConflictMessage(session, customScheduleConflicts)
+              }
             />
           </div>
         </div>

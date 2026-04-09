@@ -58,7 +58,7 @@ export const PreviewSection = ({
   const totalFee = ratePerLesson * lessonsCount;
 
   return (
-    <Card className='overflow-hidden border shadow-sm'>
+    <Card className='overflow-hidden border shadow-sm pt-0'>
       <div className='bg-muted/50 border-b px-6 py-4'>
         <h3 className='text-foreground text-lg font-semibold'>Preview</h3>
       </div>
@@ -123,11 +123,11 @@ export const PreviewSection = ({
             <TableCell className='bg-card py-4'>
               {(scheduleMode === 'custom' ? customSessions[0]?.date : scheduleSettings.startClass.date)
                 ? new Date(`${scheduleMode === 'custom' ? customSessions[0]?.date : scheduleSettings.startClass.date}T00:00:00`).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })
                 : '—'}
             </TableCell>
           </TableRow>

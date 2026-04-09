@@ -37,6 +37,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useUserProfile } from '../../../../context/profile-context';
@@ -167,6 +168,7 @@ const SAMPLE_BILLING_HISTORY: BillingHistory[] = [
 
 const SettingsPage = () => {
   const user = useUserProfile();
+  const router = useRouter()
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(SAMPLE_PAYMENT_METHODS);
   const [connectedApps, setConnectedApps] = useState<ConnectedApp[]>(SAMPLE_CONNECTED_APPS);
@@ -183,8 +185,6 @@ const SettingsPage = () => {
   // Advanced settings
   const [showAccountId, setShowAccountId] = useState(false);
   const [copiedAccountId, setCopiedAccountId] = useState(false);
-
-  const [openDelete, setOpenDelete] = useState(false);
 
   const handleCopyAccountId = () => {
     navigator.clipboard.writeText(user?.uuid as string);
@@ -300,46 +300,10 @@ const SettingsPage = () => {
                 </p>
               </div>
 
-              <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
-                <AlertDialogTrigger asChild>
-                  <Button variant='destructive'>
-                    <Trash2 className='mr-2 h-4 w-4' />
-                    Delete Account
-                  </Button>
-                </AlertDialogTrigger>
-
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your account and
-                      remove all your data from our servers including:
-                      <ul className='mt-2 list-inside list-disc space-y-1'>
-                        <li>All classes and course materials</li>
-                        <li>Student enrollments and records</li>
-                        <li>Payment history and billing information</li>
-                        <li>Messages and notifications</li>
-                        <li>Connected apps and integrations</li>
-                      </ul>
-                    </AlertDialogDescription>
-                    <div className='flex flex-row gap-2 self-end'>
-                      <Button variant='outline' onClick={() => setOpenDelete(false)}>
-                        Cancel
-                      </Button>
-
-                      <Button
-                        variant='destructive'
-                        onClick={async () => {
-                          await handleDeleteAccount();
-                          setOpenDelete(false);
-                        }}
-                      >
-                        Yes, Delete
-                      </Button>
-                    </div>
-                  </AlertDialogHeader>
-                </AlertDialogContent>
-              </AlertDialog>
+              <Button onClick={() => router.push('/dashboard/add-profile')} variant='destructive'>
+                <Trash2 className='mr-2 h-4 w-4' />
+                Delete Account
+              </Button>
             </div>
           </div>
         </Card>
@@ -779,33 +743,11 @@ const SettingsPage = () => {
                     Permanently delete your account and all data
                   </p>
                 </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant='destructive'>
-                      <Trash2 className='mr-2 h-4 w-4' />
-                      Delete Account
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete your account and
-                        remove all your data from our servers including:
-                        <ul className='mt-2 list-inside list-disc space-y-1'>
-                          <li>All classes and course materials</li>
-                          <li>Student enrollments and records</li>
-                          <li>Payment history and billing information</li>
-                          <li>Messages and notifications</li>
-                          <li>Connected apps and integrations</li>
-                        </ul>
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div>
-                      <Button>Yes, Delete</Button>
-                    </div>
-                  </AlertDialogContent>
-                </AlertDialog>
+
+                <Button onClick={() => router.push('/dashboard/add-profile')} variant='destructive'>
+                  <Trash2 className='mr-2 h-4 w-4' />
+                  Delete Account
+                </Button>
               </div>
             </div>
           </Card>
