@@ -1270,7 +1270,7 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
 const experienceSchema = z.object({
   uuid: z.string().optional(),
   instructor_uuid: z.string(),
-  organization_name: z.string().min(1, 'Organisation is required'),
+  organisation_name: z.string().min(1, 'Organisation is required'),
   position: z.string().min(1, 'Job title is required'),
   responsibilities: z.string().optional().nullable(),
   start_date: z.string().min(1, 'Start date is required'),
@@ -1314,7 +1314,7 @@ function ExperienceViewCard({ item, color }: { item: any; color: string }) {
       </div>
       <p className='text-foreground text-sm font-semibold'>{item.position}</p>
       <div className='flex items-center gap-2'>
-        <p className='text-muted-foreground text-xs'>{item.organization_name}</p>
+        <p className='text-muted-foreground text-xs'>{item.organisation_name}</p>
         {item.experience_level && (
           <>
             <span className='text-muted-foreground'>•</span>
@@ -1383,7 +1383,7 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
 
   const blankEntry = (): ExpEntry => ({
     instructor_uuid: sharedProfile?.uuid ?? '',
-    organization_name: '',
+    organisation_name: '',
     position: '',
     responsibilities: '',
     start_date: '',
@@ -1394,7 +1394,7 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
   const toFormEntry = (exp: any): ExpEntry => ({
     uuid: exp.uuid,
     instructor_uuid: sharedProfile?.uuid ?? '',
-    organization_name: exp.organization_name ?? '',
+    organisation_name: exp.organisation_name ?? '',
     position: exp.position ?? '',
     responsibilities: exp.responsibilities ?? '',
     start_date: exp.start_date ? new Date(exp.start_date).toISOString().slice(0, 7) : '',
@@ -1585,7 +1585,7 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
                         <Grip className='text-muted-foreground mt-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100' />
                         <div>
                           <p className='text-foreground text-sm leading-snug font-semibold'>
-                            {form.watch(`experiences.${index}.organization_name`) ||
+                            {form.watch(`experiences.${index}.organisation_name`) ||
                               'New Experience'}
                           </p>
                           <p className='text-muted-foreground text-xs'>
@@ -1608,7 +1608,7 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
                     <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                       <FormField
                         control={form.control}
-                        name={`experiences.${index}.organization_name`}
+                        name={`experiences.${index}.organisation_name`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Organisation</FormLabel>

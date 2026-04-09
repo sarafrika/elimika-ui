@@ -12,12 +12,12 @@ import {
 } from '@/components/ui/select';
 import { getCourseTrainingRequirementsQueryKey } from '@/services/client/@tanstack/react-query.gen';
 import { CheckCircle2, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { type Dispatch, Fragment, type SetStateAction, useState } from 'react';
 import { toast } from 'sonner';
 import { Textarea } from '../../../../components/ui/textarea';
 import { requirementTypes } from './course-creation-types';
 
-export type Provider = 'instructor' | 'organisation' | 'student';
+export type Provider = 'course_creator' | 'instructor' | 'organisation' | 'student';
 
 const PROVIDERS: { value: Provider; label: string }[] = [
   { value: 'instructor', label: 'Instructor' },
@@ -40,7 +40,7 @@ const UNIT_OPTIONS = [
   'other',
 ];
 
-type DraftRow = {
+export type DraftRow = {
   id: string; // temp local id
   name: string;
   requirement_type: string;
@@ -50,7 +50,7 @@ type DraftRow = {
   description: string;
 };
 
-const emptyDraft = (): DraftRow => ({
+export const emptyDraft = (): DraftRow => ({
   id: crypto.randomUUID(),
   name: '',
   requirement_type: requirementTypes[0] ?? 'material',
@@ -60,11 +60,24 @@ const emptyDraft = (): DraftRow => ({
   description: '',
 });
 
+export type DraftsByProvider = Record<Provider, DraftRow[]>;
+
+export const createEmptyDraftsByProvider = (): DraftsByProvider => ({
+  course_creator: [emptyDraft()],
+  instructor: [emptyDraft()],
+  organisation: [emptyDraft()],
+  student: [emptyDraft()],
+});
+
 type Props = {
   existingRequirements: any[];
-  setExistingRequirements: React.Dispatch<React.SetStateAction<any[]>>;
+  setExistingRequirements: Dispatch<SetStateAction<any[]>>;
   editingCourseId?: string;
   courseId?: string;
+  draftsByProvider: DraftsByProvider;
+  setDraftsByProvider: Dispatch<SetStateAction<DraftsByProvider>>;
+  activeProvider: Provider | null;
+  setActiveProvider: Dispatch<SetStateAction<Provider | null>>;
   addTrainingReqMut: any;
   updateTrainingReqMut: any;
   deleteTrainingReqMut: any;
@@ -78,6 +91,10 @@ export function TrainingRequirementsSection({
   setExistingRequirements,
   editingCourseId,
   courseId,
+  draftsByProvider,
+  setDraftsByProvider,
+  activeProvider,
+  setActiveProvider,
   addTrainingReqMut,
   updateTrainingReqMut,
   deleteTrainingReqMut,
@@ -86,16 +103,6 @@ export function TrainingRequirementsSection({
   qc,
 }: Props) {
   const targetCourseUuid = editingCourseId ?? courseId;
-
-  const [activeProvider, setActiveProvider] = useState<Provider | null>(null);
-
-  // Draft rows keyed by provider
-  const [draftsByProvider, setDraftsByProvider] = useState<Record<Provider, DraftRow[]>>({
-    course_creator: [emptyDraft()],
-    instructor: [emptyDraft()],
-    organisation: [emptyDraft()],
-    student: [emptyDraft()],
-  });
 
   const [savingProvider, setSavingProvider] = useState<Provider | null>(null);
 
@@ -179,7 +186,7 @@ export function TrainingRequirementsSection({
             query: { pageable: {} },
           }),
         });
-        // Reset drafts for this provider
+        // Reset only the provider that was successfully persisted.
         setDraftsByProvider(prev => ({
           ...prev,
           [provider]: [emptyDraft()],

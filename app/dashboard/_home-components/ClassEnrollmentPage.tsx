@@ -1,5 +1,6 @@
 'use client';
 
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
@@ -347,6 +348,13 @@ const ClassEnrollmentPage = ({ courseId, classId }: { courseId: string; classId:
             </div>
           </div>
         </Card>
+
+        <CourseTrainingRequirements
+          requirements={enrollingClass?.course?.training_requirements}
+          viewerRole='student'
+          title='Course Training Requirements'
+          description='Review what you need to have ready before this class begins.'
+        />
 
         <CardContent className='p-0'>
           <ClassScheduleCalendar schedules={schedule as any} />

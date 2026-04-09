@@ -1,5 +1,6 @@
 'use client';
 
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import { PublicTopNav } from '@/components/PublicTopNav';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -178,6 +179,14 @@ function ClassInviteContent() {
                     }
                   />
                 </div>
+              </CardContent>
+
+              <CardContent>
+                <CourseTrainingRequirements
+                  requirements={course?.training_requirements}
+                  title='Course Training Requirements'
+                  description='Review what you need to prepare before registering for this class.'
+                />
               </CardContent>
 
               <CardContent>

@@ -43,6 +43,10 @@ import type { ICourse } from '../../../_components/instructor-type';
 import { ContentCreationForm } from '../../../_components/lesson-content-creation-form';
 import { LessonCreationForm } from '../../../_components/lesson-creation-form';
 import {
+  createEmptyDraftsByProvider,
+  type Provider,
+} from '../../../_components/training-requirement-section';
+import {
   CourseCreatorEmptyState,
   CourseCreatorLoadingState,
 } from '../../../_components/loading-state';
@@ -52,6 +56,10 @@ export default function CourseBuilderPage() {
   const searchParams = useSearchParams();
   const courseId = searchParams.get('id');
   const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
+  const [requirementDrafts, setRequirementDrafts] = useState(createEmptyDraftsByProvider);
+  const [activeRequirementProvider, setActiveRequirementProvider] = useState<Provider | null>(
+    null
+  );
   const resolveId = courseId ? (courseId as string) : (createdCourseId as string);
   const { isLoading: creatorLoading, profile: creatorProfile } = useCourseCreator();
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -270,6 +278,10 @@ export default function CourseBuilderPage() {
                 courseId={createdCourseId as string}
                 editingCourseId={courseId as string}
                 initialValues={courseInitialValues as any}
+                requirementDrafts={requirementDrafts}
+                setRequirementDrafts={setRequirementDrafts}
+                activeRequirementProvider={activeRequirementProvider}
+                setActiveRequirementProvider={setActiveRequirementProvider}
                 successResponse={data => {
                   setCreatedCourseId(data?.uuid);
                 }}
