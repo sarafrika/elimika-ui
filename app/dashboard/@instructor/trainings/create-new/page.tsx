@@ -2,7 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import {
+  type InstructorClassWithSchedule,
+  useInstructorClassesWithSchedules,
+} from '@/hooks/use-instructor-classes-with-schedules';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -146,7 +149,7 @@ const normalizeDateTimeValue = (value: string | Date | undefined | null) => {
 
 const findScheduleConflicts = (
   sessions: ScheduledSessionInstance[],
-  instructorClasses: any[],
+  instructorClasses: InstructorClassWithSchedule[],
   resolveId: string | null,
   instructorUuid?: string
 ): ScheduleConflict[] => {
@@ -157,7 +160,7 @@ const findScheduleConflicts = (
   const existingSchedules = instructorClasses
     .filter(classItem => classItem.uuid && classItem.uuid !== resolveId)
     .flatMap(classItem =>
-      (classItem.schedule ?? []).map((schedule: any) => ({
+      (classItem.schedule ?? []).map(schedule => ({
         classUuid: classItem.uuid,
         classTitle: classItem.title || 'Existing class',
         startTime: schedule.start_time,
