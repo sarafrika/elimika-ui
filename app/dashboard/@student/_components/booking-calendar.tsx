@@ -1,5 +1,8 @@
 'use client';
 
+import { CalendarIcon, Clock, MapPin, Video, X } from 'lucide-react';
+import type React from 'react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -15,20 +18,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getDayLabel } from '@/lib/day-of-week';
-import {
-  getAvailabilityForDateOptions,
-  getInstructorAvailabilityOptions,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
-import { CalendarIcon, Clock, MapPin, Video, X } from 'lucide-react';
-import type React from 'react';
-import { useState } from 'react';
-import type { BookingSlot } from '../all-courses/instructor/page';
+import type { Instructor } from '@/services/client/types.gen';
+import type { BookingSlot } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
 
 type Props = {
-  instructor: any;
-  selectedSlots: any[];
+  instructor: Instructor;
+  selectedSlots: BookingSlot[];
   onSlotsChange: (slots: BookingSlot[]) => void;
+};
+
+type AvailabilitySlot = {
+  date?: Date;
+  day_of_week?: string;
+  endTime?: string;
+  is_available?: boolean;
+  startTime?: string;
+  time_range?: string;
+  uuid?: string;
 };
 
 export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, onSlotsChange }) => {
@@ -40,25 +46,12 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
   const [recurringFrequency, setRecurringFrequency] = useState<'daily' | 'weekly'>('weekly');
   const [recurringEndDate, setRecurringEndDate] = useState<Date | undefined>();
 
-  const { data } = useQuery({
-    ...getInstructorAvailabilityOptions({ path: { instructorUuid: instructor.uuid } }),
-    enabled: !!instructor.uuid,
-  });
-  const availability = data?.data || [];
+  const availability: AvailabilitySlot[] = [];
+  const availableSlots: AvailabilitySlot[] = [];
 
-  const { data: dateAvailability } = useQuery({
-    ...getAvailabilityForDateOptions({
-      path: {
-        instructorUuid: instructor.uuid,
-        date: selectedDate ? (selectedDate?.toISOString().split('T')[0] as any) : '',
-      },
-    }),
-    enabled: !!selectedDate,
-  });
-  const availableSlots = selectedDate ? dateAvailability?.data : [];
-
-  const handleSlotSelect = (slot: any) => {
+  const handleSlotSelect = (slot: AvailabilitySlot) => {
     if (!selectedDate) return;
+    if (!slot.startTime || !slot.endTime) return;
 
     const newSlot: BookingSlot = {
       id: `booking-${Date.now()}`,
@@ -93,9 +86,9 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
     }
   };
 
-  const isSlotSelected = (date: Date, start_time: string) => {
+  const isSlotSelected = (date: Date, startTime: string) => {
     return selectedSlots.some(
-      s => s.date.toDateString() === date.toDateString() && s.start_time === start_time
+      s => s.date.toDateString() === date.toDateString() && s.startTime === startTime
     );
   };
 
@@ -112,14 +105,15 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
   };
 
   // Disable dates that don't have availability
-  const notAvailable = availability?.filter((slot: any) => !slot.is_available);
+  const notAvailable = availability.filter(slot => !slot.is_available);
   const disabledDates = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // normalize
 
     const isPastDate = date < today;
 
-    const isUnavailable = notAvailable?.some((slot: any) => {
+    const isUnavailable = notAvailable.some(slot => {
+      if (!slot.date) return false;
       const slotDate = new Date(slot.date);
       return slotDate.toDateString() === date.toDateString();
     });
@@ -163,8 +157,10 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
             {selectedDate ? (
               (availableSlots?.length as number) > 0 ? (
                 <div className='max-h-[150px] space-y-2 overflow-y-auto'>
-                  {availableSlots?.map((slot: any) => {
-                    const selected = isSlotSelected(selectedDate, slot.startTime);
+                  {availableSlots.map(slot => {
+                    const selected = slot.startTime
+                      ? isSlotSelected(selectedDate, slot.startTime)
+                      : false;
 
                     return (
                       <Button
@@ -175,8 +171,8 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
                         // onClick={() => console.log(slot, "clicked slot")}
                       >
                         <Clock className='h-4 w-4' />
-                        {getDayLabel(slot.day_of_week)} {' - '}
-                        {slot.time_range}
+                        {getDayLabel(Number(slot.day_of_week ?? 0))} {' - '}
+                        {slot.time_range ?? 'Unavailable'}
                         {selected && <Badge variant='secondary'>Selected</Badge>}
                       </Button>
                     );
@@ -221,7 +217,15 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
         {/* Mode */}
         <div>
           <Label>Mode - User selects online or onsite classes</Label>
-          <RadioGroup value={mode} onValueChange={(v: any) => setMode(v)} className='mt-2'>
+          <RadioGroup
+            value={mode}
+            onValueChange={value => {
+              if (value === 'online' || value === 'onsite') {
+                setMode(value);
+              }
+            }}
+            className='mt-2'
+          >
             {instructor.is_profile_complete && (
               <div className='flex items-center space-x-2'>
                 <RadioGroupItem value='online' id='mode-online' />
@@ -276,7 +280,11 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
                 <Label>Frequency</Label>
                 <Select
                   value={recurringFrequency}
-                  onValueChange={(v: any) => setRecurringFrequency(v)}
+                  onValueChange={value => {
+                    if (value === 'daily' || value === 'weekly') {
+                      setRecurringFrequency(value);
+                    }
+                  }}
                 >
                   <SelectTrigger className='mt-2'>
                     <SelectValue />
@@ -294,7 +302,7 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
                   mode='single'
                   selected={recurringEndDate}
                   onSelect={setRecurringEndDate}
-                  // disabled={(date: any) =>
+                  // disabled={date =>
                   //     date < new Date() || (selectedDate && date <= selectedDate)
                   // }
                   className='mt-2 rounded-md border'

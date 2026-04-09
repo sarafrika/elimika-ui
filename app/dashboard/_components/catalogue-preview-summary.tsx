@@ -17,6 +17,7 @@ import {
   getCourseByUuidOptions,
   resolveByCourseOrClassOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { ClassDefinition, CommerceCatalogueItem, Course } from '@/services/client/types.gen';
 
 export function CataloguePreviewSummary({
   breadcrumbBase = { title: 'Catalogue', href: '/dashboard/catalogue' },
@@ -34,8 +35,10 @@ export function CataloguePreviewSummary({
     enabled: Boolean(routeId),
   });
 
-  const resolvedCourseId = catalogueQuery.data?.data?.course_uuid ?? routeId;
-  const resolvedClassId = catalogueQuery.data?.data?.class_definition_uuid ?? undefined;
+  const resolvedItems = catalogueQuery.data?.data ?? [];
+  const primaryResolvedItem = resolvedItems[0];
+  const resolvedCourseId = primaryResolvedItem?.course_uuid ?? routeId;
+  const resolvedClassId = primaryResolvedItem?.class_definition_uuid ?? undefined;
 
   const courseQuery = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: resolvedCourseId ?? '' } }),
@@ -49,9 +52,9 @@ export function CataloguePreviewSummary({
     enabled: Boolean(resolvedClassId),
   });
 
-  const catalogueItem = catalogueQuery.data?.data[0];
-  const course = extractEntity(courseQuery.data);
-  const classDefinition = extractEntity(classQuery.data);
+  const catalogueItem: CommerceCatalogueItem | undefined = primaryResolvedItem;
+  const course = extractEntity<Course>(courseQuery.data);
+  const classDefinition = extractEntity<ClassDefinition>(classQuery.data);
 
   const breadcrumbs = useMemo(
     () =>
@@ -114,7 +117,7 @@ export function CataloguePreviewSummary({
 
   const isActive = catalogueItem.active !== false;
   const isPublic = catalogueItem.publicly_visible !== false;
-  const pricing = (catalogueItem as { price?: number | string | null }).price ?? null;
+  const pricing = catalogueItem.unit_amount ?? null;
   const priceLabel =
     pricing !== null && pricing !== undefined
       ? formatMoney(pricing, catalogueItem.currency_code)
@@ -149,7 +152,7 @@ export function CataloguePreviewSummary({
             <Badge variant='outline'>{typeLabel}</Badge>
           </div>
           <CardTitle className='text-2xl font-semibold'>
-            {course?.title ?? course?.name ?? classDefinition?.title ?? 'Catalogue item'}
+            {course?.name ?? classDefinition?.title ?? 'Catalogue item'}
           </CardTitle>
           <CardDescription>
             {course?.description ? (
@@ -187,9 +190,7 @@ export function CataloguePreviewSummary({
               <LinkedItem
                 label='Course'
                 value={
-                  catalogueItem.course_uuid
-                    ? (course?.title ?? course?.name ?? catalogueItem.course_uuid)
-                    : '—'
+                  catalogueItem.course_uuid ? (course?.name ?? catalogueItem.course_uuid) : '—'
                 }
                 href={
                   catalogueItem.course_uuid
@@ -201,9 +202,7 @@ export function CataloguePreviewSummary({
                 label='Class'
                 value={
                   catalogueItem.class_definition_uuid
-                    ? (classDefinition?.title ??
-                      classDefinition?.name ??
-                      catalogueItem.class_definition_uuid)
+                    ? (classDefinition?.title ?? catalogueItem.class_definition_uuid)
                     : '—'
                 }
                 href={

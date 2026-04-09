@@ -8,18 +8,16 @@ import { Label } from '../../../../components/ui/label';
 import Spinner from '../../../../components/ui/spinner';
 import { Switch } from '../../../../components/ui/switch';
 import { getCourseAssessmentsOptions } from '../../../../services/client/@tanstack/react-query.gen';
+import type { CourseAssessment } from '../../../../services/client/types.gen';
 
 type CourseGradingFormProps = {
   courseUuid: string;
 };
 
-type Assessment = {
-  uuid: string;
-  title: string;
-  description?: string;
-  weight_percentage: number;
-  is_required: boolean;
-};
+type Assessment = Pick<
+  CourseAssessment,
+  'uuid' | 'title' | 'description' | 'weight_percentage' | 'is_required'
+>;
 
 const DEFAULT_AUTO_PASS_RATE = 50;
 
@@ -103,9 +101,7 @@ export default function CourseGradingForm({ courseUuid }: CourseGradingFormProps
                   <th className='text-foreground px-6 py-3 text-left font-semibold'>
                     Component Title
                   </th>
-                  <th className='text-foreground px-4 py-3 text-left font-semibold'>
-                    Weight (%)
-                  </th>
+                  <th className='text-foreground px-4 py-3 text-left font-semibold'>Weight (%)</th>
                 </tr>
               </thead>
 
@@ -127,10 +123,11 @@ export default function CourseGradingForm({ courseUuid }: CourseGradingFormProps
                           {assessment.weight_percentage}%
                         </span>
                         <span
-                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${assessment.is_required
-                            ? 'bg-success/10 text-success/70'
-                            : 'bg-muted-foreground/10 text-muted-foreground'
-                            }`}
+                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            assessment.is_required
+                              ? 'bg-success/10 text-success/70'
+                              : 'bg-muted-foreground/10 text-muted-foreground'
+                          }`}
                         >
                           {assessment.is_required ? 'Required' : 'Optional'}
                         </span>
@@ -142,8 +139,7 @@ export default function CourseGradingForm({ courseUuid }: CourseGradingFormProps
 
               <tfoot>
                 <tr className='bg-muted/40 border-t'>
-                  <td className='text-foreground px-6 py-3 font-bold'>Final Grade Formula
-                  </td>
+                  <td className='text-foreground px-6 py-3 font-bold'>Final Grade Formula</td>
                   <td
                     className={`px-4 py-3 text-left font-bold ${totalWeight === 100 ? 'text-success' : totalWeight > 100 ? 'text-destructive' : 'text-primary'}`}
                   >
@@ -203,10 +199,7 @@ export default function CourseGradingForm({ courseUuid }: CourseGradingFormProps
                   Uses 50% of the total allocated grading weight.
                 </p>
               </div>
-              <Switch
-                checked={useCalculatedPassMark}
-                onCheckedChange={setUseCalculatedPassMark}
-              />
+              <Switch checked={useCalculatedPassMark} onCheckedChange={setUseCalculatedPassMark} />
             </div>
 
             <div className='space-y-1.5'>

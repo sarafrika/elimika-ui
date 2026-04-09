@@ -26,7 +26,23 @@ const STEPS = [
   { id: 5, title: 'Review & Submit', component: ReviewAndSubmit },
 ];
 
-export function getTotalExperienceYears(experiences: any[]): number {
+type ExperienceRecord = {
+  calculated_years?: number | null;
+};
+
+type CourseSummary = {
+  uuid?: string;
+  name?: string;
+  description?: string;
+  category_names: string[];
+  difficulty_uuid?: string | null;
+  total_duration_display?: string;
+  class_limit?: number | string | null;
+};
+
+type StepData = Record<string, unknown> | null;
+
+export function getTotalExperienceYears(experiences: ExperienceRecord[]): number {
   const totalYears = experiences.reduce((sum, exp) => {
     return sum + (exp.calculated_years ?? 0);
   }, 0);
@@ -36,7 +52,7 @@ export function getTotalExperienceYears(experiences: any[]): number {
 
 export function ApplyToTrain() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedCourse, _setSelectedCourse] = useState<any>(null);
+  const [selectedCourse, _setSelectedCourse] = useState<CourseSummary | null>(null);
 
   const instructor = useInstructor();
   const { data } = useQuery(
@@ -70,7 +86,7 @@ export function ApplyToTrain() {
     setCurrentStep(stepId);
   };
 
-  const handleDataChange = (_stepData: any) => {
+  const handleDataChange = (_stepData: StepData) => {
     // setApplicationData(prev => ({ ...prev, ...stepData }));
   };
 

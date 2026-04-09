@@ -1,9 +1,5 @@
-import AddStudentProfileForm from '../_components/add-student-profile-form';
+import { AddStudentProfilePage as AddStudentProfileView } from '@/src/features/profile/add-profile/pages/AddStudentProfilePage';
 
 export default function AddStudentProfilePage() {
-  return (
-    <div className='bg-background min-h-screen py-8'>
-      <AddStudentProfileForm />
-    </div>
-  );
+  return <AddStudentProfileView />;
 }

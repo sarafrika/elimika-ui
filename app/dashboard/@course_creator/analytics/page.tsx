@@ -12,6 +12,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { useCourseCreator } from '@/context/course-creator-context';
+import type { Course, CourseReview } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { MessageSquare, Star, Users } from 'lucide-react';
@@ -22,7 +23,7 @@ import {
 } from '../../../../services/client/@tanstack/react-query.gen';
 
 export default function CourseCreatorAnalyticsPage() {
-  const [selectedCourse, setSelectedCourse] = useState<any | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const { data, courses } = useCourseCreator();
@@ -36,7 +37,7 @@ export default function CourseCreatorAnalyticsPage() {
     { label: 'Archived', count: analytics.archivedCourses },
   ];
 
-  const handleViewReviews = (course: any) => {
+  const handleViewReviews = (course: Course) => {
     setSelectedCourse(course);
     setIsSheetOpen(true);
   };
@@ -232,31 +233,36 @@ function RatingStars({ value }: { value: number }) {
   );
 }
 
-function CourseReviewCard({ course, onViewReviews }: { course: any; onViewReviews: () => void }) {
+function CourseReviewCard({
+  course,
+  onViewReviews,
+}: {
+  course: Course;
+  onViewReviews: () => void;
+}) {
   const { data: enrollmentData } = useQuery({
     ...getCourseEnrollmentsOptions({
-      path: { courseUuid: course?.uuid as string },
+      path: { courseUuid: course.uuid ?? '' },
       query: { pageable: {} },
     }),
-    enabled: !!course?.uuid,
+    enabled: !!course.uuid,
   });
   const enrollments = enrollmentData?.data?.content || [];
 
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
-    ...getCourseReviewsOptions({ path: { courseUuid: course?.uuid as string } }),
-    enabled: !!course?.uuid,
+    ...getCourseReviewsOptions({ path: { courseUuid: course.uuid ?? '' } }),
+    enabled: !!course.uuid,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const reviews = reviewsData?.data || [];
+  const reviews: CourseReview[] = reviewsData?.data || [];
 
   const reviewCount = reviews.length;
 
   const averageRating =
     reviewCount > 0
-      ? Math.round(
-          (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
-        ) / 10
+      ? Math.round((reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount) * 10) /
+        10
       : null;
 
   return (
@@ -324,13 +330,13 @@ function ReviewsSheet({
   isOpen,
   onClose,
 }: {
-  course: any;
+  course: Course | null;
   isOpen: boolean;
   onClose: () => void;
 }) {
   const { data: enrollmentData } = useQuery({
     ...getCourseEnrollmentsOptions({
-      path: { courseUuid: course?.uuid as string },
+      path: { courseUuid: course?.uuid ?? '' },
       query: { pageable: {} },
     }),
     enabled: !!course?.uuid && isOpen,
@@ -338,31 +344,35 @@ function ReviewsSheet({
   const enrollments = enrollmentData?.data?.content || [];
 
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
-    ...getCourseReviewsOptions({ path: { courseUuid: course?.uuid as string } }),
+    ...getCourseReviewsOptions({ path: { courseUuid: course?.uuid ?? '' } }),
     enabled: !!course?.uuid && isOpen,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const reviews = reviewsData?.data || [];
+  const reviews: CourseReview[] = reviewsData?.data || [];
 
   const reviewCount = reviews.length;
 
   const averageRating =
     reviewCount > 0
-      ? Math.round(
-          (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10
-        ) / 10
+      ? Math.round((reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount) * 10) /
+        10
       : null;
 
   // Calculate rating distribution
   const ratingDistribution = [5, 4, 3, 2, 1].map(rating => {
-    const count = reviews.filter((r: any) => r.rating === rating).length;
+    const count = reviews.filter(review => review.rating === rating).length;
     const percentage = reviewCount > 0 ? (count / reviewCount) * 100 : 0;
     return { rating, count, percentage };
   });
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+    <Sheet
+      open={isOpen}
+      onOpenChange={open => {
+        if (!open) onClose();
+      }}
+    >
       <SheetContent className='w-full overflow-y-auto sm:max-w-xl'>
         <SheetHeader>
           <SheetTitle>Course Reviews</SheetTitle>
@@ -441,13 +451,15 @@ function ReviewsSheet({
 
                 {reviewCount > 0 ? (
                   <ScrollArea className='space-y-4'>
-                    {reviews.map((review: any) => (
-                      <Card key={review.uuid} className='mb-3'>
+                    {reviews.map((review, index) => (
+                      <Card key={review.uuid ?? `${review.student_uuid}-${index}`} className='mb-3'>
                         <CardContent className='p-4'>
                           <div className='mb-2 flex items-start justify-between'>
                             <RatingStars value={review.rating || 0} />
                             <span className='text-muted-foreground text-xs'>
-                              {format(new Date(review.created_date), 'dd MMM yyyy')}
+                              {review.created_date
+                                ? format(new Date(review.created_date), 'dd MMM yyyy')
+                                : 'Date unavailable'}
                             </span>
                           </div>
 

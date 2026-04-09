@@ -24,6 +24,7 @@ import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
+import type { Assignment, CourseReview, DifficultyLevel, Lesson, Quiz } from '@/services/client';
 import {
   getAllAssignmentsOptions,
   getAllDifficultyLevelsOptions,
@@ -149,26 +150,29 @@ export default function ReusableCourseDetailsPage({
     }),
     enabled: !!courseId,
   });
-  const lessons = courseLessons?.data?.content;
-  const lessonUuids = lessons?.map((lesson: any) => lesson.uuid) || [];
+  const lessons: Lesson[] = courseLessons?.data?.content ?? [];
+  const lessonUuids = lessons
+    .map(lesson => lesson.uuid)
+    .filter((uuid): uuid is string => typeof uuid === 'string');
 
   const { data: cAssignments, isLoading: assignmentLoading } = useQuery({
     ...getAllAssignmentsOptions({ query: { pageable: {} } }),
   });
-  const assignments = cAssignments?.data?.content;
-  const filteredAssignments =
-    assignments?.filter((a: any) => lessonUuids.includes(a.lesson_uuid)) || [];
+  const assignments: Assignment[] = cAssignments?.data?.content ?? [];
+  const filteredAssignments = assignments.filter(assignment =>
+    lessonUuids.includes(assignment.lesson_uuid)
+  );
 
   const { data: cQuizzes, isLoading: quizzesLoading } = useQuery({
     ...getAllQuizzesOptions({ query: { pageable: {} } }),
   });
-  const quizzes = cQuizzes?.data?.content;
-  const filteredQuizzes = quizzes?.filter((q: any) => lessonUuids.includes(q.lesson_uuid)) || [];
+  const quizzes: Quiz[] = cQuizzes?.data?.content ?? [];
+  const filteredQuizzes = quizzes.filter(quiz => lessonUuids.includes(quiz.lesson_uuid));
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
-  const difficultyLevels = difficulty?.data;
+  const difficultyLevels: DifficultyLevel[] = difficulty?.data ?? [];
   const getDifficultyName = (uuid: string) =>
-    difficultyLevels?.find((l: any) => l.uuid === uuid)?.name;
+    difficultyLevels.find(level => level.uuid === uuid)?.name;
 
   const {
     isLoading: isAllLessonsDataLoading,
@@ -190,12 +194,13 @@ export default function ReusableCourseDetailsPage({
   }
 
   const difficultyName = getDifficultyName(courseData?.difficulty_uuid as string);
-  const reviewCount = reviews?.data?.length || 0;
+  const reviewItems: CourseReview[] = reviews?.data ?? [];
+  const reviewCount = reviewItems.length;
   const avgRating =
     reviewCount > 0
-      ? (
-          reviews!.data!.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviewCount
-        ).toFixed(1)
+      ? (reviewItems.reduce((sum, review) => sum + (review.rating || 0), 0) / reviewCount).toFixed(
+          1
+        )
       : null;
 
   return (
@@ -441,11 +446,9 @@ export default function ReusableCourseDetailsPage({
             </div>
           ) : (
             <div className='grid gap-4 sm:grid-cols-2'>
-              {reviews?.data
+              {reviewItems
                 ?.slice(0, 6)
-                .map((review: any) => (
-                  <ReviewCard key={review.uuid} review={review} type='others' />
-                ))}
+                .map(review => <ReviewCard key={review.uuid} review={review} type='others' />)}
             </div>
           )}
 

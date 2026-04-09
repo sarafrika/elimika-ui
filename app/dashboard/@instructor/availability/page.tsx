@@ -2,6 +2,7 @@
 
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
+import type { InstructorCalendarEntry } from '@/services/client/types.gen';
 import {
   getInstructorCalendarOptions,
   getInstructorScheduleOptions,
@@ -18,19 +19,24 @@ import {
 const Page = () => {
   const user = useUserProfile();
   const instructor = useInstructor();
-  const [transformedSlots, setTransformedSlots] = useState<any[]>([]);
 
-  const { data: availabilitySlotss, refetch } = useQuery(
+  const { data: availabilitySlotsResponse } = useQuery(
     getInstructorCalendarOptions({
       path: { instructorUuid: user?.instructor?.uuid as string },
-      query: { start_date: '2025-09-11' as any, end_date: '2026-11-11' as any },
+      query: {
+        start_date: new Date('2025-09-11'),
+        end_date: new Date('2026-11-11'),
+      },
     })
   );
 
   const { data: timetable } = useQuery({
     ...getInstructorScheduleOptions({
       path: { instructorUuid: instructor?.uuid as string },
-      query: { start: '2025-10-10' as any, end: '2025-11-11' as any },
+      query: {
+        start: new Date('2025-10-10'),
+        end: new Date('2025-11-11'),
+      },
     }),
     enabled: !!instructor?.uuid,
   });
@@ -40,11 +46,36 @@ const Page = () => {
       ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])
       : [];
 
-    setAvailabilityData((prev: any) => ({
+    const calendarEvents = (availabilitySlotsResponse?.data ?? []).map(
+      (entry: InstructorCalendarEntry) => {
+        const start = entry.start_time ? new Date(entry.start_time) : new Date();
+        const end = entry.end_time ? new Date(entry.end_time) : start;
+
+        return {
+          id: entry.uuid ?? `${start.toISOString()}-${entry.entry_type ?? 'event'}`,
+          title: entry.title ?? entry.entry_type ?? 'Availability',
+          startTime: start.toTimeString().slice(0, 5),
+          endTime: end.toTimeString().slice(0, 5),
+          startDateTime: start.toISOString().slice(0, 19),
+          endDateTime: end.toISOString().slice(0, 19),
+          date: new Date(start.toDateString()),
+          day: start.toLocaleDateString('en-US', { weekday: 'long' }),
+          location: entry.location_type,
+          attendees: 0,
+          isRecurring: false,
+          recurringDays: [],
+          status: entry.status ?? 'SCHEDULED',
+          is_available: entry.is_available,
+          entry_type: entry.entry_type,
+        };
+      }
+    );
+
+    setAvailabilityData(prev => ({
       ...prev,
-      events: eventsFromSchedule, // optionally: [...calendarEvents, ...eventsFromSchedule]
+      events: [...calendarEvents, ...eventsFromSchedule],
     }));
-  }, [availabilitySlotss?.data, timetable?.data]);
+  }, [availabilitySlotsResponse?.data, timetable?.data]);
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
     events: [],
@@ -61,7 +92,7 @@ const Page = () => {
 
   return (
     <AvailabilityManager
-      availabilityData={availabilityData || []}
+      availabilityData={availabilityData}
       onAvailabilityUpdate={setAvailabilityData}
       classes={[]}
     />

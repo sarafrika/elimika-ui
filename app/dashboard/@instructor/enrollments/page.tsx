@@ -15,6 +15,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { elimikaDesignSystem } from '@/lib/design-system';
+import type { ClassDefinition, Enrollment, Student } from '@/services/client';
 import {
   getClassDefinitionsForInstructorOptions,
   getEnrollmentsForClassOptions,
@@ -42,6 +43,10 @@ type StudentEnrollmentOverview = {
   userUuid?: string;
   courses: StudentCourseRecord[];
 };
+
+type InstructorClass = ClassDefinition;
+type EnrollmentRecord = Enrollment;
+type StudentRecord = Student;
 
 const ALL_COURSES_VALUE = 'all-courses';
 
@@ -90,12 +95,15 @@ const EnrollmentsPage = () => {
   });
 
   const instructorClasses = useMemo(
-    () => classesData?.data?.map((item: any) => item.class_definition).filter(Boolean) ?? [],
+    () =>
+      classesData?.data
+        ?.map(item => item.class_definition)
+        .filter((item): item is InstructorClass => Boolean(item)) ?? [],
     [classesData]
   );
 
   const enrollmentQueries = useQueries({
-    queries: instructorClasses.map((classItem: any) => ({
+    queries: instructorClasses.map(classItem => ({
       ...getEnrollmentsForClassOptions({
         path: { uuid: classItem.uuid },
       }),
@@ -105,7 +113,7 @@ const EnrollmentsPage = () => {
 
   const classEnrollmentRows = useMemo(
     () =>
-      instructorClasses.map((classItem: any, index: number) => ({
+      instructorClasses.map((classItem, index) => ({
         classItem,
         enrollments: enrollmentQueries[index]?.data?.data ?? [],
       })),
@@ -116,7 +124,7 @@ const EnrollmentsPage = () => {
     const ids = new Set<string>();
 
     classEnrollmentRows.forEach(({ enrollments }) => {
-      enrollments.forEach((enrollment: any) => {
+      enrollments.forEach(enrollment => {
         if (enrollment.student_uuid) {
           ids.add(enrollment.student_uuid);
         }
@@ -136,10 +144,10 @@ const EnrollmentsPage = () => {
   });
 
   const studentMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, StudentRecord>();
 
     uniqueStudentIds.forEach((studentUuid, index) => {
-      const student = studentQueries[index]?.data?.data;
+      const student = studentQueries[index]?.data;
       if (student) {
         map.set(studentUuid, student);
       }
@@ -152,7 +160,7 @@ const EnrollmentsPage = () => {
     const map = new Map<string, StudentEnrollmentOverview>();
 
     classEnrollmentRows.forEach(({ classItem, enrollments }) => {
-      enrollments.forEach((enrollment: any) => {
+      enrollments.forEach(enrollment => {
         const studentId = enrollment.student_uuid;
         if (!studentId) return;
 
@@ -195,7 +203,7 @@ const EnrollmentsPage = () => {
   const courseOptions = useMemo(
     () =>
       instructorClasses
-        .map((classItem: any) => ({
+        .map(classItem => ({
           id: classItem.uuid as string,
           name: classItem.title || 'Untitled Course',
         }))

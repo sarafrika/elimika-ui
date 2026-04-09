@@ -55,10 +55,31 @@ const COURSE_FORMATS = [
   'Professional Development Series',
 ];
 
+type CourseProposalData = {
+  targetAudience?: Array<string | undefined>;
+  courseFormat?: string;
+  proposedDuration?: string;
+  sessionLength?: string;
+  teachingApproach?: string;
+  uniqueValue?: string;
+  learningOutcomes?: string;
+  previousExperience?: string;
+} | null;
+
+type CourseSummary = {
+  uuid?: string;
+  name?: string;
+  description?: string;
+  category_names?: string[];
+  difficulty_uuid?: string | null;
+  total_duration_display?: string;
+  class_limit?: number | string | null;
+} | null;
+
 interface CourseProposalProps {
-  data: any;
-  onDataChange: (applicationData: any) => void;
-  selectedCourse: any;
+  data: CourseProposalData;
+  onDataChange: (applicationData: Record<string, unknown> | null) => void;
+  selectedCourse: CourseSummary | undefined;
 }
 
 const courseProposalSchema = z.object({
@@ -117,10 +138,13 @@ export function CourseProposal({ data, selectedCourse, onDataChange }: CoursePro
                       <BookOpen className='text-primary mb-2 h-5 w-5' />
                       <h4 className='text-primary capitalize'>{selectedCourse.name}</h4>
                       <div className='text-muted-foreground mb-2 text-sm'>
-                        <RichTextRenderer htmlString={selectedCourse.description} maxChars={100} />
+                        <RichTextRenderer
+                          htmlString={selectedCourse.description || ''}
+                          maxChars={100}
+                        />
                       </div>
                       <div className='flex flex-wrap gap-2'>
-                        {selectedCourse.category_names.map((category: string, index: number) => (
+                        {selectedCourse.category_names?.map((category: string, index: number) => (
                           <Badge key={index} variant='outline' className='mr-1 text-xs'>
                             {category}
                           </Badge>

@@ -1,0 +1,247 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { addYears, format } from 'date-fns';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { CustomLoadingState } from '@/app/dashboard/@course_creator/_components/loading-state';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useStudent } from '@/context/student-context';
+import useProgramBundledClassInfo from '@/hooks/use-program-classes';
+import { listCatalogItemsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import EnrollCourseCard from '@/src/features/dashboard/courses/components/enroll-course-card';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import type { BundledClass } from '../types';
+
+export default function AvailableProgramsPage({ programId }: { programId: string }) {
+  const router = useRouter();
+  const { activeDomain } = useUserDomain();
+
+  const { replaceBreadcrumbs } = useBreadcrumb();
+  const student = useStudent();
+
+  useEffect(() => {
+    if (programId) {
+      replaceBreadcrumbs([
+        {
+          id: 'dashboard',
+          title: 'Dashboard',
+          url: buildWorkspaceAliasPath(activeDomain, '/dashboard/overview'),
+        },
+        {
+          id: 'courses',
+          title: 'Browse Courses',
+          url: buildWorkspaceAliasPath(activeDomain, '/dashboard/all-courses'),
+        },
+        {
+          id: 'program-details',
+          title: `Available programs`,
+          url: buildWorkspaceAliasPath(
+            activeDomain,
+            `/dashboard/all-courses/available-programs/${programId}`
+          ),
+        },
+      ]);
+    }
+  }, [replaceBreadcrumbs, programId, activeDomain]);
+
+  // --- Date filter: default to a 1-year span, but classes won't load until user clicks Apply
+  const today = new Date();
+  const defaultStartDate = today;
+  const defaultEndDate = addYears(today, 1);
+
+  const toInputDate = (d: Date) => d.toISOString().slice(0, 10);
+  const [startDateInput, setStartDateInput] = useState<string>(toInputDate(defaultStartDate));
+  const [endDateInput, setEndDateInput] = useState<string>(toInputDate(defaultEndDate));
+
+  const [appliedStart, setAppliedStart] = useState<string>(toInputDate(defaultStartDate));
+  const [appliedEnd, setAppliedEnd] = useState<string>(toInputDate(defaultEndDate));
+  const [dateError, setDateError] = useState<string | null>(null);
+
+  const applyDates = () => {
+    setDateError(null);
+    if (!startDateInput || !endDateInput) {
+      setDateError('Please select both start and end dates.');
+      return;
+    }
+    const s = new Date(startDateInput);
+    const e = new Date(endDateInput);
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) {
+      setDateError('Invalid date format.');
+      return;
+    }
+    if (s > e) {
+      setDateError('Start date must be before end date.');
+      return;
+    }
+    setAppliedStart(startDateInput);
+    setAppliedEnd(endDateInput);
+  };
+
+  const clearDates = () => {
+    const start = toInputDate(defaultStartDate);
+    const end = toInputDate(defaultEndDate);
+
+    setStartDateInput(start);
+    setEndDateInput(end);
+    setAppliedStart(start);
+    setAppliedEnd(end);
+    setDateError(null);
+  };
+
+  const { data: catalogues } = useQuery({
+    ...listCatalogItemsOptions(),
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const {
+    classes = [],
+    loading,
+    isError,
+  } = useProgramBundledClassInfo(
+    programId,
+    appliedStart ?? undefined,
+    appliedEnd ?? undefined,
+    student
+  );
+
+  const filteredClasses = classes;
+  const cardClasses: BundledClass[] = filteredClasses.map(cls => ({
+    ...cls,
+    course: cls.course?.[0] ?? null,
+  }));
+  // const filteredClasses = classes.filter(cls =>
+  //   catalogues?.data?.some(cat => cat.class_definition_uuid === cls.uuid)
+  // );
+
+  return (
+    <div className='space-y-4 pb-10'>
+      <div className='flex items-center justify-between'>
+        <div>
+          <h1 className='text-2xl font-semibold'>Explore Classes Open for Enrollment</h1>
+          <p className='text-muted-foreground'>
+            Discover courses designed to help you grow and succeed.
+          </p>
+        </div>
+      </div>
+
+      {/* Date filter controls */}
+      <Card className='flex flex-row items-center justify-between space-y-4 p-4'>
+        {/* Active range display */}
+        <div className='flex items-center justify-between'>
+          <div className='text-sm'>
+            <span className='text-muted-foreground'>Date range</span>
+            <div className='font-medium'>
+              {!appliedStart || !appliedEnd ? (
+                <span className='text-muted-foreground'>Default range</span>
+              ) : (
+                <>
+                  {format(new Date(appliedStart), 'MMM dd, yyyy')}
+                  <span className='text-muted-foreground mx-2'>→</span>
+                  {format(new Date(appliedEnd), 'MMM dd, yyyy')}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className='flex flex-wrap items-end gap-3'>
+          <div>
+            <Label className='text-muted-foreground text-xs'>Start date</Label>
+            <Input
+              type='date'
+              value={startDateInput}
+              onChange={e => setStartDateInput(e.target.value)}
+              className='mt-1 w-[160px]'
+            />
+          </div>
+
+          <div>
+            <Label className='text-muted-foreground text-xs'>End date</Label>
+            <Input
+              type='date'
+              value={endDateInput}
+              onChange={e => setEndDateInput(e.target.value)}
+              className='mt-1 w-[160px]'
+            />
+          </div>
+
+          <Button size='sm' onClick={applyDates}>
+            Apply
+          </Button>
+
+          <Button size='sm' variant='outline' onClick={clearDates}>
+            Reset
+          </Button>
+        </div>
+
+        {dateError && <p className='text-destructive text-sm'>{dateError}</p>}
+      </Card>
+
+      {loading ? (
+        <CustomLoadingState subHeading='Loading available classes...' />
+      ) : (
+        <>
+          {!appliedStart || !appliedEnd ? (
+            <Card className='text-muted-foreground flex flex-col items-center justify-center space-y-2 p-6 text-center'>
+              <h3 className='text-foreground text-lg font-medium'>Select a date range</h3>
+              <p className='text-muted-foreground text-sm'>
+                Choose a start and end date then click Apply to view available classes.
+              </p>
+            </Card>
+          ) : classes.length === 0 ? (
+            <Card className='text-muted-foreground flex flex-col items-center justify-center space-y-2 p-6 text-center'>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                className='text-muted-foreground h-10 w-10'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M8 7V3m8 4V3m-9 8h10m-9 4h4m-8 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
+                />
+              </svg>
+              <h3 className='text-foreground text-lg font-medium'>No Classes Available</h3>
+              <p className='text-muted-foreground text-sm'>
+                It looks like this course doesn’t have any classes yet.
+              </p>
+            </Card>
+          ) : (
+            <div className='flex flex-row flex-wrap gap-4'>
+              {cardClasses.map(cls => (
+                <EnrollCourseCard
+                  key={cls?.uuid}
+                  href='#'
+                  cls={cls}
+                  isFull={false}
+                  disableEnroll={false}
+                  handleEnroll={selectedClass => {
+                    router.push(
+                      buildWorkspaceAliasPath(
+                        activeDomain,
+                        `/dashboard/all-courses/available-programs/${programId}/enroll?id=${selectedClass.uuid}`
+                      )
+                    );
+                  }}
+                  variant='full'
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

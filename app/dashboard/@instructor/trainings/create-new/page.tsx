@@ -8,6 +8,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import type { CreateClassDefinitionData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
@@ -104,6 +105,19 @@ const RECURRENCE_TYPE_MAP: Record<string, string> = {
   week: 'WEEKLY',
   month: 'MONTHLY',
   year: 'YEARLY',
+};
+type SubmitEventLike = {
+  preventDefault(): void;
+};
+
+const getMutationErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const { message } = error as { message?: unknown };
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return message;
+    }
+  }
+  return fallback;
 };
 
 type ScheduleConflict = {
@@ -450,7 +464,7 @@ const ClassBuilderPage = () => {
         const startDate = new Date(classData.default_start_time);
         const endDate = new Date(classData.default_end_time);
 
-        setScheduleSettings((prev: any) => ({
+        setScheduleSettings(prev => ({
           ...prev,
           startClass: {
             date: startDate.toISOString().split('T')[0],
@@ -579,17 +593,17 @@ const ClassBuilderPage = () => {
   };
 
   // Handle Form Submit
-  const handleSubmit = (e: FormEvent<HTMLFormElement>, isDraft: boolean = false) => {
+  const handleSubmit = (e: SubmitEventLike, isDraft: boolean = false) => {
     e.preventDefault();
 
     if (!isFormValid()) return;
 
     try {
-      const sessionTemplates =
+      const sessionTemplates: CreateClassDefinitionData['body']['session_templates'] =
         scheduleMode === 'custom'
           ? sortedCustomSessions.map(session => ({
-              start_time: buildUtcIsoDateTime(session.date, session.startTime),
-              end_time: buildUtcIsoDateTime(session.date, session.endTime),
+              start_time: new Date(buildUtcIsoDateTime(session.date, session.startTime)),
+              end_time: new Date(buildUtcIsoDateTime(session.date, session.endTime)),
               conflict_resolution: 'FAIL',
             }))
           : (() => {
@@ -609,8 +623,8 @@ const ClassBuilderPage = () => {
 
               return [
                 {
-                  start_time: startTimeIso,
-                  end_time: endTimeIso,
+                  start_time: new Date(startTimeIso),
+                  end_time: new Date(endTimeIso),
                   recurrence: {
                     recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
                     interval_value: scheduleSettings.repeat.interval,
@@ -622,15 +636,16 @@ const ClassBuilderPage = () => {
               ];
             })();
 
-      const payload = {
-        course_uuid: classDetails.course_uuid,
-        program_uuid: classDetails.program_uuid,
+      const payload: CreateClassDefinitionData['body'] = {
+        course_uuid: classDetails.course_uuid ?? undefined,
+        program_uuid: classDetails.program_uuid ?? undefined,
         title: classDetails.title,
         description: classDetails.description,
         default_instructor_uuid: instructor?.uuid as string,
         class_visibility: 'PUBLIC',
         session_format: 'GROUP',
-        location_type: classDetails.location_type,
+        location_type:
+          classDetails.location_type as CreateClassDefinitionData['body']['location_type'],
         location_name: classDetails.location_name,
         location_latitude: -1.292066,
         location_longitude: 36.821945,
@@ -639,17 +654,29 @@ const ClassBuilderPage = () => {
         is_active: !isDraft,
         default_start_time:
           scheduleMode === 'custom'
-            ? buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
-            : buildUtcIsoDateTime(
-                scheduleSettings.startClass.date,
-                scheduleSettings.allDay ? '00:00' : (scheduleSettings.startClass.startTime as string)
+            ? new Date(
+                buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
+              )
+            : new Date(
+                buildUtcIsoDateTime(
+                  scheduleSettings.startClass.date,
+                  scheduleSettings.allDay
+                    ? '00:00'
+                    : (scheduleSettings.startClass.startTime as string)
+                )
               ),
         default_end_time:
           scheduleMode === 'custom'
-            ? buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
-            : buildUtcIsoDateTime(
-                scheduleSettings.startClass.date,
-                scheduleSettings.allDay ? '23:59' : (scheduleSettings.startClass.endTime as string)
+            ? new Date(
+                buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
+              )
+            : new Date(
+                buildUtcIsoDateTime(
+                  scheduleSettings.startClass.date,
+                  scheduleSettings.allDay
+                    ? '23:59'
+                    : (scheduleSettings.startClass.endTime as string)
+                )
               ),
         meeting_link: classDetails.meeting_link,
         session_templates: sessionTemplates,
@@ -657,9 +684,9 @@ const ClassBuilderPage = () => {
 
       if (resolveId) {
         updateClassDefinition.mutate(
-          { path: { uuid: resolveId }, body: payload as any },
+          { path: { uuid: resolveId }, body: payload },
           {
-            onSuccess: response => {
+            onSuccess: () => {
               qc.invalidateQueries({
                 queryKey: getClassDefinitionsForInstructorQueryKey({
                   path: { instructorUuid: instructor?.uuid as string },
@@ -676,14 +703,14 @@ const ClassBuilderPage = () => {
 
               router.push('/dashboard/trainings');
             },
-            onError: (error: any) => {
-              toast.error(error?.message || 'Failed to update class');
+            onError: error => {
+              toast.error(getMutationErrorMessage(error, 'Failed to update class'));
             },
           }
         );
       } else {
         createClassDefinition.mutate(
-          { body: payload as any },
+          { body: payload },
           {
             onSuccess: response => {
               const savedUuid = response?.data?.class_definition?.uuid;
@@ -705,13 +732,13 @@ const ClassBuilderPage = () => {
               toast.success(isDraft ? 'Class saved as draft' : 'Class created successfully');
               router.push('/dashboard/trainings');
             },
-            onError: (error: any) => {
-              toast.error(error?.message || 'Failed to create class');
+            onError: error => {
+              toast.error(getMutationErrorMessage(error, 'Failed to create class'));
             },
           }
         );
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred while processing your request');
     }
   };
@@ -743,9 +770,9 @@ const ClassBuilderPage = () => {
                 <Button
                   type='button'
                   variant='outline'
-                  onClick={e => {
-                    e.preventDefault();
-                    handleSubmit(e as any, true);
+                  onClick={event => {
+                    event.preventDefault();
+                    handleSubmit(event, true);
                   }}
                   disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
                 >
@@ -758,7 +785,6 @@ const ClassBuilderPage = () => {
               <ClassDetailsSection
                 data={classDetails}
                 onChange={updates => setClassDetails(prev => ({ ...prev, ...updates }))}
-                courseDetail={courseDetail}
               />
 
               {/* Schedule Section */}

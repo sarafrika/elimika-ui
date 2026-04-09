@@ -1,4 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
+import type {
+  GetClassDefinitionResponse,
+  GetClassScheduleResponse,
+  GetCourseByUuidResponse,
+  GetCourseLessonsResponse,
+  GetEnrollmentsForClassResponse,
+  GetProgramCoursesResponse,
+  GetTrainingProgramByUuidResponse,
+} from '@/services/client/types.gen';
 import {
   getClassDefinitionOptions,
   getClassScheduleOptions,
@@ -8,6 +17,24 @@ import {
   getProgramCoursesOptions,
   getTrainingProgramByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
+
+export type ClassDetailsClass = NonNullable<
+  NonNullable<GetClassDefinitionResponse['data']>['class_definition']
+>;
+export type ClassDetailsScheduleItem = NonNullable<
+  NonNullable<GetClassScheduleResponse['data']>['content']
+>[number];
+export type ClassDetailsCourse = NonNullable<GetCourseByUuidResponse['data']>;
+export type ClassDetailsProgramCourse = NonNullable<
+  NonNullable<GetProgramCoursesResponse['data']>[number]
+>;
+export type ClassDetailsProgram = NonNullable<GetTrainingProgramByUuidResponse['data']>;
+export type ClassDetailsLesson = NonNullable<
+  NonNullable<GetCourseLessonsResponse['data']>['content']
+>[number];
+export type ClassDetailsEnrollment = NonNullable<
+  NonNullable<GetEnrollmentsForClassResponse['data']>[number]
+>;
 
 export const useClassDetails = (classId?: string) => {
   //  Fetch class definition

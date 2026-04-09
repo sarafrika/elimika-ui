@@ -22,11 +22,13 @@ import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import type { Student, StudentSchedule } from '@/services/client';
 import {
   getStudentScheduleOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { Skeleton } from '../../../components/ui/skeleton';
+import type { DashboardResolvedStudent, EnrolledScheduleItem, StopPropagationEvent } from './types';
 
 type FilterType = 'all' | 'active' | 'inactive';
 type Category = 'All';
@@ -59,7 +61,16 @@ const filterOptions: Array<{
 
 const categoryOptions: Category[] = ['All'];
 
-export default function StudentsListPage({ studentsData }: { studentsData: any }) {
+type StudentsPageData = {
+  data?: {
+    content?: Student[];
+    metadata?: {
+      totalPages?: number;
+    };
+  };
+};
+
+export default function StudentsListPage({ studentsData }: { studentsData: StudentsPageData }) {
   const [page, setPage] = useState(0);
 
   const students = studentsData?.data?.content ?? [];
@@ -77,7 +88,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
     queries: students.map(student => ({
       ...getStudentScheduleOptions({
         path: { studentUuid: student.uuid as string },
-        query: { start: '2025-10-01' as any, end: '2030-12-31' as any },
+        query: { start: new Date('2025-10-01'), end: new Date('2030-12-31') },
       }),
       enabled: !!student.uuid,
     })),
@@ -85,14 +96,14 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
   const isLoading =
     studentDetailQueries.some(q => q.isLoading) || studentEnrollmentQueries.some(q => q.isLoading);
 
-  const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data);
+  const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data ?? []);
 
   const uniqueEnrollments = detailedEnrollments.map(enrollments => {
     if (!enrollments) return [];
 
     const seen = new Set();
 
-    return enrollments.filter((enrollment: any) => {
+    return enrollments.filter((enrollment: EnrolledScheduleItem) => {
       if (seen.has(enrollment.class_definition_uuid)) {
         return false;
       }
@@ -112,7 +123,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
     [students, uniqueEnrollments]
   );
 
-  const resolvedStudents = useMemo(
+  const resolvedStudents = useMemo<DashboardResolvedStudent[]>(
     () =>
       students
         .map((student, index) => {
@@ -125,7 +136,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
             enrollmentCount: (uniqueEnrollments[index] ?? []).length,
           };
         })
-        .filter(Boolean),
+        .filter((student): student is DashboardResolvedStudent => student !== null),
     [students, detailedStudents, uniqueEnrollments]
   );
 
@@ -203,7 +214,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
     }
   }, [filteredStudents, selectedStudentUuid]);
 
-  const toggleStar = (studentUuid: string, e?: React.MouseEvent) => {
+  const toggleStar = (studentUuid: string, e?: StopPropagationEvent) => {
     e?.stopPropagation();
     setStarredStudents(prev => {
       const newSet = new Set(prev);
@@ -216,7 +227,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
     });
   };
 
-  const handleStudentClick = (student: any) => {
+  const handleStudentClick = (student: DashboardResolvedStudent) => {
     setSelectedStudentUuid(student?.uuid ?? null);
     // Open mobile details sheet on mobile devices
     if (window.innerWidth < 1024) {
@@ -228,7 +239,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
     setIsMobileDetailsOpen(false);
   };
 
-  const getEnrollmentForStudent = (studentUuid: string) => {
+  const getEnrollmentForStudent = (studentUuid: string): EnrolledScheduleItem[] => {
     return enrollmentMap.get(studentUuid) ?? [];
   };
 
@@ -387,7 +398,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
               <div className='text-muted-foreground p-8 text-center text-sm'>No students found</div>
             ) : (
               <div className='divide-y'>
-                {filteredStudents.map((student: any) => {
+                {filteredStudents.map(student => {
                   const isSelected = selectedStudentUuid === student?.uuid;
 
                   return (
@@ -599,8 +610,12 @@ export default function StudentsListPage({ studentsData }: { studentsData: any }
               <button className='hover:bg-muted rounded-lg p-2 text-yellow-500'>
                 <Star
                   size={20}
-                  className={starredStudents.has(selectedStudent.uuid) ? 'fill-yellow-500' : ''}
-                  onClick={() => toggleStar(selectedStudent.uuid, {} as any)}
+                  className={
+                    selectedStudent.uuid && starredStudents.has(selectedStudent.uuid)
+                      ? 'fill-yellow-500'
+                      : ''
+                  }
+                  onClick={() => selectedStudent.uuid && toggleStar(selectedStudent.uuid)}
                 />
               </button>
             </div>
@@ -635,12 +650,14 @@ function StudentDetailsContent({
   getEnrollmentForStudent,
   isMobile = false,
 }: {
-  selectedStudent: any;
+  selectedStudent: DashboardResolvedStudent;
   starredStudents: Set<string>;
-  toggleStar: (uuid: string, e: any) => void;
-  getEnrollmentForStudent: (uuid: string) => any;
+  toggleStar: (uuid: string, e?: StopPropagationEvent) => void;
+  getEnrollmentForStudent: (uuid: string) => EnrolledScheduleItem[];
   isMobile?: boolean;
 }) {
+  const selectedStudentUuid = selectedStudent.uuid ?? '';
+
   return (
     <div className='overflow-y-hidden p-6 sm:p-8'>
       {/* Header - Desktop Only (mobile has it in the sheet header) */}
@@ -655,7 +672,7 @@ function StudentDetailsContent({
                 className={
                   starredStudents.has(selectedStudent.uuid) ? 'fill-yellow-500' : ''
                 }
-                onClick={() => toggleStar(selectedStudent.uuid, {} as any)}
+                onClick={() => selectedStudent.uuid && toggleStar(selectedStudent.uuid)}
               />
             </button>
             <button className='rounded-lg p-2 hover:bg-muted'>
@@ -745,33 +762,31 @@ function StudentDetailsContent({
         <h3 className='mb-4 text-base font-semibold sm:text-lg'>Enrolled Classes/Courses</h3>
         <main className='mx-0'>
           <CardContent className='p-4'>
-            {getEnrollmentForStudent(selectedStudent.uuid)?.length > 0 ? (
+            {getEnrollmentForStudent(selectedStudentUuid)?.length > 0 ? (
               <div className='space-y-3'>
-                {getEnrollmentForStudent(selectedStudent.uuid)?.map(
-                  (enrollment: any, index: number) => (
-                    <div key={index} className='rounded-lg border p-3'>
-                      <div className='flex items-center justify-between'>
-                        <div className='flex-1'>
-                          <p className='text-sm font-medium sm:text-base'>
-                            {enrollment?.title || 'Course'}
-                          </p>
-                          <p className='text-muted-foreground text-xs'>
-                            Progress: {enrollment?.progress_percentage || 0}%
-                          </p>
-                        </div>
-                        <div
-                          className={`rounded-full px-2 py-1 text-xs font-medium ${
-                            enrollment?.status === 'COMPLETED'
-                              ? 'text-success/70 bg-success/10'
-                              : 'text-primary/70 bg-primary/10'
-                          }`}
-                        >
-                          {enrollment?.status || 'IN_PROGRESS'}
-                        </div>
+                {getEnrollmentForStudent(selectedStudentUuid)?.map((enrollment, index: number) => (
+                  <div key={index} className='rounded-lg border p-3'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex-1'>
+                        <p className='text-sm font-medium sm:text-base'>
+                          {enrollment?.title || 'Course'}
+                        </p>
+                        <p className='text-muted-foreground text-xs'>
+                          Progress: {enrollment?.progress_percentage || 0}%
+                        </p>
+                      </div>
+                      <div
+                        className={`rounded-full px-2 py-1 text-xs font-medium ${
+                          enrollment?.status === 'COMPLETED'
+                            ? 'text-success/70 bg-success/10'
+                            : 'text-primary/70 bg-primary/10'
+                        }`}
+                      >
+                        {enrollment?.status || 'IN_PROGRESS'}
                       </div>
                     </div>
-                  )
-                )}
+                  </div>
+                ))}
               </div>
             ) : (
               <p className='text-muted-foreground text-sm'>No courses enrolled</p>

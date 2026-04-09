@@ -9,7 +9,7 @@
       "recommended": false,
       "suspicious": {
         "noConsole": "error",
-        "noExplicitAny": "off"
+        "noExplicitAny": "error"
       },
       "style": {
         "noNonNullAssertion": "off"
@@ -33,7 +33,8 @@
       "!app/globals.css",
       "!next-env.d.ts",
       "!services/api/schema.ts",
-      "!services/client/@tanstack/react-query.gen.ts"
+      "!services/client/**/*.gen.ts",
+      "!services/client/client/**"
     ]
   }
 }

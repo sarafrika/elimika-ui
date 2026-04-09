@@ -43,7 +43,24 @@ const tooltipStyles = {
 };
 const legendWrapperStyle = { color: 'hsl(var(--muted-foreground))' };
 const RADIAN = Math.PI / 180;
-const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }: any) => {
+
+interface PieLabelProps {
+  cx?: number;
+  cy?: number;
+  midAngle?: number;
+  outerRadius?: number;
+  percent?: number;
+  name?: string | number;
+}
+
+const renderPieLabel = ({
+  cx = 0,
+  cy = 0,
+  midAngle = 0,
+  outerRadius = 0,
+  percent = 0,
+  name = '',
+}: PieLabelProps) => {
   const radius = outerRadius + 12;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
@@ -57,7 +74,7 @@ const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }: any) =
       dominantBaseline='central'
       fontSize={12}
     >
-      {`${name} ${(percent * 100).toFixed(0)}%`}
+      {`${String(name)} ${(percent * 100).toFixed(0)}%`}
     </text>
   );
 };
@@ -70,7 +87,7 @@ interface AnalyticsChartsProps {
 export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChartsProps) {
   const CHART_COLORS = useChartColors();
   const userMetrics = statistics?.user_metrics;
-  const organizationMetrics = statistics?.organization_metrics;
+  const organizationMetrics = statistics?.organisation_metrics;
   const complianceMetrics = statistics?.compliance_metrics;
   const learningMetrics = statistics?.learning_metrics;
 
@@ -82,10 +99,10 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
   ];
 
   const organizationGrowthData = [
-    { label: 'Total Organisations', value: toNumber(organizationMetrics?.total_organizations) },
-    { label: 'Active', value: toNumber(organizationMetrics?.active_organizations) },
+    { label: 'Total Organisations', value: toNumber(organizationMetrics?.total_organisations) },
+    { label: 'Active', value: toNumber(organizationMetrics?.active_organisations) },
     { label: 'Pending', value: toNumber(organizationMetrics?.pending_approvals) },
-    { label: 'Suspended', value: toNumber(organizationMetrics?.suspended_organizations) },
+    { label: 'Suspended', value: toNumber(organizationMetrics?.suspended_organisations) },
   ];
 
   const distributionData = [

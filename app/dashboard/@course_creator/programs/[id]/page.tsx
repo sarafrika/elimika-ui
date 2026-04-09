@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Pen, Users } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import type { Course, ProgramEnrollment, TrainingProgram } from '@/services/client/types.gen';
 import { Button } from '../../../../../components/ui/button';
 import { Skeleton } from '../../../../../components/ui/skeleton';
 import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
@@ -13,17 +14,40 @@ import {
   getTrainingProgramByUuidOptions,
 } from '../../../../../services/client/@tanstack/react-query.gen';
 
-const ProgramPreview = ({ onEdit }: any) => {
+type ProgramPreviewProps = {
+  onEdit?: (program: TrainingProgram) => void;
+};
+
+type ProgramCoursePreview = Course & {
+  is_required?: boolean;
+};
+
+type ProgramEnrollmentPreview = ProgramEnrollment & {
+  student_name?: string;
+};
+
+const formatEnrollmentDate = (value?: Date | string) => {
+  if (!value) return 'N/A';
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return typeof value === 'string' ? value : 'N/A';
+  }
+
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const ProgramPreview = ({ onEdit }: ProgramPreviewProps) => {
   const router = useRouter();
   const params = useParams();
-  const programUuid = params?.id;
+  const programUuid = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'courses' | 'enrollments'>('overview');
 
   const { data, isLoading: programLoading } = useQuery({
-    ...getTrainingProgramByUuidOptions({ path: { uuid: programUuid } }),
+    ...getTrainingProgramByUuidOptions({ path: { uuid: programUuid ?? '' } }),
     enabled: !!programUuid,
   });
   const program = data?.data;
@@ -43,16 +67,16 @@ const ProgramPreview = ({ onEdit }: any) => {
         isLast: true,
       },
     ]);
-  }, [replaceBreadcrumbs]);
+  }, [program?.title, program?.uuid, replaceBreadcrumbs]);
 
   const { data: programCourses, isLoading: coursesLoading } = useQuery({
-    ...getProgramCoursesOptions({ path: { programUuid } }),
+    ...getProgramCoursesOptions({ path: { programUuid: programUuid ?? '' } }),
     enabled: !!programUuid,
   });
 
   const { data: enrollmentsData, isLoading: enrollmentsLoading } = useQuery({
     ...getProgramEnrollmentsOptions({
-      path: { programUuid },
+      path: { programUuid: programUuid ?? '' },
       query: { pageable: {} },
     }),
     enabled: !!programUuid,
@@ -83,8 +107,8 @@ const ProgramPreview = ({ onEdit }: any) => {
     );
   }
 
-  const enrollments = enrollmentsData?.data?.content || [];
-  const courses = programCourses?.data || [];
+  const enrollments: ProgramEnrollmentPreview[] = enrollmentsData?.data?.content ?? [];
+  const courses: ProgramCoursePreview[] = programCourses?.data ?? [];
 
   const getStatusClasses = (status: string) => {
     switch (status) {
@@ -133,7 +157,16 @@ const ProgramPreview = ({ onEdit }: any) => {
           </div>
 
           <Button
-            onClick={() => onEdit(program)}
+            onClick={() => {
+              if (onEdit) {
+                onEdit(program);
+                return;
+              }
+
+              if (program.uuid) {
+                router.push(`/dashboard/course-management/create-new-program?id=${program.uuid}`);
+              }
+            }}
             className='bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-lg px-4 py-2 text-sm font-medium md:w-auto md:text-base'
           >
             <Pen /> Edit
@@ -148,7 +181,7 @@ const ProgramPreview = ({ onEdit }: any) => {
           { label: 'Enrolled Students', value: enrollments.length },
           {
             label: 'Available Spots',
-            value: program?.class_limit - enrollments.length,
+            value: (program.class_limit ?? 0) - enrollments.length,
           },
           { label: 'Price', value: `KES ${program?.price}` },
         ].map(stat => (
@@ -237,7 +270,7 @@ const ProgramPreview = ({ onEdit }: any) => {
 
                         <span
                           className='text-muted-foreground line-clamp-3'
-                          dangerouslySetInnerHTML={{ __html: course.description }}
+                          dangerouslySetInnerHTML={{ __html: course.description ?? '' }}
                         />
                       </div>
                     </div>
@@ -267,7 +300,7 @@ const ProgramPreview = ({ onEdit }: any) => {
             <>
               {/* Mobile Card View */}
               <div className='space-y-2 md:hidden'>
-                {enrollments.map((e: any) => (
+                {enrollments.map(e => (
                   <div key={e.uuid} className='border-border bg-card rounded-lg border p-3'>
                     <div className='mb-2 flex items-start justify-between gap-2'>
                       <div className='min-w-0 flex-1'>
@@ -280,7 +313,7 @@ const ProgramPreview = ({ onEdit }: any) => {
                       </span>
                     </div>
                     <p className='text-muted-foreground text-xs'>
-                      Enrolled: {e.enrollment_date || 'N/A'}
+                      Enrolled: {formatEnrollmentDate(e.enrollment_date)}
                     </p>
                   </div>
                 ))}
@@ -302,7 +335,7 @@ const ProgramPreview = ({ onEdit }: any) => {
                     </tr>
                   </thead>
                   <tbody className='divide-border divide-y'>
-                    {enrollments.map((e: any) => (
+                    {enrollments.map(e => (
                       <tr key={e.uuid}>
                         <td className='text-foreground px-6 py-4 text-sm'>
                           {e.student_name || e.student_uuid}
@@ -313,7 +346,7 @@ const ProgramPreview = ({ onEdit }: any) => {
                           </span>
                         </td>
                         <td className='text-muted-foreground px-6 py-4 text-sm'>
-                          {e.enrollment_date || 'N/A'}
+                          {formatEnrollmentDate(e.enrollment_date)}
                         </td>
                       </tr>
                     ))}

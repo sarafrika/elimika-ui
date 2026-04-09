@@ -25,7 +25,80 @@ import {
   SelectValue,
 } from '../../../../components/ui/select';
 
-const _skillsFundApplications: any[] = [
+type SkillsFundApplicantType = 'student' | 'instructor';
+type SkillsFundFundType = 'scholarship' | 'training-support' | 'loan' | 'grant';
+type SkillsFundApplicationStatus = 'under-review' | 'approved' | 'draft' | 'rejected' | 'disbursed';
+type SkillsFundTargetGroup = 'students' | 'instructors' | 'specific-program';
+
+type SkillsFundApplicationDocument = {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+};
+
+type SkillsFundApplication = {
+  id: string;
+  applicantId: string;
+  applicantName: string;
+  applicantType: SkillsFundApplicantType;
+  fundType: SkillsFundFundType;
+  program: string;
+  reason: string;
+  amount: number;
+  currency: string;
+  documents: SkillsFundApplicationDocument[];
+  status: SkillsFundApplicationStatus;
+  submittedAt?: Date;
+  reviewedAt?: Date;
+  reviewedBy?: string;
+  disbursedAt?: Date;
+  linkedCourseId?: string;
+  rejectionReason?: string;
+};
+
+type SkillsFundContributionImpact = {
+  beneficiaries: number;
+  skillsOutcomes?: string[];
+  fundUtilization?: number;
+};
+
+type SkillsFundContribution = {
+  id: string;
+  donorId: string;
+  donorName: string;
+  donorType: 'organization' | 'donor';
+  amount: number;
+  currency: string;
+  purpose: string;
+  targetGroup: SkillsFundTargetGroup;
+  targetProgramId?: string;
+  date: Date;
+  status: 'completed' | 'pending';
+  impact?: SkillsFundContributionImpact;
+};
+
+type SkillsFundContributionDraft = {
+  currency: string;
+  targetGroup: SkillsFundTargetGroup;
+  amount?: number;
+  purpose?: string;
+  targetProgramId?: string;
+};
+
+type SkillsFundCurrentUser = {
+  id: string;
+  name: string;
+};
+
+type SkillsFundWallet = {
+  id?: string;
+  balance?: number;
+  currency?: string;
+  [key: string]: unknown;
+};
+
+const _skillsFundApplications: SkillsFundApplication[] = [
   {
     id: 'app-001',
     applicantId: 'student_001',
@@ -155,7 +228,7 @@ const _skillsFundApplications: any[] = [
   },
 ];
 
-export const sampleSkillsFundContributions: any[] = [
+export const sampleSkillsFundContributions: SkillsFundContribution[] = [
   {
     id: 'c1',
     donorId: 'd123',
@@ -234,9 +307,9 @@ export const sampleSkillsFundContributions: any[] = [
 ];
 
 type Props = {
-  currentUser: any;
-  wallet: any | null;
-  setWallet: (wallet: any | null) => void;
+  currentUser: SkillsFundCurrentUser;
+  wallet: SkillsFundWallet | null;
+  setWallet: (wallet: SkillsFundWallet | null) => void;
 };
 
 const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) => {
@@ -246,18 +319,18 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
   ];
 
   const [showContributeModal, setShowContributeModal] = useState(false);
-  const [newContribution, setNewContribution] = useState<Partial<any>>({
+  const [newContribution, setNewContribution] = useState<SkillsFundContributionDraft>({
     currency: 'USD',
     targetGroup: 'students',
   });
 
   const handleSubmitContribution = () => {
-    if (!newContribution.amount || !newContribution.purpose) {
+    if (typeof newContribution.amount !== 'number' || !newContribution.purpose) {
       alert('Please fill in all required fields');
       return;
     }
 
-    const _contribution: any = {
+    const contribution: SkillsFundContribution = {
       id: `contrib-${Date.now()}`,
       donorId: currentUser.id,
       donorName: currentUser.name,
@@ -265,7 +338,7 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
       amount: newContribution.amount,
       currency: newContribution.currency || 'USD',
       purpose: newContribution.purpose,
-      targetGroup: newContribution.targetGroup as any,
+      targetGroup: newContribution.targetGroup,
       targetProgramId: newContribution.targetProgramId,
       date: new Date(),
       status: 'completed',
@@ -276,6 +349,7 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
       },
     };
 
+    void contribution;
     setShowContributeModal(false);
     setNewContribution({
       currency: 'USD',
@@ -341,7 +415,7 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
                 {orgContributions.length > 0
                   ? Math.round(
                       orgContributions.reduce(
-                        (sum: any, c: any) => sum + (c.impact?.fundUtilization || 0),
+                        (sum, c) => sum + (c.impact?.fundUtilization || 0),
                         0
                       ) / orgContributions.length
                     )
@@ -458,7 +532,7 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
 
           <div className='space-y-4'>
             {orgContributions.length > 0 ? (
-              orgContributions.map((contrib: any) => (
+              orgContributions.map(contrib => (
                 <Card key={contrib.id} className='bg-muted p-4'>
                   <div className='space-y-3'>
                     <div className='flex items-center justify-between'>
@@ -514,8 +588,8 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
                 <span className='text-xl'>
                   $
                   {orgContributions
-                    .filter((c: any) => c.targetGroup === 'students')
-                    .reduce((sum: any, c: any) => sum + c.amount, 0)
+                    .filter(c => c.targetGroup === 'students')
+                    .reduce((sum, c) => sum + c.amount, 0)
                     .toLocaleString()}
                 </span>
               </div>
@@ -531,7 +605,7 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
                 <span className='text-xl'>
                   $
                   {orgContributions
-                    .filter((c: any) => c.targetGroup === 'instructors')
+                    .filter(c => c.targetGroup === 'instructors')
                     .reduce((sum, c) => sum + c.amount, 0)
                     .toLocaleString()}
                 </span>
@@ -577,9 +651,15 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
               <Label>Target Group</Label>
               <Select
                 value={newContribution.targetGroup}
-                onValueChange={(value: any) =>
-                  setNewContribution({ ...newContribution, targetGroup: value })
-                }
+                onValueChange={value => {
+                  if (
+                    value === 'students' ||
+                    value === 'instructors' ||
+                    value === 'specific-program'
+                  ) {
+                    setNewContribution({ ...newContribution, targetGroup: value });
+                  }
+                }}
               >
                 <SelectTrigger className='mt-2'>
                   <SelectValue />

@@ -61,7 +61,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import {
   type CourseCreationFormValues,
@@ -74,6 +74,28 @@ import {
   type Provider,
   TrainingRequirementsSection,
 } from './training-requirement-section';
+
+type MutationPayload = Record<string, unknown>;
+type CategoryItem = { uuid?: string; name?: string };
+type DifficultyLevelItem = { uuid?: string; name?: string };
+type RequirementRecord = {
+  uuid?: string;
+  course_uuid: string;
+  requirement_type: string;
+  name: string;
+  description?: string;
+  quantity?: number;
+  unit?: string;
+  provided_by?: 'course_creator' | 'instructor' | 'organisation' | 'student';
+  is_mandatory?: boolean;
+};
+type CategoryMutationResponse = { error?: Record<string, unknown>; message?: string };
+
+const getFormErrorMessage = (value: unknown) => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.find(item => typeof item === 'string');
+  return undefined;
+};
 
 export type FormSectionProps = {
   title: string;
@@ -138,9 +160,8 @@ function SavingOverlay({ stage }: { stage: SaveStage }) {
             return (
               <div
                 key={step.key}
-                className={`flex items-center gap-3 transition-opacity duration-300 ${
-                  isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
-                }`}
+                className={`flex items-center gap-3 transition-opacity duration-300 ${isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
+                  }`}
               >
                 {isDone ? (
                   <CheckCircle2 className='h-4 w-4 shrink-0 text-green-500' />
@@ -246,14 +267,24 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     }, [initialValues, form]);
 
-    const { append: appendCategory, remove: removeCategory } = useFieldArray({
-      control: form.control,
-      name: 'categories',
-    });
+    const appendCategory = (uuid: string) => {
+      form.setValue('categories', [...form.getValues('categories'), uuid], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    };
+
+    const removeCategory = (index: number) => {
+      form.setValue(
+        'categories',
+        form.getValues('categories').filter((_, categoryIndex) => categoryIndex !== index),
+        { shouldDirty: true, shouldValidate: true }
+      );
+    };
 
     const { data: trainingRequirements } = useQuery({
       ...getCourseTrainingRequirementsOptions({
-        path: { courseUuid: courseId || editingCourseId },
+        path: { courseUuid: courseId || editingCourseId || '' },
         query: { pageable: {} },
       }),
       enabled: !!courseId || !!editingCourseId,
@@ -278,10 +309,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const [categoryInput, setCategoryInput] = useState('');
 
     const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
-      mutationFn: ({ body }: { body: any }) => createCategory({ body }),
-      onSuccess: (data: any) => {
+      mutationFn: ({ body }: { body: { name: string } }) => createCategory({ body }),
+      onSuccess: (data: CategoryMutationResponse) => {
         if (data?.error) {
-          if (data.error.error?.toLowerCase().includes('duplicate key')) {
+          const duplicateMessage = getFormErrorMessage(data.error.error);
+          if (duplicateMessage?.toLowerCase().includes('duplicate key')) {
             toast.error('Category already exists');
           } else {
             toast.error('Failed to add category');
@@ -303,8 +335,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       useMutation(createCourseMutation());
 
     const { mutate: updateCourseMutation, isPending: updateCourseIsPending } = useMutation({
-      mutationFn: ({ body, uuid }: { body: any; uuid: string }) =>
-        updateCourse({ body, path: { uuid } }),
+      mutationFn: ({ body, uuid }: { body: MutationPayload; uuid: string }) =>
+        updateCourse({ body: body as never, path: { uuid } }),
     });
 
     const addTrainingReqMut = useMutation(addCourseTrainingRequirementMutation());
@@ -395,7 +427,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
         setSaveStage('course');
         updateCourseMutation(
-          { body: editBody as any, uuid: editingCourseId },
+          { body: editBody as MutationPayload, uuid: editingCourseId },
           {
             onSuccess(data) {
               const respObj = data?.data;
@@ -463,7 +495,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             is_draft: true,
             age_lower_limit: data?.age_lower_limit,
             age_upper_limit: data?.age_upper_limit,
-          },
+          } as never,
         },
         {
           onError(error) {
@@ -471,7 +503,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             toast.error(error?.message);
           },
           onSuccess: courseResponse => {
-            const newCourseUuid = courseResponse?.data?.uuid as string;
+            const newCourseUuid = courseResponse?.uuid as string;
 
             queryClient.invalidateQueries({
               queryKey: getCourseByUuidQueryKey({ path: { uuid: newCourseUuid } }),
@@ -499,7 +531,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       );
     };
 
-    const onError = (errors: any) => {
+    const onError = (errors: Record<string, unknown>) => {
       if (Object.keys(errors).length > 0) {
         toast.error('Please fill in all required fields.');
       }
@@ -591,10 +623,13 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                     <SelectContent>
                       <div className='max-h-[250px] overflow-auto'>
                         {/* @ts-ignore */}
-                        {categories?.data?.content
-                          ?.filter((cat: any) => !form.watch('categories').includes(cat.uuid))
-                          .map((cat: any) => (
-                            <SelectItem key={cat.uuid} value={cat.uuid}>
+                        {(categories?.data?.content as CategoryItem[] | undefined)
+                          ?.filter(
+                            (cat: CategoryItem) =>
+                              !form.watch('categories').includes(cat.uuid ?? '')
+                          )
+                          .map((cat: CategoryItem) => (
+                            <SelectItem key={cat.uuid} value={cat.uuid as string}>
                               {cat.name}
                             </SelectItem>
                           ))}
@@ -655,8 +690,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
               <div className='flex flex-wrap gap-2'>
                 {form.watch('categories').map((uuid: string, index: number) => {
-                  // @ts-expect-error
-                  const cat = categories?.data?.content?.find((c: any) => c.uuid === uuid);
+                  const cat = (categories?.data?.content as CategoryItem[] | undefined)?.find(
+                    (c: CategoryItem) => c.uuid === uuid
+                  );
                   if (!cat) return null;
                   return (
                     <Badge key={uuid} variant='secondary' className='flex items-center gap-1'>
@@ -808,7 +844,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                       ) : (
                         <SelectContent>
                           {Array.isArray(difficultyLevels) &&
-                            difficultyLevels.map((level: any) => (
+                            difficultyLevels.map((level: DifficultyLevelItem) => (
                               <SelectItem key={level.uuid} value={level.uuid as string}>
                                 {level.name}
                               </SelectItem>

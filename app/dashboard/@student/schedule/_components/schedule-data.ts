@@ -1,11 +1,40 @@
 import { format } from 'date-fns';
+import type {
+  GetClassDefinitionResponse,
+  GetCourseByUuidResponse,
+  GetStudentScheduleResponse,
+  ScheduledInstance,
+} from '@/services/client';
+
+type StudentClassDetails = NonNullable<
+  NonNullable<GetClassDefinitionResponse['data']>['class_definition']
+>;
+type StudentClassData = StudentClassDetails & {
+  subtitle?: string | null;
+  classroom?: string | null;
+  instructor?: {
+    full_name?: string | null;
+  } | null;
+};
+type StudentCourse = NonNullable<GetCourseByUuidResponse['data']>;
+type StudentEnrollment = NonNullable<GetStudentScheduleResponse['data']>[number] & {
+  enrollment_date?: string | Date;
+};
+type StudentClassSchedule = ScheduledInstance & {
+  uuid?: string;
+  start_time: string | Date;
+  end_time: string | Date;
+  room?: string | null;
+  meeting_url?: string | null;
+  student_attended?: boolean | null;
+};
 
 export type StudentClassRecord = {
   uuid: string;
-  classDetails: any;
-  course: any;
-  enrollments: any[];
-  schedules: any[];
+  classDetails?: StudentClassDetails | { class_definition?: StudentClassDetails | null } | null;
+  course?: StudentCourse | null;
+  enrollments: StudentEnrollment[];
+  schedules: StudentClassSchedule[];
 };
 
 export type StudentScheduleInstance = {
@@ -16,8 +45,8 @@ export type StudentScheduleInstance = {
   classSubtitle?: string;
   courseName?: string;
   instructorName?: string;
-  startTime: string;
-  endTime: string;
+  startTime: string | Date;
+  endTime: string | Date;
   timeRange: string;
   durationFormatted: string;
   status?: string;
@@ -40,8 +69,20 @@ export function humanizeEnum(value?: string | null) {
     .join(' ');
 }
 
-export function getClassData(classRecord: StudentClassRecord | any) {
-  return classRecord?.classDetails?.class_definition ?? classRecord?.classDetails ?? {};
+export function getClassData(
+  classRecord:
+    | StudentClassRecord
+    | { classDetails?: StudentClassRecord['classDetails'] }
+    | null
+    | undefined
+): Partial<StudentClassData> {
+  const classDetails = classRecord?.classDetails;
+
+  if (classDetails && typeof classDetails === 'object' && 'class_definition' in classDetails) {
+    return (classDetails.class_definition ?? {}) as Partial<StudentClassData>;
+  }
+
+  return (classDetails ?? {}) as Partial<StudentClassData>;
 }
 
 export function formatClassroomLabel({
@@ -64,7 +105,7 @@ export function buildStudentScheduleInstances(classRecords: StudentClassRecord[]
       const courseName = classRecord.course?.name;
       const instructorName = classData?.instructor?.full_name;
 
-      return (classRecord.schedules ?? []).map((schedule: any) => {
+      return (classRecord.schedules ?? []).map(schedule => {
         const startTime = new Date(schedule.start_time);
         const endTime = new Date(schedule.end_time);
         const locationType = schedule.location_type ?? classData?.location_type;
@@ -73,13 +114,13 @@ export function buildStudentScheduleInstances(classRecords: StudentClassRecord[]
         const meetingUrl = schedule.meeting_url ?? classData?.meeting_link;
 
         return {
-          uuid: schedule.uuid,
+          uuid: schedule.uuid ?? `${classRecord.uuid}-${startTime.getTime()}`,
           classDefinitionUuid: classRecord.uuid,
           classHref: `/dashboard/schedule/classes/${classRecord.uuid}`,
           classTitle,
-          classSubtitle: classData?.subtitle,
+          classSubtitle: classData?.subtitle ?? undefined,
           courseName,
-          instructorName,
+          instructorName: instructorName ?? undefined,
           startTime: schedule.start_time,
           endTime: schedule.end_time,
           timeRange:
@@ -93,7 +134,7 @@ export function buildStudentScheduleInstances(classRecords: StudentClassRecord[]
           status: schedule.status,
           locationType,
           locationName,
-          classroom,
+          classroom: classroom ?? undefined,
           locationLabel: formatClassroomLabel({ locationName, classroom, locationType }),
           meetingUrl,
           isCurrentlyActive: schedule.is_currently_active,

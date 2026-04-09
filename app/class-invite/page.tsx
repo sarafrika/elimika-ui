@@ -33,6 +33,13 @@ import { useClassDetails } from '../../hooks/use-class-details';
 import { useDifficultyLevels } from '../../hooks/use-difficultyLevels';
 import { useUserDomains } from '../../hooks/use-user-query';
 
+type ClassInviteData = ReturnType<typeof useClassDetails>['data'];
+type ClassInviteCourse = NonNullable<ClassInviteData['course']>;
+type ClassInviteEnrollment = ClassInviteData['enrollments'][number];
+type ClassInviteProgram = NonNullable<ClassInviteData['program']>;
+type ClassInviteProgramCourse = ClassInviteData['pCourses'][number] & { title?: string };
+type ClassInviteSchedule = ClassInviteData['schedule'][number];
+
 function ClassInviteContent() {
   const searchParams = useSearchParams();
   const uuid = searchParams.get('id');
@@ -50,9 +57,9 @@ function ClassInviteContent() {
   const uniqueEnrollments = useMemo(() => {
     if (!enrollments) return [];
 
-    const map = new Map();
+    const map = new Map<string, ClassInviteEnrollment>();
 
-    enrollments.forEach((enrollment: any) => {
+    enrollments.forEach(enrollment => {
       if (enrollment.student_uuid && !map.has(enrollment.student_uuid)) {
         map.set(enrollment.student_uuid, enrollment);
       }
@@ -131,9 +138,7 @@ function ClassInviteContent() {
                 ) : null}
               </CardHeader>
 
-              <div>
-                <CourseDetailedCard course={course as any} />
-              </div>
+              <div>{course && <CourseDetailedCard course={course} />}</div>
 
               <CardContent className='space-y-6'>
                 {/* DETAILS */}
@@ -187,10 +192,11 @@ function ClassInviteContent() {
                   title='Course Training Requirements'
                   description='Review what you need to prepare before registering for this class.'
                 />
-              </CardContent>
+              </CardContent >
 
               <CardContent>
                 <ClassScheduleCalendar schedules={schedules as any} />
+                <ClassScheduleCalendar schedules={schedules} />
               </CardContent>
 
               {/* CTA */}
@@ -209,133 +215,134 @@ function ClassInviteContent() {
                   </Button>
                 </div>
               </div>
-            </Card>
-          )}
+            </Card >
+          )
+          }
 
-          {data?.program_uuid && (
-            <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
-              <CardHeader className='space-y-4'>
-                <div className='flxe-row flex items-center justify-between'>
-                  <div className='flex flex-wrap gap-2'>
-                    <Badge className='rounded-full'>{data?.session_format}</Badge>
-                    <Badge variant='outline' className='rounded-full'>
-                      {data?.class_visibility}
-                    </Badge>
-                    <Badge
-                      variant='outline'
-                      className='border-primary/30 bg-primary/10 text-primary rounded-full'
-                    >
-                      {data?.duration_formatted}
-                    </Badge>
+          {
+            data?.program_uuid && (
+              <Card className='border-border bg-card rounded-[28px] border shadow-xl'>
+                <CardHeader className='space-y-4'>
+                  <div className='flxe-row flex items-center justify-between'>
+                    <div className='flex flex-wrap gap-2'>
+                      <Badge className='rounded-full'>{data?.session_format}</Badge>
+                      <Badge variant='outline' className='rounded-full'>
+                        {data?.class_visibility}
+                      </Badge>
+                      <Badge
+                        variant='outline'
+                        className='border-primary/30 bg-primary/10 text-primary rounded-full'
+                      >
+                        {data?.duration_formatted}
+                      </Badge>
+                    </div>
+
+                    <span className='text-on-accent bg-accent rounded-full px-3 py-1 text-xs font-semibold shadow-sm'>
+                      PROGRAM
+                    </span>
                   </div>
 
-                  <span className='text-on-accent bg-accent rounded-full px-3 py-1 text-xs font-semibold shadow-sm'>
-                    PROGRAM
-                  </span>
+                  <CardTitle className='text-3xl font-semibold'>{data?.title}</CardTitle>
+
+                  {data?.description ? (
+                    <CardDescription className='text-muted-foreground'>
+                      {data?.description}
+                    </CardDescription>
+                  ) : null}
+                </CardHeader>
+
+                <div>{program && <ProgramDetailsCard program={program} />}</div>
+
+                {/* Courses Card */}
+                <CardContent className='bg-primary/5 mx-6 space-y-3 rounded-lg p-6'>
+                  <h3 className='font-semibold'>Courses Included in This Training</h3>
+
+                  <ul className='text-muted-foreground space-y-2 text-sm'>
+                    {programCourses?.length === 0 && (
+                      <li className='text-muted-foreground text-sm'>No courses available</li>
+                    )}
+
+                    {programCourses?.map((course: ClassInviteProgramCourse) => (
+                      <li key={course.uuid} className='flex items-start gap-2'>
+                        <BookOpen className='text-primary mt-0.5 h-4 w-4' />
+                        <span>{course.title || course.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+
+                <CardContent className='space-y-6'>
+                  {/* DETAILS */}
+                  <div className='grid gap-4 sm:grid-cols-2'>
+                    <InfoRow
+                      icon={<Clock className='h-4 w-4' />}
+                      label='CLASS BEGINS'
+                      value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
+                        data?.default_end_time
+                      ).toLocaleTimeString()}`}
+                    />
+
+                    <InfoRow
+                      icon={<MapPin className='h-4 w-4' />}
+                      label='Location'
+                      value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
+                    />
+
+                    <InfoRow
+                      icon={<Users className='h-4 w-4' />}
+                      label='Capacity'
+                      value={data?.capacity_info}
+                    />
+
+                    <InfoRow
+                      icon={<Layers className='h-4 w-4' />}
+                      label='Fee'
+                      value={
+                        typeof data?.training_fee === 'number'
+                          ? `KES ${data?.training_fee.toLocaleString()}`
+                          : 'Free'
+                      }
+                    />
+
+                    <InfoRow
+                      icon={<Armchair className='h-4 w-4' />}
+                      label='Available Seats'
+                      value={
+                        <div>
+                          {Number(data?.max_participants) - uniqueEnrollments?.length} of{' '}
+                          {data?.max_participants}
+                        </div>
+                      }
+                    />
+                  </div>
+                </CardContent>
+
+                <CardContent>
+                  <ClassScheduleCalendar schedules={schedules} />
+                </CardContent>
+
+                {/* CTA */}
+                <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
+                  <div className='text-muted-foreground text-sm'>
+                    Open to the public • Limited seats
+                  </div>
+
+                  <div className='flex items-center gap-3'>
+                    <Button onClick={handleRegister} size='lg' className='rounded-full px-10'>
+                      Register for Class
+                    </Button>
+
+                    <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
+                      {copied ? 'Copied!' : 'Copy link'}
+                    </Button>
+                  </div>
                 </div>
-
-                <CardTitle className='text-3xl font-semibold'>{data?.title}</CardTitle>
-
-                {data?.description ? (
-                  <CardDescription className='text-muted-foreground'>
-                    {data?.description}
-                  </CardDescription>
-                ) : null}
-              </CardHeader>
-
-              <div>
-                <ProgramDetailsCard program={program as any} />
-              </div>
-
-              {/* Courses Card */}
-              <CardContent className='bg-primary/5 mx-6 space-y-3 rounded-lg p-6'>
-                <h3 className='font-semibold'>Courses Included in This Training</h3>
-
-                <ul className='text-muted-foreground space-y-2 text-sm'>
-                  {programCourses?.length === 0 && (
-                    <li className='text-muted-foreground text-sm'>No courses available</li>
-                  )}
-
-                  {programCourses?.map((course: any) => (
-                    <li key={course.uuid} className='flex items-start gap-2'>
-                      <BookOpen className='text-primary mt-0.5 h-4 w-4' />
-                      <span>{course.title || course.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-
-              <CardContent className='space-y-6'>
-                {/* DETAILS */}
-                <div className='grid gap-4 sm:grid-cols-2'>
-                  <InfoRow
-                    icon={<Clock className='h-4 w-4' />}
-                    label='CLASS BEGINS'
-                    value={`${new Date(data?.default_start_time).toLocaleString()} – ${new Date(
-                      data?.default_end_time
-                    ).toLocaleTimeString()}`}
-                  />
-
-                  <InfoRow
-                    icon={<MapPin className='h-4 w-4' />}
-                    label='Location'
-                    value={data?.location_type === 'ONLINE' ? 'Online' : data?.location_name}
-                  />
-
-                  <InfoRow
-                    icon={<Users className='h-4 w-4' />}
-                    label='Capacity'
-                    value={data?.capacity_info}
-                  />
-
-                  <InfoRow
-                    icon={<Layers className='h-4 w-4' />}
-                    label='Fee'
-                    value={
-                      typeof data?.training_fee === 'number'
-                        ? `KES ${data?.training_fee.toLocaleString()}`
-                        : 'Free'
-                    }
-                  />
-
-                  <InfoRow
-                    icon={<Armchair className='h-4 w-4' />}
-                    label='Available Seats'
-                    value={
-                      <div>
-                        {Number(data?.max_participants) - uniqueEnrollments?.length} of{' '}
-                        {data?.max_participants}
-                      </div>
-                    }
-                  />
-                </div>
-              </CardContent>
-
-              <CardContent>
-                <ClassScheduleCalendar schedules={schedules as any} />
-              </CardContent>
-
-              {/* CTA */}
-              <div className='border-border flex flex-col gap-3 border-t px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
-                <div className='text-muted-foreground text-sm'>
-                  Open to the public • Limited seats
-                </div>
-
-                <div className='flex items-center gap-3'>
-                  <Button onClick={handleRegister} size='lg' className='rounded-full px-10'>
-                    Register for Class
-                  </Button>
-
-                  <Button variant='outline' size='sm' onClick={copyLink} disabled={copied}>
-                    {copied ? 'Copied!' : 'Copy link'}
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          )}
+              </Card>
+            )
+          }
         </>
       )}
-    </div>
+    </div >
   );
 }
 
@@ -357,7 +364,15 @@ export default function PublicClassInvitePage() {
   );
 }
 
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+}) {
   return (
     <div className='flex items-start gap-3'>
       <div className='text-primary mt-0.5'>{icon}</div>
@@ -369,27 +384,11 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
-export type ClassScheduleItem = {
-  uuid: string;
-  class_definition_uuid: string;
-  start_time: string;
-  end_time: string;
-  timezone: string;
-  title: string;
-  location_type: 'ONLINE' | 'PHYSICAL';
-  status: 'SCHEDULED' | 'CANCELLED';
-  duration_minutes: number;
-  duration_formatted: string;
-  time_range: string;
-  is_currently_active: boolean;
-  can_be_cancelled: boolean;
-};
-
 interface Props {
-  schedules: ClassScheduleItem[];
+  schedules: ClassInviteSchedule[];
 }
 
-function getCalendarBounds(schedules: ClassScheduleItem[]) {
+function getCalendarBounds(schedules: ClassInviteSchedule[]) {
   if (!schedules?.length) {
     const now = new Date();
     return {
@@ -402,9 +401,20 @@ function getCalendarBounds(schedules: ClassScheduleItem[]) {
     ?.map(s => new Date(s.start_time))
     ?.sort((a, b) => a.getTime() - b.getTime());
 
+  const firstSchedule = sorted[0];
+  const lastSchedule = sorted[sorted.length - 1];
+
+  if (!firstSchedule || !lastSchedule) {
+    const now = new Date();
+    return {
+      minMonth: startOfMonth(now),
+      maxMonth: endOfMonth(now),
+    };
+  }
+
   return {
-    minMonth: startOfMonth(addWeeks(sorted[0], -2)),
-    maxMonth: endOfMonth(addWeeks(sorted[sorted.length - 1], 2)),
+    minMonth: startOfMonth(addWeeks(firstSchedule, -2)),
+    maxMonth: endOfMonth(addWeeks(lastSchedule, 2)),
   };
 }
 
@@ -433,9 +443,9 @@ export function ClassScheduleCalendar({ schedules }: Props) {
   const canGoNext = nextMonth <= maxMonth;
 
   const sessionsByDay = useMemo(() => {
-    const map = new Map<string, ClassScheduleItem[]>();
+    const map = new Map<string, ClassInviteSchedule[]>();
 
-    schedules?.forEach((s: any) => {
+    schedules?.forEach(s => {
       const key = format(new Date(s.start_time), 'yyyy-MM-dd');
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(s);
@@ -518,23 +528,8 @@ export function ClassScheduleCalendar({ schedules }: Props) {
   );
 }
 
-interface Course {
-  name: string;
-  category_names: string[];
-  difficulty_uuid?: string;
-  total_duration_display: string;
-  class_limit: number;
-  age_lower_limit: number;
-  age_upper_limit: number;
-  thumbnail_url?: string;
-  banner_url?: string;
-  intro_video_url?: string;
-  prerequisites?: string;
-  objectives?: string;
-}
-
 interface CourseProps {
-  course: Course;
+  course: ClassInviteCourse;
 }
 
 export function CourseDetailedCard({ course }: CourseProps) {
@@ -548,7 +543,7 @@ export function CourseDetailedCard({ course }: CourseProps) {
           <div className='space-y-1'>
             <h2 className='text-2xl font-bold'>{course?.name}</h2>
             <p className='text-muted-foreground text-sm'>
-              <strong>Category:</strong> {course?.category_names.join(', ')}
+              <strong>Category:</strong> {course.category_names?.join(', ') || 'Uncategorized'}
             </p>
             {course?.difficulty_uuid && (
               <p className='text-muted-foreground text-sm'>
@@ -605,7 +600,7 @@ export function CourseDetailedCard({ course }: CourseProps) {
   );
 }
 
-export function ProgramDetailsCard({ program }: any) {
+export function ProgramDetailsCard({ program }: { program: ClassInviteProgram }) {
   return (
     <CardContent className='space-y-6'>
       <div className='flex flex-row items-start justify-between gap-8'>

@@ -45,22 +45,22 @@ import {
   updateLessonContentMutation,
   uploadLessonMediaMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import type {
+  ApiResponseCourse,
+  ContentType as GeneratedContentType,
+  Lesson,
+  LessonContent,
+  PagedDtoLesson,
+} from '../../../../services/client/types.gen';
 import { ContentItem } from '../../@instructor/trainings/overview/[id]/page';
 import { AudioPlayer } from '../../@student/schedule/classes/[id]/AudioPlayer';
 import { ReadingMode } from '../../@student/schedule/classes/[id]/ReadingMode';
 import { VideoPlayer } from '../../@student/schedule/classes/[id]/VideoPlayer';
 
 type LessonCreationFormProps = {
-  course: any;
-  lessons: any;
-  lessonContentsMap: any;
-};
-
-type Lesson = {
-  id: string;
-  isDraft?: boolean;
-  title: string;
-  description?: string;
+  course: ApiResponseCourse | undefined;
+  lessons: PagedDtoLesson | undefined;
+  lessonContentsMap: Map<string, LessonContent[]>;
 };
 
 type ContentType = 'TEXT' | 'VIDEO' | 'AUDIO' | 'PDF' | 'IMAGE';
@@ -70,7 +70,7 @@ const tabs = ['Lesson Content'];
 const lessonFormSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1).max(350),
-  lesson_number: z.any(),
+  lesson_number: z.coerce.number(),
 });
 type LessonFormValues = z.infer<typeof lessonFormSchema>;
 
@@ -82,13 +82,18 @@ const lessonContentSchema = z.object({
   content_text: z.string().optional(),
   content_category: z.string().optional(),
   title: z.string().min(1, 'Title is required'),
-  description: z.any().optional(),
-  value: z.any().optional(),
-  file_url: z.any().optional(),
+  description: z.string().optional(),
+  value: z.string().optional(),
+  file_url: z.string().optional(),
   display_order: z.coerce.number().min(0, 'Order number must be positive'),
-  uuid: z.any().optional(),
+  uuid: z.string().optional(),
 });
 type LessonContentValues = z.infer<typeof lessonContentSchema>;
+
+type LessonContentFormItem = LessonContentValues & { content_type_key?: string };
+type EnrichedLessonContent = LessonContent & { content_type_key?: string };
+
+type PreviewableContentItem = EnrichedLessonContent & ContentItem;
 
 export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   course,
@@ -124,7 +129,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   const watchedType = contentForm.watch('content_type');
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
-  const [lessonContents, setLessonContents] = useState<LessonContentValues[]>([]);
+  const [lessonContents, setLessonContents] = useState<LessonContentFormItem[]>([]);
 
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
   const [showContentForm, setShowContentForm] = useState(false);
@@ -168,7 +173,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
     if (!contentForm.getValues('content_type_uuid') && contentTypeData.length > 0) {
       const typeObj = contentTypeData.find(item => item.name?.toUpperCase() === 'TEXT');
       if (typeObj) {
-        contentForm.setValue('content_type_uuid', typeObj.uuid);
+        contentForm.setValue('content_type_uuid', typeObj.uuid ?? '');
         contentForm.setValue('content_type', 'TEXT');
         setContentType('TEXT');
       }
@@ -181,14 +186,14 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
     const existingContents = lessonContentsMap.get(activeLessonId) || [];
 
     setLessonContents(
-      existingContents.map((content: any) => ({
+      existingContents.map((content: LessonContent) => ({
         uuid: content.uuid,
         title: content.title || '',
         description: content.description || '',
-        content_type: content.content_type_key || 'TEXT',
+        content_type: 'TEXT' as ContentType,
         content_type_uuid: content.content_type_uuid || '',
         content_text: content.content_text || '',
-        value: content.value || '',
+        value: content.file_url || '',
         file_url: content.file_url || '',
         display_order: content.display_order || 1,
         content_category: content.content_category || '',
@@ -202,17 +207,17 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
     const typeObj = contentTypeData.find(item => item.name?.toUpperCase() === watchedType);
 
     if (typeObj) {
-      contentForm.setValue('content_type_uuid', typeObj.uuid);
+      contentForm.setValue('content_type_uuid', typeObj.uuid ?? '');
     }
   }, [watchedType, contentTypeData]);
 
   const enrichedLessonContentsMap = useMemo(() => {
-    const map = new Map();
+    const map = new Map<string, (LessonContent & { content_type_key?: string })[]>();
 
-    lessons?.content?.forEach((lesson: any) => {
-      const contents = lessonContentsMap.get(lesson.uuid) || [];
+    lessons?.content?.forEach((lesson: Lesson) => {
+      const contents = lesson.uuid ? lessonContentsMap.get(lesson.uuid) || [] : [];
 
-      const enriched = contents.map((content: any) => {
+      const enriched = contents.map((content: LessonContent) => {
         const type = contentTypeData.find(item => item.uuid === content.content_type_uuid);
         return {
           ...content,
@@ -220,7 +225,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
         };
       });
 
-      map.set(lesson.uuid, enriched);
+      if (lesson.uuid) map.set(lesson.uuid, enriched);
     });
 
     return map;
@@ -247,7 +252,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   const activeLesson = useMemo(
     () =>
       activeLessonId
-        ? lessons?.content?.find((lesson: any) => lesson.uuid === activeLessonId)
+        ? lessons?.content?.find((lesson: Lesson) => lesson.uuid === activeLessonId)
         : null,
     [lessons, activeLessonId]
   );
@@ -255,7 +260,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   React.useEffect(() => {
     if (!activeLessonId && !creatingDraft && lessons?.content?.length) {
       const lastLesson = lessons.content[lessons.content.length - 1];
-      setActiveLessonId(lastLesson.uuid);
+      if (lastLesson?.uuid) setActiveLessonId(lastLesson.uuid);
     }
   }, [lessons, activeLessonId, creatingDraft]);
 
@@ -289,7 +294,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
     if (data.uuid) {
       updateLessonContent.mutate(
         {
-          body: contentBody as any,
+          body: contentBody as never,
           path: {
             courseUuid: courseId as string,
             lessonUuid: activeLessonId as string,
@@ -311,7 +316,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
     } else {
       createLessonContent.mutate(
         {
-          body: contentBody as any,
+          body: contentBody as never,
           path: { courseUuid: courseId as string, lessonUuid: activeLessonId as string },
         },
         {
@@ -339,7 +344,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
       content_text: '',
       value: '',
       file_url: '',
-      display_order: (lessonContentsMap.get(activeLessonId)?.length || 0) + 1,
+      display_order: (activeLessonId ? lessonContentsMap.get(activeLessonId)?.length || 0 : 0) + 1,
       uuid: undefined,
     });
     setContentType('TEXT');
@@ -348,8 +353,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
     setSelectedContentId(null);
   };
 
-  const handleEditContent = (content: any) => {
-    const contentTypeKey = content.content_type_key || content.content_type;
+  const handleEditContent = (content: EnrichedLessonContent) => {
+    const contentTypeKey = (content.content_type_key || 'TEXT') as ContentType;
     const typeObj = contentTypeData.find(item => item.name?.toUpperCase() === contentTypeKey);
 
     contentForm.reset({
@@ -357,19 +362,19 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
       content_type_uuid: typeObj?.uuid || content.content_type_uuid,
       title: content.title || '',
       content_text: content.content_text || '',
-      value: content.value || content.file_url || '',
-      file_url: content.file_url || content.value || '',
+      value: content.file_url || '',
+      file_url: content.file_url || '',
       display_order: content.display_order || 1,
       uuid: content.uuid,
     });
 
     setContentType(contentTypeKey as ContentType);
-    setSelectedContentId(content.uuid);
+    setSelectedContentId(content.uuid ?? null);
     setShowContentForm(true);
     setMediaFile(null);
   };
 
-  const handleDeleteContent = async (resolvedId: any, lessonId: any, contentId: any) => {
+  const handleDeleteContent = async (resolvedId: string, lessonId: string, contentId: string) => {
     if (!course?.data?.uuid) return;
 
     try {
@@ -425,8 +430,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
             <div className='space-y-2'>
               {lessons?.content
                 ?.slice()
-                ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
-                ?.map((lesson: any) => (
+                ?.sort((a: Lesson, b: Lesson) => a.lesson_number - b.lesson_number)
+                ?.map((lesson: Lesson) => (
                   <div
                     key={lesson.uuid}
                     className={cn(
@@ -438,7 +443,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                   >
                     <div
                       onClick={() => {
-                        setActiveLessonId(lesson.uuid);
+                        if (lesson.uuid) setActiveLessonId(lesson.uuid);
                         setShowContentForm(false);
                         setSelectedContentId(null);
                       }}
@@ -516,7 +521,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                   <>
                     <div className='space-y-3'>
                       {(enrichedLessonContentsMap.get(activeLessonId) || []).map(
-                        (content: any, idx: number) => (
+                        (content: EnrichedLessonContent, idx: number) => (
                           <div
                             key={content.uuid || idx}
                             className={cn(
@@ -533,7 +538,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                   : 'bg-background text-muted-foreground'
                               }`}
                             >
-                              {getContentIcon(content.content_type_key)}
+                              {getContentIcon(content.content_type_key ?? 'TEXT')}
                             </div>
 
                             <div
@@ -559,8 +564,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                               <Button
                                 onClick={() => {
                                   handleViewContent(
-                                    content,
-                                    content.content_type_key?.toLowerCase()
+                                    content as PreviewableContentItem,
+                                    (content.content_type_key ?? 'TEXT').toLowerCase()
                                   );
                                 }}
                                 variant='outline'
@@ -577,7 +582,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                   handleDeleteContent(
                                     course?.data?.uuid as string,
                                     activeLessonId,
-                                    content?.uuid
+                                    content.uuid ?? ''
                                   );
                                 }}
                               >
@@ -644,7 +649,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                         );
 
                                         if (typeObj) {
-                                          contentForm.setValue('content_type_uuid', typeObj.uuid);
+                                          contentForm.setValue(
+                                            'content_type_uuid',
+                                            typeObj.uuid ?? ''
+                                          );
                                         }
                                       }}
                                       className='flex gap-3'
@@ -826,7 +834,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                             {
                                               body: { file: mediaFile },
                                               path: {
-                                                courseUuid: course?.data?.uuid,
+                                                courseUuid: course?.data?.uuid as string,
                                                 lessonUuid: activeLessonId,
                                               },
                                               query: {
@@ -844,7 +852,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                                 qc.invalidateQueries({
                                                   queryKey: getLessonContentQueryKey({
                                                     path: {
-                                                      courseUuid: course?.data?.uuid,
+                                                      courseUuid: course?.data?.uuid as string,
                                                       lessonUuid: activeLessonId,
                                                     },
                                                   }),
@@ -972,7 +980,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
         />
       </div>
       {/* {activeTab === "Lesson Content" &&
-       
+
         } */}
 
       {/*  {activeTab === "Assessment Tasks" && <div>Assessment tasks</div>} */}

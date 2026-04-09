@@ -1,13 +1,17 @@
-import { Badge } from '@/components/ui/badge';
-import type { Instructor } from '@/services/api/schema';
 import { BadgeCheckIcon, Trash2 } from 'lucide-react';
 import type React from 'react';
+import { Badge } from '@/components/ui/badge';
+import type { GetAllInstructorsResponse } from '@/services/client';
+
+type InstructorRecord = NonNullable<
+  NonNullable<GetAllInstructorsResponse['data']>['content']
+>[number];
 
 interface InstructorCardProps {
-  instructor: Instructor;
+  instructor: InstructorRecord;
   isSelected: boolean;
-  onSelect: (instructor: Instructor) => void;
-  onDelete: (instructor: Instructor) => void;
+  onSelect: (instructor: InstructorRecord) => void;
+  onDelete: (instructor: InstructorRecord) => void;
   getStatusBadgeComponent: (instructorId: string) => React.ReactElement;
 }
 

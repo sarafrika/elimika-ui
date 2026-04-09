@@ -9,7 +9,7 @@ import {
 } from '../../../../../services/client/@tanstack/react-query.gen';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { type FieldErrors, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -30,12 +30,12 @@ import { ClassDetails } from './page';
 const classSchema = z.object({
   course_uuid: z.string().min(1, 'Course is required'),
   title: z.string().min(1, 'Title is required'),
-  categories: z.any().optional(),
+  categories: z.array(z.string()).optional(),
   class_type: z.string().min(1, 'Class type is required'),
-  rate_card: z.any().optional(),
+  rate_card: z.string().optional(),
   location_type: z.string().min(1, 'Location type is required'),
   location_name: z.string().optional(),
-  class_limit: z.any().optional(),
+  class_limit: z.number().optional(),
 });
 
 type ClassFormValues = z.infer<typeof classSchema>;
@@ -182,7 +182,7 @@ export const ClassDetailsFormPage = ({
       ];
 
     if (rate !== undefined) {
-      form.setValue('rate_card', rate);
+      form.setValue('rate_card', String(rate));
     }
   }, [selectedClassType, selectedCourse, form]);
 
@@ -214,8 +214,8 @@ export const ClassDetailsFormPage = ({
     onNext();
   };
 
-  const onSubmitError = (errors: any) => {
-    toast.error('Form validation errors:', errors);
+  const onSubmitError = (_errors: FieldErrors<ClassFormValues>) => {
+    toast.error('Please fix the highlighted form fields before continuing.');
   };
 
   return (

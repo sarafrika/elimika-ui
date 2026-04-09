@@ -1,20 +1,18 @@
 # syntax=docker.io/docker/dockerfile:1
 FROM node:lts-alpine AS base
 
+RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
+
 # Install dependencies only when needed
 FROM base AS deps
 
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files only (skip lockfile on purpose)
-COPY package.json .npmrc* ./
+# Copy package files needed for deterministic installs
+COPY package.json pnpm-lock.yaml .npmrc* ./
 
-# Use latest pnpm and ignore lockfile by generating a new one
-RUN \
-  corepack enable && \
-  corepack prepare pnpm@latest --activate && \
-  pnpm install
+RUN pnpm install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -26,10 +24,7 @@ COPY . .
 # Optional: disable Next.js telemetry
 # ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN \
-  corepack enable && \
-  corepack prepare pnpm@latest --activate && \
-  pnpm run build
+RUN pnpm run build
 
 # Production image
 FROM base AS runner

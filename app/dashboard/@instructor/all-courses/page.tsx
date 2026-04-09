@@ -1,7 +1,5 @@
-import MyCoursesPage from '../../_home-components/MyCoursesPage';
+import { SharedAllCoursesPage } from '@/src/features/dashboard/workspace/pages/SharedAllCoursesPage';
 
-const Page = () => {
-  return <MyCoursesPage />;
-};
-
-export default Page;
+export default function InstructorAllCoursesPage() {
+  return <SharedAllCoursesPage />;
+}

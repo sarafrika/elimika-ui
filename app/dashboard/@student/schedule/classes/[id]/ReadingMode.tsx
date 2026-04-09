@@ -38,21 +38,21 @@ export function ReadingMode({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [pdfError, setPdfError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const scrollElement = scrollRef.current;
-    if (!scrollElement) return;
+    const viewport = scrollAreaRef.current?.querySelector('[data-slot="scroll-area-viewport"]');
+    if (!(viewport instanceof HTMLDivElement)) return;
 
     const handleScroll = () => {
-      const scrollTop = scrollElement.scrollTop;
-      const scrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
+      const scrollTop = viewport.scrollTop;
+      const scrollHeight = viewport.scrollHeight - viewport.clientHeight;
       const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
       setScrollProgress(Math.min(100, Math.max(0, progress)));
     };
 
-    scrollElement.addEventListener('scroll', handleScroll);
-    return () => scrollElement.removeEventListener('scroll', handleScroll);
+    viewport.addEventListener('scroll', handleScroll);
+    return () => viewport.removeEventListener('scroll', handleScroll);
   }, []);
 
   if (!isOpen) return null;
@@ -268,20 +268,22 @@ export function ReadingMode({
         </div>
 
         {/* Content Area */}
-        <ScrollArea className='flex-1' ref={scrollRef as any}>
-          <div className='p-4 sm:p-6 md:p-8 lg:p-12'>
-            <div
-              className='mx-auto max-w-5xl transition-all duration-200'
-              style={{ fontSize: `${zoomLevel}%` }}
-            >
-              {/* Text Content */}
+        <div ref={scrollAreaRef} className='flex-1'>
+          <ScrollArea className='h-full'>
+            <div className='p-4 sm:p-6 md:p-8 lg:p-12'>
               <div
-                className='prose prose-sm sm:prose lg:prose-lg dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg prose-img:shadow-md prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border max-w-none'
-                dangerouslySetInnerHTML={{ __html: content }}
-              />
+                className='mx-auto max-w-5xl transition-all duration-200'
+                style={{ fontSize: `${zoomLevel}%` }}
+              >
+                {/* Text Content */}
+                <div
+                  className='prose prose-sm sm:prose lg:prose-lg dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg prose-img:shadow-md prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border max-w-none'
+                  dangerouslySetInnerHTML={{ __html: content }}
+                />
+              </div>
             </div>
-          </div>
-        </ScrollArea>
+          </ScrollArea>
+        </div>
 
         {/* Footer */}
         <div className='bg-muted/30 flex items-center justify-between border-t px-4 py-2'>

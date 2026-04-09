@@ -31,15 +31,37 @@ import {
   getProgramRequirementsQueryKey,
   removeProgramCourseMutation,
 } from '../../../../../services/client/@tanstack/react-query.gen';
+import type { Course, RequirementTypeEnum } from '@/services/client/types.gen';
 
-const ProgramCourseManagement = ({ programUuid, onSaveDraft, onBack }: any) => {
+type ProgramCourseManagementProps = {
+  programUuid: string;
+  onPublish?: () => void;
+  onSaveDraft: () => void;
+  onBack: () => void;
+  isPublishing?: boolean;
+  editingProgram?: { status?: string };
+};
+
+type NewRequirement = {
+  requirement_type: RequirementTypeEnum;
+  requirement_text: string;
+  is_mandatory: boolean;
+};
+
+type ProgramCourseListItem = Course & { uuid?: string; is_required?: boolean };
+
+const ProgramCourseManagement = ({
+  programUuid,
+  onSaveDraft,
+  onBack,
+}: ProgramCourseManagementProps) => {
   const qc = useQueryClient();
 
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [showRequirementModal, setShowRequirementModal] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
-  const [newRequirement, setNewRequirement] = useState({
+  const [newRequirement, setNewRequirement] = useState<NewRequirement>({
     requirement_type: 'STUDENT',
     requirement_text: '',
     is_mandatory: true,
@@ -52,7 +74,7 @@ const ProgramCourseManagement = ({ programUuid, onSaveDraft, onBack }: any) => {
   });
 
   const { data: programCourses } = useQuery({
-    ...getProgramCoursesOptions({ path: { programUuid } }),
+    ...getProgramCoursesOptions({ path: { programUuid: programUuid as string } }),
     enabled: !!programUuid,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -60,7 +82,7 @@ const ProgramCourseManagement = ({ programUuid, onSaveDraft, onBack }: any) => {
 
   const { data: programRequirements } = useQuery({
     ...getProgramRequirementsOptions({
-      path: { programUuid },
+      path: { programUuid: programUuid as string },
       query: { pageable: {} },
     }),
     enabled: !!programUuid,
@@ -124,11 +146,11 @@ const ProgramCourseManagement = ({ programUuid, onSaveDraft, onBack }: any) => {
   });
 
   const allCourses = allCoursesData?.data?.content || [];
-  const assignedCourseUuids = programCourses?.data?.map(pc => pc.uuid) || [];
+  const assignedCourseUuids = programCourses?.data?.map(pc => pc.uuid).filter(Boolean) || [];
   const availableCourses = allCourses.filter(c => !assignedCourseUuids.includes(c.uuid));
 
   const handleAddCourse = () => {
-    if (!selectedCourse) return;
+    if (!selectedCourse?.uuid) return;
 
     addCourseMut.mutate({
       body: {
@@ -202,7 +224,7 @@ const ProgramCourseManagement = ({ programUuid, onSaveDraft, onBack }: any) => {
               </p>
             </div>
           ) : (
-            programCourses?.data?.map((course, index) => (
+            programCourses?.data?.map((course: ProgramCourseListItem, index) => (
               <div
                 key={course.uuid}
                 className='border-border bg-muted flex items-center justify-between rounded-lg border p-4'
@@ -221,7 +243,7 @@ const ProgramCourseManagement = ({ programUuid, onSaveDraft, onBack }: any) => {
                   </div>
                 </div>
                 <Button
-                  onClick={() => handleRemoveCourse(course.uuid)}
+                  onClick={() => course.uuid && handleRemoveCourse(course.uuid)}
                   disabled={removeCourseMut.isPending}
                   className='bg-destructive/10 text-destructive hover:bg-destructive/20 rounded px-3 py-1 text-sm font-medium'
                 >
@@ -273,7 +295,7 @@ const ProgramCourseManagement = ({ programUuid, onSaveDraft, onBack }: any) => {
                   </div>
                 </div>
                 <Button
-                  onClick={() => handleRemoveRequirement(req.uuid)}
+                  onClick={() => req.uuid && handleRemoveRequirement(req.uuid)}
                   disabled={removeRequirementMut.isPending}
                   className='bg-destructive/10 text-destructive hover:bg-destructive/20 rounded px-3 py-1 text-sm font-medium'
                 >
@@ -377,7 +399,7 @@ const ProgramCourseManagement = ({ programUuid, onSaveDraft, onBack }: any) => {
                 onValueChange={value =>
                   setNewRequirement(prev => ({
                     ...prev,
-                    requirement_type: value,
+                    requirement_type: value as RequirementTypeEnum,
                   }))
                 }
               >

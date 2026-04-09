@@ -46,7 +46,7 @@ export default function StatisticsContent() {
 
   const statistics = data?.data as ExtendedAdminDashboardStats | undefined;
   const adminMetrics = statistics?.admin_metrics;
-  const organizationMetrics = statistics?.organization_metrics;
+  const organizationMetrics = statistics?.organisation_metrics;
   const complianceMetrics = statistics?.compliance_metrics;
   const enrollmentComplianceMetrics = statistics?.enrollment_compliance_metrics;
 

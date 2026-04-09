@@ -5,15 +5,23 @@ export type PageMetadataLike = {
   pageSize?: number;
   hasNext?: boolean;
   hasPrevious?: boolean;
+  total_elements?: number;
 } & Record<string, unknown>;
 
-function unwrapPayload(layer: unknown): any {
+function getObjectValue<T>(value: unknown, key: string): T | undefined {
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+
+  return (value as Record<string, unknown>)[key] as T | undefined;
+}
+
+function unwrapPayload(layer: unknown): unknown {
   if (!layer || typeof layer !== 'object') {
     return undefined;
   }
 
-  const payload = (layer as any).data ?? layer;
-  return payload;
+  return getObjectValue(layer, 'data') ?? layer;
 }
 
 export function extractEntity<T>(apiResponse: unknown): T | null {
@@ -22,12 +30,18 @@ export function extractEntity<T>(apiResponse: unknown): T | null {
     return null;
   }
 
-  const entity = (payload as any).data ?? payload;
+  const entity = getObjectValue(payload, 'data') ?? payload;
   if (!entity || typeof entity !== 'object') {
     return null;
   }
 
   return entity as T;
+}
+
+export function extractList<T>(apiResponse: unknown): T[] {
+  const payload = unwrapPayload(apiResponse);
+
+  return Array.isArray(payload) ? (payload as T[]) : [];
 }
 
 export function extractPage<T>(apiResponse: unknown): { items: T[]; metadata: PageMetadataLike } {
@@ -38,8 +52,8 @@ export function extractPage<T>(apiResponse: unknown): { items: T[]; metadata: Pa
     return { items: dataLayer as T[], metadata: {} };
   }
 
-  const content = (dataLayer as any)?.content ?? [];
-  const metadata = ((dataLayer as any)?.metadata ?? {}) as PageMetadataLike;
+  const content = getObjectValue<unknown[]>(dataLayer, 'content') ?? [];
+  const metadata = (getObjectValue<PageMetadataLike>(dataLayer, 'metadata') ?? {}) as PageMetadataLike;
 
   return {
     items: Array.isArray(content) ? (content as T[]) : [],
@@ -50,8 +64,7 @@ export function extractPage<T>(apiResponse: unknown): { items: T[]; metadata: Pa
 export function getTotalFromMetadata(metadata?: PageMetadataLike): number {
   if (!metadata) return 0;
 
-  const total =
-    (metadata.totalElements as number | undefined) ?? (metadata as any).total_elements ?? 0;
+  const total = metadata.totalElements ?? metadata.total_elements ?? 0;
 
   return typeof total === 'number' ? total : 0;
 }

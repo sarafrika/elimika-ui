@@ -1,5 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import type { GetCourseLessonsResponse, GetLessonContentResponse } from '@/services/client/types.gen';
 import {
   getAllContentTypesOptions,
   getCourseLessonsOptions,
@@ -8,6 +9,17 @@ import {
 
 type Params = {
   courseUuid?: string;
+};
+
+export type CourseLesson = NonNullable<
+  NonNullable<GetCourseLessonsResponse['data']>['content']
+>[number];
+export type CourseLessonContent = NonNullable<
+  NonNullable<GetLessonContentResponse['data']>['content']
+>[number];
+export type CourseLessonWithContent = {
+  lesson: CourseLesson;
+  content: GetLessonContentResponse | undefined;
 };
 
 export function useCourseLessonsWithContent({ courseUuid }: Params) {
@@ -50,10 +62,12 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
   const isAllLessonsDataLoading = lessonsLoading || isLessonContentLoading;
   const isAllLessonsDataFetching = lessonsFetching || isLessonContentFetching;
 
-  const lessonsWithContent = cLessons?.data?.content?.map((lesson, index) => ({
-    lesson,
-    content: lessonContentQueries[index]?.data,
-  }));
+  const lessonsWithContent = cLessons?.data?.content?.map(
+    (lesson, index): CourseLessonWithContent => ({
+      lesson,
+      content: lessonContentQueries[index]?.data,
+    })
+  );
 
   const { data: contentTypeList, isFetching: contentTypeFetching } = useQuery(
     getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })

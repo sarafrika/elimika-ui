@@ -45,6 +45,7 @@ jobs:
           sed -i "s|__KEYCLOAK_CLIENT_ID__|${{ secrets.KEYCLOAK_CLIENT_ID }}|g" .env.local
           sed -i "s|__KEYCLOAK_CLIENT_SECRET__|${{ secrets.KEYCLOAK_CLIENT_SECRET }}|g" .env.local
           sed -i "s|__KEYCLOAK_REALM__|${{ secrets.KEYCLOAK_REALM }}|g" .env.local
+          sed -i "s|__NEXT_PUBLIC_SITE_URL__|${{ secrets.NEXT_PUBLIC_SITE_URL || secrets.NEXTAUTH_URL }}|g" .env.local
 
           echo "✅ .env.local file created from template!"
 

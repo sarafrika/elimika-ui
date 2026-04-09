@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Button } from '../../../../../components/ui/button';
 import { Skeleton } from '../../../../../components/ui/skeleton';
 import { useCourseCreator } from '../../../../../context/course-creator-context';
+import type { SchemaEnum4 } from '@/services/client/types.gen';
 import ProgramBasicInfo from './ProgramBasicInfo';
 import ProgramCourseManagement from './ProgramCourseManagement';
 
@@ -32,9 +33,28 @@ interface ProgramFormData {
   category_uuid: string;
   total_duration_hours: number;
   total_duration_minutes: number;
-  status: string;
+  status: SchemaEnum4;
   active: boolean;
+  categories: string[];
+  published: boolean;
 }
+
+type MutationErrorLike = { message?: string };
+const getMutationErrorMessage = (error: unknown) =>
+  typeof error === 'object' && error !== null && 'message' in error
+    ? (error as MutationErrorLike).message
+    : undefined;
+type ProgramBasicFormData = Omit<
+  Pick<
+    ProgramFormData,
+    'title' | 'description' | 'class_limit' | 'price' | 'category_uuid' | 'categories' | 'active'
+  >,
+  'program_type'
+> & {
+  program_type?: string;
+  objectives?: string;
+  prerequisites?: string;
+};
 
 const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
   const qc = useQueryClient();
@@ -69,6 +89,8 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
     total_duration_minutes: 0,
     status: 'draft',
     active: true,
+    categories: [],
+    published: false,
   });
 
   // Initialize form data when editing
@@ -89,6 +111,8 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
       total_duration_minutes: editingProgram.total_duration_minutes ?? 0,
       status: editingProgram.status ?? 'draft',
       active: editingProgram.active ?? false,
+      categories: editingProgram.category_uuid ? [editingProgram.category_uuid] : [],
+      published: editingProgram.published ?? false,
     });
 
     setIsInitialized(true);
@@ -119,14 +143,18 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
     });
   };
 
-  const handleStep1Submit = (data: ProgramFormData) => {
-    setFormData(data);
+  const handleStep1Submit = (data: ProgramBasicFormData) => {
+    const nextFormData: ProgramFormData = {
+      ...formData,
+      ...data,
+    };
+    setFormData(nextFormData);
 
     if (programUuid) {
       // UPDATE existing program
       updateProgramMut.mutate(
         {
-          body: data,
+          body: nextFormData,
           path: { uuid: programUuid },
         },
         {
@@ -135,18 +163,18 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
             toast.success(response?.message || 'Program updated successfully');
             setStep(2);
           },
-          onError: (error: any) => {
-            toast.error(error?.message || 'Failed to update program');
+          onError: error => {
+            toast.error(getMutationErrorMessage(error) || 'Failed to update program');
           },
         }
       );
     } else {
       // CREATE new program
       createProgramMut.mutate(
-        { body: data },
+        { body: nextFormData },
         {
           onSuccess: response => {
-            const newProgramUuid = response?.data?.uuid || response?.uuid;
+            const newProgramUuid = response?.uuid;
 
             if (!newProgramUuid) {
               toast.error('Program created but UUID not returned');
@@ -164,8 +192,8 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
             invalidateProgramQueries();
             setStep(2);
           },
-          onError: (error: any) => {
-            toast.error(error?.message || 'Failed to create program');
+          onError: error => {
+            toast.error(getMutationErrorMessage(error) || 'Failed to create program');
           },
         }
       );
@@ -192,8 +220,8 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
           toast.success(response?.message || 'Program published successfully');
           onComplete?.();
         },
-        onError: (error: any) => {
-          toast.error(error?.message || 'Failed to publish program');
+        onError: error => {
+          toast.error(getMutationErrorMessage(error) || 'Failed to publish program');
         },
       }
     );
@@ -219,8 +247,8 @@ const CreateProgramWizard = ({ onComplete }: { onComplete?: () => void }) => {
           toast.success(response?.message || 'Draft saved successfully');
           onComplete?.();
         },
-        onError: (error: any) => {
-          toast.error(error?.message || 'Failed to save draft');
+        onError: error => {
+          toast.error(getMutationErrorMessage(error) || 'Failed to save draft');
         },
       }
     );

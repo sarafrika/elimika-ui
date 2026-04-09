@@ -23,7 +23,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, Clock, Filter, MapPin, Phone, Search, Video } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import type { AvailabilityData } from './types';
+import type { AvailabilityData, CalendarEvent } from './types';
 
 interface AvailabilityBookingProps {
   availabilityData: AvailabilityData;
@@ -38,6 +38,8 @@ interface BookingRequestData {
   preferredMethod: 'online' | 'in-person' | 'phone';
 }
 
+type TimeRangeFilter = 'morning' | 'afternoon' | 'evening' | 'all';
+
 export function AvailabilityBooking({
   availabilityData,
   onBookingRequest,
@@ -51,14 +53,12 @@ export function AvailabilityBooking({
     preferredMethod: 'online',
   });
   const [filterDays, setFilterDays] = useState<string[]>([]);
-  const [filterTimeRange, setFilterTimeRange] = useState<
-    'morning' | 'afternoon' | 'evening' | 'all'
-  >('all');
+  const [filterTimeRange, setFilterTimeRange] = useState<TimeRangeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const availableSlots = useMemo(() => {
     const now = new Date();
-    const slots = availabilityData?.slots
+    const slots = availabilityData.events
       ?.filter(slot => slot.is_available === true)
       ?.filter(slot => {
         // Only show future slots
@@ -110,7 +110,7 @@ export function AvailabilityBooking({
     }
 
     return filteredSlots;
-  }, [availabilityData.slots, filterDays, filterTimeRange, searchQuery]);
+  }, [availabilityData.events, filterDays, filterTimeRange, searchQuery]);
 
   const handleBookingSubmit = () => {
     if (!selectedSlot) return;
@@ -278,7 +278,7 @@ export function AvailabilityBooking({
               <Label>Time of Day</Label>
               <Select
                 value={filterTimeRange}
-                onValueChange={(value: any) => setFilterTimeRange(value)}
+                onValueChange={value => setFilterTimeRange(value as TimeRangeFilter)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -379,7 +379,7 @@ function BookingForm({
   setBookingData,
   onSubmit,
 }: {
-  slot: any;
+  slot: CalendarEvent;
   bookingData: BookingRequestData;
   setBookingData: (data: BookingRequestData) => void;
   onSubmit: () => void;
@@ -458,7 +458,12 @@ function BookingForm({
         <Label htmlFor='method'>Preferred Method</Label>
         <Select
           value={bookingData.preferredMethod}
-          onValueChange={(value: any) => setBookingData({ ...bookingData, preferredMethod: value })}
+          onValueChange={value =>
+            setBookingData({
+              ...bookingData,
+              preferredMethod: value as BookingRequestData['preferredMethod'],
+            })
+          }
         >
           <SelectTrigger>
             <SelectValue />

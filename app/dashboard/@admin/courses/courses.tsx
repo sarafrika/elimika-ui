@@ -61,6 +61,7 @@ import {
   getCourseEnrollmentsOptions,
   moderateCourseMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import type { CourseEnrollment } from '../../../../services/client/types.gen';
 
 // Course type based on the example data
 interface Course {
@@ -86,10 +87,11 @@ interface Course {
   banner_url: string;
   status: 'published' | 'draft' | 'in_review' | 'archived';
   active: boolean;
+  admin_approved?: boolean;
   category_names: string[];
-  created_date: string;
+  created_date: Date | string;
   created_by: string;
-  updated_date: string;
+  updated_date: Date | string;
   updated_by: string;
   accepts_new_enrollments: boolean;
   is_published: boolean;
@@ -156,7 +158,7 @@ export default function CoursesPage() {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
-  const allCourses = (coursesData?.data?.content ?? []) as Course[];
+  const allCourses = (coursesData?.data?.content ?? []) as unknown as Course[];
 
   // Fetch enrollment counts for all courses
   const courseUuids = useMemo(() => allCourses.map(c => c.uuid).filter(Boolean), [allCourses]);
@@ -203,10 +205,16 @@ export default function CoursesPage() {
       const content = query.data?.data?.content ?? [];
       const metadata = query.data?.data?.metadata;
 
+      if (!uuid) {
+        return;
+      }
+
       map[uuid] = {
-        total: metadata?.totalElements ?? 0,
+        total: Number(metadata?.totalElements ?? 0),
         active: Array.isArray(content)
-          ? content.filter((e: any) => e?.status === 'active').length
+          ? (content as CourseEnrollmentRecord[]).filter(
+              enrollment => enrollment.status === 'ACTIVE'
+            ).length
           : 0,
         isLoading: query.isLoading || query.isFetching,
       };
@@ -736,6 +744,19 @@ export default function CoursesPage() {
 }
 
 type CourseFormValues = z.infer<typeof courseFormSchema>;
+type CourseEnrollmentRecord = CourseEnrollment & { progressPercentage?: number };
+type UpdateCoursePayload = {
+  uuid: string;
+  data: CourseFormValues;
+};
+type UpdateCourseCallbacks = {
+  onSuccess: () => void;
+  onError?: (error: Error) => void;
+};
+type CourseContentPreviewItem = PreviewableLessonContent & {
+  title?: string;
+  description?: string;
+};
 
 interface CourseDetailSheetProps {
   course: Course | null;
@@ -757,7 +778,7 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
   });
 
   const updateCourse = {
-    mutate: (data: any, callbacks: any) => {
+    mutate: (_data: UpdateCoursePayload, callbacks: UpdateCourseCallbacks) => {
       setTimeout(() => callbacks.onSuccess(), 500);
     },
     isPending: false,
@@ -831,8 +852,12 @@ function CourseDetailSheet({ course, open, onOpenChange }: CourseDetailSheetProp
             toast.success(data?.message);
             closeModerationDialog();
           },
-          onError: (error: Error) => {
-            toast.error(error.message || `Failed to ${moderationDialog.action} course`);
+          onError: error => {
+            toast.error(
+              typeof error === 'object' && error && 'message' in error
+                ? String(error.message)
+                : `Failed to ${moderationDialog.action} course`
+            );
           },
         }
       );
@@ -1281,10 +1306,10 @@ function CourseContentPlaceholder({ course }: { course: Course }) {
   const [isReading, setIsReading] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
-  const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<CourseContentPreviewItem | null>(null);
   const [contentTypeName, setContentTypeName] = useState<string>('');
 
-  const handleViewContent = (content: ContentItem, contentType: string) => {
+  const handleViewContent = (content: CourseContentPreviewItem, contentType: string) => {
     setSelectedLesson(content);
     setContentTypeName(contentType);
 
@@ -1372,7 +1397,8 @@ function CourseContentPlaceholder({ course }: { course: Course }) {
           <Card>
             <CardContent className='space-y-6 p-6'>
               {lessonsWithContent.map((skill, skillIndex) => {
-                const hasContent = skill?.content?.data && skill.content.data.length > 0;
+                const lessonContent = skill.content?.data ?? [];
+                const hasContent = lessonContent.length > 0;
 
                 return (
                   <div key={skillIndex} className='space-y-3'>
@@ -1398,8 +1424,7 @@ function CourseContentPlaceholder({ course }: { course: Course }) {
                       {hasContent ? (
                         <Badge variant='secondary' className='gap-1 text-xs'>
                           <FileText className='h-3 w-3' />
-                          {skill.content.data.length}{' '}
-                          {skill.content.data.length === 1 ? 'item' : 'items'}
+                          {lessonContent.length} {lessonContent.length === 1 ? 'item' : 'items'}
                         </Badge>
                       ) : (
                         <Badge variant='outline' className='text-muted-foreground text-xs'>
@@ -1422,7 +1447,7 @@ function CourseContentPlaceholder({ course }: { course: Course }) {
                     ) : (
                       // Has content
                       <div className='space-y-2'>
-                        {skill.content.data.map((c, cIndex) => {
+                        {lessonContent.map((c, cIndex) => {
                           const contentTypeName = contentTypeMap[c.content_type_uuid] || 'file';
 
                           return (
@@ -1584,9 +1609,11 @@ import {
 import { Label } from '../../../../components/ui/label';
 import { useCourseLessonsWithContent } from '../../../../hooks/use-courselessonwithcontent';
 import { useStudentsMap } from '../../../../hooks/use-studentsMap';
-import { resolveLessonContentSource } from '../../../../lib/lesson-content-preview';
+import {
+  type PreviewableLessonContent,
+  resolveLessonContentSource,
+} from '../../../../lib/lesson-content-preview';
 import { getResourceIcon } from '../../../../lib/resources-icon';
-import { ContentItem } from '../../@instructor/trainings/overview/[id]/page';
 import { AudioPlayer } from '../../@student/schedule/classes/[id]/AudioPlayer';
 import { ReadingMode } from '../../@student/schedule/classes/[id]/ReadingMode';
 import { VideoPlayer } from '../../@student/schedule/classes/[id]/VideoPlayer';
@@ -1619,7 +1646,9 @@ function CourseEnrollmentsPlaceholder({ course }: { course: Course }) {
   };
 
   const studentUuids = useMemo(() => {
-    return Array.from(new Set(enrollments.map((e: any) => e.student_uuid).filter(Boolean)));
+    return Array.from(
+      new Set((enrollments as CourseEnrollmentRecord[]).map(enrollment => enrollment.student_uuid))
+    ).filter(Boolean);
   }, [enrollments]);
 
   // const { data: studentsData, isLoading: isLoadingStudents } = useQuery({
@@ -1635,7 +1664,7 @@ function CourseEnrollmentsPlaceholder({ course }: { course: Course }) {
   //             )
   //         );
 
-  //         const mapped: Record<string, any> = {};
+  //         const mapped: Record<string, unknown> = {};
   //         results.forEach((student) => {
   //             if (student?.uuid) {
   //                 mapped[student.uuid] = student;
@@ -1657,13 +1686,16 @@ function CourseEnrollmentsPlaceholder({ course }: { course: Course }) {
 
   // const student = studentsMap[uuid];
 
-  const activeEnrollments = enrollments.filter((i: any) => i?.status === 'active');
+  const activeEnrollments = (enrollments as CourseEnrollmentRecord[]).filter(
+    enrollment => enrollment.status === 'ACTIVE'
+  );
   const activeStudents = activeEnrollments.length;
   const averageProgress =
     activeStudents === 0
       ? 0
       : activeEnrollments.reduce(
-          (sum: number, student: any) => sum + (student?.progressPercentage || 0),
+          (sum: number, enrollment) =>
+            sum + (enrollment.progressPercentage ?? enrollment.progress_percentage ?? 0),
           0
         ) / activeStudents;
 
@@ -1774,7 +1806,7 @@ function CourseEnrollmentsPlaceholder({ course }: { course: Course }) {
                               </td>
                             </tr>
                           ))
-                        : enrollments.map((enrollment: any) => {
+                        : (enrollments as CourseEnrollmentRecord[]).map(enrollment => {
                             const student = studentsMap[enrollment.student_uuid];
 
                             return (
@@ -1787,7 +1819,7 @@ function CourseEnrollmentsPlaceholder({ course }: { course: Course }) {
                                 <td className='p-4'>
                                   <Badge
                                     variant={
-                                      enrollment.status === 'active' ? 'default' : 'secondary'
+                                      enrollment.status === 'ACTIVE' ? 'default' : 'secondary'
                                     }
                                     className='capitalize'
                                   >
@@ -1815,7 +1847,7 @@ function CourseEnrollmentsPlaceholder({ course }: { course: Course }) {
                 {pagination && !isTableLoading && (
                   <div className='flex items-center justify-between border-t p-4'>
                     <p className='text-muted-foreground text-sm'>
-                      Page {pagination?.pageNumber + 1} of {pagination.totalPages}
+                      Page {(pagination?.pageNumber ?? 0) + 1} of {pagination?.totalPages ?? 1}
                     </p>
 
                     <div className='flex gap-2'>
@@ -1831,7 +1863,7 @@ function CourseEnrollmentsPlaceholder({ course }: { course: Course }) {
                       <Button
                         variant='outline'
                         size='sm'
-                        disabled={page + 1 >= pagination?.totalPages}
+                        disabled={page + 1 >= (pagination?.totalPages ?? 1)}
                         onClick={() => handlePageChange(page + 1)}
                       >
                         Next

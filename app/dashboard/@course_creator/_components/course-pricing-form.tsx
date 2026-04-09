@@ -41,12 +41,26 @@ import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
 import { FormSection } from './course-creation-form';
 import { type CourseCreationFormValues, CURRENCIES } from './course-creation-types';
 
+type MutationPayload = Record<string, unknown>;
+type CategoryPayload = { name: string };
+type CourseMutationResult = {
+  data?: { message?: string };
+  error?: Record<string, unknown>;
+  message?: string;
+};
+
+const getFormErrorMessage = (value: unknown) => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.find(item => typeof item === 'string');
+  return undefined;
+};
+
 export type CourseFormProps = {
   showSubmitButton?: boolean;
   initialValues?: Partial<CourseCreationFormValues>;
   editingCourseId?: string;
   courseId?: string;
-  successResponse?: (data: any) => void;
+  successResponse?: (data: unknown) => void;
 };
 
 export type CourseFormRef = {
@@ -112,7 +126,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
     useEffect(() => {
       if (initialValues && Object.keys(initialValues).length > 0) {
         form.reset({
-          ...form.getValues(), // preserve any unsaved edits (optional)
+          ...form.getValues(), // preserve unsaved edits (optional)
           ...initialValues, // overwrite with fetched data
         });
       }
@@ -133,10 +147,11 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     // MUTATION
     const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
-      mutationFn: ({ body }: { body: any }) => createCategory({ body }),
-      onSuccess: (data: any) => {
+      mutationFn: ({ body }: { body: CategoryPayload }) => createCategory({ body }),
+      onSuccess: (data: CourseMutationResult) => {
         if (data?.error) {
-          if (data.error.error?.toLowerCase().includes('duplicate key')) {
+          const duplicateMessage = getFormErrorMessage(data.error.error);
+          if (duplicateMessage?.toLowerCase().includes('duplicate key')) {
             toast.error('Category already exists');
           } else {
             toast.error('Failed to add category');
@@ -159,8 +174,8 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
       useMutation(createCourseMutation());
 
     const { mutate: updateCourseMutation, isPending: updateCourseIsPending } = useMutation({
-      mutationFn: ({ body, uuid }: { body: any; uuid: string }) =>
-        updateCourse({ body, path: { uuid: uuid } }),
+      mutationFn: ({ body, uuid }: { body: MutationPayload; uuid: string }) =>
+        updateCourse({ body: body as never, path: { uuid: uuid } }),
     });
 
     // GET COURSE CATEGORIES
@@ -237,7 +252,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
         };
 
         updateCourseMutation(
-          { body: editBody as any, uuid: editingCourseId },
+          { body: editBody as MutationPayload, uuid: editingCourseId },
           {
             onSuccess(data, _variables, _context) {
               const respObj = data?.data;
@@ -259,14 +274,13 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
               if (errorObj && typeof errorObj === 'object') {
                 Object.values(errorObj).forEach(errorMsg => {
-                  if (typeof errorMsg === 'string') {
-                    toast.error(errorMsg);
+                  const message = getFormErrorMessage(errorMsg);
+                  if (message) {
+                    toast.error(message);
                   }
                 });
                 return;
-                // @ts-expect-error
-              } else if (data?.message) {
-                // @ts-expect-error
+              } else if ('message' in data && typeof data.message === 'string') {
                 toast.error(data.message);
                 return;
               } else {
@@ -279,8 +293,8 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     };
 
-    const onError = (error: any) => {
-      toast.error(error);
+    const onError = () => {
+      toast.error('Please review the pricing fields and try again.');
     };
 
     useImperativeHandle(ref, () => ({
@@ -291,9 +305,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     useEffect(() => {
       if (isFree) {
-        form.setValue('price', 0);
-        form.setValue('sale_price', 0);
-        // form.setValue('minimum_training_fee', 0);
+        form.setValue('minimum_training_fee', 0);
       }
     }, [isFree, form]);
 

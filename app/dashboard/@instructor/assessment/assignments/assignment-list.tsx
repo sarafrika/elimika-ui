@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
+import type { Assignment } from '@/services/client/types.gen';
 import {
   deleteAssignmentMutation,
   getAllAssignmentsOptions,
@@ -23,7 +24,32 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Card } from '../../../../../components/ui/card';
 import useInstructorClassesWithDetails from '../../../../../hooks/use-instructor-classes';
-import { AssignmentDialog } from '../../../@course_creator/_components/assignment-management-form';
+import {
+  type AsignmentFormValues,
+  AssignmentDialog,
+} from '../../../@course_creator/_components/assignment-management-form';
+
+const ASSIGNMENT_SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'] as const;
+
+const isAssignmentFormSubmissionType = (
+  value: string
+): value is NonNullable<AsignmentFormValues['submission_types']>[number] =>
+  ASSIGNMENT_SUBMISSION_TYPES.includes(value as (typeof ASSIGNMENT_SUBMISSION_TYPES)[number]);
+
+const getAssignmentInitialValues = (assignment: Assignment): Partial<AsignmentFormValues> => ({
+  title: assignment.title,
+  lesson_uuid: assignment.lesson_uuid,
+  description: assignment.description,
+  instructions: assignment.instructions,
+  max_points: assignment.max_points,
+  rubric_uuid: assignment.rubric_uuid,
+  due_date: assignment.due_date ? new Date(assignment.due_date) : undefined,
+  submission_types:
+    typeof assignment.submission_types === 'string' &&
+    isAssignmentFormSubmissionType(assignment.submission_types)
+      ? [assignment.submission_types]
+      : undefined,
+});
 
 export default function AssignmentListPage() {
   const qc = useQueryClient();
@@ -42,8 +68,9 @@ export default function AssignmentListPage() {
   const [openAssignmentModal, setOpenAssignmentModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const [editingAssignmetId, setEditingAssignmentId] = useState();
-  const [editingAssignmentData, setEditingAssignmentData] = useState();
+  const [editingAssignmetId, setEditingAssignmentId] = useState<string>();
+  const [editingAssignmentData, setEditingAssignmentData] =
+    useState<Partial<AsignmentFormValues>>();
 
   const instructor = useInstructor();
   const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
@@ -55,13 +82,13 @@ export default function AssignmentListPage() {
   );
   const assignments = data?.data?.content;
 
-  const handleEditAssignment = (assignment: any) => {
+  const handleEditAssignment = (assignment: Assignment) => {
     setOpenAssignmentModal(true);
     setEditingAssignmentId(assignment?.uuid);
-    setEditingAssignmentData(assignment);
+    setEditingAssignmentData(getAssignmentInitialValues(assignment));
   };
 
-  const handleDeleteAssignment = (assignmentId: any) => {
+  const handleDeleteAssignment = (assignmentId: string) => {
     setEditingAssignmentId(assignmentId);
     setOpenDeleteModal(true);
   };

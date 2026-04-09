@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Calendar, Clock, Users } from 'lucide-react';
 import { useMemo } from 'react';
+import type { ClassDetailsCourse, ClassDetailsLesson } from '@/hooks/use-class-details';
 import { ClassDetails, ScheduleSettings } from './page';
 import { ScheduleMode, ScheduledSessionInstance } from './schedule-utils';
 
@@ -27,8 +28,8 @@ export const PreviewSection = ({
   scheduleSettings: ScheduleSettings;
   scheduleMode: ScheduleMode;
   customSessions: ScheduledSessionInstance[];
-  courseData?: any;
-  courseLessons?: any[];
+  courseData?: ClassDetailsCourse;
+  courseLessons?: ClassDetailsLesson[];
   occurrenceCount: number;
 }) => {
   const totalHours = useMemo(() => {

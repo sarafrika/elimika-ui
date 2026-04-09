@@ -135,8 +135,9 @@ export function findNodeAtPosition(editor: Editor, position: number) {
       return null;
     }
     return node;
-  } catch (error) {
-    toast.message(`Error getting node at position ${position}:`, error as any);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    toast.message(`Error getting node at position ${position}: ${errorMessage}`);
     return null;
   }
 }

@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { getStudentById } from '../services/client';
 
+type StudentRecord = NonNullable<Awaited<ReturnType<typeof getStudentById>>['data']>;
+
 export const useStudentsMap = (studentUuids: string[]) => {
   const query = useQuery({
     queryKey: ['students-batch', studentUuids],
@@ -10,14 +12,14 @@ export const useStudentsMap = (studentUuids: string[]) => {
       const results = await Promise.all(
         studentUuids.map(uuid =>
           getStudentById({ path: { uuid } })
-            .then(res => res?.data?.data)
+            .then(res => res?.data)
             .catch(() => null)
         )
       );
 
-      const mapped: Record<string, any> = {};
+      const mapped: Record<string, StudentRecord> = {};
 
-      results.forEach(student => {
+      results.forEach((student: StudentRecord | null | undefined) => {
         if (student?.uuid) {
           mapped[student.uuid] = student;
         }

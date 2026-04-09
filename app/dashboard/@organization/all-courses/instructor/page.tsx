@@ -13,97 +13,18 @@ import { BookOpen, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import type {
+  BookingRecord,
+  BundledClass,
+  SearchInstructor,
+} from '@/src/features/dashboard/courses/types';
 import { useStudent } from '../../../../../context/student-context';
 
 import { InstructorDirectory } from '../../../_components/instructor-directory';
 import { ManageBookings } from '../../../_components/manage-bookings';
 
-export type Instructor = {
-  id: string;
-  name: string;
-  title: string;
-  bio: string;
-  profileImage?: string;
-  type: 'individual' | 'organization';
-  gender?: 'male' | 'female' | 'other';
-  rating: number;
-  totalReviews: number;
-  totalStudents: number;
-  experience: number; // years
-  specializations: string[];
-  courses: string[];
-  skills: string[];
-  certifications: Array<{
-    id: string;
-    name: string;
-    issuer: string;
-    year: number;
-  }>;
-  availability: Array<{
-    id: string;
-    date: Date;
-    startTime: string;
-    endTime: string;
-    status: 'available' | 'booked';
-  }>;
-  rateCard: {
-    hourly: number;
-    halfDay: number;
-    fullDay: number;
-    currency: string;
-  };
-  mode: ('online' | 'onsite')[];
-  location?: {
-    city: string;
-    country: string;
-    coordinates?: { lat: number; lng: number };
-  };
-  reviews: Array<{
-    id: string;
-    studentName: string;
-    studentImage?: string;
-    rating: number;
-    comment: string;
-    date: Date;
-    course: string;
-  }>;
-};
-
-export type BookingSlot = {
-  id: string;
-  date: Date;
-  startTime: string;
-  endTime: string;
-  duration: number; // in hours
-  venue?: string;
-  mode: 'online' | 'onsite';
-};
-
-export type Booking = {
-  id: string;
-  studentId: string;
-  studentName: string;
-  instructorId: string;
-  instructorName: string;
-  slots: BookingSlot[];
-  recurring?: {
-    frequency: 'daily' | 'weekly' | 'monthly';
-    endDate: Date;
-  };
-  totalSessions: number;
-  totalDuration: number; // in hours
-  totalFee: number;
-  currency: string;
-  paymentMethod?: 'skill-fund' | 'm-pesa' | 'card' | 'bank';
-  paymentStatus: 'pending' | 'completed' | 'failed';
-  status: 'pending' | 'confirmed' | 'declined' | 'cancelled' | 'completed';
-  createdAt: Date;
-  confirmedAt?: Date;
-  notes?: string;
-};
-
 type Props = {
-  classes: any[];
+  classes: BundledClass[];
 };
 
 const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
@@ -136,7 +57,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       ?.filter(app => app?.applicant_type === 'instructor')
       ?.map(app => app?.applicant_uuid) ?? [];
 
-  const filteredInstructors = trainingInstructors?.filter(instructor =>
+  const filteredInstructors: SearchInstructor[] = trainingInstructors.filter(instructor =>
     approvedInstructorUuids.includes(instructor.uuid)
   );
 
@@ -158,16 +79,11 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
     ]);
   }, [replaceBreadcrumbs]);
 
-  const handleBookingComplete = (_newBooking: Booking) => {
-    // setBookings((prev: any) => [...prev, newBooking]);
+  const handleBookingComplete = () => {
     setActiveTab('bookings');
   };
 
-  const handleBookingUpdate = (_updatedBooking: Booking) => {
-    // setBookings((prev: any) =>
-    //     prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b))
-    // );
-  };
+  const handleBookingUpdate = (_updatedBooking: BookingRecord) => {};
 
   return (
     <div className='space-y-6'>
@@ -245,7 +161,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
         <TabsContent value='browse' className='mt-6'>
           <InstructorDirectory
-            instructors={filteredInstructors as any}
+            instructors={filteredInstructors}
             classes={classes}
             onBookingComplete={handleBookingComplete}
             courseId={courseId as string}
@@ -255,7 +171,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
         <TabsContent value='bookings' className='mt-6'>
           <ManageBookings
             bookings={bookings}
-            instructors={filteredInstructors as any}
+            instructors={filteredInstructors}
             onBookingUpdate={handleBookingUpdate}
             refetchBookings={() => refetch()}
           />

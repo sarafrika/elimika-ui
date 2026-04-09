@@ -15,6 +15,7 @@ import {
   getStudentScheduleOptions,
   searchStudentsOptions,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import type { InstructorSkill, StudentSchedule } from '../../../../services/client';
 
 const elimikaDesignSystem = {
   components: {
@@ -37,6 +38,8 @@ const skillColorMap = [
   'bg-pink-500',
 ];
 
+type MultipleClassDetail = NonNullable<ReturnType<typeof useMultipleClassDetails>['data']>[number];
+
 const MySkillsPage = () => {
   const router = useRouter();
   const instructor = useInstructor();
@@ -58,15 +61,14 @@ const MySkillsPage = () => {
     }),
     enabled: !!instructor?.user_uuid,
   });
-  // @ts-ignore
-  const studentInfo = studentSearch?.data?.content[0];
+  const studentInfo = studentSearch?.data?.content?.[0];
 
   const { data, isLoading: skillsIsLoading } = useQuery({
     ...getInstructorSkillsOptions({ path: { instructorUuid: uuid }, query: { pageable: {} } }),
     enabled: !!uuid,
   });
   const [useMockData, setUseMockData] = useState(false);
-  const apiSkills = data?.data?.content ?? [];
+  const apiSkills: InstructorSkill[] = data?.data?.content ?? [];
   // const skills = useMockData ? mockSkills : apiSkills;
   const skills = apiSkills;
 
@@ -74,50 +76,52 @@ const MySkillsPage = () => {
   const overallProgress =
     skills.length > 0
       ? Math.round(
-          skills.reduce(
-            (acc: number, skill: any) => acc + (proficiencyScoreMap[skill.proficiency_level] || 0),
-            0
-          ) / skills.length
+          skills.reduce((acc, skill) => {
+            return acc + (proficiencyScoreMap[skill.proficiency_level.toLowerCase()] || 0);
+          }, 0) / skills.length
         )
       : 0;
 
   // top 3 skills by proficiency
   const topSkills = [...skills]
-    .sort(
-      (a: any, b: any) =>
-        (proficiencyScoreMap[b.proficiency_level] || 0) -
-        (proficiencyScoreMap[a.proficiency_level] || 0)
-    )
+    .sort((a, b) => (proficiencyScoreMap[b.proficiency_level.toLowerCase()] || 0) - (proficiencyScoreMap[a.proficiency_level.toLowerCase()] || 0))
     .slice(0, 3)
-    .map((skill: any, index: number) => ({
+    .map((skill, index) => ({
       name: skill.skill_name,
       level: skill.proficiency_level,
       icon: '⭐',
       color: skillColorMap[index % skillColorMap.length],
     }));
 
+  const studentScheduleStart = new Date('2026-01-20');
+  const studentScheduleEnd = new Date('2027-01-20');
+
   const { data: studentEnrollmentData } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: studentInfo?.uuid },
-      query: { start: '2026-01-20' as any, end: '2027-01-20' as any },
+      query: { start: studentScheduleStart, end: studentScheduleEnd },
     }),
     enabled: !!studentInfo?.uuid,
   });
 
   const [useMockEnrollment, setUseMockEnrollment] = useState(false);
-  const studentEnrollmentsApi = studentEnrollmentData?.data;
+  const studentEnrollmentsApi: StudentSchedule[] = studentEnrollmentData?.data ?? [];
   // const studentEnrollments = useMockEnrollment ? mockStudentEnrollments : studentEnrollmentsApi;
   const studentEnrollments = studentEnrollmentsApi;
 
   const uniqueClassDefinitionUuids = [
-    ...new Set(studentEnrollments?.map(e => e.class_definition_uuid)),
+    ...new Set(
+      studentEnrollments
+        .map(enrollment => enrollment.class_definition_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid))
+    ),
   ];
 
   const { data: allClasses, isLoading: enrollmentIsLoading } = useMultipleClassDetails(
-    uniqueClassDefinitionUuids as any
+    uniqueClassDefinitionUuids
   );
 
-  const getStatusBadge = (status: any) => {
+  const getStatusBadge = (status?: string | null) => {
     const badges = {
       complete: {
         text: 'Completed',
@@ -139,16 +143,17 @@ const MySkillsPage = () => {
         icon: Clock,
       },
     };
-    // @ts-ignore
-    return badges[status] || badges.incomplete;
+
+    return badges[status?.toLowerCase() as keyof typeof badges] || badges.incomplete;
   };
 
-  const getGradeColor = (grade: any) => {
+  const getGradeColor = (grade?: string | number | null) => {
     if (!grade) return 'text-muted-foreground';
-    if (grade.startsWith('A')) return 'text-green-600';
-    if (grade.startsWith('B')) return 'text-blue-600';
-    if (grade.startsWith('C')) return 'text-yellow-600';
-    if (grade.startsWith('D')) return 'text-orange-600';
+    const normalizedGrade = String(grade).toUpperCase();
+    if (normalizedGrade.startsWith('A')) return 'text-green-600';
+    if (normalizedGrade.startsWith('B')) return 'text-blue-600';
+    if (normalizedGrade.startsWith('C')) return 'text-yellow-600';
+    if (normalizedGrade.startsWith('D')) return 'text-orange-600';
     return 'text-destructive';
   };
 
@@ -373,7 +378,7 @@ const MySkillsPage = () => {
         ) : (
           <>
             <div className='space-y-4'>
-              {allClasses.map((en: any) => {
+              {allClasses.map((en: MultipleClassDetail) => {
                 const statusInfo = getStatusBadge(en?.course?.status);
                 const StatusIcon = statusInfo.icon;
 
@@ -402,7 +407,7 @@ const MySkillsPage = () => {
                                 {statusInfo.text}
                               </span>
                               <span className='bg-muted text-muted-foreground rounded-full px-2 py-1 text-xs'>
-                                {en?.course?.category_names?.map((i: any) => i)}
+                                {en?.course?.category_names?.join(', ')}
                               </span>
                               {en?.course?.grade ? (
                                 <span

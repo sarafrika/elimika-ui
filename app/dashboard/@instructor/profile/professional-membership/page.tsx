@@ -1,5 +1,3 @@
-import ProfessionalBodySettings from './_component/MembershipForm';
+import InstructorMembershipPage from '@/src/features/profile/pages/instructor/InstructorMembershipPage';
 
-export default function InstructorMemebershipPage() {
-  return <ProfessionalBodySettings />;
-}
+export default InstructorMembershipPage;

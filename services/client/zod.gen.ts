@@ -303,7 +303,7 @@ export const zSystemRuleRequest = z.object({
     .int()
     .describe('Priority used when multiple rules match')
     .optional()
-    .default('0'),
+    .default(0),
   status: zSchemaEnum2.optional(),
   valueType: zValueTypeEnum.optional(),
   valuePayload: zJsonNode,
@@ -2041,9 +2041,9 @@ export const zApiResponseInstructorSkill = z.object({
 });
 
 /**
- * **[READ-ONLY]** Classification of organization type based on name keywords.
+ * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
-export const zOrganizationTypeEnum = z
+export const zOrganisationTypeEnum = z
   .enum([
     'PROFESSIONAL_INSTITUTE',
     'CERTIFICATION_BODY',
@@ -2052,7 +2052,7 @@ export const zOrganizationTypeEnum = z
     'TRADE_ORGANIZATION',
     'OTHER',
   ])
-  .describe('**[READ-ONLY]** Classification of organization type based on name keywords.');
+  .describe('**[READ-ONLY]** Classification of organisation type based on name keywords.');
 
 /**
  * **[READ-ONLY]** Current status of the membership.
@@ -2080,19 +2080,19 @@ export const zInstructorProfessionalMembership = z
       .describe(
         '**[REQUIRED]** Reference to the instructor profile UUID. Links membership record to specific instructor.'
       ),
-    organization_name: z
+    organisation_name: z
       .string()
       .min(0)
       .max(255)
       .describe(
-        '**[REQUIRED]** Full name of the professional organization, association, or certification body.'
+        '**[REQUIRED]** Full name of the professional organisation, association, or certification body.'
       ),
     membership_number: z
       .string()
       .min(0)
       .max(100)
       .describe(
-        '**[OPTIONAL]** Official membership number or identifier issued by the organization.'
+        '**[OPTIONAL]** Official membership number or identifier issued by the organisation.'
       )
       .optional(),
     start_date: z
@@ -2176,7 +2176,7 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if the membership has a membership number documented.')
       .readonly()
       .optional(),
-    organization_type: zOrganizationTypeEnum.optional(),
+    organisation_type: zOrganisationTypeEnum.optional(),
     years_of_membership: z
       .number()
       .describe('**[READ-ONLY]** Years of membership calculated with decimal precision.')
@@ -2241,12 +2241,12 @@ export const zInstructorExperience = z
       .min(0)
       .max(255)
       .describe('**[REQUIRED]** Job title or position held by the instructor in this role.'),
-    organization_name: z
+    organisation_name: z
       .string()
       .min(0)
       .max(255)
       .describe(
-        '**[REQUIRED]** Name of the organization, company, or institution where the instructor worked.'
+        '**[REQUIRED]** Name of the organisation, company, or institution where the instructor worked.'
       ),
     responsibilities: z
       .string()
@@ -3394,8 +3394,9 @@ export const zLessonContent = z
       .int()
       .gte(1)
       .describe(
-        '**[REQUIRED]** Display order of content within the lesson for sequential presentation.'
-      ),
+        '**[OPTIONAL]** Display order of content within the lesson for sequential presentation. If omitted, the system appends the content at the end.'
+      )
+      .optional(),
     is_required: z
       .boolean()
       .describe('**[OPTIONAL]** Indicates if this content is required for lesson completion.')
@@ -3560,6 +3561,11 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    is_major_assessment: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
+      .readonly()
+      .optional(),
     contribution_level: z
       .string()
       .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
@@ -3580,11 +3586,6 @@ export const zCourseAssessment = z
     weight_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
-    is_major_assessment: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
       .readonly()
       .optional(),
   })
@@ -3855,7 +3856,7 @@ export const zCourseCreatorProfessionalMembership = z
   .object({
     uuid: z.string().uuid().readonly().optional(),
     course_creator_uuid: z.string().uuid(),
-    organization_name: z.string().min(0).max(255),
+    organisation_name: z.string().min(0).max(255),
     membership_number: z.string().min(0).max(100).optional(),
     start_date: z.string().date().optional(),
     end_date: z.string().date().optional(),
@@ -3885,7 +3886,7 @@ export const zCourseCreatorExperience = z
     uuid: z.string().uuid().readonly().optional(),
     course_creator_uuid: z.string().uuid(),
     position: z.string().min(0).max(255),
-    organization_name: z.string().min(0).max(255),
+    organisation_name: z.string().min(0).max(255),
     responsibilities: z.string().optional(),
     years_of_experience: z.number().gte(0).lte(60).optional(),
     start_date: z.string().date().optional(),
@@ -3969,7 +3970,7 @@ export const zCourseCreatorCertification = z
     uuid: z.string().uuid().readonly().optional(),
     course_creator_uuid: z.string().uuid(),
     certification_name: z.string().min(0).max(255),
-    issuing_organization: z.string().min(0).max(255),
+    issuing_organisation: z.string().min(0).max(255),
     issued_date: z.string().date().optional(),
     expiry_date: z.string().date().optional(),
     credential_id: z.string().min(0).max(120).optional(),
@@ -4520,7 +4521,7 @@ export const zClassDefinition = z
       .string()
       .uuid()
       .describe(
-        '**[OPTIONAL]** Reference to the organization UUID that owns this class definition.'
+        '**[OPTIONAL]** Reference to the organisation UUID that owns this class definition.'
       )
       .optional(),
     course_uuid: z
@@ -5373,6 +5374,11 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -5388,11 +5394,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -5736,7 +5737,7 @@ export const zGuardianStudentLinkRequest = z
       .boolean()
       .describe('Marks this guardian as the primary contact')
       .optional()
-      .default('false'),
+      .default(false),
     notes: z.string().describe('Optional note shown in audits or invitation emails').optional(),
   })
   .describe('Request payload to link a guardian/parent to a learner profile.');
@@ -5829,11 +5830,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
@@ -5842,6 +5838,11 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
   })
@@ -6893,17 +6894,17 @@ export const zCurrencyCreateRequest = z
       .gte(0)
       .lte(6)
       .describe('Number of fractional decimal places')
-      .default('2'),
+      .default(2),
     active: z
       .boolean()
       .describe('Whether the currency is active immediately')
       .optional()
-      .default('true'),
+      .default(true),
     default_currency: z
       .boolean()
       .describe('Whether to set this currency as the platform default')
       .optional()
-      .default('false'),
+      .default(false),
   })
   .describe('Admin payload to register an additional platform currency');
 
@@ -7684,14 +7685,14 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -8109,14 +8110,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
-      .readonly()
-      .optional(),
     is_upcoming: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
       .readonly()
       .optional(),
   })
@@ -8523,14 +8524,14 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -9006,16 +9007,16 @@ export const zUserMetrics = z
   .describe('User metrics for dashboard');
 
 /**
- * Organization metrics for dashboard
+ * Organisation metrics for dashboard
  */
 export const zOrganizationMetrics = z
   .object({
-    total_organizations: z.coerce.bigint().optional(),
+    total_organisations: z.coerce.bigint().optional(),
     pending_approvals: z.coerce.bigint().optional(),
-    active_organizations: z.coerce.bigint().optional(),
-    suspended_organizations: z.coerce.bigint().optional(),
+    active_organisations: z.coerce.bigint().optional(),
+    suspended_organisations: z.coerce.bigint().optional(),
   })
-  .describe('Organization metrics for dashboard');
+  .describe('Organisation metrics for dashboard');
 
 /**
  * Content metrics for dashboard
@@ -9050,7 +9051,7 @@ export const zAdminMetrics = z
     active_admin_sessions: z.coerce.bigint().optional(),
     admin_actions_today: z.coerce.bigint().optional(),
     system_admins: z.coerce.bigint().optional(),
-    organization_admins: z.coerce.bigint().optional(),
+    organisation_admins: z.coerce.bigint().optional(),
   })
   .describe('Admin-specific metrics');
 
@@ -9157,7 +9158,7 @@ export const zAdminDashboardStats = z
       .optional(),
     overall_health: z.string().describe('Overall system health status').optional(),
     user_metrics: zUserMetrics.optional(),
-    organization_metrics: zOrganizationMetrics.optional(),
+    organisation_metrics: zOrganizationMetrics.optional(),
     content_metrics: zContentMetrics.optional(),
     system_performance: zSystemPerformance.optional(),
     admin_metrics: zAdminMetrics.optional(),
@@ -9342,7 +9343,7 @@ export const zDeleteUserData = z.object({
       .string()
       .uuid()
       .describe(
-        'UUID of the user to delete. This will remove the user and all their organization relationships.'
+        'UUID of the user to delete. This will remove the user and all their organisation relationships.'
       ),
   }),
   query: z.never().optional(),
@@ -9857,7 +9858,7 @@ export const zDeleteTrainingBranch1Data = z.object({
       .string()
       .uuid()
       .describe(
-        'UUID of the organization that owns the training branch. Must be an existing organization.'
+        'UUID of the organisation that owns the training branch. Must be an existing organisation.'
       ),
     branchUuid: z
       .string()
@@ -9881,13 +9882,13 @@ export const zGetTrainingBranchByUuid1Data = z.object({
       .string()
       .uuid()
       .describe(
-        'UUID of the organization that owns the training branch. Must be an existing organization.'
+        'UUID of the organisation that owns the training branch. Must be an existing organisation.'
       ),
     branchUuid: z
       .string()
       .uuid()
       .describe(
-        'UUID of the training branch to retrieve. Must be a branch within the specified organization.'
+        'UUID of the training branch to retrieve. Must be a branch within the specified organisation.'
       ),
   }),
   query: z.never().optional(),
@@ -9905,13 +9906,13 @@ export const zUpdateTrainingBranch1Data = z.object({
       .string()
       .uuid()
       .describe(
-        'UUID of the organization that owns the training branch. Must be an existing organization.'
+        'UUID of the organisation that owns the training branch. Must be an existing organisation.'
       ),
     branchUuid: z
       .string()
       .uuid()
       .describe(
-        'UUID of the training branch to update. Must be a branch within the specified organization.'
+        'UUID of the training branch to update. Must be a branch within the specified organisation.'
       ),
   }),
   query: z.never().optional(),
@@ -11418,7 +11419,7 @@ export const zCreateTrainingBranch1Data = z.object({
       .string()
       .uuid()
       .describe(
-        'UUID of the organization to create the training branch in. Must be an existing organization.'
+        'UUID of the organisation to create the training branch in. Must be an existing organisation.'
       ),
   }),
   query: z.never().optional(),
@@ -11436,13 +11437,13 @@ export const zRemoveUserFromBranchData = z.object({
       .string()
       .uuid()
       .describe(
-        'UUID of the organization that owns the training branch. Must be an existing organization.'
+        'UUID of the organisation that owns the training branch. Must be an existing organisation.'
       ),
     branchUuid: z
       .string()
       .uuid()
       .describe(
-        'UUID of the training branch to remove the user from. Must be a branch within the specified organization.'
+        'UUID of the training branch to remove the user from. Must be a branch within the specified organisation.'
       ),
     userUuid: z
       .string()
@@ -11466,13 +11467,13 @@ export const zAssignUserToBranchData = z.object({
       .string()
       .uuid()
       .describe(
-        'UUID of the organization that owns the training branch. Must be an existing organization.'
+        'UUID of the organisation that owns the training branch. Must be an existing organisation.'
       ),
     branchUuid: z
       .string()
       .uuid()
       .describe(
-        'UUID of the training branch to assign the user to. Must be a branch within the specified organization.'
+        'UUID of the training branch to assign the user to. Must be a branch within the specified organisation.'
       ),
     userUuid: z
       .string()
@@ -13156,27 +13157,6 @@ export const zModerateProgramData = z.object({
  */
 export const zModerateProgramResponse = zApiResponseTrainingProgram;
 
-export const zModerateOrganisationData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the organization to moderate. Must be an existing organization identifier.'
-      ),
-  }),
-  query: z.object({
-    action: zSchemaEnum3,
-    reason: z.string().describe('Optional reason for the chosen moderation action').optional(),
-  }),
-});
-
-/**
- * Organization moderation completed successfully
- */
-export const zModerateOrganisationResponse = zApiResponseOrganisation;
-
 export const zCreateOrganisationUserData = z.object({
   body: zOrganisationUserCreateRequestDto,
   path: z.object({
@@ -13189,6 +13169,27 @@ export const zCreateOrganisationUserData = z.object({
  * Organisation user created and activation email sent
  */
 export const zCreateOrganisationUserResponse = zApiResponseUser;
+
+export const zModerateOrganisationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe(
+        'UUID of the organisation to moderate. Must be an existing organisation identifier.'
+      ),
+  }),
+  query: z.object({
+    action: zSchemaEnum3,
+    reason: z.string().describe('Optional reason for the chosen moderation action').optional(),
+  }),
+});
+
+/**
+ * Organisation moderation completed successfully
+ */
+export const zModerateOrganisationResponse = zApiResponseOrganisation;
 
 export const zVerifyInstructorData = z.object({
   body: z.never().optional(),
@@ -14298,13 +14299,13 @@ export const zGetBranchUsersData = z.object({
       .string()
       .uuid()
       .describe(
-        'UUID of the organization that owns the training branch. Must be an existing organization.'
+        'UUID of the organisation that owns the training branch. Must be an existing organisation.'
       ),
     branchUuid: z
       .string()
       .uuid()
       .describe(
-        'UUID of the training branch to get users for. Must be a branch within the specified organization.'
+        'UUID of the training branch to get users for. Must be a branch within the specified organisation.'
       ),
   }),
   query: z.never().optional(),
@@ -14322,13 +14323,13 @@ export const zGetBranchUsersByDomainData = z.object({
       .string()
       .uuid()
       .describe(
-        'UUID of the organization that owns the training branch. Must be an existing organization.'
+        'UUID of the organisation that owns the training branch. Must be an existing organisation.'
       ),
     branchUuid: z
       .string()
       .uuid()
       .describe(
-        'UUID of the training branch to get users for. Must be a branch within the specified organization.'
+        'UUID of the training branch to get users for. Must be a branch within the specified organisation.'
       ),
     domainName: z
       .string()
@@ -14858,6 +14859,21 @@ export const zGetCoursesByInstructorData = z.object({
  * OK
  */
 export const zGetCoursesByInstructorResponse = zApiResponsePagedDtoCourse;
+
+export const zGetCourseContentMediaData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    filePath: z.string().describe('Stored relative path of the lesson content media file.'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Lesson content media retrieved successfully
+ */
+export const zGetCourseContentMediaResponse = z
+  .string()
+  .describe('Lesson content media retrieved successfully');
 
 export const zGetCoursesByCategoryData = z.object({
   body: z.never().optional(),
@@ -15561,7 +15577,7 @@ export const zGetOrganizationAdminUsersData = z.object({
 });
 
 /**
- * Organization admin users retrieved successfully
+ * Organisation admin users retrieved successfully
  */
 export const zGetOrganizationAdminUsersResponse = zApiResponsePagedDtoUser;
 
@@ -15608,7 +15624,7 @@ export const zListPendingProgramsResponse = zApiResponsePagedDtoTrainingProgram;
 export const zIsOrganisationVerifiedData = z.object({
   body: z.never().optional(),
   path: z.object({
-    uuid: z.string().uuid().describe('UUID of the organization to check verification status for.'),
+    uuid: z.string().uuid().describe('UUID of the organisation to check verification status for.'),
   }),
   query: z.never().optional(),
 });
@@ -15627,7 +15643,7 @@ export const zGetPendingOrganisationsData = z.object({
 });
 
 /**
- * Pending organizations retrieved successfully
+ * Pending organisations retrieved successfully
  */
 export const zGetPendingOrganisationsResponse = zApiResponsePagedDtoOrganisation;
 

@@ -106,12 +106,13 @@ const RevenuePage = () => {
 
   const courses = courseCreator?.courses;
   const enrollmentQueries = useQueries({
-    queries: (courses || []).map(course =>
-      getCourseEnrollmentsOptions({
-        path: { courseUuid: course.uuid },
+    queries: (courses || []).map(course => ({
+      ...getCourseEnrollmentsOptions({
+        path: { courseUuid: course.uuid as string },
         query: { pageable: {} },
-      })
-    ),
+      }),
+      enabled: !!course.uuid,
+    })),
   });
 
   const coursesWithEnrollments = courses?.map((course, index) => ({
@@ -129,74 +130,33 @@ const RevenuePage = () => {
       path: { userUuid: userUuid as string },
       query: {
         currency_code: walletData?.data?.currency_code,
-        pageable: { page, size, sort: [[sortBy, sortOrder]] },
+        pageable: { page, size, sort: [`${sortBy},${sortOrder}`] },
       },
     }),
     enabled: !!userUuid && !!walletData?.data?.currency_code,
   });
 
-  const randomFrom = <T,>(arr: T[]): T => arr[Math?.floor(Math.random() * arr.length)];
-  const randomAmount = () => Math.floor(Math.random() * 2000) + 100;
-  const randomDate = (daysBack = 30) => {
-    const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * daysBack));
-    return date.toISOString();
-  };
-
-  const generateTransactions = (
-    count: number,
-    walletUuid = 'wallet-001',
-    currency = 'KES'
-  ): WalletTransaction[] => {
-    let balance = 50000;
-    return Array.from({ length: count }).map((_, index) => {
-      const transaction_type = randomFrom(TRANSACTION_TYPES);
-      const amount = randomAmount();
-      const balance_before = balance;
-      if (transaction_type === 'DEPOSIT') balance += amount;
-      if (['WITHDRAWAL', 'PAYMENT', 'TRANSFER'].includes(transaction_type)) {
-        balance = Math.max(balance - amount, 0);
-      }
-      return {
-        uuid: `txn-${String(index + 1).padStart(3, '0')}`,
-        wallet_uuid: walletUuid,
-        transaction_type,
-        amount,
-        currency_code: currency,
-        balance_before,
-        balance_after: balance,
-        reference: `${transaction_type}-${2026}-${String(index + 1).padStart(4, '0')}`,
-        description: randomFrom(DESCRIPTIONS[transaction_type]),
-        counterparty_user_uuid:
-          transaction_type === 'TRANSFER' || transaction_type === 'PAYMENT'
-            ? `user-${Math.floor(Math.random() * 1000)}`
-            : 'counter_party_uuid',
-        created_date: randomDate(),
-      };
-    });
-  };
-
   const listAllTransactions = useMemo(
-    () => listTransactions?.data?.content || [],
+    () => (listTransactions?.data?.content as WalletTransaction[] | undefined) ?? [],
     [listTransactions?.data?.content]
   );
 
   const analyticsData = useMemo(() => {
     const totalCount = listAllTransactions.length;
     const totalRevenue = listAllTransactions
-      .filter((t: any) => t.transaction_type === 'DEPOSIT' || t.transaction_type === 'PAYMENT')
+      .filter(t => t.transaction_type === 'DEPOSIT' || t.transaction_type === 'PAYMENT')
       .reduce((sum, t) => sum + t.amount, 0);
     const totalWithdrawals = listAllTransactions
-      .filter((t: any) => t.transaction_type === 'WITHDRAWAL')
+      .filter(t => t.transaction_type === 'WITHDRAWAL')
       .reduce((sum, t) => sum + t.amount, 0);
     const completedCount = listAllTransactions.filter(
-      (t: any) => getStatusFromType(t.transaction_type) === 'completed'
+      t => getStatusFromType(t.transaction_type) === 'completed'
     ).length;
     const pendingCount = listAllTransactions.filter(
-      (t: any) => getStatusFromType(t.transaction_type) === 'pending'
+      t => getStatusFromType(t.transaction_type) === 'pending'
     ).length;
     const failedCount = listAllTransactions.filter(
-      (t: any) => getStatusFromType(t.transaction_type) === 'failed'
+      t => getStatusFromType(t.transaction_type) === 'failed'
     ).length;
     const avgTransactionValue = totalCount > 0 ? totalRevenue / totalCount : 0;
     return {
@@ -217,16 +177,14 @@ const RevenuePage = () => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (txn: any) =>
+        txn =>
           txn?.description?.toLowerCase().includes(query) ||
           txn?.reference?.toLowerCase().includes(query) ||
           txn?.transaction_type?.toLowerCase().includes(query)
       );
     }
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(
-        (txn: any) => getStatusFromType(txn?.transaction_type) === statusFilter
-      );
+      filtered = filtered.filter(txn => getStatusFromType(txn.transaction_type) === statusFilter);
     }
     return filtered;
   }, [listAllTransactions, searchQuery, statusFilter]);
@@ -669,14 +627,4 @@ export type WalletTransaction = {
   transfer_reference?: string;
   counterparty_user_uuid?: string;
   created_date: string;
-};
-
-const TRANSACTION_TYPES = ['DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'PAYMENT'] as const;
-type TransactionType = (typeof TRANSACTION_TYPES)[number];
-
-const DESCRIPTIONS: Record<TransactionType, string[]> = {
-  DEPOSIT: ['Wallet deposit via M-Pesa', 'Wallet top-up via card'],
-  WITHDRAWAL: ['Wallet withdrawal to bank', 'Cash withdrawal'],
-  TRANSFER: ['Transfer to instructor', 'Transfer to another user'],
-  PAYMENT: ['Payment for React Course', 'Payment for UI/UX Course'],
 };

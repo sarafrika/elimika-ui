@@ -5,11 +5,22 @@ import type { paths } from './schema';
  * Generic Search function defination
  */
 type SearchEndpoints = {
-  [K in keyof paths]: paths[K] extends { get: any } ? K : never;
+  [K in keyof paths]: paths[K] extends { get: unknown } ? K : never;
 }[keyof paths];
 
-export async function search<P extends SearchEndpoints>(endpoint: P, searchParams: any) {
-  const init: any = {};
+type SearchParams = Record<string, unknown>;
+type SearchInit = {
+  params?: {
+    pageable: {
+      page: number;
+      size: number;
+    };
+    query: SearchParams;
+  };
+};
+
+export async function search<P extends SearchEndpoints>(endpoint: P, searchParams?: SearchParams) {
+  const init: SearchInit = {};
   if (searchParams) {
     init.params = {
       pageable: {

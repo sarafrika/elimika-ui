@@ -13,6 +13,8 @@ import { useCourseCreator } from '@/context/course-creator-context';
 import { domainBadgeClass, formatDomainLabel } from '@/lib/domain-utils';
 import type {
   CourseCreatorCertification,
+  CourseCreatorEducation,
+  CourseCreatorExperience,
   CourseCreatorProfessionalMembership,
 } from '@/services/client';
 import {
@@ -227,9 +229,9 @@ export default function CourseCreatorProfilePage() {
       description: 'Highest qualifications you have added.',
       content: (
         <div className='space-y-3'>
-          {educations.map((education: any, index) => (
+          {educations.map((education: CourseCreatorEducation, index) => (
             <div
-              key={education.uuid ?? `${education.institution}-${index}`}
+              key={education.uuid ?? `${education.school_name}-${index}`}
               className='border-border/50 rounded-lg border p-3'
             >
               <p className='font-medium'>Degree: {education.qualification}</p>
@@ -276,22 +278,22 @@ export default function CourseCreatorProfilePage() {
       description: 'Roles that demonstrate your expertise.',
       content: (
         <div className='space-y-3'>
-          {experiences.map((exp: any, index) => {
+          {experiences.map((exp: CourseCreatorExperience, index) => {
             const start = toDate(exp.start_date);
             const end = toDate(exp.end_date);
             const range =
               start || end
                 ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${
-                    exp.currently_working ? 'Present' : end ? format(end, 'MMM yyyy') : 'End?'
+                    exp.is_current_position ? 'Present' : end ? format(end, 'MMM yyyy') : 'End?'
                   }`
                 : null;
             return (
               <div
-                key={exp.uuid ?? `${exp.company_name}-${index}`}
+                key={exp.uuid ?? `${exp.organisation_name}-${index}`}
                 className='border-border/50 rounded-lg border p-3'
               >
                 <p className='font-medium'>{exp.position}</p>
-                <p className='text-muted-foreground text-sm'>{exp.organization_name}</p>
+                <p className='text-muted-foreground text-sm'>{exp.organisation_name}</p>
                 <p className='text-muted-foreground text-xs'>{renderTenure(exp.tenure_label)}</p>
                 {exp.responsibilities ? (
                   <p className='text-muted-foreground mt-2 text-sm'>{exp.responsibilities}</p>
@@ -326,7 +328,7 @@ export default function CourseCreatorProfilePage() {
                 className='border-border/50 rounded-lg border p-3'
               >
                 <p className='font-medium'>{cert.certification_name || 'Certification'}</p>
-                <p className='text-muted-foreground text-sm'>{cert.issuing_organization}</p>
+                <p className='text-muted-foreground text-sm'>{cert.issuing_organisation}</p>
                 {issued ? (
                   <p className='text-muted-foreground text-xs'>
                     Issued: {format(issued, 'MMM yyyy')}
@@ -373,11 +375,11 @@ export default function CourseCreatorProfilePage() {
 
             return (
               <div
-                key={membership.uuid ?? `${membership.organization_name}-${index}`}
+                key={membership.uuid ?? `${membership.organisation_name}-${index}`}
                 className='border-border/50 flex flex-col gap-1 rounded-lg border p-3'
               >
                 <div className='flex flex-row items-center gap-4'>
-                  <p className='font-medium'>{membership.organization_name}</p>
+                  <p className='font-medium'>{membership.organisation_name}</p>
                   <span className={`rounded-full px-2 py-1 text-xs font-semibold ${badgeClass}`}>
                     {badgeText}
                   </span>

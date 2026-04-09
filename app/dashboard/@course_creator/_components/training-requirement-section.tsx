@@ -10,14 +10,60 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getCourseTrainingRequirementsQueryKey } from '@/services/client/@tanstack/react-query.gen';
+import {
+  addCourseTrainingRequirementMutation,
+  deleteCourseTrainingRequirementMutation,
+  getCourseTrainingRequirementsQueryKey,
+  updateCourseTrainingRequirementMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import type { CourseTrainingRequirement } from '@/services/client/types.gen';
+import type { QueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { type Dispatch, Fragment, type SetStateAction, useState } from 'react';
 import { toast } from 'sonner';
 import { Textarea } from '../../../../components/ui/textarea';
-import { requirementTypes } from './course-creation-types';
+import { providedByOptions, requirementTypes } from './course-creation-types';
 
-export type Provider = 'course_creator' | 'instructor' | 'organisation' | 'student';
+type MutationVariables<T> = T extends {
+  mutationFn?: (variables: infer TVariables) => Promise<unknown>;
+}
+  ? TVariables
+  : never;
+export type Provider = (typeof providedByOptions)[number];
+type RequirementRecord = {
+  uuid?: string;
+  course_uuid: string;
+  requirement_type: string;
+  name: string;
+  description?: string;
+  quantity?: number;
+  unit?: string;
+  provided_by?: Provider;
+  is_mandatory?: boolean;
+  created_date?: CourseTrainingRequirement['created_date'];
+  created_by?: CourseTrainingRequirement['created_by'];
+  updated_date?: CourseTrainingRequirement['updated_date'];
+  updated_by?: CourseTrainingRequirement['updated_by'];
+};
+type AddRequirementVariables = MutationVariables<
+  ReturnType<typeof addCourseTrainingRequirementMutation>
+>;
+type UpdateRequirementVariables = MutationVariables<
+  ReturnType<typeof updateCourseTrainingRequirementMutation>
+>;
+type DeleteRequirementVariables = MutationVariables<
+  ReturnType<typeof deleteCourseTrainingRequirementMutation>
+>;
+type RequirementMutation<TVariables> = {
+  mutate: (
+    variables: TVariables,
+    options?: {
+      onSuccess?: (data: unknown) => void;
+      onError?: (error: unknown) => void;
+    }
+  ) => void;
+  isPending: boolean;
+};
 
 const PROVIDERS: { value: Provider; label: string }[] = [
   { value: 'instructor', label: 'Instructor' },
@@ -70,20 +116,20 @@ export const createEmptyDraftsByProvider = (): DraftsByProvider => ({
 });
 
 type Props = {
-  existingRequirements: any[];
-  setExistingRequirements: Dispatch<SetStateAction<any[]>>;
-  editingCourseId?: string;
-  courseId?: string;
   draftsByProvider: DraftsByProvider;
   setDraftsByProvider: Dispatch<SetStateAction<DraftsByProvider>>;
   activeProvider: Provider | null;
   setActiveProvider: Dispatch<SetStateAction<Provider | null>>;
-  addTrainingReqMut: any;
-  updateTrainingReqMut: any;
-  deleteTrainingReqMut: any;
+  existingRequirements: RequirementRecord[];
+  setExistingRequirements: React.Dispatch<React.SetStateAction<RequirementRecord[]>>;
+  editingCourseId?: string;
+  courseId?: string;
+  addTrainingReqMut: RequirementMutation<AddRequirementVariables>;
+  updateTrainingReqMut: RequirementMutation<UpdateRequirementVariables>;
+  deleteTrainingReqMut: RequirementMutation<DeleteRequirementVariables>;
   deletingId: string | null;
   setDeletingId: (id: string | null) => void;
-  qc: any;
+  qc: QueryClient;
 };
 
 export function TrainingRequirementsSection({
@@ -149,34 +195,32 @@ export function TrainingRequirementsSection({
       const results = await Promise.allSettled(
         drafts.map(
           draft =>
-            new Promise<any>((resolve, reject) => {
-              addTrainingReqMut.mutate(
-                {
-                  body: {
-                    name: draft.name.trim(),
-                    requirement_type: draft.requirement_type,
-                    quantity: draft.quantity ? Number(draft.quantity) : 0,
-                    unit: draft.unit,
-                    is_mandatory: draft.is_mandatory,
-                    description: draft.description,
-                    provided_by: provider,
-                    course_uuid: targetCourseUuid,
-                  } as any,
-                  path: { courseUuid: targetCourseUuid },
-                },
-                {
-                  onSuccess: (res: any) => resolve(res),
-                  onError: (err: any) => reject(err),
-                }
-              );
+            new Promise<unknown>((resolve, reject) => {
+              const variables = {
+                body: {
+                  name: draft.name.trim(),
+                  requirement_type: draft.requirement_type,
+                  quantity: draft.quantity ? Number(draft.quantity) : 0,
+                  unit: draft.unit,
+                  is_mandatory: draft.is_mandatory,
+                  description: draft.description,
+                  provided_by: provider,
+                  course_uuid: targetCourseUuid,
+                } as AddRequirementVariables['body'],
+                path: { courseUuid: targetCourseUuid },
+              } as AddRequirementVariables;
+              addTrainingReqMut.mutate(variables, {
+                onSuccess: res => resolve(res),
+                onError: err => reject(err),
+              });
             })
         )
       );
 
       const succeeded = results
-        .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
-        .map(r => r.value?.data)
-        .filter(Boolean);
+        .filter((r): r is PromiseFulfilledResult<unknown> => r.status === 'fulfilled')
+        .map(r => (r.value as { data?: RequirementRecord } | undefined)?.data)
+        .filter((requirement): requirement is RequirementRecord => Boolean(requirement));
 
       if (succeeded.length > 0) {
         setExistingRequirements(prev => [...prev, ...succeeded]);
@@ -204,7 +248,8 @@ export function TrainingRequirementsSection({
     }
   };
 
-  const startEdit = (req: any) => {
+  const startEdit = (req: RequirementRecord) => {
+    if (!req.uuid) return;
     setEditingReqId(req.uuid);
     setEditDraft({
       name: req.name ?? '',
@@ -221,73 +266,77 @@ export function TrainingRequirementsSection({
     setEditDraft({});
   };
 
-  const saveEdit = (req: any) => {
+  const saveEdit = (req: RequirementRecord) => {
+    if (!targetCourseUuid || !req.uuid) return;
     if (!editDraft.name?.trim()) {
       toast.error('Requirement name is required.');
       return;
     }
-    updateTrainingReqMut.mutate(
-      {
-        body: {
-          name: editDraft.name?.trim(),
-          requirement_type: editDraft.requirement_type,
-          quantity: editDraft.quantity ? Number(editDraft.quantity) : 0,
-          unit: editDraft.unit,
-          is_mandatory: editDraft.is_mandatory,
-          description: editDraft.description,
-          provided_by: req.provided_by,
-          course_uuid: targetCourseUuid,
-        } as any,
-        path: {
-          courseUuid: targetCourseUuid,
-          requirementUuid: req.uuid,
-        },
+    const variables = {
+      body: {
+        name: editDraft.name?.trim(),
+        requirement_type: editDraft.requirement_type,
+        quantity: editDraft.quantity ? Number(editDraft.quantity) : 0,
+        unit: editDraft.unit,
+        is_mandatory: editDraft.is_mandatory,
+        description: editDraft.description,
+        provided_by: req.provided_by,
+        course_uuid: targetCourseUuid,
+      } as UpdateRequirementVariables['body'],
+      path: {
+        courseUuid: targetCourseUuid,
+        requirementUuid: req.uuid,
       },
-      {
-        onSuccess: () => {
-          setExistingRequirements(prev =>
-            prev.map(r =>
-              r.uuid === req.uuid ? { ...r, ...editDraft, quantity: Number(editDraft.quantity) } : r
-            )
-          );
-          qc.invalidateQueries({
-            queryKey: getCourseTrainingRequirementsQueryKey({
-              path: { courseUuid: targetCourseUuid as string },
-              query: { pageable: {} },
-            }),
-          });
-          toast.success('Requirement updated.');
-          cancelEdit();
-        },
-        onError: () => toast.error('Failed to update requirement.'),
-      }
-    );
+    } as UpdateRequirementVariables;
+    updateTrainingReqMut.mutate(variables, {
+      onSuccess: () => {
+        setExistingRequirements(prev =>
+          prev.map(r => {
+            if (r.uuid !== req.uuid) return r;
+            return {
+              ...r,
+              ...editDraft,
+              requirement_type: editDraft.requirement_type ?? r.requirement_type,
+              quantity: Number(editDraft.quantity),
+            };
+          })
+        );
+        qc.invalidateQueries({
+          queryKey: getCourseTrainingRequirementsQueryKey({
+            path: { courseUuid: targetCourseUuid as string },
+            query: { pageable: {} },
+          }),
+        });
+        toast.success('Requirement updated.');
+        cancelEdit();
+      },
+      onError: () => toast.error('Failed to update requirement.'),
+    });
   };
 
-  const deleteReq = (req: any) => {
+  const deleteReq = (req: RequirementRecord) => {
+    if (!editingCourseId || !req.uuid) return;
     setDeletingId(req.uuid);
-    deleteTrainingReqMut.mutate(
-      {
-        path: {
-          courseUuid: editingCourseId,
-          requirementUuid: req.uuid,
-        },
+    const variables = {
+      path: {
+        courseUuid: editingCourseId,
+        requirementUuid: req.uuid,
       },
-      {
-        onSuccess: () => {
-          qc.invalidateQueries({
-            queryKey: getCourseTrainingRequirementsQueryKey({
-              path: { courseUuid: editingCourseId as string },
-              query: { pageable: {} },
-            }),
-          });
-          setExistingRequirements(prev => prev.filter(r => r.uuid !== req.uuid));
-          setDeletingId(null);
-          if (editingReqId === req.uuid) cancelEdit();
-        },
-        onError: () => setDeletingId(null),
-      }
-    );
+    } as DeleteRequirementVariables;
+    deleteTrainingReqMut.mutate(variables, {
+      onSuccess: () => {
+        qc.invalidateQueries({
+          queryKey: getCourseTrainingRequirementsQueryKey({
+            path: { courseUuid: editingCourseId as string },
+            query: { pageable: {} },
+          }),
+        });
+        setExistingRequirements(prev => prev.filter(r => r.uuid !== req.uuid));
+        setDeletingId(null);
+        if (editingReqId === req.uuid) cancelEdit();
+      },
+      onError: () => setDeletingId(null),
+    });
   };
 
   const grouped = PROVIDERS.map(p => ({

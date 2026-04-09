@@ -214,7 +214,10 @@ export function SimpleEditor({
         maxSize: MAX_FILE_SIZE,
         limit: 3,
         upload: handleImageUpload,
-        onError: error => toast.error('Upload failed:', error as any),
+        onError: error => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          toast.error(`Upload failed: ${errorMessage}`);
+        },
       }),
     ],
     editorProps: {

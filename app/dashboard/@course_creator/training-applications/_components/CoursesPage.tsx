@@ -34,7 +34,7 @@ export default function CoursesPage() {
 
   useEffect(() => {
     if (courses.length > 0 && !selectedCourse) {
-      setSelectedCourses(courses[0] as any);
+      setSelectedCourses(courses[0] ?? null);
     }
   }, [courses, selectedCourse]);
 
@@ -80,7 +80,7 @@ export default function CoursesPage() {
   };
 
   const handeCourseCreatorSelect = (course: Course) => {
-    setSelectedCourses(course as any);
+    setSelectedCourses(course);
     // Open modal on small screens
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setIsModalOpen(true);
@@ -143,8 +143,8 @@ export default function CoursesPage() {
   return (
     <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
       <CourseList
-        courses={filteredAndSortedCourseCourses as any}
-        selectedCourse={selectedCourse as any}
+        courses={filteredAndSortedCourseCourses}
+        selectedCourse={selectedCourse}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         statusFilter={statusFilter}
@@ -158,7 +158,7 @@ export default function CoursesPage() {
 
       {/* Right Panel - Instructor Details (Desktop only) */}
       <CourseDetailsPanel
-        course={selectedCourse as any}
+        course={selectedCourse}
         onApprove={handleApproveCourse}
         onUnverify={handleUnverifyCourse}
         onDecline={handleDeclineCourse}
@@ -169,7 +169,7 @@ export default function CoursesPage() {
 
       {/* Mobile Modal */}
       <CourseMobileModal
-        course={selectedCourse as any}
+        course={selectedCourse}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onApprove={handleApproveCourse}

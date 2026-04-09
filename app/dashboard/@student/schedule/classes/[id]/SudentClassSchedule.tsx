@@ -51,9 +51,12 @@ function getCalendarBounds(schedules: ClassScheduleItem[]) {
     ?.map(s => new Date(s.start_time))
     ?.sort((a, b) => a.getTime() - b.getTime());
 
+  const firstSchedule = sorted[0] ?? new Date();
+  const lastSchedule = sorted[sorted.length - 1] ?? firstSchedule;
+
   return {
-    minMonth: startOfMonth(addWeeks(sorted[0], -2)),
-    maxMonth: endOfMonth(addWeeks(sorted[sorted.length - 1], 2)),
+    minMonth: startOfMonth(addWeeks(firstSchedule, -2)),
+    maxMonth: endOfMonth(addWeeks(lastSchedule, 2)),
   };
 }
 

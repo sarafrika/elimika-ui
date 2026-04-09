@@ -34,9 +34,9 @@ export const courseCreationSchema = z.object({
     .string()
     .min(10, 'Course objectives is required')
     .max(999, 'Objectives must not exceed 1000 characters'),
-  thumbnail_url: z.any().optional(),
-  banner_url: z.any().optional(),
-  intro_video_url: z.any().optional(),
+  thumbnail_url: z.unknown().optional(),
+  banner_url: z.unknown().optional(),
+  intro_video_url: z.unknown().optional(),
   is_free: z.boolean().default(false),
   currency: z.string().optional(),
   prerequisites: z.string().max(999, 'Objectives must not exceed 1000 characters'),
@@ -118,7 +118,7 @@ export const emptyRequirement = {
 };
 
 export type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & {
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export const CURRENCIES = {

@@ -2828,7 +2828,7 @@ export const InstructorProfessionalMembershipSchema = {
   example: {
     uuid: 'mem12345-6789-abcd-ef01-234567890abc',
     instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
-    organization_name: 'Institute of Electrical and Electronics Engineers (IEEE)',
+    organisation_name: 'Institute of Electrical and Electronics Engineers (IEEE)',
     membership_number: 'IEEE-92345678',
     start_date: '2020-03-15',
     end_date: null,
@@ -2843,7 +2843,7 @@ export const InstructorProfessionalMembershipSchema = {
     is_long_standing_member: true,
     has_membership_number: true,
     membership_status: 'ACTIVE',
-    organization_type: 'PROFESSIONAL_INSTITUTE',
+    organisation_type: 'PROFESSIONAL_INSTITUTE',
     years_of_membership: 4.25,
     is_recent_membership: true,
   },
@@ -2863,10 +2863,10 @@ export const InstructorProfessionalMembershipSchema = {
         '**[REQUIRED]** Reference to the instructor profile UUID. Links membership record to specific instructor.',
       example: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
     },
-    organization_name: {
+    organisation_name: {
       type: 'string',
       description:
-        '**[REQUIRED]** Full name of the professional organization, association, or certification body.',
+        '**[REQUIRED]** Full name of the professional organisation, association, or certification body.',
       example: 'Institute of Electrical and Electronics Engineers (IEEE)',
       maxLength: 255,
       minLength: 0,
@@ -2874,7 +2874,7 @@ export const InstructorProfessionalMembershipSchema = {
     membership_number: {
       type: 'string',
       description:
-        '**[OPTIONAL]** Official membership number or identifier issued by the organization.',
+        '**[OPTIONAL]** Official membership number or identifier issued by the organisation.',
       example: 'IEEE-92345678',
       maxLength: 100,
       minLength: 0,
@@ -2973,8 +2973,8 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    organization_type: {
-      $ref: '#/components/schemas/OrganizationTypeEnum',
+    organisation_type: {
+      $ref: '#/components/schemas/OrganisationTypeEnum',
     },
     years_of_membership: {
       type: 'number',
@@ -3002,7 +3002,7 @@ export const InstructorProfessionalMembershipSchema = {
       $ref: '#/components/schemas/MembershipStatusEnum',
     },
   },
-  required: ['instructor_uuid', 'organization_name'],
+  required: ['instructor_uuid', 'organisation_name'],
 } as const;
 
 export const ApiResponseInstructorProfessionalMembershipSchema = {
@@ -3031,7 +3031,7 @@ export const InstructorExperienceSchema = {
     uuid: 'exp12345-6789-abcd-ef01-234567890abc',
     instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
     position: 'Senior Software Developer',
-    organization_name: 'Safaricom PLC',
+    organisation_name: 'Safaricom PLC',
     responsibilities:
       'Led development of mobile banking applications, mentored junior developers, implemented DevOps practices, and collaborated with cross-functional teams to deliver high-quality software solutions.',
     years_of_experience: 5.5,
@@ -3074,10 +3074,10 @@ export const InstructorExperienceSchema = {
       maxLength: 255,
       minLength: 0,
     },
-    organization_name: {
+    organisation_name: {
       type: 'string',
       description:
-        '**[REQUIRED]** Name of the organization, company, or institution where the instructor worked.',
+        '**[REQUIRED]** Name of the organisation, company, or institution where the instructor worked.',
       example: 'Safaricom PLC',
       maxLength: 255,
       minLength: 0,
@@ -3211,7 +3211,7 @@ export const InstructorExperienceSchema = {
       readOnly: true,
     },
   },
-  required: ['instructor_uuid', 'organization_name', 'position'],
+  required: ['instructor_uuid', 'organisation_name', 'position'],
 } as const;
 
 export const ApiResponseInstructorExperienceSchema = {
@@ -4592,7 +4592,7 @@ export const LessonContentSchema = {
       type: 'integer',
       format: 'int32',
       description:
-        '**[REQUIRED]** Display order of content within the lesson for sequential presentation.',
+        '**[OPTIONAL]** Display order of content within the lesson for sequential presentation. If omitted, the system appends the content at the end.',
       example: 1,
       minimum: 1,
     },
@@ -4659,7 +4659,7 @@ export const LessonContentSchema = {
       readOnly: true,
     },
   },
-  required: ['content_type_uuid', 'display_order', 'lesson_uuid', 'title'],
+  required: ['content_type_uuid', 'lesson_uuid', 'title'],
 } as const;
 
 export const ApiResponseLessonContentSchema = {
@@ -4800,6 +4800,12 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_major_assessment: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
+      example: false,
+      readOnly: true,
+    },
     contribution_level: {
       type: 'string',
       description: '**[READ-ONLY]** Level of contribution to final grade based on weight.',
@@ -4823,12 +4829,6 @@ export const CourseAssessmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
       example: '20% of final grade',
-      readOnly: true,
-    },
-    is_major_assessment: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
-      example: false,
       readOnly: true,
     },
   },
@@ -5394,7 +5394,7 @@ export const CourseCreatorProfessionalMembershipSchema = {
   example: {
     uuid: 'memb1234-5678-abcd-ef01-234567890abc',
     course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
-    organization_name: 'International Society for Technology in Education',
+    organisation_name: 'International Society for Technology in Education',
     membership_number: 'ISTE-2024-991',
     start_date: '2022-01-01',
     end_date: null,
@@ -5410,7 +5410,7 @@ export const CourseCreatorProfessionalMembershipSchema = {
       type: 'string',
       format: 'uuid',
     },
-    organization_name: {
+    organisation_name: {
       type: 'string',
       maxLength: 255,
       minLength: 0,
@@ -5454,7 +5454,7 @@ export const CourseCreatorProfessionalMembershipSchema = {
       readOnly: true,
     },
   },
-  required: ['course_creator_uuid', 'organization_name'],
+  required: ['course_creator_uuid', 'organisation_name'],
 } as const;
 
 export const ApiResponseCourseCreatorProfessionalMembershipSchema = {
@@ -5482,7 +5482,7 @@ export const CourseCreatorExperienceSchema = {
     uuid: 'exp12345-6789-abcd-ef01-234567890abc',
     course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
     position: 'Lead Content Strategist',
-    organization_name: 'Digital Learning Labs',
+    organisation_name: 'Digital Learning Labs',
     responsibilities: 'Designed blended learning experiences for enterprise teams.',
     years_of_experience: 5.5,
     start_date: '2019-01-01',
@@ -5504,7 +5504,7 @@ export const CourseCreatorExperienceSchema = {
       maxLength: 255,
       minLength: 0,
     },
-    organization_name: {
+    organisation_name: {
       type: 'string',
       maxLength: 255,
       minLength: 0,
@@ -5551,7 +5551,7 @@ export const CourseCreatorExperienceSchema = {
       readOnly: true,
     },
   },
-  required: ['course_creator_uuid', 'organization_name', 'position'],
+  required: ['course_creator_uuid', 'organisation_name', 'position'],
 } as const;
 
 export const ApiResponseCourseCreatorExperienceSchema = {
@@ -5775,7 +5775,7 @@ export const CourseCreatorCertificationSchema = {
     uuid: 'cert1234-5678-abcd-ef01-234567890abc',
     course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
     certification_name: 'Adobe Captivate Specialist',
-    issuing_organization: 'Adobe',
+    issuing_organisation: 'Adobe',
     issued_date: '2023-04-01',
     expiry_date: '2025-04-01',
     credential_id: 'ADCAP-2023-8891',
@@ -5798,7 +5798,7 @@ export const CourseCreatorCertificationSchema = {
       maxLength: 255,
       minLength: 0,
     },
-    issuing_organization: {
+    issuing_organisation: {
       type: 'string',
       maxLength: 255,
       minLength: 0,
@@ -5850,7 +5850,7 @@ export const CourseCreatorCertificationSchema = {
       readOnly: true,
     },
   },
-  required: ['certification_name', 'course_creator_uuid', 'issuing_organization'],
+  required: ['certification_name', 'course_creator_uuid', 'issuing_organisation'],
 } as const;
 
 export const ApiResponseCourseCreatorCertificationSchema = {
@@ -6548,7 +6548,7 @@ export const ClassDefinitionSchema = {
       type: 'string',
       format: 'uuid',
       description:
-        '**[OPTIONAL]** Reference to the organization UUID that owns this class definition.',
+        '**[OPTIONAL]** Reference to the organisation UUID that owns this class definition.',
       example: 'org12345-6789-abcd-ef01-234567890abc',
     },
     course_uuid: {
@@ -7834,6 +7834,12 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -7851,12 +7857,6 @@ export const ScheduledInstanceSchema = {
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -8585,12 +8585,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    is_attendance_marked: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -8601,6 +8595,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    is_attendance_marked: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
       readOnly: true,
     },
   },
@@ -12159,16 +12159,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -13056,16 +13056,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -13864,16 +13864,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -14989,9 +14989,9 @@ export const AdminDashboardStatsSchema = {
       $ref: '#/components/schemas/UserMetrics',
       description: 'User-related metrics',
     },
-    organization_metrics: {
+    organisation_metrics: {
       $ref: '#/components/schemas/OrganizationMetrics',
-      description: 'Organization-related metrics',
+      description: 'Organisation-related metrics',
     },
     content_metrics: {
       $ref: '#/components/schemas/ContentMetrics',
@@ -15052,7 +15052,7 @@ export const AdminMetricsSchema = {
       type: 'integer',
       format: 'int64',
     },
-    organization_admins: {
+    organisation_admins: {
       type: 'integer',
       format: 'int64',
     },
@@ -15291,9 +15291,9 @@ export const LearningMetricsSchema = {
 
 export const OrganizationMetricsSchema = {
   type: 'object',
-  description: 'Organization metrics for dashboard',
+  description: 'Organisation metrics for dashboard',
   properties: {
-    total_organizations: {
+    total_organisations: {
       type: 'integer',
       format: 'int64',
     },
@@ -15301,11 +15301,11 @@ export const OrganizationMetricsSchema = {
       type: 'integer',
       format: 'int64',
     },
-    active_organizations: {
+    active_organisations: {
       type: 'integer',
       format: 'int64',
     },
-    suspended_organizations: {
+    suspended_organisations: {
       type: 'integer',
       format: 'int64',
     },
@@ -15708,9 +15708,9 @@ export const ProficiencyLevelEnumSchema = {
   example: 'EXPERT',
 } as const;
 
-export const OrganizationTypeEnumSchema = {
+export const OrganisationTypeEnumSchema = {
   type: 'string',
-  description: '**[READ-ONLY]** Classification of organization type based on name keywords.',
+  description: '**[READ-ONLY]** Classification of organisation type based on name keywords.',
   enum: [
     'PROFESSIONAL_INSTITUTE',
     'CERTIFICATION_BODY',

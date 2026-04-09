@@ -4,7 +4,9 @@ import { CustomPagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Course } from '@/services/client';
 import { getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { PageMetadata } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Search } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -36,10 +38,10 @@ export default function CourseMangementPage() {
   const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery(
     getAllCoursesOptions({ query: { pageable: { page, size } } })
   );
-  const courses = data?.data?.content || [];
-  const paginationMetadata = data?.data?.metadata;
+  const courses: Course[] = data?.data?.content ?? [];
+  const paginationMetadata: PageMetadata | undefined = data?.data?.metadata;
 
-  const filteredCourses = courses?.filter((course: any) => {
+  const filteredCourses = courses.filter((course: Course) => {
     const matchesSearch =
       searchQuery === '' ||
       course?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -91,7 +93,7 @@ export default function CourseMangementPage() {
           {filteredCourses.map(course => (
             <CourseCard
               key={course.uuid}
-              course={course as any}
+              course={course}
               isStudentView={true}
               handleEnroll={() => router.push(`/dashboard/learning/enroll/${course.uuid}`)}
               handleSearchInstructor={() =>
@@ -140,10 +142,9 @@ export default function CourseMangementPage() {
           </div>
         )}
 
-        {/* @ts-ignore */}
-        {paginationMetadata?.totalPages >= 1 && (
+        {paginationMetadata && paginationMetadata.totalPages >= 1 && (
           <CustomPagination
-            totalPages={paginationMetadata?.totalPages as number}
+            totalPages={paginationMetadata.totalPages}
             onPageChange={page => {
               setPage(page - 1);
             }}

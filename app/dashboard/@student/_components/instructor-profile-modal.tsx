@@ -1,5 +1,22 @@
 'use client';
 
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Award,
+  BookOpen,
+  Briefcase,
+  Calendar,
+  CheckCircle,
+  DollarSign,
+  MapPin,
+  Star,
+  Users,
+  Video,
+  X,
+} from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -9,64 +26,60 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudent } from '@/context/student-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import {
-  getEnrollmentsForClassOptions,
   getInstructorCalendarOptions,
   getInstructorReviewsOptions,
   listCatalogItemsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import {
-  Award,
-  BookOpen,
-  Briefcase,
-  Calendar,
-  CheckCircle,
-  DollarSign,
-  GraduationCap,
-  Star,
-  Users,
-  Video,
-  X,
-} from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import type React from 'react';
-import { useEffect, useState } from 'react';
+import type {
+  CourseTrainingApplication,
+  CourseTrainingRateCard,
+  InstructorCalendarEntry,
+  InstructorReview,
+} from '@/services/client/types.gen';
+import type { Booking } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
+import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import {
   AvailabilityData,
   ClassScheduleItem,
   convertToCalendarEvents,
 } from '../../@instructor/availability/components/types';
 import { ReviewCard } from '../../@instructor/reviews/review-card';
-import type { Booking } from '../all-courses/instructor/page';
 import BookInstructorTimeTableManager from './book-instructor-schedule';
 
 type Props = {
-  instructor: any;
+  instructor: SearchInstructor;
   onClose: () => void;
   onBookingComplete: (booking: Booking) => void;
 };
 
+type RateKey = keyof Pick<
+  CourseTrainingRateCard,
+  'group_inperson_rate' | 'group_online_rate' | 'private_inperson_rate' | 'private_online_rate'
+>;
+
 export const InstructorProfileComponent: React.FC<Props> = ({
   instructor,
   onClose,
-  onBookingComplete: _onBookingComplete,
+  onBookingComplete,
 }) => {
   const student = useStudent();
+  const qc = useQueryClient();
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
 
   const [showBooking, setShowBooking] = useState(false);
+  const [reason, setReason] = useState('');
 
   const { data: timetable } = useQuery({
     ...getInstructorCalendarOptions({
       path: { instructorUuid: instructor?.uuid as string },
-      query: { start_date: '2024-09-10' as any, end_date: '2026-11-11' as any },
+      query: { start_date: new Date('2024-09-10'), end_date: new Date('2026-11-11') },
     }),
     enabled: !!instructor?.uuid,
   });
 
-  const instructorSchedule = timetable?.data ?? [];
+  const instructorSchedule: InstructorCalendarEntry[] = timetable?.data ?? [];
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
     events: convertToCalendarEvents(instructorSchedule as ClassScheduleItem[]),
@@ -86,7 +99,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
       ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])
       : [];
 
-    setAvailabilityData((prev: any) => ({
+    setAvailabilityData(prev => ({
       ...prev,
       events: eventsFromSchedule,
     }));
@@ -105,7 +118,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
     ...getInstructorReviewsOptions({ path: { instructorUuid: instructor?.uuid as string } }),
     enabled: !!instructor.uuid,
   });
-  const instructorReviews = reviews?.data || [];
+  const instructorReviews: InstructorReview[] = reviews?.data ?? [];
   // get students details
   // get enrollment details / class name or course name
 
@@ -116,91 +129,21 @@ export const InstructorProfileComponent: React.FC<Props> = ({
     enabled: !!instructor?.uuid,
   });
 
-  const matchedCourse = appliedCourses?.data?.content?.find(
+  const matchedCourse: CourseTrainingApplication | undefined = appliedCourses?.data?.content?.find(
     course => course.course_uuid === courseId
   );
 
-  const classEnrollmentQueries = useQueries({
-    queries: filteredClasses.map(classItem => ({
-      ...getEnrollmentsForClassOptions({
-        path: { uuid: classItem.uuid },
-      }),
-      queryKey: ['student-instructor-profile-class-enrollments', classItem.uuid],
-      enabled: !!classItem.uuid,
-    })),
-  });
-
-  const classEnrollmentCounts = new Map(
-    filteredClasses.map((classItem, index) => {
-      const enrollments = classEnrollmentQueries[index]?.data?.data ?? [];
-      const uniqueStudentIds = new Set(
-        enrollments.map((enrollment: any) => enrollment?.student_uuid ?? enrollment?.uuid).filter(Boolean)
-      );
-
-      return [classItem.uuid, uniqueStudentIds.size || enrollments.length];
-    })
-  );
-
-  const getClassEnrollmentMeta = (classItem: any) => {
-    const capacity = Number(classItem?.max_participants ?? 0);
-
-    const uniqueEnrolledCount = Array.isArray(classItem?.enrollments)
-      ? new Set(
-        classItem.enrollments
-          .map((enrollment: any) => enrollment?.student_uuid ?? enrollment?.uuid)
-          .filter(Boolean)
-      ).size
-      : 0;
-
-    const queriedEnrolledCount = classItem?.uuid
-      ? Number(classEnrollmentCounts.get(classItem.uuid) ?? 0)
-      : 0;
-
-    const enrolledCount = Number(
-      queriedEnrolledCount ||
-      classItem?.current_enrollments ||
-      (uniqueEnrolledCount > 0 ? uniqueEnrolledCount : classItem?.enrollments?.length ?? 0)
-    );
-
-    const enrollmentPercentage =
-      capacity > 0 ? Math.min(100, Math.round((enrolledCount / capacity) * 100)) : 0;
-
-    return {
-      capacity,
-      enrolledCount,
-      enrollmentPercentage,
-    };
-  };
-
-  const rateEntries = [
-    {
-      key: 'private_online_rate',
-      label: 'Private online',
-      description: '1:1 virtual training session',
-      amount: matchedCourse?.rate_card?.private_online_rate,
-    },
-    {
-      key: 'private_inperson_rate',
-      label: 'Private in person',
-      description: '1:1 onsite training session',
-      amount: matchedCourse?.rate_card?.private_inperson_rate,
-    },
-    {
-      key: 'group_online_rate',
-      label: 'Group online',
-      description: 'Virtual session for multiple learners',
-      amount: matchedCourse?.rate_card?.group_online_rate,
-    },
-    {
-      key: 'group_inperson_rate',
-      label: 'Group in person',
-      description: 'Physical session for multiple learners',
-      amount: matchedCourse?.rate_card?.group_inperson_rate,
-    },
-  ].filter(entry => typeof entry.amount === 'number');
+  const [selectedRateKey, setSelectedRateKey] = useState<RateKey>('private_online_rate');
+  const [totalAmount, setTotalAmount] = useState(0);
+  const bookingRates = matchedCourse?.rate_card
+    ? {
+        ...matchedCourse.rate_card,
+        currency: matchedCourse.rate_card.currency ?? 'KES',
+      }
+    : undefined;
 
   return (
-    <div className='bg-background relative mx-auto w-full max-w-7xl self-center overflow-y-auto rounded-[32px]'>
+    <div className='relative mx-auto w-full max-w-7xl self-center overflow-y-auto'>
       <Button
         variant='ghost'
         size='sm'
@@ -210,112 +153,74 @@ export const InstructorProfileComponent: React.FC<Props> = ({
         <X className='h-6 w-6' />
       </Button>
 
-      <div className='space-y-6 p-6'>
-        <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]'>
-          <Card className='border-border/60 rounded-[32px] p-6 shadow-sm'>
-            <div className='flex items-start gap-6'>
-              <Avatar className='h-24 w-24'>
-                <AvatarImage src={instructor.profileImage} alt={instructor.name} />
-                <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
-              </Avatar>
+      <div className='space-y-6 pt-6 pr-6'>
+        {/* Header */}
+        <div className='flex items-start gap-6'>
+          <Avatar className='h-24 w-24'>
+            <AvatarImage
+              src={instructor.profile_image_url ?? undefined}
+              alt={instructor.full_name}
+            />
+            <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
+          </Avatar>
 
-              <div className='flex-1'>
-                <div className='flex items-start justify-between'>
-                  <div>
-                    <div className='mb-1 flex items-center gap-2'>
-                      <h2>{instructor?.full_name}</h2>
-                    </div>
-                    <p className='text-muted-foreground'>{instructor?.professional_headline}</p>
-                  </div>
-                </div>
-
-                {/* Quick Stats */}
-                <div className='mt-4 flex flex-wrap items-center gap-4'>
-                  <div className='flex items-center gap-1'>
-                    <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
-                    <span>{instructorReviews?.length} reviews</span>
-                  </div>
-                  <div className='text-muted-foreground flex items-center gap-1'>
-                    <Users className='h-4 w-4' />
-                    <span>N/A students</span>
-                  </div>
-                  <div className='text-muted-foreground flex items-center gap-1'>
-                    <Briefcase className='h-4 w-4' />
-                    <span>{instructor?.total_experience_years} years experience</span>
-                  </div>
-                </div>
-
-                {/* Mode badges */}
-                <div className='mt-3 flex gap-2'>
-                  <Badge variant='secondary' className='gap-1'>
-                    <Video className='h-3 w-3' />
-                    Online / Onsite
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className='border-border/60 rounded-[32px] p-6 shadow-sm'>
-            <div className='space-y-4'>
+          <div className='flex-1'>
+            <div className='flex items-start justify-between'>
               <div>
-                <p className='text-muted-foreground text-sm'>Booking fit</p>
-                <h3 className='mt-1 text-xl font-semibold'>Know who you are booking</h3>
+                <div className='mb-1 flex items-center gap-2'>
+                  <h2>{instructor?.full_name}</h2>
+                </div>
+                <p className='text-muted-foreground'>{instructor?.professional_headline}</p>
               </div>
-
-              <ul className='list-disc space-y-3 pl-5 text-sm'>
-                <li>
-                  <span className='font-medium'>Course alignment: </span>
-                  <span className='text-muted-foreground'>
-                    {matchedCourse?.course_name ??
-                      'This instructor is approved to teach the selected course.'}
-                  </span>
-                </li>
-
-                <li>
-                  <span className='font-medium'>Session formats: </span>
-                  <span className='text-muted-foreground'>
-                    Use the scheduler below to request an online or in-person slot based on the rate you choose.
-                  </span>
-                </li>
-
-                <li>
-                  <span className='font-medium'>Booking flow: </span>
-                  <span className='text-muted-foreground'>
-                    Pick a rate, add a short purpose, then choose a slot from the timetable to create your booking request.
-                  </span>
-                </li>
-              </ul>
-
-              <Button
-                onClick={() => setShowBooking(current => !current)}
-                size='lg'
-                className='w-full gap-2'
-              >
-                <Calendar className='h-4 w-4' />
-                {showBooking ? 'Hide booking scheduler' : 'Start booking'}
-              </Button>
             </div>
-          </Card>
+
+            {/* Quick Stats */}
+            <div className='mt-4 flex flex-wrap items-center gap-4'>
+              <div className='flex items-center gap-1'>
+                <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
+                <span>{instructorReviews?.length} reviews</span>
+              </div>
+              <div className='text-muted-foreground flex items-center gap-1'>
+                <Users className='h-4 w-4' />
+                <span>N/A students</span>
+              </div>
+              <div className='text-muted-foreground flex items-center gap-1'>
+                <Briefcase className='h-4 w-4' />
+                <span>{instructor?.total_experience_years} years experience</span>
+              </div>
+              {instructor?.has_location_coordinates && (
+                <div className='text-muted-foreground flex items-center gap-1'>
+                  <MapPin className='h-4 w-4' />
+                  <span>{instructor?.formatted_location}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Mode badges */}
+            <div className='mt-3 flex gap-2'>
+              <Badge variant='secondary' className='gap-1'>
+                <Video className='h-3 w-3' />
+                Online / Onsite
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Book Button */}
+        <div className='flex justify-end'>
+          <Button
+            onClick={() => setShowBooking(true)}
+            size='lg'
+            className='flex items-center gap-2'
+          >
+            <Calendar className='h-4 w-4' />
+            Book Session
+          </Button>
         </div>
 
         {/* Booking Form */}
         {showBooking && (
-          <Card className='border-border/60 rounded-[32px] p-6 shadow-sm'>
-            <div className='mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
-              <div>
-                <h3 className='text-lg font-semibold'>Booking scheduler</h3>
-                <p className='text-muted-foreground text-sm'>
-                  Use the instructor timetable to choose a slot after reviewing the available rates
-                  and expectations.
-                </p>
-              </div>
-
-              <Badge variant='secondary' className='w-fit'>
-                Course booking flow
-              </Badge>
-            </div>
-
+          <>
             <BookInstructorTimeTableManager
               availabilityData={availabilityData || []}
               onAvailabilityUpdate={setAvailabilityData}
@@ -324,12 +229,13 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 student_uuid: student?.uuid || '',
                 instructor_uuid: instructor?.uuid || '',
                 booking_id: '',
-                rates: matchedCourse?.rate_card,
-                instructor_name: instructor?.full_name || '',
-                course_name: matchedCourse?.course_name || '',
+                price_amount: totalAmount,
+                purpose: reason,
+                rate_key: selectedRateKey,
+                rates: bookingRates,
               }}
             />
-          </Card>
+          </>
         )}
 
         {/* Content Tabs */}
@@ -348,7 +254,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               <Card className='p-6'>
                 <h3 className='mb-3'>About</h3>
                 <div className='text-muted-foreground'>
-                  <RichTextRenderer htmlString={instructor.bio} />
+                  <RichTextRenderer htmlString={instructor.bio ?? ''} />
                 </div>
               </Card>
 
@@ -358,7 +264,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 <div className='flex flex-wrap gap-2'>
                   {skills?.length > 0 ? (
                     <div className='flex flex-wrap gap-2'>
-                      {skills?.map((skill: any, index: any) => (
+                      {skills?.map(skill => (
                         <Badge key={skill.uuid} variant='outline'>
                           {skill.skill_name}
                         </Badge>
@@ -376,8 +282,8 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
                 {instructor?.specializations?.length > 0 ? (
                   <div className='flex flex-wrap gap-2'>
-                    {instructor?.specializations?.map((spec: any, index: any) => (
-                      <Badge key={spec.uuid} variant='outline'>
+                    {instructor?.specializations?.map(spec => (
+                      <Badge key={spec.uuid ?? spec.skill_name} variant='outline'>
                         {spec.skill_name}
                       </Badge>
                     ))}
@@ -385,33 +291,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 ) : (
                   <p className='text-muted-foreground text-sm'>No specializations added</p>
                 )}
-              </Card>
-
-              <Card className='p-6'>
-                <div className='mb-3 flex items-center gap-2'>
-                  <GraduationCap className='h-5 w-5' />
-                  <h3>Why students book this instructor</h3>
-                </div>
-                <div className='grid gap-4 md:grid-cols-3'>
-                  {instructor?.total_experience_years > 0 && <div className='border-border/60 rounded-2xl border p-4'>
-                    <div className='font-medium'>Experience depth</div>
-                    <p className='text-muted-foreground mt-1 text-sm'>
-                      {instructor?.total_experience_years ?? 0} years of experience in the field.
-                    </p>
-                  </div>}
-                  <div className='border-border/60 rounded-2xl border p-4'>
-                    <div className='font-medium'>Course relevance</div>
-                    <p className='text-muted-foreground mt-1 text-sm'>
-                      Approved for this course and visible in the student booking flow.
-                    </p>
-                  </div>
-                  <div className='border-border/60 rounded-2xl border p-4'>
-                    <div className='font-medium'>Booking clarity</div>
-                    <p className='text-muted-foreground mt-1 text-sm'>
-                      Rates, schedule, and review history are shown before you commit.
-                    </p>
-                  </div>
-                </div>
               </Card>
 
               {/* Classes */}
@@ -430,33 +309,24 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
                 {filteredClasses?.length > 0 ? (
                   <div className='divide-border divide-y rounded-md'>
-                    {filteredClasses.map(course => {
-                      const { capacity, enrolledCount, enrollmentPercentage } =
-                        getClassEnrollmentMeta(course);
-
-                      return (
-                        <div
-                          key={course?.uuid}
-                          className='hover:bg-secondary dark:hover:bg-muted flex items-start gap-3 p-4 transition'
-                        >
-                          <CheckCircle className='mt-1 h-5 w-5 text-green-600' />
-                          <div className='flex flex-col'>
-                            <div>
-                              <p className='font-medium'>{course?.title}</p>
-                              <p className='text-muted-foreground text-sm'>
-                                {capacity > 0
-                                  ? `${enrollmentPercentage}% enrollment • ${enrolledCount}/${capacity} seats filled`
-                                  : `${enrolledCount} enrolled`}
-                              </p>
-                            </div>
-                            <div className='text-muted-foreground mt-1 flex items-start gap-2 text-sm'>
-                              <BookOpen className='text-muted-foreground h-4 w-4' />
-                              <span>{course?.course?.name}</span>
-                            </div>
+                    {filteredClasses.map(course => (
+                      <div
+                        key={course?.uuid}
+                        className='hover:bg-secondary dark:hover:bg-muted flex items-start gap-3 p-4 transition'
+                      >
+                        <CheckCircle className='mt-1 h-5 w-5 text-green-600' />
+                        <div className='flex flex-col'>
+                          <div>
+                            <p className='font-medium'>{course?.title}</p>
+                            <p className='text-muted-foreground text-sm'>0% enrollment</p>
+                          </div>
+                          <div className='text-muted-foreground mt-1 flex items-start gap-2 text-sm'>
+                            <BookOpen className='text-muted-foreground h-4 w-4' />
+                            <span>{course?.course?.name}</span>
                           </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
@@ -471,9 +341,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
             {/* Reviews Tab */}
             <TabsContent value='reviews' className='space-y-4'>
               {Array.isArray(instructorReviews) && instructorReviews.length > 0 ? (
-                instructorReviews.map((review: any) => (
-                  <ReviewCard key={review.uuid} review={review} />
-                ))
+                instructorReviews.map(review => <ReviewCard key={review.uuid} review={review} />)
               ) : (
                 <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
                   <Star className='text-muted-foreground mb-4 h-10 w-10' />
@@ -517,35 +385,56 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
             {/* Rates Tab */}
             <TabsContent value='rates' className='space-y-4'>
-              {rateEntries.length > 0 && (
-                <Card className='border-border/60 rounded-[32px] p-6 shadow-sm'>
-                  <div className='mb-4 flex items-center justify-between gap-4'>
+              <Card className='p-6'>
+                <div>
+                  <CardTitle className='mb-4'>Rate Card</CardTitle>
+                </div>
+                <div className='space-y-4'>
+                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
                     <div>
-                      <h3 className='text-lg font-semibold'>Rate overview</h3>
-                      <p className='text-muted-foreground text-sm'>
-                        Understand the available session types before opening the booking scheduler.
-                      </p>
+                      <p>Group In Person Rate</p>
+                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
                     </div>
-                    <Badge variant='secondary'>{rateEntries.length} rate options</Badge>
+                    <p className='text-2xl'>
+                      {matchedCourse?.rate_card?.currency}{' '}
+                      {matchedCourse?.rate_card?.group_inperson_rate}
+                    </p>
                   </div>
 
-                  <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-                    {rateEntries.map(entry => (
-                      <div
-                        key={entry.key}
-                        className='border-border/60 bg-muted/30 rounded-3xl border p-4'
-                      >
-                        <div className='font-medium'>{entry.label}</div>
-                        <p className='text-muted-foreground mt-1 text-sm'>{entry.description}</p>
-                        <div className='mt-4 text-xl font-semibold'>
-                          {matchedCourse?.rate_card?.currency ?? 'KES'} {entry.amount}
-                          <span className='text-muted-foreground text-sm font-normal'> / hour</span>
-                        </div>
-                      </div>
-                    ))}
+                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
+                    <div>
+                      <p>Group Online Rate</p>
+                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
+                    </div>
+                    <p className='text-2xl'>
+                      {matchedCourse?.rate_card?.currency}{' '}
+                      {matchedCourse?.rate_card?.group_online_rate}
+                    </p>
                   </div>
-                </Card>
-              )}
+
+                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
+                    <div>
+                      <p>Private In Person Rate</p>
+                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
+                    </div>
+                    <p className='text-2xl'>
+                      {matchedCourse?.rate_card?.currency}{' '}
+                      {matchedCourse?.rate_card?.private_inperson_rate}
+                    </p>
+                  </div>
+
+                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
+                    <div>
+                      <p>Private Online Rate</p>
+                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
+                    </div>
+                    <p className='text-2xl'>
+                      {matchedCourse?.rate_card?.currency}{' '}
+                      {matchedCourse?.rate_card?.private_online_rate}
+                    </p>
+                  </div>
+                </div>
+              </Card>
 
               <Card className='border-primary/30 bg-primary/10 mb-6 p-6'>
                 <div className='flex gap-3'>
@@ -567,7 +456,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
   );
 };
 
-const skills = [] as any[];
+const skills: Array<{ skill_name: string; uuid?: string }> = [];
 const certifications = [
   { id: 'cert-3', name: 'Deep Learning Specialization', issuer: 'DeepLearning.AI', year: 2020 },
   { id: 'cert-4', name: 'Google Cloud Professional Data Engineer', issuer: 'Google', year: 2021 },

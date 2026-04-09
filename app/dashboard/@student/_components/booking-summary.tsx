@@ -1,23 +1,29 @@
 'use client';
 
+import { AlertCircle, Calendar, Clock, DollarSign, MapPin, Video } from 'lucide-react';
+import type React from 'react';
+import { useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, Calendar, Clock, DollarSign, MapPin, Video } from 'lucide-react';
-import type React from 'react';
-import { useState } from 'react';
-import type { Booking } from '../all-courses/instructor/page';
+import type { Instructor } from '@/services/client/types.gen';
+import type {
+  Booking,
+  BookingSlot,
+} from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
 import { BookingConfirmation } from './booking-confirmation';
 import { PaymentModal } from './payment-modal';
 
 type Props = {
-  instructor: any;
-  selectedSlots: any[];
+  instructor: Instructor;
+  selectedSlots: BookingSlot[];
   onBack: () => void;
   onBookingComplete: (booking: Booking) => void;
 };
+
+type PaymentMethod = NonNullable<Booking['paymentMethod']>;
 
 export const BookingSummary: React.FC<Props> = ({
   instructor,
@@ -47,19 +53,27 @@ export const BookingSummary: React.FC<Props> = ({
   };
 
   const handlePaymentComplete = (paymentMethod: string) => {
+    const normalizedPaymentMethod: PaymentMethod =
+      paymentMethod === 'skill-fund' ||
+      paymentMethod === 'm-pesa' ||
+      paymentMethod === 'card' ||
+      paymentMethod === 'bank'
+        ? paymentMethod
+        : 'card';
+
     // Create booking
     const booking: Booking = {
       id: `booking-${Date.now()}`,
       studentId: 'student-current', // Would come from auth context
       studentName: 'Current Student', // Would come from auth context
-      instructorId: instructor.id,
-      instructorName: instructor.name,
+      instructorId: instructor.uuid ?? '',
+      instructorName: instructor.full_name ?? 'Instructor',
       slots: selectedSlots,
       totalSessions,
       totalDuration,
       totalFee,
-      currency: instructor.rateCard.currency,
-      paymentMethod: paymentMethod as any,
+      currency: rateCard.currency,
+      paymentMethod: normalizedPaymentMethod,
       paymentStatus: 'completed',
       status: 'confirmed',
       createdAt: new Date(),
@@ -144,7 +158,7 @@ export const BookingSummary: React.FC<Props> = ({
                 <MapPin className='h-4 w-4' />
               )}
             </span>
-            <Badge variant='secondary'>{selectedSlots[0].mode}</Badge>
+            <Badge variant='secondary'>{selectedSlots[0]?.mode}</Badge>
           </div>
         )}
       </div>

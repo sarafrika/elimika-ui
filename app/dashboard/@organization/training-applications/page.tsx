@@ -45,6 +45,24 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import type { CourseTrainingApplication } from '@/services/client';
+
+type TrainingApplicationRow = CourseTrainingApplication & {
+  course_name?: string;
+  course_description?: string;
+  applicant_name?: string;
+};
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (typeof error === 'object' && error !== null) {
+    const maybeError = error as { message?: string };
+    if (typeof maybeError.message === 'string' && maybeError.message) {
+      return maybeError.message;
+    }
+  }
+
+  return fallback;
+}
 
 export default function TrainingApplicationsPage() {
   const courseCreator = useOptionalCourseCreator();
@@ -56,7 +74,7 @@ export default function TrainingApplicationsPage() {
   const [applicantTypeFilter, setApplicantTypeFilter] = useState<string>('ALL');
   const [reviewDialog, setReviewDialog] = useState<{
     open: boolean;
-    application: any;
+    application: TrainingApplicationRow | null;
     action: 'APPROVE' | 'REJECT' | 'REVOKE' | null;
   }>({
     open: false,
@@ -99,12 +117,12 @@ export default function TrainingApplicationsPage() {
 
   const decideMutation = useMutation(decideOnTrainingApplicationMutation());
 
-  const applications = data?.data?.content || [];
+  const applications: TrainingApplicationRow[] = data?.data?.content ?? [];
   const totalApplications = data?.data?.totalElements || 0;
   const totalPages = Math.ceil(totalApplications / pageSize);
 
   // Filter by search query (client-side)
-  const filteredApplications = applications.filter((app: any) => {
+  const filteredApplications = applications.filter(app => {
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -117,16 +135,17 @@ export default function TrainingApplicationsPage() {
   // Stats
   const stats = {
     total: totalApplications,
-    pending: applications.filter((app: any) => app.status === 'PENDING').length,
-    approved: applications.filter((app: any) => app.status === 'APPROVED').length,
+    pending: applications.filter(app => app.status === 'PENDING').length,
+    approved: applications.filter(app => app.status === 'APPROVED').length,
     instructors: new Set(
       applications
-        .filter((app: any) => app.applicant_type === 'instructor')
-        .map((app: any) => app.applicant_uuid)
+        .filter(app => app.applicant_type === 'instructor')
+        .map(app => app.applicant_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid))
     ).size,
   };
 
-  const handleReview = (application: any, action: 'APPROVE' | 'REJECT' | 'REVOKE') => {
+  const handleReview = (application: TrainingApplicationRow, action: 'APPROVE' | 'REJECT' | 'REVOKE') => {
     setReviewDialog({ open: true, application, action });
     setReviewNotes('');
   };
@@ -150,8 +169,8 @@ export default function TrainingApplicationsPage() {
       setReviewDialog({ open: false, application: null, action: null });
       setReviewNotes('');
       refetch();
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to process application');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to process application'));
     }
   };
 
@@ -312,7 +331,7 @@ export default function TrainingApplicationsPage() {
       ) : (
         <>
           <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-            {filteredApplications.map((application: any) => {
+            {filteredApplications.map(application => {
               const statusConfig = getStatusConfig(application.status);
               const StatusIcon = statusConfig.icon;
               const isInstructor = application.applicant_type === 'instructor';

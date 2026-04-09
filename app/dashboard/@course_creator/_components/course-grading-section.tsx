@@ -1,9 +1,10 @@
 'use client';
 
+import type { ApiResponseCourse } from '../../../../services/client/types.gen';
 import CourseGradingForm from './course-grading-form';
 
 type CourseGradingSectionProps = {
-  course: any;
+  course: ApiResponseCourse | undefined;
 };
 
 const CourseGradingSection = ({ course }: CourseGradingSectionProps) => {

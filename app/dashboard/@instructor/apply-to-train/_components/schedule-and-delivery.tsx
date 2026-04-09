@@ -25,6 +25,40 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+type Trainer = {
+  id: string;
+  name: string;
+  title: string;
+  specialties: string[];
+  avatar: string;
+};
+
+type ScheduleAndDeliveryData = {
+  trainingMode?: '' | 'ONLINE' | 'IN_PERSON' | 'HYBRID';
+  trainingCity?: string;
+  trainingCountry?: string;
+  venueRequirements?: string;
+  minStudents?: number | '';
+  allowOneOnOne?: boolean;
+  max_students?: unknown;
+  leadTrainer?: Trainer | null;
+  supportTrainers?: Trainer[];
+} | null;
+
+type InstructorProfile = {
+  user_domain?: string[];
+} | null;
+
+type SelectedCourse = {
+  uuid?: string;
+  name?: string;
+  description?: string;
+  category_names?: string[];
+  difficulty_uuid?: string | null;
+  total_duration_display?: string;
+  class_limit?: number | string | null;
+} | null;
+
 // ✅ Zod Schema
 const scheduleSchema = z
   .object({
@@ -46,7 +80,7 @@ const scheduleSchema = z
       .optional(),
 
     allowOneOnOne: z.boolean().optional(),
-    max_students: z.any(),
+    max_students: z.unknown(),
   })
   .superRefine((data, ctx) => {
     if (data.trainingMode === 'IN_PERSON' || data.trainingMode === 'HYBRID') {
@@ -93,13 +127,13 @@ const AVAILABLE_INSTRUCTORS = [
     specialties: ['UI/UX', 'Design Thinking', 'Prototyping'],
     avatar: '',
   },
-];
+] satisfies Trainer[];
 
 interface ScheduleAndDeliveryProps {
-  data: any;
-  profile: any;
-  selectedCourse: any;
-  onDataChange: (data: any) => void;
+  data: ScheduleAndDeliveryData;
+  profile: InstructorProfile;
+  selectedCourse: SelectedCourse | undefined;
+  onDataChange: (data: Record<string, unknown> | null) => void;
 }
 
 export function ScheduleAndDelivery({
@@ -116,21 +150,21 @@ export function ScheduleAndDelivery({
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
-      trainingMode: data?.trainingMode || '',
+      trainingMode: data?.trainingMode || undefined,
       trainingCity: data?.trainingCity || '',
       trainingCountry: data?.trainingCountry || '',
       venueRequirements: data?.venueRequirements || '',
-      minStudents: data?.minStudents || '',
+      minStudents: typeof data?.minStudents === 'number' ? data.minStudents : undefined,
       allowOneOnOne: data?.allowOneOnOne || false,
       max_students: courseDetails?.data?.class_limit ?? '',
     },
   });
 
-  const [leadTrainer, setLeadTrainer] = useState<any>(data?.leadTrainer || null);
-  const [supportTrainers, setSupportTrainers] = useState<any[]>(data?.supportTrainers || []);
+  const [leadTrainer, setLeadTrainer] = useState<Trainer | null>(data?.leadTrainer || null);
+  const [supportTrainers, setSupportTrainers] = useState<Trainer[]>(data?.supportTrainers || []);
   const [showInstructorSearch, setShowInstructorSearch] = useState(false);
 
-  const handleLeadTrainerSelect = (instructor: any) => {
+  const handleLeadTrainerSelect = (instructor: Trainer) => {
     setLeadTrainer(instructor);
     onDataChange({ ...data, leadTrainer: instructor });
     setShowInstructorSearch(false);
@@ -150,7 +184,7 @@ export function ScheduleAndDelivery({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
-        {profile.user_domain?.includes('organisation') && (
+        {profile?.user_domain?.includes('organisation') && (
           <div>
             {/* Lead Trainer */}
             <Card>

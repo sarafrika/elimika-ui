@@ -37,20 +37,32 @@ import {
   searchAssignmentsOptions,
   uploadAssignmentAttachmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import type {
+  AssessmentRubric,
+  Assignment,
+  AssignmentAttachment,
+  Lesson,
+  PagedDtoLesson,
+  ResponseDtoVoid,
+  SubmissionTypesEnum,
+} from '../../../../services/client/types.gen';
 
 export type AssignmentCreationFormProps = {
   courseId: string;
-  lessons: any;
+  lessons: PagedDtoLesson | undefined;
   assignmentId?: string | null;
   selectedLessonId: string;
-  selectedLesson: any;
+  selectedLesson: Lesson | null;
   setSelectedLessonId: (id: string) => void;
-  setSelectedLesson: (lesson: any) => void;
+  setSelectedLesson: (lesson: Lesson) => void;
   onSelectAssignment?: (assignmentUuid: string | null) => void;
 
   // API callbacks
-  createAssignmentForLesson: (lessonId: string, payload: any) => Promise<string>;
-  updateAssignmentForLesson: (assignmentUuid: string, payload: any) => Promise<void>;
+  createAssignmentForLesson: (lessonId: string, payload: AssignmentFormState) => Promise<string>;
+  updateAssignmentForLesson: (
+    assignmentUuid: string,
+    payload: AssignmentFormState
+  ) => Promise<void>;
   deleteAssignmentForLesson: (assignmentUuid: string) => Promise<void>;
 
   isPending: boolean;
@@ -71,6 +83,16 @@ const EMPTY_ASSIGNMENT = {
   submission_types: [] as string[],
   lesson_uuid: '',
 };
+
+type AssignmentFormState = typeof EMPTY_ASSIGNMENT;
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  (error as ResponseDtoVoid | undefined)?.message ||
+  (error instanceof Error ? error.message : fallback);
+
+const toSubmissionTypes = (
+  value: SubmissionTypesEnum | SubmissionTypesEnum[] | undefined
+): string[] => (Array.isArray(value) ? value : value ? [value] : []);
 
 export const AssignmentCreationForm = ({
   courseId,
@@ -99,13 +121,15 @@ export const AssignmentCreationForm = ({
     }),
     enabled: !!creator?.profile?.uuid,
   });
-  const rubrics: any[] = searchRubs?.data?.content ?? [];
+  const rubrics: AssessmentRubric[] = searchRubs?.data?.content ?? [];
 
   // ── Assignment state (must come before any derived values) ────────────────
-  const [assignmentData, setAssignmentData] = useState({ ...EMPTY_ASSIGNMENT });
+  const [assignmentData, setAssignmentData] = useState<AssignmentFormState>({
+    ...EMPTY_ASSIGNMENT,
+  });
 
   // Now safe to derive selectedRubric from assignmentData
-  const selectedRubric = rubrics.find((r: any) => r.uuid === assignmentData.rubric_uuid);
+  const selectedRubric = rubrics.find(r => r.uuid === assignmentData.rubric_uuid);
 
   const { data: assignments } = useQuery({
     ...searchAssignmentsOptions({
@@ -136,7 +160,10 @@ export const AssignmentCreationForm = ({
     isPending || uploadAssignmentMut.isPending || deleteAttachmentMut.isPending;
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleAssignmentInputChange = (field: string, value: any) => {
+  const handleAssignmentInputChange = <K extends keyof AssignmentFormState>(
+    field: K,
+    value: AssignmentFormState[K]
+  ) => {
     setAssignmentData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -144,7 +171,7 @@ export const AssignmentCreationForm = ({
     if (onSelectAssignment) onSelectAssignment(selectedUuid);
 
     const selectedAssignment = assignments?.data?.content?.find(
-      (a: any) => a.uuid === selectedUuid
+      (a: Assignment) => a.uuid === selectedUuid
     );
 
     if (selectedAssignment) {
@@ -154,11 +181,14 @@ export const AssignmentCreationForm = ({
         instructions: selectedAssignment.instructions || '',
         max_points: selectedAssignment.max_points || 0,
         rubric_uuid: selectedAssignment.rubric_uuid || '',
-        is_published: selectedAssignment.is_published,
-        active: selectedAssignment?.active,
-        due_date: selectedAssignment.due_date || '',
+        is_published: selectedAssignment.is_published ?? false,
+        active: false,
+        due_date:
+          selectedAssignment.due_date instanceof Date
+            ? selectedAssignment.due_date.toISOString()
+            : '',
         assignment_category: selectedAssignment.assignment_category || '',
-        submission_types: selectedAssignment.submission_types || [],
+        submission_types: toSubmissionTypes(selectedAssignment.submission_types),
         lesson_uuid: selectedLessonId as string,
       });
     } else {
@@ -267,8 +297,8 @@ export const AssignmentCreationForm = ({
             queryKey: getAssignmentAttachmentsQueryKey({ path: { assignmentUuid } }),
           });
         },
-        onError: (err: any) => {
-          toast.error(err?.message || 'Attachment upload failed');
+        onError: (err: unknown) => {
+          toast.error(getErrorMessage(err, 'Attachment upload failed'));
         },
       }
     );
@@ -289,7 +319,7 @@ export const AssignmentCreationForm = ({
           });
         },
         onError: error => {
-          toast.error(error?.message);
+          toast.error(getErrorMessage(error, 'Failed to delete attachment'));
         },
       }
     );
@@ -305,11 +335,12 @@ export const AssignmentCreationForm = ({
         {lessons?.content?.length ? (
           <ul className='flex flex-col gap-2 space-y-2'>
             {lessons.content
-              .sort((a: any, b: any) => a.lesson_number - b.lesson_number)
-              .map((lesson: any) => (
+              .sort((a: Lesson, b: Lesson) => a.lesson_number - b.lesson_number)
+              .map((lesson: Lesson) => (
                 <li
                   key={lesson.uuid}
                   onClick={() => {
+                    if (!lesson.uuid) return;
                     setSelectedLessonId(lesson.uuid);
                     setSelectedLesson(lesson);
                     handleAssignmentSelect(null);
@@ -377,11 +408,12 @@ export const AssignmentCreationForm = ({
             {assignments?.data?.content?.length ? (
               <ul className='flex flex-col gap-2'>
                 {assignments.data.content
-                  .filter((a: any) => a.assignment_category)
-                  .map((assignment: any, idx: number) => (
+                  .filter((a: Assignment) => Boolean(a.assignment_category && a.uuid))
+                  .map((assignment: Assignment, idx: number) => (
                     <li
                       key={assignment.uuid}
                       onClick={() => {
+                        if (!assignment.uuid) return;
                         setSelectedAssignmentUuid(assignment.uuid);
                         handleAssignmentSelect(assignment.uuid);
                       }}
@@ -435,9 +467,7 @@ export const AssignmentCreationForm = ({
                 </Label>
                 <SimpleEditor
                   value={assignmentData.description}
-                  onChange={(value) =>
-                    handleAssignmentInputChange('description', value)
-                  }
+                  onChange={value => handleAssignmentInputChange('description', value)}
                 />
               </div>
 
@@ -448,9 +478,7 @@ export const AssignmentCreationForm = ({
                 </Label>
                 <SimpleEditor
                   value={assignmentData.instructions}
-                  onChange={(value) =>
-                    handleAssignmentInputChange('instructions', value)
-                  }
+                  onChange={value => handleAssignmentInputChange('instructions', value)}
                 />
               </div>
 
@@ -489,7 +517,9 @@ export const AssignmentCreationForm = ({
                 {isLoadingRubrics ? (
                   <div className='flex items-center gap-2 py-2'>
                     <Spinner className='h-4 w-4' />
-                    <span className='text-muted-foreground text-xs'>Loading evalutaion rubrics...</span>
+                    <span className='text-muted-foreground text-xs'>
+                      Loading evalutaion rubrics...
+                    </span>
                   </div>
                 ) : (
                   <>
@@ -506,8 +536,8 @@ export const AssignmentCreationForm = ({
                         <SelectItem value='__none__'>
                           <span className='text-muted-foreground'>None</span>
                         </SelectItem>
-                        {rubrics.map((r: any) => (
-                          <SelectItem key={r.uuid} value={r.uuid}>
+                        {rubrics.map(r => (
+                          <SelectItem key={r.uuid} value={r.uuid ?? ''}>
                             <div className='flex flex-col'>
                               <span className='font-medium'>{r.title}</span>
                               {r.description && (
@@ -643,14 +673,14 @@ export const AssignmentCreationForm = ({
                 </div>
 
                 <div className='space-y-3'>
-                  {attachments?.data?.map((file: any) => (
+                  {attachments?.data?.map((file: AssignmentAttachment) => (
                     <div
                       key={file.uuid}
                       className='border-border hover:border-primary flex items-start justify-between rounded-lg border bg-white p-4 transition'
                     >
                       <div className='flex items-start gap-3'>
                         <span className='flex h-8 w-8 items-center justify-center text-xl'>
-                          {getFileIcon(file.mime_type)}
+                          {getFileIcon(file.mime_type ?? '')}
                         </span>
                         <div>
                           <p className='text-foreground font-medium'>{file.original_filename}</p>
@@ -659,12 +689,14 @@ export const AssignmentCreationForm = ({
                           </p>
                           <p className='text-muted-foreground text-xs'>
                             {formatFileSize(Number(file.file_size_bytes))} •{' '}
-                            {new Date(file.created_date).toLocaleDateString()}
+                            {file.created_date
+                              ? new Date(file.created_date).toLocaleDateString()
+                              : 'Unknown date'}
                           </p>
                         </div>
                       </div>
                       <button
-                        onClick={() => handleDeleteAttachment(file.uuid)}
+                        onClick={() => file.uuid && handleDeleteAttachment(file.uuid)}
                         className='border-destructive/20 text-destructive hover:bg-destructive/5 inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm font-medium'
                       >
                         <Trash2 className='h-4 w-4' />

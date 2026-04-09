@@ -1,7 +1,3 @@
-import UserProfilePage from '../../_profile-components/user-profile-page';
+import UserProfileLandingPage from '@/src/features/profile/pages/shared/UserProfileLandingPage';
 
-const Page = () => {
-  return <UserProfilePage />;
-};
-
-export default Page;
+export default UserProfileLandingPage;

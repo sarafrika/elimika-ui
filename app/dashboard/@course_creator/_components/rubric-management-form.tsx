@@ -44,7 +44,7 @@ import {
   updateRubricCriterionMutation,
   updateScoringLevelMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { StatusEnum } from '@/services/client/types.gen';
+import { StatusEnum, type AssessmentRubric } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -70,6 +70,39 @@ export enum Visibility {
   Private = 'Private',
 }
 
+type MutationVariables<T> = T extends {
+  mutationFn?: (variables: infer TVariables) => Promise<unknown>;
+}
+  ? TVariables
+  : never;
+type DialogSubmitCallback = () => void;
+type MessageLike = { message?: string };
+type RubricDialogValues = Partial<RubricDetailsFormValues>;
+type CriteriaDialogValues = Partial<RubricCriteriaFormValues>;
+type ScoringLevelDialogValues = Partial<ScoringLevelFormValues>;
+type ScoringDialogValues = Partial<RubricScoringFormValues>;
+
+const getMessage = (value: unknown) =>
+  typeof value === 'object' && value !== null && 'message' in value
+    ? (value as MessageLike).message
+    : undefined;
+
+type CreateAssessmentRubricVariables = MutationVariables<
+  ReturnType<typeof createAssessmentRubricMutation>
+>;
+type UpdateAssessmentRubricVariables = MutationVariables<
+  ReturnType<typeof updateAssessmentRubricMutation>
+>;
+type AddRubricCriterionVariables = MutationVariables<ReturnType<typeof addRubricCriterionMutation>>;
+type UpdateRubricCriterionVariables = MutationVariables<
+  ReturnType<typeof updateRubricCriterionMutation>
+>;
+type CreateRubricScoringLevelVariables = MutationVariables<
+  ReturnType<typeof createRubricScoringLevelMutation>
+>;
+type UpdateScoringLevelVariables = MutationVariables<ReturnType<typeof updateScoringLevelMutation>>;
+type UpdateMatrixCellVariables = MutationVariables<ReturnType<typeof updateMatrixCellMutation>>;
+
 export const rubricDetailsSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -78,7 +111,7 @@ export const rubricDetailsSchema = z.object({
   total_weight: z.coerce.number().optional(),
   max_score: z.coerce.number().optional(),
   min_passing_score: z.coerce.number().optional(),
-  course_creator_uuid: z.any().optional(),
+  course_creator_uuid: z.string().optional(),
 });
 
 export type RubricDetailsFormValues = z.infer<typeof rubricDetailsSchema>;
@@ -91,10 +124,10 @@ function RubricDetailsForm({
   className,
 }: {
   rubricId?: string;
-  defaultValues?: RubricDetailsFormValues;
-  onSuccess: () => void;
+  defaultValues?: Partial<RubricDetailsFormValues>;
+  onSuccess: DialogSubmitCallback;
   onCancel: () => void;
-  className: any;
+  className?: string;
 }) {
   const form = useForm<RubricDetailsFormValues>({
     resolver: zodResolver(rubricDetailsSchema),
@@ -124,7 +157,7 @@ function RubricDetailsForm({
 
     if (rubricId) {
       updateRubric.mutate(
-        { path: { uuid: rubricId }, body: payload as any },
+        { path: { uuid: rubricId }, body: payload as UpdateAssessmentRubricVariables['body'] },
         {
           onSuccess: data => {
             qc.invalidateQueries({
@@ -138,7 +171,7 @@ function RubricDetailsForm({
             qc.invalidateQueries({
               queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -146,7 +179,7 @@ function RubricDetailsForm({
       );
     } else {
       createRubric.mutate(
-        { body: payload as any },
+        { body: payload as CreateAssessmentRubricVariables['body'] },
         {
           onSuccess: data => {
             qc.invalidateQueries({
@@ -157,7 +190,7 @@ function RubricDetailsForm({
                 },
               }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -329,11 +362,11 @@ function RubricCriteriaForm({
   className,
 }: {
   rubricId: string;
-  defaultValues?: RubricCriteriaFormValues;
-  onSuccess: () => void;
+  defaultValues?: Partial<RubricCriteriaFormValues>;
+  onSuccess: DialogSubmitCallback;
   onCancel: () => void;
   criterionId: string;
-  className: any;
+  className?: string;
 }) {
   const form = useForm<RubricCriteriaFormValues>({
     resolver: zodResolver(rubricCriteriaSchema),
@@ -361,7 +394,10 @@ function RubricCriteriaForm({
 
     if (rubricId && criterionId) {
       updateRubricCriteria.mutate(
-        { path: { rubricUuid: rubricId, criteriaUuid: criterionId }, body: payload as any },
+        {
+          path: { rubricUuid: rubricId, criteriaUuid: criterionId },
+          body: payload as UpdateRubricCriterionVariables['body'],
+        },
         {
           onSuccess: data => {
             qc.invalidateQueries({
@@ -383,7 +419,7 @@ function RubricCriteriaForm({
             qc.invalidateQueries({
               queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -391,7 +427,10 @@ function RubricCriteriaForm({
       );
     } else {
       createRubricCriteria.mutate(
-        { path: { rubricUuid: rubricId }, body: payload as any },
+        {
+          path: { rubricUuid: rubricId },
+          body: payload as AddRubricCriterionVariables['body'],
+        },
         {
           onSuccess: data => {
             qc.invalidateQueries({
@@ -411,7 +450,7 @@ function RubricCriteriaForm({
             qc.invalidateQueries({
               queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -544,10 +583,10 @@ function ScoringLevelForm({
 }: {
   rubricId: string;
   scoringLevelId?: string;
-  defaultValues?: ScoringLevelFormValues;
-  onSuccess: () => void;
+  defaultValues?: Partial<ScoringLevelFormValues>;
+  onSuccess: DialogSubmitCallback;
   onCancel: () => void;
-  className: any;
+  className?: string;
 }) {
   const form = useForm<ScoringLevelFormValues>({
     resolver: zodResolver(scoringLevelSchema),
@@ -578,7 +617,7 @@ function ScoringLevelForm({
       updateRubricScoringLevel.mutate(
         {
           path: { rubricUuid: rubricId, levelUuid: scoringLevelId },
-          body: payload as any,
+          body: payload as UpdateScoringLevelVariables['body'],
         },
         {
           onSuccess: data => {
@@ -601,7 +640,7 @@ function ScoringLevelForm({
             qc.invalidateQueries({
               queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -609,7 +648,10 @@ function ScoringLevelForm({
       );
     } else {
       createRubricScoringLevel.mutate(
-        { path: { rubricUuid: rubricId }, body: payload as any },
+        {
+          path: { rubricUuid: rubricId },
+          body: payload as CreateRubricScoringLevelVariables['body'],
+        },
         {
           onSuccess: data => {
             qc.invalidateQueries({
@@ -631,7 +673,7 @@ function ScoringLevelForm({
             qc.invalidateQueries({
               queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -809,10 +851,10 @@ function RubricScoringForm({
   rubricId: string;
   criterionId: string;
   scoringId: string;
-  defaultValues?: RubricScoringFormValues;
-  onSuccess: () => void;
+  defaultValues?: Partial<RubricScoringFormValues>;
+  onSuccess: DialogSubmitCallback;
   onCancel: () => void;
-  className: any;
+  className?: string;
 }) {
   const form = useForm<RubricScoringFormValues>({
     resolver: zodResolver(rubricScoringSchema),
@@ -840,7 +882,7 @@ function RubricScoringForm({
       updateMatrixCells.mutate(
         {
           path: { rubricUuid: rubricId },
-          body: payload as any,
+          body: payload as UpdateMatrixCellVariables['body'],
         },
         {
           onSuccess: data => {
@@ -869,7 +911,7 @@ function RubricScoringForm({
             qc.invalidateQueries({
               queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
             });
-            toast.success(data?.message);
+            toast.success(getMessage(data));
             onCancel();
             onSuccess();
           },
@@ -1058,9 +1100,9 @@ export function RubricDialog({
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
-  editingRubric?: any;
+  editingRubric?: Partial<AssessmentRubric>;
   editingRubricId?: string;
-  onSubmitSuccess: () => void;
+  onSubmitSuccess: DialogSubmitCallback;
 }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -1102,8 +1144,8 @@ export function CriteriaDialog({
   setOpen: (open: boolean) => void;
   rubricId: string;
   criterionId?: string;
-  defaultValues?: any;
-  onSuccess: () => void;
+  defaultValues?: CriteriaDialogValues;
+  onSuccess: DialogSubmitCallback;
 }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -1146,8 +1188,8 @@ export function ScoringLevelDialog({
   setOpen: (open: boolean) => void;
   rubricId: string;
   scoringLevelId?: string;
-  defaultValues?: any;
-  onSuccess: () => void;
+  defaultValues?: ScoringLevelDialogValues;
+  onSuccess: DialogSubmitCallback;
 }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -1192,8 +1234,8 @@ export function ScoringDialog({
   rubricId: string;
   criterionId: string;
   scoringId?: string;
-  defaultValues?: any;
-  onSuccess: () => void;
+  defaultValues?: ScoringDialogValues;
+  onSuccess: DialogSubmitCallback;
 }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>

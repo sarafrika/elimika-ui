@@ -1,6 +1,13 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
+import type {
+  CourseCreator,
+  Instructor,
+  Organisation,
+  Student,
+  User,
+} from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
@@ -28,10 +35,44 @@ const TAB_REGISTRY: Record<UserDomain, TabDefinition[]> = {
   organization: instructorTabs,
 };
 
-function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfile {
+type PublicAdminProfile = {
+  uuid?: string;
+  professional_headline?: string;
+  admin_verified?: boolean;
+  is_profile_complete?: boolean;
+};
+
+type PublicStudentProfile = Student & {
+  professional_headline?: string;
+  admin_verified?: boolean;
+  is_profile_complete?: boolean;
+};
+
+type SearchResultData<T> = {
+  data?: {
+    content?: T[];
+  };
+};
+
+type PublicOrganisationProfile = Organisation & {
+  org_name?: string;
+  full_name?: string;
+};
+
+type PublicUser = Partial<User> & {
+  student?: PublicStudentProfile;
+  instructor?: Instructor;
+  courseCreator?: CourseCreator;
+  course_creator?: CourseCreator;
+  admin?: PublicAdminProfile;
+  organization?: PublicOrganisationProfile;
+  organisation?: PublicOrganisationProfile;
+};
+
+function normalisePublicProfile(user: PublicUser, domain: UserDomain): SharedUserProfile {
   const baseProfile = {
-    user_uuid: user.uuid,
-    full_name: user.full_name,
+    user_uuid: user.uuid ?? '',
+    full_name: user.full_name ?? '',
     email: user.email,
     phone: user.phone_number,
     dob: user.dob,
@@ -54,11 +95,11 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
     case 'instructor': {
       const instructor = user.instructor;
       if (!instructor) {
-        return { ...baseProfile, uuid: user.uuid };
+        return { ...baseProfile, uuid: user.uuid ?? '' };
       }
       return {
         ...baseProfile,
-        uuid: instructor.uuid,
+        uuid: instructor.uuid ?? user.uuid ?? '',
         website: instructor.website,
         bio: instructor.bio,
         ...privateLocationFields,
@@ -71,11 +112,11 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
     case 'student': {
       const student = user.student;
       if (!student) {
-        return { ...baseProfile, uuid: user.uuid };
+        return { ...baseProfile, uuid: user.uuid ?? '' };
       }
       return {
         ...baseProfile,
-        uuid: student.uuid,
+        uuid: student.uuid ?? user.uuid ?? '',
         bio: student.bio,
         ...privateLocationFields,
         professional_headline: student.professional_headline,
@@ -88,11 +129,11 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
     case 'course_creator': {
       const creator = user.courseCreator;
       if (!creator) {
-        return { ...baseProfile, uuid: user.uuid };
+        return { ...baseProfile, uuid: user.uuid ?? '' };
       }
       return {
         ...baseProfile,
-        uuid: creator.uuid,
+        uuid: creator.uuid ?? user.uuid ?? '',
         bio: creator.bio,
         website: creator.website,
         ...privateLocationFields,
@@ -105,11 +146,11 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
     case 'admin': {
       const admin = user.admin;
       if (!admin) {
-        return { ...baseProfile, uuid: user.uuid };
+        return { ...baseProfile, uuid: user.uuid ?? '' };
       }
       return {
         ...baseProfile,
-        uuid: admin.uuid,
+        uuid: admin.uuid ?? user.uuid ?? '',
         ...privateLocationFields,
         professional_headline: admin.professional_headline,
         admin_verified: admin.admin_verified,
@@ -120,19 +161,19 @@ function normalisePublicProfile(user: any, domain: UserDomain): SharedUserProfil
     case 'organization': {
       const org = user.organization || user.organisation;
       if (!org) {
-        return { ...baseProfile, uuid: user.uuid };
+        return { ...baseProfile, uuid: user.uuid ?? '' };
       }
       return {
         ...baseProfile,
-        uuid: org.uuid,
-        full_name: org.org_name || org.full_name || user.full_name,
+        uuid: org.uuid ?? user.uuid ?? '',
+        full_name: org.org_name || org.full_name || user.full_name || '',
         ...privateLocationFields,
         admin_verified: org.admin_verified,
       };
     }
 
     default:
-      return { ...baseProfile, uuid: user.uuid };
+      return { ...baseProfile, uuid: user.uuid ?? '' };
   }
 }
 
@@ -218,7 +259,8 @@ export default function PublicUserProfilePage() {
     }),
     enabled: domain === 'instructor' && !!userId,
   });
-  const instructor = instructorData?.data?.content?.[0];
+  const instructor = (instructorData as SearchResultData<Instructor> | undefined)?.data
+    ?.content?.[0];
 
   const { data: creatorData } = useQuery({
     ...searchCourseCreatorsOptions({
@@ -231,7 +273,8 @@ export default function PublicUserProfilePage() {
     }),
     enabled: domain === 'course_creator' && !!userId,
   });
-  const course_creator = creatorData?.data?.content?.[0];
+  const course_creator = (creatorData as SearchResultData<CourseCreator> | undefined)?.data
+    ?.content?.[0];
 
   const { data: studentData } = useQuery({
     ...searchStudentsOptions({
@@ -244,7 +287,8 @@ export default function PublicUserProfilePage() {
     }),
     enabled: domain === 'student' && !!userId,
   });
-  const student = studentData?.data?.content?.[0];
+  const student = (studentData as SearchResultData<PublicStudentProfile> | undefined)?.data
+    ?.content?.[0];
 
   const user = {
     ...userData?.data,

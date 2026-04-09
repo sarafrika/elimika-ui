@@ -85,39 +85,35 @@ export function CertificateUploadModal({
     setFile(f);
   };
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (!file) return;
+    if (!student?.uuid) {
+      setError('Student profile not loaded');
+      return;
+    }
 
     setIsUploading(true);
     setError(null);
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      uploadCertMut.mutate(
-        {
-          path: { uuid: student?.uuid as string },
-          body: { file: file as any },
+    uploadCertMut.mutate(
+      {
+        path: { uuid: student.uuid },
+        body: { file },
+      },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
         },
-        {
-          onSuccess: data => {
-            toast.success(data?.message);
-          },
-          onError: error => {
-            toast.error(error?.message);
-          },
-        }
-      );
+        onError: error => {
+          toast.error(error?.message);
+        },
+      }
+    );
 
-      onUploadComplete();
-      setFile(null);
-      onOpenChange(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during upload');
-    } finally {
-      setIsUploading(false);
-    }
+    onUploadComplete();
+    setFile(null);
+    onOpenChange(false);
+    setIsUploading(false);
   };
 
   const handleRemoveFile = () => {

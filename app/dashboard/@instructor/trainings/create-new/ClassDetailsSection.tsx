@@ -53,11 +53,9 @@ const RATE_CARD_LOCATION_TYPE_MAP: Record<string, string> = {
 export const ClassDetailsSection = ({
   data,
   onChange,
-  courseDetail,
 }: {
   data: ClassDetails;
   onChange: (updates: Partial<ClassDetails>) => void;
-  courseDetail?: any;
 }) => {
   const instructor = useInstructor();
   const prevCourseRef = useRef<string | null>(null);

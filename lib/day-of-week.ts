@@ -8,12 +8,19 @@ const DaysOfWeekEnum = {
   SUNDAY: 0,
 } as const;
 
+type DayOfWeekOption = {
+  id: string;
+  label: string;
+};
+
 export const daysOfWeekOptions = Object.entries(DaysOfWeekEnum).map(([key, value]) => ({
   id: value.toString(), // value must be string for select value
   label: key.charAt(0) + key.slice(1).toLowerCase(), // 'MONDAY' -> 'Monday'
-}));
+})) as DayOfWeekOption[];
 
 export const getDayLabel = (dayNum: number) => {
-  const option = daysOfWeekOptions.find((opt: any) => opt.id === dayNum?.toString());
+  const option = daysOfWeekOptions.find(
+    (option: DayOfWeekOption) => option.id === dayNum?.toString()
+  );
   return option ? option.label : 'Unknown';
 };

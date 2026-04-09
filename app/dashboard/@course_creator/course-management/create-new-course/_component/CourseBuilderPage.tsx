@@ -17,6 +17,7 @@ import {
   publishCourseMutation,
   publishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { Lesson } from '@/services/client/types.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BadgeDollarSign,
@@ -36,20 +37,27 @@ import { toast } from 'sonner';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
+import type { CourseCreationFormValues } from '../../../_components/course-creation-types';
 import CourseGradingSection from '../../../_components/course-grading-section';
 import { CoursePricingForm } from '../../../_components/course-pricing-form';
 import CriteriaCreationForm from '../../../_components/criteria-creation-form';
-import type { ICourse } from '../../../_components/instructor-type';
 import { ContentCreationForm } from '../../../_components/lesson-content-creation-form';
 import { LessonCreationForm } from '../../../_components/lesson-creation-form';
-import {
-  createEmptyDraftsByProvider,
-  type Provider,
-} from '../../../_components/training-requirement-section';
 import {
   CourseCreatorEmptyState,
   CourseCreatorLoadingState,
 } from '../../../_components/loading-state';
+import {
+  createEmptyDraftsByProvider,
+  type Provider,
+} from '../../../_components/training-requirement-section';
+
+type CourseLessonPreview = Lesson & { duration_display?: string };
+
+const getResponseUuid = (value: unknown) => {
+  if (typeof value !== 'object' || value === null || !('uuid' in value)) return null;
+  return typeof value.uuid === 'string' ? value.uuid : null;
+};
 
 export default function CourseBuilderPage() {
   const router = useRouter();
@@ -98,7 +106,9 @@ export default function CourseBuilderPage() {
     enabled: !!resolveId,
   });
 
-  const [courseInitialValues, setCourseInitialValues] = useState<ICourse | undefined>(undefined);
+  const [courseInitialValues, setCourseInitialValues] = useState<
+    Partial<CourseCreationFormValues> | undefined
+  >(undefined);
 
   useEffect(() => {
     if (!courseId || !course?.data) return;
@@ -110,7 +120,7 @@ export default function CourseBuilderPage() {
       description: c.description || '',
       instructor: c.course_creator_uuid || '',
       price: c.price ?? 0,
-      objectives: c.objectives || [],
+      objectives: c.objectives || '',
       categories: c.category_uuids || [],
       difficulty: c.difficulty_uuid || '',
       class_limit: c.class_limit ?? 0,
@@ -133,7 +143,7 @@ export default function CourseBuilderPage() {
       creator_share_percentage: c.creator_share_percentage ?? 0,
       instructor_share_percentage: c.instructor_share_percentage ?? 0,
       revenue_share_notes: c.revenue_share_notes ?? '',
-      training_requirements: {},
+      training_requirements: [],
     });
   }, [courseId, course]);
 
@@ -146,7 +156,7 @@ export default function CourseBuilderPage() {
     enabled: !!resolveId,
   });
   const lessons = courseLessons?.data?.content;
-  const lessonUuids = lessons?.map((lesson: any) => lesson.uuid) || [];
+  const lessonUuids = lessons?.map(lesson => lesson.uuid).filter(Boolean) ?? [];
 
   const lessonContentQueries = useQueries({
     queries: (courseLessons?.data?.content || []).map(lesson => {
@@ -251,7 +261,6 @@ export default function CourseBuilderPage() {
             <StepperTrigger step={4} title='Assessment Structure' icon={CheckCheck} />
             <StepperTrigger step={5} title='Course Grading' icon={FileCheck} />
 
-
             {/* <StepperTrigger step={5} title='Rules' icon={ClipboardList} /> */}
             <StepperTrigger step={6} title='Branding' icon={Palette} />
             <StepperTrigger step={7} title='Pricing' icon={BadgeDollarSign} />
@@ -283,7 +292,10 @@ export default function CourseBuilderPage() {
                 activeRequirementProvider={activeRequirementProvider}
                 setActiveRequirementProvider={setActiveRequirementProvider}
                 successResponse={data => {
-                  setCreatedCourseId(data?.uuid);
+                  const uuid = getResponseUuid(data);
+                  if (uuid) {
+                    setCreatedCourseId(uuid);
+                  }
                 }}
               />
             </StepperContent>
@@ -374,9 +386,12 @@ export default function CourseBuilderPage() {
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={resolveId as string}
-                initialValues={course?.data as any}
+                initialValues={course?.data}
                 successResponse={data => {
-                  setCreatedCourseId(data?.uuid);
+                  const uuid = getResponseUuid(data);
+                  if (uuid) {
+                    setCreatedCourseId(uuid);
+                  }
                 }}
               />
             </StepperContent> */}
@@ -395,9 +410,12 @@ export default function CourseBuilderPage() {
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={resolveId as string}
-                initialValues={course?.data as any}
+                initialValues={course?.data}
                 successResponse={data => {
-                  setCreatedCourseId(data?.uuid);
+                  const uuid = getResponseUuid(data);
+                  if (uuid) {
+                    setCreatedCourseId(uuid);
+                  }
                 }}
               />
             </StepperContent>
@@ -416,9 +434,12 @@ export default function CourseBuilderPage() {
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={resolveId as string}
-                initialValues={course?.data as any}
+                initialValues={course?.data}
                 successResponse={data => {
-                  setCreatedCourseId(data?.uuid);
+                  const uuid = getResponseUuid(data);
+                  if (uuid) {
+                    setCreatedCourseId(uuid);
+                  }
                 }}
               />
             </StepperContent>
@@ -436,8 +457,8 @@ export default function CourseBuilderPage() {
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={resolveId as string}
-                initialValues={course?.data as any}
-                successResponse={(data: any) => {
+                initialValues={course?.data}
+                successResponse={data => {
                   setCreatedCourseId(data?.uuid);
                 }}
               />
@@ -538,10 +559,10 @@ export default function CourseBuilderPage() {
                   </div>
                   <section>
                     <div className='-mt-2 flex flex-col gap-2 space-y-4'>
-                      {courseLessons?.data?.content
+                      {(courseLessons?.data?.content as CourseLessonPreview[] | undefined)
                         ?.slice()
-                        ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
-                        ?.map((lesson: any, i: any) => (
+                        ?.sort((a, b) => a.lesson_number - b.lesson_number)
+                        ?.map((lesson, i: number) => (
                           <div key={i} className='flex flex-row gap-2'>
                             <div>
                               <span className='min-h-4 min-w-4'>

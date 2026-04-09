@@ -31,16 +31,48 @@ import {
   searchAssessmentRubricsOptions,
   searchQuizzesOptions,
 } from '../../../../services/client/@tanstack/react-query.gen';
+import type { AssessmentRubric, Quiz } from '../../../../services/client/types.gen';
 import { Question, QuestionType } from './assessment-creation-form';
 
+type LessonItem = {
+  uuid: string;
+  title?: string;
+  lesson_number?: number;
+};
+type LessonList = { content?: LessonItem[] } | undefined;
+type RubricItem = Pick<AssessmentRubric, 'uuid' | 'title' | 'description'>;
+type QuizSummary = Pick<
+  Quiz,
+  | 'uuid'
+  | 'title'
+  | 'instructions'
+  | 'time_limit_minutes'
+  | 'attempts_allowed'
+  | 'passing_score'
+  | 'active'
+  | 'status'
+  | 'rubric_uuid'
+>;
+type QuizPayload = {
+  title: string;
+  instructions: string;
+  time_limit_minutes: number;
+  attempts_allowed: number;
+  passing_score: number;
+  active: boolean;
+  status: string;
+  rubric_uuid: string;
+  lesson_uuid?: string;
+};
+
 export type QuizCreationFormProps = {
-  lessons: any;
-  quizId: any;
+  lessons?: LessonList;
+  quizId?: string | null;
   questions: Question[];
   selectedLessonId: string;
-  selectedLesson: any;
+  selectedLesson?: LessonItem | null;
   setSelectedLessonId: (id: string) => void;
-  setSelectedLesson: (lesson: any) => void;
+  setSelectedLesson: (lesson: LessonItem | null) => void;
 
   onSelectQuiz?: (quizUuid: string | null) => void;
 
@@ -58,11 +90,11 @@ export type QuizCreationFormProps = {
   deleteOption: (qIndex: number, oIndex: number) => void;
 
   // API callbacks
-  createQuizForLesson: (lessonId: string, payload: any) => Promise<string>;
-  updateQuizForLesson: (quizUuid: string, payload: any) => Promise<void>;
+  createQuizForLesson: (lessonId: string, payload: QuizPayload) => Promise<string>;
+  updateQuizForLesson: (quizUuid: string, payload: QuizPayload) => Promise<void>;
   deleteQuizForLesson: (quizUuid: string) => Promise<void>;
-  addQuizQuestion: (payload: any) => Promise<any>;
-  addQuestionOption: (payload: any) => Promise<any>;
+  addQuizQuestion: (payload: unknown) => Promise<unknown>;
+  addQuestionOption: (payload: unknown) => Promise<unknown>;
 
   isPending: boolean;
 };
@@ -146,20 +178,23 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
+                  opt.isCorrect
                     ? 'border-primary bg-primary/10'
                     : 'border-border hover:border-primary/50'
-                  }`}
+                }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                    }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                  }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
-                    }`}
+                  className={`text-sm font-medium ${
+                    opt.isCorrect ? 'text-primary' : 'text-foreground'
+                  }`}
                 >
                   {opt.text}
                 </span>
@@ -315,7 +350,7 @@ const QUESTION_TYPES = [
   { label: 'Essay', value: 'ESSAY' },
   { label: 'Short Answer', value: 'SHORT_ANSWER' },
   // { label: 'Matching', value: 'MATCHING' },
-];
+] as const satisfies Array<{ label: string; value: QuestionType }>;
 
 const EMPTY_QUIZ = {
   title: '',
@@ -366,12 +401,12 @@ export const QuizCreationForm = ({
     }),
     enabled: !!creator?.profile?.uuid,
   });
-  const rubrics: any[] = searchRubs?.data?.content ?? [];
+  const rubrics: RubricItem[] = searchRubs?.data?.content ?? [];
 
   // ── Quiz state ────────────────────────────────────────────────────────────
   const [localQuizData, setLocalQuizData] = useState({ ...EMPTY_QUIZ });
 
-  const selectedRubric = rubrics.find((r: any) => r.uuid === localQuizData.rubric_uuid);
+  const selectedRubric = rubrics.find(r => r.uuid === localQuizData.rubric_uuid);
 
   const { data: quizzes } = useQuery({
     ...searchQuizzesOptions({
@@ -387,15 +422,18 @@ export const QuizCreationForm = ({
     [selectedLessonId, localQuizData]
   );
 
-  const handleQuizInputChange = useCallback((field: string, value: any) => {
-    setLocalQuizData(prev => ({ ...prev, [field]: value }));
-  }, []);
+  const handleQuizInputChange = useCallback(
+    <K extends keyof typeof EMPTY_QUIZ>(field: K, value: (typeof EMPTY_QUIZ)[K]) => {
+      setLocalQuizData(prev => ({ ...prev, [field]: value }));
+    },
+    []
+  );
 
   useEffect(() => {
     if (!quizUuid || quizUuid === '') {
       setLocalQuizData({ ...EMPTY_QUIZ });
     } else {
-      const selected = quizzes?.data?.content?.find((q: any) => q.uuid === quizUuid);
+      const selected = quizzes?.data?.content?.find(q => q.uuid === quizUuid);
       if (selected) {
         setLocalQuizData({
           title: selected.title || '',
@@ -459,7 +497,7 @@ export const QuizCreationForm = ({
   }, [quizUuid, deleteQuizForLesson, onSelectQuiz]);
 
   const handleLessonSelect = useCallback(
-    (lesson: any) => {
+    (lesson: LessonItem) => {
       setSelectedLessonId(lesson.uuid);
       setSelectedLesson(lesson);
       handleQuizSelect(null);
@@ -475,8 +513,10 @@ export const QuizCreationForm = ({
         <ul className='flex flex-col gap-2 space-y-2'>
           {lessons?.content?.length ? (
             lessons.content
-              .sort((a: any, b: any) => a.lesson_number - b.lesson_number)
-              .map((lesson: any) => (
+              .sort(
+                (a: LessonItem, b: LessonItem) => (a.lesson_number ?? 0) - (b.lesson_number ?? 0)
+              )
+              .map((lesson: LessonItem) => (
                 <li
                   key={`lesson-${lesson.uuid}`}
                   onClick={() => handleLessonSelect(lesson)}
@@ -488,7 +528,8 @@ export const QuizCreationForm = ({
                   )}
                 >
                   <p className='text-xs'>LESSON {lesson.lesson_number}.</p>
-                  <p className='line-clamp-2'>{lesson.title}</p>                </li>
+                  <p className='line-clamp-2'>{lesson.title}</p>{' '}
+                </li>
               ))
           ) : (
             <li className='text-muted-foreground rounded-lg border border-dashed py-6 text-center text-sm'>
@@ -535,10 +576,10 @@ export const QuizCreationForm = ({
 
               <ul className='flex flex-col space-y-2'>
                 {quizzes?.data?.content?.length ? (
-                  quizzes.data.content.map((quiz: any, idx: number) => (
+                  quizzes.data.content.map((quiz, idx: number) => (
                     <li
                       key={`quiz-${quiz.uuid}`}
-                      onClick={() => handleQuizSelect(quiz.uuid)}
+                      onClick={() => handleQuizSelect(quiz.uuid ?? null)}
                       className={cn(
                         'group flex cursor-pointer items-center justify-between rounded-md border px-4 py-2.5 text-sm font-medium transition-all',
                         quizUuid === quiz.uuid
@@ -651,18 +692,20 @@ export const QuizCreationForm = ({
                       <SelectItem value='__none__'>
                         <span className='text-muted-foreground'>None</span>
                       </SelectItem>
-                      {rubrics.map((r: any) => (
-                        <SelectItem key={r.uuid} value={r.uuid}>
-                          <div className='flex flex-col'>
-                            <span className='font-medium'>{r.title}</span>
-                            {r.description && (
-                              <span className='text-muted-foreground line-clamp-1 text-xs'>
-                                {r.description}
-                              </span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
+                      {rubrics
+                        .filter((r): r is RubricItem & { uuid: string } => Boolean(r.uuid))
+                        .map(r => (
+                          <SelectItem key={r.uuid} value={r.uuid}>
+                            <div className='flex flex-col'>
+                              <span className='font-medium'>{r.title}</span>
+                              {r.description && (
+                                <span className='text-muted-foreground line-clamp-1 text-xs'>
+                                  {r.description}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
 

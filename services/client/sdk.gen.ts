@@ -844,12 +844,12 @@ import type {
   ModerateProgramData,
   ModerateProgramResponses,
   ModerateProgramErrors,
-  ModerateOrganisationData,
-  ModerateOrganisationResponses,
-  ModerateOrganisationErrors,
   CreateOrganisationUserData,
   CreateOrganisationUserResponses,
   CreateOrganisationUserErrors,
+  ModerateOrganisationData,
+  ModerateOrganisationResponses,
+  ModerateOrganisationErrors,
   VerifyInstructorData,
   VerifyInstructorResponses,
   VerifyInstructorErrors,
@@ -1195,6 +1195,9 @@ import type {
   GetCoursesByInstructorData,
   GetCoursesByInstructorResponses,
   GetCoursesByInstructorErrors,
+  GetCourseContentMediaData,
+  GetCourseContentMediaResponses,
+  GetCourseContentMediaErrors,
   GetCoursesByCategoryData,
   GetCoursesByCategoryResponses,
   GetCoursesByCategoryErrors,
@@ -1639,8 +1642,8 @@ import {
   getAdminUsersResponseTransformer,
   createAdminUserResponseTransformer,
   moderateProgramResponseTransformer,
-  moderateOrganisationResponseTransformer,
   createOrganisationUserResponseTransformer,
+  moderateOrganisationResponseTransformer,
   verifyInstructorResponseTransformer,
   unverifyInstructorResponseTransformer,
   moderateCourseResponseTransformer,
@@ -2917,7 +2920,7 @@ export const updateOrganisation = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Delete a training branch by UUID within organization
+ * Delete a training branch by UUID within organisation
  */
 export const deleteTrainingBranch1 = <ThrowOnError extends boolean = false>(
   options: Options<DeleteTrainingBranch1Data, ThrowOnError>
@@ -2943,7 +2946,7 @@ export const deleteTrainingBranch1 = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get a training branch by UUID within organization
+ * Get a training branch by UUID within organisation
  */
 export const getTrainingBranchByUuid1 = <ThrowOnError extends boolean = false>(
   options: Options<GetTrainingBranchByUuid1Data, ThrowOnError>
@@ -2970,7 +2973,7 @@ export const getTrainingBranchByUuid1 = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Update a training branch by UUID within organization
+ * Update a training branch by UUID within organisation
  */
 export const updateTrainingBranch1 = <ThrowOnError extends boolean = false>(
   options: Options<UpdateTrainingBranch1Data, ThrowOnError>
@@ -6474,7 +6477,7 @@ export const getTrainingBranchesByOrganisation = <ThrowOnError extends boolean =
 };
 
 /**
- * Create a new training branch within organization
+ * Create a new training branch within organisation
  */
 export const createTrainingBranch1 = <ThrowOnError extends boolean = false>(
   options: Options<CreateTrainingBranch1Data, ThrowOnError>
@@ -6506,7 +6509,7 @@ export const createTrainingBranch1 = <ThrowOnError extends boolean = false>(
 
 /**
  * Remove user from training branch
- * Removes a user from a training branch. The user remains in the parent organization but loses branch-specific assignment.
+ * Removes a user from a training branch. The user remains in the parent organisation but loses branch-specific assignment.
  */
 export const removeUserFromBranch = <ThrowOnError extends boolean = false>(
   options: Options<RemoveUserFromBranchData, ThrowOnError>
@@ -6533,7 +6536,7 @@ export const removeUserFromBranch = <ThrowOnError extends boolean = false>(
 
 /**
  * Assign user to training branch
- * Assigns a user to a specific training branch with a defined role. If the user is not already in the parent organization, creates organization membership first. If the user is already in the organization, updates their branch assignment.
+ * Assigns a user to a specific training branch with a defined role. If the user is not already in the parent organisation, creates organisation membership first. If the user is already in the organisation, updates their branch assignment.
  */
 export const assignUserToBranch = <ThrowOnError extends boolean = false>(
   options: Options<AssignUserToBranchData, ThrowOnError>
@@ -10127,7 +10130,7 @@ export const uploadAssignmentAttachment = <ThrowOnError extends boolean = false>
 
 /**
  * Assign admin domain to user
- * Assigns admin domain privileges to a user. This grants the user administrative access either globally (system admin) or within specific organizational contexts. Only existing system administrators can perform this operation.
+ * Assigns admin domain privileges to a user. This grants the user administrative access either globally (system admin) or within specific organisational contexts. Only existing system administrators can perform this operation.
  */
 export const assignAdminDomain = <ThrowOnError extends boolean = false>(
   options: Options<AssignAdminDomainData, ThrowOnError>
@@ -10159,7 +10162,7 @@ export const assignAdminDomain = <ThrowOnError extends boolean = false>(
 
 /**
  * Get all admin users
- * Retrieves a paginated list of all users with administrative privileges. Includes both system administrators and organization administrators. Supports filtering by admin level, status, and other criteria.
+ * Retrieves a paginated list of all users with administrative privileges. Includes both system administrators and organisation administrators. Supports filtering by admin level, status, and other criteria.
  */
 export const getAdminUsers = <ThrowOnError extends boolean = false>(
   options: Options<GetAdminUsersData, ThrowOnError>
@@ -10245,34 +10248,6 @@ export const moderateProgram = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Moderate organization verification
- * Handles organization approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
- */
-export const moderateOrganisation = <ThrowOnError extends boolean = false>(
-  options: Options<ModerateOrganisationData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    ModerateOrganisationResponses,
-    ModerateOrganisationErrors,
-    ThrowOnError
-  >({
-    responseTransformer: moderateOrganisationResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/admin/organizations/{uuid}/moderate',
-    ...options,
-  });
-};
-
-/**
  * Create a new organisation user with domain
  * Creates a new user, provisions them in Keycloak, assigns them to the organisation with the specified domain and optional branch. If the email already exists in Keycloak or locally, an error is returned so the client can use the existing email to assign roles instead.
  */
@@ -10301,6 +10276,34 @@ export const createOrganisationUser = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+};
+
+/**
+ * Moderate organisation verification
+ * Handles organisation approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
+ */
+export const moderateOrganisation = <ThrowOnError extends boolean = false>(
+  options: Options<ModerateOrganisationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ModerateOrganisationResponses,
+    ModerateOrganisationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: moderateOrganisationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/organisations/{uuid}/moderate',
+    ...options,
   });
 };
 
@@ -12450,7 +12453,7 @@ export const getUsersByOrganisationAndDomain = <ThrowOnError extends boolean = f
 
 /**
  * Get users assigned to training branch
- * Retrieves all users that are assigned to a specific training branch within the organization. This includes users with any role/domain within the branch.
+ * Retrieves all users that are assigned to a specific training branch within the organisation. This includes users with any role/domain within the branch.
  */
 export const getBranchUsers = <ThrowOnError extends boolean = false>(
   options: Options<GetBranchUsersData, ThrowOnError>
@@ -13689,6 +13692,36 @@ export const getCoursesByInstructor = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/instructor/{instructorUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get uploaded lesson content media
+ * Retrieves uploaded lesson content files by their stored relative path.
+ * This is the canonical preview endpoint for course content media such as images,
+ * PDFs, audio, and video attached during lesson authoring.
+ *
+ */
+export const getCourseContentMedia = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseContentMediaData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseContentMediaResponses,
+    GetCourseContentMediaErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/content-media/{filePath}',
     ...options,
   });
 };
@@ -15149,7 +15182,7 @@ export const isUserSystemAdmin = <ThrowOnError extends boolean = false>(
 
 /**
  * Check if user is admin
- * Checks whether a specific user has any type of administrative privileges. Returns true if the user has either system admin or organization admin roles.
+ * Checks whether a specific user has any type of administrative privileges. Returns true if the user has either system admin or organisation admin roles.
  */
 export const isUserAdmin = <ThrowOnError extends boolean = false>(
   options: Options<IsUserAdminData, ThrowOnError>
@@ -15203,8 +15236,8 @@ export const getSystemAdminUsers = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get organization admin users
- * Retrieves a paginated list of users with organization administrator privileges. These users have administrative access within specific organizational contexts.
+ * Get organisation admin users
+ * Retrieves a paginated list of users with organisation administrator privileges. These users have administrative access within specific organisational contexts.
  */
 export const getOrganizationAdminUsers = <ThrowOnError extends boolean = false>(
   options: Options<GetOrganizationAdminUsersData, ThrowOnError>
@@ -15225,7 +15258,7 @@ export const getOrganizationAdminUsers = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/admin/users/organization-admins',
+    url: '/api/v1/admin/users/organisation-admins',
     ...options,
   });
 };
@@ -15312,8 +15345,8 @@ export const listPendingPrograms = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Check if organization is verified
- * Checks whether a specific organization has been verified by an admin. Returns true if the organization has admin verification status.
+ * Check if organisation is verified
+ * Checks whether a specific organisation has been verified by an admin. Returns true if the organisation has admin verification status.
  */
 export const isOrganisationVerified = <ThrowOnError extends boolean = false>(
   options: Options<IsOrganisationVerifiedData, ThrowOnError>
@@ -15333,14 +15366,14 @@ export const isOrganisationVerified = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/admin/organizations/{uuid}/verification-status',
+    url: '/api/v1/admin/organisations/{uuid}/verification-status',
     ...options,
   });
 };
 
 /**
- * Get pending organization approvals
- * Retrieves a paginated list of organizations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
+ * Get pending organisation approvals
+ * Retrieves a paginated list of organisations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
  */
 export const getPendingOrganisations = <ThrowOnError extends boolean = false>(
   options: Options<GetPendingOrganisationsData, ThrowOnError>
@@ -15361,7 +15394,7 @@ export const getPendingOrganisations = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/admin/organizations/pending',
+    url: '/api/v1/admin/organisations/pending',
     ...options,
   });
 };
@@ -15422,7 +15455,7 @@ export const getOrganisationSupportedDomains = <ThrowOnError extends boolean = f
 
 /**
  * Get admin dashboard statistics
- * Retrieves comprehensive statistics for the admin dashboard including user metrics, organization metrics, content metrics, system performance, and admin-specific data.
+ * Retrieves comprehensive statistics for the admin dashboard including user metrics, organisation metrics, content metrics, system performance, and admin-specific data.
  */
 export const getDashboardStatistics = <ThrowOnError extends boolean = false>(
   options?: Options<GetDashboardStatisticsData, ThrowOnError>

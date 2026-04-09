@@ -33,7 +33,7 @@ import {
   getInstructorBookingsQueryKey,
   getStudentByIdOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { BookingResponse, StatusEnum9 } from '@/services/client/types.gen';
+import type { BookingResponse, GetStudentByIdResponse, StatusEnum9 } from '@/services/client/types.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CalendarDays,
@@ -119,6 +119,9 @@ const formatTimeRange = (start?: Date, end?: Date) => {
     minute: '2-digit',
   })}`;
 };
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error && error.message ? error.message : fallback;
 
 const getDurationLabel = (start?: Date, end?: Date) => {
   if (!start || !end) return 'Unknown duration';
@@ -209,9 +212,9 @@ function BookingsPage() {
   });
 
   const studentsById = useMemo(() => {
-    const map: Record<string, any> = {};
+    const map: Record<string, GetStudentByIdResponse> = {};
     studentQueries.forEach(queryResult => {
-      const student = queryResult.data?.data;
+      const student = queryResult.data;
       if (student?.uuid) {
         map[student.uuid] = student;
       }
@@ -422,8 +425,8 @@ function BookingsPage() {
           toast.success(response?.message || 'Booking accepted');
           setOpenAcceptModal(false);
         },
-        onError: (error: any) => {
-          toast.error(error?.message || 'Failed to accept booking');
+        onError: (error: unknown) => {
+          toast.error(getErrorMessage(error, 'Failed to accept booking'));
         },
       }
     );
@@ -440,8 +443,8 @@ function BookingsPage() {
           toast.success(response?.message || 'Booking declined');
           setOpenDeclineModal(false);
         },
-        onError: (error: any) => {
-          toast.error(error?.message || 'Failed to decline booking');
+        onError: (error: unknown) => {
+          toast.error(getErrorMessage(error, 'Failed to decline booking'));
         },
       }
     );

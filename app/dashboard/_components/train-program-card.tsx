@@ -1,19 +1,31 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+import { BookOpen, CheckCircle2, Clock, Heart, Pencil, Share, Users, XCircle } from 'lucide-react';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
-import type { ProgramCourse } from '@/services/client';
+import type { CourseCreator, DifficultyLevel } from '@/services/client';
 import {
   getAllDifficultyLevelsOptions,
   getCourseCreatorByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, CheckCircle2, Clock, Heart, Pencil, Share, Users, XCircle } from 'lucide-react';
+
+type TrainProgram = {
+  uuid?: string;
+  title?: string;
+  description?: string;
+  course_creator_uuid?: string;
+  difficulty_uuid?: string;
+  class_limit?: number;
+  is_free?: boolean;
+  price?: number;
+  application?: unknown;
+};
 
 interface TrainProgramCardProps {
-  program: ProgramCourse & { application?: any };
+  program: TrainProgram;
   applicationStatus?: string | null;
   applicationReviewNote?: string | null;
   handleClick: () => void;
@@ -41,10 +53,10 @@ export function TrainProgramCard({
     getCourseCreatorByUuidOptions({ path: { uuid: program?.course_creator_uuid as string } })
   );
   // @ts-expect-error
-  const courseCreator = creator?.data;
+  const courseCreator: CourseCreator | undefined = creator?.data;
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
-  const difficultyLevels = difficulty?.data;
+  const difficultyLevels: DifficultyLevel[] = difficulty?.data ?? [];
 
   const getDifficultyNameFromUUID = (uuid: string): string | undefined => {
     return difficultyLevels?.find(level => level.uuid === uuid)?.name;
@@ -169,7 +181,7 @@ export function TrainProgramCard({
             <Avatar className='min-h-9 min-w-9'>
               <AvatarImage src={program?.course_creator_uuid} />
               <AvatarFallback className='text-xs'>
-                {getInitials(courseCreator?.full_name) || 'XY'}
+                {getInitials(courseCreator?.full_name ?? '') || 'XY'}
               </AvatarFallback>
             </Avatar>
             <span className='text-muted-foreground text-sm'>

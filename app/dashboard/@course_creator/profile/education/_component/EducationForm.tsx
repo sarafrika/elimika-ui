@@ -3,6 +3,7 @@
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
+import type { UseMutationResult } from '@tanstack/react-query';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 
@@ -32,7 +33,6 @@ import Spinner from '@/components/ui/spinner';
 import { useUserProfile } from '@/context/profile-context';
 import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
-import type { CourseCreatorEducation } from '@/services/api/schema';
 import { deleteCourseCreatorEducation } from '@/services/client';
 import {
   addCourseCreatorEducationMutation,
@@ -40,6 +40,7 @@ import {
   getCourseCreatorEducationQueryKey,
   updateCourseCreatorEducationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { CourseCreatorEducation, UserDomainEnum } from '@/services/client/types.gen';
 import { zCourseCreatorEducation } from '@/services/client/zod.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
@@ -67,6 +68,7 @@ const edSchema = zCourseCreatorEducation
       field_of_study: z.string(),
       year_completed: z.string().optional(),
       is_recent_qualification: z.boolean(),
+      full_description: z.string().optional(),
     })
   );
 
@@ -76,6 +78,24 @@ const educationSchema = z.object({
 
 type EducationFormValues = z.infer<typeof educationSchema>;
 type EdType = z.infer<typeof edSchema>;
+type EducationView = CourseCreatorEducation & { full_description?: string };
+
+const formatDomainBadge = (domain: UserDomainEnum) =>
+  domain
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+const getMutationErrorMessage = (error: unknown) => {
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = error.message;
+    if (typeof message === 'string' && message.length > 0) {
+      return message;
+    }
+  }
+
+  return 'An unexpected error occurred.';
+};
 
 export default function EducationSettings() {
   const qc = useQueryClient();
@@ -105,7 +125,7 @@ export default function EducationSettings() {
     enabled: !!courseCreator?.uuid,
   });
 
-  const courseCreatorEducation = data?.data?.content || [];
+  const courseCreatorEducation: EducationView[] = data?.data?.content ?? [];
 
   const defaultEducation: EdType = {
     school_name: '',
@@ -128,7 +148,6 @@ export default function EducationSettings() {
   const form = useForm<EducationFormValues>({
     resolver: zodResolver(educationSchema),
     defaultValues: {
-      //@ts-expect-error
       educations:
         courseCreatorEducation.length > 0
           ? courseCreatorEducation.map(passEducation)
@@ -144,14 +163,25 @@ export default function EducationSettings() {
 
   const addEdMutation = useMutation(addCourseCreatorEducationMutation());
   const updateMutation = useMutation(updateCourseCreatorEducationMutation());
-  const { errors, submitting } = useMultiMutations([addEdMutation, updateMutation]);
+  const { errors, submitting } = useMultiMutations([
+    addEdMutation,
+    updateMutation,
+  ] as readonly UseMutationResult<unknown, unknown, unknown, unknown>[]);
+
+  const toEducationPayload = (education: EdType) => ({
+    course_creator_uuid: education.course_creator_uuid,
+    qualification: education.qualification,
+    field_of_study: education.field_of_study,
+    school_name: education.school_name,
+    year_completed: education.year_completed ? Number(education.year_completed) : undefined,
+    certificate_number: education.certificate_number,
+  });
 
   const saveEducations = async (data: EducationFormValues) => {
     for (const [index, ed] of data.educations.entries()) {
       const options = {
         path: { courseCreatorUuid: courseCreator?.uuid as string },
-        //@ts-expect-error
-        body: { ...ed, year_completed: Number(ed.year_completed) },
+        body: toEducationPayload(ed),
       };
 
       if (!ed.uuid) {
@@ -243,14 +273,10 @@ export default function EducationSettings() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 70 }, (_, i) => currentYear - i);
 
-  const domainBadges =
-    // @ts-expect-error
-    user?.data?.user_domain?.map((domain: any) =>
-      domain
-        .split('_')
-        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
-    ) ?? [];
+  const rawUserDomains = user?.user_domain;
+  const domainBadges = (
+    Array.isArray(rawUserDomains) ? rawUserDomains : rawUserDomains ? [rawUserDomains] : []
+  ).map(formatDomainBadge);
 
   return (
     <ProfileFormShell
@@ -267,7 +293,7 @@ export default function EducationSettings() {
               <AlertDescription>
                 <ul className='ml-4 list-disc space-y-1 text-sm'>
                   {errors.map((error, index) => (
-                    <li key={index}>{error.message}</li>
+                    <li key={index}>{getMutationErrorMessage(error)}</li>
                   ))}
                 </ul>
               </AlertDescription>
@@ -290,7 +316,7 @@ export default function EducationSettings() {
                       edu.year_completed,
                       edu.is_recent_qualification
                     )}
-                    year_completed={edu.year_completed}
+                    year_completed={edu.year_completed?.toString()}
                   >
                     {edu.certificate_number && (
                       <div className='text-muted-foreground mt-2 text-xs'>
@@ -428,7 +454,9 @@ export default function EducationSettings() {
                         control={form.control}
                         name={`educations.${index}.year_completed`}
                         render={({ field }) => {
-                          const isDisabled = form.watch(`educations.${index}.is_recent_qualification`);
+                          const isDisabled = form.watch(
+                            `educations.${index}.is_recent_qualification`
+                          );
 
                           return (
                             <FormItem>

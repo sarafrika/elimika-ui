@@ -5,6 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
+import type {
+  CreateAssessmentRubricData,
+  CreateRubricScoringLevelData,
+  RubricCriteria as RubricCriteriaBody,
+  RubricScoring as RubricScoringBody,
+  StatusEnum,
+  UpdateAssessmentRubricData,
+  UpdateRubricCriterionData,
+  UpdateRubricScoringData,
+  UpdateScoringLevelData,
+} from '@/services/client/types.gen';
 import { useMutation } from '@tanstack/react-query';
 import {
   AlertTriangle,
@@ -48,7 +59,70 @@ import {
 // const DEFAULT_LEVEL_NAMES = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
 const DEFAULT_LEVEL_NAMES = ['Good', 'Fair'];
 
-const createEmptyRubric = (): Rubric => ({
+type RubricCardLevel = Rubric['scoringLevels'][number] & {
+  color_code?: string;
+  name?: string;
+};
+
+type EditableCriteriaScoring = ScoringLevel & {
+  points: string;
+};
+
+type EditableCriterion = Omit<Criterion, 'scoring'> & {
+  scoring: EditableCriteriaScoring[];
+};
+
+type EditableRubric = Omit<Rubric, 'criteria' | 'scoringLevels'> & {
+  criteria: EditableCriterion[];
+  scoringLevels: RubricScoringLevel[];
+};
+
+type RubricCardCriterion = Criterion;
+type RubricCardCell = Criterion['scoring'][number] & {
+  points?: string | number;
+};
+
+type MatrixCells = Record<string, RubricCardCell>;
+type DeletedScoringLink = {
+  criteriaUuid: string;
+  scoringUuid: string;
+};
+
+type CreateAssessmentRubricBody = CreateAssessmentRubricData['body'];
+type UpdateAssessmentRubricBody = UpdateAssessmentRubricData['body'];
+type CreateRubricScoringLevelBody = CreateRubricScoringLevelData['body'];
+type UpdateRubricScoringLevelBody = UpdateScoringLevelData['body'];
+type CreateRubricCriterionBody = RubricCriteriaBody;
+type UpdateRubricCriterionBody = UpdateRubricCriterionData['body'];
+type CreateRubricScoringBody = RubricScoringBody;
+type UpdateRubricScoringBody = UpdateRubricScoringData['body'];
+
+const toApiStatus = (status: EditableRubric['status']): StatusEnum => {
+  switch (status) {
+    case 'published':
+      return 'PUBLISHED';
+    case 'archived':
+      return 'ARCHIVED';
+    case 'draft':
+    default:
+      return 'DRAFT';
+  }
+};
+
+const getCreatedCriterionUuid = (data: unknown): string | null => {
+  if (!data || typeof data !== 'object' || !('criteria' in data)) {
+    return null;
+  }
+
+  const criteria = data.criteria;
+  if (!criteria || typeof criteria !== 'object' || !('uuid' in criteria)) {
+    return null;
+  }
+
+  return typeof criteria.uuid === 'string' ? criteria.uuid : null;
+};
+
+const createEmptyRubric = (): EditableRubric => ({
   uuid: '',
   title: '',
   description: '',
@@ -67,6 +141,7 @@ const createEmptyRubric = (): Rubric => ({
   max_score: 100,
   min_passing_score: 50,
   scoringLevels: DEFAULT_LEVEL_NAMES.map((name, idx) => ({
+    name,
     description: name,
     rubric_uuid: '',
     feedback_category: '',
@@ -79,6 +154,8 @@ const createEmptyRubric = (): Rubric => ({
     created_date: '',
     updated_by: '',
     updated_date: '',
+    level_order: idx + 1,
+    is_passing: idx < 2,
   })),
   criteria: [
     {
@@ -92,7 +169,7 @@ const createEmptyRubric = (): Rubric => ({
       is_primary_criteria: true,
       rubric_uuid: '',
       uuid: '',
-      scoring: DEFAULT_LEVEL_NAMES.map((name, idx) => ({
+      scoring: DEFAULT_LEVEL_NAMES.map((_, idx) => ({
         rubric_scoring_level_uuid: '',
         criteria_uuid: '',
         description: '',
@@ -210,9 +287,9 @@ const RubricManager: React.FC = () => {
   );
 
   const [isEditing, setIsEditing] = useState(false);
-  const [currentRubric, setCurrentRubric] = useState<Rubric | null>(null);
+  const [currentRubric, setCurrentRubric] = useState<EditableRubric | null>(null);
   const [deletedCriteria, setDeletedCriteria] = useState<string[]>([]);
-  const [deletedScoring, setDeletedScoring] = useState<string[]>([]);
+  const [deletedScoring, setDeletedScoring] = useState<DeletedScoringLink[]>([]);
   const [deletedScoringLevels, setDeletedScoringLevels] = useState<string[]>([]);
 
   // Mutations
@@ -248,14 +325,29 @@ const RubricManager: React.FC = () => {
       toast.error('Invalid rubric data');
       return;
     }
-    const clonedRubric = JSON.parse(JSON.stringify(rubric));
-    clonedRubric.criteria = (clonedRubric.criteria || []).map((criterion: any) => ({
-      ...criterion,
-      uuid: criterion.uuid || '',
-      scoring: Array.isArray(criterion.scoring)
-        ? criterion.scoring.map((score: any) => ({ ...score, uuid: score.uuid || '' }))
-        : [],
-    }));
+    const clonedRubric: EditableRubric = {
+      ...structuredClone(rubric),
+      scoringLevels: (structuredClone(rubric.scoringLevels) || []).map(level => ({
+        ...level,
+        name: level.name || level.description,
+        points: level.points || level.score_range || '0',
+        score_range: level.score_range || level.points || '0',
+        performance_expectation: level.performance_expectation || '',
+        feedback_category: level.feedback_category || '',
+        is_passing: level.is_passing ?? level.is_passing_level,
+      })),
+      criteria: (structuredClone(rubric.criteria) || []).map(criterion => ({
+        ...criterion,
+        uuid: criterion.uuid || '',
+        scoring: Array.isArray(criterion.scoring)
+          ? criterion.scoring.map(score => ({
+              ...score,
+              uuid: score.uuid || '',
+              points: score.score_range || '0',
+            }))
+          : [],
+      })),
+    };
     setCurrentRubric(clonedRubric);
     setIsEditing(true);
     setDeletedCriteria([]);
@@ -296,7 +388,7 @@ const RubricManager: React.FC = () => {
     const isNewRubric = !existingRubric;
 
     if (isNewRubric) {
-      const rubricPayload = {
+      const rubricPayload: CreateAssessmentRubricBody = {
         title: currentRubric.title,
         description: currentRubric.description,
         rubric_type: currentRubric.rubric_type,
@@ -306,7 +398,7 @@ const RubricManager: React.FC = () => {
         is_public: currentRubric.is_public,
         is_published: currentRubric.is_published,
         active: currentRubric.active,
-        status: currentRubric.status,
+        status: toApiStatus(currentRubric.status),
         total_weight: Number(currentRubric.total_weight),
         weight_unit: currentRubric.weight_unit,
         max_score: Number(currentRubric.max_score),
@@ -314,7 +406,7 @@ const RubricManager: React.FC = () => {
       };
 
       try {
-        const rubricResponse = await createRubric.mutateAsync({ body: rubricPayload as any });
+        const rubricResponse = await createRubric.mutateAsync({ body: rubricPayload });
         const newRubricUuid = rubricResponse.data?.uuid;
         if (!newRubricUuid) {
           toast.error('Failed to get rubric UUID');
@@ -327,16 +419,12 @@ const RubricManager: React.FC = () => {
           addRubricScoringLevel.mutateAsync({
             body: {
               rubric_uuid: newRubricUuid,
+              name: level.description,
               description: level.description,
-              score_range: level.score_range || '0',
-              points: level.points || 0,
-              is_passing_level: level.is_passing_level,
-              performance_expectation: level.performance_expectation || '',
-              feedback_category: level.feedback_category || '',
+              points: Number(level.points || 0),
               is_passing: level.is_passing_level,
               level_order: idx + 1,
-              name: level.description,
-            } as any,
+            } satisfies CreateRubricScoringLevelBody,
             path: { rubricUuid: newRubricUuid },
           })
         );
@@ -350,8 +438,7 @@ const RubricManager: React.FC = () => {
               description: criterion.description || '',
               criteria_category: criterion.criteria_category || '',
               display_order: index + 1,
-              is_primary_criteria: criterion.is_primary_criteria,
-            } as any,
+            } satisfies CreateRubricCriterionBody,
             path: { rubricUuid: newRubricUuid },
           })
         );
@@ -363,7 +450,7 @@ const RubricManager: React.FC = () => {
         toast.success('Scoring levels and criteria created!');
 
         const linkingPromises = criteriaResponses.flatMap((criteriaResponse, criteriaIndex) => {
-          const criteriaUuid = criteriaResponse.data?.criteria?.uuid;
+          const criteriaUuid = getCreatedCriterionUuid(criteriaResponse.data);
           if (!criteriaUuid) return [];
           return scoringLevelResponses.map((scoringResponse, scoringIndex) => {
             const scoringLevelUuid = scoringResponse.data?.uuid;
@@ -372,12 +459,9 @@ const RubricManager: React.FC = () => {
               body: {
                 criteria_uuid: criteriaUuid,
                 rubric_scoring_level_uuid: scoringLevelUuid,
-                performance_expectation:
-                  currentRubric.criteria[criteriaIndex]?.scoring[scoringIndex]
-                    ?.performance_expectation || '',
                 description:
                   currentRubric.criteria[criteriaIndex]?.scoring[scoringIndex]?.description || '',
-              } as any,
+              } satisfies CreateRubricScoringBody,
               path: { rubricUuid: newRubricUuid, criteriaUuid },
             });
           });
@@ -394,7 +478,7 @@ const RubricManager: React.FC = () => {
         toast.error('Failed to create rubric');
       }
     } else {
-      const rubricPayload = {
+      const rubricPayload: UpdateAssessmentRubricBody = {
         title: currentRubric.title,
         description: currentRubric.description,
         rubric_type: currentRubric.rubric_type,
@@ -404,13 +488,13 @@ const RubricManager: React.FC = () => {
         max_score: Number(currentRubric.max_score),
         min_passing_score: Number(currentRubric.min_passing_score),
         course_creator_uuid: creator?.data?.profile?.uuid as string,
-        status: currentRubric?.status,
+        status: toApiStatus(currentRubric.status),
       };
 
       try {
         await updateRubric.mutateAsync({
           path: { uuid: currentRubric.uuid },
-          body: rubricPayload as any,
+          body: rubricPayload,
         });
         toast.success('Rubric updated successfully');
 
@@ -420,9 +504,9 @@ const RubricManager: React.FC = () => {
               path: { criteriaUuid: uuid, rubricUuid: currentRubric.uuid },
             })
           ),
-          ...deletedScoring.map(uuid =>
+          ...deletedScoring.map(({ criteriaUuid, scoringUuid }) =>
             deleteScoringApi.mutateAsync({
-              path: { levelUuid: uuid, rubricUuid: currentRubric.uuid },
+              path: { criteriaUuid, rubricUuid: currentRubric.uuid, scoringUuid },
             })
           ),
           ...deletedScoringLevels.map(uuid =>
@@ -444,51 +528,46 @@ const RubricManager: React.FC = () => {
               ? level.level_order || idx + 1
               : existingLevelsCount + newLevelPosition;
 
-            const payload = {
+            const payload: UpdateRubricScoringLevelBody = {
               rubric_uuid: currentRubric.uuid,
-              description: level.description,
-              score_range: level.score_range || '0',
-              points: level.points || 0,
-              is_passing_level: level.is_passing_level,
-              performance_expectation: level.performance_expectation || '',
-              feedback_category: level.feedback_category || '',
-              level_order: resolvedLevelOrder,
               name: level.description,
+              description: level.description,
+              points: Number(level.points || 0),
+              level_order: resolvedLevelOrder,
               is_passing: level.is_passing_level || true,
             };
             if (!level.uuid)
               return addRubricScoringLevel.mutateAsync({
-                body: payload as any,
+                body: payload,
                 path: { rubricUuid: currentRubric.uuid },
               });
             return updateRubricScoringLevel.mutateAsync({
               path: { levelUuid: level.uuid, rubricUuid: currentRubric.uuid },
-              body: payload as any,
+              body: payload,
             });
           })
         );
 
-        const criteriaUuids = await Promise.all(
+        const criteriaUuids: string[] = await Promise.all(
           currentRubric.criteria.map(async criterion => {
-            const payload = {
+            const payload: UpdateRubricCriterionBody = {
               rubric_uuid: currentRubric.uuid,
               component_name: criterion.component_name,
               criteria_number: criterion.criteria_number,
               description: criterion.description || '',
               criteria_category: criterion.criteria_category || '',
               display_order: criterion.display_order,
-              is_primary_criteria: criterion.is_primary_criteria,
             };
             if (!criterion.uuid) {
               const response = await addCriteria.mutateAsync({
-                body: payload as any,
+                body: payload,
                 path: { rubricUuid: currentRubric.uuid },
               });
-              return response.data?.criteria?.uuid || criterion.uuid;
+              return getCreatedCriterionUuid(response.data) || criterion.uuid;
             }
             await updateCriteria.mutateAsync({
               path: { criteriaUuid: criterion.uuid, rubricUuid: currentRubric.uuid },
-              body: payload as any,
+              body: payload,
             });
             return criterion.uuid;
           })
@@ -511,17 +590,16 @@ const RubricManager: React.FC = () => {
                 ? criterion.scoring[scoringLevelIndex]
                 : criterion.scoring.find(s => s.rubric_scoring_level_uuid === scoringLevelUuid);
 
-              const linkPayload = {
+              const linkPayload: UpdateRubricScoringBody = {
                 criteria_uuid: criteriaUuid,
                 rubric_scoring_level_uuid: scoringLevelUuid,
-                performance_expectation: scoringEntry?.performance_expectation || '',
                 description: scoringEntry?.description || '',
               };
 
               // New scoring link — no existing uuid to update
               if (!scoringEntry?.uuid)
                 return addScoring.mutateAsync({
-                  body: linkPayload as any,
+                  body: linkPayload,
                   path: { rubricUuid: currentRubric.uuid, criteriaUuid },
                 });
 
@@ -531,7 +609,7 @@ const RubricManager: React.FC = () => {
                   rubricUuid: currentRubric.uuid,
                   criteriaUuid,
                 },
-                body: linkPayload as any,
+                body: linkPayload,
               });
             });
           })
@@ -562,7 +640,10 @@ const RubricManager: React.FC = () => {
 
   // ── Update Helpers ─────────────────────────────────────────────────────────
 
-  const updateRubricField = (field: keyof Omit<Rubric, 'criteria'>, value: string | number) => {
+  const updateRubricField = (
+    field: keyof Omit<EditableRubric, 'criteria' | 'scoringLevels'>,
+    value: string | number
+  ) => {
     if (!currentRubric) return;
     setCurrentRubric({ ...currentRubric, [field]: value });
   };
@@ -570,6 +651,7 @@ const RubricManager: React.FC = () => {
   const updateCriteriaName = (index: number, value: string) => {
     if (!currentRubric) return;
     const criteria = [...currentRubric.criteria];
+    if (!criteria[index]) return;
     criteria[index] = { ...criteria[index], component_name: value };
     setCurrentRubric({ ...currentRubric, criteria });
   };
@@ -609,14 +691,15 @@ const RubricManager: React.FC = () => {
     if (!currentRubric) return;
     const scoringLevels =
       currentRubric.scoringLevels?.map((sl, i) =>
-        i === levelIndex ? { ...sl, description: value } : sl
+        i === levelIndex ? { ...sl, description: value, name: value } : sl
       ) || [];
     setCurrentRubric({ ...currentRubric, scoringLevels });
   };
 
   const addCriterion = () => {
     if (!currentRubric) return;
-    const newCriterion: Criterion = {
+    const baseScoring = currentRubric.criteria[0]?.scoring ?? [];
+    const newCriterion: EditableCriterion = {
       component_name: '',
       created_by: creator?.data?.profile?.uuid || '',
       created_date: new Date(),
@@ -627,7 +710,7 @@ const RubricManager: React.FC = () => {
       is_primary_criteria: false,
       rubric_uuid: currentRubric.uuid,
       uuid: '',
-      scoring: currentRubric?.criteria[0]?.scoring.map(s => ({
+      scoring: baseScoring.map(s => ({
         rubric_scoring_level_uuid: s.rubric_scoring_level_uuid,
         criteria_uuid: '',
         description: '',
@@ -652,6 +735,7 @@ const RubricManager: React.FC = () => {
     const newScoringLevel: RubricScoringLevel = {
       uuid: newScoringLevelUuid,
       rubric_uuid: currentRubric.uuid,
+      name: '',
       description: '',
       score_range: '0',
       points: '0',
@@ -706,7 +790,7 @@ const RubricManager: React.FC = () => {
       currentRubric.criteria.forEach(c => {
         const cell = c.scoring.find(s => s.rubric_scoring_level_uuid === levelToRemove.uuid);
         if (cell?.uuid) {
-          setDeletedScoring(prev => [...prev, cell.uuid]);
+          setDeletedScoring(prev => [...prev, { criteriaUuid: c.uuid, scoringUuid: cell.uuid }]);
         }
       });
     }
@@ -1141,16 +1225,16 @@ const RubricManager: React.FC = () => {
           <div className='flex flex-col divide-y'>
             {filtered.map(rubric => {
               const sortedLevels = [...(rubric.scoringLevels ?? [])].sort(
-                (a: any, b: any) => (a.level_order ?? 0) - (b.level_order ?? 0)
+                (a, b) => (a.level_order ?? 0) - (b.level_order ?? 0)
               );
               const sortedCriteria = [...(rubric.criteria ?? [])].sort(
-                (a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0)
+                (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
               );
 
               // Build matrix lookup: criteriaUuid_levelUuid → scoring cell
-              const matrixCells: Record<string, any> = {};
-              sortedCriteria.forEach((crit: any) => {
-                (crit.scoring ?? []).forEach((cell: any) => {
+              const matrixCells: MatrixCells = {};
+              sortedCriteria.forEach(crit => {
+                (crit.scoring ?? []).forEach(cell => {
                   matrixCells[`${crit.uuid}_${cell.rubric_scoring_level_uuid}`] = cell;
                 });
               });
@@ -1259,7 +1343,7 @@ const RubricManager: React.FC = () => {
                             <th className='text-foreground min-w-[200px] px-4 py-2.5 text-left text-xs font-semibold'>
                               Criteria
                             </th>
-                            {sortedLevels.map((level: any) => (
+                            {sortedLevels.map((level: RubricCardLevel) => (
                               <th
                                 key={level.uuid}
                                 className='text-foreground min-w-[130px] border-l px-3 py-2.5 text-center text-xs font-semibold'
@@ -1280,7 +1364,7 @@ const RubricManager: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className='divide-y'>
-                          {sortedCriteria.map((crit: any) => (
+                          {sortedCriteria.map((crit: RubricCardCriterion) => (
                             <tr key={crit.uuid} className='hover:bg-muted/20 transition-colors'>
                               {/* Criterion name */}
                               <td className='px-4 py-3 align-top'>
@@ -1294,7 +1378,7 @@ const RubricManager: React.FC = () => {
                                 )}
                               </td>
                               {/* Scoring cells */}
-                              {sortedLevels.map((level: any) => {
+                              {sortedLevels.map((level: RubricCardLevel) => {
                                 const cell = matrixCells[`${crit.uuid}_${level.uuid}`] ?? null;
                                 return (
                                   <td

@@ -36,8 +36,9 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import type { TLessonContentItem } from '../../_components/instructor-type';
+import type { TLesson, TLessonContentItem } from '../../_components/instructor-type';
 import {
+  type ContentFormValues,
   type ContentType,
   getContentTypeIcon,
   LessonContentDialog,
@@ -49,6 +50,19 @@ import {
   type QuizFormValues,
 } from '../../_components/quiz-management-form';
 import QuizQuestions from './quizQuestions';
+import type { ContentType as ApiContentType, Quiz } from '@/services/client/types.gen';
+
+type LessonRecord = TLesson & { duration_display?: string };
+type LessonContentRecord = TLessonContentItem & { uuid?: string; lesson_uuid: string };
+type QuizRecord = Quiz & { uuid?: string; lesson_uuid: string; time_limit_display?: string };
+type AssignmentRecord = {
+  uuid?: string;
+  lesson_uuid?: string;
+  title?: string;
+  description?: string;
+  time_limit_display?: string;
+  passing_score?: number;
+};
 
 const LessonDetailsPage = () => {
   const searchParams = useSearchParams();
@@ -63,8 +77,7 @@ const LessonDetailsPage = () => {
       path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
     })
   );
-  // @ts-expect-error
-  const lesson = data?.data;
+  const lesson = data as unknown as LessonRecord | undefined;
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -98,7 +111,7 @@ const LessonDetailsPage = () => {
       path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
     })
   );
-  const contentItems = lessonContent?.data ?? [];
+  const contentItems = (lessonContent?.data ?? []) as unknown as LessonContentRecord[];
 
   const [openContentModal, setOpenContentModal] = useState(false);
   const [openDeleteContentModal, setOpenDeleteContentModal] = useState(false);
@@ -106,17 +119,18 @@ const LessonDetailsPage = () => {
   const [editingContent, setEditingContent] = useState<TLessonContentItem | null>(null);
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
 
-  const handleAddLessonContent = (_lesson: any) => {
+  const openAddLessonContent = () => {
     setOpenContentModal(true);
   };
 
-  const handleEditContent = (item: any) => {
+  const handleEditContent = (item: LessonContentRecord) => {
     setOpenContentModal(true);
     setEditingContent(item);
+    setEditingContentId(item.uuid ?? null);
   };
 
-  const handleDeleteContent = (_courseId: any, _lessonId: any, contentId: any) => {
-    setEditingContentId(contentId);
+  const handleDeleteContent = (_courseId: string | null, _lessonId: string, contentId?: string) => {
+    setEditingContentId(contentId ?? null);
     setOpenDeleteContentModal(true);
   };
 
@@ -186,24 +200,35 @@ const LessonDetailsPage = () => {
   const handleAddQuiz = () => {
     setEditingQuizData(null);
     setEditingQuizId(null);
-    setEditingLessonId(lessonId);
+    setEditingLessonId(lessonId as string);
     setOpenEditQuizModal(true);
   };
 
-  const handleEditQuiz = (quiz: any) => {
-    setEditingQuizData(quiz);
+  const handleEditQuiz = (quiz: QuizRecord) => {
+    setEditingQuizData({
+      lesson_uuid: quiz.lesson_uuid,
+      title: quiz.title,
+      description: quiz.description,
+      instructions: quiz.instructions,
+      time_limit_minutes: quiz.time_limit_minutes,
+      attempts_allowed: quiz.attempts_allowed,
+      passing_score: quiz.passing_score,
+      status: quiz.status,
+      active: quiz.active ?? false,
+      rubric_uuid: quiz.rubric_uuid,
+    });
     setEditingLessonId(quiz.lesson_uuid);
-    setEditingQuizId(quiz?.uuid);
+    setEditingQuizId(quiz.uuid ?? null);
     setOpenEditQuizModal(true);
   };
 
-  const handleAddQuestions = (quiz: any) => {
-    setEditingQuizId(quiz?.uuid);
+  const handleAddQuestions = (quiz: QuizRecord) => {
+    setEditingQuizId(quiz.uuid ?? null);
     setOpenQuestionModal(true);
   };
 
-  const handleDeleteQuiz = (quiz: any) => {
-    setEditingQuizId(quiz?.uuid);
+  const handleDeleteQuiz = (quiz: QuizRecord) => {
+    setEditingQuizId(quiz.uuid ?? null);
     setOpenDeleteQuizModal(true);
   };
 
@@ -240,7 +265,7 @@ const LessonDetailsPage = () => {
         <div className='flex flex-col gap-2'>
           <h1 className='text-2xl font-semibold'>{lesson?.title}</h1>
           <div className='text-muted-foreground mt-1 text-[15px]'>
-            <RichTextRenderer htmlString={lesson?.description} />
+            <RichTextRenderer htmlString={lesson?.description ?? ''} />
           </div>
           <div className='text-muted-foreground flex flex-row gap-6 text-sm font-normal'>
             <p className='flex items-center gap-2'>
@@ -259,7 +284,7 @@ const LessonDetailsPage = () => {
           <div className='flex flex-row items-center justify-between gap-4'>
             <p className='text-lg font-semibold'>Skill Content</p>
             <Button
-              onClick={handleAddLessonContent}
+              onClick={openAddLessonContent}
               variant='secondary'
               size='sm'
               className='flex w-fit items-center gap-1'
@@ -276,8 +301,10 @@ const LessonDetailsPage = () => {
 
         <div className='mx-3 space-y-6'>
           {contentItems.length > 0 ? (
-            contentItems.map((item: any) => {
-              const type = contentTypeData.find((ct: any) => ct.uuid === item.content_type_uuid);
+            contentItems.map(item => {
+              const type = contentTypeData.find(
+                (ct: ApiContentType) => ct.uuid === item.content_type_uuid
+              );
               const content_type_key = type?.name?.toUpperCase();
 
               return (
@@ -350,7 +377,7 @@ const LessonDetailsPage = () => {
               <p className='text-muted-foreground text-sm'>No content items yet.</p>
 
               <Button
-                onClick={() => handleAddLessonContent(lesson)}
+                onClick={openAddLessonContent}
                 variant='secondary'
                 size='sm'
                 className='flex items-center gap-1'
@@ -388,9 +415,9 @@ const LessonDetailsPage = () => {
         ) : (
           <CardContent>
             <div className='mt-1 flex w-full flex-col gap-2 space-y-2'>
-              {quizzesData?.data?.content
-                ?.filter((quiz: any) => quiz.lesson_uuid === lessonId)
-                ?.map((quiz: any, i: number) => (
+              {(quizzesData?.data?.content as QuizRecord[] | undefined)
+                ?.filter(quiz => quiz.lesson_uuid === lessonId)
+                ?.map((quiz, i: number) => (
                   <div key={i} className='group flex w-full cursor-default flex-col gap-4'>
                     <div className={quizCardClasses}>
                       {/* Header */}
@@ -407,7 +434,7 @@ const LessonDetailsPage = () => {
                           {/* Quiz Description */}
                           <div className='text-muted-foreground text-sm'>
                             <RichTextRenderer
-                              htmlString={(quiz?.description as string) || 'No skill provided'}
+                              htmlString={quiz.description || 'No skill provided'}
                             />
                           </div>
 
@@ -439,7 +466,7 @@ const LessonDetailsPage = () => {
                       {/* Conditionally Render Questions */}
                       {expandedQuizIndexes.includes(i) && (
                         <div className='mt-3'>
-                          <QuizQuestions quizUuid={quiz.uuid} />
+                          {quiz.uuid ? <QuizQuestions quizUuid={quiz.uuid} /> : null}
                         </div>
                       )}
 
@@ -533,9 +560,9 @@ const LessonDetailsPage = () => {
         ) : (
           <CardContent>
             <div className='mt-1 flex w-full flex-col gap-2 space-y-2'>
-              {assignmentData?.data?.content
-                ?.filter((a: any) => a.lesson_uuid === lessonId)
-                ?.map((a: any, i: number) => (
+              {(assignmentData?.data?.content as AssignmentRecord[] | undefined)
+                ?.filter(a => a.lesson_uuid === lessonId)
+                ?.map((a, i: number) => (
                   <div key={i} className='group flex w-full cursor-default flex-col gap-4'>
                     <div className={quizCardClasses}>
                       {/* Header */}
@@ -551,9 +578,7 @@ const LessonDetailsPage = () => {
 
                           {/* Quiz Description */}
                           <div className='text-muted-foreground text-sm'>
-                            <RichTextRenderer
-                              htmlString={(a?.description as string) || 'No skill provided'}
-                            />
+                            <RichTextRenderer htmlString={a.description || 'No skill provided'} />
                           </div>
 
                           {/* Info Bar: Time Limit + Passing Score */}
@@ -562,7 +587,7 @@ const LessonDetailsPage = () => {
                               <span>📅</span> {a.time_limit_display}
                             </span>
                             <span className='flex items-center gap-1'>
-                              <span>🏆</span> Passing Score: {a.passing_score}
+                              <span>🏆</span> Passing Score: {a.passing_score ?? 'N/A'}
                             </span>
                           </div>
                         </div>
@@ -582,7 +607,7 @@ const LessonDetailsPage = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align='end'>
-                          <DropdownMenuItem onClick={() => handleEditQuiz(alert)}>
+                          <DropdownMenuItem disabled>
                             <PenLine className='mr-1 h-4 w-4' />
                             Edit Assignment
                           </DropdownMenuItem>
@@ -590,7 +615,12 @@ const LessonDetailsPage = () => {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className='text-destructive'
-                            onClick={() => handleDeleteQuiz(a)}
+                            onClick={() => {
+                              if (a.uuid) {
+                                setEditingQuizId(a.uuid);
+                                setOpenDeleteQuizModal(true);
+                              }
+                            }}
                           >
                             <Trash className='mr-1 h-4 w-4' />
                             Delete Assignment
@@ -627,7 +657,7 @@ const LessonDetailsPage = () => {
           setEditingContentId(null);
           setOpenContentModal(false);
         }}
-        initialValues={editingContent as any}
+        initialValues={(editingContent as Partial<ContentFormValues> | null) ?? undefined}
       />
 
       <DeleteModal
@@ -646,7 +676,7 @@ const LessonDetailsPage = () => {
         setOpen={setOpenEditQuizModal}
         courseId={courseId as string}
         editingQuiz={editingQuizId as string}
-        initialValues={editingQuizData as any}
+        initialValues={editingQuizData ?? undefined}
         onCancel={() => {
           setEditingQuizData(null);
           setEditingLessonId(null);

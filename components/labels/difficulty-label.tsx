@@ -1,6 +1,11 @@
 import { tanstackClient } from '@/services/api/tanstack-client';
 import type React from 'react';
 
+type DifficultyLevel = {
+  uuid?: string;
+  name?: string;
+};
+
 type DifficultyLabelProps = {
   difficultyUuid: string;
   fallback?: React.ReactNode;
@@ -16,7 +21,9 @@ export function DifficultyLabel({ difficultyUuid, fallback = 'Unknown' }: Diffic
     }
   );
 
-  const difficulty = difficultyLevels?.data?.find((d: any) => d.uuid === difficultyUuid);
+  const difficulty = difficultyLevels?.data?.find(
+    (difficulty: DifficultyLevel) => difficulty.uuid === difficultyUuid
+  );
 
   return <>{difficulty ? difficulty.name : fallback}</>;
 }

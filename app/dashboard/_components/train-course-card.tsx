@@ -1,16 +1,5 @@
 'use client';
 
-import RichTextRenderer from '@/components/editors/richTextRenders';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { CardContent } from '@/components/ui/card';
-import type { Course } from '@/services/client';
-import {
-  getAllDifficultyLevelsOptions,
-  getCourseCreatorByUuidOptions,
-  getCourseReviewsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -25,9 +14,21 @@ import {
   XCircle,
 } from 'lucide-react';
 import Image from 'next/image';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { CardContent } from '@/components/ui/card';
+import type { Course, CourseCreator, DifficultyLevel } from '@/services/client';
+import {
+  getAllDifficultyLevelsOptions,
+  getCourseCreatorByUuidOptions,
+  getCourseReviewsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import type { CourseWithApplication } from './types';
 
 interface TrainCourseCardProps {
-  course: Course & { application?: any };
+  course: CourseWithApplication;
   applicationStatus?: string | null;
   applicationReviewNote?: string | null;
   handleClick: () => void;
@@ -55,7 +56,7 @@ export function TrainCourseCard({
     getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } })
   );
   // @ts-expect-error
-  const courseCreator = creator?.data;
+  const courseCreator: CourseCreator | undefined = creator?.data;
 
   const { data: courseReviews } = useQuery({
     ...getCourseReviewsOptions({ path: { courseUuid: course?.uuid as string } }),
@@ -67,7 +68,7 @@ export function TrainCourseCard({
   const averageRating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
-  const difficultyLevels = difficulty?.data;
+  const difficultyLevels: DifficultyLevel[] = difficulty?.data ?? [];
 
   const getDifficultyNameFromUUID = (uuid: string): string | undefined => {
     return difficultyLevels?.find(level => level.uuid === uuid)?.name;
@@ -192,7 +193,7 @@ export function TrainCourseCard({
             <Avatar className='min-h-9 min-w-9'>
               <AvatarImage src={course?.course_creator_uuid} />
               <AvatarFallback className='text-xs'>
-                {getInitials(courseCreator?.full_name) || 'XY'}
+                {getInitials(courseCreator?.full_name ?? '') || 'XY'}
               </AvatarFallback>
             </Avatar>
             <span className='text-muted-foreground text-sm'>
