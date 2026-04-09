@@ -1,11 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { UserProfileType } from '@/lib/types';
 import type { CourseCreator, Organisation, Student } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useMemo } from 'react';
 import { creatorTabs } from './course-creator-tab';
 import { instructorTabs } from './instructors-tab';
 import { ProfilePage } from './profile-page';
@@ -72,6 +72,29 @@ function getLocationProfileFields(value: unknown): LocationProfileFields | null 
   return value && typeof value === 'object' ? (value as LocationProfileFields) : null;
 }
 
+function getPreferredFullName(
+  rawUser: Partial<RawProfileUser> | null,
+  ...fallbacks: Array<string | null | undefined>
+) {
+  const nameFromParts = [rawUser?.first_name, rawUser?.last_name].filter(Boolean).join(' ').trim();
+
+  if (nameFromParts) return nameFromParts;
+  if (typeof rawUser?.display_name === 'string' && rawUser.display_name.trim()) {
+    return rawUser.display_name.trim();
+  }
+  if (typeof rawUser?.full_name === 'string' && rawUser.full_name.trim()) {
+    return rawUser.full_name.trim();
+  }
+
+  for (const fallback of fallbacks) {
+    if (typeof fallback === 'string' && fallback.trim()) {
+      return fallback.trim();
+    }
+  }
+
+  return '';
+}
+
 // Profile normaliser
 function normaliseProfile(
   domain: UserDomain,
@@ -88,7 +111,7 @@ function normaliseProfile(
         uuid: p.uuid ?? rawUser?.uuid ?? '',
         active: rawUser?.active,
         user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
-        full_name: p.full_name ?? rawUser?.full_name ?? '',
+        full_name: getPreferredFullName(rawUser, p.full_name),
         email: rawUser?.email,
         phone: rawUser?.phone_number,
         website: p.website,
@@ -116,7 +139,7 @@ function normaliseProfile(
         uuid: p.uuid ?? rawUser?.uuid ?? '',
         active: rawUser?.active,
         user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
-        full_name: p.full_name ?? rawUser?.full_name ?? '',
+        full_name: getPreferredFullName(rawUser, p.full_name),
         email: rawUser?.email,
         phone: rawUser?.phone_number,
         dob: normalizeDob(rawUser?.dob),
@@ -144,7 +167,7 @@ function normaliseProfile(
         uuid: p.uuid ?? rawUser?.uuid ?? '',
         active: rawUser?.active,
         user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
-        full_name: p.full_name ?? rawUser?.full_name ?? '',
+        full_name: getPreferredFullName(rawUser, p.full_name),
         email: rawUser?.email,
         phone: rawUser?.phone_number,
         avatar_url: rawUser?.avatar_url ?? rawUser?.profile_image_url,
@@ -169,7 +192,7 @@ function normaliseProfile(
         uuid: p.uuid ?? rawUser?.uuid ?? '',
         active: rawUser?.active,
         user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
-        full_name: p.full_name ?? rawUser?.full_name ?? '',
+        full_name: getPreferredFullName(rawUser, p.full_name),
         email: rawUser?.email,
         phone: rawUser?.phone_number,
         avatar_url: rawUser?.profile_image_url,
@@ -197,7 +220,7 @@ function normaliseProfile(
         uuid: p.uuid ?? rawUser?.uuid ?? '',
         active: rawUser?.active,
         user_uuid: p.user_uuid ?? rawUser?.uuid ?? '',
-        full_name: p.org_name ?? p.full_name ?? '',
+        full_name: getPreferredFullName(rawUser, p.org_name, p.full_name),
         email: rawUser?.email,
         dob: normalizeDob(rawUser?.dob),
         phone: rawUser?.phone_number,

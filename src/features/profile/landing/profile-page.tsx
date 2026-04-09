@@ -1,9 +1,5 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Briefcase, Camera, Globe, Mail, MapPin, Phone, Upload, X } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -11,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { updateCourseCreator, updateInstructor, updateStudent } from '@/services/client';
+import { updateCourseCreator, updateInstructor, updateStudent, updateUser } from '@/services/client';
 import { uploadProfileImageMutation } from '@/services/client/@tanstack/react-query.gen';
 import type {
   CourseCreator,
@@ -20,10 +16,18 @@ import type {
   UpdateCourseCreatorData,
   UpdateInstructorData,
   UpdateStudentData,
+  UpdateUserData,
+  User,
 } from '@/services/client/types.gen';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Briefcase, Camera, Globe, Mail, MapPin, Phone, Upload, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import type { ProfilePageProps } from './types';
 
 type EditableProfileDetails = {
+  first_name: string;
+  last_name: string;
   professional_headline: string;
   website: string;
   bio: string;
@@ -72,7 +76,13 @@ function MetaItem({ icon, value }: { icon: React.ReactNode; value?: string }) {
 }
 
 function getProfileDetailsDefaults(profile: ProfilePageProps['profile']): EditableProfileDetails {
+  const [fallbackFirstName = '', ...remainingNames] = (profile.full_name ?? '')
+    .split(' ')
+    .filter(Boolean);
+
   return {
+    first_name: fallbackFirstName,
+    last_name: remainingNames.join(' '),
     professional_headline: profile.professional_headline ?? '',
     website: profile.website ?? '',
     bio: profile.bio ?? profile.student_profile?.bio ?? '',
@@ -84,6 +94,21 @@ function getProfileDetailsDefaults(profile: ProfilePageProps['profile']): Editab
       typeof profile.longitude === 'number' && Number.isFinite(profile.longitude)
         ? String(profile.longitude)
         : '',
+  };
+}
+
+function getEditableProfileDetails(
+  profile: ProfilePageProps['profile'],
+  profileSource?: ProfilePageProps['profileSource']
+): EditableProfileDetails {
+  const defaults = getProfileDetailsDefaults(profile);
+
+  return {
+    ...defaults,
+    first_name:
+      typeof profileSource?.first_name === 'string' ? profileSource.first_name : defaults.first_name,
+    last_name:
+      typeof profileSource?.last_name === 'string' ? profileSource.last_name : defaults.last_name,
   };
 }
 
@@ -148,8 +173,9 @@ export function ProfilePage({
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [displayFullName, setDisplayFullName] = useState(profile.full_name ?? '');
   const [detailsValues, setDetailsValues] = useState<EditableProfileDetails>(
-    getProfileDetailsDefaults(profile)
+    getEditableProfileDetails(profile, profileSource)
   );
   const [detailsErrors, setDetailsErrors] = useState<EditableProfileErrors>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -165,9 +191,10 @@ export function ProfilePage({
       (domain === 'student' && Boolean(profileSource?.student?.uuid)));
 
   useEffect(() => {
-    setDetailsValues(getProfileDetailsDefaults(profile));
+    setDetailsValues(getEditableProfileDetails(profile, profileSource));
     setDetailsErrors({});
-  }, [profile]);
+    setDisplayFullName(profile.full_name ?? '');
+  }, [profile, profileSource]);
 
   const uploadProfileImageMut = useMutation({
     ...uploadProfileImageMutation(),
@@ -184,6 +211,28 @@ export function ProfilePage({
 
   const saveProfileDetailsMut = useMutation({
     mutationFn: async (values: EditableProfileDetails) => {
+      const firstName = values.first_name.trim();
+      const lastName = values.last_name.trim();
+      const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+
+      if (profile.user_uuid) {
+        const userBody: UpdateUserData['body'] = {
+          ...(profileSource as User),
+          first_name: firstName || undefined,
+          last_name: lastName || undefined,
+          full_name: fullName || undefined,
+        };
+
+        const userResponse = await updateUser({
+          path: { uuid: profile.user_uuid },
+          body: userBody,
+        });
+
+        if (userResponse.error) {
+          throw userResponse.error;
+        }
+      }
+
       const sharedUpdates = {
         bio: normalizeOptionalString(values.bio),
         professional_headline: normalizeOptionalString(values.professional_headline),
@@ -245,10 +294,16 @@ export function ProfilePage({
 
       throw new Error('This profile cannot be edited here.');
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, values) => {
+      const fullName = [values.first_name.trim(), values.last_name.trim()]
+        .filter(Boolean)
+        .join(' ');
+      setDisplayFullName(fullName || profile.full_name || '');
       toast.success('Profile details updated successfully');
       setIsEditingDetails(false);
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
+      await queryClient.invalidateQueries({
+        queryKey: profileSource?.email ? ['profile', profileSource.email] : ['profile'],
+      });
     },
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error));
@@ -315,6 +370,14 @@ export function ProfilePage({
   const validateDetails = (values: EditableProfileDetails) => {
     const nextErrors: EditableProfileErrors = {};
 
+    if (!values.first_name.trim()) {
+      nextErrors.first_name = 'First name is required.';
+    }
+
+    if (!values.last_name.trim()) {
+      nextErrors.last_name = 'Last name is required.';
+    }
+
     if (supportsExtendedDetails && values.website.trim() && !isValidUrl(values.website.trim())) {
       nextErrors.website = 'Enter a valid website URL.';
     }
@@ -355,7 +418,7 @@ export function ProfilePage({
     );
   }
 
-  const initials = profile.full_name
+  const initials = displayFullName
     .split(' ')
     .map(n => n[0])
     .join('')
@@ -379,7 +442,7 @@ export function ProfilePage({
               <Avatar className='ring-border h-20 w-20 rounded-xl ring-2 sm:h-[90px] sm:w-[90px]'>
                 <AvatarImage
                   src={previewUrl || profile?.profile_image_url || profile?.avatar_url}
-                  alt={profile?.full_name}
+                  alt={displayFullName}
                 />
                 <AvatarFallback className='bg-primary/10 text-primary rounded-xl text-base font-semibold sm:text-lg'>
                   {initials}
@@ -460,7 +523,7 @@ export function ProfilePage({
 
             <div className='mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
               <h1 className='text-foreground w-full truncate text-xl font-bold tracking-tight sm:text-2xl'>
-                {profile.full_name}
+                {displayFullName}
               </h1>
               {headerBadge && <div className='shrink-0'>{headerBadge}</div>}
             </div>
@@ -512,6 +575,32 @@ export function ProfilePage({
             ) : (
               <div className='mt-4 w-full rounded-2xl border p-4 sm:p-5'>
                 <div className='space-y-5'>
+                  <div className='grid gap-5 sm:grid-cols-2'>
+                    <div className='space-y-2'>
+                      <label className='text-sm font-medium'>First name</label>
+                      <Input
+                        value={detailsValues.first_name}
+                        onChange={event => handleDetailsChange('first_name', event.target.value)}
+                        placeholder='First name'
+                      />
+                      {detailsErrors.first_name ? (
+                        <p className='text-destructive text-xs'>{detailsErrors.first_name}</p>
+                      ) : null}
+                    </div>
+
+                    <div className='space-y-2'>
+                      <label className='text-sm font-medium'>Last name</label>
+                      <Input
+                        value={detailsValues.last_name}
+                        onChange={event => handleDetailsChange('last_name', event.target.value)}
+                        placeholder='Last name'
+                      />
+                      {detailsErrors.last_name ? (
+                        <p className='text-destructive text-xs'>{detailsErrors.last_name}</p>
+                      ) : null}
+                    </div>
+                  </div>
+
                   {supportsExtendedDetails && (
                     <div className='grid gap-5 sm:grid-cols-2'>
                       <div className='space-y-2'>
@@ -607,7 +696,7 @@ export function ProfilePage({
                       type='button'
                       variant='outline'
                       onClick={() => {
-                        setDetailsValues(getProfileDetailsDefaults(profile));
+                        setDetailsValues(getEditableProfileDetails(profile, profileSource));
                         setDetailsErrors({});
                         setIsEditingDetails(false);
                       }}

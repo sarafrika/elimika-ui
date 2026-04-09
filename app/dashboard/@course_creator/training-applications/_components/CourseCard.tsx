@@ -10,6 +10,12 @@ interface CourseCardProps {
   onDelete: (course: Course) => void;
 }
 
+const stripHtml = (value?: string | null) =>
+  value
+    ?.replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() ?? '';
+
 export default function CourseCard({ course, isSelected, onSelect, onDelete }: CourseCardProps) {
   return (
     <div
@@ -23,6 +29,20 @@ export default function CourseCard({ course, isSelected, onSelect, onDelete }: C
               {course.name || 'Course name not provided'}
             </h3>
           </div>
+
+          <div
+            className='text-muted-foreground mb-3 overflow-hidden text-sm leading-5'
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              maxHeight: '2.5rem', // 2 lines × line-height (leading-5 ≈ 1.25rem)
+            }}
+          >
+            {stripHtml(course?.description)}
+          </div>
+
+
           <div className='text-muted-foreground mb-1 line-clamp-3 w-[95%] truncate text-xs lg:line-clamp-0 lg:w-full'>
             <RichTextRenderer htmlString={course.description || 'No description provided'} />
           </div>
@@ -48,7 +68,7 @@ export default function CourseCard({ course, isSelected, onSelect, onDelete }: C
                 onDelete(course);
               }}
               className='text-muted-foreground hover:text-destructive'
-              // disabled={true}
+            // disabled={true}
             >
               <Trash2 className='h-4 w-4' />
             </button>

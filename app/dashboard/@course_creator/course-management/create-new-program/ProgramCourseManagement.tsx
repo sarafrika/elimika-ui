@@ -8,6 +8,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  RequirementTypeEnum as RequirementTypeValues,
+  type Course,
+  type RequirementTypeEnum,
+} from '@/services/client/types.gen';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '../../../../../components/ui/button';
 import { Input } from '../../../../../components/ui/input';
@@ -30,8 +35,8 @@ import {
   getProgramRequirementsOptions,
   getProgramRequirementsQueryKey,
   removeProgramCourseMutation,
+  updateProgramRequirementMutation,
 } from '../../../../../services/client/@tanstack/react-query.gen';
-import type { Course, RequirementTypeEnum } from '@/services/client/types.gen';
 
 type ProgramCourseManagementProps = {
   programUuid: string;
@@ -50,6 +55,21 @@ type NewRequirement = {
 
 type ProgramCourseListItem = Course & { uuid?: string; is_required?: boolean };
 
+const normalizeRequirementType = (value: string | null | undefined): RequirementTypeEnum => {
+  const normalized = value?.toUpperCase();
+
+  switch (normalized) {
+    case RequirementTypeValues.STUDENT:
+      return RequirementTypeValues.STUDENT;
+    case RequirementTypeValues.INSTRUCTOR:
+      return RequirementTypeValues.INSTRUCTOR;
+    case RequirementTypeValues.TRAINING_CENTER:
+      return RequirementTypeValues.TRAINING_CENTER;
+    default:
+      return RequirementTypeValues.STUDENT;
+  }
+};
+
 const ProgramCourseManagement = ({
   programUuid,
   onSaveDraft,
@@ -60,9 +80,10 @@ const ProgramCourseManagement = ({
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [showRequirementModal, setShowRequirementModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [editingRequirementUuid, setEditingRequirementUuid] = useState<string | null>(null);
 
   const [newRequirement, setNewRequirement] = useState<NewRequirement>({
-    requirement_type: 'STUDENT',
+    requirement_type: RequirementTypeValues.STUDENT,
     requirement_text: '',
     is_mandatory: true,
   });
@@ -126,7 +147,28 @@ const ProgramCourseManagement = ({
 
       setShowRequirementModal(false);
       setNewRequirement({
-        requirement_type: 'STUDENT',
+        requirement_type: RequirementTypeValues.STUDENT,
+        requirement_text: '',
+        is_mandatory: true,
+      });
+      setEditingRequirementUuid(null);
+    },
+  });
+
+  const updateRequirementMut = useMutation({
+    ...updateProgramRequirementMutation(),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: getProgramRequirementsQueryKey({
+          path: { programUuid },
+          query: { pageable: {} },
+        }),
+      });
+
+      setShowRequirementModal(false);
+      setEditingRequirementUuid(null);
+      setNewRequirement({
+        requirement_type: RequirementTypeValues.STUDENT,
         requirement_text: '',
         is_mandatory: true,
       });
@@ -171,8 +213,38 @@ const ProgramCourseManagement = ({
     });
   };
 
+  const resetRequirementForm = () => {
+    setEditingRequirementUuid(null);
+    setNewRequirement({
+      requirement_type: RequirementTypeValues.STUDENT,
+      requirement_text: '',
+      is_mandatory: true,
+    });
+  };
+
   const handleAddRequirement = () => {
     if (!newRequirement.requirement_text.trim()) return;
+
+    if (editingRequirementUuid) {
+      updateRequirementMut.mutate({
+        path: {
+          programUuid,
+          requirementUuid: editingRequirementUuid,
+        },
+        body: {
+          uuid: editingRequirementUuid,
+          program_uuid: programUuid,
+          requirement_type: newRequirement.requirement_type,
+          requirement_text: newRequirement.requirement_text,
+          is_mandatory: newRequirement.is_mandatory,
+          requirement_category: newRequirement.is_mandatory
+            ? 'Mandatory Requirement'
+            : 'Optional Requirement',
+          is_optional: !newRequirement.is_mandatory,
+        },
+      });
+      return;
+    }
 
     addRequirementMut.mutate({
       body: {
@@ -196,6 +268,16 @@ const ProgramCourseManagement = ({
         requirementUuid: reqUuid,
       },
     });
+  };
+
+  const handleEditRequirement = (requirement: NonNullable<typeof programRequirements>['data']['content'][number]) => {
+    setEditingRequirementUuid(requirement.uuid ?? null);
+    setNewRequirement({
+      requirement_type: normalizeRequirementType(requirement.requirement_type),
+      requirement_text: requirement.requirement_text || '',
+      is_mandatory: requirement.is_mandatory ?? !requirement.is_optional,
+    });
+    setShowRequirementModal(true);
   };
 
   return (
@@ -263,7 +345,10 @@ const ProgramCourseManagement = ({
             <p className='text-muted-foreground text-sm'>Set prerequisites and requirements</p>
           </div>
           <Button
-            onClick={() => setShowRequirementModal(true)}
+            onClick={() => {
+              resetRequirementForm();
+              setShowRequirementModal(true);
+            }}
             className='bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium'
           >
             <PlusCircle /> Add Requirement
@@ -294,13 +379,23 @@ const ProgramCourseManagement = ({
                     <div className='text-muted-foreground text-sm'>{req.requirement_category}</div>
                   </div>
                 </div>
-                <Button
-                  onClick={() => req.uuid && handleRemoveRequirement(req.uuid)}
-                  disabled={removeRequirementMut.isPending}
-                  className='bg-destructive/10 text-destructive hover:bg-destructive/20 rounded px-3 py-1 text-sm font-medium'
-                >
-                  Remove
-                </Button>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    variant='outline'
+                    onClick={() => handleEditRequirement(req)}
+                    disabled={updateRequirementMut.isPending}
+                    className='rounded px-3 py-1 text-sm font-medium'
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={() => req.uuid && handleRemoveRequirement(req.uuid)}
+                    disabled={removeRequirementMut.isPending}
+                    className='bg-destructive/10 text-destructive hover:bg-destructive/20 rounded px-3 py-1 text-sm font-medium'
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
             ))
           )}
@@ -354,11 +449,10 @@ const ProgramCourseManagement = ({
                 <div
                   key={course.uuid}
                   onClick={() => setSelectedCourse(course)}
-                  className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${
-                    selectedCourse?.uuid === course.uuid
+                  className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${selectedCourse?.uuid === course.uuid
                       ? 'border-primary bg-primary/10'
                       : 'border-muted hover:border-muted/80'
-                  }`}
+                    }`}
                 >
                   <div className='font-medium'>{course.name}</div>
                 </div>
@@ -388,7 +482,9 @@ const ProgramCourseManagement = ({
       <Dialog open={showRequirementModal} onOpenChange={setShowRequirementModal}>
         <DialogContent className='max-w-lg'>
           <DialogHeader>
-            <DialogTitle>Add Requirement</DialogTitle>
+            <DialogTitle>
+              {editingRequirementUuid ? 'Edit Requirement' : 'Add Requirement'}
+            </DialogTitle>
           </DialogHeader>
 
           <div className='space-y-4'>
@@ -408,9 +504,15 @@ const ProgramCourseManagement = ({
                 </SelectTrigger>
 
                 <SelectContent>
-                  <SelectItem value='STUDENT'>Student Requirement</SelectItem>
-                  <SelectItem value='TECHNICAL'>Technical Requirement</SelectItem>
-                  <SelectItem value='ADMINISTRATIVE'>Administrative Requirement</SelectItem>
+                  <SelectItem value={RequirementTypeValues.STUDENT}>
+                    Student Requirement
+                  </SelectItem>
+                  <SelectItem value={RequirementTypeValues.INSTRUCTOR}>
+                    Instructor Requirement
+                  </SelectItem>
+                  <SelectItem value={RequirementTypeValues.TRAINING_CENTER}>
+                    Training Center Requirement
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -455,11 +557,7 @@ const ProgramCourseManagement = ({
               variant='ghost'
               onClick={() => {
                 setShowRequirementModal(false);
-                setNewRequirement({
-                  requirement_type: 'STUDENT',
-                  requirement_text: '',
-                  is_mandatory: true,
-                });
+                resetRequirementForm();
               }}
             >
               Cancel
@@ -468,9 +566,19 @@ const ProgramCourseManagement = ({
             <Button
               variant='success'
               onClick={handleAddRequirement}
-              disabled={!newRequirement.requirement_text.trim() || addRequirementMut.isPending}
+              disabled={
+                !newRequirement.requirement_text.trim() ||
+                addRequirementMut.isPending ||
+                updateRequirementMut.isPending
+              }
             >
-              {addRequirementMut.isPending ? 'Adding...' : 'Add Requirement'}
+              {editingRequirementUuid
+                ? updateRequirementMut.isPending
+                  ? 'Saving...'
+                  : 'Save Changes'
+                : addRequirementMut.isPending
+                  ? 'Adding...'
+                  : 'Add Requirement'}
             </Button>
           </DialogFooter>
         </DialogContent>
