@@ -195,7 +195,6 @@ function ClassInviteContent() {
               </CardContent >
 
               <CardContent>
-                <ClassScheduleCalendar schedules={schedules as any} />
                 <ClassScheduleCalendar schedules={schedules} />
               </CardContent>
 

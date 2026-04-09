@@ -36,6 +36,7 @@ import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { createCategory, updateCourse } from '@/services/client';
+import type { Course, CourseTrainingRequirement } from '@/services/client/types.gen';
 import {
   addCourseTrainingRequirementMutation,
   createCourseMutation,
@@ -78,17 +79,6 @@ import {
 type MutationPayload = Record<string, unknown>;
 type CategoryItem = { uuid?: string; name?: string };
 type DifficultyLevelItem = { uuid?: string; name?: string };
-type RequirementRecord = {
-  uuid?: string;
-  course_uuid: string;
-  requirement_type: string;
-  name: string;
-  description?: string;
-  quantity?: number;
-  unit?: string;
-  provided_by?: 'course_creator' | 'instructor' | 'organisation' | 'student';
-  is_mandatory?: boolean;
-};
 type CategoryMutationResponse = { error?: Record<string, unknown>; message?: string };
 
 const getFormErrorMessage = (value: unknown) => {
@@ -124,7 +114,7 @@ export type CourseFormProps = {
   setRequirementDrafts?: Dispatch<SetStateAction<DraftsByProvider>>;
   activeRequirementProvider?: Provider | null;
   setActiveRequirementProvider?: Dispatch<SetStateAction<Provider | null>>;
-  successResponse?: (data: any) => void;
+  successResponse?: (data: Course) => void;
 };
 
 export type CourseFormRef = {
@@ -217,7 +207,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const [editingRequirementId, setEditingRequirementId] = useState<string | null>(null);
     const requirementMode: RequirementFormMode = editingRequirementId ? 'edit' : 'add';
 
-    const [existingRequirements, setExistingRequirements] = useState<any[]>([]);
+    const [existingRequirements, setExistingRequirements] = useState<CourseTrainingRequirement[]>(
+      []
+    );
     const controlledRequirementDrafts = requirementDrafts ?? createEmptyDraftsByProvider();
     const controlledSetRequirementDrafts =
       setRequirementDrafts ?? (() => undefined);
@@ -518,8 +510,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             });
 
             if (typeof successResponse === 'function') {
-              // @ts-expect-error
-              successResponse(courseResponse?.data);
+              successResponse(courseResponse);
             }
 
             setSaveStage('redirecting');

@@ -286,7 +286,7 @@ export default function CourseBuilderPage() {
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={courseId as string}
-                initialValues={courseInitialValues as any}
+                initialValues={courseInitialValues}
                 requirementDrafts={requirementDrafts}
                 setRequirementDrafts={setRequirementDrafts}
                 activeRequirementProvider={activeRequirementProvider}

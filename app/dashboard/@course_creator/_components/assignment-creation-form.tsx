@@ -209,7 +209,7 @@ export const AssignmentCreationForm = ({
             });
             resolve();
           },
-          onError: (err: any) => reject(err),
+          onError: (err: unknown) => reject(err),
         }
       );
     });
