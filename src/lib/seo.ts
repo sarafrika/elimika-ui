@@ -1,11 +1,22 @@
 import type { Metadata } from 'next';
 
-const siteOrigin =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  process.env.AUTH_URL ??
-  `http://127.0.0.1:${process.env.PORT ?? '3000'}`;
+const getValidSiteUrl = (value?: string) => {
+  const normalizedValue = value?.trim().replace(/\/$/, '');
+  if (!normalizedValue || /^__.+__$/.test(normalizedValue)) {
+    return undefined;
+  }
 
-export const metadataBase = new URL(siteOrigin);
+  try {
+    return new URL(normalizedValue);
+  } catch {
+    return undefined;
+  }
+};
+
+export const metadataBase =
+  getValidSiteUrl(process.env.NEXT_PUBLIC_SITE_URL) ??
+  getValidSiteUrl(process.env.AUTH_URL) ??
+  new URL(`http://127.0.0.1:${process.env.PORT ?? '3000'}`);
 
 export const defaultSeoDescription =
   'Elimika helps learners, instructors, course creators, and organisations discover courses, build skills wallets, and manage modern learning journeys.';
