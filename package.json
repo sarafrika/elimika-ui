@@ -76,7 +76,7 @@
     "lucide-react": "^0.477.0",
     "mapbox-gl": "^3.18.0",
     "moment": "^2.30.1",
-    "next": "16.1.5",
+    "next": "16.1.7",
     "next-auth": "5.0.0-beta.30",
     "next-themes": "^0.4.5",
     "openapi-fetch": "^0.14.0",
@@ -118,7 +118,7 @@
     "@types/react-dom": "^19",
     "@types/react-draft-wysiwyg": "^1.13.8",
     "baseline-browser-mapping": "^2.8.32",
-    "next": "16.1.5",
+    "next": "16.1.7",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "sass": "^1.89.2",
@@ -135,9 +135,11 @@
     ],
     "overrides": {
       "js-yaml": ">=4.1.1",
-      "lodash": "4.17.23",
-      "lodash-es": "4.17.23",
+      "immutable": "5.1.5",
+      "lodash": "4.18.1",
+      "lodash-es": "4.18.1",
       "markdown-it": "14.1.1",
+      "picomatch": "2.3.2",
       "qs": "6.14.2",
       "tar": "7.5.7"
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { UserDomain } from '@/lib/types';
@@ -28,6 +29,7 @@ const UserDomainContext = createContext<UserDomainContextValue | null>(null);
 export function UserDomainProvider({ children }: { children: ReactNode }) {
   const profile = useUserProfile();
   const { status } = useSession();
+  const pathname = usePathname();
   const rawDomains = profile?.user_domain;
 
   const domains = useMemo(() => {
@@ -40,6 +42,19 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
 
   const [activeDomain, setActiveDomainState] = useState<UserDomain | null>(null);
   const [hydrated, setHydrated] = useState(false);
+
+  const pathnameDomain = useMemo(() => {
+    if (!pathname?.startsWith('/dashboard/workspace/')) {
+      return null;
+    }
+
+    const [, , workspace, domain] = pathname.split('/');
+    if (workspace !== 'workspace') {
+      return null;
+    }
+
+    return normalizeStoredUserDomain(domain);
+  }, [pathname]);
 
   const dashboardStorageKey = useMemo(
     () => getDashboardStorageKey(profile?.uuid ?? profile?.email ?? undefined),
@@ -79,6 +94,14 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
   }, [domains, hydrated]);
 
   useEffect(() => {
+    if (!pathnameDomain || !domains.includes(pathnameDomain)) {
+      return;
+    }
+
+    setActiveDomainState(prev => (prev === pathnameDomain ? prev : pathnameDomain));
+  }, [domains, pathnameDomain]);
+
+  useEffect(() => {
     if (typeof window === 'undefined' || !hydrated) return;
 
     if (activeDomain) {
@@ -109,14 +132,15 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       domains,
-      activeDomain,
+      activeDomain:
+        pathnameDomain && domains.includes(pathnameDomain) ? pathnameDomain : activeDomain,
       hasMultipleDomains: domains.length > 1,
       isLoading: Boolean(profile?.isLoading) || !hydrated,
       isReady: hydrated && !profile?.isLoading,
       setActiveDomain,
       clearDomain,
     }),
-    [domains, activeDomain, profile?.isLoading, hydrated]
+    [domains, pathnameDomain, activeDomain, profile?.isLoading, hydrated]
   );
 
   return <UserDomainContext.Provider value={value}>{children}</UserDomainContext.Provider>;
