@@ -17,7 +17,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     ? requestedNextPath
     : '/dashboard/overview';
 
-  const response = NextResponse.redirect(new URL(nextPath, request.url));
+  // Use a relative Location header so reverse proxies don't leak the internal app origin.
+  const response = NextResponse.redirect(nextPath);
 
   if (normalizedDomain) {
     response.cookies.set(ACTIVE_DASHBOARD_COOKIE, normalizedDomain, {

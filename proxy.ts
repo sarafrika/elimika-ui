@@ -13,7 +13,7 @@ export default auth(req => {
 
   // If accessing protected route without authentication, redirect to home
   if (!isAuth && isProtectedRoute) {
-    return NextResponse.redirect(new URL('/', req.url));
+    return NextResponse.redirect('/');
   }
 
   // Allow the request to continue
