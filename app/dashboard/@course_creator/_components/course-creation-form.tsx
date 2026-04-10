@@ -513,8 +513,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               successResponse(courseResponse);
             }
 
-            console.log(newCourseUuid, "id here")
-
             setSaveStage('redirecting');
             setTimeout(() => {
               router.replace(`/dashboard/course-management/create-new-course?id=${newCourseUuid}`);
