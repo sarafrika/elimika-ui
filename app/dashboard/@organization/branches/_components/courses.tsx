@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Book } from 'lucide-react';
 import Image from 'next/image';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { Card, CardHeader, CardTitle } from '../../../../../components/ui/card';
 import {
   Table,
@@ -57,6 +57,9 @@ export default function Courses({
                   alt={course.name}
                   src={toAuthenticatedMediaUrl(course.thumbnail_url) || course.thumbnail_url}
                   className='object-fit w-full rounded-sm'
+                  unoptimized={isAuthenticatedMediaUrl(
+                    toAuthenticatedMediaUrl(course.thumbnail_url)
+                  )}
                 />
               ) : (
                 <Book size={256} color='gray-500' />
@@ -83,6 +86,9 @@ export default function Courses({
                       alt={course.name}
                       className='object-fit h-10 w-10 rounded-md'
                       src={toAuthenticatedMediaUrl(course.thumbnail_url) || course.thumbnail_url}
+                      unoptimized={isAuthenticatedMediaUrl(
+                        toAuthenticatedMediaUrl(course.thumbnail_url)
+                      )}
                     />
                   ) : (
                     <Book size={32} color='gray-500' />

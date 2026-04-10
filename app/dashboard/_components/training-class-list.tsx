@@ -22,7 +22,7 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -259,6 +259,9 @@ export function TrainingClassList({
                           className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
                           width={400}
                           height={208}
+                          unoptimized={isAuthenticatedMediaUrl(
+                            toAuthenticatedMediaUrl(cls.course.banner_url)
+                          )}
                         />
                       ) : (
                         <BookOpen className='text-muted-foreground/90 h-12 w-12' />

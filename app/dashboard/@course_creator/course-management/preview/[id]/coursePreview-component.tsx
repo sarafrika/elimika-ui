@@ -19,7 +19,7 @@ import {
   Video,
 } from 'lucide-react';
 import Image from 'next/image';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
@@ -186,6 +186,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
             priority
             width={1200}
             height={300}
+            unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(course.banner_url))}
           />
         </div>
       )}
@@ -202,6 +203,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                 priority
                 width={20}
                 height={20}
+                unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(course.thumbnail_url))}
               />
             </div>
           )}

@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 interface CourseCardProps {
   course: Course | TrainingProgram;
@@ -93,6 +93,7 @@ export function CourseCard({
               className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
               width={400}
               height={208}
+              unoptimized={isAuthenticatedMediaUrl(resolvedBannerUrl)}
             />
           ) : (
             <BookOpen className='text-primary/40 h-16 w-16' />

@@ -19,7 +19,7 @@ import {
   getCartQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useCartStore } from '@/store/cart-store';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { type BundledClass, getErrorMessage } from '../types';
 import AddToCartModal from './AddToCartModal';
 
@@ -142,6 +142,7 @@ export default function EnrollCourseCard({
               className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
               width={400}
               height={208}
+              unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(cls.course.banner_url))}
             />
           ) : (
             <div className='bg-primary/30 flex h-[208px] w-full items-center justify-center'>

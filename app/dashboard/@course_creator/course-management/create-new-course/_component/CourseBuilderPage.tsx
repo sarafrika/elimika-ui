@@ -34,7 +34,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
@@ -507,6 +507,9 @@ export default function CourseBuilderPage() {
                         width={128}
                         height={128}
                         className='bg-muted mb-8 max-h-[250px] w-full text-sm'
+                        unoptimized={isAuthenticatedMediaUrl(
+                          toAuthenticatedMediaUrl(course?.data?.banner_url as string)
+                        )}
                       />
                     </div>
 

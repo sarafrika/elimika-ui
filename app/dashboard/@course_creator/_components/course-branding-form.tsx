@@ -16,7 +16,7 @@ import * as z from 'zod';
 import { Button } from '../../../../components/ui/button';
 import Spinner from '../../../../components/ui/spinner';
 import { useStepper } from '../../../../components/ui/stepper';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import {
   getCourseByUuidQueryKey,
   updateCourseMutation,
@@ -552,6 +552,9 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             height={128}
                             alt='Thumbnail Preview'
                             className='h-full w-full object-cover'
+                            unoptimized={isAuthenticatedMediaUrl(
+                              toAuthenticatedMediaUrl(thumbnailPreview)
+                            )}
                           />
                         </div>
                       )}
