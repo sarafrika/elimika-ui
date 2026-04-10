@@ -176,7 +176,7 @@ export function CourseCard({
             <div className='flex items-center gap-1'>
               <Star className='h-4 w-4 fill-yellow-400 text-yellow-400' />
               {/* <span>{course?.rating}</span> */}
-              <span>{1.2}</span>
+              {/* <span>{1.2}</span> */}
             </div>
             <div className='flex items-center gap-1'>
               <Users className='h-4 w-4' />
