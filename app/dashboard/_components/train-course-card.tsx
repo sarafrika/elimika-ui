@@ -25,6 +25,7 @@ import {
   getCourseCreatorByUuidOptions,
   getCourseReviewsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { CourseWithApplication } from './types';
 
 interface TrainCourseCardProps {
@@ -119,7 +120,7 @@ export function TrainCourseCard({
         <div className='bg-muted relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg'>
           {course?.banner_url ? (
             <Image
-              src={course?.banner_url}
+              src={toAuthenticatedMediaUrl(course?.banner_url) || course?.banner_url}
               alt={course?.name || 'banner'}
               className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
               width={400}

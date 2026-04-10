@@ -35,6 +35,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { CustomEmptyState } from '../../_components/loading-state';
 
 type DraftCourseItem = {
@@ -270,7 +271,10 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
 
                             <TableCell className='py-1'>
                               <Image
-                                src={(course?.thumbnail_url as string) || '/illustration.png'}
+                                src={
+                                  toAuthenticatedMediaUrl(course?.thumbnail_url as string) ||
+                                  '/illustration.png'
+                                }
                                 alt='thumbnail'
                                 width={48}
                                 height={48}

@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 interface CourseCardProps {
   course: Course | TrainingProgram;
@@ -36,6 +37,7 @@ export function CourseCard({
   const difficultyUuid = 'difficulty_uuid' in course ? course.difficulty_uuid : undefined;
   const introVideoUrl = 'intro_video_url' in course ? course.intro_video_url : undefined;
   const bannerUrl = 'banner_url' in course ? course.banner_url : undefined;
+  const resolvedBannerUrl = toAuthenticatedMediaUrl(bannerUrl);
   const classLimit = 'class_limit' in course ? course.class_limit : undefined;
   const totalDurationDisplay =
     'total_duration_display' in course ? course.total_duration_display : undefined;
@@ -84,9 +86,9 @@ export function CourseCard({
       <div className='relative'>
         {/* Course Image */}
         <div className='bg-muted relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg'>
-          {bannerUrl ? (
+          {resolvedBannerUrl ? (
             <Image
-              src={bannerUrl}
+              src={resolvedBannerUrl}
               alt={courseName || 'banner'}
               className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
               width={400}
