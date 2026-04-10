@@ -8,6 +8,7 @@ import { AlertCircle, Clock, Play, Target, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import type { CourseTrainingRequirement } from '@/services/client/types.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 type CoursePreviewRecord = {
   status?: string;
@@ -57,7 +58,7 @@ export default function CustomCoursePreview() {
       {/* Hero Section with Banner */}
       <div className='relative mt-4 h-96 overflow-hidden rounded-lg'>
         <img
-          src={course?.banner_url || '/illustration.png'}
+          src={toAuthenticatedMediaUrl(course?.banner_url) || '/illustration.png'}
           alt='Course Banner'
           className='h-full w-full object-cover opacity-40'
         />
@@ -107,7 +108,7 @@ export default function CustomCoursePreview() {
                 {!isPlaying ? (
                   <div className='absolute inset-0 flex items-center justify-center'>
                     <img
-                      src={course?.thumbnail_url || '/illustration.png'}
+                      src={toAuthenticatedMediaUrl(course?.thumbnail_url) || '/illustration.png'}
                       alt='Course Thumbnail'
                       className='h-full w-full object-cover opacity-60'
                     />

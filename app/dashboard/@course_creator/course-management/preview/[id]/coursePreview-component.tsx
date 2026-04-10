@@ -19,6 +19,7 @@ import {
   Video,
 } from 'lucide-react';
 import Image from 'next/image';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
@@ -179,12 +180,13 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
       {course?.banner_url && (
         <div className='relative h-60 w-full overflow-hidden rounded-lg shadow-md'>
           <Image
-            src={course.banner_url}
+            src={toAuthenticatedMediaUrl(course.banner_url) || course.banner_url}
             alt='Course banner'
             className='h-full w-full object-cover'
             priority
             width={1200}
             height={300}
+            unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(course.banner_url))}
           />
         </div>
       )}
@@ -195,12 +197,13 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
           {course?.thumbnail_url && (
             <div className='relative h-20 w-20 overflow-hidden rounded-md shadow-sm'>
               <Image
-                src={course.thumbnail_url}
+                src={toAuthenticatedMediaUrl(course.thumbnail_url) || course.thumbnail_url}
                 alt='Course thumbnail'
                 className='h-full w-full object-cover'
                 priority
                 width={20}
                 height={20}
+                unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(course.thumbnail_url))}
               />
             </div>
           )}

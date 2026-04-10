@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import Spinner from '@/components/ui/spinner';
 import type { Course } from '@/services/client/types.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { BundledClass } from '../types';
 
 type CourseWithOptionalShortDescription = Course & {
@@ -35,6 +36,7 @@ export default function AddToCartModal({
   if (!cls) return null;
 
   const thumbnail = cls?.course?.thumbnail_url;
+  const resolvedThumbnail = toAuthenticatedMediaUrl(thumbnail);
   const courseWithShortDescription = cls.course as CourseWithOptionalShortDescription | null;
 
   return (
@@ -53,9 +55,9 @@ export default function AddToCartModal({
 
         <div className='flex gap-4 pt-2 pb-4'>
           <div className='shrink-0'>
-            {thumbnail ? (
+            {resolvedThumbnail ? (
               <img
-                src={thumbnail}
+                src={resolvedThumbnail}
                 alt={'thumnbnail'}
                 className='bg-muted h-24 w-24 rounded-md object-cover'
               />

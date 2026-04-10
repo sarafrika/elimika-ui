@@ -34,6 +34,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
@@ -65,9 +66,7 @@ export default function CourseBuilderPage() {
   const courseId = searchParams.get('id');
   const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
   const [requirementDrafts, setRequirementDrafts] = useState(createEmptyDraftsByProvider);
-  const [activeRequirementProvider, setActiveRequirementProvider] = useState<Provider | null>(
-    null
-  );
+  const [activeRequirementProvider, setActiveRequirementProvider] = useState<Provider | null>(null);
   const resolveId = courseId ? (courseId as string) : (createdCourseId as string);
   const { isLoading: creatorLoading, profile: creatorProfile } = useCourseCreator();
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -205,7 +204,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   if (creatorLoading) {
@@ -500,11 +499,17 @@ export default function CourseBuilderPage() {
                   <section>
                     <div>
                       <Image
-                        src={(course?.data?.banner_url as string) || '/illustration.png'}
+                        src={
+                          toAuthenticatedMediaUrl(course?.data?.banner_url as string) ||
+                          '/illustration.png'
+                        }
                         alt='upload-banner'
                         width={128}
                         height={128}
                         className='bg-muted mb-8 max-h-[250px] w-full text-sm'
+                        unoptimized={isAuthenticatedMediaUrl(
+                          toAuthenticatedMediaUrl(course?.data?.banner_url as string)
+                        )}
                       />
                     </div>
 

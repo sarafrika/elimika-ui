@@ -35,6 +35,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 type PublishedCourseItem = {
   uuid?: string;
@@ -248,11 +249,17 @@ export default function PublishedCoursesComponent({
 
                             <TableCell className='py-1'>
                               <Image
-                                src={course?.thumbnail_url || '/illustration.png'}
+                                src={
+                                  toAuthenticatedMediaUrl(course?.thumbnail_url) ||
+                                  '/illustration.png'
+                                }
                                 alt='thumbnail'
                                 width={48}
                                 height={48}
                                 className='bg-muted-foreground/30 min-h-12 min-w-12 rounded-md'
+                                unoptimized={isAuthenticatedMediaUrl(
+                                  toAuthenticatedMediaUrl(course?.thumbnail_url)
+                                )}
                               />
                             </TableCell>
 
