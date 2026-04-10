@@ -1,6 +1,15 @@
 import { auth } from '@/services/auth';
 import { NextResponse } from 'next/server';
 
+function buildPublicRequestUrl(req: Parameters<Parameters<typeof auth>[0]>[0], path: string) {
+  const forwardedHost = req.headers.get('x-forwarded-host')?.split(',')[0]?.trim();
+  const forwardedProto = req.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const host = forwardedHost || req.headers.get('host') || req.nextUrl.host;
+  const protocol = forwardedProto || req.nextUrl.protocol.replace(/:$/, '');
+
+  return new URL(path, `${protocol}://${host}`);
+}
+
 export default auth(req => {
   const { pathname } = req.nextUrl;
   const isAuth = !!req.auth;
@@ -13,7 +22,7 @@ export default auth(req => {
 
   // If accessing protected route without authentication, redirect to home
   if (!isAuth && isProtectedRoute) {
-    return NextResponse.redirect('/');
+    return NextResponse.redirect(buildPublicRequestUrl(req, '/'));
   }
 
   // Allow the request to continue
