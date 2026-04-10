@@ -36,7 +36,6 @@ import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { createCategory, updateCourse } from '@/services/client';
-import type { Course, CourseTrainingRequirement } from '@/services/client/types.gen';
 import {
   addCourseTrainingRequirementMutation,
   createCourseMutation,
@@ -48,6 +47,7 @@ import {
   searchCoursesQueryKey,
   updateCourseTrainingRequirementMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { Course, CourseTrainingRequirement } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Plus, XIcon } from 'lucide-react';
@@ -495,7 +495,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             toast.error(error?.message);
           },
           onSuccess: courseResponse => {
-            const newCourseUuid = courseResponse?.uuid as string;
+            const newCourseUuid = courseResponse?.data?.uuid as string;
 
             queryClient.invalidateQueries({
               queryKey: getCourseByUuidQueryKey({ path: { uuid: newCourseUuid } }),
@@ -512,6 +512,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             if (typeof successResponse === 'function') {
               successResponse(courseResponse);
             }
+
+            console.log(newCourseUuid, "id here")
 
             setSaveStage('redirecting');
             setTimeout(() => {
