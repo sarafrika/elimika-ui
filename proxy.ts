@@ -5,7 +5,8 @@ function buildPublicRequestUrl(req: Parameters<Parameters<typeof auth>[0]>[0], p
   const forwardedHost = req.headers.get('x-forwarded-host')?.split(',')[0]?.trim();
   const forwardedProto = req.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
   const host = forwardedHost || req.headers.get('host') || req.nextUrl.host;
-  const protocol = forwardedProto || req.nextUrl.protocol.replace(/:$/, '');
+  const isLocalHost = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i.test(host);
+  const protocol = forwardedProto === 'https' || !isLocalHost ? 'https' : 'http';
 
   return new URL(path, `${protocol}://${host}`);
 }
