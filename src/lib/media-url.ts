@@ -1,5 +1,10 @@
-const COURSE_MEDIA_PATH_PREFIX = '/api/v1/courses/media/';
-const PROXY_MEDIA_PATH_PREFIX = '/api/proxy/api/v1/courses/media/';
+const ALLOWED_MEDIA_HOSTS = new Set([
+  'api.elimika.sarafrika.com',
+  'api.elimika.staging.sarafrika.com',
+]);
+
+const ALLOWED_MEDIA_PATH_PREFIXES = ['/api/v1/courses/media/'];
+const AUTHENTICATED_MEDIA_ROUTE = '/api/media';
 
 export function toAuthenticatedMediaUrl(url?: string | null) {
   if (!url) {
@@ -8,16 +13,20 @@ export function toAuthenticatedMediaUrl(url?: string | null) {
 
   try {
     const parsedUrl = new URL(url);
-    if (!parsedUrl.pathname.startsWith(COURSE_MEDIA_PATH_PREFIX)) {
+    if (!ALLOWED_MEDIA_HOSTS.has(parsedUrl.hostname)) {
       return url;
     }
 
-    return `/api/proxy${parsedUrl.pathname}${parsedUrl.search}`;
+    if (!ALLOWED_MEDIA_PATH_PREFIXES.some(prefix => parsedUrl.pathname.startsWith(prefix))) {
+      return url;
+    }
+
+    return `${AUTHENTICATED_MEDIA_ROUTE}?url=${encodeURIComponent(parsedUrl.toString())}`;
   } catch {
     return url;
   }
 }
 
 export function isAuthenticatedMediaUrl(url?: string | null) {
-  return typeof url === 'string' && url.startsWith(PROXY_MEDIA_PATH_PREFIX);
+  return typeof url === 'string' && url.startsWith(`${AUTHENTICATED_MEDIA_ROUTE}?`);
 }
