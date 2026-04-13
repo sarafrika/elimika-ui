@@ -1,5 +1,12 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { Edit, Filter, PlusCircle, TrashIcon, X } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import {
   AlertDialog,
@@ -32,13 +39,6 @@ import {
 } from '@/components/ui/table';
 import { useCourseCreator } from '@/context/course-creator-context';
 import type { Course } from '@/services/client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { Edit, Filter, PlusCircle, TrashIcon, X } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import {
   deleteCourseMutation,
   getCourseTrainingRequirementsOptions,
@@ -80,6 +80,7 @@ export default function CourseCreatorCoursesContent() {
   const isCourses = currentType === 'courses';
 
   const [statusFilter, setStatusFilter] = useState<CourseStatusFilter>('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [open, setOpen] = useState(false);
 
   const size = 20;
@@ -95,11 +96,30 @@ export default function CourseCreatorCoursesContent() {
     enabled: !!data?.profile?.uuid,
   });
   const courses = cData?.data?.content || [];
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+
+    courses.forEach(course => {
+      course.category_names?.forEach(category => {
+        if (category) {
+          categories.add(category);
+        }
+      });
+    });
+
+    return Array.from(categories).sort((a, b) => a.localeCompare(b));
+  }, [courses]);
 
   const filteredCourses = useMemo(() => {
-    if (statusFilter === 'all') return courses;
-    return courses.filter(course => course.status === statusFilter);
-  }, [courses, statusFilter]);
+    return courses.filter(course => {
+      const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
+      const matchesCategory =
+        selectedCategory === 'all' ||
+        course.category_names?.includes(selectedCategory) === true;
+
+      return matchesStatus && matchesCategory;
+    });
+  }, [courses, selectedCategory, statusFilter]);
 
   type ViewMode = 'list' | 'create' | 'preview';
 
@@ -146,6 +166,26 @@ export default function CourseCreatorCoursesContent() {
           </header>
 
           <>
+            <div className='flex flex-wrap gap-2'>
+              <Button
+                variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                size='sm'
+                onClick={() => setSelectedCategory('all')}
+              >
+                All categories
+              </Button>
+              {availableCategories.map(category => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? 'default' : 'outline'}
+                  size='sm'
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+
             {open ? (
               <div className='mt-8 flex flex-col gap-4'>
                 {' '}
@@ -193,7 +233,8 @@ export default function CourseCreatorCoursesContent() {
                     <div className='flex flex-col items-center justify-center space-y-4 py-16 text-center'>
                       <p className='text-lg font-medium'>No courses match this filter.</p>
                       <p className='text-muted-foreground text-sm'>
-                        Adjust the status filter or create a new course to populate this view.
+                        Adjust the status or category filter, or create a new course to populate
+                        this view.
                       </p>
                       <Button variant='outline' asChild>
                         <Link prefetch href='/dashboard/course-management'>

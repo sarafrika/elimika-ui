@@ -1,11 +1,10 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
-
 import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
@@ -43,10 +42,11 @@ import {
 } from '../../../../../components/ui/table';
 import {
   deleteTrainingProgramMutation,
+  getProgramCoursesOptions,
   searchTrainingProgramsOptions,
   searchTrainingProgramsQueryKey,
 } from '../../../../../services/client/@tanstack/react-query.gen';
-import type { TrainingProgram } from '../../../../../services/client/types.gen';
+import type { Course, TrainingProgram } from '../../../../../services/client/types.gen';
 
 type ProgramStatusFilter = 'all' | 'published' | 'draft' | 'archived';
 
@@ -92,6 +92,7 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProgramStatusFilter>('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const { data: programsData, isLoading } = useQuery(
     searchTrainingProgramsOptions({
@@ -101,7 +102,6 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
       },
     })
   );
-
   const programs = (programsData?.data?.content ?? []).filter(
     (program): program is Program =>
       typeof program.uuid === 'string' &&
@@ -110,6 +110,43 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
       typeof program.class_limit === 'number' &&
       typeof program.price === 'number'
   );
+  const programCoursesQueries = useQueries({
+    queries: programs.map(program => ({
+      ...getProgramCoursesOptions({
+        path: { programUuid: program.uuid },
+      }),
+      enabled: !!program.uuid,
+      staleTime: Infinity,
+      refetchOnWindowFocus: false,
+    })),
+  });
+  const programCoursesByProgramUuid = useMemo(
+    () =>
+      new Map(
+        programs.map((program, index) => [
+          program.uuid,
+          (programCoursesQueries[index]?.data?.data ?? []) as Course[],
+        ])
+      ),
+    [programs, programCoursesQueries]
+  );
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+
+    programs.forEach(program => {
+      const courses = programCoursesByProgramUuid.get(program.uuid) ?? [];
+      courses.forEach(course => {
+        course.category_names?.forEach(category => {
+          if (category) {
+            categories.add(category);
+          }
+        });
+      });
+    });
+
+    return Array.from(categories).sort((a, b) => a.localeCompare(b));
+  }, [programCoursesByProgramUuid, programs]);
+
   const filteredPrograms = useMemo(() => {
     return programs.filter(program => {
       const matchesSearch =
@@ -117,10 +154,15 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
         program.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus = statusFilter === 'all' || program.status === statusFilter;
+      const matchesCategory =
+        selectedCategory === 'all' ||
+        (programCoursesByProgramUuid.get(program.uuid) ?? []).some(course =>
+          course.category_names?.includes(selectedCategory)
+        );
 
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesCategory;
     });
-  }, [programs, searchTerm, statusFilter]);
+  }, [programCoursesByProgramUuid, programs, searchTerm, selectedCategory, statusFilter]);
 
   const deleteProgramMut = useMutation(deleteTrainingProgramMutation());
   const handleDelete = (uuid: string) => {
@@ -183,6 +225,26 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
       </header>
 
       {/* Main Card */}
+      <div className='flex flex-wrap gap-2'>
+        <Button
+          variant={selectedCategory === 'all' ? 'default' : 'outline'}
+          size='sm'
+          onClick={() => setSelectedCategory('all')}
+        >
+          All categories
+        </Button>
+        {availableCategories.map(category => (
+          <Button
+            key={category}
+            variant={selectedCategory === category ? 'default' : 'outline'}
+            size='sm'
+            onClick={() => setSelectedCategory(category)}
+          >
+            {category}
+          </Button>
+        ))}
+      </div>
+
       <Card>
         <CardHeader className='border-border/50 flex flex-col gap-3 border-b pb-3 md:gap-4 md:pb-4'>
           <div>
@@ -232,12 +294,12 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
           {filteredPrograms.length === 0 ? (
             <div className='flex flex-col items-center justify-center space-y-3 px-4 py-12 text-center md:space-y-4 md:py-16'>
               <p className='text-base font-medium md:text-lg'>
-                {searchTerm || statusFilter !== 'all'
+                {searchTerm || statusFilter !== 'all' || selectedCategory !== 'all'
                   ? 'No programs match this filter.'
                   : 'No programs found.'}
               </p>
               <p className='text-muted-foreground text-xs md:text-sm'>
-                {searchTerm || statusFilter !== 'all'
+                {searchTerm || statusFilter !== 'all' || selectedCategory !== 'all'
                   ? 'Try adjusting your search or filter criteria.'
                   : 'Create your first training program to get started.'}
               </p>

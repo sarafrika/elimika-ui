@@ -239,11 +239,6 @@ export default {
       icon: BadgeCheck,
     },
     {
-      title: 'Classes',
-      url: '/dashboard/classes',
-      icon: ClipboardList,
-    },
-    {
       title: 'Schedule',
       url: '/dashboard/trainings',
       icon: ClipboardList,
