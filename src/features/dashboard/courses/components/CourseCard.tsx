@@ -71,7 +71,6 @@ export function CourseCard({
     enabled: !!course?.uuid,
   })
   const enrollments = data?.data?.content || [];
-  console.log(enrollments, 'enrollments data');
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
