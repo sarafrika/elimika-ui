@@ -152,12 +152,13 @@ export const AssignmentCreationForm = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDeletingAssignment, setIsDeletingAssignment] = useState(false);
+  const [deletingAttachmentUuid, setDeletingAttachmentUuid] = useState<string | null>(null);
   const uploadAssignmentMut = useMutation(uploadAssignmentAttachmentMutation());
   const deleteAttachmentMut = useMutation(deleteAssignmentAttachmentMutation());
   const isCreatingNewAssignment = !assignmentUuid;
   const isSavingWithAttachment = isCreatingNewAssignment && !!mediaFile;
-  const isSavingAssignment =
-    isPending || uploadAssignmentMut.isPending || deleteAttachmentMut.isPending;
+  const isSavingAssignment = isPending || uploadAssignmentMut.isPending;
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleAssignmentInputChange = <K extends keyof AssignmentFormState>(
@@ -262,6 +263,7 @@ export const AssignmentCreationForm = ({
       return;
 
     try {
+      setIsDeletingAssignment(true);
       await deleteAssignmentForLesson(assignmentUuid);
       setSelectedAssignmentUuid(null);
       onSelectAssignment?.(null);
@@ -269,6 +271,8 @@ export const AssignmentCreationForm = ({
       toast.success('Assignment deleted successfully');
     } catch (err) {
       toast.error('Failed to delete assignment.');
+    } finally {
+      setIsDeletingAssignment(false);
     }
   };
 
@@ -307,6 +311,7 @@ export const AssignmentCreationForm = ({
   const handleDeleteAttachment = (attachmentUuid: string) => {
     if (!confirm('Are you sure you want to delete this attachment?')) return;
 
+    setDeletingAttachmentUuid(attachmentUuid);
     deleteAttachmentMut.mutate(
       { path: { assignmentUuid: assignmentUuid as string, attachmentUuid } },
       {
@@ -320,6 +325,9 @@ export const AssignmentCreationForm = ({
         },
         onError: error => {
           toast.error(getErrorMessage(error, 'Failed to delete attachment'));
+        },
+        onSettled: () => {
+          setDeletingAttachmentUuid(null);
         },
       }
     );
@@ -530,14 +538,16 @@ export const AssignmentCreationForm = ({
                       }
                     >
                       <SelectTrigger className='w-full'>
-                        <SelectValue placeholder='Select a rubric (optional)' />
+                        <SelectValue placeholder='Select a rubric (optional)'>
+                          {selectedRubric ? selectedRubric.title : 'None'}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value='__none__'>
                           <span className='text-muted-foreground'>None</span>
                         </SelectItem>
                         {rubrics.map(r => (
-                          <SelectItem key={r.uuid} value={r.uuid ?? ''}>
+                          <SelectItem key={r.uuid} value={r.uuid ?? ''} textValue={r.title}>
                             <div className='flex flex-col'>
                               <span className='font-medium'>{r.title}</span>
                               {r.description && (
@@ -697,10 +707,15 @@ export const AssignmentCreationForm = ({
                       </div>
                       <button
                         onClick={() => file.uuid && handleDeleteAttachment(file.uuid)}
+                        disabled={
+                          deleteAttachmentMut.isPending && deletingAttachmentUuid === file.uuid
+                        }
                         className='border-destructive/20 text-destructive hover:bg-destructive/5 inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm font-medium'
                       >
                         <Trash2 className='h-4 w-4' />
-                        Delete
+                        {deleteAttachmentMut.isPending && deletingAttachmentUuid === file.uuid
+                          ? 'Deleting...'
+                          : 'Delete'}
                       </button>
                     </div>
                   ))}
@@ -791,10 +806,15 @@ export const AssignmentCreationForm = ({
               {/* Save / delete */}
               <div className='flex items-end justify-end gap-4 pt-2'>
                 {assignmentUuid && (
-                <Button size='sm' variant='destructive' onClick={handleDeleteAssignment}>
-                  {isPending ? <Spinner /> : <Trash2 />}
-                </Button>
-              )}
+                  <Button
+                    size='sm'
+                    variant='destructive'
+                    onClick={handleDeleteAssignment}
+                    disabled={isDeletingAssignment}
+                  >
+                    {isDeletingAssignment ? <Spinner /> : <Trash2 />}
+                  </Button>
+                )}
                 <Button size='sm' onClick={handleSaveAssignment} disabled={isSavingAssignment}>
                   {isSavingAssignment ? (
                     <>

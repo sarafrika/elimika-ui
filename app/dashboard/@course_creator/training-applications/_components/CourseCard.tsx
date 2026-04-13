@@ -42,10 +42,10 @@ export default function CourseCard({ course, isSelected, onSelect, onDelete }: C
             {stripHtml(course?.description)}
           </div>
 
-
           <div className='text-muted-foreground mb-1 line-clamp-3 w-[95%] truncate text-xs lg:line-clamp-0 lg:w-full'>
             <RichTextRenderer htmlString={course.description || 'No description provided'} />
           </div>
+
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
               <Badge variant={course?.status === 'published' ? 'success' : 'secondary'}>

@@ -1256,11 +1256,7 @@ const AssessmentCreationForm = ({
               createAssignmentForLesson={createAssignmentForLesson}
               updateAssignmentForLesson={updateAssignmentForLesson}
               deleteAssignmentForLesson={deleteAssignmentForLesson}
-              isPending={
-                createAssignmentMut.isPending ||
-                updateAssignmentMut.isPending ||
-                deleteAssignmentMut.isPending
-              }
+              isPending={createAssignmentMut.isPending || updateAssignmentMut.isPending}
             />
           </div>
         )}

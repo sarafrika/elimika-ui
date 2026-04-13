@@ -1,19 +1,20 @@
 'use client';
 
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Users } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { cn } from '@/lib/utils';
 import {
   getProgramCoursesOptions,
   getProgramEnrollmentsOptions,
   getTrainingProgramByUuidOptions,
   publishProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Users } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import Spinner from '../../../../../../components/ui/spinner';
 
 type ProgramCourseItem = {
@@ -21,6 +22,7 @@ type ProgramCourseItem = {
   name?: string;
   description?: string;
   is_required?: boolean;
+  category_names?: string[];
 };
 
 type ProgramEnrollmentItem = {
@@ -43,6 +45,7 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'courses' | 'enrollments'>('overview');
+  const [selectedCourseCategory, setSelectedCourseCategory] = useState('all');
 
   const { data, isLoading: programLoading } = useQuery({
     ...getTrainingProgramByUuidOptions({ path: { uuid: programUuid as string } }),
@@ -119,6 +122,28 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
 
   const enrollments = enrollmentsData?.data?.content || [];
   const courses = programCourses?.data || [];
+  const availableCourseCategories = useMemo(() => {
+    const categories = new Set<string>();
+
+    (courses as ProgramCourseItem[]).forEach(course => {
+      course.category_names?.forEach(category => {
+        if (category) {
+          categories.add(category);
+        }
+      });
+    });
+
+    return Array.from(categories).sort((a, b) => a.localeCompare(b));
+  }, [courses]);
+  const filteredCourses = useMemo(
+    () =>
+      (courses as ProgramCourseItem[]).filter(
+        course =>
+          selectedCourseCategory === 'all' ||
+          course.category_names?.includes(selectedCourseCategory) === true
+      ),
+    [courses, selectedCourseCategory]
+  );
 
   const getStatusClasses = (status: string) => {
     switch (status) {
@@ -259,36 +284,76 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
               </p>
             </div>
           ) : (
-            <div className='space-y-2 md:space-y-3'>
-              {(courses as ProgramCourseItem[]).map((course, index) => (
-                <div
-                  key={course.uuid}
-                  className='border-border bg-card rounded-lg border p-3 md:p-5'
+            <div className='space-y-4'>
+              <div className='flex flex-wrap gap-2'>
+                <Button
+                  variant={selectedCourseCategory === 'all' ? 'default' : 'outline'}
+                  size='sm'
+                  onClick={() => setSelectedCourseCategory('all')}
                 >
-                  <div className='flex gap-3 md:gap-4'>
-                    <div className='bg-primary/10 text-primary flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-sm font-semibold md:h-10 md:w-10 md:text-base'>
-                      {index + 1}
-                    </div>
-                    <div className='min-w-0 flex-1'>
-                      <h4 className='text-foreground mb-1 text-sm font-semibold md:text-base'>
-                        {course.name || 'Untitled Course'}
-                      </h4>
-                      <div className='flex flex-wrap gap-1.5 text-xs md:gap-2 md:text-sm'>
-                        {course.is_required && (
-                          <span className='bg-destructive/10 text-destructive rounded-full px-2 py-0.5 text-[10px] font-medium md:text-xs'>
-                            Required
-                          </span>
-                        )}
+                  All categories
+                </Button>
+                {availableCourseCategories.map(category => (
+                  <Button
+                    key={category}
+                    variant={selectedCourseCategory === category ? 'default' : 'outline'}
+                    size='sm'
+                    onClick={() => setSelectedCourseCategory(category)}
+                  >
+                    {category}
+                  </Button>
+                ))}
+              </div>
 
-                        <span
-                          className='text-muted-foreground line-clamp-3'
-                          dangerouslySetInnerHTML={{ __html: course.description ?? '' }}
-                        />
+              {filteredCourses.length === 0 ? (
+                <div className='border-border rounded-lg border-2 border-dashed py-8 text-center md:py-12'>
+                  <p className='text-muted-foreground text-sm md:text-base'>
+                    No courses match this category filter
+                  </p>
+                </div>
+              ) : (
+                <div className='space-y-2 md:space-y-3'>
+                  {filteredCourses.map((course, index) => (
+                    <div
+                      key={course.uuid}
+                      className='border-border bg-card rounded-lg border p-3 md:p-5'
+                    >
+                      <div className='flex gap-3 md:gap-4'>
+                        <div className='bg-primary/10 text-primary flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-sm font-semibold md:h-10 md:w-10 md:text-base'>
+                          {index + 1}
+                        </div>
+                        <div className='min-w-0 flex-1'>
+                          <h4 className='text-foreground mb-1 text-sm font-semibold md:text-base'>
+                            {course.name || 'Untitled Course'}
+                          </h4>
+                          <div className='mb-2 flex flex-wrap gap-1.5 md:gap-2'>
+                            {course.is_required && (
+                              <span className='bg-destructive/10 text-destructive rounded-full px-2 py-0.5 text-[10px] font-medium md:text-xs'>
+                                Required
+                              </span>
+                            )}
+                            {course.category_names?.map(category => (
+                              <span
+                                key={`${course.uuid}-${category}`}
+                                className={cn(
+                                  'bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[10px] font-medium md:text-xs'
+                                )}
+                              >
+                                {category}
+                              </span>
+                            ))}
+                          </div>
+
+                          <span
+                            className='text-muted-foreground line-clamp-3 text-xs md:text-sm'
+                            dangerouslySetInnerHTML={{ __html: course.description ?? '' }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

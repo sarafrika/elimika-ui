@@ -1,4 +1,5 @@
 export type ViewMode = 'day' | 'week' | 'month' | 'year';
+export type ScheduleEventType = 'class' | 'booking_request';
 
 export interface ClassSchedule {
   uuid: string;
@@ -49,6 +50,12 @@ export interface CalendarEvent {
   maxParticipants: number;
   trainingFee: number;
   sessionFormat: string;
+  eventType?: ScheduleEventType;
+  requestStatus?: string;
+  requestSource?: string;
+  requestSourceType?: 'student' | 'venue' | 'classroom' | 'system';
+  requestNote?: string;
+  studentName?: string;
 }
 
 export interface StudentEnrollment {

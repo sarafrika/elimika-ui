@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { AlertTriangle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../../../../lib/utils';
 import { ScheduleSettings } from './page';
@@ -261,17 +262,24 @@ export const ScheduleSection = ({
 
       {activeScheduleConflicts.length > 0 && (
         <div className='border-b px-6 py-5'>
-          <Alert variant='destructive'>
-            <AlertTitle>Schedule conflict detected</AlertTitle>
-            <AlertDescription>
-              <p>
+          <Alert
+            variant='destructive'
+            className='border-destructive/30 bg-destructive/8 text-foreground rounded-xl border shadow-sm'
+          >
+            <AlertTriangle className='text-destructive mt-0.5' />
+            <AlertTitle className='text-destructive text-base font-semibold'>
+              Schedule conflict detected
+            </AlertTitle>
+            <AlertDescription className='text-muted-foreground gap-2'>
+              <p className='text-muted-foreground'>
                 One or more selected sessions overlap with this instructor&apos;s existing class
                 schedule. Adjust the times below before publishing.
               </p>
-              <ul className='list-disc space-y-1 pl-5'>
+              <ul className='marker:text-destructive list-disc space-y-1.5 pl-5 text-muted-foreground'>
                 {activeScheduleConflicts.slice(0, 5).map(conflict => (
                   <li
                     key={`${conflict.proposed.date}-${conflict.proposed.startTime}-${conflict.existing.classTitle}-${conflict.existing.startTime}`}
+                    className='leading-relaxed'
                   >
                     {formatSessionDate(conflict.proposed.date)} {conflict.proposed.startTime} -{' '}
                     {conflict.proposed.endTime} overlaps with {conflict.existing.classTitle} (
@@ -288,7 +296,9 @@ export const ScheduleSection = ({
                   </li>
                 ))}
                 {activeScheduleConflicts.length > 5 && (
-                  <li>{activeScheduleConflicts.length - 5} more conflict(s) not shown.</li>
+                  <li className='font-medium'>
+                    {activeScheduleConflicts.length - 5} more conflict(s) not shown.
+                  </li>
                 )}
               </ul>
             </AlertDescription>

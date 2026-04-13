@@ -16,6 +16,7 @@ import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
   createClassDefinitionMutation,
+  getAllClassDefinitionsQueryKey,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
   updateClassDefinitionMutation,
@@ -277,7 +278,22 @@ const calculateOccurrences = (
   return Math.max(0, occurrences);
 };
 
-const ClassBuilderPage = () => {
+type ClassBuilderPageProps = {
+  embedded?: boolean;
+  initialSlot?: {
+    startTime: Date;
+    endTime: Date;
+  } | null;
+  onCancel?: () => void;
+  onSuccess?: () => void;
+};
+
+const ClassBuilderPage = ({
+  embedded = false,
+  initialSlot = null,
+  onCancel,
+  onSuccess,
+}: ClassBuilderPageProps = {}) => {
   const searchParams = useSearchParams();
   const classId = searchParams.get('id');
   const qc = useQueryClient();
@@ -357,6 +373,49 @@ const ClassBuilderPage = () => {
     reminder: '',
     classColour: '',
   });
+
+  useEffect(() => {
+    if (resolveId || !initialSlot) return;
+
+    const nextDate = initialSlot.startTime.toISOString().slice(0, 10);
+    const nextStart = initialSlot.startTime.toTimeString().slice(0, 5);
+    const nextEnd = initialSlot.endTime.toTimeString().slice(0, 5);
+    const slotWeekday = initialSlot.startTime.getDay();
+    const normalizedWeekday = slotWeekday === 0 ? 6 : slotWeekday - 1;
+
+    setScheduleSettings(prev => ({
+      ...prev,
+      startClass: {
+        ...prev.startClass,
+        date: nextDate,
+        startTime: nextStart,
+        endTime: nextEnd,
+      },
+      endRepeat: prev.endRepeat || nextDate,
+      repeat: {
+        ...prev.repeat,
+        unit: 'week',
+        days:
+          prev.repeat.days && prev.repeat.days.length > 0 ? prev.repeat.days : [normalizedWeekday],
+      },
+      timetable: {
+        ...prev.timetable,
+        days:
+          prev.timetable.days && prev.timetable.days.length > 0
+            ? prev.timetable.days
+            : [DAY_NAMES[normalizedWeekday]],
+        time: {
+          ...prev.timetable.time,
+          duration:
+            prev.timetable.time.duration ||
+            `${Math.max(
+              30,
+              Math.round((initialSlot.endTime.getTime() - initialSlot.startTime.getTime()) / 60000)
+            )}`,
+        },
+      },
+    }));
+  }, [initialSlot, resolveId]);
 
 
   useEffect(() => {
@@ -697,6 +756,10 @@ const ClassBuilderPage = () => {
               });
 
               qc.invalidateQueries({
+                queryKey: getAllClassDefinitionsQueryKey({ query: { pageable: {} } }),
+              });
+
+              qc.invalidateQueries({
                 queryKey: getClassDefinitionQueryKey({
                   path: { uuid: resolveId },
                 }),
@@ -704,7 +767,11 @@ const ClassBuilderPage = () => {
 
               toast.success(isDraft ? 'Class saved as draft' : 'Class updated successfully');
 
-              router.push('/dashboard/trainings');
+              if (embedded) {
+                onSuccess?.();
+              } else {
+                router.push('/dashboard/trainings');
+              }
             },
             onError: error => {
               toast.error(getMutationErrorMessage(error, 'Failed to update class'));
@@ -728,12 +795,20 @@ const ClassBuilderPage = () => {
                 }),
               });
 
+              qc.invalidateQueries({
+                queryKey: getAllClassDefinitionsQueryKey({ query: { pageable: {} } }),
+              });
+
               if (typeof window !== 'undefined') {
                 window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
               }
 
               toast.success(isDraft ? 'Class saved as draft' : 'Class created successfully');
-              router.push('/dashboard/trainings');
+              if (embedded) {
+                onSuccess?.();
+              } else {
+                router.push('/dashboard/trainings');
+              }
             },
             onError: error => {
               toast.error(getMutationErrorMessage(error, 'Failed to create class'));
@@ -749,11 +824,13 @@ const ClassBuilderPage = () => {
   const shouldShowSkeleton = isLoading || (resolveId && !isDataInitialized);
 
   return (
-    <div className='bg-background min-h-screen px-4 py-8'>
-      <div className='mx-auto max-w-5xl'>
+    <div className={embedded ? 'bg-background px-1 py-1' : 'bg-background min-h-screen px-4 py-8'}>
+      <div className={embedded ? 'mx-auto max-w-5xl' : 'mx-auto max-w-5xl'}>
         {/* Header */}
-        <div className='mb-8'>
-          <h1 className='text-foreground mb-2 text-3xl font-bold'>Class Builder</h1>
+        <div className={embedded ? 'mb-6' : 'mb-8'}>
+          <h1 className={`text-foreground mb-2 font-bold ${embedded ? 'text-2xl' : 'text-3xl'}`}>
+            Class Builder
+          </h1>
           <p className='text-muted-foreground'>
             Create and customize your training class with all required details, schedule, and
             notifications.
@@ -766,10 +843,17 @@ const ClassBuilderPage = () => {
           <>
             <form onSubmit={e => handleSubmit(e, false)} className='space-y-6'>
               <div className='flex-end flex items-center justify-between'>
-                <Button variant={'outline'} onClick={() => router.push('/dashboard/trainings')}>
-                  <ArrowLeft />
-                  Back
-                </Button>
+                {embedded ? (
+                  <Button type='button' variant='outline' onClick={onCancel}>
+                    <ArrowLeft />
+                    Close
+                  </Button>
+                ) : (
+                  <Button variant={'outline'} onClick={() => router.push('/dashboard/trainings')}>
+                    <ArrowLeft />
+                    Back
+                  </Button>
+                )}
                 <Button
                   type='button'
                   variant='outline'
