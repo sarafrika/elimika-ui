@@ -9,12 +9,14 @@ import type { Course, TrainingProgram } from '@/services/client';
 import {
   getAllDifficultyLevelsOptions,
   getCourseCreatorByUuidOptions,
+  getCourseEnrollmentsOptions,
+  getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
+import { BookOpen, Heart, Play, Share, Star, Users } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 interface CourseCardProps {
   course: Course | TrainingProgram;
@@ -50,11 +52,26 @@ export function CourseCard({
       .toUpperCase();
   };
 
-  const { data: creator } = useQuery(
-    getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } })
-  );
-  // @ts-expect-error
-  const courseCreator = creator?.data;
+  const { data: courseCreator } = useQuery({
+    ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } }),
+    enabled: !!course?.course_creator_uuid,
+  });
+
+  const { data: courseCreatorUser } = useQuery({
+    ...getUserByUuidOptions({ path: { uuid: courseCreator?.data?.user_uuid as string } }),
+    enabled: !!courseCreator?.data?.user_uuid,
+  });
+  const creatorName = courseCreatorUser?.data?.full_name || courseCreator?.data?.full_name || '';
+  const creatorImageUrl = courseCreatorUser?.data?.profile_image_url ?? '';
+
+  const { data } = useQuery({
+    ...getCourseEnrollmentsOptions({
+      path: { courseUuid: course?.uuid as string },
+    }),
+    enabled: !!course?.uuid,
+  })
+  const enrollments = data?.data?.content || [];
+  console.log(enrollments, 'enrollments data');
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -158,17 +175,17 @@ export function CourseCard({
             <RichTextRenderer htmlString={course?.description ?? ''} />
           </div>
 
-          {/* Instructor */}
+          {/* Course Creator */}
           <div className='mb-3 flex items-center gap-2'>
             <Avatar className='min-h-9 min-w-9'>
-              <AvatarImage src={course?.course_creator_uuid} />
-              <AvatarFallback className='text-xs'>
-                {getInitials(courseCreator?.full_name) || 'XY'}
-              </AvatarFallback>
+              <AvatarImage
+                src={creatorImageUrl}
+                alt={creatorName}
+                className='h-full w-full object-cover'
+              />
+              <AvatarFallback className='text-xs'>{getInitials(creatorName) || 'XY'}</AvatarFallback>
             </Avatar>
-            <span className='text-muted-foreground text-sm'>
-              {courseCreator?.full_name || 'Creator Name'}
-            </span>
+            <span className='text-muted-foreground text-sm'>{creatorName}</span>
           </div>
 
           {/* Stats */}
@@ -180,11 +197,7 @@ export function CourseCard({
             </div>
             <div className='flex items-center gap-1'>
               <Users className='h-4 w-4' />
-              <span>{classLimit}</span>
-            </div>
-            <div className='flex items-center gap-1'>
-              <Clock className='h-4 w-4' />
-              <span>{totalDurationDisplay}</span>
+              <span>{enrollments.length} enrollments</span>
             </div>
           </div>
 

@@ -1,3 +1,4 @@
+import type { UserDomain } from '@/lib/types';
 import {
   Award,
   BadgeCheck,
@@ -40,7 +41,6 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
-import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -237,6 +237,11 @@ export default {
       title: 'My Skills',
       url: '/dashboard/my-skills',
       icon: BadgeCheck,
+    },
+    {
+      title: 'Classes',
+      url: '/dashboard/classes',
+      icon: ClipboardList,
     },
     {
       title: 'Schedule',

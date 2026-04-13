@@ -1,6 +1,24 @@
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-
+import { GripVertical, LoaderCircle, PlusCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -9,11 +27,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  RequirementTypeEnum as RequirementTypeValues,
   type Course,
+  type ProgramRequirement,
   type RequirementTypeEnum,
+  RequirementTypeEnum as RequirementTypeValues,
 } from '@/services/client/types.gen';
-import { PlusCircle } from 'lucide-react';
 import { Button } from '../../../../../components/ui/button';
 import { Input } from '../../../../../components/ui/input';
 import { Label } from '../../../../../components/ui/label';
@@ -37,6 +55,7 @@ import {
   removeProgramCourseMutation,
   updateProgramRequirementMutation,
 } from '../../../../../services/client/@tanstack/react-query.gen';
+import { updateProgramCourse } from '../../../../../services/client/sdk.gen';
 
 type ProgramCourseManagementProps = {
   programUuid: string;
@@ -54,6 +73,87 @@ type NewRequirement = {
 };
 
 type ProgramCourseListItem = Course & { uuid?: string; is_required?: boolean };
+
+type SortableProgramCourseCardProps = {
+  course: ProgramCourseListItem;
+  index: number;
+  isRemoving: boolean;
+  isReordering: boolean;
+  onRemove: (courseUuid: string) => void;
+};
+
+const SortableProgramCourseCard = ({
+  course,
+  index,
+  isRemoving,
+  isReordering,
+  onRemove,
+}: SortableProgramCourseCardProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: course.uuid ?? `course-${index}`,
+    disabled: isRemoving || isReordering,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={`border-border bg-muted flex items-center justify-between rounded-lg border p-4 ${
+        isDragging ? 'shadow-lg ring-primary/20 ring-2' : ''
+      }`}
+    >
+      <div className='flex items-center gap-4'>
+        <Button
+          type='button'
+          variant='ghost'
+          size='icon'
+          disabled={isRemoving || isReordering}
+          className='text-muted-foreground hover:text-foreground h-9 w-9 cursor-grab active:cursor-grabbing'
+          aria-label={`Reorder ${course.name || 'course'}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className='h-4 w-4' />
+        </Button>
+        <div className='bg-primary/5 text-primary flex h-10 w-10 items-center justify-center rounded-lg font-semibold'>
+          {index + 1}
+        </div>
+        <div>
+          <div className='text-foreground font-medium'>{course.name || 'Course'}</div>
+          {course.is_required && (
+            <span className='bg-destructive/10 text-destructive mt-1 inline-block rounded px-2 py-0.5 text-xs font-medium'>
+              Required
+            </span>
+          )}
+        </div>
+      </div>
+      <Button
+        onClick={() => course.uuid && onRemove(course.uuid)}
+        disabled={isRemoving || isReordering}
+        className='bg-destructive/10 text-destructive hover:bg-destructive/20 rounded px-3 py-1 text-sm font-medium'
+      >
+        {isRemoving ? (
+          <>
+            <LoaderCircle className='animate-spin' />
+            Removing...
+          </>
+        ) : (
+          'Remove'
+        )}
+      </Button>
+    </div>
+  );
+};
 
 const normalizeRequirementType = (value: string | null | undefined): RequirementTypeEnum => {
   const normalized = value?.toUpperCase();
@@ -81,6 +181,9 @@ const ProgramCourseManagement = ({
   const [showRequirementModal, setShowRequirementModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [editingRequirementUuid, setEditingRequirementUuid] = useState<string | null>(null);
+  const [orderedCourses, setOrderedCourses] = useState<ProgramCourseListItem[]>([]);
+  const [removingCourseUuid, setRemovingCourseUuid] = useState<string | null>(null);
+  const [removingRequirementUuid, setRemovingRequirementUuid] = useState<string | null>(null);
 
   const [newRequirement, setNewRequirement] = useState<NewRequirement>({
     requirement_type: RequirementTypeValues.STUDENT,
@@ -126,7 +229,52 @@ const ProgramCourseManagement = ({
 
   const removeCourseMut = useMutation({
     ...removeProgramCourseMutation(),
+    onMutate: variables => {
+      setRemovingCourseUuid(variables.path.courseUuid);
+    },
     onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: getProgramCoursesQueryKey({
+          path: { programUuid },
+        }),
+      });
+    },
+    onSettled: () => {
+      setRemovingCourseUuid(null);
+    },
+  });
+
+  const reorderCoursesMut = useMutation({
+    mutationFn: async (courses: ProgramCourseListItem[]) => {
+      await Promise.all(
+        courses
+          .filter(course => course.uuid)
+          .map((course, index) =>
+            updateProgramCourse({
+              body: {
+                program_uuid: programUuid,
+                course_uuid: course.uuid as string,
+                sequence_order: index + 1,
+                is_required: course.is_required ?? true,
+              },
+              path: {
+                programUuid,
+                courseUuid: course.uuid as string,
+              },
+              throwOnError: true,
+            })
+          )
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: getProgramCoursesQueryKey({
+          path: { programUuid },
+        }),
+      });
+    },
+    onError: () => {
+      toast.error('Failed to update course order');
       qc.invalidateQueries({
         queryKey: getProgramCoursesQueryKey({
           path: { programUuid },
@@ -177,6 +325,9 @@ const ProgramCourseManagement = ({
 
   const removeRequirementMut = useMutation({
     ...deleteProgramRequirementMutation(),
+    onMutate: variables => {
+      setRemovingRequirementUuid(variables.path.requirementUuid);
+    },
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: getProgramRequirementsQueryKey({
@@ -185,11 +336,29 @@ const ProgramCourseManagement = ({
         }),
       });
     },
+    onSettled: () => {
+      setRemovingRequirementUuid(null);
+    },
   });
 
   const allCourses = allCoursesData?.data?.content || [];
   const assignedCourseUuids = programCourses?.data?.map(pc => pc.uuid).filter(Boolean) || [];
   const availableCourses = allCourses.filter(c => !assignedCourseUuids.includes(c.uuid));
+  const sortedProgramCourses = [...(programCourses?.data ?? [])].sort(
+    (a, b) => (a.sequence_order ?? 0) - (b.sequence_order ?? 0)
+  );
+  const courseIds = orderedCourses.map(course => course.uuid).filter(Boolean) as string[];
+
+  useEffect(() => {
+    setOrderedCourses(sortedProgramCourses);
+  }, [programCourses?.data]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleAddCourse = () => {
     if (!selectedCourse?.uuid) return;
@@ -210,6 +379,33 @@ const ProgramCourseManagement = ({
   const handleRemoveCourse = (courseUuid: string) => {
     removeCourseMut.mutate({
       path: { programUuid, courseUuid },
+    });
+  };
+
+  const handleCourseDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id || reorderCoursesMut.isPending) {
+      return;
+    }
+
+    setOrderedCourses(currentCourses => {
+      const oldIndex = currentCourses.findIndex(course => course.uuid === active.id);
+      const newIndex = currentCourses.findIndex(course => course.uuid === over.id);
+
+      if (oldIndex < 0 || newIndex < 0) {
+        return currentCourses;
+      }
+
+      const reorderedCourses = arrayMove(currentCourses, oldIndex, newIndex).map(
+        (course, index) => ({
+          ...course,
+          sequence_order: index + 1,
+        })
+      );
+
+      reorderCoursesMut.mutate(reorderedCourses);
+      return reorderedCourses;
     });
   };
 
@@ -270,7 +466,7 @@ const ProgramCourseManagement = ({
     });
   };
 
-  const handleEditRequirement = (requirement: NonNullable<typeof programRequirements>['data']['content'][number]) => {
+  const handleEditRequirement = (requirement: ProgramRequirement) => {
     setEditingRequirementUuid(requirement.uuid ?? null);
     setNewRequirement({
       requirement_type: normalizeRequirementType(requirement.requirement_type),
@@ -286,7 +482,9 @@ const ProgramCourseManagement = ({
         <div className='mb-4 flex items-center justify-between'>
           <div>
             <h3 className='text-foreground text-lg font-semibold'>Program Courses</h3>
-            <p className='text-muted-foreground text-sm'>Add courses to your training program</p>
+            <p className='text-muted-foreground text-sm'>
+              Add courses to your training program and drag to reorder them
+            </p>
           </div>
           <Button
             onClick={() => setShowCourseModal(true)}
@@ -297,7 +495,7 @@ const ProgramCourseManagement = ({
         </div>
 
         <div className='space-y-3'>
-          {!programCourses || programCourses?.data?.length === 0 ? (
+          {orderedCourses.length === 0 ? (
             <div className='border-border rounded-lg border-2 border-dashed py-8 text-center'>
               <div className='mb-2 text-3xl'>📖</div>
               <p className='text-muted-foreground'>No courses added yet</p>
@@ -306,33 +504,24 @@ const ProgramCourseManagement = ({
               </p>
             </div>
           ) : (
-            programCourses?.data?.map((course: ProgramCourseListItem, index) => (
-              <div
-                key={course.uuid}
-                className='border-border bg-muted flex items-center justify-between rounded-lg border p-4'
-              >
-                <div className='flex items-center gap-4'>
-                  <div className='bg-primary/5 text-primary flex h-10 w-10 items-center justify-center rounded-lg font-semibold'>
-                    {index + 1}
-                  </div>
-                  <div>
-                    <div className='text-foreground font-medium'>{course.name || 'Course'}</div>
-                    {course.is_required && (
-                      <span className='bg-destructive/10 text-destructive mt-1 inline-block rounded px-2 py-0.5 text-xs font-medium'>
-                        Required
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <Button
-                  onClick={() => course.uuid && handleRemoveCourse(course.uuid)}
-                  disabled={removeCourseMut.isPending}
-                  className='bg-destructive/10 text-destructive hover:bg-destructive/20 rounded px-3 py-1 text-sm font-medium'
-                >
-                  Remove
-                </Button>
-              </div>
-            ))
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleCourseDragEnd}
+            >
+              <SortableContext items={courseIds} strategy={verticalListSortingStrategy}>
+                {orderedCourses.map((course, index) => (
+                  <SortableProgramCourseCard
+                    key={course.uuid}
+                    course={course}
+                    index={index}
+                    isRemoving={removingCourseUuid === course.uuid}
+                    isReordering={reorderCoursesMut.isPending}
+                    onRemove={handleRemoveCourse}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       </div>
@@ -383,17 +572,29 @@ const ProgramCourseManagement = ({
                   <Button
                     variant='outline'
                     onClick={() => handleEditRequirement(req)}
-                    disabled={updateRequirementMut.isPending}
+                    disabled={
+                      updateRequirementMut.isPending || removeRequirementMut.isPending
+                    }
                     className='rounded px-3 py-1 text-sm font-medium'
                   >
                     Edit
                   </Button>
                   <Button
                     onClick={() => req.uuid && handleRemoveRequirement(req.uuid)}
-                    disabled={removeRequirementMut.isPending}
+                    disabled={
+                      removeRequirementMut.isPending &&
+                      removingRequirementUuid === req.uuid
+                    }
                     className='bg-destructive/10 text-destructive hover:bg-destructive/20 rounded px-3 py-1 text-sm font-medium'
                   >
-                    Remove
+                    {removeRequirementMut.isPending && removingRequirementUuid === req.uuid ? (
+                      <>
+                        <LoaderCircle className='animate-spin' />
+                        Removing...
+                      </>
+                    ) : (
+                      'Remove'
+                    )}
                   </Button>
                 </div>
               </div>
@@ -574,8 +775,8 @@ const ProgramCourseManagement = ({
             >
               {editingRequirementUuid
                 ? updateRequirementMut.isPending
-                  ? 'Saving...'
-                  : 'Save Changes'
+                  ? 'Updating...'
+                  : 'Update Requirement'
                 : addRequirementMut.isPending
                   ? 'Adding...'
                   : 'Add Requirement'}
