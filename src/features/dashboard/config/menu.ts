@@ -240,6 +240,11 @@ export default {
     },
     {
       title: 'Schedule',
+      url: '/dashboard/schedules',
+      icon: ClipboardList,
+    },
+    {
+      title: 'Classes',
       url: '/dashboard/trainings',
       icon: ClipboardList,
     },

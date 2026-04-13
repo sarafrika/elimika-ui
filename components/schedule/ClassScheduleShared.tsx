@@ -43,6 +43,25 @@ export const Skeleton: React.FC<{ className?: string }> = ({ className = '' }) =
   <div className={`bg-muted animate-pulse rounded ${className}`} />
 );
 
+const REQUEST_EVENT_STYLES = {
+  backgroundColor: 'rgba(245, 158, 11, 0.12)',
+  borderColor: 'rgba(245, 158, 11, 0.7)',
+  color: 'rgb(146, 64, 14)',
+};
+
+const isBookingRequestEvent = (event: CalendarEvent) => event.eventType === 'booking_request';
+
+const getVisibleWeekDays = (showWeekends: boolean) =>
+  [
+    { label: 'Mon', dayOffset: 0 },
+    { label: 'Tue', dayOffset: 1 },
+    { label: 'Wed', dayOffset: 2 },
+    { label: 'Thu', dayOffset: 3 },
+    { label: 'Fri', dayOffset: 4 },
+    { label: 'Sat', dayOffset: 5 },
+    { label: 'Sun', dayOffset: 6 },
+  ].filter(day => showWeekends || day.dayOffset < 5);
+
 const Dropdown: React.FC<{
   label: string;
   count: number;
@@ -180,7 +199,19 @@ export const ScheduleCalendarHeader: React.FC<{
   onViewChange: (view: ViewMode) => void;
   onDateChange: (direction: 'prev' | 'next') => void;
   eventCount: number;
-}> = ({ currentDate, viewMode, onViewChange, onDateChange, eventCount }) => {
+  workingHoursLabel?: string;
+  onWorkingHoursClick?: () => void;
+  onSettingsClick?: () => void;
+}> = ({
+  currentDate,
+  viewMode,
+  onViewChange,
+  onDateChange,
+  eventCount,
+  workingHoursLabel,
+  onWorkingHoursClick,
+  onSettingsClick,
+}) => {
   const formatDate = () => {
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'short',
@@ -233,6 +264,16 @@ export const ScheduleCalendarHeader: React.FC<{
               </button>
             ))}
           </div>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            className='rounded-full px-4'
+            onClick={onWorkingHoursClick}
+          >
+            <Clock className='h-3.5 w-3.5' />
+            {workingHoursLabel || 'Working hours'}
+          </Button>
         </div>
         <div className='flex items-center justify-between gap-3 md:justify-end'>
           <div className='bg-primary/10 flex items-center gap-2 rounded-lg px-2.5 py-1.5'>
@@ -241,7 +282,11 @@ export const ScheduleCalendarHeader: React.FC<{
               {eventCount} {eventCount === 1 ? 'Session' : 'Sessions'}
             </span>
           </div>
-          <button type='button' className='hover:bg-primary/5 rounded-lg p-1.5 transition-colors'>
+          <button
+            type='button'
+            className='hover:bg-primary/5 rounded-lg p-1.5 transition-colors'
+            onClick={onSettingsClick}
+          >
             <Settings className='text-muted-foreground h-4 w-4' />
           </button>
         </div>
@@ -256,8 +301,17 @@ export const ScheduleWeekView: React.FC<{
   selectedEvent: CalendarEvent | null;
   currentDate: Date;
   onDateSelect?: (date: Date) => void;
-}> = ({ events, onEventSelect, selectedEvent, currentDate, onDateSelect }) => {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  showWeekends?: boolean;
+  onTimeSlotSelect?: (slot: { startTime: Date; endTime: Date }) => void;
+}> = ({
+  events,
+  onEventSelect,
+  selectedEvent,
+  currentDate,
+  onDateSelect,
+  showWeekends = true,
+  onTimeSlotSelect,
+}) => {
   const hours = Array.from({ length: 18 }, (_, i) => i + 4);
 
   const getWeekStart = (date: Date) => {
@@ -268,10 +322,10 @@ export const ScheduleWeekView: React.FC<{
   };
 
   const weekStart = getWeekStart(currentDate);
-  const weekDaysWithDates = days.map((day, idx) => {
+  const weekDaysWithDates = getVisibleWeekDays(showWeekends).map(({ label, dayOffset }) => {
     const date = new Date(weekStart);
-    date.setDate(weekStart.getDate() + idx);
-    return { day, date };
+    date.setDate(weekStart.getDate() + dayOffset);
+    return { day: label, date, dayOffset };
   });
 
   const getEventsForDayAndHour = (dayIndex: number, hour: number) => {
@@ -297,6 +351,14 @@ export const ScheduleWeekView: React.FC<{
     const start = new Date(event.startTime);
     const minutes = start.getMinutes();
     return (minutes / 60) * 60;
+  };
+
+  const createSlotRange = (date: Date, hour: number) => {
+    const startTime = new Date(date);
+    startTime.setHours(hour, 0, 0, 0);
+    const endTime = new Date(startTime);
+    endTime.setHours(hour + 1, 0, 0, 0);
+    return { startTime, endTime };
   };
 
   return (
@@ -341,22 +403,33 @@ export const ScheduleWeekView: React.FC<{
                           ? 'border-primary bg-primary/5'
                           : 'border-border bg-background hover:border-primary/40 hover:bg-primary/5'
                       }`}
+                      style={
+                        isBookingRequestEvent(event)
+                          ? REQUEST_EVENT_STYLES
+                          : undefined
+                      }
                     >
                       <div className='flex items-start justify-between gap-3'>
                         <div className='min-w-0'>
-                          <div className='text-foreground truncate text-sm font-semibold'>
-                            {event.title}
+                          <div className='truncate text-sm font-semibold'>
+                            {isBookingRequestEvent(event) ? 'Booking request' : event.title}
                           </div>
-                          <div className='text-muted-foreground truncate text-xs'>
-                            {event.courseName}
+                          <div className='truncate text-xs opacity-80'>
+                            {event.courseName || event.studentName || event.requestSource}
                           </div>
                         </div>
-                        <span
-                          className='mt-0.5 h-2.5 w-2.5 flex-shrink-0 rounded-full'
-                          style={{ backgroundColor: event.color }}
-                        />
+                        {isBookingRequestEvent(event) ? (
+                          <span className='border-warning/70 text-warning-foreground rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase'>
+                            Request
+                          </span>
+                        ) : (
+                          <span
+                            className='mt-0.5 h-2.5 w-2.5 flex-shrink-0 rounded-full'
+                            style={{ backgroundColor: event.color }}
+                          />
+                        )}
                       </div>
-                      <div className='text-muted-foreground mt-2 text-xs'>
+                      <div className='mt-2 text-xs opacity-80'>
                         {new Date(event.startTime).toLocaleTimeString('en-US', {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -367,24 +440,34 @@ export const ScheduleWeekView: React.FC<{
                           minute: '2-digit',
                         })}
                       </div>
-                      <div className='text-muted-foreground mt-1 truncate text-xs'>
-                        {event.location}
-                      </div>
+                      <div className='mt-1 truncate text-xs opacity-75'>{event.location}</div>
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className='text-muted-foreground rounded-xl border border-dashed px-3 py-6 text-center text-sm'>
-                  No sessions scheduled.
-                </div>
+                <button
+                  type='button'
+                  className='text-muted-foreground hover:border-primary/40 hover:bg-primary/5 w-full rounded-xl border border-dashed px-3 py-6 text-center text-sm transition-colors'
+                  onClick={() => onTimeSlotSelect?.(createSlotRange(date, 9))}
+                >
+                  No sessions scheduled. Tap to create a class.
+                </button>
               )}
             </div>
           );
         })}
       </div>
 
-      <div className='hidden min-[1551px]:block min-[1551px]:min-w-[980px]'>
-        <div className='border-border bg-muted sticky top-0 z-10 grid grid-cols-8 border-b'>
+      <div
+        className={`hidden min-[1551px]:block ${showWeekends ? 'min-[1551px]:min-w-[980px]' : 'min-[1551px]:min-w-[760px]'}`}
+      >
+        <div
+          className='border-border bg-muted sticky top-0 z-10 border-b'
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `84px repeat(${weekDaysWithDates.length}, minmax(120px, 1fr))`,
+          }}
+        >
           <div className='text-muted-foreground p-2 text-xs font-semibold md:p-3 md:text-sm'>
             Time
           </div>
@@ -406,19 +489,28 @@ export const ScheduleWeekView: React.FC<{
         </div>
         <div className='relative'>
           {hours.map(hour => (
-            <div key={hour} className='border-border/50 grid grid-cols-8 border-b'>
+            <div
+              key={hour}
+              className='border-border/50 border-b'
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `84px repeat(${weekDaysWithDates.length}, minmax(120px, 1fr))`,
+              }}
+            >
               <div className='text-muted-foreground p-2 text-xs font-medium md:p-3 md:text-sm'>
                 {hour.toString().padStart(2, '0')}:00
               </div>
-              {days.map((_, dayIndex) => {
-                const dayEvents = getEventsForDayAndHour(dayIndex, hour);
+              {weekDaysWithDates.map(({ dayOffset, date }) => {
+                const dayEvents = getEventsForDayAndHour(dayOffset, hour);
                 const isStartHour = dayEvents.some(e => new Date(e.startTime).getHours() === hour);
 
                 return (
-                  <div
-                    key={dayIndex}
-                    className='border-border/50 relative border-l'
+                  <button
+                    key={dayOffset}
+                    type='button'
+                    className='border-border/50 hover:bg-primary/5 relative border-l text-left transition-colors'
                     style={{ height: '60px' }}
+                    onClick={() => onTimeSlotSelect?.(createSlotRange(date, hour))}
                   >
                     {isStartHour &&
                       dayEvents.map((event, eventIdx) => {
@@ -428,26 +520,35 @@ export const ScheduleWeekView: React.FC<{
                         return (
                           <div
                             key={event.id}
-                            className={`absolute cursor-pointer overflow-hidden rounded-lg p-1.5 transition-all hover:shadow-lg md:p-2 ${
+                            className={`absolute overflow-hidden rounded-lg border p-1.5 transition-all hover:shadow-lg md:p-2 ${
                               selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
                             }`}
                             style={{
-                              backgroundColor: event.color,
+                              backgroundColor: isBookingRequestEvent(event)
+                                ? REQUEST_EVENT_STYLES.backgroundColor
+                                : event.color,
+                              borderColor: isBookingRequestEvent(event)
+                                ? REQUEST_EVENT_STYLES.borderColor
+                                : event.color,
+                              color: isBookingRequestEvent(event) ? REQUEST_EVENT_STYLES.color : 'white',
                               height: `${getEventHeight(event)}px`,
                               top: `${getEventTop(event)}px`,
                               left: `${4 + eventIdx * 2}px`,
                               right: '4px',
                               zIndex: eventIdx + 1,
                             }}
-                            onClick={() => onEventSelect(event)}
+                            onClick={slotEvent => {
+                              slotEvent.stopPropagation();
+                              onEventSelect(event);
+                            }}
                           >
-                            <div className='truncate text-[10px] font-semibold text-white md:text-xs'>
-                              {event.title}
+                            <div className='truncate text-[10px] font-semibold md:text-xs'>
+                              {isBookingRequestEvent(event) ? 'Booking request' : event.title}
                             </div>
-                            <div className='truncate text-[9px] text-white opacity-90 md:text-xs'>
-                              {event.courseName}
+                            <div className='truncate text-[9px] opacity-90 md:text-xs'>
+                              {event.courseName || event.studentName || event.requestSource}
                             </div>
-                            <div className='mt-0.5 truncate text-[9px] text-white opacity-75 md:text-xs'>
+                            <div className='mt-0.5 truncate text-[9px] opacity-75 md:text-xs'>
                               {new Date(event.startTime).toLocaleTimeString('en-US', {
                                 hour: '2-digit',
                                 minute: '2-digit',
@@ -456,7 +557,7 @@ export const ScheduleWeekView: React.FC<{
                           </div>
                         );
                       })}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -472,7 +573,8 @@ export const ScheduleDayView: React.FC<{
   onEventSelect: (event: CalendarEvent) => void;
   selectedEvent: CalendarEvent | null;
   currentDate: Date;
-}> = ({ events, onEventSelect, selectedEvent, currentDate }) => {
+  onTimeSlotSelect?: (slot: { startTime: Date; endTime: Date }) => void;
+}> = ({ events, onEventSelect, selectedEvent, currentDate, onTimeSlotSelect }) => {
   const hours = Array.from({ length: 18 }, (_, i) => i + 4);
 
   const dayEvents = events.filter(event => {
@@ -491,6 +593,14 @@ export const ScheduleDayView: React.FC<{
     return durationHours * 60;
   };
 
+  const createSlotRange = (hour: number) => {
+    const startTime = new Date(currentDate);
+    startTime.setHours(hour, 0, 0, 0);
+    const endTime = new Date(startTime);
+    endTime.setHours(hour + 1, 0, 0, 0);
+    return { startTime, endTime };
+  };
+
   return (
     <div className='scrollbar-hide flex-1 overflow-auto'>
       <div className='relative'>
@@ -502,36 +612,47 @@ export const ScheduleDayView: React.FC<{
                 {hour.toString().padStart(2, '0')}:00
               </div>
 
-              <div className='relative flex-1 p-2'>
+              <button
+                type='button'
+                className='hover:bg-primary/5 relative flex-1 p-2 text-left transition-colors'
+                onClick={() => onTimeSlotSelect?.(createSlotRange(hour))}
+              >
                 {hourEvents.map((event, idx) => (
                   <div
                     key={event.id}
-                    className={`absolute cursor-pointer rounded-lg p-2 transition-all hover:shadow-lg md:p-3 ${
+                    className={`absolute rounded-lg border p-2 transition-all hover:shadow-lg md:p-3 ${
                       selectedEvent?.id === event.id ? 'ring-ring ring-2' : ''
                     }`}
                     style={{
-                      backgroundColor: event.color,
+                      backgroundColor: isBookingRequestEvent(event)
+                        ? REQUEST_EVENT_STYLES.backgroundColor
+                        : event.color,
+                      borderColor: isBookingRequestEvent(event)
+                        ? REQUEST_EVENT_STYLES.borderColor
+                        : event.color,
+                      color: isBookingRequestEvent(event) ? REQUEST_EVENT_STYLES.color : 'white',
                       height: `${getEventHeight(event)}px`,
                       left: `${8 + idx * 4}px`,
                       right: '0px',
                       top: '0px',
                       zIndex: idx + 1,
                     }}
-                    onClick={() => onEventSelect(event)}
+                    onClick={slotEvent => {
+                      slotEvent.stopPropagation();
+                      onEventSelect(event);
+                    }}
                   >
-                    <div className='text-sm font-semibold text-white md:text-base'>
-                      {event.title}
+                    <div className='text-sm font-semibold md:text-base'>
+                      {isBookingRequestEvent(event) ? 'Booking request' : event.title}
                     </div>
-                    <div className='mt-0.5 text-xs text-white opacity-90 md:text-sm'>
-                      {event.courseName}
+                    <div className='mt-0.5 text-xs opacity-90 md:text-sm'>
+                      {event.courseName || event.studentName || event.requestSource}
                     </div>
-                    <div className='text-xs text-white opacity-90 md:text-sm'>
-                      {event.instructor}
-                    </div>
-                    <div className='text-xs text-white opacity-90 md:text-sm'>{event.location}</div>
+                    <div className='text-xs opacity-90 md:text-sm'>{event.instructor}</div>
+                    <div className='text-xs opacity-90 md:text-sm'>{event.location}</div>
                   </div>
                 ))}
-              </div>
+              </button>
             </div>
           );
         })}
@@ -545,6 +666,7 @@ export const ScheduleMonthView: React.FC<{
   onEventSelect: (event: CalendarEvent) => void;
   currentDate: Date;
   onDateSelect?: (date: Date) => void;
+  showWeekends?: boolean;
 }> = ({ events, onEventSelect, currentDate, onDateSelect }) => {
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
@@ -643,15 +765,13 @@ export const ScheduleMonthView: React.FC<{
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const dayNumber = i + 1;
           const dayEvents = getEventsForDay(dayNumber);
+          const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayNumber);
+
           return (
             <div
               key={dayNumber}
               className='border-border hover:border-ring hover:bg-primary/5 min-h-[70px] rounded-lg border p-2 transition-colors md:min-h-[100px]'
-              onClick={() =>
-                onDateSelect?.(
-                  new Date(currentDate.getFullYear(), currentDate.getMonth(), dayNumber)
-                )
-              }
+              onClick={() => onDateSelect?.(targetDate)}
             >
               <div className='text-foreground mb-1.5 text-xs font-semibold md:text-sm'>
                 {dayNumber}
@@ -660,8 +780,12 @@ export const ScheduleMonthView: React.FC<{
                 {dayEvents.slice(0, 3).map(event => (
                   <div
                     key={event.id}
-                    className='cursor-pointer truncate rounded p-1 text-[10px] transition-opacity hover:opacity-80 md:text-xs'
-                    style={{ backgroundColor: event.color, color: 'white' }}
+                    className='cursor-pointer truncate rounded border p-1 text-[10px] transition-opacity hover:opacity-80 md:text-xs'
+                    style={
+                      isBookingRequestEvent(event)
+                        ? REQUEST_EVENT_STYLES
+                        : { backgroundColor: event.color, borderColor: event.color, color: 'white' }
+                    }
                     onClick={e => {
                       e.stopPropagation();
                       onEventSelect(event);
@@ -778,9 +902,9 @@ export const ScheduleStudentEnrollmentTable: React.FC<{ students: StudentEnrollm
 }) => {
   const getStatusBadge = (status: StudentEnrollment['attendanceStatus']) => {
     const config = {
-      present: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: Check },
-      absent: { bg: 'bg-red-100', text: 'text-red-700', icon: X },
-      pending: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Clock },
+      present: { bg: 'bg-success/15', text: 'text-success', icon: Check },
+      absent: { bg: 'bg-destructive/15', text: 'text-destructive', icon: X },
+      pending: { bg: 'bg-warning/15', text: 'text-warning', icon: Clock },
     };
     const { bg, text, icon: Icon } = config[status];
     return (
@@ -850,7 +974,17 @@ export const ScheduleSessionDetailsPanel: React.FC<{
   selectedEvent: CalendarEvent | null;
   isLoadingStudents: boolean;
   transformedStudents: StudentEnrollment[];
-}> = ({ selectedEvent, isLoadingStudents, transformedStudents }) => {
+  onAcceptRequest?: () => void;
+  onDeclineRequest?: () => void;
+  isUpdatingRequest?: boolean;
+}> = ({
+  selectedEvent,
+  isLoadingStudents,
+  transformedStudents,
+  onAcceptRequest,
+  onDeclineRequest,
+  isUpdatingRequest,
+}) => {
   if (!selectedEvent) {
     return (
       <div className='flex h-full items-center justify-center p-6'>
@@ -866,7 +1000,7 @@ export const ScheduleSessionDetailsPanel: React.FC<{
     <div>
       <div className='border-border bg-background border-b p-4'>
         <h3 className='text-muted-foreground mb-1.5 text-xs font-semibold tracking-wider uppercase'>
-          Class Session
+          {isBookingRequestEvent(selectedEvent) ? 'Booking Request' : 'Class Session'}
         </h3>
         <h2 className='text-foreground text-base font-bold'>{selectedEvent.title}</h2>
         {selectedEvent.courseName && (
@@ -904,10 +1038,12 @@ export const ScheduleSessionDetailsPanel: React.FC<{
           <div className='mb-1.5 flex items-center gap-1.5'>
             <Users className='text-muted-foreground h-3.5 w-3.5' />
             <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
-              Instructor
+              {isBookingRequestEvent(selectedEvent) ? 'Requester' : 'Instructor'}
             </span>
           </div>
-          <p className='text-foreground mt-0.5 text-sm'>{selectedEvent.instructor}</p>
+          <p className='text-foreground mt-0.5 text-sm'>
+            {selectedEvent.studentName || selectedEvent.instructor || 'Unassigned'}
+          </p>
         </div>
         <div className='border-border border-b pb-3'>
           <div className='mb-1.5 flex items-center gap-1.5'>
@@ -920,6 +1056,27 @@ export const ScheduleSessionDetailsPanel: React.FC<{
             {selectedEvent.location} ({selectedEvent.locationType})
           </p>
         </div>
+        {isBookingRequestEvent(selectedEvent) && (
+          <div className='border-border border-b pb-3'>
+            <div className='mb-1.5 flex items-center gap-1.5'>
+              <Info className='text-muted-foreground h-3.5 w-3.5' />
+              <span className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
+                Request details
+              </span>
+            </div>
+            <p className='text-foreground text-sm'>
+              {selectedEvent.requestSource || 'Request added to the schedule'}
+            </p>
+            {selectedEvent.requestNote && (
+              <p className='text-muted-foreground mt-1 text-sm'>{selectedEvent.requestNote}</p>
+            )}
+            {selectedEvent.requestStatus && (
+              <span className='border-warning/70 bg-warning/10 text-warning mt-3 inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold capitalize'>
+                {selectedEvent.requestStatus.replaceAll('_', ' ')}
+              </span>
+            )}
+          </div>
+        )}
         <div className='border-border border-b pb-3'>
           <div className='mb-1.5 flex items-center gap-1.5'>
             <Users className='text-muted-foreground h-3.5 w-3.5' />
@@ -943,13 +1100,31 @@ export const ScheduleSessionDetailsPanel: React.FC<{
         <div className='border-border border-t pt-3'>
           <div className='bg-primary/10 border-primary/20 rounded-lg border p-3'>
             <div className='text-primary mb-0.5 text-xs font-semibold tracking-wider uppercase'>
-              Training Fee (/hr/head)
+              {isBookingRequestEvent(selectedEvent) ? 'Requested Fee' : 'Training Fee (/hr/head)'}
             </div>
             <div className='text-primary text-xl font-bold'>${selectedEvent.trainingFee}</div>
           </div>
         </div>
 
-        {isLoadingStudents ? (
+        {isBookingRequestEvent(selectedEvent) ? (
+          <div className='flex gap-3 pt-1'>
+            <Button
+              className='flex-1'
+              onClick={onAcceptRequest}
+              disabled={isUpdatingRequest}
+            >
+              Accept request
+            </Button>
+            <Button
+              variant='outline'
+              className='flex-1'
+              onClick={onDeclineRequest}
+              disabled={isUpdatingRequest}
+            >
+              Decline request
+            </Button>
+          </div>
+        ) : isLoadingStudents ? (
           <div className='mt-4'>
             <Skeleton className='mb-2 h-4 w-32' />
             <div className='border-border overflow-hidden rounded-lg border'>
