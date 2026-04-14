@@ -202,7 +202,6 @@ export default function NewClassPage() {
     () => buildStudentRows({ enrollments: selectedClassEnrollments, studentMap }),
     [selectedClassEnrollments, studentMap]
   );
-  console.log(studentRows, "SR")
 
   const isLoadingStudents = studentQueries.some(query => query.isLoading || query.isFetching);
 
@@ -341,8 +340,8 @@ export default function NewClassPage() {
                             setIsTabsSheetOpen(false);
                           }}
                           className={`h-12 w-full justify-between rounded-[18px] border px-4 ${isActive
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-border/70 bg-background text-foreground'
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border/70 bg-background text-foreground'
                             }`}
                         >
                           <span>{tab.label}</span>
