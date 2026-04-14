@@ -245,7 +245,8 @@ export default {
     },
     {
       title: 'Classes',
-      url: '/dashboard/trainings',
+      // url: '/dashboard/trainings',
+      url: '/dashboard/classes',
       icon: ClipboardList,
     },
     {

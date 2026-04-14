@@ -1,5 +1,3 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import {
   getEnrollmentsForClassOptions,
   getStudentByIdOptions,
@@ -10,6 +8,8 @@ import type {
   GetStudentByIdResponse,
   GetUserByUuidResponse,
 } from '@/services/client/types.gen';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 type Enrollment = NonNullable<GetEnrollmentsForClassResponse['data']>[number];
 type Student = GetStudentByIdResponse;
@@ -54,9 +54,9 @@ export function useClassRoster(classId: string | undefined) {
   const userQueries = useQueries({
     queries: students.map(stu => ({
       ...getUserByUuidOptions({
-        path: { uuid: stu.user_uuid },
+        path: { uuid: stu?.data?.user_uuid },
       }),
-      enabled: !!stu.user_uuid,
+      enabled: !!stu?.data?.user_uuid,
     })),
   });
 
@@ -72,8 +72,9 @@ export function useClassRoster(classId: string | undefined) {
 
   const rosterAllEnrollments = useMemo<RosterEntry[]>(() => {
     return allEnrollments.map(enrollment => {
-      const student = students.find(s => s.uuid === enrollment.student_uuid);
+      const student = students.find(s => s.data.uuid === enrollment.student_uuid).data;
       const user = student ? users.find(u => u.uuid === student.user_uuid) : null;
+
       return { enrollment, student, user };
     });
   }, [allEnrollments, students, users]);
