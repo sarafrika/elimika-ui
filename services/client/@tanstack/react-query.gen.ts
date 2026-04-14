@@ -364,6 +364,7 @@ import {
   getBranchUsersByDomain,
   search2,
   getInstructorRatingSummary,
+  getInstructorDocumentMedia,
   getInstructorBookings,
   checkAvailability,
   getInstructorCalendar,
@@ -403,6 +404,7 @@ import {
   getCoursesByCategory,
   getActiveCourses,
   isCourseCreatorVerified,
+  getCourseCreatorDocumentMedia,
   getVerifiedCourseCreators,
   getUnverifiedCourseCreators,
   searchCourseCreatorSkills,
@@ -436,6 +438,7 @@ import {
   getRevokedCertificates,
   getProgramCertificates1,
   getCertificateByNumber,
+  getCertificateFile,
   getCourseCertificates,
   getBooking,
   getAssignmentSubmissions,
@@ -445,6 +448,7 @@ import {
   getAssignmentAttachments,
   getSubmissionAnalytics,
   searchSubmissions,
+  getSubmissionMedia,
   searchAssignments,
   getAssignmentMedia,
   getPendingGrading,
@@ -1411,6 +1415,7 @@ import type {
   Search2Error,
   Search2Response,
   GetInstructorRatingSummaryData,
+  GetInstructorDocumentMediaData,
   GetInstructorBookingsData,
   GetInstructorBookingsError,
   GetInstructorBookingsResponse,
@@ -1492,6 +1497,7 @@ import type {
   GetActiveCoursesError,
   GetActiveCoursesResponse,
   IsCourseCreatorVerifiedData,
+  GetCourseCreatorDocumentMediaData,
   GetVerifiedCourseCreatorsData,
   GetVerifiedCourseCreatorsError,
   GetVerifiedCourseCreatorsResponse,
@@ -1555,6 +1561,7 @@ import type {
   GetRevokedCertificatesData,
   GetProgramCertificates1Data,
   GetCertificateByNumberData,
+  GetCertificateFileData,
   GetCourseCertificatesData,
   GetBookingData,
   GetAssignmentSubmissionsData,
@@ -1566,6 +1573,7 @@ import type {
   SearchSubmissionsData,
   SearchSubmissionsError,
   SearchSubmissionsResponse,
+  GetSubmissionMediaData,
   SearchAssignmentsData,
   SearchAssignmentsError,
   SearchAssignmentsResponse,
@@ -4920,30 +4928,32 @@ export const getAllTrainingBranchesInfiniteOptions = (
     QueryKey<Options<GetAllTrainingBranchesData>>,
     | number
     | Pick<QueryKey<Options<GetAllTrainingBranchesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllTrainingBranchesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllTrainingBranches({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllTrainingBranchesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllTrainingBranchesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllTrainingBranches({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllTrainingBranchesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createTrainingBranchQueryKey = (options: Options<CreateTrainingBranchData>) =>
@@ -5219,27 +5229,32 @@ export const listRulesInfiniteOptions = (options: Options<ListRulesData>) => {
     InfiniteData<ListRulesResponse>,
     QueryKey<Options<ListRulesData>>,
     number | Pick<QueryKey<Options<ListRulesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<QueryKey<Options<ListRulesData>>[0], 'body' | 'headers' | 'path' | 'query'> =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await listRules({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listRulesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListRulesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listRules({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listRulesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createRuleQueryKey = (options: Options<CreateRuleData>) =>
@@ -5323,30 +5338,32 @@ export const getAllStudentsInfiniteOptions = (options: Options<GetAllStudentsDat
     InfiniteData<GetAllStudentsResponse>,
     QueryKey<Options<GetAllStudentsData>>,
     number | Pick<QueryKey<Options<GetAllStudentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllStudentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllStudents({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllStudentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllStudentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllStudents({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllStudentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createStudentQueryKey = (options: Options<CreateStudentData>) =>
@@ -5436,30 +5453,32 @@ export const getAllAssessmentRubricsInfiniteOptions = (
     QueryKey<Options<GetAllAssessmentRubricsData>>,
     | number
     | Pick<QueryKey<Options<GetAllAssessmentRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllAssessmentRubricsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllAssessmentRubrics({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllAssessmentRubricsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllAssessmentRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllAssessmentRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllAssessmentRubricsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createAssessmentRubricQueryKey = (options: Options<CreateAssessmentRubricData>) =>
@@ -5556,30 +5575,32 @@ export const getScoringLevelsByRubricInfiniteOptions = (
         QueryKey<Options<GetScoringLevelsByRubricData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetScoringLevelsByRubricData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getScoringLevelsByRubric({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getScoringLevelsByRubricInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetScoringLevelsByRubricData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getScoringLevelsByRubric({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getScoringLevelsByRubricInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createRubricScoringLevelQueryKey = (options: Options<CreateRubricScoringLevelData>) =>
@@ -5773,30 +5794,32 @@ export const getRubricCriteriaInfiniteOptions = (options: Options<GetRubricCrite
     QueryKey<Options<GetRubricCriteriaData>>,
     | number
     | Pick<QueryKey<Options<GetRubricCriteriaData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetRubricCriteriaData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getRubricCriteria({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getRubricCriteriaInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetRubricCriteriaData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getRubricCriteria({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getRubricCriteriaInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addRubricCriterionQueryKey = (options: Options<AddRubricCriterionData>) =>
@@ -5886,30 +5909,32 @@ export const getRubricScoringInfiniteOptions = (options: Options<GetRubricScorin
     InfiniteData<GetRubricScoringResponse>,
     QueryKey<Options<GetRubricScoringData>>,
     number | Pick<QueryKey<Options<GetRubricScoringData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetRubricScoringData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getRubricScoring({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getRubricScoringInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetRubricScoringData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getRubricScoring({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getRubricScoringInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addRubricScoringQueryKey = (options: Options<AddRubricScoringData>) =>
@@ -5999,30 +6024,32 @@ export const getAllQuizzesInfiniteOptions = (options: Options<GetAllQuizzesData>
     InfiniteData<GetAllQuizzesResponse>,
     QueryKey<Options<GetAllQuizzesData>>,
     number | Pick<QueryKey<Options<GetAllQuizzesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllQuizzesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllQuizzes({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllQuizzesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllQuizzesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllQuizzes({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllQuizzesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createQuizQueryKey = (options: Options<CreateQuizData>) =>
@@ -6181,30 +6208,32 @@ export const getQuestionOptionsInfiniteOptions = (options: Options<GetQuestionOp
     QueryKey<Options<GetQuestionOptionsData>>,
     | number
     | Pick<QueryKey<Options<GetQuestionOptionsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetQuestionOptionsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getQuestionOptions({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getQuestionOptionsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetQuestionOptionsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getQuestionOptions({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getQuestionOptionsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addQuestionOptionQueryKey = (options: Options<AddQuestionOptionData>) =>
@@ -6348,30 +6377,32 @@ export const getAllTrainingProgramsInfiniteOptions = (
     QueryKey<Options<GetAllTrainingProgramsData>>,
     | number
     | Pick<QueryKey<Options<GetAllTrainingProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllTrainingProgramsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllTrainingPrograms({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllTrainingProgramsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllTrainingProgramsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllTrainingPrograms({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllTrainingProgramsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createTrainingProgramQueryKey = (options: Options<CreateTrainingProgramData>) =>
@@ -6519,30 +6550,32 @@ export const listProgramTrainingApplicationsInfiniteOptions = (
         QueryKey<Options<ListProgramTrainingApplicationsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<ListProgramTrainingApplicationsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await listProgramTrainingApplications({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listProgramTrainingApplicationsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListProgramTrainingApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listProgramTrainingApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listProgramTrainingApplicationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const submitProgramTrainingApplicationQueryKey = (
@@ -6733,30 +6766,32 @@ export const getProgramRequirementsInfiniteOptions = (
     QueryKey<Options<GetProgramRequirementsData>>,
     | number
     | Pick<QueryKey<Options<GetProgramRequirementsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetProgramRequirementsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getProgramRequirements({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getProgramRequirementsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetProgramRequirementsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getProgramRequirements({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getProgramRequirementsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addProgramRequirementQueryKey = (options: Options<AddProgramRequirementData>) =>
@@ -6918,30 +6953,32 @@ export const getAllOrganisationsInfiniteOptions = (options: Options<GetAllOrgani
     QueryKey<Options<GetAllOrganisationsData>>,
     | number
     | Pick<QueryKey<Options<GetAllOrganisationsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllOrganisationsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllOrganisations({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllOrganisationsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllOrganisationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllOrganisations({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllOrganisationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createOrganisationQueryKey = (options: Options<CreateOrganisationData>) =>
@@ -7037,30 +7074,32 @@ export const getTrainingBranchesByOrganisationInfiniteOptions = (
         QueryKey<Options<GetTrainingBranchesByOrganisationData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetTrainingBranchesByOrganisationData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getTrainingBranchesByOrganisation({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getTrainingBranchesByOrganisationInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetTrainingBranchesByOrganisationData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getTrainingBranchesByOrganisation({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getTrainingBranchesByOrganisationInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createTrainingBranch1QueryKey = (options: Options<CreateTrainingBranch1Data>) =>
@@ -7227,30 +7266,32 @@ export const getAllInstructorsInfiniteOptions = (options: Options<GetAllInstruct
     QueryKey<Options<GetAllInstructorsData>>,
     | number
     | Pick<QueryKey<Options<GetAllInstructorsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllInstructorsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllInstructors({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllInstructorsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllInstructorsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllInstructors({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllInstructorsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createInstructorQueryKey = (options: Options<CreateInstructorData>) =>
@@ -7342,30 +7383,32 @@ export const getInstructorSkillsInfiniteOptions = (options: Options<GetInstructo
     QueryKey<Options<GetInstructorSkillsData>>,
     | number
     | Pick<QueryKey<Options<GetInstructorSkillsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetInstructorSkillsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getInstructorSkills({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorSkillsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetInstructorSkillsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getInstructorSkills({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getInstructorSkillsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addInstructorSkillQueryKey = (options: Options<AddInstructorSkillData>) =>
@@ -7544,30 +7587,32 @@ export const getInstructorMembershipsInfiniteOptions = (
         QueryKey<Options<GetInstructorMembershipsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetInstructorMembershipsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getInstructorMemberships({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorMembershipsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetInstructorMembershipsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getInstructorMemberships({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getInstructorMembershipsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addInstructorMembershipQueryKey = (options: Options<AddInstructorMembershipData>) =>
@@ -7661,30 +7706,32 @@ export const getInstructorExperienceInfiniteOptions = (
     QueryKey<Options<GetInstructorExperienceData>>,
     | number
     | Pick<QueryKey<Options<GetInstructorExperienceData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetInstructorExperienceData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getInstructorExperience({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorExperienceInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetInstructorExperienceData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getInstructorExperience({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getInstructorExperienceInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addInstructorExperienceQueryKey = (options: Options<AddInstructorExperienceData>) =>
@@ -8166,30 +8213,32 @@ export const getAllCoursesInfiniteOptions = (options: Options<GetAllCoursesData>
     InfiniteData<GetAllCoursesResponse>,
     QueryKey<Options<GetAllCoursesData>>,
     number | Pick<QueryKey<Options<GetAllCoursesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllCoursesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllCourses({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllCoursesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllCoursesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllCourses({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllCoursesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createCourseQueryKey = (options: Options<CreateCourseData>) =>
@@ -8777,30 +8826,32 @@ export const getCourseTrainingRequirementsInfiniteOptions = (
         QueryKey<Options<GetCourseTrainingRequirementsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseTrainingRequirementsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseTrainingRequirements({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseTrainingRequirementsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseTrainingRequirementsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseTrainingRequirements({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseTrainingRequirementsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addCourseTrainingRequirementQueryKey = (
@@ -8902,30 +8953,32 @@ export const listTrainingApplicationsInfiniteOptions = (
         QueryKey<Options<ListTrainingApplicationsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<ListTrainingApplicationsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await listTrainingApplications({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listTrainingApplicationsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListTrainingApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listTrainingApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listTrainingApplicationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const submitTrainingApplicationQueryKey = (
@@ -9109,30 +9162,32 @@ export const getCourseRubricsInfiniteOptions = (options: Options<GetCourseRubric
     InfiniteData<GetCourseRubricsResponse>,
     QueryKey<Options<GetCourseRubricsData>>,
     number | Pick<QueryKey<Options<GetCourseRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseRubricsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseRubrics({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseRubricsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseRubricsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const associateRubricQueryKey = (options: Options<AssociateRubricData>) =>
@@ -9302,30 +9357,32 @@ export const getCourseRequirementsInfiniteOptions = (
     QueryKey<Options<GetCourseRequirementsData>>,
     | number
     | Pick<QueryKey<Options<GetCourseRequirementsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseRequirementsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseRequirements({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseRequirementsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseRequirementsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseRequirements({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseRequirementsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addCourseRequirementQueryKey = (options: Options<AddCourseRequirementData>) =>
@@ -9415,30 +9472,32 @@ export const getCourseLessonsInfiniteOptions = (options: Options<GetCourseLesson
     InfiniteData<GetCourseLessonsResponse>,
     QueryKey<Options<GetCourseLessonsData>>,
     number | Pick<QueryKey<Options<GetCourseLessonsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseLessonsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseLessons({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseLessonsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseLessonsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseLessons({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseLessonsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addCourseLessonQueryKey = (options: Options<AddCourseLessonData>) =>
@@ -9726,30 +9785,32 @@ export const getCourseAssessmentsInfiniteOptions = (options: Options<GetCourseAs
     QueryKey<Options<GetCourseAssessmentsData>>,
     | number
     | Pick<QueryKey<Options<GetCourseAssessmentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseAssessmentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseAssessments({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseAssessmentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseAssessmentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseAssessments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseAssessmentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addCourseAssessmentQueryKey = (options: Options<AddCourseAssessmentData>) =>
@@ -9909,30 +9970,32 @@ export const getAllCourseCreatorsInfiniteOptions = (options: Options<GetAllCours
     QueryKey<Options<GetAllCourseCreatorsData>>,
     | number
     | Pick<QueryKey<Options<GetAllCourseCreatorsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllCourseCreatorsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllCourseCreators({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllCourseCreatorsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllCourseCreatorsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllCourseCreators({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllCourseCreatorsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createCourseCreatorQueryKey = (options: Options<CreateCourseCreatorData>) =>
@@ -10126,30 +10189,32 @@ export const getCourseCreatorSkillsInfiniteOptions = (
     QueryKey<Options<GetCourseCreatorSkillsData>>,
     | number
     | Pick<QueryKey<Options<GetCourseCreatorSkillsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseCreatorSkillsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseCreatorSkills({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseCreatorSkillsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorSkillsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorSkills({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorSkillsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addCourseCreatorSkillQueryKey = (options: Options<AddCourseCreatorSkillData>) =>
@@ -10249,30 +10314,32 @@ export const getCourseCreatorMembershipsInfiniteOptions = (
         QueryKey<Options<GetCourseCreatorMembershipsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseCreatorMembershipsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseCreatorMemberships({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseCreatorMembershipsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorMembershipsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorMemberships({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorMembershipsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addCourseCreatorMembershipQueryKey = (
@@ -10375,30 +10442,32 @@ export const getCourseCreatorExperienceInfiniteOptions = (
         QueryKey<Options<GetCourseCreatorExperienceData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseCreatorExperienceData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseCreatorExperience({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseCreatorExperienceInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorExperienceData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorExperience({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorExperienceInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addCourseCreatorExperienceQueryKey = (
@@ -10501,30 +10570,32 @@ export const getCourseCreatorEducationInfiniteOptions = (
         QueryKey<Options<GetCourseCreatorEducationData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseCreatorEducationData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseCreatorEducation({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseCreatorEducationInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorEducationData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorEducation({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorEducationInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addCourseCreatorEducationQueryKey = (
@@ -10824,30 +10895,32 @@ export const getCourseCreatorCertificationsInfiniteOptions = (
         QueryKey<Options<GetCourseCreatorCertificationsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseCreatorCertificationsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseCreatorCertifications({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseCreatorCertificationsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorCertificationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorCertifications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorCertificationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const addCourseCreatorCertificationQueryKey = (
@@ -10942,30 +11015,32 @@ export const getAllGradingLevelsInfiniteOptions = (options: Options<GetAllGradin
     QueryKey<Options<GetAllGradingLevelsData>>,
     | number
     | Pick<QueryKey<Options<GetAllGradingLevelsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllGradingLevelsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllGradingLevels({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllGradingLevelsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllGradingLevelsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllGradingLevels({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllGradingLevelsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createGradingLevelQueryKey = (options: Options<CreateGradingLevelData>) =>
@@ -11178,30 +11253,32 @@ export const getAllContentTypesInfiniteOptions = (options: Options<GetAllContent
     QueryKey<Options<GetAllContentTypesData>>,
     | number
     | Pick<QueryKey<Options<GetAllContentTypesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllContentTypesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllContentTypes({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllContentTypesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllContentTypesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllContentTypes({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllContentTypesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createContentTypeQueryKey = (options: Options<CreateContentTypeData>) =>
@@ -11291,30 +11368,32 @@ export const getAllCategoriesInfiniteOptions = (options: Options<GetAllCategorie
     InfiniteData<GetAllCategoriesResponse>,
     QueryKey<Options<GetAllCategoriesData>>,
     number | Pick<QueryKey<Options<GetAllCategoriesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllCategoriesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllCategories({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllCategoriesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllCategoriesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllCategories({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllCategoriesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createCategoryQueryKey = (options: Options<CreateCategoryData>) =>
@@ -11758,30 +11837,32 @@ export const getAllClassDefinitionsInfiniteOptions = (
     QueryKey<Options<GetAllClassDefinitionsData>>,
     | number
     | Pick<QueryKey<Options<GetAllClassDefinitionsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllClassDefinitionsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllClassDefinitions({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllClassDefinitionsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllClassDefinitionsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllClassDefinitions({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllClassDefinitionsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createClassDefinitionQueryKey = (options: Options<CreateClassDefinitionData>) =>
@@ -12083,30 +12164,32 @@ export const getAllCertificatesInfiniteOptions = (options: Options<GetAllCertifi
     QueryKey<Options<GetAllCertificatesData>>,
     | number
     | Pick<QueryKey<Options<GetAllCertificatesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllCertificatesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllCertificates({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllCertificatesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllCertificatesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllCertificates({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllCertificatesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createCertificateQueryKey = (options: Options<CreateCertificateData>) =>
@@ -12366,30 +12449,32 @@ export const getCertificateTemplatesInfiniteOptions = (
     QueryKey<Options<GetCertificateTemplatesData>>,
     | number
     | Pick<QueryKey<Options<GetCertificateTemplatesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCertificateTemplatesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCertificateTemplates({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCertificateTemplatesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCertificateTemplatesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCertificateTemplates({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCertificateTemplatesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createCertificateTemplateQueryKey = (
@@ -12857,30 +12942,32 @@ export const getAllAssignmentsInfiniteOptions = (options: Options<GetAllAssignme
     QueryKey<Options<GetAllAssignmentsData>>,
     | number
     | Pick<QueryKey<Options<GetAllAssignmentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllAssignmentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllAssignments({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllAssignmentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllAssignmentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllAssignments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllAssignmentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createAssignmentQueryKey = (options: Options<CreateAssignmentData>) =>
@@ -13286,30 +13373,32 @@ export const getAdminUsersInfiniteOptions = (options: Options<GetAdminUsersData>
     InfiniteData<GetAdminUsersResponse>,
     QueryKey<Options<GetAdminUsersData>>,
     number | Pick<QueryKey<Options<GetAdminUsersData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAdminUsersData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAdminUsers({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAdminUsersInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAdminUsersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAdminUsers({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAdminUsersInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const createAdminUserQueryKey = (options: Options<CreateAdminUserData>) =>
@@ -14135,30 +14224,32 @@ export const listTransactionsInfiniteOptions = (options: Options<ListTransaction
     InfiniteData<ListTransactionsResponse>,
     QueryKey<Options<ListTransactionsData>>,
     number | Pick<QueryKey<Options<ListTransactionsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<ListTransactionsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await listTransactions({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listTransactionsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListTransactionsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listTransactions({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listTransactionsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getAllUsersQueryKey = (options: Options<GetAllUsersData>) =>
@@ -14198,30 +14289,32 @@ export const getAllUsersInfiniteOptions = (options: Options<GetAllUsersData>) =>
     InfiniteData<GetAllUsersResponse>,
     QueryKey<Options<GetAllUsersData>>,
     number | Pick<QueryKey<Options<GetAllUsersData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAllUsersData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAllUsers({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAllUsersInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAllUsersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllUsers({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllUsersInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchQueryKey = (options: Options<SearchData>) => createQueryKey('search', options);
@@ -14260,27 +14353,29 @@ export const searchInfiniteOptions = (options: Options<SearchData>) => {
     InfiniteData<SearchResponse>,
     QueryKey<Options<SearchData>>,
     number | Pick<QueryKey<Options<SearchData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<QueryKey<Options<SearchData>>[0], 'body' | 'headers' | 'path' | 'query'> =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await search({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<QueryKey<Options<SearchData>>[0], 'body' | 'headers' | 'path' | 'query'> =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await search({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getProfileImageQueryKey = (options: Options<GetProfileImageData>) =>
@@ -14341,27 +14436,29 @@ export const search1InfiniteOptions = (options: Options<Search1Data>) => {
     InfiniteData<Search1Response>,
     QueryKey<Options<Search1Data>>,
     number | Pick<QueryKey<Options<Search1Data>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<QueryKey<Options<Search1Data>>[0], 'body' | 'headers' | 'path' | 'query'> =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await search1({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: search1InfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<QueryKey<Options<Search1Data>>[0], 'body' | 'headers' | 'path' | 'query'> =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await search1({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: search1InfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getTrainingBranchesByOrganisation1QueryKey = (
@@ -14409,30 +14506,32 @@ export const getTrainingBranchesByOrganisation1InfiniteOptions = (
         QueryKey<Options<GetTrainingBranchesByOrganisation1Data>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetTrainingBranchesByOrganisation1Data>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getTrainingBranchesByOrganisation1({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getTrainingBranchesByOrganisation1InfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetTrainingBranchesByOrganisation1Data>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getTrainingBranchesByOrganisation1({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getTrainingBranchesByOrganisation1InfiniteQueryKey(options),
+    }
+  );
 };
 
 /**
@@ -14522,30 +14621,32 @@ export const getInstructorScheduleInfiniteOptions = (
     QueryKey<Options<GetInstructorScheduleData>>,
     | Date
     | Pick<QueryKey<Options<GetInstructorScheduleData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetInstructorScheduleData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                start: pageParam,
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getInstructorSchedule({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorScheduleInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetInstructorScheduleData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getInstructorSchedule({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getInstructorScheduleInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getStudentBookingsQueryKey = (options: Options<GetStudentBookingsData>) =>
@@ -14584,30 +14685,32 @@ export const getStudentBookingsInfiniteOptions = (options: Options<GetStudentBoo
     QueryKey<Options<GetStudentBookingsData>>,
     | number
     | Pick<QueryKey<Options<GetStudentBookingsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetStudentBookingsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getStudentBookings({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getStudentBookingsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetStudentBookingsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getStudentBookings({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getStudentBookingsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchStudentsQueryKey = (options: Options<SearchStudentsData>) =>
@@ -14647,30 +14750,32 @@ export const searchStudentsInfiniteOptions = (options: Options<SearchStudentsDat
     InfiniteData<SearchStudentsResponse>,
     QueryKey<Options<SearchStudentsData>>,
     number | Pick<QueryKey<Options<SearchStudentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchStudentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchStudents({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchStudentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchStudentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchStudents({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchStudentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const validateMatrixQueryKey = (options: Options<ValidateMatrixData>) =>
@@ -14736,30 +14841,32 @@ export const getPassingScoringLevelsInfiniteOptions = (
     QueryKey<Options<GetPassingScoringLevelsData>>,
     | number
     | Pick<QueryKey<Options<GetPassingScoringLevelsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetPassingScoringLevelsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getPassingScoringLevels({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getPassingScoringLevelsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetPassingScoringLevelsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPassingScoringLevels({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPassingScoringLevelsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getHighestScoringLevelQueryKey = (options: Options<GetHighestScoringLevelData>) =>
@@ -14935,30 +15042,32 @@ export const searchAssessmentRubricsInfiniteOptions = (
     QueryKey<Options<SearchAssessmentRubricsData>>,
     | number
     | Pick<QueryKey<Options<SearchAssessmentRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchAssessmentRubricsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchAssessmentRubrics({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchAssessmentRubricsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchAssessmentRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchAssessmentRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchAssessmentRubricsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getRubricsByTypeQueryKey = (options: Options<GetRubricsByTypeData>) =>
@@ -14998,30 +15107,32 @@ export const getRubricsByTypeInfiniteOptions = (options: Options<GetRubricsByTyp
     InfiniteData<GetRubricsByTypeResponse>,
     QueryKey<Options<GetRubricsByTypeData>>,
     number | Pick<QueryKey<Options<GetRubricsByTypeData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetRubricsByTypeData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getRubricsByType({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getRubricsByTypeInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetRubricsByTypeData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getRubricsByType({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getRubricsByTypeInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getRubricsByStatusQueryKey = (options: Options<GetRubricsByStatusData>) =>
@@ -15062,30 +15173,32 @@ export const getRubricsByStatusInfiniteOptions = (options: Options<GetRubricsByS
     QueryKey<Options<GetRubricsByStatusData>>,
     | number
     | Pick<QueryKey<Options<GetRubricsByStatusData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetRubricsByStatusData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getRubricsByStatus({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getRubricsByStatusInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetRubricsByStatusData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getRubricsByStatus({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getRubricsByStatusInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getRubricStatisticsQueryKey = (options?: Options<GetRubricStatisticsData>) =>
@@ -15174,30 +15287,32 @@ export const searchPublicRubricsInfiniteOptions = (options: Options<SearchPublic
     QueryKey<Options<SearchPublicRubricsData>>,
     | number
     | Pick<QueryKey<Options<SearchPublicRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchPublicRubricsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchPublicRubrics({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchPublicRubricsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchPublicRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchPublicRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchPublicRubricsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getPublicRubricsQueryKey = (options: Options<GetPublicRubricsData>) =>
@@ -15237,30 +15352,32 @@ export const getPublicRubricsInfiniteOptions = (options: Options<GetPublicRubric
     InfiniteData<GetPublicRubricsResponse>,
     QueryKey<Options<GetPublicRubricsData>>,
     number | Pick<QueryKey<Options<GetPublicRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetPublicRubricsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getPublicRubrics({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getPublicRubricsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetPublicRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPublicRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPublicRubricsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getPopularRubricsQueryKey = (options: Options<GetPopularRubricsData>) =>
@@ -15301,30 +15418,32 @@ export const getPopularRubricsInfiniteOptions = (options: Options<GetPopularRubr
     QueryKey<Options<GetPopularRubricsData>>,
     | number
     | Pick<QueryKey<Options<GetPopularRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetPopularRubricsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getPopularRubrics({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getPopularRubricsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetPopularRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPopularRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPopularRubricsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getGeneralRubricsQueryKey = (options: Options<GetGeneralRubricsData>) =>
@@ -15365,30 +15484,32 @@ export const getGeneralRubricsInfiniteOptions = (options: Options<GetGeneralRubr
     QueryKey<Options<GetGeneralRubricsData>>,
     | number
     | Pick<QueryKey<Options<GetGeneralRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetGeneralRubricsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getGeneralRubrics({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getGeneralRubricsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetGeneralRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getGeneralRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getGeneralRubricsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getCourseCreatorRubricsQueryKey = (options: Options<GetCourseCreatorRubricsData>) =>
@@ -15432,30 +15553,32 @@ export const getCourseCreatorRubricsInfiniteOptions = (
     QueryKey<Options<GetCourseCreatorRubricsData>>,
     | number
     | Pick<QueryKey<Options<GetCourseCreatorRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseCreatorRubricsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseCreatorRubrics({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseCreatorRubricsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorRubricsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getRevenueDashboardQueryKey = (options: Options<GetRevenueDashboardData>) =>
@@ -15535,27 +15658,32 @@ export const listSalesInfiniteOptions = (options: Options<ListSalesData>) => {
     InfiniteData<ListSalesResponse>,
     QueryKey<Options<ListSalesData>>,
     number | Pick<QueryKey<Options<ListSalesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<QueryKey<Options<ListSalesData>>[0], 'body' | 'headers' | 'path' | 'query'> =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await listSales({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listSalesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListSalesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listSales({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listSalesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getPlatformFeeSummaryQueryKey = (options?: Options<GetPlatformFeeSummaryData>) =>
@@ -15614,30 +15742,32 @@ export const listPaymentsInfiniteOptions = (options: Options<ListPaymentsData>) 
     InfiniteData<ListPaymentsResponse>,
     QueryKey<Options<ListPaymentsData>>,
     number | Pick<QueryKey<Options<ListPaymentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<ListPaymentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await listPayments({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listPaymentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListPaymentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listPayments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listPaymentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getRevenueDashboard1QueryKey = (options: Options<GetRevenueDashboard1Data>) =>
@@ -15742,30 +15872,32 @@ export const getQuizAttemptsInfiniteOptions = (options: Options<GetQuizAttemptsD
     InfiniteData<GetQuizAttemptsResponse>,
     QueryKey<Options<GetQuizAttemptsData>>,
     number | Pick<QueryKey<Options<GetQuizAttemptsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetQuizAttemptsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getQuizAttempts({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getQuizAttemptsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetQuizAttemptsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getQuizAttempts({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getQuizAttemptsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchQuizzesQueryKey = (options: Options<SearchQuizzesData>) =>
@@ -15825,30 +15957,32 @@ export const searchQuizzesInfiniteOptions = (options: Options<SearchQuizzesData>
     InfiniteData<SearchQuizzesResponse>,
     QueryKey<Options<SearchQuizzesData>>,
     number | Pick<QueryKey<Options<SearchQuizzesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchQuizzesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchQuizzes({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchQuizzesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchQuizzesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchQuizzes({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchQuizzesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchQuestionsQueryKey = (options: Options<SearchQuestionsData>) =>
@@ -15902,30 +16036,32 @@ export const searchQuestionsInfiniteOptions = (options: Options<SearchQuestionsD
     InfiniteData<SearchQuestionsResponse>,
     QueryKey<Options<SearchQuestionsData>>,
     number | Pick<QueryKey<Options<SearchQuestionsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchQuestionsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchQuestions({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchQuestionsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchQuestionsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchQuestions({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchQuestionsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchAttemptsQueryKey = (options: Options<SearchAttemptsData>) =>
@@ -15983,30 +16119,32 @@ export const searchAttemptsInfiniteOptions = (options: Options<SearchAttemptsDat
     InfiniteData<SearchAttemptsResponse>,
     QueryKey<Options<SearchAttemptsData>>,
     number | Pick<QueryKey<Options<SearchAttemptsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchAttemptsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchAttempts({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchAttemptsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchAttemptsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchAttempts({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchAttemptsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getProgramEnrollmentsQueryKey = (options: Options<GetProgramEnrollmentsData>) =>
@@ -16050,30 +16188,32 @@ export const getProgramEnrollmentsInfiniteOptions = (
     QueryKey<Options<GetProgramEnrollmentsData>>,
     | number
     | Pick<QueryKey<Options<GetProgramEnrollmentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetProgramEnrollmentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getProgramEnrollments({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getProgramEnrollmentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetProgramEnrollmentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getProgramEnrollments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getProgramEnrollmentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getRequiredCoursesQueryKey = (options: Options<GetRequiredCoursesData>) =>
@@ -16183,30 +16323,32 @@ export const getProgramCertificatesInfiniteOptions = (
     QueryKey<Options<GetProgramCertificatesData>>,
     | number
     | Pick<QueryKey<Options<GetProgramCertificatesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetProgramCertificatesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getProgramCertificates({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getProgramCertificatesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetProgramCertificatesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getProgramCertificates({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getProgramCertificatesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchProgramTrainingApplicationsQueryKey = (
@@ -16262,30 +16404,32 @@ export const searchProgramTrainingApplicationsInfiniteOptions = (
         QueryKey<Options<SearchProgramTrainingApplicationsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchProgramTrainingApplicationsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchProgramTrainingApplications({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchProgramTrainingApplicationsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchProgramTrainingApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchProgramTrainingApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchProgramTrainingApplicationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchTrainingProgramsQueryKey = (options: Options<SearchTrainingProgramsData>) =>
@@ -16371,30 +16515,32 @@ export const searchTrainingProgramsInfiniteOptions = (
     QueryKey<Options<SearchTrainingProgramsData>>,
     | number
     | Pick<QueryKey<Options<SearchTrainingProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchTrainingProgramsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchTrainingPrograms({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchTrainingProgramsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchTrainingProgramsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchTrainingPrograms({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchTrainingProgramsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchProgramRequirementsQueryKey = (
@@ -16458,30 +16604,32 @@ export const searchProgramRequirementsInfiniteOptions = (
         QueryKey<Options<SearchProgramRequirementsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchProgramRequirementsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchProgramRequirements({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchProgramRequirementsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchProgramRequirementsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchProgramRequirements({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchProgramRequirementsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getPublishedProgramsQueryKey = (options: Options<GetPublishedProgramsData>) =>
@@ -16523,30 +16671,32 @@ export const getPublishedProgramsInfiniteOptions = (options: Options<GetPublishe
     QueryKey<Options<GetPublishedProgramsData>>,
     | number
     | Pick<QueryKey<Options<GetPublishedProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetPublishedProgramsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getPublishedPrograms({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getPublishedProgramsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetPublishedProgramsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPublishedPrograms({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPublishedProgramsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getFreeProgramsQueryKey = (options: Options<GetFreeProgramsData>) =>
@@ -16586,30 +16736,32 @@ export const getFreeProgramsInfiniteOptions = (options: Options<GetFreeProgramsD
     InfiniteData<GetFreeProgramsResponse>,
     QueryKey<Options<GetFreeProgramsData>>,
     number | Pick<QueryKey<Options<GetFreeProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetFreeProgramsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getFreePrograms({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getFreeProgramsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetFreeProgramsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getFreePrograms({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getFreeProgramsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchProgramEnrollmentsQueryKey = (options: Options<SearchProgramEnrollmentsData>) =>
@@ -16674,30 +16826,32 @@ export const searchProgramEnrollmentsInfiniteOptions = (
         QueryKey<Options<SearchProgramEnrollmentsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchProgramEnrollmentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchProgramEnrollments({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchProgramEnrollmentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchProgramEnrollmentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchProgramEnrollments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchProgramEnrollmentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getProgramsByCourseCreatorQueryKey = (
@@ -16747,30 +16901,32 @@ export const getProgramsByCourseCreatorInfiniteOptions = (
         QueryKey<Options<GetProgramsByCourseCreatorData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetProgramsByCourseCreatorData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getProgramsByCourseCreator({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getProgramsByCourseCreatorInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetProgramsByCourseCreatorData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getProgramsByCourseCreator({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getProgramsByCourseCreatorInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchProgramCoursesQueryKey = (options: Options<SearchProgramCoursesData>) =>
@@ -16826,30 +16982,32 @@ export const searchProgramCoursesInfiniteOptions = (options: Options<SearchProgr
     QueryKey<Options<SearchProgramCoursesData>>,
     | number
     | Pick<QueryKey<Options<SearchProgramCoursesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchProgramCoursesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchProgramCourses({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchProgramCoursesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchProgramCoursesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchProgramCourses({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchProgramCoursesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getProgramsByCategoryQueryKey = (options: Options<GetProgramsByCategoryData>) =>
@@ -16893,30 +17051,32 @@ export const getProgramsByCategoryInfiniteOptions = (
     QueryKey<Options<GetProgramsByCategoryData>>,
     | number
     | Pick<QueryKey<Options<GetProgramsByCategoryData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetProgramsByCategoryData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getProgramsByCategory({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getProgramsByCategoryInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetProgramsByCategoryData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getProgramsByCategory({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getProgramsByCategoryInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getActiveProgramsQueryKey = (options: Options<GetActiveProgramsData>) =>
@@ -16957,30 +17117,32 @@ export const getActiveProgramsInfiniteOptions = (options: Options<GetActiveProgr
     QueryKey<Options<GetActiveProgramsData>>,
     | number
     | Pick<QueryKey<Options<GetActiveProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetActiveProgramsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getActivePrograms({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getActiveProgramsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetActiveProgramsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getActivePrograms({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getActiveProgramsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getUsersByOrganisationQueryKey = (options: Options<GetUsersByOrganisationData>) =>
@@ -17022,30 +17184,32 @@ export const getUsersByOrganisationInfiniteOptions = (
     QueryKey<Options<GetUsersByOrganisationData>>,
     | number
     | Pick<QueryKey<Options<GetUsersByOrganisationData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetUsersByOrganisationData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getUsersByOrganisation({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getUsersByOrganisationInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetUsersByOrganisationData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getUsersByOrganisation({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getUsersByOrganisationInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getUsersByOrganisationAndDomainQueryKey = (
@@ -17174,27 +17338,29 @@ export const search2InfiniteOptions = (options: Options<Search2Data>) => {
     InfiniteData<Search2Response>,
     QueryKey<Options<Search2Data>>,
     number | Pick<QueryKey<Options<Search2Data>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<QueryKey<Options<Search2Data>>[0], 'body' | 'headers' | 'path' | 'query'> =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await search2({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: search2InfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<QueryKey<Options<Search2Data>>[0], 'body' | 'headers' | 'path' | 'query'> =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await search2({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: search2InfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getInstructorRatingSummaryQueryKey = (
@@ -17219,6 +17385,31 @@ export const getInstructorRatingSummaryOptions = (
       return data;
     },
     queryKey: getInstructorRatingSummaryQueryKey(options),
+  });
+};
+
+export const getInstructorDocumentMediaQueryKey = (
+  options: Options<GetInstructorDocumentMediaData>
+) => createQueryKey('getInstructorDocumentMedia', options);
+
+/**
+ * Get instructor document media
+ * Streams an uploaded instructor document by stored relative path.
+ */
+export const getInstructorDocumentMediaOptions = (
+  options: Options<GetInstructorDocumentMediaData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorDocumentMedia({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorDocumentMediaQueryKey(options),
   });
 };
 
@@ -17261,30 +17452,32 @@ export const getInstructorBookingsInfiniteOptions = (
     QueryKey<Options<GetInstructorBookingsData>>,
     | number
     | Pick<QueryKey<Options<GetInstructorBookingsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetInstructorBookingsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getInstructorBookings({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorBookingsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetInstructorBookingsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getInstructorBookings({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getInstructorBookingsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const checkAvailabilityQueryKey = (options: Options<CheckAvailabilityData>) =>
@@ -17330,30 +17523,32 @@ export const checkAvailabilityInfiniteOptions = (options: Options<CheckAvailabil
     InfiniteData<CheckAvailabilityResponse>,
     QueryKey<Options<CheckAvailabilityData>>,
     Date | Pick<QueryKey<Options<CheckAvailabilityData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<CheckAvailabilityData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                start: pageParam,
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await checkAvailability({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: checkAvailabilityInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<CheckAvailabilityData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await checkAvailability({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: checkAvailabilityInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getInstructorCalendarQueryKey = (options: Options<GetInstructorCalendarData>) =>
@@ -17449,30 +17644,32 @@ export const searchSkillsInfiniteOptions = (options: Options<SearchSkillsData>) 
     InfiniteData<SearchSkillsResponse>,
     QueryKey<Options<SearchSkillsData>>,
     number | Pick<QueryKey<Options<SearchSkillsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchSkillsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchSkills({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchSkillsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchSkillsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchSkills({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchSkillsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchInstructorsQueryKey = (options: Options<SearchInstructorsData>) =>
@@ -17605,30 +17802,32 @@ export const searchInstructorsInfiniteOptions = (options: Options<SearchInstruct
     QueryKey<Options<SearchInstructorsData>>,
     | number
     | Pick<QueryKey<Options<SearchInstructorsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchInstructorsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchInstructors({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchInstructorsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchInstructorsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchInstructors({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchInstructorsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchMembershipsQueryKey = (options: Options<SearchMembershipsData>) =>
@@ -17701,30 +17900,32 @@ export const searchMembershipsInfiniteOptions = (options: Options<SearchMembersh
     QueryKey<Options<SearchMembershipsData>>,
     | number
     | Pick<QueryKey<Options<SearchMembershipsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchMembershipsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchMemberships({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchMembershipsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchMembershipsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchMemberships({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchMembershipsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchExperienceQueryKey = (options: Options<SearchExperienceData>) =>
@@ -17798,30 +17999,32 @@ export const searchExperienceInfiniteOptions = (options: Options<SearchExperienc
     InfiniteData<SearchExperienceResponse>,
     QueryKey<Options<SearchExperienceData>>,
     number | Pick<QueryKey<Options<SearchExperienceData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchExperienceData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchExperience({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchExperienceInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchExperienceData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchExperience({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchExperienceInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchEducationQueryKey = (options: Options<SearchEducationData>) =>
@@ -17883,30 +18086,32 @@ export const searchEducationInfiniteOptions = (options: Options<SearchEducationD
     InfiniteData<SearchEducationResponse>,
     QueryKey<Options<SearchEducationData>>,
     number | Pick<QueryKey<Options<SearchEducationData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchEducationData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchEducation({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchEducationInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchEducationData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchEducation({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchEducationInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchDocumentsQueryKey = (options: Options<SearchDocumentsData>) =>
@@ -17982,30 +18187,32 @@ export const searchDocumentsInfiniteOptions = (options: Options<SearchDocumentsD
     InfiniteData<SearchDocumentsResponse>,
     QueryKey<Options<SearchDocumentsData>>,
     number | Pick<QueryKey<Options<SearchDocumentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchDocumentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchDocuments({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchDocumentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchDocumentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchDocuments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchDocumentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getStudentDashboardQueryKey = (options: Options<GetStudentDashboardData>) =>
@@ -18133,30 +18340,32 @@ export const getStudentScheduleInfiniteOptions = (options: Options<GetStudentSch
     InfiniteData<GetStudentScheduleResponse>,
     QueryKey<Options<GetStudentScheduleData>>,
     Date | Pick<QueryKey<Options<GetStudentScheduleData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetStudentScheduleData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                start: pageParam,
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getStudentSchedule({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getStudentScheduleInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetStudentScheduleData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getStudentSchedule({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getStudentScheduleInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchEnrollmentsQueryKey = (options: Options<SearchEnrollmentsData>) =>
@@ -18197,30 +18406,32 @@ export const searchEnrollmentsInfiniteOptions = (options: Options<SearchEnrollme
     QueryKey<Options<SearchEnrollmentsData>>,
     | number
     | Pick<QueryKey<Options<SearchEnrollmentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchEnrollmentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchEnrollments({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchEnrollmentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchEnrollmentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchEnrollments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchEnrollmentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getEnrollmentsForInstanceQueryKey = (
@@ -18345,30 +18556,32 @@ export const listCurrenciesInfiniteOptions = (options: Options<ListCurrenciesDat
     InfiniteData<ListCurrenciesResponse>,
     QueryKey<Options<ListCurrenciesData>>,
     number | Pick<QueryKey<Options<ListCurrenciesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<ListCurrenciesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await listCurrencies({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listCurrenciesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListCurrenciesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listCurrencies({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listCurrenciesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getDefaultCurrencyQueryKey = (options?: Options<GetDefaultCurrencyData>) =>
@@ -18504,30 +18717,32 @@ export const getRubricsByContextInfiniteOptions = (options: Options<GetRubricsBy
     QueryKey<Options<GetRubricsByContextData>>,
     | number
     | Pick<QueryKey<Options<GetRubricsByContextData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetRubricsByContextData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getRubricsByContext({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getRubricsByContextInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetRubricsByContextData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getRubricsByContext({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getRubricsByContextInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getEnrollmentGradeBookQueryKey = (options: Options<GetEnrollmentGradeBookData>) =>
@@ -18591,30 +18806,32 @@ export const getCourseEnrollmentsInfiniteOptions = (options: Options<GetCourseEn
     QueryKey<Options<GetCourseEnrollmentsData>>,
     | number
     | Pick<QueryKey<Options<GetCourseEnrollmentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCourseEnrollmentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCourseEnrollments({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCourseEnrollmentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseEnrollmentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseEnrollments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseEnrollmentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getCourseCompletionRateQueryKey = (options: Options<GetCourseCompletionRateData>) =>
@@ -18742,30 +18959,32 @@ export const searchTrainingApplicationsInfiniteOptions = (
         QueryKey<Options<SearchTrainingApplicationsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchTrainingApplicationsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchTrainingApplications({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchTrainingApplicationsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchTrainingApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchTrainingApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchTrainingApplicationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchCoursesQueryKey = (options: Options<SearchCoursesData>) =>
@@ -18833,30 +19052,32 @@ export const searchCoursesInfiniteOptions = (options: Options<SearchCoursesData>
     InfiniteData<SearchCoursesResponse>,
     QueryKey<Options<SearchCoursesData>>,
     number | Pick<QueryKey<Options<SearchCoursesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCoursesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCourses({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCoursesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCoursesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourses({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCoursesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getPublishedCoursesQueryKey = (options: Options<GetPublishedCoursesData>) =>
@@ -18898,30 +19119,32 @@ export const getPublishedCoursesInfiniteOptions = (options: Options<GetPublished
     QueryKey<Options<GetPublishedCoursesData>>,
     | number
     | Pick<QueryKey<Options<GetPublishedCoursesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetPublishedCoursesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getPublishedCourses({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getPublishedCoursesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetPublishedCoursesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPublishedCourses({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPublishedCoursesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getCourseMediaQueryKey = (options: Options<GetCourseMediaData>) =>
@@ -19005,30 +19228,32 @@ export const getCoursesByInstructorInfiniteOptions = (
     QueryKey<Options<GetCoursesByInstructorData>>,
     | number
     | Pick<QueryKey<Options<GetCoursesByInstructorData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCoursesByInstructorData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCoursesByInstructor({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCoursesByInstructorInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCoursesByInstructorData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCoursesByInstructor({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCoursesByInstructorInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getCourseContentMediaQueryKey = (options: Options<GetCourseContentMediaData>) =>
@@ -19105,30 +19330,32 @@ export const getCoursesByCategoryInfiniteOptions = (options: Options<GetCoursesB
     QueryKey<Options<GetCoursesByCategoryData>>,
     | number
     | Pick<QueryKey<Options<GetCoursesByCategoryData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetCoursesByCategoryData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getCoursesByCategory({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCoursesByCategoryInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCoursesByCategoryData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCoursesByCategory({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCoursesByCategoryInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getActiveCoursesQueryKey = (options: Options<GetActiveCoursesData>) =>
@@ -19168,30 +19395,32 @@ export const getActiveCoursesInfiniteOptions = (options: Options<GetActiveCourse
     InfiniteData<GetActiveCoursesResponse>,
     QueryKey<Options<GetActiveCoursesData>>,
     number | Pick<QueryKey<Options<GetActiveCoursesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetActiveCoursesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getActiveCourses({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getActiveCoursesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetActiveCoursesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getActiveCourses({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getActiveCoursesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const isCourseCreatorVerifiedQueryKey = (options: Options<IsCourseCreatorVerifiedData>) =>
@@ -19213,6 +19442,31 @@ export const isCourseCreatorVerifiedOptions = (options: Options<IsCourseCreatorV
       return data;
     },
     queryKey: isCourseCreatorVerifiedQueryKey(options),
+  });
+};
+
+export const getCourseCreatorDocumentMediaQueryKey = (
+  options: Options<GetCourseCreatorDocumentMediaData>
+) => createQueryKey('getCourseCreatorDocumentMedia', options);
+
+/**
+ * Get course creator document media
+ * Streams an uploaded course creator document by stored relative path.
+ */
+export const getCourseCreatorDocumentMediaOptions = (
+  options: Options<GetCourseCreatorDocumentMediaData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorDocumentMedia({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorDocumentMediaQueryKey(options),
   });
 };
 
@@ -19263,30 +19517,32 @@ export const getVerifiedCourseCreatorsInfiniteOptions = (
         QueryKey<Options<GetVerifiedCourseCreatorsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetVerifiedCourseCreatorsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getVerifiedCourseCreators({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getVerifiedCourseCreatorsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetVerifiedCourseCreatorsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getVerifiedCourseCreators({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getVerifiedCourseCreatorsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getUnverifiedCourseCreatorsQueryKey = (
@@ -19336,30 +19592,32 @@ export const getUnverifiedCourseCreatorsInfiniteOptions = (
         QueryKey<Options<GetUnverifiedCourseCreatorsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetUnverifiedCourseCreatorsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getUnverifiedCourseCreators({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getUnverifiedCourseCreatorsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetUnverifiedCourseCreatorsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getUnverifiedCourseCreators({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getUnverifiedCourseCreatorsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchCourseCreatorSkillsQueryKey = (
@@ -19409,30 +19667,32 @@ export const searchCourseCreatorSkillsInfiniteOptions = (
         QueryKey<Options<SearchCourseCreatorSkillsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCourseCreatorSkillsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCourseCreatorSkills({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCourseCreatorSkillsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorSkillsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreatorSkills({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorSkillsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchCourseCreatorsQueryKey = (options: Options<SearchCourseCreatorsData>) =>
@@ -19542,30 +19802,32 @@ export const searchCourseCreatorsInfiniteOptions = (options: Options<SearchCours
     QueryKey<Options<SearchCourseCreatorsData>>,
     | number
     | Pick<QueryKey<Options<SearchCourseCreatorsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCourseCreatorsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCourseCreators({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCourseCreatorsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreators({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchCourseCreatorMembershipsQueryKey = (
@@ -19615,30 +19877,32 @@ export const searchCourseCreatorMembershipsInfiniteOptions = (
         QueryKey<Options<SearchCourseCreatorMembershipsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCourseCreatorMembershipsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCourseCreatorMemberships({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCourseCreatorMembershipsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorMembershipsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreatorMemberships({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorMembershipsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchCourseCreatorExperienceQueryKey = (
@@ -19688,30 +19952,32 @@ export const searchCourseCreatorExperienceInfiniteOptions = (
         QueryKey<Options<SearchCourseCreatorExperienceData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCourseCreatorExperienceData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCourseCreatorExperience({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCourseCreatorExperienceInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorExperienceData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreatorExperience({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorExperienceInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchCourseCreatorEducationQueryKey = (
@@ -19761,30 +20027,32 @@ export const searchCourseCreatorEducationInfiniteOptions = (
         QueryKey<Options<SearchCourseCreatorEducationData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCourseCreatorEducationData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCourseCreatorEducation({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCourseCreatorEducationInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorEducationData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreatorEducation({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorEducationInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const countCourseCreatorsByVerificationStatusQueryKey = (
@@ -19859,30 +20127,32 @@ export const searchCourseCreatorCertificationsInfiniteOptions = (
         QueryKey<Options<SearchCourseCreatorCertificationsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCourseCreatorCertificationsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCourseCreatorCertifications({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCourseCreatorCertificationsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorCertificationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreatorCertifications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorCertificationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchContentTypesQueryKey = (options: Options<SearchContentTypesData>) =>
@@ -19935,30 +20205,32 @@ export const searchContentTypesInfiniteOptions = (options: Options<SearchContent
     QueryKey<Options<SearchContentTypesData>>,
     | number
     | Pick<QueryKey<Options<SearchContentTypesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchContentTypesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchContentTypes({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchContentTypesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchContentTypesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchContentTypes({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchContentTypesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const checkMimeTypeSupportQueryKey = (options: Options<CheckMimeTypeSupportData>) =>
@@ -20078,30 +20350,32 @@ export const searchCategoriesInfiniteOptions = (options: Options<SearchCategorie
     InfiniteData<SearchCategoriesResponse>,
     QueryKey<Options<SearchCategoriesData>>,
     number | Pick<QueryKey<Options<SearchCategoriesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCategoriesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCategories({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCategoriesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCategoriesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCategories({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCategoriesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getRootCategoriesQueryKey = (options?: Options<GetRootCategoriesData>) =>
@@ -20205,30 +20479,32 @@ export const searchCatalogueInfiniteOptions = (options: Options<SearchCatalogueD
     InfiniteData<SearchCatalogueResponse>,
     QueryKey<Options<SearchCatalogueData>>,
     number | Pick<QueryKey<Options<SearchCatalogueData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCatalogueData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCatalogue({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCatalogueInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCatalogueData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCatalogue({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCatalogueInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const resolveByCourseOrClassQueryKey = (options?: Options<ResolveByCourseOrClassData>) =>
@@ -20298,30 +20574,32 @@ export const getClassSchedulingConflictsInfiniteOptions = (
         QueryKey<Options<GetClassSchedulingConflictsData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetClassSchedulingConflictsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getClassSchedulingConflicts({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getClassSchedulingConflictsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetClassSchedulingConflictsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getClassSchedulingConflicts({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getClassSchedulingConflictsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getClassScheduleQueryKey = (options: Options<GetClassScheduleData>) =>
@@ -20359,30 +20637,32 @@ export const getClassScheduleInfiniteOptions = (options: Options<GetClassSchedul
     InfiniteData<GetClassScheduleResponse>,
     QueryKey<Options<GetClassScheduleData>>,
     number | Pick<QueryKey<Options<GetClassScheduleData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetClassScheduleData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getClassSchedule({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getClassScheduleInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetClassScheduleData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getClassSchedule({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getClassScheduleInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getEnrollmentsForClassQueryKey = (options: Options<GetEnrollmentsForClassData>) =>
@@ -20587,30 +20867,32 @@ export const searchCertificateTemplatesInfiniteOptions = (
         QueryKey<Options<SearchCertificateTemplatesData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCertificateTemplatesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCertificateTemplates({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCertificateTemplatesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCertificateTemplatesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCertificateTemplates({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCertificateTemplatesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getStudentCertificatesQueryKey = (options: Options<GetStudentCertificatesData>) =>
@@ -20730,30 +21012,32 @@ export const searchCertificatesInfiniteOptions = (options: Options<SearchCertifi
     QueryKey<Options<SearchCertificatesData>>,
     | number
     | Pick<QueryKey<Options<SearchCertificatesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchCertificatesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchCertificates({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCertificatesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCertificatesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCertificates({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCertificatesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getRevokedCertificatesQueryKey = (options?: Options<GetRevokedCertificatesData>) =>
@@ -20819,6 +21103,28 @@ export const getCertificateByNumberOptions = (options: Options<GetCertificateByN
       return data;
     },
     queryKey: getCertificateByNumberQueryKey(options),
+  });
+};
+
+export const getCertificateFileQueryKey = (options: Options<GetCertificateFileData>) =>
+  createQueryKey('getCertificateFile', options);
+
+/**
+ * Get certificate PDF by file path
+ * Retrieves a certificate PDF by its stored relative path.
+ */
+export const getCertificateFileOptions = (options: Options<GetCertificateFileData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCertificateFile({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCertificateFileQueryKey(options),
   });
 };
 
@@ -21056,29 +21362,53 @@ export const searchSubmissionsInfiniteOptions = (options: Options<SearchSubmissi
     QueryKey<Options<SearchSubmissionsData>>,
     | number
     | Pick<QueryKey<Options<SearchSubmissionsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchSubmissionsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchSubmissions({
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchSubmissionsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchSubmissions({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchSubmissionsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getSubmissionMediaQueryKey = (options: Options<GetSubmissionMediaData>) =>
+  createQueryKey('getSubmissionMedia', options);
+
+/**
+ * Get assignment submission media by file path
+ * Retrieves assignment submission attachment files by their stored relative path.
+ */
+export const getSubmissionMediaOptions = (options: Options<GetSubmissionMediaData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSubmissionMedia({
         ...options,
-        ...params,
+        ...queryKey[0],
         signal,
         throwOnError: true,
       });
       return data;
     },
-    queryKey: searchSubmissionsInfiniteQueryKey(options),
+    queryKey: getSubmissionMediaQueryKey(options),
   });
 };
 
@@ -21136,30 +21466,32 @@ export const searchAssignmentsInfiniteOptions = (options: Options<SearchAssignme
     QueryKey<Options<SearchAssignmentsData>>,
     | number
     | Pick<QueryKey<Options<SearchAssignmentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<SearchAssignmentsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await searchAssignments({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchAssignmentsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchAssignmentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchAssignments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchAssignmentsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getAssignmentMediaQueryKey = (options: Options<GetAssignmentMediaData>) =>
@@ -21167,7 +21499,7 @@ export const getAssignmentMediaQueryKey = (options: Options<GetAssignmentMediaDa
 
 /**
  * Get assignment media by file name
- * Retrieves assignment media files by their stored filename.
+ * Retrieves assignment attachment files by their stored relative path.
  */
 export const getAssignmentMediaOptions = (options: Options<GetAssignmentMediaData>) => {
   return queryOptions({
@@ -21289,30 +21621,32 @@ export const getSystemAdminUsersInfiniteOptions = (options: Options<GetSystemAdm
     QueryKey<Options<GetSystemAdminUsersData>>,
     | number
     | Pick<QueryKey<Options<GetSystemAdminUsersData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetSystemAdminUsersData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getSystemAdminUsers({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getSystemAdminUsersInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetSystemAdminUsersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getSystemAdminUsers({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getSystemAdminUsersInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getOrganizationAdminUsersQueryKey = (
@@ -21362,30 +21696,32 @@ export const getOrganizationAdminUsersInfiniteOptions = (
         QueryKey<Options<GetOrganizationAdminUsersData>>[0],
         'body' | 'headers' | 'path' | 'query'
       >
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetOrganizationAdminUsersData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getOrganizationAdminUsers({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getOrganizationAdminUsersInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetOrganizationAdminUsersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getOrganizationAdminUsers({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getOrganizationAdminUsersInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getAdminEligibleUsersQueryKey = (options: Options<GetAdminEligibleUsersData>) =>
@@ -21429,30 +21765,32 @@ export const getAdminEligibleUsersInfiniteOptions = (
     QueryKey<Options<GetAdminEligibleUsersData>>,
     | number
     | Pick<QueryKey<Options<GetAdminEligibleUsersData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetAdminEligibleUsersData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getAdminEligibleUsers({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAdminEligibleUsersInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetAdminEligibleUsersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAdminEligibleUsers({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAdminEligibleUsersInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getProgramApprovalStatusQueryKey = (options: Options<GetProgramApprovalStatusData>) =>
@@ -21513,30 +21851,32 @@ export const listPendingProgramsInfiniteOptions = (options: Options<ListPendingP
     QueryKey<Options<ListPendingProgramsData>>,
     | number
     | Pick<QueryKey<Options<ListPendingProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<ListPendingProgramsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await listPendingPrograms({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listPendingProgramsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListPendingProgramsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listPendingPrograms({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listPendingProgramsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const isOrganisationVerifiedQueryKey = (options: Options<IsOrganisationVerifiedData>) =>
@@ -21602,30 +21942,32 @@ export const getPendingOrganisationsInfiniteOptions = (
     QueryKey<Options<GetPendingOrganisationsData>>,
     | number
     | Pick<QueryKey<Options<GetPendingOrganisationsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetPendingOrganisationsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getPendingOrganisations({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getPendingOrganisationsInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetPendingOrganisationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPendingOrganisations({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPendingOrganisationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const isInstructorVerifiedQueryKey = (options: Options<IsInstructorVerifiedData>) =>
@@ -21736,30 +22078,32 @@ export const getDashboardActivityInfiniteOptions = (options: Options<GetDashboar
     QueryKey<Options<GetDashboardActivityData>>,
     | number
     | Pick<QueryKey<Options<GetDashboardActivityData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<GetDashboardActivityData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await getDashboardActivity({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getDashboardActivityInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetDashboardActivityData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getDashboardActivity({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getDashboardActivityInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getCourseApprovalStatusQueryKey = (options: Options<GetCourseApprovalStatusData>) =>
@@ -21819,30 +22163,32 @@ export const listPendingCoursesInfiniteOptions = (options: Options<ListPendingCo
     QueryKey<Options<ListPendingCoursesData>>,
     | number
     | Pick<QueryKey<Options<ListPendingCoursesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >({
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-      const page: Pick<
-        QueryKey<Options<ListPendingCoursesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      > =
-        typeof pageParam === 'object'
-          ? pageParam
-          : {
-              query: {
-                pageable: { page: pageParam },
-              },
-            };
-      const params = createInfiniteParams(queryKey, page);
-      const { data } = await listPendingCourses({
-        ...options,
-        ...params,
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listPendingCoursesInfiniteQueryKey(options),
-  });
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListPendingCoursesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listPendingCourses({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listPendingCoursesInfiniteQueryKey(options),
+    }
+  );
 };
 
 /**

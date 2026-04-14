@@ -155,30 +155,28 @@ export default function CourseBuilderPage() {
     enabled: !!resolveId,
   });
   const lessons = courseLessons?.data?.content;
-  const lessonUuids = lessons?.map(lesson => lesson.uuid).filter(Boolean) ?? [];
+  const lessonsWithUuid = (lessons || []).filter(
+    (lesson): lesson is Lesson & { uuid: string } =>
+      typeof lesson?.uuid === 'string' && !!lesson.uuid
+  );
 
   const lessonContentQueries = useQueries({
-    queries: (courseLessons?.data?.content || []).map(lesson => {
+    queries: lessonsWithUuid.map(lesson => {
       const options = getLessonContentOptions({
-        path: { courseUuid: resolveId, lessonUuid: lesson?.uuid as string },
+        path: { courseUuid: resolveId, lessonUuid: lesson.uuid },
       });
 
       return {
-        queryKey: getLessonContentQueryKey({
-          path: {
-            courseUuid: resolveId,
-            lessonUuid: lesson?.uuid as string,
-          },
-        }),
+        ...options,
         queryFn: options.queryFn,
-        enabled: !!resolveId,
+        enabled: !!resolveId && !!lesson.uuid,
       };
     }),
   });
 
   const lessonContentMap = new Map();
 
-  (courseLessons?.data?.content || []).forEach((lesson, index) => {
+  lessonsWithUuid.forEach((lesson, index) => {
     const query = lessonContentQueries[index];
     const contents = query?.data?.data || [];
     lessonContentMap.set(lesson.uuid, contents);

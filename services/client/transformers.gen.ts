@@ -1624,6 +1624,18 @@ const classSessionTemplateSchemaResponseTransformer = (data: any) => {
 const classDefinitionSchemaResponseTransformer = (data: any) => {
   data.default_start_time = new Date(data.default_start_time);
   data.default_end_time = new Date(data.default_end_time);
+  if (data.academic_period_start_date) {
+    data.academic_period_start_date = new Date(data.academic_period_start_date);
+  }
+  if (data.academic_period_end_date) {
+    data.academic_period_end_date = new Date(data.academic_period_end_date);
+  }
+  if (data.registration_period_start_date) {
+    data.registration_period_start_date = new Date(data.registration_period_start_date);
+  }
+  if (data.registration_period_end_date) {
+    data.registration_period_end_date = new Date(data.registration_period_end_date);
+  }
   data.session_templates = data.session_templates.map((item: any) => {
     return classSessionTemplateSchemaResponseTransformer(item);
   });

@@ -1,4 +1,5 @@
 import { auth } from '@/services/auth';
+import { getServerApiBaseUrl } from '@/services/api/base-url';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -9,7 +10,7 @@ const ALLOWED_MEDIA_HOSTS = new Set([
   'api.elimika.staging.sarafrika.com',
 ]);
 
-const ALLOWED_MEDIA_PATH_PREFIXES = ['/api/v1/courses/media/'];
+const ALLOWED_MEDIA_PATH_PREFIXES = ['/api/v1/courses/media/', '/api/v1/courses/content-media/'];
 
 function resolveUpstreamUrl(request: NextRequest) {
   const rawUrl = request.nextUrl.searchParams.get('url');
@@ -18,16 +19,28 @@ function resolveUpstreamUrl(request: NextRequest) {
   }
 
   try {
-    const upstreamUrl = new URL(rawUrl);
-    if (!ALLOWED_MEDIA_HOSTS.has(upstreamUrl.hostname)) {
+    const parsedUrl = new URL(rawUrl);
+    if (!ALLOWED_MEDIA_HOSTS.has(parsedUrl.hostname)) {
       return null;
     }
 
-    if (!ALLOWED_MEDIA_PATH_PREFIXES.some(prefix => upstreamUrl.pathname.startsWith(prefix))) {
+    if (!ALLOWED_MEDIA_PATH_PREFIXES.some(prefix => parsedUrl.pathname.startsWith(prefix))) {
       return null;
     }
 
-    return upstreamUrl;
+    // Re-root the path onto API_BASE_URL so staging internal networking is respected,
+    // the same way app/api/proxy/[...path]/route.ts does.
+    const apiBase = new URL(getServerApiBaseUrl());
+    const apiBasePath = apiBase.pathname.replace(/\/$/, '');
+    const mediaPath = parsedUrl.pathname;
+    const dedupedPath =
+      apiBasePath && mediaPath.startsWith(`${apiBasePath}/`)
+        ? mediaPath.slice(apiBasePath.length)
+        : mediaPath;
+    apiBase.pathname = `${apiBasePath}${dedupedPath}`.replace(/\/{2,}/g, '/');
+    apiBase.search = parsedUrl.search;
+
+    return apiBase;
   } catch {
     return null;
   }

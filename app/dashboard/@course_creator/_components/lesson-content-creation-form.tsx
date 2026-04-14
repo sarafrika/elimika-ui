@@ -238,7 +238,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
         lessonUuid: activeLessonId as string,
       },
     }),
-    enabled: !activeLessonId,
+    enabled: !!activeLessonId,
   });
 
   const uploadLessonMedia = useMutation(uploadLessonMediaMutation());

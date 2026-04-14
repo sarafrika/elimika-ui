@@ -367,10 +367,6 @@ export type AssessmentRubric = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
-   */
-  readonly is_published?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the rubric based on its type.
    */
   readonly rubric_category?: string;
@@ -382,6 +378,10 @@ export type AssessmentRubric = {
    * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
   readonly usage_status?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
+   */
+  readonly is_published?: boolean;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -578,14 +578,6 @@ export type RubricCriteria = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is a primary assessment criteria.
-   */
-  readonly is_primary_criteria?: boolean;
-  /**
-   * **[READ-ONLY]** Category classification of the assessment criteria.
-   */
-  readonly criteria_category?: string;
-  /**
    * **[READ-ONLY]** Suggested weight or priority level for this criteria.
    */
   readonly weight_suggestion?: string;
@@ -593,6 +585,14 @@ export type RubricCriteria = {
    * **[READ-ONLY]** Formatted criteria number for display in assessment interface.
    */
   readonly criteria_number?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is a primary assessment criteria.
+   */
+  readonly is_primary_criteria?: boolean;
+  /**
+   * **[READ-ONLY]** Category classification of the assessment criteria.
+   */
+  readonly criteria_category?: string;
 };
 
 /**
@@ -622,13 +622,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1302,10 +1302,6 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
-   */
-  readonly is_profile_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
@@ -1313,6 +1309,10 @@ export type Instructor = {
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   */
+  readonly is_profile_complete?: boolean;
 };
 
 /**
@@ -1435,6 +1435,7 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
+  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -1460,7 +1461,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
-  membership_status?: MembershipStatusEnum;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1629,10 +1629,6 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1640,6 +1636,10 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
@@ -1761,6 +1761,10 @@ export type InstructorDocument = {
    * **[READ-ONLY]** Email or username of the user who last modified this document record.
    */
   readonly updated_by?: string;
+  /**
+   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
+   */
+  readonly file_url?: string;
   /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
@@ -1935,10 +1939,6 @@ export type Course = {
    */
   readonly accepts_new_enrollments?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
    */
   readonly has_multiple_categories?: boolean;
@@ -1950,6 +1950,10 @@ export type Course = {
    * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
    */
   readonly lifecycle_stage?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
 };
 
 /**
@@ -2334,6 +2338,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -2345,14 +2357,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
-  /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -2650,6 +2654,10 @@ export type CourseCreatorDocumentDto = {
   readonly created_by?: string;
   readonly updated_date?: Date;
   readonly updated_by?: string;
+  /**
+   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
+   */
+  readonly file_url?: string;
 };
 
 export type ApiResponseCourseCreatorDocumentDto = {
@@ -3066,6 +3074,30 @@ export type ClassDefinition = {
    * **[REQUIRED]** Default end date-time for class sessions (UTC).
    */
   default_end_time: Date;
+  /**
+   * **[OPTIONAL]** Academic period start date for the class lifecycle.
+   */
+  academic_period_start_date?: Date;
+  /**
+   * **[OPTIONAL]** Academic period end date for the class lifecycle.
+   */
+  academic_period_end_date?: Date;
+  /**
+   * **[OPTIONAL]** Registration period start date for learner enrollment.
+   */
+  registration_period_start_date?: Date;
+  /**
+   * **[OPTIONAL]** Registration period end date for learner enrollment.
+   */
+  registration_period_end_date?: Date;
+  /**
+   * **[OPTIONAL]** Number of minutes before class start when reminders should be triggered.
+   */
+  class_reminder_minutes?: number;
+  /**
+   * **[OPTIONAL]** Hex color code used to visually distinguish the class in UI surfaces.
+   */
+  class_color?: string;
   location_type: LocationTypeEnum;
   /**
    * **[OPTIONAL]** Human-readable name for the primary class location, used for Mapbox forward/reverse geocoding (e.g., campus, room, or venue name). Required when location_type is IN_PERSON or HYBRID.
@@ -3762,10 +3794,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -3777,6 +3805,10 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 /**
@@ -4164,21 +4196,21 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
-  readonly status_description?: string;
+  readonly can_be_cancelled?: boolean;
   /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   */
+  readonly status_description?: string;
 };
 
 export type ApiResponse = {
@@ -5450,8 +5482,8 @@ export type PagedDtoBookingResponse = {
 };
 
 export type Page = {
-  totalElements?: bigint;
   totalPages?: number;
+  totalElements?: bigint;
   first?: boolean;
   last?: boolean;
   size?: number;
@@ -6013,13 +6045,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the program.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the program.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -6420,13 +6452,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if this class is upcoming.
-   */
-  readonly is_upcoming?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this class is upcoming.
+   */
+  readonly is_upcoming?: boolean;
 };
 
 export type ApiResponsePagedDtoEnrollment = {
@@ -6798,13 +6830,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the course.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the course.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -7834,6 +7866,21 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
+
+/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -7849,21 +7896,6 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -20842,6 +20874,40 @@ export type GetInstructorRatingSummaryResponses = {
 export type GetInstructorRatingSummaryResponse =
   GetInstructorRatingSummaryResponses[keyof GetInstructorRatingSummaryResponses];
 
+export type GetInstructorDocumentMediaData = {
+  body?: never;
+  path: {
+    instructorUuid: string;
+    filePath: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/{instructorUuid}/documents/files/{filePath}';
+};
+
+export type GetInstructorDocumentMediaErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetInstructorDocumentMediaError =
+  GetInstructorDocumentMediaErrors[keyof GetInstructorDocumentMediaErrors];
+
+export type GetInstructorDocumentMediaResponses = {
+  /**
+   * OK
+   */
+  200: Blob | File;
+};
+
+export type GetInstructorDocumentMediaResponse =
+  GetInstructorDocumentMediaResponses[keyof GetInstructorDocumentMediaResponses];
+
 export type GetInstructorBookingsData = {
   body?: never;
   path: {
@@ -22036,12 +22102,12 @@ export type GetCourseMediaData = {
   body?: never;
   path: {
     /**
-     * Name of the media file to retrieve. This is typically returned from the upload endpoints.
+     * Stored relative path of the course media file, or a legacy flat filename from older records.
      */
-    fileName: string;
+    filePath: string;
   };
   query?: never;
-  url: '/api/v1/courses/media/{fileName}';
+  url: '/api/v1/courses/media/{filePath}';
 };
 
 export type GetCourseMediaErrors = {
@@ -22235,6 +22301,40 @@ export type IsCourseCreatorVerifiedResponses = {
 
 export type IsCourseCreatorVerifiedResponse =
   IsCourseCreatorVerifiedResponses[keyof IsCourseCreatorVerifiedResponses];
+
+export type GetCourseCreatorDocumentMediaData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    filePath: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/documents/files/{filePath}';
+};
+
+export type GetCourseCreatorDocumentMediaErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorDocumentMediaError =
+  GetCourseCreatorDocumentMediaErrors[keyof GetCourseCreatorDocumentMediaErrors];
+
+export type GetCourseCreatorDocumentMediaResponses = {
+  /**
+   * OK
+   */
+  200: Blob | File;
+};
+
+export type GetCourseCreatorDocumentMediaResponse =
+  GetCourseCreatorDocumentMediaResponses[keyof GetCourseCreatorDocumentMediaResponses];
 
 export type GetVerifiedCourseCreatorsData = {
   body?: never;
@@ -23386,6 +23486,38 @@ export type GetCertificateByNumberResponses = {
 export type GetCertificateByNumberResponse =
   GetCertificateByNumberResponses[keyof GetCertificateByNumberResponses];
 
+export type GetCertificateFileData = {
+  body?: never;
+  path: {
+    filePath: string;
+  };
+  query?: never;
+  url: '/api/v1/certificates/files/{filePath}';
+};
+
+export type GetCertificateFileErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCertificateFileError = GetCertificateFileErrors[keyof GetCertificateFileErrors];
+
+export type GetCertificateFileResponses = {
+  /**
+   * OK
+   */
+  200: Blob | File;
+};
+
+export type GetCertificateFileResponse =
+  GetCertificateFileResponses[keyof GetCertificateFileResponses];
+
 export type GetCourseCertificatesData = {
   body?: never;
   path?: never;
@@ -23686,6 +23818,38 @@ export type SearchSubmissionsResponses = {
 export type SearchSubmissionsResponse =
   SearchSubmissionsResponses[keyof SearchSubmissionsResponses];
 
+export type GetSubmissionMediaData = {
+  body?: never;
+  path: {
+    filePath: string;
+  };
+  query?: never;
+  url: '/api/v1/assignments/submission-media/{filePath}';
+};
+
+export type GetSubmissionMediaErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetSubmissionMediaError = GetSubmissionMediaErrors[keyof GetSubmissionMediaErrors];
+
+export type GetSubmissionMediaResponses = {
+  /**
+   * OK
+   */
+  200: Blob | File;
+};
+
+export type GetSubmissionMediaResponse =
+  GetSubmissionMediaResponses[keyof GetSubmissionMediaResponses];
+
 export type SearchAssignmentsData = {
   body?: never;
   path?: never;
@@ -23727,10 +23891,10 @@ export type SearchAssignmentsResponse =
 export type GetAssignmentMediaData = {
   body?: never;
   path: {
-    fileName: string;
+    filePath: string;
   };
   query?: never;
-  url: '/api/v1/assignments/media/{fileName}';
+  url: '/api/v1/assignments/media/{filePath}';
 };
 
 export type GetAssignmentMediaErrors = {

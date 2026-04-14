@@ -1090,6 +1090,9 @@ import type {
   GetInstructorRatingSummaryData,
   GetInstructorRatingSummaryResponses,
   GetInstructorRatingSummaryErrors,
+  GetInstructorDocumentMediaData,
+  GetInstructorDocumentMediaResponses,
+  GetInstructorDocumentMediaErrors,
   GetInstructorBookingsData,
   GetInstructorBookingsResponses,
   GetInstructorBookingsErrors,
@@ -1207,6 +1210,9 @@ import type {
   IsCourseCreatorVerifiedData,
   IsCourseCreatorVerifiedResponses,
   IsCourseCreatorVerifiedErrors,
+  GetCourseCreatorDocumentMediaData,
+  GetCourseCreatorDocumentMediaResponses,
+  GetCourseCreatorDocumentMediaErrors,
   GetVerifiedCourseCreatorsData,
   GetVerifiedCourseCreatorsResponses,
   GetVerifiedCourseCreatorsErrors,
@@ -1306,6 +1312,9 @@ import type {
   GetCertificateByNumberData,
   GetCertificateByNumberResponses,
   GetCertificateByNumberErrors,
+  GetCertificateFileData,
+  GetCertificateFileResponses,
+  GetCertificateFileErrors,
   GetCourseCertificatesData,
   GetCourseCertificatesResponses,
   GetCourseCertificatesErrors,
@@ -1333,6 +1342,9 @@ import type {
   SearchSubmissionsData,
   SearchSubmissionsResponses,
   SearchSubmissionsErrors,
+  GetSubmissionMediaData,
+  GetSubmissionMediaResponses,
+  GetSubmissionMediaErrors,
   SearchAssignmentsData,
   SearchAssignmentsResponses,
   SearchAssignmentsErrors,
@@ -12570,6 +12582,33 @@ export const getInstructorRatingSummary = <ThrowOnError extends boolean = false>
 };
 
 /**
+ * Get instructor document media
+ * Streams an uploaded instructor document by stored relative path.
+ */
+export const getInstructorDocumentMedia = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorDocumentMediaData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorDocumentMediaResponses,
+    GetInstructorDocumentMediaErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/documents/files/{filePath}',
+    ...options,
+  });
+};
+
+/**
  * Get instructor bookings
  */
 export const getInstructorBookings = <ThrowOnError extends boolean = false>(
@@ -13663,7 +13702,7 @@ export const getCourseMedia = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/courses/media/{fileName}',
+    url: '/api/v1/courses/media/{filePath}',
     ...options,
   });
 };
@@ -13810,6 +13849,33 @@ export const isCourseCreatorVerified = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/course-creators/{uuid}/verification-status',
+    ...options,
+  });
+};
+
+/**
+ * Get course creator document media
+ * Streams an uploaded course creator document by stored relative path.
+ */
+export const getCourseCreatorDocumentMedia = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorDocumentMediaData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorDocumentMediaResponses,
+    GetCourseCreatorDocumentMediaErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/documents/files/{filePath}',
     ...options,
   });
 };
@@ -14807,6 +14873,33 @@ export const getCertificateByNumber = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get certificate PDF by file path
+ * Retrieves a certificate PDF by its stored relative path.
+ */
+export const getCertificateFile = <ThrowOnError extends boolean = false>(
+  options: Options<GetCertificateFileData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCertificateFileResponses,
+    GetCertificateFileErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/certificates/files/{filePath}',
+    ...options,
+  });
+};
+
+/**
  * Get course certificates
  * Retrieves all certificates issued for course completions.
  */
@@ -15063,6 +15156,33 @@ export const searchSubmissions = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get assignment submission media by file path
+ * Retrieves assignment submission attachment files by their stored relative path.
+ */
+export const getSubmissionMedia = <ThrowOnError extends boolean = false>(
+  options: Options<GetSubmissionMediaData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetSubmissionMediaResponses,
+    GetSubmissionMediaErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/assignments/submission-media/{filePath}',
+    ...options,
+  });
+};
+
+/**
  * Search assignments
  * Advanced assignment search with flexible criteria and operators.
  *
@@ -15100,7 +15220,7 @@ export const searchAssignments = <ThrowOnError extends boolean = false>(
 
 /**
  * Get assignment media by file name
- * Retrieves assignment media files by their stored filename.
+ * Retrieves assignment attachment files by their stored relative path.
  */
 export const getAssignmentMedia = <ThrowOnError extends boolean = false>(
   options: Options<GetAssignmentMediaData, ThrowOnError>
@@ -15120,7 +15240,7 @@ export const getAssignmentMedia = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/assignments/media/{fileName}',
+    url: '/api/v1/assignments/media/{filePath}',
     ...options,
   });
 };

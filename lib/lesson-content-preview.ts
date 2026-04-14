@@ -1,3 +1,5 @@
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+
 export type PreviewableLessonContent = {
   content_text?: string | null;
   file_url?: string | null;
@@ -25,7 +27,7 @@ function normalizeUrl(candidate?: string | null) {
     trimmed.startsWith('data:') ||
     trimmed.startsWith('/')
   ) {
-    return trimmed;
+    return toAuthenticatedMediaUrl(trimmed) || trimmed;
   }
 
   return '';
