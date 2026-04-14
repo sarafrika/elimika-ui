@@ -5,968 +5,1290 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from '@/components/ui/pagination';
 import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import type { Enrollment, Student } from '@/services/client';
 import {
-    BookOpen,
-    ChevronDown,
-    ChevronUp,
-    CircleDot,
-    FileText,
-    GraduationCap,
-    LayoutGrid,
-    NotebookPen,
-    Play,
-    Search,
-    Users,
-    Video
+  getEnrollmentsForClassOptions,
+  getStudentByIdOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useQueries } from '@tanstack/react-query';
+import {
+  BookOpen,
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  CircleDot,
+  Clock3,
+  FileText,
+  GraduationCap,
+  NotebookPen,
+  Play,
+  Search,
+  UserRound,
+  Video,
+  Users,
+  PanelBottom,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import HTMLTextPreview from '../../../../components/editors/html-text-preview';
 
-type ClassTab = 'overview' | 'students' | 'announcements' | 'tasks';
+type ClassTab = 'overview' | 'delivery-status' | 'students' | 'announcements' | 'tasks';
+type DateFilter = 'current-week' | 'all';
+
+type StudentTableRow = {
+  studentUuid: string;
+  fullName: string;
+  status: string;
+  enrolledOn: string;
+};
 
 type LessonContentItem = {
-    uuid: string;
-    title: string;
-    type: string;
-    content_type_uuid: string;
-    duration?: string;
-    description?: string;
+  uuid: string;
+  title: string;
+  type: string;
+  content_type_uuid: string;
+  duration?: string;
+  description?: string;
 };
 
 type LessonModule = {
-    lesson: {
-        uuid?: string;
-        title?: string;
-        description?: string;
-    };
-    content?: {
-        data?: LessonContentItem[];
-    };
-};
-
-type InstructorClassCard = {
-    uuid: string;
-    title: string;
-    courseName: string;
-    sessionFormat?: string;
-    difficulty: string;
-    scheduleCount: number;
-    remainingSessions: number;
+  lesson: {
+    uuid?: string;
+    title?: string;
+    description?: string;
+  };
+  content?: {
+    data?: LessonContentItem[];
+  };
 };
 
 const tabs: { value: ClassTab; label: string }[] = [
-    { value: 'overview', label: 'Overview' },
-    { value: 'students', label: 'Students' },
-    { value: 'waiting-list', label: 'Waiting Lists' },
-    { value: 'announcements', label: 'Announcements' },
-    { value: 'tasks', label: 'Tasks' },
+  { value: 'overview', label: 'Overview' },
+  { value: 'delivery-status', label: 'Delivery Status' },
+  { value: 'students', label: 'Students' },
+  { value: 'announcements', label: 'Announcements' },
+  { value: 'tasks', label: 'Tasks' },
 ];
 
-const CLASSES_PER_PAGE = 10;
-
-const formatLabel = (value?: string | null) => {
-    if (!value) return 'Not available';
-    return value
-        .toLowerCase()
-        .split(/[_\s-]+/)
-        .filter(Boolean)
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
+const getStartOfWeek = (date: Date) => {
+  const result = new Date(date);
+  const day = result.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  result.setDate(result.getDate() + diff);
+  result.setHours(0, 0, 0, 0);
+  return result;
 };
 
-const clampPercentage = (value?: number | null) => {
-    if (value === null || value === undefined || Number.isNaN(value)) return 0;
-    return Math.min(100, Math.max(0, Number(value)));
+const getEndOfWeek = (date: Date) => {
+  const result = getStartOfWeek(date);
+  result.setDate(result.getDate() + 6);
+  result.setHours(23, 59, 59, 999);
+  return result;
+};
+
+const formatLabel = (value?: string | null) => {
+  if (!value) return 'Not available';
+  return value
+    .toLowerCase()
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+};
+
+const formatDateTime = (value?: string | Date | null) => {
+  if (!value) return 'TBD';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'TBD';
+
+  return date.toLocaleString('en-GB', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+};
+
+const formatDateOnly = (value?: string | Date | null) => {
+  if (!value) return 'TBD';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'TBD';
+
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const formatDuration = (startValue?: string | Date | null, endValue?: string | Date | null) => {
+  if (!startValue || !endValue) return 'TBD';
+
+  const start = new Date(startValue);
+  const end = new Date(endValue);
+  const diffInMinutes = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+
+  if (Number.isNaN(diffInMinutes) || diffInMinutes <= 0) return 'TBD';
+
+  const hours = Math.floor(diffInMinutes / 60);
+  const minutes = diffInMinutes % 60;
+
+  if (hours && minutes) return `${hours}h ${minutes}m`;
+  if (hours) return `${hours} hour${hours === 1 ? '' : 's'}`;
+  return `${minutes}m`;
 };
 
 const getContentTypeLabel = (contentTypeMap: Record<string, string>, uuid?: string) => {
-    const typeName = uuid ? contentTypeMap[uuid] : '';
-    return typeName ? formatLabel(typeName) : 'Content';
+  const typeName = uuid ? contentTypeMap[uuid] : '';
+  return typeName ? formatLabel(typeName) : 'Content';
 };
 
 const getContentTypeIcon = (contentTypeMap: Record<string, string>, uuid?: string) => {
-    const typeName = uuid ? contentTypeMap[uuid] : '';
+  const typeName = uuid ? contentTypeMap[uuid] : '';
 
-    switch (typeName) {
-        case 'video':
-            return <Video className='text-primary h-4 w-4' />;
-        case 'pdf':
-        case 'text':
-            return <BookOpen className='text-primary h-4 w-4' />;
-        case 'quiz':
-        case 'assignment':
-            return <FileText className='text-primary h-4 w-4' />;
-        default:
-            return <BookOpen className='text-primary h-4 w-4' />;
-    }
+  switch (typeName) {
+    case 'video':
+      return <Video className='text-primary h-4 w-4' />;
+    case 'pdf':
+    case 'text':
+      return <BookOpen className='text-primary h-4 w-4' />;
+    case 'quiz':
+    case 'assignment':
+      return <FileText className='text-primary h-4 w-4' />;
+    default:
+      return <BookOpen className='text-primary h-4 w-4' />;
+  }
+};
+
+const isWithinCurrentWeek = (value?: string | Date | null) => {
+  if (!value) return false;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+
+  const now = new Date();
+  return date >= getStartOfWeek(now) && date <= getEndOfWeek(now);
+};
+
+const getInstanceStatus = (startValue?: string | Date | null, endValue?: string | Date | null) => {
+  if (!startValue || !endValue) return 'Scheduled';
+
+  const start = new Date(startValue);
+  const end = new Date(endValue);
+  const now = new Date();
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Scheduled';
+  if (end < now) return 'Completed';
+  if (start <= now && end >= now) return 'In progress';
+  return 'Upcoming';
 };
 
 function PlaceholderTab({
-    title,
-    description,
+  title,
+  description,
 }: {
-    title: string;
-    description: string;
+  title: string;
+  description: string;
 }) {
-    return (
-        <Card className='border-border/70 bg-card shadow-sm'>
-            <CardContent className='flex min-h-[320px] flex-col items-center justify-center gap-4 p-8 text-center'>
-                <div className='bg-primary/10 text-primary rounded-full p-4'>
-                    <LayoutGrid className='h-6 w-6' />
-                </div>
-                <div className='space-y-2'>
-                    <h3 className='text-foreground text-lg font-semibold'>{title}</h3>
-                    <p className='text-muted-foreground max-w-xl text-sm'>{description}</p>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function MetricTile({
-    icon,
-    label,
-    value,
-    hint,
-}: {
-    icon: ReactNode;
-    label: string;
-    value: string;
-    hint: string;
-}) {
-    return (
-        <div className='rounded-[24px] border border-border/70 bg-background/80 p-4'>
-            <div className='text-muted-foreground flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em]'>
-                {icon}
-                <span>{label}</span>
-            </div>
-            <p className='text-foreground mt-3 text-lg font-semibold leading-tight'>{value}</p>
-            <p className='text-muted-foreground mt-1 text-sm'>{hint}</p>
+  return (
+    <Card className='border-border/70 bg-card shadow-sm'>
+      <CardContent className='flex min-h-[320px] flex-col items-center justify-center gap-4 p-8 text-center'>
+        <div className='bg-primary/10 text-primary rounded-full p-4'>
+          <NotebookPen className='h-6 w-6' />
         </div>
-    );
+        <div className='space-y-2'>
+          <h3 className='text-foreground text-lg font-semibold'>{title}</h3>
+          <p className='text-muted-foreground max-w-xl text-sm'>{description}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
-function ClassRoster({
-    isLoading,
-    classes,
-    searchTerm,
-    draftSearchTerm,
-    currentPage,
-    totalPages,
-    selectedClassUuid,
-    onDraftSearchChange,
-    onSearch,
-    onPageChange,
-    onSelectClass,
+function ClassSidebar({
+  isLoading,
+  classes,
+  selectedClassUuid,
+  searchTerm,
+  draftSearchTerm,
+  dateFilter,
+  onSelectClass,
+  onSearchChange,
+  onDateFilterChange,
 }: {
-    isLoading: boolean;
-    classes: InstructorClassCard[];
-    searchTerm: string;
-    draftSearchTerm: string;
-    currentPage: number;
-    totalPages: number;
-    selectedClassUuid: string | null;
-    onDraftSearchChange: (value: string) => void;
-    onSearch: (value?: string) => void;
-    onPageChange: (page: number) => void;
-    onSelectClass: (uuid: string) => void;
+  isLoading: boolean;
+  classes: ReturnType<typeof useMemoFilteredClasses>;
+  selectedClassUuid: string | null;
+  searchTerm: string;
+  draftSearchTerm: string;
+  dateFilter: DateFilter;
+  onSelectClass: (uuid: string) => void;
+  onSearchChange: (value: string) => void;
+  onDateFilterChange: (value: DateFilter) => void;
 }) {
-    const hasSearchTerm = searchTerm.trim().length > 0;
+  const hasSearchTerm = searchTerm.trim().length > 0;
 
-    return (
-        <Card className='border-border/70 bg-card shadow-sm'>
-            <CardHeader className='space-y-4 pb-4'>
+  return (
+    <Card className='border-border/70 bg-card shadow-sm'>
+      <CardHeader className='space-y-4 pb-4'>
+        <div className='space-y-2'>
+          <BrandPill icon={<NotebookPen className='h-3.5 w-3.5' />} className='px-3 py-1 text-[10px]'>
+            Classes
+          </BrandPill>
+          <div>
+            <CardTitle className='text-lg'>Created classes</CardTitle>
+            <p className='text-muted-foreground mt-1 text-sm'>
+              Browse classes and review the individual class instances under each one.
+            </p>
+          </div>
+        </div>
+
+        <div className='space-y-2'>
+          <div className='relative'>
+            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+            <Input
+              value={draftSearchTerm}
+              onChange={event => onSearchChange(event.target.value)}
+              placeholder='Search classes'
+              className='bg-background h-10 rounded-full border-border/70 pr-4 pl-9 text-sm'
+              aria-label='Search instructor classes'
+            />
+          </div>
+
+          <Select value={dateFilter} onValueChange={value => onDateFilterChange(value as DateFilter)}>
+            <SelectTrigger className='bg-background h-10 rounded-full border-border/70'>
+              <SelectValue placeholder='Filter by date' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='current-week'>Current week</SelectItem>
+              <SelectItem value='all'>All scheduled dates</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+
+      <CardContent className='space-y-3'>
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className='h-[128px] rounded-[20px]' />
+          ))
+        ) : classes.length === 0 ? (
+          <div className='border-border/70 rounded-[24px] border border-dashed p-6 text-center'>
+            <p className='text-foreground font-medium'>
+              {hasSearchTerm ? 'No classes match this search' : 'No classes for this filter'}
+            </p>
+            <p className='text-muted-foreground mt-1 text-sm'>
+              {hasSearchTerm
+                ? 'Try another class name or course title.'
+                : 'Switch the date filter to load more class instances.'}
+            </p>
+          </div>
+        ) : (
+          classes.map(classItem => {
+            const isSelected = classItem.uuid === selectedClassUuid;
+
+            return (
+              <button
+                key={classItem.uuid}
+                type='button'
+                onClick={() => onSelectClass(classItem.uuid)}
+                className={`w-full rounded-[20px] border px-3 py-3 text-left transition-colors ${
+                  isSelected
+                    ? 'border-primary bg-primary/10 shadow-sm'
+                    : 'border-border/70 bg-background/80 hover:bg-primary/10'
+                }`}
+              >
                 <div className='flex items-start justify-between gap-3'>
-                    <div className='space-y-2'>
-                        <BrandPill
-                            icon={<NotebookPen className='h-3.5 w-3.5' />}
-                            className='px-3 py-1 text-[10px]'
-                        >
-                            Classes
-                        </BrandPill>
-                        <div>
-                            <CardTitle className='text-lg'>Instructor classes</CardTitle>
-                            <p className='text-muted-foreground mt-1 text-sm'>
-                                Select a class to load its overview and teaching content.
-                            </p>
-                        </div>
-                    </div>
+                  <div className='min-w-0 space-y-1.5'>
+                    <p className='text-foreground truncate text-sm font-semibold'>{classItem.title}</p>
+                    <p className='text-muted-foreground truncate text-[11px]'>{classItem.courseName}</p>
+                  </div>
+                  <BrandPill className='shrink-0 px-2.5 py-1 text-[10px] normal-case tracking-normal'>
+                    {classItem.visibleInstances.length} instances
+                  </BrandPill>
                 </div>
 
-                <form
-                    className='flex flex-col gap-2 sm:flex-row'
-                    onSubmit={event => {
-                        event.preventDefault();
-                        onSearch();
-                    }}
-                >
-                    <div className='relative flex-1'>
-                        <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-                        <Input
-                            value={draftSearchTerm}
-                            onChange={event => {
-                                const nextValue = event.target.value;
-                                onDraftSearchChange(nextValue);
-                                onSearch(nextValue);
-                            }}
-                            placeholder='Search by class, course, format, or difficulty'
-                            className='bg-background h-10 rounded-full border-border/70 pr-4 pl-9 text-sm'
-                            aria-label='Search instructor classes'
-                        />
-                    </div>
-                    <Button type='submit' className='rounded-full px-5'>
-                        Search
-                    </Button>
-                </form>
-            </CardHeader>
-            <CardContent className='space-y-2.5'>
-                {isLoading ? (
-                    Array.from({ length: 8 }).map((_, index) => (
-                        <Skeleton key={index} className='h-[72px] rounded-[20px]' />
+                <div className='mt-3 space-y-2'>
+                  {classItem.visibleInstances.length > 0 ? (
+                    classItem.visibleInstances.map(instance => (
+                      <div
+                        key={instance.uuid}
+                        className='bg-card/90 rounded-[16px] border border-border/60 px-3 py-2'
+                      >
+                        <div className='flex items-center justify-between gap-3'>
+                          <p className='text-foreground truncate text-[11px] font-medium'>
+                            {formatDateTime(instance.start_time)}
+                          </p>
+                          <span className='text-muted-foreground shrink-0 text-[10px]'>
+                            {getInstanceStatus(instance.start_time, instance.end_time)}
+                          </span>
+                        </div>
+                        <p className='text-muted-foreground mt-1 text-[10px]'>
+                          {formatDuration(instance.start_time, instance.end_time)}
+                        </p>
+                      </div>
                     ))
-                ) : classes.length === 0 ? (
-                    <div className='border-border/70 rounded-[24px] border border-dashed p-6 text-center'>
-                        <p className='text-foreground font-medium'>
-                            {hasSearchTerm ? 'No classes match this search' : 'No active classes yet'}
-                        </p>
-                        <p className='text-muted-foreground mt-1 text-sm'>
-                            {hasSearchTerm
-                                ? 'Try a different keyword to find a class in your current teaching list.'
-                                : 'Your instructor classes will appear here once they are scheduled.'}
-                        </p>
-                    </div>
-                ) : (
-                    <>
-                        {classes.map(classItem => {
-                            const isActive = classItem.uuid === selectedClassUuid;
+                  ) : (
+                    <p className='text-muted-foreground text-[11px]'>No instances for this filter</p>
+                  )}
+                </div>
+              </button>
+            );
+          })
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-                            return (
-                                <button
-                                    key={classItem.uuid}
-                                    type='button'
-                                    onClick={() => onSelectClass(classItem.uuid)}
-                                    className={`w-full rounded-[20px] border px-3 py-3 text-left transition-colors ${isActive
-                                        ? 'border-primary bg-primary/10 shadow-sm'
-                                        : 'border-border/70 bg-background/80 hover:bg-primary/10'
-                                        }`}
-                                >
-                                    <div className='flex items-start justify-between gap-3'>
-                                        <div className='min-w-0 space-y-1.5'>
-                                            <p className='text-foreground truncate text-sm font-semibold'>
-                                                {classItem.title}
-                                            </p>
-                                            <p className='text-muted-foreground truncate text-[11px]'>
-                                                {classItem.courseName}
-                                            </p>
-                                            <div className='text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]'>
-                                                <span>{classItem.sessionFormat || 'Lecture'}</span>
-                                                <span aria-hidden='true'>•</span>
-                                                <span>{classItem.difficulty}</span>
-                                            </div>
-                                        </div>
-                                        <BrandPill className='shrink-0 px-2.5 py-1 text-[10px] normal-case tracking-normal'>
-                                            {classItem.scheduleCount} sessions
-                                        </BrandPill>
-                                    </div>
+type FilteredClassItem = {
+  uuid: string;
+  title: string;
+  courseName: string;
+  difficulty: string;
+  sessionFormat: string;
+  visibleInstances: Array<{
+    uuid: string;
+    start_time?: string | Date;
+    end_time?: string | Date;
+    location_name?: string | null;
+  }>;
+  allInstances: Array<{
+    uuid: string;
+    start_time?: string | Date;
+    end_time?: string | Date;
+    location_name?: string | null;
+  }>;
+  classItem: ReturnType<typeof useInstructorClassesWithSchedules>['classes'][number];
+};
 
-                                    <div className='text-muted-foreground mt-2 flex items-center justify-between gap-3 text-[11px]'>
-                                        <span>
-                                            Scheduled <span className='text-foreground font-medium'>{classItem.scheduleCount}</span>
-                                        </span>
-                                        <span>
-                                            Remaining <span className='text-foreground font-medium'>{classItem.remainingSessions}</span>
-                                        </span>
-                                    </div>
-                                </button>
-                            );
-                        })}
+function useMemoFilteredClasses(args: {
+  classes: ReturnType<typeof useInstructorClassesWithSchedules>['classes'];
+  difficultyMap: Record<string, string>;
+  searchTerm: string;
+  dateFilter: DateFilter;
+}) {
+  const { classes, difficultyMap, searchTerm, dateFilter } = args;
 
-                        {totalPages > 1 ? (
-                            <Pagination className='justify-between pt-2'>
-                                <PaginationContent className='w-full justify-between'>
-                                    <PaginationItem>
-                                        <PaginationPrevious
-                                            href='#'
-                                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                                            onClick={event => {
-                                                event.preventDefault();
-                                                if (currentPage > 1) {
-                                                    onPageChange(currentPage - 1);
-                                                }
-                                            }}
-                                        />
-                                    </PaginationItem>
-                                    <PaginationItem>
-                                        <PaginationLink
-                                            href='#'
-                                            isActive
-                                            onClick={event => event.preventDefault()}
-                                            className='min-w-[96px]'
-                                        >
-                                            {currentPage} / {totalPages}
-                                        </PaginationLink>
-                                    </PaginationItem>
-                                    <PaginationItem>
-                                        <PaginationNext
-                                            href='#'
-                                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                                            onClick={event => {
-                                                event.preventDefault();
-                                                if (currentPage < totalPages) {
-                                                    onPageChange(currentPage + 1);
-                                                }
-                                            }}
-                                        />
-                                    </PaginationItem>
-                                </PaginationContent>
-                            </Pagination>
-                        ) : null}
-                    </>
-                )}
-            </CardContent>
-        </Card>
-    );
+  return useMemo<FilteredClassItem[]>(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return classes
+      .map(classItem => {
+        const sortedInstances = [...(classItem.schedule ?? [])].sort(
+          (left, right) =>
+            new Date(left.start_time ?? 0).getTime() - new Date(right.start_time ?? 0).getTime()
+        );
+
+        const visibleInstances =
+          dateFilter === 'current-week'
+            ? sortedInstances.filter(instance => isWithinCurrentWeek(instance.start_time))
+            : sortedInstances;
+
+        return {
+          uuid: classItem.uuid,
+          title: classItem.title,
+          courseName: classItem.course?.name || 'No linked course',
+          difficulty: classItem.course?.difficulty_uuid
+            ? difficultyMap[classItem.course.difficulty_uuid]
+            : 'General',
+          sessionFormat: formatLabel(classItem.session_format),
+          visibleInstances,
+          allInstances: sortedInstances,
+          classItem,
+        };
+      })
+      .filter(classItem => {
+        const matchesSearch =
+          !normalizedSearch ||
+          [
+            classItem.title,
+            classItem.courseName,
+            classItem.sessionFormat,
+            classItem.difficulty,
+            ...classItem.visibleInstances.map(instance => formatDateTime(instance.start_time)),
+          ]
+            .join(' ')
+            .toLowerCase()
+            .includes(normalizedSearch);
+
+        const matchesDateFilter = dateFilter === 'all' || classItem.visibleInstances.length > 0;
+
+        return matchesSearch && matchesDateFilter;
+      })
+      .sort((left, right) => {
+        const leftTime = new Date(
+          (left.visibleInstances[0] ?? left.allInstances[0])?.start_time ?? 0
+        ).getTime();
+        const rightTime = new Date(
+          (right.visibleInstances[0] ?? right.allInstances[0])?.start_time ?? 0
+        ).getTime();
+
+        return leftTime - rightTime;
+      });
+  }, [classes, dateFilter, difficultyMap, searchTerm]);
 }
 
 export default function NewClassPage() {
-    const instructor = useInstructor();
-    const { replaceBreadcrumbs } = useBreadcrumb();
-    const router = useRouter()
-    const { difficultyMap } = useDifficultyLevels();
-    const [selectedClassUuid, setSelectedClassUuid] = useState<string | null>(null);
-    const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
-    const [selectedLessonUuid, setSelectedLessonUuid] = useState<string | null>(null);
-    const [draftSearchTerm, setDraftSearchTerm] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
+  const instructor = useInstructor();
+  const { replaceBreadcrumbs } = useBreadcrumb();
+  const router = useRouter();
+  const { difficultyMap } = useDifficultyLevels();
 
-    useEffect(() => {
-        replaceBreadcrumbs([
-            { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-            {
-                id: 'new-class',
-                title: 'New Class',
-                url: '/dashboard/new-class',
-                isLast: true,
-            },
-        ]);
-    }, [replaceBreadcrumbs]);
+  const [selectedClassUuid, setSelectedClassUuid] = useState<string | null>(null);
+  const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
+  const [selectedLessonUuid, setSelectedLessonUuid] = useState<string | null>(null);
+  const [draftSearchTerm, setDraftSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('current-week');
+  const [activeTab, setActiveTab] = useState<ClassTab>('overview');
+  const [isTabsSheetOpen, setIsTabsSheetOpen] = useState(false);
 
-    const {
-        classes,
-        isLoading: isLoadingClasses,
-        isError: hasClassesError,
-    } = useInstructorClassesWithSchedules(instructor?.uuid);
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+      {
+        id: 'new-class',
+        title: 'New Class',
+        url: '/dashboard/new-class',
+        isLast: true,
+      },
+    ]);
+  }, [replaceBreadcrumbs]);
 
-    const selectedClass = useMemo(
-        () => classes.find(item => item.uuid === selectedClassUuid) ?? null,
-        [classes, selectedClassUuid]
+  const {
+    classes,
+    isLoading: isLoadingClasses,
+    isError: hasClassesError,
+  } = useInstructorClassesWithSchedules(instructor?.uuid);
+
+  const enrollmentQueries = useQueries({
+    queries: classes.map(classItem => ({
+      ...getEnrollmentsForClassOptions({
+        path: { uuid: classItem.uuid as string },
+      }),
+      enabled: !!classItem.uuid,
+    })),
+  });
+
+  const filteredClasses = useMemoFilteredClasses({
+    classes,
+    difficultyMap,
+    searchTerm,
+    dateFilter,
+  });
+
+  useEffect(() => {
+    if (!filteredClasses.length) {
+      setSelectedClassUuid(null);
+      return;
+    }
+
+    setSelectedClassUuid(previous =>
+      previous && filteredClasses.some(classItem => classItem.uuid === previous)
+        ? previous
+        : filteredClasses[0]?.uuid ?? null
+    );
+  }, [filteredClasses]);
+
+  const selectedClassEntry = useMemo(
+    () => filteredClasses.find(classItem => classItem.uuid === selectedClassUuid) ?? null,
+    [filteredClasses, selectedClassUuid]
+  );
+
+  const selectedClass = selectedClassEntry?.classItem ?? null;
+  const {
+    isLoading: isLoadingLessons,
+    lessons,
+    contentTypeMap,
+  } = useCourseLessonsWithContent({ courseUuid: selectedClass?.course_uuid });
+  const lessonModules = useMemo<LessonModule[]>(() => lessons ?? [], [lessons]);
+  const selectedClassIndex = useMemo(
+    () => classes.findIndex(classItem => classItem.uuid === selectedClassUuid),
+    [classes, selectedClassUuid]
+  );
+
+  useEffect(() => {
+    if (!lessonModules.length) {
+      setExpandedModuleId(null);
+      setSelectedLessonUuid(null);
+      return;
+    }
+
+    const firstModule = lessonModules[0];
+    const firstLesson = firstModule?.content?.data?.[0];
+
+    setExpandedModuleId(previous =>
+      previous && lessonModules.some(module => module.lesson.uuid === previous)
+        ? previous
+        : (firstModule?.lesson?.uuid ?? null)
     );
 
-    const {
-        isLoading: isLoadingLessons,
-        isError: hasLessonsError,
-        lessons,
-        contentTypeMap,
-    } = useCourseLessonsWithContent({ courseUuid: selectedClass?.course_uuid });
+    setSelectedLessonUuid(previous => {
+      if (
+        previous &&
+        lessonModules.some(module =>
+          module.content?.data?.some(content => content.uuid === previous)
+        )
+      ) {
+        return previous;
+      }
 
-    const lessonModules = useMemo<LessonModule[]>(() => lessons ?? [], [lessons]);
+      return firstLesson?.uuid ?? null;
+    });
+  }, [lessonModules]);
 
-    useEffect(() => {
-        if (!lessonModules.length) {
-            setExpandedModuleId(null);
-            setSelectedLessonUuid(null);
-            return;
-        }
+  const selectedModule = useMemo(
+    () =>
+      lessonModules.find(module =>
+        module.content?.data?.some(content => content.uuid === selectedLessonUuid)
+      ) ?? lessonModules[0] ?? null,
+    [lessonModules, selectedLessonUuid]
+  );
 
-        const firstModule = lessonModules[0];
-        const firstLesson = firstModule?.content?.data?.[0];
+  const selectedLesson = useMemo(
+    () =>
+      selectedModule?.content?.data?.find(content => content.uuid === selectedLessonUuid) ??
+      selectedModule?.content?.data?.[0] ??
+      null,
+    [selectedLessonUuid, selectedModule]
+  );
 
-        setExpandedModuleId(previous =>
-            previous && lessonModules.some(module => module.lesson.uuid === previous)
-                ? previous
-                : (firstModule?.lesson?.uuid ?? null)
-        );
+  const selectedModuleResources = selectedModule?.content?.data ?? [];
 
-        setSelectedLessonUuid(previous => {
-            if (
-                previous &&
-                lessonModules.some(module =>
-                    module.content?.data?.some(content => content.uuid === previous)
-                )
-            ) {
-                return previous;
-            }
+  const selectedClassEnrollments =
+    selectedClassIndex >= 0 ? enrollmentQueries[selectedClassIndex]?.data?.data ?? [] : [];
 
-            return firstLesson?.uuid ?? null;
-        });
-    }, [lessonModules]);
+  const uniqueStudentUuids = useMemo(() => {
+    const ids = new Set<string>();
 
-    const selectedModule = useMemo(
-        () =>
-            lessonModules.find(module =>
-                module.content?.data?.some(content => content.uuid === selectedLessonUuid)
-            ) ?? lessonModules[0] ?? null,
-        [lessonModules, selectedLessonUuid]
-    );
+    selectedClassEnrollments.forEach(enrollment => {
+      if (enrollment.student_uuid && enrollment.status !== 'CANCELLED') {
+        ids.add(enrollment.student_uuid);
+      }
+    });
 
-    const selectedLesson = useMemo(
-        () =>
-            selectedModule?.content?.data?.find(content => content.uuid === selectedLessonUuid) ??
-            selectedModule?.content?.data?.[0] ??
-            null,
-        [selectedLessonUuid, selectedModule]
-    );
+    return Array.from(ids);
+  }, [selectedClassEnrollments]);
 
-    const selectedModuleResources = selectedModule?.content?.data ?? [];
+  const studentQueries = useQueries({
+    queries: uniqueStudentUuids.map(studentUuid => ({
+      ...getStudentByIdOptions({
+        path: { uuid: studentUuid },
+      }),
+      enabled: !!studentUuid,
+    })),
+  });
 
-    const now = new Date();
+  const studentMap = useMemo(() => {
+    const map = new Map<string, Student>();
 
-    const totalSessions = selectedClass?.schedule?.length ?? 0;
-    const completedSessions =
-        selectedClass?.schedule?.filter((session: { start_time?: string }) =>
-            session.start_time ? new Date(session.start_time) < now : false
-        ).length ?? 0;
-    const remainingSessions = Math.max(totalSessions - completedSessions, 0);
-    const sessionProgress = totalSessions ? Math.round((completedSessions / totalSessions) * 100) : 0;
+    uniqueStudentUuids.forEach((studentUuid, index) => {
+      const student = studentQueries[index]?.data;
+      if (student) {
+        map.set(studentUuid, student);
+      }
+    });
 
-    const classCards = useMemo<InstructorClassCard[]>(
-        () =>
-            classes.map(classItem => {
-                const scheduleCount = classItem.schedule?.length ?? 0;
-                const classRemainingSessions =
-                    classItem.schedule?.filter((session: { start_time?: string }) =>
-                        session.start_time ? new Date(session.start_time) >= now : false
-                    ).length ?? 0;
+    return map;
+  }, [studentQueries, uniqueStudentUuids]);
 
-                return {
-                    uuid: classItem.uuid,
-                    title: classItem.title,
-                    courseName: classItem.course?.name || 'No linked course',
-                    sessionFormat: formatLabel(classItem.session_format),
-                    difficulty: classItem.course?.difficulty_uuid
-                        ? difficultyMap[classItem.course.difficulty_uuid]
-                        : 'General',
-                    scheduleCount,
-                    remainingSessions: classRemainingSessions,
-                };
-            }),
-        [classes, difficultyMap, now]
-    );
+  const studentRows = useMemo<StudentTableRow[]>(() => {
+    const rows = new Map<string, StudentTableRow>();
 
-    const filteredClassCards = useMemo(() => {
-        const normalizedSearch = searchTerm.trim().toLowerCase();
+    selectedClassEnrollments.forEach(enrollment => {
+      if (!enrollment.student_uuid || enrollment.status === 'CANCELLED') return;
 
-        if (!normalizedSearch) {
-            return classCards;
-        }
+      if (rows.has(enrollment.student_uuid)) return;
 
-        return classCards.filter(classItem =>
-            [
-                classItem.title,
-                classItem.courseName,
-                classItem.sessionFormat,
-                classItem.difficulty,
-            ]
-                .filter(Boolean)
-                .some(value => value?.toLowerCase().includes(normalizedSearch))
-        );
-    }, [classCards, searchTerm]);
+      const student = studentMap.get(enrollment.student_uuid);
 
-    const totalPages = Math.max(1, Math.ceil(filteredClassCards.length / CLASSES_PER_PAGE));
+      rows.set(enrollment.student_uuid, {
+        studentUuid: enrollment.student_uuid,
+        fullName: student?.full_name || 'Unknown student',
+        status: formatLabel(enrollment.status),
+        enrolledOn: formatDateOnly(enrollment.created_date),
+      });
+    });
 
-    useEffect(() => {
-        setCurrentPage(previous => Math.min(previous, totalPages));
-    }, [totalPages]);
+    return Array.from(rows.values()).sort((left, right) => left.fullName.localeCompare(right.fullName));
+  }, [selectedClassEnrollments, studentMap]);
 
-    const paginatedClassCards = useMemo(() => {
-        const startIndex = (currentPage - 1) * CLASSES_PER_PAGE;
-        return filteredClassCards.slice(startIndex, startIndex + CLASSES_PER_PAGE);
-    }, [currentPage, filteredClassCards]);
+  const isLoadingStudents = studentQueries.some(query => query.isLoading || query.isFetching);
 
-    useEffect(() => {
-        if (!filteredClassCards.length) {
-            setSelectedClassUuid(null);
-            return;
-        }
+  const totalInstances = selectedClassEntry?.allInstances.length ?? 0;
+  const visibleInstances = selectedClassEntry?.visibleInstances ?? [];
+  const completedInstances = visibleInstances.filter(
+    instance => getInstanceStatus(instance.start_time, instance.end_time) === 'Completed'
+  ).length;
+  const remainingInstances = Math.max(visibleInstances.length - completedInstances, 0);
+  const completionRate = visibleInstances.length
+    ? Math.round((completedInstances / visibleInstances.length) * 100)
+    : 0;
+  const totalSessions = selectedClass?.schedule?.length ?? 0;
+  const completedSessions =
+    selectedClass?.schedule?.filter((session: { start_time?: string }) =>
+      session.start_time ? new Date(session.start_time) < new Date() : false
+    ).length ?? 0;
+  const remainingSessions = Math.max(totalSessions - completedSessions, 0);
+  const sessionProgress = totalSessions ? Math.round((completedSessions / totalSessions) * 100) : 0;
 
-        setSelectedClassUuid(previous =>
-            previous && filteredClassCards.some(item => item.uuid === previous)
-                ? previous
-                : filteredClassCards[0]?.uuid ?? null
-        );
-    }, [filteredClassCards]);
+  const hasError = hasClassesError;
 
-    useEffect(() => {
-        if (!paginatedClassCards.length) {
-            return;
-        }
+  return (
+    <div className='flex min-h-full flex-col gap-6 py-10 pb-8'>
+      {hasError ? (
+        <Card className='border-destructive/40'>
+          <CardContent className='flex min-h-48 flex-col items-center justify-center gap-3 p-8 text-center'>
+            <NotebookPen className='text-destructive h-8 w-8' />
+            <div className='space-y-1'>
+              <p className='text-foreground font-semibold'>Unable to load class workspace</p>
+              <p className='text-muted-foreground text-sm'>
+                We hit a problem while loading classes, instances, or student enrollments.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
-        setSelectedClassUuid(previous =>
-            previous && paginatedClassCards.some(item => item.uuid === previous)
-                ? previous
-                : paginatedClassCards[0]?.uuid ?? null
-        );
-    }, [paginatedClassCards]);
+      <div className='grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
+        <aside className='space-y-4'>
+          <ClassSidebar
+            isLoading={isLoadingClasses}
+            classes={filteredClasses}
+            selectedClassUuid={selectedClassUuid}
+            searchTerm={searchTerm}
+            draftSearchTerm={draftSearchTerm}
+            dateFilter={dateFilter}
+            onSelectClass={setSelectedClassUuid}
+            onSearchChange={value => {
+              setDraftSearchTerm(value);
+              setSearchTerm(value.trim());
+            }}
+            onDateFilterChange={setDateFilter}
+          />
+        </aside>
 
-    const hasError = hasClassesError || hasLessonsError;
-    const isSearchEmpty =
-        !isLoadingClasses && searchTerm.trim().length > 0 && filteredClassCards.length === 0;
-    const shouldShowWorkspace = isLoadingClasses || classCards.length > 0 || isSearchEmpty;
+        {!selectedClassEntry && !isLoadingClasses ? (
+          <Card className='border-border/70 bg-card shadow-sm'>
+            <CardContent className='flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center'>
+              <div className='bg-primary/10 text-primary rounded-full p-4'>
+                <Search className='h-6 w-6' />
+              </div>
+              <div className='space-y-2'>
+                <h3 className='text-foreground text-lg font-semibold'>No classes available</h3>
+                <p className='text-muted-foreground max-w-lg text-sm'>
+                  Try another search term or switch the date filter to load more class instances.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Tabs value={activeTab} onValueChange={value => setActiveTab(value as ClassTab)} className='space-y-4'>
+            <div className='flex md:hidden'>
+              <Sheet open={isTabsSheetOpen} onOpenChange={setIsTabsSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='bg-card text-foreground border-border/70 flex h-12 w-full items-center justify-between rounded-[22px] px-4'
+                  >
+                    <span className='flex items-center gap-2'>
+                      <PanelBottom className='h-4 w-4' />
+                      {tabs.find(tab => tab.value === activeTab)?.label ?? 'Overview'}
+                    </span>
+                    <span className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
+                      Open tabs
+                    </span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side='bottom' className='rounded-t-[28px] border-border/70 px-0 pb-6'>
+                  <SheetHeader className='px-5 pb-3'>
+                    <SheetTitle>Class tabs</SheetTitle>
+                    <SheetDescription>Choose the section you want to view for this class.</SheetDescription>
+                  </SheetHeader>
+                  <div className='space-y-2 px-5'>
+                    {tabs.map(tab => {
+                      const isActive = tab.value === activeTab;
 
-    return (
-        <div className='flex min-h-full flex-col gap-6 pb-8 py-10'>
-            {/* <Card className='border-border/70 bg-card shadow-sm'>
-                <CardContent className='space-y-6 p-5 sm:p-6'>
-                    <div className='space-y-3'>
-                        <BrandPill
-                            icon={<NotebookPen className='h-3.5 w-3.5' />}
-                            className='px-3 py-1 text-[10px]'
+                      return (
+                        <Button
+                          key={tab.value}
+                          type='button'
+                          variant='ghost'
+                          onClick={() => {
+                            setActiveTab(tab.value);
+                            setIsTabsSheetOpen(false);
+                          }}
+                          className={`h-12 w-full justify-between rounded-[18px] border px-4 ${
+                            isActive
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border/70 bg-background text-foreground'
+                          }`}
                         >
-                            Class Console
-                        </BrandPill>
-                        <div className='space-y-2'>
-                            <h1 className='text-foreground text-2xl font-semibold sm:text-3xl'>
-                                New class workspace
-                            </h1>
-                            <p className='text-muted-foreground max-w-3xl text-sm sm:text-base'>
-                                Review your active classes, inspect the course program, and keep the next
-                                lesson content visible from one instructor dashboard.
-                            </p>
-                        </div>
+                          <span>{tab.label}</span>
+                          {isActive ? (
+                            <span className='text-[10px] uppercase tracking-[0.18em]'>Active</span>
+                          ) : null}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+
+            <TabsList className='bg-card hidden h-auto w-full flex-wrap justify-start rounded-[28px] p-2 md:flex'>
+              {tabs.map(tab => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className='rounded-[20px] px-4 py-2 text-[11px] uppercase tracking-[0.18em]'
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            <TabsContent value='overview' className='mt-0'>
+              <Card className='border-border/70 bg-card shadow-sm'>
+                <CardContent className='space-y-6 p-4 sm:p-6'>
+                  {isLoadingClasses || !selectedClass || isLoadingLessons ? (
+                    <div className='space-y-4'>
+                      <Skeleton className='h-44 rounded-[28px]' />
+                      <Skeleton className='h-72 rounded-[28px]' />
                     </div>
+                  ) : (
+                    <>
+                      <div className='rounded-[28px] border border-border/70 bg-background/80'>
+                        <div className='border-border/70 flex flex-col gap-5 border-b p-5 lg:flex-row lg:items-start lg:justify-between'>
+                          <div className='flex min-w-0 gap-4'>
+                            <div className='bg-muted hidden h-24 w-24 shrink-0 rounded-[24px] border border-border/60 sm:flex sm:items-center sm:justify-center'>
+                              <BookOpen className='text-muted-foreground h-8 w-8' />
+                            </div>
+                            <div className='min-w-0 space-y-4'>
+                              <div className='space-y-2'>
+                                <h2 className='text-foreground text-2xl font-semibold'>
+                                  {selectedClass.course?.name || selectedClass.title || 'Select a class'}
+                                </h2>
+                                <HTMLTextPreview
+                                  className='text-muted-foreground text-sm leading-6'
+                                  htmlContent={
+                                    selectedClass.course?.description ||
+                                    selectedClass.description ||
+                                    'Open the class to review the course details and lesson flow.'
+                                  }
+                                />
+                              </div>
 
-                    <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-                        <MetricTile
-                            icon={<BookOpen className='h-3.5 w-3.5' />}
-                            label='Course'
-                            value={selectedClass?.course?.name || 'No linked course'}
-                            hint='Current course connected to this class'
-                        />
-                        <MetricTile
-                            icon={<Users className='h-3.5 w-3.5' />}
-                            label='Learners'
-                            value={
-                                selectedClass?.max_participants
-                                    ? `${selectedClass.max_participants}`
-                                    : 'Not set'
-                            }
-                            hint='Planned learner capacity for this class'
-                        />
-                        <MetricTile
-                            icon={<GraduationCap className='h-3.5 w-3.5' />}
-                            label='Delivery'
-                            value={formatLabel(selectedClass?.session_format)}
-                            hint='Teaching format for the selected class'
-                        />
-                        <MetricTile
-                            icon={<BarChart3 className='h-3.5 w-3.5' />}
-                            label='Progress'
-                            value={`${completedSessions}/${totalSessions}`}
-                            hint='Scheduled sessions already delivered'
-                        />
-                    </div>
-                </CardContent>
-            </Card> */}
+                              <div className='text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 text-sm'>
+                                <span className='inline-flex items-center gap-1.5'>
+                                  <CircleDot className='h-4 w-4' />
+                                  {totalSessions} sessions
+                                </span>
+                                <span className='inline-flex items-center gap-1.5'>
+                                  <GraduationCap className='h-4 w-4' />
+                                  {selectedClass.course?.difficulty_uuid
+                                    ? difficultyMap[selectedClass.course.difficulty_uuid]
+                                    : 'General'}
+                                </span>
+                                <span className='inline-flex items-center gap-1.5'>
+                                  <Users className='h-4 w-4' />
+                                  {instructor?.full_name || 'Instructor view'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
 
-            {hasError ? (
-                <Card className='border-destructive/40'>
-                    <CardContent className='flex min-h-48 flex-col items-center justify-center gap-3 p-8 text-center'>
-                        <NotebookPen className='text-destructive h-8 w-8' />
-                        <div className='space-y-1'>
-                            <p className='text-foreground font-semibold'>Unable to load class workspace</p>
-                            <p className='text-muted-foreground text-sm'>
-                                We hit a problem while loading classes or course lesson content for this
-                                screen.
-                            </p>
+                          <Button
+                            type='button'
+                            onClick={() => router.push('/dashboard/trainings/create-new')}
+                            className='rounded-md border border-border/70 bg-primary hover:bg-accent'
+                          >
+                            Add classes
+                          </Button>
                         </div>
-                    </CardContent>
-                </Card>
-            ) : null}
 
-            {shouldShowWorkspace ? (
-                <div className='grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
-                    <aside className='space-y-4'>
-                        <ClassRoster
-                            isLoading={isLoadingClasses}
-                            classes={paginatedClassCards}
-                            searchTerm={searchTerm}
-                            draftSearchTerm={draftSearchTerm}
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            selectedClassUuid={selectedClassUuid}
-                            onDraftSearchChange={value => setDraftSearchTerm(value)}
-                            onSearch={value => {
-                                setSearchTerm((value ?? draftSearchTerm).trim());
-                                setCurrentPage(1);
-                            }}
-                            onPageChange={setCurrentPage}
-                            onSelectClass={setSelectedClassUuid}
-                        />
-                    </aside>
+                        <div className='space-y-3 p-5'>
+                          <Progress value={sessionProgress} className='h-2.5 bg-primary/15' />
+                          <div className='flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between'>
+                            <p className='text-foreground font-semibold'>{sessionProgress}% completed</p>
+                            <p className='text-muted-foreground'>
+                              {remainingSessions} session{remainingSessions === 1 ? '' : 's'} remaining
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-                    {isSearchEmpty ? (
-                        <Card className='border-border/70 bg-card shadow-sm'>
-                            <CardContent className='flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center'>
-                                <div className='bg-primary/10 text-primary rounded-full p-4'>
-                                    <Search className='h-6 w-6' />
-                                </div>
-                                <div className='space-y-2'>
-                                    <h3 className='text-foreground text-lg font-semibold'>
-                                        No classes found for "{searchTerm}"
-                                    </h3>
-                                    <p className='text-muted-foreground max-w-lg text-sm'>
-                                        Try another class name, course title, format, or difficulty to load a
-                                        class into this workspace.
+                      <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_220px]'>
+                        <div className='rounded-[28px] border border-border/70 bg-background/80 p-4'>
+                          <div className='mb-4'>
+                            <h3 className='text-foreground text-lg font-semibold'>Course program</h3>
+                            <p className='text-muted-foreground mt-1 text-sm'>
+                              Lessons and content currently mapped to this class course.
+                            </p>
+                          </div>
+
+                          <div className='space-y-3'>
+                            {lessonModules.length === 0 ? (
+                              <div className='border-border/70 rounded-[24px] border border-dashed p-6 text-center'>
+                                <p className='text-foreground font-medium'>No lesson content yet</p>
+                                <p className='text-muted-foreground mt-1 text-sm'>
+                                  Course lessons will appear here once the program is configured.
+                                </p>
+                              </div>
+                            ) : (
+                              lessonModules.map((module, moduleIndex) => {
+                                const isOpen = expandedModuleId === module.lesson.uuid;
+
+                                return (
+                                  <Collapsible
+                                    key={module.lesson.uuid ?? `module-${moduleIndex}`}
+                                    open={isOpen}
+                                    onOpenChange={() =>
+                                      setExpandedModuleId(isOpen ? null : (module.lesson.uuid ?? null))
+                                    }
+                                  >
+                                    <div className='rounded-[24px] border border-border/70 bg-card'>
+                                      <CollapsibleTrigger asChild>
+                                        <button
+                                          type='button'
+                                          className='flex w-full items-center justify-between gap-3 p-4 text-left'
+                                        >
+                                          <div className='min-w-0'>
+                                            <p className='text-foreground font-semibold'>
+                                              Module {moduleIndex + 1}:{' '}
+                                              {module.lesson.title || 'Untitled lesson'}
+                                            </p>
+                                            <p className='text-muted-foreground mt-1 text-sm'>
+                                              {module.content?.data?.length ?? 0} content item
+                                              {(module.content?.data?.length ?? 0) === 1 ? '' : 's'}
+                                            </p>
+                                          </div>
+                                          {isOpen ? (
+                                            <ChevronUp className='text-muted-foreground h-4 w-4 shrink-0' />
+                                          ) : (
+                                            <ChevronDown className='text-muted-foreground h-4 w-4 shrink-0' />
+                                          )}
+                                        </button>
+                                      </CollapsibleTrigger>
+
+                                      <CollapsibleContent>
+                                        <div className='space-y-2 border-t border-border/70 p-4 pt-3'>
+                                          {module.content?.data?.map((content, contentIndex) => {
+                                            const isSelected = selectedLesson?.uuid === content.uuid;
+
+                                            return (
+                                              <button
+                                                key={content.uuid}
+                                                type='button'
+                                                onClick={() => setSelectedLessonUuid(content.uuid)}
+                                                className={`flex w-full items-center justify-between rounded-[18px] border p-3 text-left transition-colors ${
+                                                  isSelected
+                                                    ? 'border-primary bg-primary/10'
+                                                    : 'border-border/60 bg-background/70 hover:bg-accent'
+                                                }`}
+                                              >
+                                                <div className='flex min-w-0 items-center gap-3'>
+                                                  {getContentTypeIcon(contentTypeMap, content.content_type_uuid)}
+                                                  <div className='min-w-0'>
+                                                    <p className='text-foreground truncate text-sm font-medium'>
+                                                      Lesson {moduleIndex + 1}.{contentIndex + 1} {content.title}
+                                                    </p>
+                                                    <p className='text-muted-foreground mt-1 text-xs'>
+                                                      {getContentTypeLabel(
+                                                        contentTypeMap,
+                                                        content.content_type_uuid
+                                                      )}
+                                                      {content.duration ? ` • ${content.duration}` : ''}
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                                {isSelected ? (
+                                                  <CircleDot className='text-primary h-4 w-4 shrink-0' />
+                                                ) : null}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </CollapsibleContent>
+                                    </div>
+                                  </Collapsible>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+
+                        <div className='space-y-6'>
+                          <div className='rounded-[28px] border border-border/70 bg-background/80 p-4'>
+                            <div className='mb-4'>
+                              <h3 className='text-foreground text-lg font-semibold'>
+                                {selectedLesson
+                                  ? `${
+                                      selectedModule && lessonModules.length
+                                        ? `Lesson ${
+                                            lessonModules.findIndex(
+                                              module => module.lesson.uuid === selectedModule.lesson.uuid
+                                            ) + 1
+                                          }.${
+                                            (selectedModule.content?.data?.findIndex(
+                                              item => item.uuid === selectedLesson.uuid
+                                            ) ?? 0) + 1
+                                          }`
+                                        : 'Lesson'
+                                    }`
+                                  : 'Lesson details'}
+                              </h3>
+                            </div>
+
+                            {selectedLesson ? (
+                              <div className='space-y-4'>
+                                <div className='flex items-center gap-3'>
+                                  <div className='bg-primary/10 rounded-full p-2.5'>
+                                    {getContentTypeIcon(contentTypeMap, selectedLesson.content_type_uuid)}
+                                  </div>
+                                  <div>
+                                    <p className='text-foreground font-medium'>
+                                      {getContentTypeLabel(
+                                        contentTypeMap,
+                                        selectedLesson.content_type_uuid
+                                      )}
                                     </p>
+                                    <p className='text-muted-foreground text-sm'>
+                                      {selectedLesson.duration || 'Duration not set'}
+                                    </p>
+                                  </div>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <Tabs defaultValue='overview' className='space-y-4'>
-                            <TabsList className='bg-card h-auto w-full flex-wrap justify-start rounded-[28px] p-2'>
-                                {tabs.map(tab => (
-                                    <TabsTrigger
-                                        key={tab.value}
-                                        value={tab.value}
-                                        className='rounded-[20px] px-4 py-2 text-[11px] uppercase tracking-[0.18em]'
-                                    >
-                                        {tab.label}
-                                    </TabsTrigger>
+
+                                <Button className='w-full rounded-full'>
+                                  {contentTypeMap[selectedLesson.content_type_uuid] === 'video' ? (
+                                    <Play className='mr-2 h-4 w-4' />
+                                  ) : null}
+                                  Start lesson
+                                </Button>
+                              </div>
+                            ) : (
+                              <p className='text-muted-foreground text-sm'>
+                                Select a lesson from the course program to view details.
+                              </p>
+                            )}
+                          </div>
+
+                          <div className='rounded-[28px] border border-border/70 bg-background/80 p-4'>
+                            <div className='mb-4'>
+                              <h3 className='text-foreground text-lg font-semibold'>Resources</h3>
+                            </div>
+
+                            {selectedModuleResources.length ? (
+                              <div className='space-y-3'>
+                                {selectedModuleResources.map(resource => (
+                                  <div
+                                    key={resource.uuid}
+                                    className='flex items-start gap-3 rounded-[20px] border border-border/70 bg-card p-3'
+                                  >
+                                    {getContentTypeIcon(contentTypeMap, resource.content_type_uuid)}
+                                    <div className='min-w-0'>
+                                      <p className='text-foreground text-sm font-medium'>
+                                        {resource.title}
+                                      </p>
+                                      <p className='text-muted-foreground mt-1 text-xs'>
+                                        {getContentTypeLabel(contentTypeMap, resource.content_type_uuid)}
+                                        {resource.duration ? ` • ${resource.duration}` : ''}
+                                      </p>
+                                    </div>
+                                  </div>
                                 ))}
-                            </TabsList>
+                              </div>
+                            ) : (
+                              <p className='text-muted-foreground text-sm'>
+                                Resources for the selected lesson will appear here.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                            <TabsContent value='overview' className='mt-0'>
-                                <Card className='border-border/70 bg-card shadow-sm'>
-                                    <CardContent className='space-y-6 p-4 sm:p-6'>
-                                        {isLoadingLessons ? (
-                                            <div className='space-y-4'>
-                                                <Skeleton className='h-44 rounded-[28px]' />
-                                                <Skeleton className='h-72 rounded-[28px]' />
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div className='rounded-[28px] border border-border/70 bg-background/80'>
-                                                    <div className='border-border/70 flex flex-col gap-5 border-b p-5 lg:flex-row lg:items-start lg:justify-between'>
-                                                        <div className='flex min-w-0 gap-4'>
-                                                            <div className='bg-muted hidden h-24 w-24 shrink-0 rounded-[24px] border border-border/60 sm:flex sm:items-center sm:justify-center'>
-                                                                <BookOpen className='text-muted-foreground h-8 w-8' />
-                                                            </div>
-                                                            <div className='min-w-0 space-y-4'>
-                                                                <div className='space-y-2'>
-                                                                    <h2 className='text-foreground text-2xl font-semibold'>
-                                                                        {selectedClass?.course?.name ||
-                                                                            selectedClass?.title ||
-                                                                            'Select a class'}
-                                                                    </h2>
-                                                                    <HTMLTextPreview
-                                                                        className='text-muted-foreground text-sm leading-6'
-                                                                        htmlContent={selectedClass?.course?.description ||
-                                                                            selectedClass?.description ||
-                                                                            'Open the class to review the course details and lesson flow.'} />
-                                                                </div>
+            <TabsContent value='delivery-status' className='mt-0'>
+              <Card className='border-border/70 bg-card shadow-sm'>
+                <CardContent className='space-y-6 p-4 sm:p-6'>
+                  {isLoadingClasses || !selectedClass ? (
+                    <div className='space-y-4'>
+                      <Skeleton className='h-44 rounded-[28px]' />
+                      <Skeleton className='h-72 rounded-[28px]' />
+                    </div>
+                  ) : (
+                    <>
+                      <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_260px]'>
+                        <div className='rounded-[28px] border border-border/70 bg-background/80'>
+                          <div className='border-border/70 flex flex-col gap-5 border-b p-5 lg:flex-row lg:items-start lg:justify-between'>
+                            <div className='flex min-w-0 gap-4'>
+                              <div className='bg-muted hidden h-24 w-24 shrink-0 rounded-[24px] border border-border/60 sm:flex sm:items-center sm:justify-center'>
+                                <NotebookPen className='text-muted-foreground h-8 w-8' />
+                              </div>
+                              <div className='min-w-0 space-y-4'>
+                                <div className='space-y-2'>
+                                  <h2 className='text-foreground text-2xl font-semibold'>
+                                    {selectedClass.title}
+                                  </h2>
+                                  <p className='text-muted-foreground text-sm leading-6'>
+                                    {selectedClass.course?.description ||
+                                      selectedClass.description ||
+                                      'Review the selected class, its scheduled instances, and the enrolled students.'}
+                                  </p>
+                                </div>
 
-                                                                <div className='text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 text-sm'>
-                                                                    <span className='inline-flex items-center gap-1.5'>
-                                                                        <CircleDot className='h-4 w-4' />
-                                                                        {totalSessions} sessions
-                                                                    </span>
-                                                                    <span className='inline-flex items-center gap-1.5'>
-                                                                        <GraduationCap className='h-4 w-4' />
-                                                                        {selectedClass?.course?.difficulty_uuid
-                                                                            ? difficultyMap[selectedClass.course.difficulty_uuid]
-                                                                            : 'General'}
-                                                                    </span>
-                                                                    <span className='inline-flex items-center gap-1.5'>
-                                                                        <Users className='h-4 w-4' />
-                                                                        {instructor?.full_name || 'Instructor view'}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                <div className='text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 text-sm'>
+                                  <span className='inline-flex items-center gap-1.5'>
+                                    <CircleDot className='h-4 w-4' />
+                                    {totalInstances} total instances
+                                  </span>
+                                  <span className='inline-flex items-center gap-1.5'>
+                                    <GraduationCap className='h-4 w-4' />
+                                    {selectedClass.course?.difficulty_uuid
+                                      ? difficultyMap[selectedClass.course.difficulty_uuid]
+                                      : 'General'}
+                                  </span>
+                                  <span className='inline-flex items-center gap-1.5'>
+                                    <Users className='h-4 w-4' />
+                                    {studentRows.length} unique students
+                                  </span>
+                                  <span className='inline-flex items-center gap-1.5'>
+                                    <UserRound className='h-4 w-4' />
+                                    {instructor?.full_name || 'Instructor view'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
 
-                                                        <Button
-                                                            type="button"
-                                                            onClick={() => router.push("/dashboard/trainings/create-new")}
-                                                            className="rounded-md border border-border/70 bg-primary hover:bg-accent cursor-pointer"
-                                                        >
-                                                            Add classes
-                                                        </Button>
-                                                    </div>
+                            <Button
+                              type='button'
+                              onClick={() => router.push('/dashboard/trainings/create-new')}
+                              className='rounded-md border border-border/70 bg-primary hover:bg-accent'
+                            >
+                              Add classes
+                            </Button>
+                          </div>
 
-                                                    <div className='space-y-3 p-5'>
-                                                        <Progress value={sessionProgress} className='h-2.5 bg-primary/15' />
-                                                        <div className='flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between'>
-                                                            <p className='text-foreground font-semibold'>
-                                                                {sessionProgress}% completed
-                                                            </p>
-                                                            <p className='text-muted-foreground'>
-                                                                {remainingSessions} session
-                                                                {remainingSessions === 1 ? '' : 's'} remaining
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                          <div className='grid gap-4 p-5 md:grid-cols-3'>
+                            <div className='rounded-[20px] border border-border/70 bg-card p-4'>
+                              <p className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
+                                Filter
+                              </p>
+                              <p className='text-foreground mt-2 text-lg font-semibold'>
+                                {dateFilter === 'current-week' ? 'Current week' : 'All scheduled dates'}
+                              </p>
+                            </div>
+                            <div className='rounded-[20px] border border-border/70 bg-card p-4'>
+                              <p className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
+                                Visible Instances
+                              </p>
+                              <p className='text-foreground mt-2 text-lg font-semibold'>
+                                {visibleInstances.length}
+                              </p>
+                            </div>
+                            <div className='rounded-[20px] border border-border/70 bg-card p-4'>
+                              <p className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
+                                Remaining
+                              </p>
+                              <p className='text-foreground mt-2 text-lg font-semibold'>
+                                {remainingInstances}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
 
-                                                <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_220px]'>
-                                                    <div className='rounded-[28px] border border-border/70 bg-background/80 p-4'>
-                                                        <div className='mb-4'>
-                                                            <h3 className='text-foreground text-lg font-semibold'>
-                                                                Course program
-                                                            </h3>
-                                                            <p className='text-muted-foreground mt-1 text-sm'>
-                                                                Lessons and content currently mapped to this class course.
-                                                            </p>
-                                                        </div>
+                        <div className='rounded-[28px] border border-border/70 bg-background/80 p-5'>
+                          <h3 className='text-foreground text-lg font-semibold'>Class overview</h3>
+                          <div className='mt-4 space-y-4'>
+                            <div className='flex items-start justify-between gap-3 border-b border-border/70 pb-3'>
+                              <span className='text-muted-foreground text-sm'>Course</span>
+                              <span className='text-foreground max-w-[140px] text-right text-sm font-medium'>
+                                {selectedClass.course?.name || 'No linked course'}
+                              </span>
+                            </div>
+                            <div className='flex items-start justify-between gap-3 border-b border-border/70 pb-3'>
+                              <span className='text-muted-foreground text-sm'>Session format</span>
+                              <span className='text-foreground text-right text-sm font-medium'>
+                                {formatLabel(selectedClass.session_format)}
+                              </span>
+                            </div>
+                            <div className='flex items-start justify-between gap-3 border-b border-border/70 pb-3'>
+                              <span className='text-muted-foreground text-sm'>Completion</span>
+                              <span className='text-foreground text-right text-sm font-medium'>
+                                {completionRate}%
+                              </span>
+                            </div>
+                            <div className='flex items-start justify-between gap-3'>
+                              <span className='text-muted-foreground text-sm'>Students</span>
+                              <span className='text-foreground text-right text-sm font-medium'>
+                                {studentRows.length}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-                                                        <div className='space-y-3'>
-                                                            {lessonModules.length === 0 ? (
-                                                                <div className='border-border/70 rounded-[24px] border border-dashed p-6 text-center'>
-                                                                    <p className='text-foreground font-medium'>
-                                                                        No lesson content yet
-                                                                    </p>
-                                                                    <p className='text-muted-foreground mt-1 text-sm'>
-                                                                        Course lessons will appear here once the program is configured.
-                                                                    </p>
-                                                                </div>
-                                                            ) : (
-                                                                lessonModules.map((module, moduleIndex) => {
-                                                                    const isOpen = expandedModuleId === module.lesson.uuid;
+                      <Card className='border-border/70 bg-background/80 shadow-none'>
+                        <CardHeader className='pb-3'>
+                          <CardTitle className='text-lg'>Class instances</CardTitle>
+                          <p className='text-muted-foreground text-sm'>
+                            {dateFilter === 'current-week'
+                              ? 'Showing class instances happening in the current week, arranged by date.'
+                              : 'Showing every scheduled instance for the selected class, arranged by date.'}
+                          </p>
+                        </CardHeader>
+                        <CardContent className='pt-0'>
+                          <Table>
+                            <TableHeader>
+                              <TableRow className='hover:bg-transparent'>
+                                <TableHead>Session</TableHead>
+                                <TableHead>Date & Time</TableHead>
+                                <TableHead>Class Duration</TableHead>
+                                <TableHead>Location</TableHead>
+                                <TableHead>Status</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {visibleInstances.length > 0 ? (
+                                visibleInstances.map((instance, index) => (
+                                  <TableRow key={instance.uuid || `${selectedClass.uuid}-${index}`}>
+                                    <TableCell className='font-medium'>{index + 1}</TableCell>
+                                    <TableCell>{formatDateTime(instance.start_time)}</TableCell>
+                                    <TableCell>
+                                      {formatDuration(instance.start_time, instance.end_time)}
+                                    </TableCell>
+                                    <TableCell>
+                                      {instance.location_name ||
+                                        selectedClass.location_name ||
+                                        formatLabel(selectedClass.location_type)}
+                                    </TableCell>
+                                    <TableCell>{getInstanceStatus(instance.start_time, instance.end_time)}</TableCell>
+                                  </TableRow>
+                                ))
+                              ) : (
+                                <TableRow className='hover:bg-transparent'>
+                                  <TableCell colSpan={5} className='text-muted-foreground py-10 text-center'>
+                                    No class instances match the current date filter.
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      </Card>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                                                                    return (
-                                                                        <Collapsible
-                                                                            key={module.lesson.uuid ?? `module-${moduleIndex}`}
-                                                                            open={isOpen}
-                                                                            onOpenChange={() =>
-                                                                                setExpandedModuleId(
-                                                                                    isOpen ? null : (module.lesson.uuid ?? null)
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <div className='rounded-[24px] border border-border/70 bg-card'>
-                                                                                <CollapsibleTrigger asChild>
-                                                                                    <button
-                                                                                        type='button'
-                                                                                        className='flex w-full items-center justify-between gap-3 p-4 text-left'
-                                                                                    >
-                                                                                        <div className='min-w-0'>
-                                                                                            <p className='text-foreground font-semibold'>
-                                                                                                Module {moduleIndex + 1}:{' '}
-                                                                                                {module.lesson.title || 'Untitled lesson'}
-                                                                                            </p>
-                                                                                            <p className='text-muted-foreground mt-1 text-sm'>
-                                                                                                {module.content?.data?.length ?? 0} content item
-                                                                                                {(module.content?.data?.length ?? 0) === 1
-                                                                                                    ? ''
-                                                                                                    : 's'}
-                                                                                            </p>
-                                                                                        </div>
-                                                                                        {isOpen ? (
-                                                                                            <ChevronUp className='text-muted-foreground h-4 w-4 shrink-0' />
-                                                                                        ) : (
-                                                                                            <ChevronDown className='text-muted-foreground h-4 w-4 shrink-0' />
-                                                                                        )}
-                                                                                    </button>
-                                                                                </CollapsibleTrigger>
+            <TabsContent value='students' className='mt-0'>
+              <Card className='border-border/70 bg-card shadow-sm'>
+                <CardHeader className='pb-3'>
+                  <CardTitle className='text-lg'>Enrolled students</CardTitle>
+                  <p className='text-muted-foreground text-sm'>
+                    Unique students enrolled in the selected class. Duplicate enrollment records are collapsed into one row per student.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingStudents ? (
+                    <div className='space-y-3'>
+                      <Skeleton className='h-12 rounded-[16px]' />
+                      <Skeleton className='h-12 rounded-[16px]' />
+                      <Skeleton className='h-12 rounded-[16px]' />
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow className='hover:bg-transparent'>
+                          <TableHead>Student</TableHead>
+                          <TableHead>Student UUID</TableHead>
+                          <TableHead>Enrollment Status</TableHead>
+                          <TableHead>Enrolled On</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {studentRows.length > 0 ? (
+                          studentRows.map(student => (
+                            <TableRow key={student.studentUuid}>
+                              <TableCell className='font-medium'>{student.fullName}</TableCell>
+                              <TableCell className='text-muted-foreground'>
+                                {student.studentUuid.slice(0, 8)}
+                              </TableCell>
+                              <TableCell>{student.status}</TableCell>
+                              <TableCell>{student.enrolledOn}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow className='hover:bg-transparent'>
+                            <TableCell colSpan={4} className='text-muted-foreground py-10 text-center'>
+                              No enrolled students found for this class.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                                                                                <CollapsibleContent>
-                                                                                    <div className='space-y-2 border-t border-border/70 p-4 pt-3'>
-                                                                                        {module.content?.data?.map((content, contentIndex) => {
-                                                                                            const isSelected =
-                                                                                                selectedLesson?.uuid === content.uuid;
+            <TabsContent value='announcements' className='mt-0'>
+              <PlaceholderTab
+                title='Announcements'
+                description='This tab is ready for class-wide announcement tools and communication flows when you are ready to wire them in.'
+              />
+            </TabsContent>
 
-                                                                                            return (
-                                                                                                <button
-                                                                                                    key={content.uuid}
-                                                                                                    type='button'
-                                                                                                    onClick={() =>
-                                                                                                        setSelectedLessonUuid(content.uuid)
-                                                                                                    }
-                                                                                                    className={`flex w-full items-center justify-between rounded-[18px] border p-3 text-left transition-colors ${isSelected
-                                                                                                        ? 'border-primary bg-primary/10'
-                                                                                                        : 'border-border/60 bg-background/70 hover:bg-accent'
-                                                                                                        }`}
-                                                                                                >
-                                                                                                    <div className='flex min-w-0 items-center gap-3'>
-                                                                                                        {getContentTypeIcon(contentTypeMap, content.content_type_uuid)}
-                                                                                                        <div className='min-w-0'>
-                                                                                                            <p className='text-foreground truncate text-sm font-medium'>
-                                                                                                                Lesson {moduleIndex + 1}.{contentIndex + 1}{' '}
-                                                                                                                {content.title}
-                                                                                                            </p>
-                                                                                                            <p className='text-muted-foreground mt-1 text-xs'>
-                                                                                                                {getContentTypeLabel(
-                                                                                                                    contentTypeMap,
-                                                                                                                    content.content_type_uuid
-                                                                                                                )}
-                                                                                                                {content.duration
-                                                                                                                    ? ` • ${content.duration}`
-                                                                                                                    : ''}
-                                                                                                            </p>
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                    {isSelected ? (
-                                                                                                        <CircleDot className='text-primary h-4 w-4 shrink-0' />
-                                                                                                    ) : null}
-                                                                                                </button>
-                                                                                            );
-                                                                                        })}
-                                                                                    </div>
-                                                                                </CollapsibleContent>
-                                                                            </div>
-                                                                        </Collapsible>
-                                                                    );
-                                                                })
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className='space-y-6'>
-                                                        <div className='rounded-[28px] border border-border/70 bg-background/80 p-4'>
-                                                            <div className='mb-4'>
-                                                                <h3 className='text-foreground text-lg font-semibold'>
-                                                                    {selectedLesson
-                                                                        ? `${selectedModule && lessonModules.length
-                                                                            ? `Lesson ${lessonModules.findIndex(module => module.lesson.uuid === selectedModule.lesson.uuid) + 1}.${(selectedModule.content?.data?.findIndex(item => item.uuid === selectedLesson.uuid) ?? 0) + 1}`
-                                                                            : 'Lesson'
-                                                                        }`
-                                                                        : 'Lesson details'}
-                                                                </h3>
-                                                            </div>
-
-                                                            {selectedLesson ? (
-                                                                <div className='space-y-4'>
-                                                                    <div className='flex items-center gap-3'>
-                                                                        <div className='bg-primary/10 rounded-full p-2.5'>
-                                                                            {getContentTypeIcon(
-                                                                                contentTypeMap,
-                                                                                selectedLesson.content_type_uuid
-                                                                            )}
-                                                                        </div>
-                                                                        <div>
-                                                                            <p className='text-foreground font-medium'>
-                                                                                {getContentTypeLabel(
-                                                                                    contentTypeMap,
-                                                                                    selectedLesson.content_type_uuid
-                                                                                )}
-                                                                            </p>
-                                                                            <p className='text-muted-foreground text-sm'>
-                                                                                {selectedLesson.duration || 'Duration not set'}
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <Button className='w-full rounded-full'>
-                                                                        {contentTypeMap[selectedLesson.content_type_uuid] === 'video' ? (
-                                                                            <Play className='mr-2 h-4 w-4' />
-                                                                        ) : null}
-                                                                        Start lesson
-                                                                    </Button>
-                                                                </div>
-                                                            ) : (
-                                                                <p className='text-muted-foreground text-sm'>
-                                                                    Select a lesson from the course program to view details.
-                                                                </p>
-                                                            )}
-                                                        </div>
-
-                                                        <div className='rounded-[28px] border border-border/70 bg-background/80 p-4'>
-                                                            <div className='mb-4'>
-                                                                <h3 className='text-foreground text-lg font-semibold'>
-                                                                    Resources
-                                                                </h3>
-                                                            </div>
-
-                                                            {selectedModuleResources.length ? (
-                                                                <div className='space-y-3'>
-                                                                    {selectedModuleResources.map(resource => (
-                                                                        <div
-                                                                            key={resource.uuid}
-                                                                            className='flex items-start gap-3 rounded-[20px] border border-border/70 bg-card p-3'
-                                                                        >
-                                                                            {getContentTypeIcon(
-                                                                                contentTypeMap,
-                                                                                resource.content_type_uuid
-                                                                            )}
-                                                                            <div className='min-w-0'>
-                                                                                <p className='text-foreground text-sm font-medium'>
-                                                                                    {resource.title}
-                                                                                </p>
-                                                                                <p className='text-muted-foreground mt-1 text-xs'>
-                                                                                    {getContentTypeLabel(
-                                                                                        contentTypeMap,
-                                                                                        resource.content_type_uuid
-                                                                                    )}
-                                                                                    {resource.duration
-                                                                                        ? ` • ${resource.duration}`
-                                                                                        : ''}
-                                                                                </p>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            ) : (
-                                                                <p className='text-muted-foreground text-sm'>
-                                                                    Resources for the selected lesson will appear here.
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-
-                            <TabsContent value='students' className='mt-0'>
-                                <PlaceholderTab
-                                    title='Students'
-                                    description='This tab is left open for the class roster, learner progress, and other student-facing instructor tools we can add next.'
-                                />
-                            </TabsContent>
-
-                            <TabsContent value='waiting-list' className='mt-0'>
-                                <PlaceholderTab
-                                    title='Waiting Lists'
-                                    description='This tab is left open for the class roster, learner progress, and other student-facing instructor tools we can add next.'
-                                />
-                            </TabsContent>
-
-                            <TabsContent value='announcements' className='mt-0'>
-                                <PlaceholderTab
-                                    title='Announcements'
-                                    description='This tab is ready for class-wide announcement tools and communication flows when you are ready to wire them in.'
-                                />
-                            </TabsContent>
-
-                            <TabsContent value='tasks' className='mt-0'>
-                                <PlaceholderTab
-                                    title='Tasks'
-                                    description='This tab stays open for upcoming instructor actions, assignments, and class tasks in a later update.'
-                                />
-                            </TabsContent>
-                        </Tabs>
-                    )}
-                </div>
-            ) : null}
-        </div>
-    );
+            <TabsContent value='tasks' className='mt-0'>
+              <PlaceholderTab
+                title='Tasks'
+                description='This tab stays open for upcoming instructor actions, assignments, and class tasks in a later update.'
+              />
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
+    </div>
+  );
 }
