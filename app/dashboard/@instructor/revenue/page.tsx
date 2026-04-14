@@ -9,12 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { elimikaDesignSystem } from '@/lib/design-system';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import type { Enrollment } from '@/services/client';
+import {
+  getEnrollmentsForClassOptions,
+  getWalletOptions,
+  searchTrainingApplicationsOptions,
+  transferMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import {
   ArrowUpRight,
-  ChevronDown,
-  DollarSign,
   Eye,
   EyeOff,
   Landmark,
@@ -23,41 +29,242 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
 import { useInstructor } from '../../../../context/instructor-context';
-import {
-  getClassDefinitionsForInstructorOptions,
-  getRevenueDashboardOptions,
-  getWalletOptions,
-  listTransactionsOptions,
-  transferMutation,
-} from '../../../../services/client/@tanstack/react-query.gen';
 import { TransferFundsSheet } from '../../_components/transfer-funds-sheet';
+import {
+  type InstructorClassWithSchedule,
+  useInstructorClassesWithSchedules,
+} from '../../../../hooks/use-instructor-classes-with-schedules';
 
-// Status badge color map with semantic tokens
-const STATUS_BADGE_MAP = {
-  completed:
-    'bg-success/10 dark:bg-success/15 text-success dark:text-success-foreground border border-success/20 dark:border-success/30',
-  pending:
-    'bg-warning/10 dark:bg-warning/15 text-warning dark:text-warning-foreground border border-warning/20 dark:border-warning/30',
-  failed:
-    'bg-destructive/10 dark:bg-destructive/15 text-destructive dark:text-destructive-foreground border border-destructive/20 dark:border-destructive/30',
+type RevenueStatus = 'fulfilled' | 'partial' | 'pending' | 'cancelled' | 'refund';
+
+type RevenueStatusFilter = 'all' | RevenueStatus;
+
+type RevenueRow = {
+  id: string;
+  classTitle: string;
+  orderDate: string;
+  location: string;
+  deliveryStatus: string;
+  statusKey: RevenueStatus;
+  sessions: number;
+  duration: string;
+  durationHours: number;
+  students: number;
+  sessionFee: number;
+  feePerStudent: number;
+  classFees: number;
+  currencyCode: string;
+  sortDate: number;
 };
+
+const STATUS_BADGE_MAP: Record<RevenueStatus, string> = {
+  fulfilled:
+    'bg-success/10 dark:bg-success/15 text-success dark:text-success-foreground border border-success/20 dark:border-success/30',
+  partial:
+    'bg-warning/10 dark:bg-warning/15 text-warning dark:text-warning-foreground border border-warning/20 dark:border-warning/30',
+  pending:
+    'bg-primary/10 dark:bg-primary/15 text-primary dark:text-primary-foreground border border-primary/20 dark:border-primary/30',
+  cancelled:
+    'bg-destructive/10 dark:bg-destructive/15 text-destructive dark:text-destructive-foreground border border-destructive/20 dark:border-destructive/30',
+  refund:
+    'bg-muted text-muted-foreground border border-border',
+};
+
+const STATUS_LABEL_MAP: Record<RevenueStatus, string> = {
+  fulfilled: 'Fulfilled',
+  partial: 'Partially',
+  pending: 'Pending',
+  cancelled: 'Cancelled',
+  refund: 'Refund',
+};
+
+const STATUS_OPTIONS: { value: RevenueStatusFilter; label: string }[] = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'fulfilled', label: 'Fulfilled' },
+  { value: 'partial', label: 'Partially' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'refund', label: 'Refund' },
+];
+
+const PAGE_SIZE_OPTIONS = ['5', '10', '20', '50'] as const;
+
+const truncateText = (value: string, maxLength: number) =>
+  value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
+
+const formatCurrency = (amount: number, currencyCode = 'KES') =>
+  new Intl.NumberFormat('en-KE', {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+
+const formatDate = (dateValue?: Date | string | null) => {
+  if (!dateValue) return '-';
+
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return '-';
+
+  return date.toLocaleDateString('en-KE', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const formatDuration = (hours: number) => {
+  if (hours <= 0) return '-';
+
+  const wholeHours = Math.floor(hours);
+  const minutes = Math.round((hours - wholeHours) * 60);
+
+  if (wholeHours > 0 && minutes > 0) {
+    return `${wholeHours}h ${minutes}m`;
+  }
+
+  if (wholeHours > 0) {
+    return `${wholeHours}h`;
+  }
+
+  return `${minutes}m`;
+};
+
+const getDurationHours = (classItem: InstructorClassWithSchedule) => {
+  const schedule = classItem.schedule[0];
+  const startValue = schedule?.start_time ?? classItem.default_start_time;
+  const endValue = schedule?.end_time ?? classItem.default_end_time;
+
+  if (!startValue || !endValue) return 0;
+
+  const start = new Date(startValue);
+  const end = new Date(endValue);
+  const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+
+  if (Number.isNaN(diff) || diff <= 0) return 0;
+
+  return Number(diff.toFixed(2));
+};
+
+const getLocationLabel = (classItem: InstructorClassWithSchedule) => {
+  if (classItem.location_name?.trim()) return classItem.location_name;
+
+  switch (classItem.location_type) {
+    case 'ONLINE':
+      return 'Online';
+    case 'IN_PERSON':
+      return 'In person';
+    case 'HYBRID':
+      return 'Hybrid';
+    default:
+      return 'TBD';
+  }
+};
+
+const getRateCardKey = (classItem: InstructorClassWithSchedule) => {
+  const sessionPrefix = classItem.session_format === 'GROUP' ? 'group' : 'private';
+  const locationSuffix = classItem.location_type === 'ONLINE' ? 'online' : 'inperson';
+  return `${sessionPrefix}_${locationSuffix}_rate` as const;
+};
+
+const getHourlyRate = (
+  classItem: InstructorClassWithSchedule,
+  approvedRateCards: Map<string, { currency?: string; [key: string]: unknown }>
+) => {
+  if (typeof classItem.training_fee === 'number' && classItem.training_fee > 0) {
+    return {
+      amount: classItem.training_fee,
+      currencyCode: approvedRateCards.get(classItem.course_uuid ?? '')?.currency ?? 'KES',
+    };
+  }
+
+  const rateCard = approvedRateCards.get(classItem.course_uuid ?? '');
+  const rateCardKey = getRateCardKey(classItem);
+  const rateValue = rateCard?.[rateCardKey];
+
+  if (typeof rateValue === 'number' && rateValue > 0) {
+    return {
+      amount: rateValue,
+      currencyCode: rateCard?.currency ?? 'KES',
+    };
+  }
+
+  if (typeof classItem.course?.minimum_training_fee === 'number' && classItem.course.minimum_training_fee > 0) {
+    return {
+      amount: classItem.course.minimum_training_fee,
+      currencyCode: approvedRateCards.get(classItem.course_uuid ?? '')?.currency ?? 'KES',
+    };
+  }
+
+  return {
+    amount: 0,
+    currencyCode: approvedRateCards.get(classItem.course_uuid ?? '')?.currency ?? 'KES',
+  };
+};
+
+const getStatusFromClass = (
+  classItem: InstructorClassWithSchedule,
+  enrollments: Enrollment[],
+  now: Date
+): RevenueStatus => {
+  if (classItem.is_active === false) return 'cancelled';
+
+  const activeEnrollments = enrollments.filter(
+    enrollment => enrollment.status !== 'CANCELLED' && enrollment.status !== 'WAITLISTED'
+  );
+
+  if (activeEnrollments.length === 0 || classItem.schedule.length === 0) {
+    return 'pending';
+  }
+
+  const completedSessions = classItem.schedule.filter(
+    scheduleItem => new Date(scheduleItem.end_time).getTime() < now.getTime()
+  ).length;
+
+  if (completedSessions >= classItem.schedule.length) {
+    return 'fulfilled';
+  }
+
+  if (completedSessions > 0) {
+    return 'partial';
+  }
+
+  return 'pending';
+};
+
+function TruncatedCellText({
+  value,
+  maxLength,
+}: {
+  value: string;
+  maxLength: number;
+}) {
+  const displayValue = truncateText(value, maxLength);
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className='block truncate'>{displayValue}</span>
+      </TooltipTrigger>
+      <TooltipContent side='top' className='max-w-xs break-words'>
+        {value}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 const RevenuePage = () => {
   const instructor = useInstructor();
-
   const userUuid = instructor?.user_uuid;
-  const [timeRange, setTimeRange] = useState('7days');
+
   const [showStats, setShowStats] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'pending' | 'failed'>(
-    'all'
-  );
+  const [statusFilter, setStatusFilter] = useState<RevenueStatusFilter>('all');
   const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
-  const [sortBy, setSortBy] = useState('created_date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [size, setSize] = useState('10');
 
   const [isTransferSheetOpen, setIsTransferSheetOpen] = useState(false);
   const [targetUserUuid, setTargetUserUuid] = useState('');
@@ -80,6 +287,165 @@ const RevenuePage = () => {
     },
   });
 
+  const { classes, isLoading: isLoadingClasses } = useInstructorClassesWithSchedules(instructor?.uuid);
+
+  const enrollmentsQueries = useQueries({
+    queries: classes.map(classItem => ({
+      ...getEnrollmentsForClassOptions({
+        path: { uuid: classItem.uuid as string },
+      }),
+      enabled: !!classItem.uuid,
+    })),
+  });
+
+  const { data: approvedApplicationsData } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        pageable: { page: 0, size: 200 },
+        searchParams: { applicant_uuid_eq: instructor?.uuid as string },
+      },
+    }),
+    enabled: !!instructor?.uuid,
+  });
+
+  const { data: walletData } = useQuery({
+    ...getWalletOptions({ path: { userUuid: userUuid as string } }),
+    enabled: !!userUuid,
+  });
+
+  const approvedRateCards = useMemo(() => {
+    const map = new Map<string, { currency?: string; [key: string]: unknown }>();
+
+    approvedApplicationsData?.data?.content
+      ?.filter(application => application.status === 'approved' && application.course_uuid)
+      .forEach(application => {
+        map.set(application.course_uuid as string, application.rate_card ?? {});
+      });
+
+    return map;
+  }, [approvedApplicationsData?.data?.content]);
+
+  const revenueRows = useMemo<RevenueRow[]>(() => {
+    const now = new Date();
+
+    return classes
+      .map((classItem, index) => {
+        const enrollments = enrollmentsQueries[index]?.data?.data ?? [];
+        const activeEnrollments = enrollments.filter(
+          enrollment => enrollment.status !== 'CANCELLED' && enrollment.status !== 'WAITLISTED'
+        );
+        const durationHours = getDurationHours(classItem);
+        const sessions = classItem.schedule.length || classItem.session_templates.length || 0;
+        const pricing = getHourlyRate(classItem, approvedRateCards);
+        const sessionFee = pricing.amount * durationHours;
+        const feePerStudent = sessionFee * sessions;
+        const classFees = feePerStudent * activeEnrollments.length;
+        const firstSessionDate =
+          classItem.schedule[0]?.start_time ?? classItem.default_start_time ?? classItem.created_date;
+        const statusKey = getStatusFromClass(classItem, enrollments, now);
+
+        return {
+          id: classItem.uuid ?? `class-${index}`,
+          classTitle: classItem.title || classItem.course?.name || 'Untitled class',
+          orderDate: formatDate(firstSessionDate),
+          location: getLocationLabel(classItem),
+          deliveryStatus: STATUS_LABEL_MAP[statusKey],
+          statusKey,
+          sessions,
+          duration: formatDuration(durationHours),
+          durationHours,
+          students: activeEnrollments.length,
+          sessionFee,
+          feePerStudent,
+          classFees,
+          currencyCode: pricing.currencyCode,
+          sortDate: firstSessionDate ? new Date(firstSessionDate).getTime() : 0,
+        };
+      })
+      .sort((left, right) => right.sortDate - left.sortDate);
+  }, [approvedRateCards, classes, enrollmentsQueries]);
+
+  const filteredTransactions = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return revenueRows.filter(row => {
+      const matchesSearch =
+        !query ||
+        [
+          row.id,
+          row.classTitle,
+          row.orderDate,
+          row.location,
+          row.deliveryStatus,
+          row.currencyCode,
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(query);
+
+      const matchesStatus = statusFilter === 'all' || row.statusKey === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [revenueRows, searchQuery, statusFilter]);
+
+  const pageSize = Number(size);
+  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
+
+  const paginatedTransactions = useMemo(() => {
+    const start = page * pageSize;
+    return filteredTransactions.slice(start, start + pageSize);
+  }, [filteredTransactions, page, pageSize]);
+
+  const analyticsData = useMemo(() => {
+    const totals = revenueRows.reduce(
+      (accumulator, row) => {
+        accumulator.totalRevenue += row.classFees;
+        accumulator.totalStudents += row.students;
+        accumulator.totalClasses += 1;
+        accumulator[row.statusKey] += row.classFees;
+
+        if (row.statusKey === 'pending' || row.statusKey === 'partial') {
+          accumulator.activeRevenue += row.classFees;
+          accumulator.activeClasses += 1;
+        }
+
+        return accumulator;
+      },
+      {
+        totalRevenue: 0,
+        totalStudents: 0,
+        totalClasses: 0,
+        activeRevenue: 0,
+        activeClasses: 0,
+        fulfilled: 0,
+        partial: 0,
+        pending: 0,
+        cancelled: 0,
+        refund: 0,
+      }
+    );
+
+    return {
+      ...totals,
+      averageClassValue: totals.totalClasses ? totals.totalRevenue / totals.totalClasses : 0,
+    };
+  }, [revenueRows]);
+
+  const topPerformingClasses = useMemo(
+    () => [...revenueRows].sort((left, right) => right.classFees - left.classFees).slice(0, 5),
+    [revenueRows]
+  );
+
+  const resetTransferForm = () => {
+    setTargetUserUuid('');
+    setTransferAmount('');
+    setTransferCurrency(walletData?.data?.currency_code || 'KES');
+    setTransferReference('');
+    setTransferDescription('');
+    setUserSearchQuery('');
+  };
+
   const handleTransferFunds = () => {
     if (!targetUserUuid || !transferAmount || !transferCurrency) return;
 
@@ -97,215 +463,13 @@ const RevenuePage = () => {
     });
   };
 
-  const resetTransferForm = () => {
-    setTargetUserUuid('');
-    setTransferAmount('');
-    setTransferCurrency('KES');
-    setTransferReference('');
-    setTransferDescription('');
-    setUserSearchQuery('');
-  };
-
-  const { data } = useQuery({
-    ...getClassDefinitionsForInstructorOptions({
-      path: { instructorUuid: instructor?.uuid as string },
-      query: { activeOnly: true },
-    }),
-    enabled: !!instructor?.uuid,
-  });
-  const instructorClasses = data?.data || [];
-  const latestClasses = useMemo(
-    () => [...instructorClasses].reverse().slice(0, 5),
-    [instructorClasses]
-  );
-
-  const { data: walletData } = useQuery({
-    ...getWalletOptions({ path: { userUuid: userUuid as string } }),
-    enabled: !!userUuid,
-  });
-
-  const { data: listTransactions } = useQuery({
-    ...listTransactionsOptions({
-      path: { userUuid: userUuid as string },
-      query: {
-        currency_code: walletData?.data?.currency_code,
-        pageable: { page, size, sort: [[sortBy, sortOrder]] },
-      },
-    }),
-    enabled: !!userUuid && !!walletData?.data?.currency_code,
-  });
-
-  ///// GENERATE SAMPLE DATA
-  const randomFrom = <T,>(arr: T[]): T => arr[Math?.floor(Math.random() * arr.length)];
-
-  const randomAmount = () => Math.floor(Math.random() * 2000) + 100;
-
-  const randomDate = (daysBack = 30) => {
-    const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * daysBack));
-    return date.toISOString();
-  };
-
-  const generateTransactions = (
-    count: number,
-    walletUuid = 'wallet-001',
-    currency = 'KES'
-  ): WalletTransaction[] => {
-    let balance = 50000;
-
-    return Array.from({ length: count }).map((_, index) => {
-      const transaction_type = randomFrom(TRANSACTION_TYPES);
-      const amount = randomAmount();
-      const balance_before = balance;
-
-      // Adjust balance logically
-      if (transaction_type === 'DEPOSIT') balance += amount;
-      if (
-        transaction_type === 'WITHDRAWAL' ||
-        transaction_type === 'PAYMENT' ||
-        transaction_type === 'TRANSFER'
-      ) {
-        balance = Math.max(balance - amount, 0);
-      }
-
-      const balance_after = balance;
-
-      return {
-        uuid: `txn-${String(index + 1).padStart(3, '0')}`,
-        wallet_uuid: walletUuid,
-        transaction_type,
-        amount,
-        currency_code: currency,
-        balance_before,
-        balance_after,
-        reference: `${transaction_type}-${2026}-${String(index + 1).padStart(4, '0')}`,
-        description: randomFrom(DESCRIPTIONS[transaction_type]),
-        counterparty_user_uuid:
-          transaction_type === 'TRANSFER' || transaction_type === 'PAYMENT'
-            ? `user-${Math.floor(Math.random() * 1000)}`
-            : 'counter_party_uuid',
-        created_date: randomDate(),
-      };
-    });
-  };
-  const transactions25 = generateTransactions(50);
-  /// GENERATE SAMPLE DATA
-
-  // const listAllTransactions = transactions25
-  const listAllTransactions = useMemo(
-    (): RevenueTransaction[] =>
-      (listTransactions?.data?.content ?? []).map(txn => ({
-        uuid: txn.uuid ?? '',
-        wallet_uuid: txn.wallet_uuid ?? '',
-        transaction_type: (txn.transaction_type as TransactionType) ?? 'DEPOSIT',
-        amount: txn.amount ?? 0,
-        currency_code: txn.currency_code ?? walletData?.data?.currency_code ?? 'KES',
-        balance_before: txn.balance_before ?? 0,
-        balance_after: txn.balance_after ?? 0,
-        reference: txn.reference ?? '',
-        description: txn.description ?? '',
-        transfer_reference: txn.transfer_reference,
-        counterparty_user_uuid: txn.counterparty_user_uuid,
-        created_date:
-          txn.created_date instanceof Date
-            ? txn.created_date.toISOString()
-            : new Date(txn.created_date ?? Date.now()).toISOString(),
-      })),
-    [listTransactions?.data?.content, walletData?.data?.currency_code]
-  );
-
-  const { data: revenueData } = useQuery({
-    ...getRevenueDashboardOptions({ query: { domain: 'instructor' } }),
-    enabled: !!instructor?.uuid,
-  });
-  const revenueAnalytics = revenueData?.data;
-
-  // Calculate analytics from actual transactions
-  const analyticsData = useMemo(() => {
-    const totalCount = listAllTransactions.length;
-    const totalRevenue = listAllTransactions
-      .filter(t => t.transaction_type === 'DEPOSIT' || t.transaction_type === 'PAYMENT')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const totalWithdrawals = listAllTransactions
-      .filter(t => t.transaction_type === 'WITHDRAWAL')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const completedCount = listAllTransactions.filter(
-      t => getStatusFromType(t.transaction_type) === 'completed'
-    ).length;
-    const pendingCount = listAllTransactions.filter(
-      t => getStatusFromType(t.transaction_type) === 'pending'
-    ).length;
-    const failedCount = listAllTransactions.filter(
-      t => getStatusFromType(t.transaction_type) === 'failed'
-    ).length;
-
-    const avgTransactionValue = totalCount > 0 ? totalRevenue / totalCount : 0;
-
-    return {
-      totalRevenue,
-      totalWithdrawals,
-      netRevenue: totalRevenue - totalWithdrawals,
-      totalTransactions: totalCount,
-      completedTransactions: completedCount,
-      pendingTransactions: pendingCount,
-      failedTransactions: failedCount,
-      averageTransactionValue: avgTransactionValue,
-      successRate: totalCount > 0 ? (completedCount / totalCount) * 100 : 0,
-    };
-  }, [listAllTransactions]);
-
-  // Filter transactions based on search query and status
-  const filteredTransactions = useMemo(() => {
-    let filtered = listAllTransactions;
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        txn =>
-          txn?.description?.toLowerCase().includes(query) ||
-          txn?.reference?.toLowerCase().includes(query) ||
-          txn?.transaction_type?.toLowerCase().includes(query)
-      );
-    }
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(txn => getStatusFromType(txn?.transaction_type) === statusFilter);
-    }
-
-    return filtered;
-  }, [listAllTransactions, searchQuery, statusFilter]);
-
-  const revenueBySource = [
-    { source: 'Advanced React Masterclass', revenue: 15847.5, percentage: 35 },
-    { source: 'Python for Data Science', revenue: 12340.0, percentage: 27 },
-    { source: 'UI/UX Design Fundamentals', revenue: 9823.0, percentage: 22 },
-    { source: 'Marketing Strategy Bootcamp', revenue: 7219.5, percentage: 16 },
-  ];
-
-  const handleSort = useCallback(
-    (field: string) => {
-      if (sortBy === field) {
-        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-      } else {
-        setSortBy(field);
-        setSortOrder('desc');
-      }
-      setPage(0);
-    },
-    [sortBy, sortOrder]
-  );
-
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
     setPage(0);
   }, []);
 
-  const handleStatusFilter = useCallback((status: 'all' | 'completed' | 'pending' | 'failed') => {
-    setStatusFilter(status);
+  const handleStatusFilter = useCallback((value: RevenueStatusFilter) => {
+    setStatusFilter(value);
     setPage(0);
   }, []);
 
@@ -314,100 +478,63 @@ const RevenuePage = () => {
   }, []);
 
   const handlePageSizeChange = useCallback((newSize: string) => {
-    setSize(Number(newSize));
+    setSize(newSize);
     setPage(0);
   }, []);
 
-  const totalPages = useMemo(
-    () => Math.ceil((filteredTransactions.length || 0) / size),
-    [filteredTransactions.length, size]
-  );
-
-  const STATUS_OPTIONS = [
-    {
-      value: 'all',
-      label: 'All',
-      count: listAllTransactions.length,
-    },
-    {
-      value: 'completed',
-      label: 'Completed',
-      count: analyticsData.completedTransactions,
-    },
-    {
-      value: 'pending',
-      label: 'Pending',
-      count: analyticsData.pendingTransactions,
-    },
-    {
-      value: 'failed',
-      label: 'Failed',
-      count: analyticsData.failedTransactions,
-    },
-  ];
-
-  const paginatedTransactions = useMemo(() => {
-    const start = page * size;
-    return filteredTransactions.slice(start, start + size);
-  }, [filteredTransactions, page, size]);
-
-  const isInsufficientBalance =
-    !!transferAmount && parseFloat(transferAmount) > analyticsData.netRevenue;
+  const availableBalance = walletData?.data?.balance_amount ?? analyticsData.fulfilled;
+  const walletCurrency = walletData?.data?.currency_code ?? revenueRows[0]?.currencyCode ?? 'KES';
+  const isLoadingRevenue =
+    isLoadingClasses || enrollmentsQueries.some(query => query.isLoading || query.isFetching);
+  const isInsufficientBalance = !!transferAmount && parseFloat(transferAmount) > availableBalance;
 
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
-      {/* Header */}
       <section className='mb-6'>
         <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div>
             <h1 className='text-foreground text-2xl font-bold'>Revenue</h1>
             <p className='text-muted-foreground mt-1 text-sm'>
-              Track and analyze your earnings, view payment history, and manage financial insights
-              across courses and sessions.
+              Track earnings from your live classes using actual schedules, enrollments, and
+              instructor pricing.
             </p>
           </div>
 
-          <div className='flex gap-3'>
-            <select
-              value={timeRange}
-              onChange={e => setTimeRange(e.target.value)}
-              className='border-input bg-background text-foreground focus:ring-primary rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none'
-            >
-              <option value='7days'>Last 7 days</option>
-              <option value='30days'>Last 30 days</option>
-              <option value='90days'>Last 90 days</option>
-              <option value='year'>This year</option>
-            </select>
-
-            {/* <Button className='flex items-center gap-2'>
-              <Download size={16} />
-              Export
-            </Button> */}
-          </div>
+          <Link href='/dashboard/revenue/transaction-list' className='text-primary text-sm font-medium'>
+            Open table view
+          </Link>
         </div>
       </section>
 
       <section className='mx-auto max-w-7xl space-y-6'>
-        {/* Wallet Card */}
         <div className='border-border bg-card max-w-[300px] rounded-xl border p-6 shadow-sm sm:max-w-2/5'>
           <div className='flex items-start justify-between'>
             <div>
               <p className='text-muted-foreground text-sm font-medium'>Available Balance</p>
               <h2 className='text-foreground mt-2 text-4xl font-bold'>
-                KES {analyticsData.netRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {formatCurrency(availableBalance, walletCurrency)}
               </h2>
-              <p className='text-muted-foreground mt-2 text-sm'>Ready to withdraw</p>
+              <p className='text-muted-foreground mt-2 text-sm'>
+                {walletData?.data?.balance_amount !== undefined
+                  ? 'Current wallet balance'
+                  : 'Derived from fulfilled class revenue'}
+              </p>
             </div>
             <div className='bg-primary/10 rounded-lg p-3'>
               <Landmark className='text-primary' size={24} />
             </div>
           </div>
-          <Button onClick={() => setIsTransferSheetOpen(true)} className='mt-6 w-full'>
+          <Button
+            onClick={() => {
+              setTransferCurrency(walletCurrency);
+              setIsTransferSheetOpen(true);
+            }}
+            className='mt-6 w-full'
+          >
             Withdraw Funds
           </Button>
         </div>
 
-        {/* View Stats Button */}
         <div className='flex justify-end'>
           <Button
             variant={showStats ? 'default' : 'outline'}
@@ -428,7 +555,6 @@ const RevenuePage = () => {
           </Button>
         </div>
 
-        {/* Analytics Grid - Conditionally Shown */}
         {showStats && (
           <div className='animate-in fade-in-50 grid grid-cols-1 gap-4 duration-300 sm:grid-cols-2 lg:grid-cols-4'>
             <div className='border-border bg-card rounded-lg border p-5'>
@@ -437,13 +563,13 @@ const RevenuePage = () => {
                   <TrendingUp className='text-primary' size={20} />
                 </div>
                 <span className='text-success dark:text-success-foreground flex items-center text-sm font-medium'>
-                  <ArrowUpRight size={16} />+{analyticsData.successRate.toFixed(1)}%
+                  <ArrowUpRight size={16} />
+                  {analyticsData.totalClasses}
                 </span>
               </div>
               <p className='text-muted-foreground mt-3 text-sm'>Total Revenue</p>
               <p className='text-foreground mt-1 text-2xl font-bold'>
-                {revenueAnalytics?.estimated_earnings?.map(i => i.currency_code)}
-                {revenueAnalytics?.estimated_earnings?.map(i => i.amount)}
+                {formatCurrency(analyticsData.totalRevenue, walletCurrency)}
               </p>
             </div>
 
@@ -454,12 +580,12 @@ const RevenuePage = () => {
                 </div>
                 <span className='text-success dark:text-success-foreground flex items-center text-sm font-medium'>
                   <ArrowUpRight size={16} />
-                  {analyticsData.totalTransactions}
+                  {analyticsData.activeClasses}
                 </span>
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Total Transactions</p>
+              <p className='text-muted-foreground mt-3 text-sm'>Active Revenue</p>
               <p className='text-foreground mt-1 text-2xl font-bold'>
-                {analyticsData.totalTransactions}
+                {formatCurrency(analyticsData.activeRevenue, walletCurrency)}
               </p>
             </div>
 
@@ -470,75 +596,69 @@ const RevenuePage = () => {
                 </div>
                 <span className='text-success dark:text-success-foreground flex items-center text-sm font-medium'>
                   <ArrowUpRight size={16} />
-                  {revenueAnalytics?.units_sold}
+                  {analyticsData.totalStudents}
                 </span>
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Completed</p>
-              <p className='text-foreground mt-1 text-2xl font-bold'>
-                {analyticsData.completedTransactions}
-              </p>
+              <p className='text-muted-foreground mt-3 text-sm'>Enrolled Students</p>
+              <p className='text-foreground mt-1 text-2xl font-bold'>{analyticsData.totalStudents}</p>
             </div>
 
             <div className='border-border bg-card rounded-lg border p-5'>
               <div className='flex items-center justify-between'>
                 <div className='bg-primary/10 rounded-lg p-2'>
-                  <DollarSign className='text-primary' size={20} />
+                  <Landmark className='text-primary' size={20} />
                 </div>
                 <span className='text-success dark:text-success-foreground flex items-center text-sm font-medium'>
                   <ArrowUpRight size={16} />
-                  +0
+                  Avg
                 </span>
               </div>
-              <p className='text-muted-foreground mt-3 text-sm'>Avg Transaction</p>
+              <p className='text-muted-foreground mt-3 text-sm'>Average Class Value</p>
               <p className='text-foreground mt-1 text-2xl font-bold'>
-                {revenueAnalytics?.average_order_value?.map(i => i.currency_code)}
-                {revenueAnalytics?.average_order_value?.map(i => i.amount)}
+                {formatCurrency(analyticsData.averageClassValue, walletCurrency)}
               </p>
             </div>
           </div>
         )}
 
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-          {/* Recent Transactions */}
           <div className='border-border bg-card rounded-xl border shadow-sm lg:col-span-2'>
             <div className='flex flex-col gap-3 p-4'>
-              <div className='flex flex-col gap-3 sm:flex-row'>
-                {/* Search */}
+              <div className='grid gap-3 sm:grid-cols-[minmax(0,1fr)_140px_180px]'>
                 <div className='relative flex-1'>
                   <Search
                     className='text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2'
                     size={16}
                   />
                   <Input
-                    placeholder='Search transactions...'
+                    placeholder='Search classes, dates, locations...'
                     value={searchQuery}
-                    onChange={e => handleSearch(e.target.value)}
+                    onChange={event => handleSearch(event.target.value)}
                     className='pl-9'
                   />
                 </div>
 
-                {/* Page Size */}
-                <Select value={size.toString()} onValueChange={handlePageSizeChange}>
-                  <SelectTrigger className='w-full sm:w-32'>
+                <Select value={size} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className='w-full'>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='5'>5 items</SelectItem>
-                    <SelectItem value='10'>10 items</SelectItem>
-                    <SelectItem value='20'>20 items</SelectItem>
-                    <SelectItem value='50'>50 items</SelectItem>
+                    {PAGE_SIZE_OPTIONS.map(option => (
+                      <SelectItem key={option} value={option}>
+                        {option} items
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
-                {/* Status Filter */}
-                <Select value={statusFilter} onValueChange={handleStatusFilter}>
-                  <SelectTrigger className='w-full sm:w-48'>
+                <Select value={statusFilter} onValueChange={value => handleStatusFilter(value as RevenueStatusFilter)}>
+                  <SelectTrigger className='w-full'>
                     <SelectValue placeholder='Status' />
                   </SelectTrigger>
                   <SelectContent>
-                    {STATUS_OPTIONS.map(status => (
-                      <SelectItem key={status.value} value={status.value}>
-                        {status.label}
+                    {STATUS_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -547,95 +667,91 @@ const RevenuePage = () => {
             </div>
 
             <div className='overflow-x-auto'>
-              <table className='w-full'>
+              <table className='w-full min-w-[1080px]'>
                 <thead className='border-border bg-muted/50 border-b'>
                   <tr>
-                    <th
-                      className='text-muted-foreground hover:text-foreground cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider uppercase transition-colors'
-                      onClick={() => handleSort('description')}
-                    >
-                      <div className='flex items-center gap-2'>
-                        Transaction
-                        <ChevronDown size={14} />
-                      </div>
+                    <th className='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'>
+                      Class ID
                     </th>
                     <th className='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'>
-                      Counter Party
+                      Class Title
                     </th>
-                    <th
-                      className='text-muted-foreground hover:text-foreground cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider uppercase transition-colors'
-                      onClick={() => handleSort('created_date')}
-                    >
-                      <div className='flex items-center gap-2'>
-                        Date
-                        <ChevronDown size={14} />
-                      </div>
+                    <th className='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'>
+                      Order Date
                     </th>
-                    <th
-                      className='text-muted-foreground hover:text-foreground cursor-pointer px-6 py-3 text-right text-xs font-medium tracking-wider uppercase transition-colors'
-                      onClick={() => handleSort('amount')}
-                    >
-                      <div className='flex items-center justify-end gap-2'>
-                        Amount
-                        <ChevronDown size={14} />
-                      </div>
+                    <th className='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'>
+                      Location
+                    </th>
+                    <th className='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'>
+                      Delivery Status
                     </th>
                     <th className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
-                      Status
+                      Sessions
+                    </th>
+                    <th className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
+                      Duration
+                    </th>
+                    <th className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
+                      Students
+                    </th>
+                    <th className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
+                      Session Fee
+                    </th>
+                    <th className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
+                      Fee/Student
+                    </th>
+                    <th className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
+                      Class Fees
                     </th>
                   </tr>
                 </thead>
                 <tbody className='divide-border divide-y'>
-                  {paginatedTransactions.length > 0 ? (
-                    paginatedTransactions.map((txn: WalletTransaction) => {
-                      const status = getStatusFromType(txn.transaction_type);
-
-                      return (
-                        <tr key={txn.uuid} className='hover:bg-muted/30 transition-colors'>
-                          <td className='px-6 py-4'>
-                            <div className='flex flex-col'>
-                              <span className='text-foreground text-sm font-medium'>
-                                {txn.description}
-                              </span>
-                              <span className='text-muted-foreground text-xs'>{txn.reference}</span>
-                            </div>
-                          </td>
-
-                          <td className='text-muted-foreground px-6 py-4 text-sm'>
-                            {txn.counterparty_user_uuid
-                              ? txn.counterparty_user_uuid.substring(0, 8) + '...'
-                              : '—'}
-                          </td>
-
-                          <td className='px-6 py-4'>
-                            <div className='flex flex-col'>
-                              <span className='text-foreground text-sm'>
-                                {formatDate(txn.created_date)}
-                              </span>
-                              <span className='text-muted-foreground text-xs'>
-                                {formatTime(txn.created_date)}
-                              </span>
-                            </div>
-                          </td>
-
-                          <td className='text-foreground px-6 py-4 text-right text-sm font-medium'>
-                            {txn.currency_code} {txn.amount.toLocaleString()}
-                          </td>
-
-                          <td className='px-6 py-4 text-right'>
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE_MAP[status]}`}
-                            >
-                              {status.charAt(0).toUpperCase() + status.slice(1)}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })
+                  {isLoadingRevenue ? (
+                    <tr>
+                      <td colSpan={11} className='px-6 py-8 text-center'>
+                        <p className='text-muted-foreground text-sm'>Loading class revenue…</p>
+                      </td>
+                    </tr>
+                  ) : paginatedTransactions.length > 0 ? (
+                    paginatedTransactions.map(row => (
+                      <tr key={row.id} className='hover:bg-muted/30 transition-colors'>
+                        <td className='text-foreground max-w-[120px] px-6 py-4 text-sm font-medium'>
+                          <TruncatedCellText value={row.id} maxLength={7} />
+                        </td>
+                        <td className='text-foreground max-w-[220px] px-6 py-4 text-sm'>
+                          <TruncatedCellText value={row.classTitle} maxLength={24} />
+                        </td>
+                        <td className='text-muted-foreground px-6 py-4 text-sm'>{row.orderDate}</td>
+                        <td className='text-muted-foreground max-w-[180px] px-6 py-4 text-sm'>
+                          <TruncatedCellText value={row.location} maxLength={20} />
+                        </td>
+                        <td className='px-6 py-4 text-sm'>
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE_MAP[row.statusKey]}`}
+                          >
+                            {row.deliveryStatus}
+                          </span>
+                        </td>
+                        <td className='text-foreground px-6 py-4 text-right text-sm'>{row.sessions}</td>
+                        <td className='text-foreground px-6 py-4 text-right text-sm'>{row.duration}</td>
+                        <td className='text-foreground px-6 py-4 text-right text-sm'>{row.students}</td>
+                        <td className='text-foreground px-6 py-4 text-right text-sm'>
+                          {formatCurrency(row.sessionFee, row.currencyCode)}
+                        </td>
+                        <td className='text-foreground px-6 py-4 text-right text-sm'>
+                          {formatCurrency(row.feePerStudent, row.currencyCode)}
+                        </td>
+                        <td className='text-foreground px-6 py-4 text-right text-sm font-semibold'>
+                          {formatCurrency(row.classFees, row.currencyCode)}
+                        </td>
+                      </tr>
+                    ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className='px-6 py-8 text-center'>
-                        <p className='text-muted-foreground text-sm'>No transactions found</p>
+                      <td colSpan={11} className='px-6 py-8 text-center'>
+                        <p className='text-muted-foreground text-sm'>
+                          No revenue rows match your current filters.
+                        </p>
                       </td>
                     </tr>
                   )}
@@ -643,11 +759,10 @@ const RevenuePage = () => {
               </table>
             </div>
 
-            {/* Pagination */}
             <div className='border-border flex items-center justify-between border-t p-6'>
               <div className='text-muted-foreground text-sm'>
-                Page {page + 1} of {Math.max(1, totalPages)} • {paginatedTransactions.length} of{' '}
-                {filteredTransactions.length} results
+                Page {Math.min(page + 1, totalPages)} of {totalPages} • {paginatedTransactions.length}{' '}
+                of {filteredTransactions.length} results
               </div>
               <div className='flex gap-2'>
                 <Button
@@ -670,52 +785,56 @@ const RevenuePage = () => {
             </div>
           </div>
 
-          {/* Revenue by Course */}
           <div className='border-border bg-card rounded-xl border shadow-sm'>
             <div className='border-border border-b p-6'>
               <h3 className='text-foreground text-lg font-semibold'>Revenue by Course</h3>
               <p className='text-muted-foreground mt-1 text-sm'>
-                Top performing courses (showing best 5)
+                Highest earning instructor classes based on live enrollments and pricing.
               </p>
             </div>
             <div className='space-y-5 p-6'>
-              {latestClasses.slice(0, 5).map((item, index) => (
-                <div key={index}>
-                  <div className='mb-2 flex items-center justify-between'>
-                    <span className='text-foreground max-w-[60%] truncate pr-2 text-sm font-medium'>
-                      {item.class_definition?.title}
-                    </span>
-                    <span className='text-foreground text-sm font-semibold'>
-                      {/* KES {item.revenue.toLocaleString()} */}
-                      KES {0}
-                    </span>
-                  </div>
-                  <div className='bg-muted h-2 w-full rounded-full'>
-                    <div
-                      className='bg-primary h-2 rounded-full transition-all duration-300'
-                      // style={{ width: `${item.percentage}%` }}
-                      style={{ width: `${0}%` }}
-                    />
-                  </div>
-                  <div className='text-muted-foreground mt-1 text-xs'>
-                    {/* {item.percentage}% of total */}
-                    {0}% of total
-                  </div>
-                </div>
-              ))}
+              {topPerformingClasses.length > 0 ? (
+                topPerformingClasses.map(item => {
+                  const share =
+                    analyticsData.totalRevenue > 0 ? (item.classFees / analyticsData.totalRevenue) * 100 : 0;
+
+                  return (
+                    <div key={item.id}>
+                      <div className='mb-2 flex items-center justify-between gap-3'>
+                        <span className='text-foreground max-w-[65%] truncate text-sm font-medium'>
+                          {item.classTitle}
+                        </span>
+                        <span className='text-foreground text-sm font-semibold'>
+                          {formatCurrency(item.classFees, item.currencyCode)}
+                        </span>
+                      </div>
+                      <div className='bg-muted h-2 w-full rounded-full'>
+                        <div
+                          className='bg-primary h-2 rounded-full transition-all duration-300'
+                          style={{ width: `${Math.min(100, share)}%` }}
+                        />
+                      </div>
+                      <div className='text-muted-foreground mt-1 text-xs'>{share.toFixed(1)}% of total</div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className='text-muted-foreground text-sm'>
+                  Revenue by course will appear here once your classes have schedules and enrollments.
+                </p>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Transfer Funds Sheet ───────────────────────────────────────────── */}
       <TransferFundsSheet
         open={isTransferSheetOpen}
         onOpenChange={open => {
           setIsTransferSheetOpen(open);
           if (!open) resetTransferForm();
         }}
-        balance={analyticsData.netRevenue}
+        balance={availableBalance}
         isInsufficientBalance={isInsufficientBalance}
         targetUserUuid={targetUserUuid}
         setTargetUserUuid={setTargetUserUuid}
@@ -743,47 +862,3 @@ const RevenuePage = () => {
 };
 
 export default RevenuePage;
-
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
-
-const formatTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-const getStatusFromType = (type?: string | null): 'completed' | 'pending' | 'failed' => {
-  switch (type) {
-    case 'DEPOSIT':
-    case 'PAYMENT':
-      return 'completed';
-    case 'TRANSFER':
-      return 'pending';
-    case 'WITHDRAWAL':
-      return 'failed';
-    default:
-      return 'completed';
-  }
-};
-
-export type RevenueTransaction = {
-  uuid: string;
-  wallet_uuid: string;
-  transaction_type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'PAYMENT';
-  amount: number;
-  currency_code: string;
-  balance_before: number;
-  balance_after: number;
-  reference: string;
-  description: string;
-  transfer_reference?: string;
-  counterparty_user_uuid?: string;
-  created_date: string;
-};
-
-const TRANSACTION_TYPES = ['DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'PAYMENT'] as const;
-type TransactionType = (typeof TRANSACTION_TYPES)[number];
-
-const DESCRIPTIONS: Record<TransactionType, string[]> = {
-  DEPOSIT: ['Wallet deposit via M-Pesa', 'Wallet top-up via card'],
-  WITHDRAWAL: ['Wallet withdrawal to bank', 'Cash withdrawal'],
-  TRANSFER: ['Transfer to instructor', 'Transfer to another user'],
-  PAYMENT: ['Payment for React Course', 'Payment for UI/UX Course'],
-};

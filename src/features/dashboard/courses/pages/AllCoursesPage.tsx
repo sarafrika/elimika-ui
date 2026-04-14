@@ -1,9 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Filter, Layers, Search } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { CustomPagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +15,10 @@ import type { Course, TrainingProgram } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { CourseCard } from '@/src/features/dashboard/courses/components/CourseCard';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useQuery } from '@tanstack/react-query';
+import { BookOpen, Filter, Layers, Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 const matchesSearchQuery = (value: string | undefined, query: string) =>
   query === '' || (value ?? '').toLowerCase().includes(query.toLowerCase());

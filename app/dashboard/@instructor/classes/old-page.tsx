@@ -345,7 +345,7 @@ function ClassRoster({
     );
 }
 
-export default function NewClassPage() {
+export default function OldClassPage() {
     const instructor = useInstructor();
     const { replaceBreadcrumbs } = useBreadcrumb();
     const router = useRouter()

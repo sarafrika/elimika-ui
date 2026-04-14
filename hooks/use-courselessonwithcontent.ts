@@ -1,6 +1,10 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import type { GetCourseLessonsResponse, GetLessonContentResponse } from '@/services/client/types.gen';
+import type {
+  ContentType,
+  GetCourseLessonsResponse,
+  GetLessonContentResponse,
+} from '@/services/client/types.gen';
 import {
   getAllContentTypesOptions,
   getCourseLessonsOptions,
@@ -82,6 +86,14 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
     return Object.fromEntries(contentTypeData.map(ct => [ct.uuid, ct.name.toLowerCase()]));
   }, [contentTypeData]);
 
+  const contentTypeDetailsMap = useMemo<Record<string, ContentType>>(() => {
+    return Object.fromEntries(
+      contentTypeData
+        .filter((ct): ct is ContentType & { uuid: string } => Boolean(ct.uuid))
+        .map(ct => [ct.uuid, ct])
+    );
+  }, [contentTypeData]);
+
   return {
     isLoading: isAllLessonsDataLoading,
     isFetching: isAllLessonsDataFetching || contentTypeFetching,
@@ -89,5 +101,6 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
     lessons: lessonsWithContent,
     contentTypes: contentTypeData,
     contentTypeMap,
+    contentTypeDetailsMap,
   };
 }
