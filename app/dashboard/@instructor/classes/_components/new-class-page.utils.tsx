@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 
 export type ClassTab =
   | 'overview'
+  | 'waiting-list'
   | 'delivery-status'
   | 'students'
   | 'announcements'
@@ -123,10 +124,27 @@ export const formatDuration = (
   return `${minutes}m`;
 };
 
-export const getContentTypeLabel = (
-  contentTypeMap: Record<string, string>,
-  uuid?: string
+export const formatTimeRange = (
+  startValue?: string | Date | null,
+  endValue?: string | Date | null
 ) => {
+  if (!startValue || !endValue) return 'TBD';
+
+  const start = new Date(startValue);
+  const end = new Date(endValue);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'TBD';
+
+  return `${start.toLocaleTimeString('en-GB', {
+    hour: 'numeric',
+    minute: '2-digit',
+  })} - ${end.toLocaleTimeString('en-GB', {
+    hour: 'numeric',
+    minute: '2-digit',
+  })}`;
+};
+
+export const getContentTypeLabel = (contentTypeMap: Record<string, string>, uuid?: string) => {
   const typeName = uuid ? contentTypeMap[uuid] : '';
   return typeName ? formatLabel(typeName) : 'Content';
 };
@@ -193,13 +211,15 @@ export const useFilteredClassInstances = ({
 
     return classes
       .flatMap(classItem =>
-        (classItem.schedule ?? []).map(instance => ({
-          instanceUuid: instance.uuid,
-          classUuid: classItem.uuid,
+        (classItem.schedule ?? []).map((instance, instanceIndex) => ({
+          instanceUuid:
+            instance.uuid ??
+            `${classItem.uuid ?? 'class'}-${instance.start_time?.toString() ?? instanceIndex}`,
+          classUuid: classItem.uuid ?? '',
           title: classItem.title,
           courseName: classItem.course?.name || 'No linked course',
           difficulty: classItem.course?.difficulty_uuid
-            ? difficultyMap[classItem.course.difficulty_uuid]
+            ? (difficultyMap[classItem.course.difficulty_uuid] ?? 'General')
             : 'General',
           sessionFormat: formatLabel(classItem.session_format),
           start_time: instance.start_time,
@@ -265,5 +285,7 @@ export const buildStudentRows = ({
     });
   });
 
-  return Array.from(rows.values()).sort((left, right) => left.fullName.localeCompare(right.fullName));
+  return Array.from(rows.values()).sort((left, right) =>
+    left.fullName.localeCompare(right.fullName)
+  );
 };

@@ -52,7 +52,6 @@ export function ClassStudentsTab({
               <TableRow className='hover:bg-transparent'>
                 <TableHead>Student</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Student UUID</TableHead>
                 <TableHead>Enrollment Status</TableHead>
                 <TableHead>Enrolled On</TableHead>
               </TableRow>
@@ -81,9 +80,6 @@ export function ClassStudentsTab({
                       </TableCell>
                       <TableCell className='text-muted-foreground'>
                         {entry.user?.email ?? 'No email available'}
-                      </TableCell>
-                      <TableCell className='text-muted-foreground'>
-                        {studentUuid.slice(0, 8)}
                       </TableCell>
                       <TableCell>{formatLabel(entry.enrollment.status)}</TableCell>
                       <TableCell>{formatDateOnly(entry.enrollment.created_date)}</TableCell>
