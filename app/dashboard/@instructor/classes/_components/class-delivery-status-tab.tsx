@@ -10,8 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { CircleDot, GraduationCap, NotebookPen, UserRound, Users } from 'lucide-react';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
+import { CircleDot, GraduationCap, UserRound, Users } from 'lucide-react';
 import type { ClassInstanceItem, DateFilter } from './new-class-page.utils';
 import {
   formatDateTime,
@@ -59,9 +59,6 @@ export function ClassDeliveryStatusTab({
               <div className='rounded-[28px] border border-border/70 bg-background/80'>
                 <div className='border-border/70 flex flex-col gap-5 border-b p-5 lg:flex-row lg:items-start lg:justify-between'>
                   <div className='flex min-w-0 gap-4'>
-                    <div className='bg-muted hidden h-24 w-24 shrink-0 rounded-[24px] border border-border/60 sm:flex sm:items-center sm:justify-center'>
-                      <NotebookPen className='text-muted-foreground h-8 w-8' />
-                    </div>
                     <div className='min-w-0 space-y-4'>
                       <div className='space-y-2'>
                         <h2 className='text-foreground text-2xl font-semibold'>{selectedClass.title}</h2>
