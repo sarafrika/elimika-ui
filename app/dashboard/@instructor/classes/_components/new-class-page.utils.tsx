@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import type { CourseLessonWithContent } from '@/hooks/use-courselessonwithcontent';
+import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import type { Student } from '@/services/client';
+import { useMemo } from 'react';
 
 export type ClassTab =
   | 'overview'
@@ -41,8 +41,9 @@ export type ClassInstanceItem = {
 
 export const classTabs: { value: ClassTab; label: string }[] = [
   { value: 'overview', label: 'Overview' },
-  { value: 'delivery-status', label: 'Delivery Status' },
   { value: 'students', label: 'Students' },
+  { value: 'waiting-list', label: 'Waiting List' },
+  { value: 'delivery-status', label: 'Delivery Status' },
   { value: 'announcements', label: 'Announcements' },
   { value: 'tasks', label: 'Tasks' },
 ];

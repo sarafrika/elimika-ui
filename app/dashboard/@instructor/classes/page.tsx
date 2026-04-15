@@ -6,15 +6,10 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
+import { useClassRoster } from '@/hooks/use-class-roster';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
-import type { Student } from '@/services/client';
-import {
-  getEnrollmentsForClassOptions,
-  getStudentByIdOptions,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useQueries } from '@tanstack/react-query';
 import { NotebookPen, PanelBottom, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -23,7 +18,6 @@ import { ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassSidebar } from './_components/class-sidebar';
 import { ClassStudentsTab } from './_components/class-students-tab';
 import {
-  buildStudentRows,
   classTabs,
   useFilteredClassInstances,
   type ClassInstanceItem,
@@ -66,15 +60,6 @@ export default function NewClassPage() {
     isError: hasClassesError,
   } = useInstructorClassesWithSchedules(instructor?.uuid);
 
-  const enrollmentQueries = useQueries({
-    queries: classes.map(classItem => ({
-      ...getEnrollmentsForClassOptions({
-        path: { uuid: classItem.uuid as string },
-      }),
-      enabled: !!classItem.uuid,
-    })),
-  });
-
   const filteredClasses = useFilteredClassInstances({
     classes,
     difficultyMap,
@@ -102,16 +87,13 @@ export default function NewClassPage() {
 
   const selectedClass = selectedInstanceEntry?.classItem ?? null;
   const selectedClassUuid = selectedClass?.uuid ?? null;
+  const { roster, isLoading: isLoadingStudents } = useClassRoster(selectedClassUuid ?? undefined);
   const {
     isLoading: isLoadingLessons,
     lessons,
     contentTypeMap,
   } = useCourseLessonsWithContent({ courseUuid: selectedClass?.course_uuid });
   const lessonModules = useMemo<LessonModule[]>(() => lessons ?? [], [lessons]);
-  const selectedClassIndex = useMemo(
-    () => classes.findIndex(classItem => classItem.uuid === selectedClassUuid),
-    [classes, selectedClassUuid]
-  );
 
   useEffect(() => {
     if (!lessonModules.length) {
@@ -160,50 +142,6 @@ export default function NewClassPage() {
   );
 
   const selectedModuleResources = selectedModule?.content?.data ?? [];
-
-  const selectedClassEnrollments =
-    selectedClassIndex >= 0 ? enrollmentQueries[selectedClassIndex]?.data?.data ?? [] : [];
-
-  const uniqueStudentUuids = useMemo(() => {
-    const ids = new Set<string>();
-
-    selectedClassEnrollments.forEach(enrollment => {
-      if (enrollment.student_uuid && enrollment.status !== 'CANCELLED') {
-        ids.add(enrollment.student_uuid);
-      }
-    });
-
-    return Array.from(ids);
-  }, [selectedClassEnrollments]);
-
-  const studentQueries = useQueries({
-    queries: uniqueStudentUuids.map(studentUuid => ({
-      ...getStudentByIdOptions({
-        path: { uuid: studentUuid },
-      }),
-      enabled: !!studentUuid,
-    })),
-  });
-
-  const studentMap = useMemo(() => {
-    const map = new Map<string, Student>();
-
-    uniqueStudentUuids.forEach((studentUuid, index) => {
-      const student = studentQueries[index]?.data;
-      if (student) {
-        map.set(studentUuid, student);
-      }
-    });
-
-    return map;
-  }, [studentQueries, uniqueStudentUuids]);
-
-  const studentRows = useMemo(
-    () => buildStudentRows({ enrollments: selectedClassEnrollments, studentMap }),
-    [selectedClassEnrollments, studentMap]
-  );
-
-  const isLoadingStudents = studentQueries.some(query => query.isLoading || query.isFetching);
 
   const totalInstances = selectedClass?.schedule?.length ?? 0;
   const visibleInstances = selectedClass?.schedule ?? [];
@@ -391,6 +329,18 @@ export default function NewClassPage() {
               />
             </TabsContent>
 
+
+            <TabsContent value='students' className='mt-0'>
+              <ClassStudentsTab isLoadingStudents={isLoadingStudents} rosterEntries={roster} />
+            </TabsContent>
+
+            <TabsContent value='waiting-list' className='mt-0'>
+              <PlaceholderTab
+                title='Waiting List'
+                description='This tab is ready for class-wide announcement tools and communication flows when you are ready to wire them in.'
+              />
+            </TabsContent>
+
             <TabsContent value='delivery-status' className='mt-0'>
               <ClassDeliveryStatusTab
                 isLoadingClasses={isLoadingClasses}
@@ -399,7 +349,7 @@ export default function NewClassPage() {
                 dateFilter={dateFilter}
                 difficultyMap={difficultyMap}
                 instructorName={instructor?.full_name}
-                studentCount={studentRows.length}
+                studentCount={roster.length}
                 totalInstances={totalInstances}
                 completionRate={completionRate}
                 visibleInstances={visibleInstances}
@@ -407,12 +357,7 @@ export default function NewClassPage() {
               />
             </TabsContent>
 
-            <TabsContent value='students' className='mt-0'>
-              <ClassStudentsTab
-                isLoadingStudents={isLoadingStudents}
-                studentRows={studentRows}
-              />
-            </TabsContent>
+
 
             <TabsContent value='announcements' className='mt-0'>
               <PlaceholderTab

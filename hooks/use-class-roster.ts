@@ -24,6 +24,9 @@ export function useClassRoster(classId: string | undefined) {
   const enrollmentQuery = useQuery(
     getEnrollmentsForClassOptions({
       path: { uuid: classId as string },
+      query: {
+        enabled: Boolean(classId),
+      },
     })
   );
 
@@ -72,7 +75,7 @@ export function useClassRoster(classId: string | undefined) {
 
   const rosterAllEnrollments = useMemo<RosterEntry[]>(() => {
     return allEnrollments.map(enrollment => {
-      const student = students.find(s => s.data.uuid === enrollment.student_uuid).data;
+      const student = students.find(s => s.data.uuid === enrollment.student_uuid);
       const user = student ? users.find(u => u.uuid === student.user_uuid) : null;
 
       return { enrollment, student, user };
