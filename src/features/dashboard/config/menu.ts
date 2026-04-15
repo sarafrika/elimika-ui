@@ -229,19 +229,19 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Courses',
-      url: '/dashboard/courses',
-      icon: BookOpen,
-    },
-    {
       title: 'My Skills',
       url: '/dashboard/my-skills',
       icon: BadgeCheck,
     },
     {
-      title: 'Schedule',
-      url: '/dashboard/schedules',
-      icon: ClipboardList,
+      title: 'Calendar',
+      url: '/dashboard/calendar',
+      icon: CalendarClock,
+    },
+    {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: BookOpen,
     },
     {
       title: 'Classes',

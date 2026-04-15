@@ -2,7 +2,14 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
@@ -46,9 +53,9 @@ export default function NewClassPage() {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
       {
-        id: 'new-class',
-        title: 'New Class',
-        url: '/dashboard/new-class',
+        id: 'classes',
+        title: 'Classes',
+        url: '/dashboard/classes',
         isLast: true,
       },
     ]);
@@ -76,12 +83,13 @@ export default function NewClassPage() {
     setSelectedInstanceUuid(previous =>
       previous && filteredClasses.some(classItem => classItem.instanceUuid === previous)
         ? previous
-        : filteredClasses[0]?.instanceUuid ?? null
+        : (filteredClasses[0]?.instanceUuid ?? null)
     );
   }, [filteredClasses]);
 
   const selectedInstanceEntry = useMemo<ClassInstanceItem | null>(
-    () => filteredClasses.find(classItem => classItem.instanceUuid === selectedInstanceUuid) ?? null,
+    () =>
+      filteredClasses.find(classItem => classItem.instanceUuid === selectedInstanceUuid) ?? null,
     [filteredClasses, selectedInstanceUuid]
   );
 
@@ -129,7 +137,9 @@ export default function NewClassPage() {
     () =>
       lessonModules.find(module =>
         module.content?.data?.some(content => content.uuid === selectedLessonUuid)
-      ) ?? lessonModules[0] ?? null,
+      ) ??
+      lessonModules[0] ??
+      null,
     [lessonModules, selectedLessonUuid]
   );
 
@@ -146,17 +156,14 @@ export default function NewClassPage() {
   const totalInstances = selectedClass?.schedule?.length ?? 0;
   const visibleInstances = selectedClass?.schedule ?? [];
   const completedInstances = visibleInstances.filter(
-    instance =>
-      instance.start_time &&
-      instance.end_time &&
-      new Date(instance.end_time) < new Date()
+    instance => instance.start_time && instance.end_time && new Date(instance.end_time) < new Date()
   ).length;
   const completionRate = visibleInstances.length
     ? Math.round((completedInstances / visibleInstances.length) * 100)
     : 0;
   const totalSessions = selectedClass?.schedule?.length ?? 0;
   const completedSessions =
-    selectedClass?.schedule?.filter((session: { start_time?: string }) =>
+    selectedClass?.schedule?.filter(session =>
       session.start_time ? new Date(session.start_time) < new Date() : false
     ).length ?? 0;
   const remainingSessions = Math.max(totalSessions - completedSessions, 0);
@@ -187,7 +194,21 @@ export default function NewClassPage() {
   ]);
 
   return (
-    <div className='flex min-h-full flex-col gap-6 py-10 pb-8'>
+    <div className='min-h-full rounded-lg  px-3 py-8 shadow-sm sm:px-5'>
+      <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+        <p className='text-foreground text-md leading-tight sm:text-lg'>
+          All of your classes today are listed here.{' '}
+          <span className='font-semibold'>Start training</span>
+        </p>
+        <Button
+          type='button'
+          onClick={() => router.push('/dashboard/trainings/create-new')}
+          className='bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success h-11 rounded-full px-10 text-base font-semibold sm:min-w-[236px]'
+        >
+          Create Class
+        </Button>
+      </div>
+
       {hasClassesError ? (
         <Card className='border-destructive/40'>
           <CardContent className='flex min-h-48 flex-col items-center justify-center gap-3 p-8 text-center'>
@@ -202,8 +223,8 @@ export default function NewClassPage() {
         </Card>
       ) : null}
 
-      <div className='grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
-        <aside className='space-y-4'>
+      <div className='grid gap-3 xl:grid-cols-[290px_minmax(0,1fr)]'>
+        <aside>
           <ClassSidebar
             isLoading={isLoadingClasses}
             classes={filteredClasses}
@@ -221,7 +242,7 @@ export default function NewClassPage() {
         </aside>
 
         {!selectedInstanceEntry && !isLoadingClasses ? (
-          <Card className='border-border/70 bg-card shadow-sm'>
+          <Card className='border-border/70 bg-card/90 shadow-sm'>
             <CardContent className='flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center'>
               <div className='bg-primary/10 text-primary rounded-full p-4'>
                 <Search className='h-6 w-6' />
@@ -238,7 +259,7 @@ export default function NewClassPage() {
           <Tabs
             value={activeTab}
             onValueChange={value => setActiveTab(value as ClassTab)}
-            className='space-y-4'
+            className='space-y-3'
           >
             <div className='flex md:hidden'>
               <Sheet open={isTabsSheetOpen} onOpenChange={setIsTabsSheetOpen}>
@@ -252,12 +273,12 @@ export default function NewClassPage() {
                       <PanelBottom className='h-4 w-4' />
                       {classTabs.find(tab => tab.value === activeTab)?.label ?? 'Overview'}
                     </span>
-                    <span className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
+                    <span className='text-muted-foreground text-xs tracking-[0.18em] uppercase'>
                       Open tabs
                     </span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side='bottom' className='rounded-t-[28px] border-border/70 px-0 pb-6'>
+                <SheetContent side='bottom' className='border-border/70 rounded-t-[28px] px-0 pb-6'>
                   <SheetHeader className='px-5 pb-3'>
                     <SheetTitle>Class tabs</SheetTitle>
                     <SheetDescription>
@@ -284,7 +305,7 @@ export default function NewClassPage() {
                         >
                           <span>{tab.label}</span>
                           {isActive ? (
-                            <span className='text-[10px] uppercase tracking-[0.18em]'>Active</span>
+                            <span className='text-[10px] tracking-[0.18em] uppercase'>Active</span>
                           ) : null}
                         </Button>
                       );
@@ -294,12 +315,12 @@ export default function NewClassPage() {
               </Sheet>
             </div>
 
-            <TabsList className='bg-card hidden h-auto w-full flex-wrap justify-start rounded-[28px] p-2 md:flex'>
+            <TabsList className='border-border/70 bg-card/70 hidden h-auto w-full flex-wrap justify-start gap-1 rounded-lg border p-1.5 shadow-sm md:flex'>
               {classTabs.map(tab => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className='rounded-[20px] px-4 py-2 text-[11px] uppercase tracking-[0.18em]'
+                  className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md px-3 py-2 text-xs font-semibold'
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -320,15 +341,15 @@ export default function NewClassPage() {
                 contentTypeMap={contentTypeMap}
                 difficultyMap={difficultyMap}
                 instructorName={instructor?.full_name}
+                rosterEntries={roster}
                 sessionProgress={sessionProgress}
                 remainingSessions={remainingSessions}
                 setExpandedModuleId={setExpandedModuleId}
                 setSelectedLessonUuid={setSelectedLessonUuid}
                 startLessonHref={startLessonHref}
-                onAddClasses={() => router.push('/dashboard/trainings/create-new')}
+                onAddClasses={() => router.push('/dashboard/classes/create-new')}
               />
             </TabsContent>
-
 
             <TabsContent value='students' className='mt-0'>
               <ClassStudentsTab isLoadingStudents={isLoadingStudents} rosterEntries={roster} />
@@ -353,11 +374,9 @@ export default function NewClassPage() {
                 totalInstances={totalInstances}
                 completionRate={completionRate}
                 visibleInstances={visibleInstances}
-                onAddClasses={() => router.push('/dashboard/trainings/create-new')}
+                onAddClasses={() => router.push('/dashboard/classes/create-new')}
               />
             </TabsContent>
-
-
 
             <TabsContent value='announcements' className='mt-0'>
               <PlaceholderTab
