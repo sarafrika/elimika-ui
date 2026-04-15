@@ -184,8 +184,9 @@ export default function NewClassPage() {
     }
 
     const queryString = params.toString();
-    return `/dashboard/classes/instructor-console/${selectedClassUuid}${queryString ? `?${queryString}` : ''
-      }`;
+    return `/dashboard/classes/class-training/${selectedClassUuid}${
+      queryString ? `?${queryString}` : ''
+    }`;
   }, [
     selectedClassUuid,
     selectedInstanceEntry?.instanceUuid,
@@ -194,7 +195,7 @@ export default function NewClassPage() {
   ]);
 
   return (
-    <div className='min-h-full rounded-lg  px-3 py-8 shadow-sm sm:px-5'>
+    <div className='min-h-full rounded-lg px-3 py-8 shadow-sm sm:px-5'>
       <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
         <p className='text-foreground text-md leading-tight sm:text-lg'>
           All of your classes today are listed here.{' '}
@@ -298,10 +299,11 @@ export default function NewClassPage() {
                             setActiveTab(tab.value);
                             setIsTabsSheetOpen(false);
                           }}
-                          className={`h-12 w-full justify-between rounded-[18px] border px-4 ${isActive
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border/70 bg-background text-foreground'
-                            }`}
+                          className={`h-12 w-full justify-between rounded-[18px] border px-4 ${
+                            isActive
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border/70 bg-background text-foreground'
+                          }`}
                         >
                           <span>{tab.label}</span>
                           {isActive ? (

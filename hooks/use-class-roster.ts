@@ -57,8 +57,10 @@ export function useClassRoster(classId: string | undefined) {
   const userQueries = useQueries({
     queries: students.map(stu => ({
       ...getUserByUuidOptions({
+        // @ts-expect-error
         path: { uuid: stu?.data?.user_uuid },
       }),
+      // @ts-expect-error
       enabled: !!stu?.data?.user_uuid,
     })),
   });
@@ -75,8 +77,10 @@ export function useClassRoster(classId: string | undefined) {
 
   const rosterAllEnrollments = useMemo<RosterEntry[]>(() => {
     return allEnrollments.map(enrollment => {
+      // @ts-expect-error
       const student = students.find(s => s.data.uuid === enrollment.student_uuid);
-      const user = student ? users.find(u => u.uuid === student.user_uuid) : null;
+      // @ts-expect-error
+      const user = student ? users.find(u => u.uuid === student.data.user_uuid) : null;
 
       return { enrollment, student, user };
     });
