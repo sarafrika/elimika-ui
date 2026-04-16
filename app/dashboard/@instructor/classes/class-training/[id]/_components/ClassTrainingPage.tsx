@@ -1,6 +1,6 @@
 'use client';
 
-import PDFViewer from '@/app/dashboard/@student/_components/pdf-viewer';
+import { LessonContentPreview } from '@/components/lesson-content/LessonContentPreview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,6 @@ import {
   type CourseLessonContent,
   type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
-import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
 import {
   getEnrollmentsForClassQueryKey,
   markAttendanceMutation,
@@ -279,121 +278,7 @@ function renderLessonContentPreview(
     { name: string; mime_types: string[]; upload_category?: string; is_media_type?: boolean }
   >
 ) {
-  if (!content) {
-    return (
-      <div className='text-muted-foreground flex min-h-[360px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
-        No lesson content was selected from the previous page.
-      </div>
-    );
-  }
-
-  const contentTypeName = getContentTypeName(content, contentTypeDetailsMap);
-  const resolvedSource = resolveLessonContentSource(content, contentTypeName);
-  const normalizedTextContent = normalizeLessonTextContent(content.content_text);
-
-  if (contentTypeName === 'text') {
-    return (
-      <div className="bg-background p-6">
-        {normalizedTextContent.renderedContent ? (
-          <RichTextPreview html={normalizedTextContent.renderedContent} />
-        ) : (
-          <p className="text-muted-foreground text-sm">
-            No text content was provided for this item.
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  if (contentTypeName === 'pdf') {
-    return resolvedSource ? (
-      <div className='bg-background p-4'>
-        <PDFViewer file={resolvedSource} />
-      </div>
-    ) : (
-      <div className='text-muted-foreground flex min-h-[360px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
-        This PDF is not available yet.
-      </div>
-    );
-  }
-
-  if (contentTypeName === 'video') {
-    const youtubeUrl = getYouTubeEmbedUrl(resolvedSource);
-    const vimeoUrl = getVimeoEmbedUrl(resolvedSource);
-    const embedUrl = youtubeUrl || vimeoUrl;
-
-    if (embedUrl) {
-      return (
-        <div className='bg-background overflow-hidden'>
-          <iframe
-            src={embedUrl}
-            title={content.title || 'Lesson video'}
-            className='aspect-video w-full'
-            allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
-            allowFullScreen
-          />
-        </div>
-      );
-    }
-
-    return resolvedSource ? (
-      <div className='border-border/60 bg-background overflow-hidden border p-4'>
-        <video controls className='aspect-video w-full rounded-2xl' src={resolvedSource} />
-      </div>
-    ) : (
-      <div className='text-muted-foreground flex min-h-[360px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
-        This video source is not available yet.
-      </div>
-    );
-  }
-
-  if (contentTypeName === 'audio') {
-    return resolvedSource ? (
-      <div className='bg-background p-6'>
-        <audio controls className='w-full' src={resolvedSource} />
-      </div>
-    ) : (
-      <div className='text-muted-foreground flex min-h-[220px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
-        This audio source is not available yet.
-      </div>
-    );
-  }
-
-  if (contentTypeName === 'image') {
-    return resolvedSource ? (
-      <div className='bg-background overflow-hidden p-4'>
-        <img
-          src={resolvedSource}
-          alt={content.title || 'Lesson image'}
-          className='max-h-[680px] w-full rounded-2xl object-contain'
-        />
-      </div>
-    ) : (
-      <div className='text-muted-foreground flex min-h-[360px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
-        This image source is not available yet.
-      </div>
-    );
-  }
-
-  return (
-    <div className='border-border/60 bg-background rounded-[28px] border p-6'>
-      <div className='space-y-3'>
-        <p className='text-sm font-semibold'>File content</p>
-        <p className='text-muted-foreground text-sm'>
-          This material opens best in a new tab for teaching or sharing.
-        </p>
-        {resolvedSource ? (
-          <Button asChild>
-            <a href={resolvedSource} target='_blank' rel='noreferrer'>
-              Open lesson file
-            </a>
-          </Button>
-        ) : (
-          <p className='text-muted-foreground text-sm'>No file source is available yet.</p>
-        )}
-      </div>
-    </div>
-  );
+  return <LessonContentPreview content={content} contentTypeDetailsMap={contentTypeDetailsMap} />;
 }
 
 function ConsoleSkeleton() {

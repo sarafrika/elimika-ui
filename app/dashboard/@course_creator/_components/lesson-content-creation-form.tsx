@@ -4,6 +4,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import {
   Eye,
   FileText,
@@ -34,7 +35,6 @@ import {
 import { Input } from '../../../../components/ui/input';
 import { RadioGroup, RadioGroupItem } from '../../../../components/ui/radio-group';
 import { ScrollArea } from '../../../../components/ui/scroll-area';
-import { resolveLessonContentSource } from '../../../../lib/lesson-content-preview';
 import { cn } from '../../../../lib/utils';
 import {
   addLessonContentMutation,
@@ -53,9 +53,6 @@ import type {
   PagedDtoLesson,
 } from '../../../../services/client/types.gen';
 import { ContentItem } from '../../@instructor/trainings/overview/[id]/page';
-import { AudioPlayer } from '../../@student/schedule/classes/[id]/AudioPlayer';
-import { ReadingMode } from '../../@student/schedule/classes/[id]/ReadingMode';
-import { VideoPlayer } from '../../@student/schedule/classes/[id]/VideoPlayer';
 
 type LessonCreationFormProps = {
   course: ApiResponseCourse | undefined;
@@ -138,23 +135,14 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isReading, setIsReading] = useState(false);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
   const [contentTypeName, setContentTypeName] = useState<string>('');
 
   const handleViewContent = (content: ContentItem, contentType: string) => {
     setSelectedLesson(content);
     setContentTypeName(contentType);
-
-    if (contentType === 'video') {
-      setIsPlaying(true);
-    } else if (contentType === 'pdf' || contentType === 'text') {
-      setIsReading(true);
-    } else if (contentType === 'audio') {
-      setIsAudioPlaying(true);
-    }
+    setIsViewerOpen(true);
   };
 
   // GET COURSE CONTENT TYPES
@@ -955,28 +943,11 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           )}
         </main>
 
-        <VideoPlayer
-          isOpen={isPlaying && contentTypeName === 'video'}
-          onClose={() => setIsPlaying(false)}
-          videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
-          title={selectedLesson?.title}
-        />
-
-        <ReadingMode
-          isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
-          onClose={() => setIsReading(false)}
-          title={selectedLesson?.title || ''}
-          description={selectedLesson?.description}
-          content={resolveLessonContentSource(selectedLesson, contentTypeName)}
-          contentType={contentTypeName as 'text' | 'pdf'}
-        />
-
-        <AudioPlayer
-          isOpen={isAudioPlaying && contentTypeName === 'audio'}
-          onClose={() => setIsAudioPlaying(false)}
-          audioUrl={resolveLessonContentSource(selectedLesson, 'audio')}
-          title={selectedLesson?.title}
-          description={selectedLesson?.description}
+        <LessonContentViewerDialog
+          open={isViewerOpen}
+          onOpenChange={setIsViewerOpen}
+          content={selectedLesson}
+          contentType={contentTypeName}
         />
       </div>
       {/* {activeTab === "Lesson Content" &&

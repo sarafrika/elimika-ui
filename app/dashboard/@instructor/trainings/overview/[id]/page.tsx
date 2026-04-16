@@ -26,6 +26,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import RichTextRenderer from '@/components/editors/richTextRenders';
+import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,20 +47,16 @@ import type { ClassDetailsScheduleItem } from '@/hooks/use-class-details';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useInstructorInfo } from '@/hooks/use-instructor-info';
-import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
 import { getResourceIcon } from '@/lib/resources-icon';
 import { getCourseAssessmentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
 import { useProgramLessonsWithContent } from '../../../../../../hooks/use-programlessonwithcontent';
 import { useScheduleStats } from '../../../../../../hooks/use-schedule-stats';
-import { AudioPlayer } from '../../../../@student/schedule/classes/[id]/AudioPlayer';
-import { ReadingMode } from '../../../../@student/schedule/classes/[id]/ReadingMode';
 import {
   ClassScheduleCalendar,
   type ClassScheduleItem as CalendarScheduleItem,
 } from '../../../../@student/schedule/classes/[id]/SudentClassSchedule';
-import { VideoPlayer } from '../../../../@student/schedule/classes/[id]/VideoPlayer';
 
 export interface ContentItem {
   uuid: string;
@@ -85,9 +82,7 @@ export default function ClassPreviewPage() {
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   // State for video player and reading mode
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isReading, setIsReading] = useState(false);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
   const [contentTypeName, setContentTypeName] = useState<string>('');
@@ -287,14 +282,7 @@ export default function ClassPreviewPage() {
   const handleViewContent = (content: ContentItem, contentType: string) => {
     setSelectedLesson(content);
     setContentTypeName(contentType);
-
-    if (contentType === 'video') {
-      setIsPlaying(true);
-    } else if (contentType === 'pdf' || contentType === 'text') {
-      setIsReading(true);
-    } else if (contentType === 'audio') {
-      setIsAudioPlaying(true);
-    }
+    setIsViewerOpen(true);
   };
 
   if (isAllLessonsDataLoading || classIsLoading) {
@@ -978,30 +966,11 @@ export default function ClassPreviewPage() {
         </CardContent>
       </Card>
 
-      {/* Video Player Modal */}
-      <VideoPlayer
-        isOpen={isPlaying && contentTypeName === 'video'}
-        onClose={() => setIsPlaying(false)}
-        videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
-        title={selectedLesson?.title}
-      />
-
-      {/* Reading Mode Modal */}
-      <ReadingMode
-        isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
-        onClose={() => setIsReading(false)}
-        title={selectedLesson?.title || ''}
-        description={selectedLesson?.description}
-        content={resolveLessonContentSource(selectedLesson, contentTypeName)}
-        contentType={contentTypeName as 'text' | 'pdf'}
-      />
-
-      <AudioPlayer
-        isOpen={isAudioPlaying && contentTypeName === 'audio'}
-        onClose={() => setIsAudioPlaying(false)}
-        audioUrl={resolveLessonContentSource(selectedLesson, 'audio')}
-        title={selectedLesson?.title}
-        description={selectedLesson?.description}
+      <LessonContentViewerDialog
+        open={isViewerOpen}
+        onOpenChange={setIsViewerOpen}
+        content={selectedLesson}
+        contentType={contentTypeName}
       />
     </div>
   );

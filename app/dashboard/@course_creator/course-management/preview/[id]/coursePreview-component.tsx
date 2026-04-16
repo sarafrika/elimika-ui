@@ -25,6 +25,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
+import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +33,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseRubrics } from '@/hooks/use-course-rubric';
-import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
 import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
@@ -42,9 +42,6 @@ import { useCourseLessonsWithContent } from '../../../../../../hooks/use-coursel
 import { getResourceIcon } from '../../../../../../lib/resources-icon';
 import { ReviewCard } from '../../../../@instructor/reviews/review-card';
 import { ContentItem } from '../../../../@instructor/trainings/overview/[id]/page';
-import { AudioPlayer } from '../../../../@student/schedule/classes/[id]/AudioPlayer';
-import { ReadingMode } from '../../../../@student/schedule/classes/[id]/ReadingMode';
-import { VideoPlayer } from '../../../../@student/schedule/classes/[id]/VideoPlayer';
 import type {
   CourseAssessment,
   CourseRubricAssociation,
@@ -142,9 +139,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
   const safeLessonsWithContent = useMemo(() => lessonsWithContent ?? [], [lessonsWithContent]);
 
   // State for video player and reading mode
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isReading, setIsReading] = useState(false);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
   const [contentTypeName, setContentTypeName] = useState<string>('');
@@ -153,14 +148,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
   const handleViewContent = (content: ContentItem, contentType: string) => {
     setSelectedLesson(content);
     setContentTypeName(contentType);
-
-    if (contentType === 'video') {
-      setIsPlaying(true);
-    } else if (contentType === 'pdf' || contentType === 'text') {
-      setIsReading(true);
-    } else if (contentType === 'audio') {
-      setIsAudioPlaying(true);
-    }
+    setIsViewerOpen(true);
   };
 
   if (isLoading) {
@@ -613,30 +601,11 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
         </DialogContent>
       </Dialog>
 
-      {/* Video Player Modal */}
-      <VideoPlayer
-        isOpen={isPlaying && contentTypeName === 'video'}
-        onClose={() => setIsPlaying(false)}
-        videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
-        title={selectedLesson?.title}
-      />
-
-      {/* Reading Mode Modal */}
-      <ReadingMode
-        isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
-        onClose={() => setIsReading(false)}
-        title={selectedLesson?.title || ''}
-        description={selectedLesson?.description}
-        content={resolveLessonContentSource(selectedLesson, contentTypeName)}
-        contentType={contentTypeName as 'text' | 'pdf'}
-      />
-
-      <AudioPlayer
-        isOpen={isAudioPlaying && contentTypeName === 'audio'}
-        onClose={() => setIsAudioPlaying(false)}
-        audioUrl={resolveLessonContentSource(selectedLesson, 'audio')}
-        title={selectedLesson?.title}
-        description={selectedLesson?.description}
+      <LessonContentViewerDialog
+        open={isViewerOpen}
+        onOpenChange={setIsViewerOpen}
+        content={selectedLesson}
+        contentType={contentTypeName}
       />
     </div>
   );
