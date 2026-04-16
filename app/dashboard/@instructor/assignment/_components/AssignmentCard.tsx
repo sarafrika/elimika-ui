@@ -34,6 +34,11 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
                 {assignment.subtitle}
               </h2>
               <p className='text-muted-foreground text-base'>{assignment.dueLabel}</p>
+              {(assignment.courseTitle || assignment.classTitle) ? (
+                <p className='text-muted-foreground text-sm'>
+                  {[assignment.courseTitle, assignment.classTitle].filter(Boolean).join(' · ')}
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -101,7 +106,14 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
                 : 'bg-primary hover:bg-primary/90'
             )}
           >
-            <Link href={`/dashboard/assignment/${assignment.id}`}>{assignment.ctaLabel}</Link>
+            <Link
+              href={{
+                pathname: `/dashboard/assignment/${assignment.id}`,
+                query: assignment.classUuid ? { classId: assignment.classUuid } : undefined,
+              }}
+            >
+              {assignment.ctaLabel}
+            </Link>
           </Button>
         </div>
       </div>

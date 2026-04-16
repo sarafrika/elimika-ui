@@ -1,28 +1,28 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import type { RubricMatrix } from '@/services/client/types.gen';
 import { CheckCircle2, Dot, Gauge, MessageSquareText, MoreHorizontal, Plus, Sparkles, SquarePen } from 'lucide-react';
 import type { SubmissionStudent } from './assignment-types';
 
 type SubmissionInsightsPanelProps = {
+  rubricMatrix: RubricMatrix | null;
   showFooterAction?: boolean;
   student: SubmissionStudent;
+  taskType: 'assignment' | 'quiz';
 };
 
 export function SubmissionInsightsPanel({
+  rubricMatrix,
   student,
+  taskType,
   showFooterAction = true,
 }: SubmissionInsightsPanelProps) {
-  const summaryMetrics = [
-    { label: 'Research depth', score: 4, total: 5 },
-    { label: 'Evidence quality', score: 5, total: 5 },
-    { label: 'Argument structure', score: 4, total: 5 },
-    { label: 'Submission readiness', score: 3, total: 5 },
-  ];
+  const summaryMetrics = rubricMatrix?.criteria.slice(0, 4) ?? [];
 
   return (
     <aside className='flex h-full min-h-0 flex-col border-l bg-white'>
       <div className='border-b p-4'>
-        <p className='text-lg font-semibold'>Score: {student.score}/25</p>
+        <p className='text-lg font-semibold'>Score: {student.score}</p>
         <p className='text-muted-foreground text-sm'>{student.name}</p>
       </div>
 
@@ -31,7 +31,7 @@ export function SubmissionInsightsPanel({
           <div className='rounded-xl border bg-background/80 p-4'>
             <div className='flex items-center justify-between gap-3'>
               <p className='text-2xl font-semibold'>
-                {student.score} <span className='text-muted-foreground text-xl'>/ 25</span>
+                {student.score} <span className='text-muted-foreground text-xl'>points</span>
               </p>
               <Badge className='rounded-full bg-warning/15 px-3 text-foreground hover:bg-warning/15'>
                 <Dot className='text-warning mr-1 h-4 w-4 fill-current' />
@@ -45,17 +45,23 @@ export function SubmissionInsightsPanel({
               <p className='font-medium'>Assessment Rubric</p>
             </div>
             <div className='divide-y'>
-              {summaryMetrics.map(metric => (
-                <div key={metric.label} className='flex items-center justify-between gap-3 px-4 py-3 text-sm'>
-                  <p className='text-muted-foreground'>{metric.label}</p>
-                  <div className='flex items-center gap-2'>
-                    <span className='font-semibold'>
-                      {metric.score} / {metric.total}
-                    </span>
-                    <CheckCircle2 className='text-success h-4 w-4' />
+              {summaryMetrics.length > 0 ? (
+                summaryMetrics.map(metric => (
+                  <div key={metric.uuid ?? metric.component_name} className='flex items-center justify-between gap-3 px-4 py-3 text-sm'>
+                    <p className='text-muted-foreground'>{metric.component_name}</p>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-semibold'>
+                        {metric.criteria_number || 'Criterion'}
+                      </span>
+                      <CheckCircle2 className='text-success h-4 w-4' />
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className='px-4 py-3 text-sm text-muted-foreground'>
+                  No rubric criteria available for this task.
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -66,30 +72,40 @@ export function SubmissionInsightsPanel({
             </div>
             <div className='space-y-3 p-4 text-sm'>
               <div className='rounded-lg bg-muted/60 p-3'>
-                <p className='font-medium'>Submission confidence</p>
-                <p className='text-muted-foreground mt-1'>Competent with room to tighten citations.</p>
+                <p className='font-medium'>Submission type</p>
+                <p className='text-muted-foreground mt-1 capitalize'>
+                  {student.submissionKind || taskType}
+                </p>
               </div>
               <div className='rounded-lg bg-muted/60 p-3'>
-                <p className='font-medium'>Readability</p>
-                <p className='text-muted-foreground mt-1'>Clear flow and strong formatting throughout.</p>
+                <p className='font-medium'>Status</p>
+                <p className='text-muted-foreground mt-1'>
+                  {student.submissionStatus || 'Awaiting review'}
+                </p>
               </div>
             </div>
           </div>
 
           <div className='rounded-xl border bg-background/80'>
             <div className='flex items-center justify-between border-b px-4 py-3'>
-              <p className='font-medium'>AI Suggestions</p>
+              <p className='font-medium'>Instructor Notes</p>
               <Badge variant='outline' className='rounded-full'>
-                Present
+                {taskType}
               </Badge>
             </div>
             <div className='space-y-3 p-4'>
-              {student.comments.map(comment => (
-                <div key={comment} className='flex gap-2 text-sm'>
-                  <Sparkles className='text-primary mt-0.5 h-4 w-4 shrink-0' />
-                  <p>{comment}</p>
-                </div>
-              ))}
+              {student.comments.length > 0 ? (
+                student.comments.map(comment => (
+                  <div key={comment} className='flex gap-2 text-sm'>
+                    <Sparkles className='text-primary mt-0.5 h-4 w-4 shrink-0' />
+                    <p>{comment}</p>
+                  </div>
+                ))
+              ) : (
+                <p className='text-sm text-muted-foreground'>
+                  No instructor comments have been added yet.
+                </p>
+              )}
             </div>
           </div>
 

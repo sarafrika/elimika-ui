@@ -1,25 +1,33 @@
 import { AlertCircle, BellRing, CalendarClock, ChevronRight, ClipboardPlus } from 'lucide-react';
 
-const riskItems = [
-  {
-    icon: AlertCircle,
-    subtitle: '',
-    title: '3 students not submitted',
-  },
-  {
-    icon: AlertCircle,
-    subtitle: 'Cluster of at-risk students',
-    title: 'Low performance trend',
-  },
-];
+type AssignmentQuickActionsProps = {
+  insights: {
+    overdueTasks: number;
+    pendingGrading: number;
+    totalSubmissions: number;
+  };
+};
 
-const actions = [
-  { icon: ClipboardPlus, label: 'Assign to Class' },
-  { icon: CalendarClock, label: 'Extend Deadline' },
-  { icon: BellRing, label: 'Send Reminder' },
-];
+export function AssignmentQuickActions({ insights }: AssignmentQuickActionsProps) {
+  const riskItems = [
+    {
+      icon: AlertCircle,
+      subtitle: insights.overdueTasks > 0 ? 'Tasks that need attention' : 'No overdue work right now',
+      title: `${insights.overdueTasks} overdue task${insights.overdueTasks === 1 ? '' : 's'}`,
+    },
+    {
+      icon: AlertCircle,
+      subtitle: 'Submissions still waiting for instructor review',
+      title: `${insights.pendingGrading} pending grading`,
+    },
+  ];
 
-export function AssignmentQuickActions() {
+  const actions = [
+    { icon: ClipboardPlus, label: 'Open Class Training' },
+    { icon: CalendarClock, label: `${insights.totalSubmissions} submissions tracked` },
+    { icon: BellRing, label: 'Send Reminder' },
+  ];
+
   return (
     <section className='space-y-4'>
       <div className='border-border/60 rounded-2xl border bg-white p-4 shadow-sm'>

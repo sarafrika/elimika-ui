@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -23,6 +22,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassDetails, type ClassDetailsScheduleItem } from '@/hooks/use-class-details';
@@ -48,7 +48,6 @@ import {
   getRubricMatrixOptions,
   markAttendanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   Assignment,
   AssignmentSubmission,
@@ -61,6 +60,7 @@ import type {
   Quiz,
   RubricMatrix,
 } from '@/services/client/types.gen';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
   ArrowLeft,
@@ -693,48 +693,48 @@ function SubmissionPanel({
                   const status = getSubmissionDisplayStatus(item.submission);
 
                   return (
-                  <div
-                    key={item.scheduleId}
-                    className='border-border/70 bg-background/80 min-w-0 overflow-hidden rounded-md border p-3'
-                  >
-                    <div className="min-w-0 space-y-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <p className="flex-1 min-w-0 truncate text-sm font-semibold">
-                          {item.assignmentTitle}
-                        </p>
-                        <Badge
-                          variant={
-                            status === 'graded'
-                              ? 'success'
-                              : status === 'submitted'
-                                ? 'warning'
-                                : 'destructive'
-                          }
-                          className="shrink-0 max-w-[80px] truncate"
-                        >
-                          {status}
-                        </Badge>
-                      </div>
+                    <div
+                      key={item.scheduleId}
+                      className='border-border/70 bg-background/80 min-w-0 overflow-hidden rounded-md border p-3'
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="flex-1 min-w-0 truncate text-sm font-semibold">
+                            {item.assignmentTitle}
+                          </p>
+                          <Badge
+                            variant={
+                              status === 'graded'
+                                ? 'success'
+                                : status === 'submitted'
+                                  ? 'warning'
+                                  : 'destructive'
+                            }
+                            className="shrink-0 max-w-[80px] truncate"
+                          >
+                            {status}
+                          </Badge>
+                        </div>
 
-                      <p className="text-muted-foreground truncate text-xs">
-                        Due {formatDateTime(item.dueAt)}
-                      </p>
-                    </div>
-                    <p className='text-muted-foreground mt-2 text-xs'>
-                      {item.submission
-                        ? item.submission.grade_display ||
+                        <p className="text-muted-foreground truncate text-xs">
+                          Due {formatDateTime(item.dueAt)}
+                        </p>
+                      </div>
+                      <p className='text-muted-foreground mt-2 text-xs'>
+                        {item.submission
+                          ? item.submission.grade_display ||
                           item.submission.submission_status_display ||
                           (item.submission.percentage != null
                             ? `${item.submission.percentage}% recorded`
                             : 'Submission received')
-                        : 'No submission recorded for this assignment yet.'}
-                    </p>
-                    {item.submission?.submitted_at ? (
-                      <p className='text-muted-foreground mt-1 text-xs'>
-                        Submitted {formatDateTime(item.submission.submitted_at)}
+                          : 'No submission recorded for this assignment yet.'}
                       </p>
-                    ) : null}
-                  </div>
+                      {item.submission?.submitted_at ? (
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          Submitted {formatDateTime(item.submission.submitted_at)}
+                        </p>
+                      ) : null}
+                    </div>
                   );
                 })
               ) : (
@@ -756,58 +756,58 @@ function SubmissionPanel({
                     : null;
 
                   return (
-                  <div
-                    key={assessment.uuid ?? assessment.title}
-                    className='border-border/70 bg-background/80 rounded-md border p-3'
-                  >
-                    <div className='mb-2 flex items-center justify-between gap-3'>
-                      <div className='min-w-0'>
-                        <p className='truncate text-sm font-semibold'>{assessment.title}</p>
-                        <p className='text-muted-foreground text-xs'>
-                          {formatEnum(assessment.assessment_type)} ·{' '}
-                          {assessment.is_required ? 'Required' : 'Optional'}
-                        </p>
-                      </div>
-                      <span className='text-primary text-sm font-semibold'>
-                        {formatPercentage(assessment.weight_percentage)}
-                      </span>
-                    </div>
-                    {assessment.description ? (
-                      <p className='text-muted-foreground mb-3 text-xs'>{assessment.description}</p>
-                    ) : null}
-                    <div className='space-y-2 rounded-md border border-dashed p-3'>
-                      <div className='flex items-center justify-between gap-3'>
-                        <p className='text-xs font-medium'>
-                          {rubric?.rubric.title || 'No rubric attached'}
-                        </p>
-                        {rubric?.rubric.max_score ? (
-                          <Badge variant='outline'>Max {rubric.rubric.max_score}</Badge>
-                        ) : null}
-                      </div>
-                      {rubric ? (
-                        <>
+                    <div
+                      key={assessment.uuid ?? assessment.title}
+                      className='border-border/70 bg-background/80 rounded-md border p-3'
+                    >
+                      <div className='mb-2 flex items-center justify-between gap-3'>
+                        <div className='min-w-0'>
+                          <p className='truncate text-sm font-semibold'>{assessment.title}</p>
                           <p className='text-muted-foreground text-xs'>
-                            {rubric.criteria.length} criteria · {rubric.scoring_levels.length}{' '}
-                            scoring levels
+                            {formatEnum(assessment.assessment_type)} ·{' '}
+                            {assessment.is_required ? 'Required' : 'Optional'}
                           </p>
-                          <div className='space-y-2'>
-                            {rubric.criteria.slice(0, 3).map(criteria => (
-                              <div key={criteria.uuid ?? criteria.component_name}>
-                                <p className='text-xs font-medium'>{criteria.component_name}</p>
-                                <p className='text-muted-foreground text-[11px]'>
-                                  {criteria.description || criteria.weight_suggestion || 'Criteria'}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        <p className='text-muted-foreground text-xs'>
-                          This assessment has no rubric matrix linked yet.
-                        </p>
-                      )}
+                        </div>
+                        <span className='text-primary text-sm font-semibold'>
+                          {formatPercentage(assessment.weight_percentage)}
+                        </span>
+                      </div>
+                      {assessment.description ? (
+                        <p className='text-muted-foreground mb-3 text-xs'>{assessment.description}</p>
+                      ) : null}
+                      <div className='space-y-2 rounded-md border border-dashed p-3'>
+                        <div className='flex items-center justify-between gap-3'>
+                          <p className='text-xs font-medium'>
+                            {rubric?.rubric.title || 'No rubric attached'}
+                          </p>
+                          {rubric?.rubric.max_score ? (
+                            <Badge variant='outline'>Max {rubric.rubric.max_score}</Badge>
+                          ) : null}
+                        </div>
+                        {rubric ? (
+                          <>
+                            <p className='text-muted-foreground text-xs'>
+                              {rubric.criteria.length} criteria · {rubric.scoring_levels.length}{' '}
+                              scoring levels
+                            </p>
+                            <div className='space-y-2'>
+                              {rubric.criteria.slice(0, 3).map(criteria => (
+                                <div key={criteria.uuid ?? criteria.component_name}>
+                                  <p className='text-xs font-medium'>{criteria.component_name}</p>
+                                  <p className='text-muted-foreground text-[11px]'>
+                                    {criteria.description || criteria.weight_suggestion || 'Criteria'}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <p className='text-muted-foreground text-xs'>
+                            This assessment has no rubric matrix linked yet.
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
                   );
                 })
               ) : (

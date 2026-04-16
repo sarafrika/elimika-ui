@@ -1,6 +1,34 @@
-import { insightMetrics } from './assignment-data';
+type AssignmentInsightsProps = {
+  insights: {
+    averageSignal: string;
+    overdueTasks: number;
+    pendingGrading: number;
+    totalSubmissions: number;
+    totalTasks: number;
+  };
+};
 
-export function AssignmentInsights() {
+export function AssignmentInsights({ insights }: AssignmentInsightsProps) {
+  const insightMetrics = [
+    {
+      changeText: `${insights.totalTasks} task${insights.totalTasks === 1 ? '' : 's'} with activity`,
+      progress: Math.min(insights.pendingGrading * 12, 100),
+      title: 'Pending Grading',
+      trendLabel: `${insights.pendingGrading}`,
+      value: `${insights.pendingGrading}`,
+    },
+    {
+      progress: Math.min(insights.totalSubmissions, 100),
+      title: 'Total Submissions',
+      value: `${insights.totalSubmissions}`,
+    },
+    {
+      progress: 0,
+      title: 'Analytics Signal',
+      value: insights.averageSignal,
+    },
+  ];
+
   return (
     <section className='border-border/60 rounded-2xl border bg-white p-5 shadow-sm'>
       <h2 className='text-foreground text-xl font-semibold'>Assignment Insights</h2>
