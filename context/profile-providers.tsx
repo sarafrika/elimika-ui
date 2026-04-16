@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import StudentContextProvider from '@/context/student-context';
 import { UserDomainProvider } from '@/src/features/dashboard/context/user-domain-context';
 import UserProfileProvider from '@/src/features/profile/context/profile-context';
 
@@ -11,7 +12,9 @@ export function ProfileProviders({ children }: { children: ReactNode }) {
 export function DashboardProviders({ children }: { children: ReactNode }) {
   return (
     <UserProfileProvider>
-      <UserDomainProvider>{children}</UserDomainProvider>
+      <StudentContextProvider>
+        <UserDomainProvider>{children}</UserDomainProvider>
+      </StudentContextProvider>
     </UserProfileProvider>
   );
 }

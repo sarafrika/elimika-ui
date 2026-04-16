@@ -1,18 +1,11 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { AlertCircle, Armchair, ArrowLeft, Calendar, DollarSign, MapPin, User } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { ClassScheduleCalendar, type ClassScheduleItem } from '@/app/class-invite/page';
 import { CustomLoadingState } from '@/app/dashboard/@course_creator/_components/loading-state';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useStudent } from '@/context/student-context';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import { useScheduleStats } from '@/hooks/use-schedule-stats';
 import {
@@ -25,6 +18,13 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { AlertCircle, Armchair, ArrowLeft, Calendar, DollarSign, MapPin, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { useStudent } from '../../../../../context/student-context';
 import { type BundledClass, getErrorMessage } from '../types';
 
 export default function ClassEnrollmentPage({
@@ -117,7 +117,7 @@ export default function ClassEnrollmentPage({
 
   // Update breadcrumbs
   useEffect(() => {
-    if (courseId && enrollingClass) {
+    if (courseId && classId) {
       replaceBreadcrumbs([
         {
           id: 'dashboard',
@@ -147,7 +147,7 @@ export default function ClassEnrollmentPage({
         },
       ]);
     }
-  }, [replaceBreadcrumbs, courseId, classId, enrollingClass, activeDomain]);
+  }, [replaceBreadcrumbs, courseId, classId, activeDomain]);
 
   const { cartId: savedCartId, setCartId } = useCartStore();
   const createCart = useMutation(createCartMutation());
