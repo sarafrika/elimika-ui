@@ -276,6 +276,20 @@ export function StudentAssignmentWorkspace() {
     ]);
   }, [replaceBreadcrumbs]);
 
+  if (!student?.uuid) {
+    return (
+      <div className={getEmptyStateClasses()}>
+        <AlertCircle className='text-primary/70 h-10 w-10' />
+        <div className='space-y-1'>
+          <h3 className='text-lg font-semibold'>Student profile required</h3>
+          <p className='text-muted-foreground max-w-lg text-sm'>
+            Assignments become available once a student profile is active on this account.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const { classDefinitions, loading: classDefinitionsLoading } =
     useStudentClassDefinitions(student);
 
@@ -459,7 +473,9 @@ export function StudentAssignmentWorkspace() {
           const assignment = assignmentMap.get(assignmentUuid);
           if (!assignment) return null;
 
-          const submissions = submissionMap.get(assignmentUuid) ?? [];
+          const submissions = (submissionMap.get(assignmentUuid) ?? []).filter(
+            submission => submission.enrollment_uuid === classMeta.enrollmentUuid
+          );
 
           return {
             assignment,
@@ -821,7 +837,7 @@ export function StudentAssignmentWorkspace() {
 
               return (
                 <Card
-                  key={`${row.classMeta.classUuid}-${row.assignment?.uuid}`}
+                  key={`${row.classMeta.classUuid}-${row.schedule?.uuid ?? row.assignment?.uuid}`}
                   className={cx(getCardClasses(), 'p-0 hover:-translate-y-0.5')}
                 >
                   <CardContent className='space-y-5 p-5 sm:p-6'>

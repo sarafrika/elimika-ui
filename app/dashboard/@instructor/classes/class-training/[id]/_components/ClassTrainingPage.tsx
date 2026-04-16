@@ -10,7 +10,8 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectTrigger
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import {
   Sheet,
@@ -21,6 +22,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassDetails, type ClassDetailsScheduleItem } from '@/hooks/use-class-details';
@@ -31,10 +33,34 @@ import {
   type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
 import {
+  createAssignmentScheduleMutation,
+  createQuizScheduleMutation,
+  getAllAssignmentsOptions,
+  getAllQuizzesOptions,
+  getAssignmentSchedulesOptions,
+  getAssignmentSchedulesQueryKey,
+  getAssignmentSubmissionsOptions,
+  getCourseAssessmentsOptions,
+  getCourseRubricsOptions,
   getEnrollmentsForClassQueryKey,
+  getQuizSchedulesOptions,
+  getQuizSchedulesQueryKey,
+  getRubricMatrixOptions,
   markAttendanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type {
+  Assignment,
+  AssignmentSubmission,
+  ClassAssignmentSchedule,
+  ClassQuizSchedule,
+  CourseAssessment,
+  CourseRubricAssociation,
+  CreateAssignmentScheduleData,
+  CreateQuizScheduleData,
+  Quiz,
+  RubricMatrix,
+} from '@/services/client/types.gen';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
   ArrowLeft,
@@ -58,6 +84,36 @@ import { toast } from 'sonner';
 type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
 type LessonContentItem = CourseLessonContent;
 type LessonModule = CourseLessonWithContent;
+type AssignmentScheduleItem = ClassAssignmentSchedule & {
+  class_lesson_plan_uuid?: string;
+  assignment?: Assignment | null;
+};
+type QuizScheduleItem = ClassQuizSchedule & {
+  class_lesson_plan_uuid?: string;
+  quiz?: Quiz | null;
+};
+type AssignmentSchedulePayload = CreateAssignmentScheduleData['body'] & {
+  class_lesson_plan_uuid?: string;
+};
+type QuizSchedulePayload = CreateQuizScheduleData['body'] & {
+  class_lesson_plan_uuid?: string;
+};
+type NoteEntry = {
+  id: string;
+  message: string;
+  sentAt: string;
+};
+
+function formatPercentage(value?: number | null) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return 'N/A';
+  return `${value}%`;
+}
+
+function getSubmissionDisplayStatus(submission?: AssignmentSubmission | null) {
+  if (!submission) return 'missing' as const;
+  if (submission.is_graded || submission.graded_at) return 'graded' as const;
+  return 'submitted' as const;
+}
 
 function formatDateTime(value?: string | Date | null) {
   if (!value) return 'Not scheduled';
@@ -426,27 +482,72 @@ function RosterPanel({
 }
 
 function SubmissionPanel({
-  submissionQueue,
   activeSchedule,
   activeInstanceStudentsCount,
   selectedContentType,
   selectedStudent,
+  courseAssessments,
+  rubricAssociations,
+  rubricMatrices,
+  lessonAssignments,
+  lessonQuizzes,
+  activeScheduleAssignments,
+  activeScheduleQuizzes,
+  selectedAssignmentUuid,
+  selectedQuizUuid,
+  assignmentDueAt,
+  quizDueAt,
+  noteDraft,
+  sentNotes,
+  selectedStudentSubmissions,
+  onAssignmentSelect,
+  onQuizSelect,
+  onAssignmentDueAtChange,
+  onQuizDueAtChange,
+  onNoteDraftChange,
+  onAssignAssignment,
+  onAssignQuiz,
+  onSendNote,
   onMarkAttendance,
   isMarkingAttendance,
+  isAssigningAssignment,
+  isAssigningQuiz,
 }: {
-  submissionQueue: Array<{
-    id: string;
-    name: string;
-    lessonTitle: string;
-    status: 'submitted' | 'review' | 'missing';
-    score: number | null;
-  }>;
   activeSchedule: TrainingSchedule | null;
   activeInstanceStudentsCount: number;
   selectedContentType: string;
   selectedStudent: RosterEntry | null;
+  courseAssessments: CourseAssessment[];
+  rubricAssociations: CourseRubricAssociation[];
+  rubricMatrices: Record<string, RubricMatrix | null>;
+  lessonAssignments: Assignment[];
+  lessonQuizzes: Quiz[];
+  activeScheduleAssignments: AssignmentScheduleItem[];
+  activeScheduleQuizzes: QuizScheduleItem[];
+  selectedAssignmentUuid: string;
+  selectedQuizUuid: string;
+  assignmentDueAt: string;
+  quizDueAt: string;
+  noteDraft: string;
+  sentNotes: NoteEntry[];
+  selectedStudentSubmissions: Array<{
+    scheduleId: string;
+    assignmentTitle: string;
+    dueAt?: Date;
+    submission: AssignmentSubmission | null;
+  }>;
+  onAssignmentSelect: (value: string) => void;
+  onQuizSelect: (value: string) => void;
+  onAssignmentDueAtChange: (value: string) => void;
+  onQuizDueAtChange: (value: string) => void;
+  onNoteDraftChange: (value: string) => void;
+  onAssignAssignment: () => void;
+  onAssignQuiz: () => void;
+  onSendNote: () => void;
   onMarkAttendance: (entry: RosterEntry, attended: boolean) => void;
   isMarkingAttendance: boolean;
+  isAssigningAssignment: boolean;
+  isAssigningQuiz: boolean;
 }) {
   const [activePanel, setActivePanel] = useState<'submissions' | 'rubric' | 'tasks' | 'notes'>(
     'submissions'
@@ -580,53 +681,67 @@ function SubmissionPanel({
                     {formatDateTime(activeSchedule?.end_time)}
                   </span>
                 </div>
-                <div className='grid gap-2'>
-                  <label className='text-muted-foreground text-xs'>Attempt Date</label>
-                  <Input value='Since' readOnly className='bg-card h-9 rounded-md text-sm' />
-                  <label className='text-muted-foreground text-xs'>Grade out of 100</label>
-                  <Input value='80' readOnly className='bg-card h-9 rounded-md text-sm' />
-                </div>
+                <p className='text-muted-foreground text-xs'>
+                  {selectedStudent
+                    ? `Showing assignment submissions for ${selectedStudent.user?.full_name ?? 'the selected student'}.`
+                    : 'Select a student to review their lesson submissions.'}
+                </p>
               </div>
 
-              {submissionQueue.length > 0 ? (
-                submissionQueue.map(item => (
-                  <div
-                    key={item.id}
-                    className='border-border/70 bg-background/80 min-w-0 overflow-hidden rounded-md border p-3'
-                  >
-                    <div className="min-w-0 space-y-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <p className="flex-1 min-w-0 truncate text-sm font-semibold">
-                          {item.name}
-                        </p>
-                        <Badge
-                          variant={
-                            item.status === 'submitted'
-                              ? 'success'
-                              : item.status === 'review'
-                                ? 'warning'
-                                : 'destructive'
-                          }
-                          className="shrink-0 max-w-[80px] truncate"
-                        >
-                          {item.status === 'review' ? 'review' : item.status}
-                        </Badge>
-                      </div>
+              {selectedStudentSubmissions.length > 0 ? (
+                selectedStudentSubmissions.map(item => {
+                  const status = getSubmissionDisplayStatus(item.submission);
 
-                      <p className="text-muted-foreground truncate text-xs">
-                        {item.lessonTitle}
+                  return (
+                    <div
+                      key={item.scheduleId}
+                      className='border-border/70 bg-background/80 min-w-0 overflow-hidden rounded-md border p-3'
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="flex-1 min-w-0 truncate text-sm font-semibold">
+                            {item.assignmentTitle}
+                          </p>
+                          <Badge
+                            variant={
+                              status === 'graded'
+                                ? 'success'
+                                : status === 'submitted'
+                                  ? 'warning'
+                                  : 'destructive'
+                            }
+                            className="shrink-0 max-w-[80px] truncate"
+                          >
+                            {status}
+                          </Badge>
+                        </div>
+
+                        <p className="text-muted-foreground truncate text-xs">
+                          Due {formatDateTime(item.dueAt)}
+                        </p>
+                      </div>
+                      <p className='text-muted-foreground mt-2 text-xs'>
+                        {item.submission
+                          ? item.submission.grade_display ||
+                          item.submission.submission_status_display ||
+                          (item.submission.percentage != null
+                            ? `${item.submission.percentage}% recorded`
+                            : 'Submission received')
+                          : 'No submission recorded for this assignment yet.'}
                       </p>
+                      {item.submission?.submitted_at ? (
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          Submitted {formatDateTime(item.submission.submitted_at)}
+                        </p>
+                      ) : null}
                     </div>
-                    <p className='text-muted-foreground mt-2 text-xs'>
-                      {item.score !== null
-                        ? `${item.score}/100 score snapshot`
-                        : 'Missing submission'}
-                    </p>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className='text-muted-foreground rounded-md border border-dashed p-5 text-sm'>
-                  Submission tracking will appear once students are attached to the instance.
+                  {selectedStudent
+                    ? 'No assignment submissions are available for the selected lesson and student yet.'
+                    : 'Submission tracking will appear once a student is selected.'}
                 </div>
               )}
             </>
@@ -634,63 +749,245 @@ function SubmissionPanel({
 
           {activePanel === 'rubric' ? (
             <div className='space-y-3'>
-              {['Attendance and readiness', 'Practical participation', 'Submission quality'].map(
-                (label, index) => (
-                  <div
-                    key={label}
-                    className='border-border/70 bg-background/80 rounded-md border p-3'
-                  >
-                    <div className='mb-2 flex items-center justify-between gap-3'>
-                      <p className='text-sm font-semibold'>{label}</p>
-                      <span className='text-primary text-sm font-semibold'>
-                        {[20, 40, 40][index]}%
-                      </span>
+              {courseAssessments.length > 0 ? (
+                courseAssessments.map(assessment => {
+                  const rubric = assessment.rubric_uuid
+                    ? rubricMatrices[assessment.rubric_uuid]
+                    : null;
+
+                  return (
+                    <div
+                      key={assessment.uuid ?? assessment.title}
+                      className='border-border/70 bg-background/80 rounded-md border p-3'
+                    >
+                      <div className='mb-2 flex items-center justify-between gap-3'>
+                        <div className='min-w-0'>
+                          <p className='truncate text-sm font-semibold'>{assessment.title}</p>
+                          <p className='text-muted-foreground text-xs'>
+                            {formatEnum(assessment.assessment_type)} ·{' '}
+                            {assessment.is_required ? 'Required' : 'Optional'}
+                          </p>
+                        </div>
+                        <span className='text-primary text-sm font-semibold'>
+                          {formatPercentage(assessment.weight_percentage)}
+                        </span>
+                      </div>
+                      {assessment.description ? (
+                        <p className='text-muted-foreground mb-3 text-xs'>{assessment.description}</p>
+                      ) : null}
+                      <div className='space-y-2 rounded-md border border-dashed p-3'>
+                        <div className='flex items-center justify-between gap-3'>
+                          <p className='text-xs font-medium'>
+                            {rubric?.rubric.title || 'No rubric attached'}
+                          </p>
+                          {rubric?.rubric.max_score ? (
+                            <Badge variant='outline'>Max {rubric.rubric.max_score}</Badge>
+                          ) : null}
+                        </div>
+                        {rubric ? (
+                          <>
+                            <p className='text-muted-foreground text-xs'>
+                              {rubric.criteria.length} criteria · {rubric.scoring_levels.length}{' '}
+                              scoring levels
+                            </p>
+                            <div className='space-y-2'>
+                              {rubric.criteria.slice(0, 3).map(criteria => (
+                                <div key={criteria.uuid ?? criteria.component_name}>
+                                  <p className='text-xs font-medium'>{criteria.component_name}</p>
+                                  <p className='text-muted-foreground text-[11px]'>
+                                    {criteria.description || criteria.weight_suggestion || 'Criteria'}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <p className='text-muted-foreground text-xs'>
+                            This assessment has no rubric matrix linked yet.
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className='bg-muted h-2 rounded-full'>
-                      <div
-                        className='bg-success h-full rounded-full'
-                        style={{ width: `${[72, 84, 62][index]}%` }}
-                      />
-                    </div>
-                  </div>
-                )
+                  );
+                })
+              ) : (
+                <div className='text-muted-foreground rounded-md border border-dashed p-5 text-sm'>
+                  No course assessments are configured for this course yet.
+                </div>
               )}
+
+              {rubricAssociations.length > 0 ? (
+                <div className='border-border/70 bg-background/80 rounded-md border p-3'>
+                  <p className='text-sm font-semibold'>Course rubric associations</p>
+                  <div className='mt-3 space-y-2'>
+                    {rubricAssociations.map(association => {
+                      const rubric = rubricMatrices[association.rubric_uuid];
+                      return (
+                        <div
+                          key={association.uuid ?? association.rubric_uuid}
+                          className='rounded-md border border-dashed p-3'
+                        >
+                          <div className='flex items-center justify-between gap-2'>
+                            <p className='truncate text-xs font-medium'>
+                              {rubric?.rubric.title || association.rubric_uuid}
+                            </p>
+                            {association.is_primary_rubric ? (
+                              <Badge variant='success'>Primary</Badge>
+                            ) : null}
+                          </div>
+                          <p className='text-muted-foreground mt-1 text-[11px]'>
+                            {association.usage_context || rubric?.rubric.rubric_type || 'General use'}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
           {activePanel === 'tasks' ? (
             <div className='space-y-3'>
               <div className='border-border/70 bg-background/80 min-w-0 rounded-md border p-3'>
-                <p className='text-sm font-semibold'>Issue Assignment</p>
+                <p className='text-sm font-semibold'>Attach assignment</p>
                 <p className='text-muted-foreground mt-1 text-xs'>
-                  Create follow-up practice for the selected lesson.
+                  Assign a lesson assignment to students in this class instance.
                 </p>
-                <div className='mt-3 grid grid-cols-1 gap-1 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3'>
-                  {['Quiz', 'Homework', 'Discussion'].map(item => (
-                    <Button key={item} variant='outline' size='sm' className='h-8 min-w-0 text-xs'>
-                      {item}
-                    </Button>
-                  ))}
+                <div className='mt-3 space-y-2'>
+                  <Select value={selectedAssignmentUuid} onValueChange={onAssignmentSelect}>
+                    <SelectTrigger className='h-9'>
+                      <SelectValue placeholder='Select assignment' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lessonAssignments.map(assignment => (
+                        <SelectItem key={assignment.uuid} value={assignment.uuid ?? ''}>
+                          {assignment.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type='datetime-local'
+                    value={assignmentDueAt}
+                    onChange={event => onAssignmentDueAtChange(event.target.value)}
+                    className='h-9'
+                  />
+                  <Button
+                    onClick={onAssignAssignment}
+                    disabled={!selectedAssignmentUuid || !activeSchedule || isAssigningAssignment}
+                    className='w-full'
+                  >
+                    <SquarePen className='mr-2 h-4 w-4' />
+                    {isAssigningAssignment ? 'Assigning...' : 'Assign Assignment'}
+                  </Button>
                 </div>
               </div>
-              <Button className='bg-primary h-10 w-full rounded-md'>
-                <SquarePen className='mr-2 h-4 w-4' />
-                Assign Tasks
-              </Button>
+
+              <div className='border-border/70 bg-background/80 min-w-0 rounded-md border p-3'>
+                <p className='text-sm font-semibold'>Attach quiz</p>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  Schedule a lesson quiz for the current training instance.
+                </p>
+                <div className='mt-3 space-y-2'>
+                  <Select value={selectedQuizUuid} onValueChange={onQuizSelect}>
+                    <SelectTrigger className='h-9'>
+                      <SelectValue placeholder='Select quiz' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lessonQuizzes.map(quiz => (
+                        <SelectItem key={quiz.uuid} value={quiz.uuid ?? ''}>
+                          {quiz.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type='datetime-local'
+                    value={quizDueAt}
+                    onChange={event => onQuizDueAtChange(event.target.value)}
+                    className='h-9'
+                  />
+                  <Button
+                    onClick={onAssignQuiz}
+                    disabled={!selectedQuizUuid || !activeSchedule || isAssigningQuiz}
+                    variant='outline'
+                    className='w-full'
+                  >
+                    <SquarePen className='mr-2 h-4 w-4' />
+                    {isAssigningQuiz ? 'Assigning...' : 'Assign Quiz'}
+                  </Button>
+                </div>
+              </div>
+
+              <div className='border-border/70 bg-background/80 rounded-md border p-3'>
+                <p className='text-sm font-semibold'>Assigned for this lesson</p>
+                <div className='mt-3 space-y-2'>
+                  {activeScheduleAssignments.map(item => (
+                    <div key={item.uuid ?? item.assignment_uuid} className='rounded-md border p-3'>
+                      <p className='text-xs font-medium'>
+                        {item.assignment?.title || 'Assignment'}
+                      </p>
+                      <p className='text-muted-foreground mt-1 text-[11px]'>
+                        Due {formatDateTime(item.due_at)}
+                      </p>
+                    </div>
+                  ))}
+                  {activeScheduleQuizzes.map(item => (
+                    <div key={item.uuid ?? item.quiz_uuid} className='rounded-md border p-3'>
+                      <p className='text-xs font-medium'>{item.quiz?.title || 'Quiz'}</p>
+                      <p className='text-muted-foreground mt-1 text-[11px]'>
+                        Due {formatDateTime(item.due_at)}
+                      </p>
+                    </div>
+                  ))}
+                  {activeScheduleAssignments.length === 0 && activeScheduleQuizzes.length === 0 ? (
+                    <p className='text-muted-foreground text-xs'>
+                      No tasks have been attached to this lesson instance yet.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
             </div>
           ) : null}
 
           {activePanel === 'notes' ? (
             <div className='space-y-3'>
-              {[
-                'Remind students to consider mobile marketing strategy.',
-                'Discuss recent trends in social media marketing.',
-                'Prepare next session on digital ads.',
-              ].map(note => (
-                <div key={note} className='border-border/70 bg-background/80 rounded-md border p-3'>
-                  <p className='text-sm'>{note}</p>
+              <div className='border-border/70 bg-background/80 rounded-md border p-3'>
+                <p className='text-sm font-semibold'>Send note to all students</p>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  Share a class-wide note for the current training session.
+                </p>
+                <Textarea
+                  value={noteDraft}
+                  onChange={event => onNoteDraftChange(event.target.value)}
+                  placeholder='Type a note for all students'
+                  className='mt-3 min-h-28'
+                />
+                <Button onClick={onSendNote} className='mt-3 w-full'>
+                  <Send className='mr-2 h-4 w-4' />
+                  Send Note
+                </Button>
+                <p className='text-muted-foreground mt-2 text-[11px]'>
+                  Notes are currently kept in-session until a dedicated notes API is available.
+                </p>
+              </div>
+              {sentNotes.map(note => (
+                <div
+                  key={note.id}
+                  className='border-border/70 bg-background/80 rounded-md border p-3'
+                >
+                  <p className='text-sm'>{note.message}</p>
+                  <p className='text-muted-foreground mt-2 text-[11px]'>
+                    Sent {formatDateTime(note.sentAt)}
+                  </p>
                 </div>
               ))}
+              {sentNotes.length === 0 ? (
+                <div className='text-muted-foreground rounded-md border border-dashed p-5 text-sm'>
+                  Session notes you send will appear here.
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -722,6 +1019,12 @@ export default function ClassTrainingPage() {
   const [selectedContentId, setSelectedContentId] = useState('');
   const [activeScheduleId, setActiveScheduleId] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState('');
+  const [selectedQuizUuid, setSelectedQuizUuid] = useState('');
+  const [assignmentDueAt, setAssignmentDueAt] = useState('');
+  const [quizDueAt, setQuizDueAt] = useState('');
+  const [noteDraft, setNoteDraft] = useState('');
+  const [sentNotes, setSentNotes] = useState<NoteEntry[]>([]);
   const appliedRouteContentSelectionRef = useRef('');
 
   useEffect(() => {
@@ -870,23 +1173,180 @@ export default function ClassTrainingPage() {
 
   const selectedStudent =
     activeInstanceStudents.find(entry => entry.enrollment?.uuid === selectedStudentId) ?? null;
-
-  const submissionQueue = useMemo(() => {
-    const statuses: Array<'submitted' | 'review' | 'missing'> = ['submitted', 'review', 'missing'];
-
-    return activeInstanceStudents.slice(0, 5).map((entry: RosterEntry, index: number) => ({
-      id: entry.user?.uuid ?? `student-${index}`,
-      name: entry.user?.full_name ?? `Student ${index + 1}`,
-      lessonTitle: activeLesson?.title ?? `Lesson ${index + 1}`,
-      status: statuses[index % statuses.length],
-      score: statuses[index % statuses.length] === 'missing' ? null : 72 + index * 5,
-    }));
-  }, [activeInstanceStudents, activeLesson?.title]);
   const selectedContentType = getContentTypeName(selectedContent, contentTypeDetailsMap);
   const instructorName =
     userProfile?.instructor?.full_name || userProfile?.full_name || 'Instructor';
   const instructorProfileImage = userProfile?.profile_image_url ?? undefined;
   const markAttendanceMut = useMutation(markAttendanceMutation());
+  const addAssignmentScheduleMut = useMutation(createAssignmentScheduleMutation());
+  const addQuizScheduleMut = useMutation(createQuizScheduleMutation());
+
+  const { data: courseRubricsData } = useQuery({
+    ...getCourseRubricsOptions({
+      path: { courseUuid: course?.uuid as string },
+      query: { pageable: { page: 0, size: 50, sort: [] } },
+    }),
+    enabled: !!course?.uuid,
+  });
+  const { data: courseAssessmentsData } = useQuery({
+    ...getCourseAssessmentsOptions({
+      path: { courseUuid: course?.uuid as string },
+      query: { pageable: { page: 0, size: 50, sort: [] } },
+    }),
+    enabled: !!course?.uuid,
+  });
+  const { data: allAssignments } = useQuery({
+    ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 100, sort: [] } } }),
+    enabled: !!classId,
+  });
+  const { data: allQuizzes } = useQuery({
+    ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 100, sort: [] } } }),
+    enabled: !!classId,
+  });
+  const { data: assignmentSchedules } = useQuery({
+    ...getAssignmentSchedulesOptions({ path: { classUuid: classId } }),
+    enabled: !!classId,
+  });
+  const { data: quizSchedules } = useQuery({
+    ...getQuizSchedulesOptions({ path: { classUuid: classId } }),
+    enabled: !!classId,
+  });
+
+  const rubricAssociations: CourseRubricAssociation[] = courseRubricsData?.data?.content ?? [];
+  const courseAssessments: CourseAssessment[] = courseAssessmentsData?.data?.content ?? [];
+  const assignmentOptions: Assignment[] = allAssignments?.data?.content ?? [];
+  const quizOptions: Quiz[] = allQuizzes?.data?.content ?? [];
+  const assignmentScheduleItems: AssignmentScheduleItem[] = assignmentSchedules?.data ?? [];
+  const quizScheduleItems: QuizScheduleItem[] = quizSchedules?.data ?? [];
+
+  const rubricUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [
+            ...rubricAssociations.map(item => item.rubric_uuid),
+            ...courseAssessments.map(item => item.rubric_uuid).filter(Boolean),
+          ].filter(Boolean)
+        )
+      ),
+    [courseAssessments, rubricAssociations]
+  );
+
+  const rubricMatrixQueries = useQueries({
+    queries: rubricUuids.map(rubricUuid => ({
+      ...getRubricMatrixOptions({ path: { rubricUuid } }),
+      enabled: !!rubricUuid,
+    })),
+  });
+
+  const rubricMatrices = useMemo<Record<string, RubricMatrix | null>>(
+    () =>
+      Object.fromEntries(
+        rubricUuids.map((rubricUuid, index) => [
+          rubricUuid,
+          rubricMatrixQueries[index]?.data?.data ?? null,
+        ])
+      ),
+    [rubricMatrixQueries, rubricUuids]
+  );
+
+  const lessonAssignments = useMemo(
+    () =>
+      assignmentOptions.filter(
+        assignment =>
+          assignment.lesson_uuid === activeLesson?.uuid &&
+          (!assignment.class_definition_uuid || assignment.class_definition_uuid === classId)
+      ),
+    [activeLesson?.uuid, assignmentOptions, classId]
+  );
+
+  const lessonQuizzes = useMemo(
+    () =>
+      quizOptions.filter(
+        quiz =>
+          quiz.lesson_uuid === activeLesson?.uuid &&
+          (!quiz.class_definition_uuid || quiz.class_definition_uuid === classId)
+      ),
+    [activeLesson?.uuid, classId, quizOptions]
+  );
+
+  const activeScheduleAssignments = useMemo(
+    () =>
+      assignmentScheduleItems
+        .filter(
+          item =>
+            item.class_lesson_plan_uuid === activeSchedule?.uuid &&
+            item.lesson_uuid === activeLesson?.uuid
+        )
+        .map(item => ({
+          ...item,
+          assignment:
+            assignmentOptions.find(assignment => assignment.uuid === item.assignment_uuid) ?? null,
+        })),
+    [activeLesson?.uuid, activeSchedule?.uuid, assignmentOptions, assignmentScheduleItems]
+  );
+
+  const activeScheduleQuizzes = useMemo(
+    () =>
+      quizScheduleItems
+        .filter(
+          item =>
+            item.class_lesson_plan_uuid === activeSchedule?.uuid &&
+            item.lesson_uuid === activeLesson?.uuid
+        )
+        .map(item => ({
+          ...item,
+          quiz: quizOptions.find(quiz => quiz.uuid === item.quiz_uuid) ?? null,
+        })),
+    [activeLesson?.uuid, activeSchedule?.uuid, quizOptions, quizScheduleItems]
+  );
+
+  useEffect(() => {
+    if (lessonAssignments.some(item => item.uuid === selectedAssignmentUuid)) return;
+    setSelectedAssignmentUuid(lessonAssignments[0]?.uuid ?? '');
+  }, [lessonAssignments, selectedAssignmentUuid]);
+
+  useEffect(() => {
+    if (lessonQuizzes.some(item => item.uuid === selectedQuizUuid)) return;
+    setSelectedQuizUuid(lessonQuizzes[0]?.uuid ?? '');
+  }, [lessonQuizzes, selectedQuizUuid]);
+
+  useEffect(() => {
+    if (!assignmentDueAt && activeSchedule?.end_time) {
+      setAssignmentDueAt(moment(activeSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
+    }
+    if (!quizDueAt && activeSchedule?.end_time) {
+      setQuizDueAt(moment(activeSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
+    }
+  }, [activeSchedule, assignmentDueAt, quizDueAt]);
+
+  const submissionQueries = useQueries({
+    queries: activeScheduleAssignments.map(item => ({
+      ...getAssignmentSubmissionsOptions({
+        path: { assignmentUuid: item.assignment_uuid as string },
+      }),
+      enabled: !!item.assignment_uuid,
+    })),
+  });
+
+  const selectedStudentSubmissions = useMemo(
+    () =>
+      activeScheduleAssignments.map((item, index) => {
+        const submissions = submissionQueries[index]?.data?.data ?? [];
+        const submission =
+          submissions.find(
+            entry => entry.enrollment_uuid === selectedStudent?.enrollment?.uuid
+          ) ?? null;
+
+        return {
+          scheduleId: item.uuid ?? item.assignment_uuid ?? `assignment-${index}`,
+          assignmentTitle: item.assignment?.title || 'Assignment',
+          dueAt: item.due_at,
+          submission,
+        };
+      }),
+    [activeScheduleAssignments, selectedStudent?.enrollment?.uuid, submissionQueries]
+  );
 
   const handleMarkAttendance = (entry: RosterEntry, attended: boolean) => {
     if (!entry.enrollment?.uuid) return;
@@ -953,6 +1413,118 @@ export default function ClassTrainingPage() {
     }
 
     toast.error('Page search is not supported in this browser.');
+  };
+
+  const handleAssignAssignment = () => {
+    if (!activeSchedule || !selectedAssignmentUuid) {
+      toast.error('Select a class instance and assignment first.');
+      return;
+    }
+
+    const assignment = lessonAssignments.find(item => item.uuid === selectedAssignmentUuid);
+    if (!assignment) {
+      toast.error('The selected assignment could not be found for this lesson.');
+      return;
+    }
+
+    const payload: AssignmentSchedulePayload = {
+      class_definition_uuid: classId,
+      lesson_uuid: assignment.lesson_uuid,
+      assignment_uuid: assignment.uuid,
+      class_lesson_plan_uuid: activeSchedule.uuid,
+      visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
+      due_at: assignmentDueAt
+        ? new Date(assignmentDueAt)
+        : activeSchedule.end_time
+          ? new Date(activeSchedule.end_time)
+          : undefined,
+      grading_due_at: assignmentDueAt
+        ? new Date(assignmentDueAt)
+        : activeSchedule.end_time
+          ? new Date(activeSchedule.end_time)
+          : undefined,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Lagos',
+      release_strategy: 'CUSTOM',
+      max_attempts: 1,
+      instructor_uuid: userProfile?.instructor?.uuid as string,
+    };
+
+    addAssignmentScheduleMut.mutate(
+      { path: { classUuid: classId }, body: payload },
+      {
+        onSuccess: () => {
+          toast.success('Assignment attached to this lesson instance.');
+          queryClient.invalidateQueries({
+            queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: classId } }),
+          });
+        },
+        onError: error => {
+          toast.error(error instanceof Error ? error.message : 'Failed to attach assignment.');
+        },
+      }
+    );
+  };
+
+  const handleAssignQuiz = () => {
+    if (!activeSchedule || !selectedQuizUuid) {
+      toast.error('Select a class instance and quiz first.');
+      return;
+    }
+
+    const quiz = lessonQuizzes.find(item => item.uuid === selectedQuizUuid);
+    if (!quiz) {
+      toast.error('The selected quiz could not be found for this lesson.');
+      return;
+    }
+
+    const payload: QuizSchedulePayload = {
+      class_definition_uuid: classId,
+      lesson_uuid: quiz.lesson_uuid,
+      quiz_uuid: quiz.uuid,
+      class_lesson_plan_uuid: activeSchedule.uuid,
+      visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
+      due_at: quizDueAt
+        ? new Date(quizDueAt)
+        : activeSchedule.end_time
+          ? new Date(activeSchedule.end_time)
+          : undefined,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Lagos',
+      release_strategy: 'CUSTOM',
+      instructor_uuid: userProfile?.instructor?.uuid as string,
+    };
+
+    addQuizScheduleMut.mutate(
+      { path: { classUuid: classId }, body: payload },
+      {
+        onSuccess: () => {
+          toast.success('Quiz attached to this lesson instance.');
+          queryClient.invalidateQueries({
+            queryKey: getQuizSchedulesQueryKey({ path: { classUuid: classId } }),
+          });
+        },
+        onError: error => {
+          toast.error(error instanceof Error ? error.message : 'Failed to attach quiz.');
+        },
+      }
+    );
+  };
+
+  const handleSendNote = () => {
+    if (!noteDraft.trim()) {
+      toast.error('Type a note before sending.');
+      return;
+    }
+
+    setSentNotes(previous => [
+      {
+        id: `${Date.now()}`,
+        message: noteDraft.trim(),
+        sentAt: new Date().toISOString(),
+      },
+      ...previous,
+    ]);
+    setNoteDraft('');
+    toast.success('Note shared for this session view.');
   };
 
   if (isLoading || rosterLoading || lessonsLoading) {
@@ -1085,13 +1657,36 @@ export default function ClassTrainingPage() {
                 <SheetDescription>Submissions, rubric, notes, and assignments.</SheetDescription>
               </SheetHeader>
               <SubmissionPanel
-                submissionQueue={submissionQueue}
                 activeSchedule={activeSchedule}
                 activeInstanceStudentsCount={activeInstanceStudents.length}
                 selectedContentType={selectedContentType}
                 selectedStudent={selectedStudent}
+                courseAssessments={courseAssessments}
+                rubricAssociations={rubricAssociations}
+                rubricMatrices={rubricMatrices}
+                lessonAssignments={lessonAssignments}
+                lessonQuizzes={lessonQuizzes}
+                activeScheduleAssignments={activeScheduleAssignments}
+                activeScheduleQuizzes={activeScheduleQuizzes}
+                selectedAssignmentUuid={selectedAssignmentUuid}
+                selectedQuizUuid={selectedQuizUuid}
+                assignmentDueAt={assignmentDueAt}
+                quizDueAt={quizDueAt}
+                noteDraft={noteDraft}
+                sentNotes={sentNotes}
+                selectedStudentSubmissions={selectedStudentSubmissions}
+                onAssignmentSelect={setSelectedAssignmentUuid}
+                onQuizSelect={setSelectedQuizUuid}
+                onAssignmentDueAtChange={setAssignmentDueAt}
+                onQuizDueAtChange={setQuizDueAt}
+                onNoteDraftChange={setNoteDraft}
+                onAssignAssignment={handleAssignAssignment}
+                onAssignQuiz={handleAssignQuiz}
+                onSendNote={handleSendNote}
                 onMarkAttendance={handleMarkAttendance}
                 isMarkingAttendance={markAttendanceMut.isPending}
+                isAssigningAssignment={addAssignmentScheduleMut.isPending}
+                isAssigningQuiz={addQuizScheduleMut.isPending}
               />
             </SheetContent>
           </Sheet>
@@ -1200,19 +1795,29 @@ export default function ClassTrainingPage() {
                   </Button>
                 </div>
                 <div className='space-y-3'>
-                  {submissionQueue.slice(0, 3).map(item => (
-                    <div key={item.id} className='flex gap-3'>
+                  {activeInstanceStudents.slice(0, 3).map((entry, index) => (
+                    <div
+                      key={entry.enrollment?.uuid ?? entry.user?.uuid ?? `discussion-${index}`}
+                      className='flex gap-3'
+                    >
                       <Avatar className='size-8'>
-                        <AvatarFallback>{getInitials(item.name)}</AvatarFallback>
+                        <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
                       </Avatar>
                       <div className='bg-muted min-w-0 flex-1 rounded-md p-3'>
-                        <p className='text-sm font-semibold'>{item.name}</p>
+                        <p className='text-sm font-semibold'>
+                          {entry.user?.full_name || 'Student'}
+                        </p>
                         <p className='text-muted-foreground mt-1 text-sm'>
                           Reminder to review your notes before the next class and complete the quiz.
                         </p>
                       </div>
                     </div>
                   ))}
+                  {activeInstanceStudents.length === 0 ? (
+                    <div className='text-muted-foreground rounded-md border border-dashed p-4 text-sm'>
+                      Discussion previews will appear when students are attached to this session.
+                    </div>
+                  ) : null}
                 </div>
                 <div className='mt-4 flex gap-2'>
                   <Input placeholder='Add a comment...' className='h-10 rounded-md' />
@@ -1227,13 +1832,36 @@ export default function ClassTrainingPage() {
 
         <aside className='border-border/70 hidden min-h-0 border-l xl:block'>
           <SubmissionPanel
-            submissionQueue={submissionQueue}
             activeSchedule={activeSchedule}
             activeInstanceStudentsCount={activeInstanceStudents.length}
             selectedContentType={selectedContentType}
             selectedStudent={selectedStudent}
+            courseAssessments={courseAssessments}
+            rubricAssociations={rubricAssociations}
+            rubricMatrices={rubricMatrices}
+            lessonAssignments={lessonAssignments}
+            lessonQuizzes={lessonQuizzes}
+            activeScheduleAssignments={activeScheduleAssignments}
+            activeScheduleQuizzes={activeScheduleQuizzes}
+            selectedAssignmentUuid={selectedAssignmentUuid}
+            selectedQuizUuid={selectedQuizUuid}
+            assignmentDueAt={assignmentDueAt}
+            quizDueAt={quizDueAt}
+            noteDraft={noteDraft}
+            sentNotes={sentNotes}
+            selectedStudentSubmissions={selectedStudentSubmissions}
+            onAssignmentSelect={setSelectedAssignmentUuid}
+            onQuizSelect={setSelectedQuizUuid}
+            onAssignmentDueAtChange={setAssignmentDueAt}
+            onQuizDueAtChange={setQuizDueAt}
+            onNoteDraftChange={setNoteDraft}
+            onAssignAssignment={handleAssignAssignment}
+            onAssignQuiz={handleAssignQuiz}
+            onSendNote={handleSendNote}
             onMarkAttendance={handleMarkAttendance}
             isMarkingAttendance={markAttendanceMut.isPending}
+            isAssigningAssignment={addAssignmentScheduleMut.isPending}
+            isAssigningQuiz={addQuizScheduleMut.isPending}
           />
         </aside>
       </section>
