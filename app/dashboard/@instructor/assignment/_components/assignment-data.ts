@@ -1,0 +1,271 @@
+import type {
+  AssignmentCardData,
+  AssignmentStatus,
+  InsightMetric,
+  SubmissionStudent,
+} from './assignment-types';
+
+export const assignmentFilters: Array<{ label: string; value: AssignmentStatus }> = [
+  { label: 'All', value: 'all' },
+  { label: 'Ongoing', value: 'ongoing' },
+  { label: 'Graded', value: 'graded' },
+  { label: 'Overdue', value: 'overdue' },
+];
+
+export const assignments: AssignmentCardData[] = [
+  {
+    ctaLabel: 'View Submissions',
+    dueLabel: 'Due 04/10/24',
+    iconTone: 'amber',
+    id: 'lesson-1-1',
+    instructor: 'Sarah Otieno',
+    lesson: 'Lesson 1.1',
+    status: 'graded',
+    statusLabel: 'Graded',
+    subtitle: 'Social Media Best Practices',
+  },
+  {
+    badge: '2 New',
+    ctaLabel: 'Grade Now',
+    dueLabel: 'Due Oct 07 · 04/12',
+    iconTone: 'blue',
+    id: 'lesson-1-2',
+    instructor: 'Sarah Otieno',
+    lesson: 'Lesson 1.2',
+    status: 'overdue',
+    statusLabel: 'Overdue',
+    subtitle: 'Basics of SEO',
+  },
+  {
+    ctaLabel: 'View Submissions',
+    dueLabel: 'Due today · 04/24',
+    iconTone: 'blue',
+    id: 'lesson-1-3-a',
+    instructor: 'Sarah Otieno',
+    lesson: 'Lesson 1.3',
+    metricLabel: '67%',
+    metricValue: '16/30 Submitted',
+    status: 'overdue',
+    statusLabel: 'Overdue',
+    studentSummary: 'Instructor: Sarah Otieno',
+    subtitle: 'Digital Marketing Strategy',
+  },
+  {
+    ctaLabel: 'View Submissions',
+    dueLabel: 'Due Oct 18 · 08/20',
+    iconTone: 'blue',
+    id: 'lesson-1-4-a',
+    instructor: 'Sarah Otieno',
+    lesson: 'Lesson 1.4',
+    metricLabel: '8%',
+    metricValue: '72/30 Submitted',
+    status: 'graded',
+    statusLabel: 'Graded',
+    studentSummary: 'Instructor: Sarah Otieno',
+    subtitle: 'Introduction to Google Ads',
+  },
+  {
+    badge: 'New',
+    ctaLabel: 'View Submissions',
+    dueLabel: 'Due 04/17/24',
+    iconTone: 'amber',
+    id: 'lesson-1-3-b',
+    instructor: 'Sarah Otieno',
+    lesson: 'Lesson 1.3',
+    metricLabel: '72%',
+    metricValue: '12/30 Submitted',
+    status: 'ongoing',
+    statusLabel: 'Ongoing',
+    studentSummary: 'Instructor: Sarah Otieno',
+    subtitle: 'Digital Marketing Strategy',
+  },
+  {
+    ctaLabel: 'View Submissions',
+    dueLabel: 'Due on 04/30/24',
+    iconTone: 'blue',
+    id: 'lesson-1-4-b',
+    instructor: 'Sarah Otieno',
+    lesson: 'Lesson 1.4',
+    metricLabel: '198%',
+    metricValue: '18/18 Graded',
+    status: 'graded',
+    statusLabel: 'Graded',
+    studentSummary: 'Instructor: Sarah Otieno',
+    subtitle: 'Introduction to Google Ads',
+  },
+  {
+    ctaLabel: 'View Submissions',
+    dueLabel: 'Due on 10/09 · 08/Gald',
+    iconTone: 'blue',
+    id: 'lesson-1-5',
+    instructor: 'Sarah Otieno',
+    lesson: 'Lesson 1.5',
+    status: 'graded',
+    statusLabel: 'Graded',
+    subtitle: 'Campaign Reporting Review',
+  },
+  {
+    ctaLabel: 'View Submissions',
+    dueLabel: 'Due on 11/14 · 05/17',
+    iconTone: 'blue',
+    id: 'lesson-1-6',
+    instructor: 'Sarah Otieno',
+    lesson: 'Lesson 1.6',
+    status: 'graded',
+    statusLabel: 'Graded',
+    subtitle: 'Google Ads Fundamentals',
+  },
+];
+
+export function getAssignmentById(id: string) {
+  return assignments.find(assignment => assignment.id === id) ?? null;
+}
+
+export const insightMetrics: InsightMetric[] = [
+  {
+    changeText: 'Last 7 days 8.71',
+    progress: 78,
+    title: 'Avg Score',
+    trendLabel: '89%',
+    value: '78%',
+  },
+  {
+    progress: 64,
+    title: 'Completion Rate',
+    value: '64%',
+  },
+  {
+    progress: 0,
+    title: 'Avg Submission Time',
+    value: '2h 14m',
+  },
+];
+
+export const submissionStudents: SubmissionStudent[] = [
+  {
+    attendanceLabel: 'Present 1',
+    comments: [
+      'Thesis is clear and the examples are strong.',
+      'Citations need a bit more consistency in the final section.',
+      'Presentation flow felt confident and well-timed.',
+    ],
+    id: 'jacob-jones',
+    insightLabel: 'Competent',
+    name: 'Jacob Jones',
+    roleLabel: 'Present 1',
+    score: 24,
+    sections: [
+      {
+        gradeLabel: 'Excellent',
+        gradeScore: 5,
+        metrics: [
+          { label: 'Research depth', note: 'Covers the required sources', score: 4, total: 5 },
+          { label: 'Evidence quality', note: 'Good examples and support', score: 5, total: 5 },
+          { label: 'Argument structure', note: 'Minor transitions to refine', score: 4, total: 5 },
+        ],
+        title: 'Assignment Quality',
+        weight: '10%',
+      },
+      {
+        gradeLabel: 'Good',
+        gradeScore: 4,
+        metrics: [{ label: 'Interpretation and originality', score: 4, total: 5 }],
+        title: 'Interpretation',
+      },
+      {
+        gradeLabel: 'Good',
+        gradeScore: 4,
+        metrics: [
+          { label: 'Clarity', note: 'Mostly confident', score: 4, total: 5 },
+          { label: 'Organization', note: 'Mostly controlled', score: 4, total: 5 },
+          { label: 'Completion', note: 'Strong submission quality', score: 5, total: 5 },
+        ],
+        title: 'Submission Readiness',
+      },
+    ],
+  },
+  {
+    attendanceLabel: 'Review 2',
+    comments: [
+      'Good effort overall, but the conclusion feels abrupt.',
+      'There is room to improve keyword coverage.',
+      'Formatting is clean and easy to follow.',
+    ],
+    id: 'eleanor-pena',
+    insightLabel: 'Intermediate',
+    name: 'Eleanor Pena',
+    roleLabel: 'Present 1',
+    score: 22,
+    sections: [
+      {
+        gradeLabel: 'Good',
+        gradeScore: 4,
+        metrics: [
+          { label: 'Research depth', note: 'Missing one supporting reference', score: 4, total: 5 },
+          { label: 'Evidence quality', note: 'Moderate support for one claim', score: 4, total: 5 },
+          { label: 'Argument structure', note: 'Transitions can be tighter', score: 4, total: 5 },
+        ],
+        title: 'Assignment Quality',
+        weight: '10%',
+      },
+      {
+        gradeLabel: 'Fair',
+        gradeScore: 3,
+        metrics: [{ label: 'Interpretation and originality', score: 3, total: 5 }],
+        title: 'Interpretation',
+      },
+      {
+        gradeLabel: 'Good',
+        gradeScore: 4,
+        metrics: [
+          { label: 'Clarity', note: 'Clear in most sections', score: 4, total: 5 },
+          { label: 'Organization', note: 'Submission is mostly structured', score: 4, total: 5 },
+          { label: 'Completion', note: 'Minor missing detail', score: 3, total: 5 },
+        ],
+        title: 'Submission Readiness',
+      },
+    ],
+  },
+  {
+    attendanceLabel: 'Pending',
+    comments: [
+      'Submission is incomplete and needs revision.',
+      'Support claims with clearer examples.',
+      'Revisit the assignment brief before resubmitting.',
+    ],
+    id: 'brooklyn-simmons',
+    insightLabel: 'Beginner',
+    name: 'Brooklyn Simmons',
+    roleLabel: 'Absent',
+    score: 18,
+    sections: [
+      {
+        gradeLabel: 'Fair',
+        gradeScore: 3,
+        metrics: [
+          { label: 'Research depth', note: 'Limited sources included', score: 3, total: 5 },
+          { label: 'Evidence quality', note: 'Examples are too broad', score: 3, total: 5 },
+          { label: 'Argument structure', note: 'Needs stronger sequencing', score: 3, total: 5 },
+        ],
+        title: 'Assignment Quality',
+        weight: '10%',
+      },
+      {
+        gradeLabel: 'Fair',
+        gradeScore: 3,
+        metrics: [{ label: 'Interpretation and originality', score: 3, total: 5 }],
+        title: 'Interpretation',
+      },
+      {
+        gradeLabel: 'Needs work',
+        gradeScore: 2,
+        metrics: [
+          { label: 'Clarity', note: 'Several rough sections', score: 2, total: 5 },
+          { label: 'Organization', note: 'Structure needs improvement', score: 2, total: 5 },
+          { label: 'Completion', note: 'Missing expected sections', score: 2, total: 5 },
+        ],
+        title: 'Submission Readiness',
+      },
+    ],
+  },
+];

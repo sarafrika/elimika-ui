@@ -25,6 +25,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/data-table';
+import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -1302,9 +1303,7 @@ function CourseContentPlaceholder({ course }: { course: Course }) {
     contentTypeMap,
   } = useCourseLessonsWithContent({ courseUuid: course?.uuid as string });
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isReading, setIsReading] = useState(false);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const [selectedLesson, setSelectedLesson] = useState<CourseContentPreviewItem | null>(null);
   const [contentTypeName, setContentTypeName] = useState<string>('');
@@ -1312,14 +1311,7 @@ function CourseContentPlaceholder({ course }: { course: Course }) {
   const handleViewContent = (content: CourseContentPreviewItem, contentType: string) => {
     setSelectedLesson(content);
     setContentTypeName(contentType);
-
-    if (contentType === 'video') {
-      setIsPlaying(true);
-    } else if (contentType === 'pdf' || contentType === 'text') {
-      setIsReading(true);
-    } else if (contentType === 'audio') {
-      setIsAudioPlaying(true);
-    }
+    setIsViewerOpen(true);
   };
 
   // Calculate content statistics
@@ -1495,28 +1487,11 @@ function CourseContentPlaceholder({ course }: { course: Course }) {
         )}
       </div>
 
-      <VideoPlayer
-        isOpen={isPlaying && contentTypeName === 'video'}
-        onClose={() => setIsPlaying(false)}
-        videoUrl={resolveLessonContentSource(selectedLesson, 'video')}
-        title={selectedLesson?.title}
-      />
-
-      <ReadingMode
-        isOpen={isReading && (contentTypeName === 'pdf' || contentTypeName === 'text')}
-        onClose={() => setIsReading(false)}
-        title={selectedLesson?.title || ''}
-        description={selectedLesson?.description}
-        content={resolveLessonContentSource(selectedLesson, contentTypeName)}
-        contentType={contentTypeName as 'text' | 'pdf'}
-      />
-
-      <AudioPlayer
-        isOpen={isAudioPlaying && contentTypeName === 'audio'}
-        onClose={() => setIsAudioPlaying(false)}
-        audioUrl={resolveLessonContentSource(selectedLesson, 'audio')}
-        title={selectedLesson?.title}
-        description={selectedLesson?.description}
+      <LessonContentViewerDialog
+        open={isViewerOpen}
+        onOpenChange={setIsViewerOpen}
+        content={selectedLesson}
+        contentType={contentTypeName}
       />
 
       {/* Course Details Section */}
@@ -1611,12 +1586,8 @@ import { useCourseLessonsWithContent } from '../../../../hooks/use-courselessonw
 import { useStudentsMap } from '../../../../hooks/use-studentsMap';
 import {
   type PreviewableLessonContent,
-  resolveLessonContentSource,
 } from '../../../../lib/lesson-content-preview';
 import { getResourceIcon } from '../../../../lib/resources-icon';
-import { AudioPlayer } from '../../@student/schedule/classes/[id]/AudioPlayer';
-import { ReadingMode } from '../../@student/schedule/classes/[id]/ReadingMode';
-import { VideoPlayer } from '../../@student/schedule/classes/[id]/VideoPlayer';
 
 function CourseEnrollmentsPlaceholder({ course }: { course: Course }) {
   const [page, setPage] = useState(0);

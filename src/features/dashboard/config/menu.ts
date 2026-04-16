@@ -244,10 +244,15 @@ export default {
       icon: BookOpen,
     },
     {
-      title: 'Classes',
+      title: 'Classes (Training Hub)',
       // url: '/dashboard/trainings',
       url: '/dashboard/classes',
       icon: ClipboardList,
+    },
+    {
+      title: 'Assignment',
+      url: '/dashboard/assignment',
+      icon: Layers,
     },
     {
       title: 'Assessment',

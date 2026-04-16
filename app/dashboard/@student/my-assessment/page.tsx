@@ -1,7 +1,7 @@
-import { AssessmentWorkspace } from './_components/AssessmentWorkspace';
+import { SharedAssessmentWorkspace } from '@/components/assessment/shared-assessment-workspace';
 
 const MyAssessmentPage = () => {
-  return <AssessmentWorkspace />;
+  return <SharedAssessmentWorkspace role='student' />;
 };
 
 export default MyAssessmentPage;

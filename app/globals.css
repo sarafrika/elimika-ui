@@ -287,6 +287,24 @@
   scrollbar-width: none; /* Firefox */
 }
 
+/* thin scrollbar */
+.thin-scrollbar {
+  scrollbar-width: thin; /* Firefox */
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.4);
+  border-radius: 9999px;
+}
+
 /* Responsive behavior */
 @media (max-width: 768px) {
   .rte-wrapper {
