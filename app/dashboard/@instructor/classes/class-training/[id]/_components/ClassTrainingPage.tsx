@@ -1,6 +1,5 @@
 'use client';
 
-import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -91,8 +90,34 @@ function getContentTitle(content: LessonContentItem, index: number) {
   return content.title?.trim() || `Lesson content ${index + 1}`;
 }
 
-function looksLikeHtml(value?: string | null) {
-  return Boolean(value && /<\/?[a-z][\s\S]*>/i.test(value));
+function looksLikeHtml(str: string) {
+  return /<\/?[a-z][\s\S]*>/i.test(str);
+}
+
+function decodeHtmlEntities(value: string) {
+  if (typeof document === 'undefined') return value;
+
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = value;
+  return textarea.value;
+}
+
+function normalizeLessonTextContent(value?: string | null) {
+  const rawContent = value?.trim() ?? '';
+  if (!rawContent) {
+    return { renderedContent: '', isHtml: false };
+  }
+
+  if (looksLikeHtml(rawContent)) {
+    return { renderedContent: rawContent, isHtml: true };
+  }
+
+  const decodedContent = decodeHtmlEntities(rawContent).trim();
+  if (decodedContent && looksLikeHtml(decodedContent)) {
+    return { renderedContent: decodedContent, isHtml: true };
+  }
+
+  return { renderedContent: rawContent, isHtml: false };
 }
 
 function getScheduleState(schedule?: { start_time?: string | Date; end_time?: string | Date }) {
@@ -193,6 +218,46 @@ function getVimeoEmbedUrl(source: string) {
   }
 }
 
+export const RichTextPreview = ({ html }: { html: string }) => {
+  return (
+    <div
+      className='
+          text-foreground mx-auto w-full text-[15px] leading-7
+          [&_*]:max-w-full
+          [&_h1]:mt-12 [&_h1]:mb-5 [&_h1]:text-[1.7rem] [&_h1]:font-bold [&_h1]:leading-tight
+          [&_h1:first-child]:mt-0
+          [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-[1.35rem] [&_h2]:font-bold [&_h2]:leading-snug
+          [&_h2:first-child]:mt-0
+          [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-[1.15rem] [&_h3]:font-semibold
+          [&_h4]:mt-8 [&_h4]:mb-3 [&_h4]:text-base [&_h4]:font-semibold
+          [&_p]:text-foreground/80 [&_p]:leading-7
+          [&_p:not(:first-child)]:mt-5
+          [&_ol]:my-6 [&_ol]:list-decimal [&_ol]:pl-6
+          [&_ul]:my-6 [&_ul]:list-disc [&_ul]:pl-6
+          [&_li]:text-foreground/80 [&_li]:leading-7
+          [&_li:not(:first-child)]:mt-1.5
+          [&_li_p]:mt-0
+          [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground
+          [&_blockquote]:my-6
+          [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4
+          [&_hr]:bg-border [&_hr]:my-10 [&_hr]:h-px [&_hr]:border-0
+          [&_pre]:bg-muted/60 [&_pre]:border-border/70 [&_pre]:my-8 [&_pre]:overflow-x-auto [&_pre]:rounded-2xl [&_pre]:border [&_pre]:p-5
+          [&_pre]:text-[0.95rem] [&_pre]:leading-7
+          [&_pre_code]:bg-transparent [&_pre_code]:border-0 [&_pre_code]:p-0
+          [&_code]:bg-muted [&_code]:rounded-md [&_code]:border [&_code]:border-border/60 [&_code]:px-1.5 [&_code]:py-0.5
+          [&_code]:font-mono [&_code]:text-[0.9em]
+          [&_img]:my-8 [&_img]:rounded-2xl [&_img]:border [&_img]:border-border/60
+          [&_img]:shadow-sm
+          [&_figure]:my-8
+          [&_table]:my-8 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden
+          [&_th]:bg-muted [&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold
+          [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2
+        '
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+};
+
 function renderLessonContentPreview(
   content: LessonContentItem | null,
   contentTypeDetailsMap: Record<
@@ -210,20 +275,15 @@ function renderLessonContentPreview(
 
   const contentTypeName = getContentTypeName(content, contentTypeDetailsMap);
   const resolvedSource = resolveLessonContentSource(content, contentTypeName);
+  const normalizedTextContent = normalizeLessonTextContent(content.content_text);
 
   if (contentTypeName === 'text') {
     return (
-      <div className='border-border/60 bg-background rounded-[28px] border p-6'>
-        {content.content_text ? (
-          looksLikeHtml(content.content_text) ? (
-            <RichTextRenderer htmlString={content.content_text} />
-          ) : (
-            <div className='text-muted-foreground text-sm leading-7 whitespace-pre-wrap'>
-              {content.content_text}
-            </div>
-          )
+      <div className="bg-background p-6">
+        {normalizedTextContent.renderedContent ? (
+          <RichTextPreview html={normalizedTextContent.renderedContent} />
         ) : (
-          <p className='text-muted-foreground text-sm'>
+          <p className="text-muted-foreground text-sm">
             No text content was provided for this item.
           </p>
         )}
@@ -254,7 +314,7 @@ function renderLessonContentPreview(
 
     if (embedUrl) {
       return (
-        <div className='border-border/60 bg-background overflow-hidden rounded-[28px] border'>
+        <div className='bg-background overflow-hidden'>
           <iframe
             src={embedUrl}
             title={content.title || 'Lesson video'}
@@ -267,7 +327,7 @@ function renderLessonContentPreview(
     }
 
     return resolvedSource ? (
-      <div className='border-border/60 bg-background overflow-hidden rounded-[28px] border p-4'>
+      <div className='border-border/60 bg-background overflow-hidden border p-4'>
         <video controls className='aspect-video w-full rounded-2xl' src={resolvedSource} />
       </div>
     ) : (
@@ -279,7 +339,7 @@ function renderLessonContentPreview(
 
   if (contentTypeName === 'audio') {
     return resolvedSource ? (
-      <div className='border-border/60 bg-background rounded-[28px] border p-6'>
+      <div className='bg-background p-6'>
         <audio controls className='w-full' src={resolvedSource} />
       </div>
     ) : (
@@ -291,7 +351,7 @@ function renderLessonContentPreview(
 
   if (contentTypeName === 'image') {
     return resolvedSource ? (
-      <div className='border-border/60 bg-background overflow-hidden rounded-[28px] border p-4'>
+      <div className='bg-background overflow-hidden p-4'>
         <img
           src={resolvedSource}
           alt={content.title || 'Lesson image'}
@@ -328,7 +388,7 @@ function renderLessonContentPreview(
 
 function ConsoleSkeleton() {
   return (
-    <div className='fixed inset-0 z-50 bg-[color-mix(in_oklch,var(--el-brand-50)_80%,var(--background))] p-3'>
+    <div className='fixed inset-0 z-50 p-3'>
       <Skeleton className='mb-3 h-14 w-full rounded-lg' />
       <div className='grid h-[calc(100vh-5rem)] gap-3 xl:grid-cols-[260px_minmax(0,1fr)_330px]'>
         <Skeleton className='hidden h-full rounded-lg xl:block' />
@@ -988,19 +1048,19 @@ export default function ClassTrainingPage() {
           </div>
 
           <ScrollArea className='h-[calc(100vh-8.5rem)]'>
-            <div className='mx-auto max-w-4xl space-y-4 p-4 md:p-5'>
+            <div className='mx-auto space-y-4 p-4 md:p-5'>
               <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                 <div className='border-border/70 border-b p-4'>
-                  <p className='text-muted-foreground text-xs'>Digital Marketing Fundamentals</p>
+                  <p className='text-muted-foreground text-xs'>{course?.name}</p>
                   <h3 className='mt-1 text-xl font-semibold'>
-                    {activeLesson?.title || selectedContent?.title || 'Lesson content'}
+                    {activeLesson?.title}
                   </h3>
                 </div>
                 <div className='p-4'>
-                  {selectedContent?.description ? (
+                  {selectedContent?.title ? (
                     <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
                       <p className='text-muted-foreground text-sm leading-7'>
-                        {selectedContent.description}
+                        {selectedContent.title}
                       </p>
                     </div>
                   ) : null}
