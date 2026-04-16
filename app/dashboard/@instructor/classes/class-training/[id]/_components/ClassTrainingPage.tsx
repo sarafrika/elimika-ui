@@ -1,5 +1,6 @@
 'use client';
 
+import PDFViewer from '@/app/dashboard/@student/_components/pdf-viewer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,10 +32,14 @@ import {
 } from '@/hooks/use-courselessonwithcontent';
 import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
 import {
+  getEnrollmentsForClassQueryKey,
+  markAttendanceMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
   AlertCircle,
   ArrowLeft,
   BookOpen,
-  CheckCircle2,
   ClipboardCheck,
   ListChecks,
   MessageSquareText,
@@ -49,6 +54,7 @@ import moment from 'moment';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
 type LessonContentItem = CourseLessonContent;
@@ -118,6 +124,14 @@ function normalizeLessonTextContent(value?: string | null) {
   }
 
   return { renderedContent: rawContent, isHtml: false };
+}
+
+function getStudentAttendanceState(entry: RosterEntry | null | undefined) {
+  if (entry?.enrollment?.is_attendance_marked) {
+    return entry.enrollment?.did_attend ? 'present' : 'absent';
+  }
+
+  return 'pending';
 }
 
 function getScheduleState(schedule?: { start_time?: string | Date; end_time?: string | Date }) {
@@ -293,12 +307,8 @@ function renderLessonContentPreview(
 
   if (contentTypeName === 'pdf') {
     return resolvedSource ? (
-      <div className='border-border/60 bg-background overflow-hidden rounded-[28px] border'>
-        <iframe
-          src={resolvedSource}
-          title={content.title || 'Lesson PDF'}
-          className='h-[680px] w-full'
-        />
+      <div className='bg-background p-4'>
+        <PDFViewer file={resolvedSource} />
       </div>
     ) : (
       <div className='text-muted-foreground flex min-h-[360px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
@@ -402,16 +412,36 @@ function ConsoleSkeleton() {
 function RosterPanel({
   activeInstanceStudentsCount,
   filteredRoster,
+  activeInstanceStudents,
   activeSchedule,
   studentSearch,
   setStudentSearch,
+  selectedStudentId,
+  onSelectStudent,
+  onMarkAllPresent,
+  isMarkingAllAttendance,
 }: {
   activeInstanceStudentsCount: number;
   filteredRoster: RosterEntry[];
+  activeInstanceStudents: RosterEntry[];
   activeSchedule: TrainingSchedule | null;
   studentSearch: string;
   setStudentSearch: (value: string) => void;
+  selectedStudentId: string;
+  onSelectStudent: (entry: RosterEntry) => void;
+  onMarkAllPresent: () => void;
+  isMarkingAllAttendance: boolean;
 }) {
+  const presentCount = activeInstanceStudents.filter(
+    entry => getStudentAttendanceState(entry) === 'present'
+  ).length;
+  const absentCount = activeInstanceStudents.filter(
+    entry => getStudentAttendanceState(entry) === 'absent'
+  ).length;
+  const pendingCount = activeInstanceStudents.filter(
+    entry => getStudentAttendanceState(entry) === 'pending'
+  ).length;
+
   return (
     <div className='flex h-full min-h-0 flex-col'>
       <div className='border-border/70 bg-card/90 space-y-3 border-b p-3'>
@@ -424,6 +454,15 @@ function RosterPanel({
             {activeInstanceStudentsCount}
           </Badge>
         </div>
+        <Button
+          size='sm'
+          variant='outline'
+          className='w-full'
+          disabled={isMarkingAllAttendance || pendingCount === 0}
+          onClick={onMarkAllPresent}
+        >
+          Mark All Present
+        </Button>
         <div className='relative'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
           <Input
@@ -436,31 +475,41 @@ function RosterPanel({
       </div>
       <ScrollArea className='min-h-0 flex-1'>
         <div className='space-y-1.5 p-2'>
-          {filteredRoster.map((entry: RosterEntry) => (
-            <div
-              key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
-              className='hover:bg-primary/5 rounded-md border border-transparent p-2.5 transition-colors'
-            >
-              <div className='flex items-center gap-2.5'>
-                <Avatar className='border-border/60 size-8 border'>
-                  <AvatarImage
-                    src={entry.user?.profile_image_url ?? undefined}
-                    alt={entry.user?.full_name || 'Student'}
-                  />
-                  <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
-                </Avatar>
-                <div className='min-w-0 flex-1 space-y-1'>
-                  <p className='truncate text-sm font-semibold'>
-                    {entry.user?.full_name || 'Unknown student'}
-                  </p>
-                  <p className='text-muted-foreground truncate text-xs'>
-                    {formatEnum(entry.enrollment?.status)}
-                  </p>
+          {filteredRoster.map((entry: RosterEntry) => {
+            const attendanceState = getStudentAttendanceState(entry);
+            const isSelected = selectedStudentId === (entry.enrollment?.uuid ?? '');
+
+            return (
+              <button
+                type='button'
+                key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                onClick={() => onSelectStudent(entry)}
+                className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected ? 'border-primary/30 bg-primary/8' : 'hover:bg-primary/5 border-transparent'
+                  }`}
+              >
+                <div className='flex items-start gap-2.5'>
+                  <Avatar className='border-border/60 size-8 border'>
+                    <AvatarImage
+                      src={entry.user?.profile_image_url ?? undefined}
+                      alt={entry.user?.full_name || 'Student'}
+                    />
+                    <AvatarFallback>{getInitials(entry.user?.full_name)}</AvatarFallback>
+                  </Avatar>
+                  <div className='min-w-0 flex-1'>
+                    <p className='truncate text-sm font-semibold'>
+                      {entry.user?.full_name || 'Unknown student'}
+                    </p>
+                    <div className='text-muted-foreground mt-1 flex items-center justify-between gap-2 text-xs'>
+                      <span className='truncate'>
+                        {entry.enrollment?.is_attendance_marked ? 'Attended' : 'Attendance pending'}
+                      </span>
+                      <span className='capitalize'>{attendanceState}</span>
+                    </div>
+                  </div>
                 </div>
-                <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
-              </div>
-            </div>
-          ))}
+              </button>
+            );
+          })}
 
           {filteredRoster.length === 0 && (
             <div className='text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm'>
@@ -472,26 +521,18 @@ function RosterPanel({
         </div>
       </ScrollArea>
       <div className='border-border/70 bg-card/90 border-t p-3'>
-        <div className='flex items-center gap-3'>
-          <div className='relative size-16'>
-            <div className='border-primary/25 absolute inset-0 rounded-full border-[8px]' />
-            <div className='text-primary absolute inset-0 flex items-center justify-center text-lg font-bold'>
-              72%
-            </div>
+        <div className='grid grid-cols-3 gap-2 text-xs'>
+          <div>
+            <p className='text-muted-foreground'>Present</p>
+            <p className='font-semibold'>{presentCount}</p>
           </div>
-          <div className='grid flex-1 grid-cols-3 gap-2 text-xs'>
-            <div>
-              <p className='text-muted-foreground'>Present</p>
-              <p className='font-semibold'>7</p>
-            </div>
-            <div>
-              <p className='text-muted-foreground'>Late</p>
-              <p className='font-semibold'>2</p>
-            </div>
-            <div>
-              <p className='text-muted-foreground'>Excused</p>
-              <p className='font-semibold'>2</p>
-            </div>
+          <div>
+            <p className='text-muted-foreground'>Pending</p>
+            <p className='font-semibold'>{pendingCount}</p>
+          </div>
+          <div>
+            <p className='text-muted-foreground'>Absent</p>
+            <p className='font-semibold'>{absentCount}</p>
           </div>
         </div>
       </div>
@@ -504,6 +545,9 @@ function SubmissionPanel({
   activeSchedule,
   activeInstanceStudentsCount,
   selectedContentType,
+  selectedStudent,
+  onMarkAttendance,
+  isMarkingAttendance,
 }: {
   submissionQueue: Array<{
     id: string;
@@ -515,10 +559,15 @@ function SubmissionPanel({
   activeSchedule: TrainingSchedule | null;
   activeInstanceStudentsCount: number;
   selectedContentType: string;
+  selectedStudent: RosterEntry | null;
+  onMarkAttendance: (entry: RosterEntry, attended: boolean) => void;
+  isMarkingAttendance: boolean;
 }) {
   const [activePanel, setActivePanel] = useState<'submissions' | 'rubric' | 'tasks' | 'notes'>(
     'submissions'
   );
+  const selectedStudentAttendanceState = getStudentAttendanceState(selectedStudent);
+  const attendanceActionDisabled = isMarkingAttendance || !selectedStudent?.enrollment?.uuid;
   const panelTabs = [
     { value: 'submissions' as const, label: 'Submissions', icon: ClipboardCheck },
     { value: 'rubric' as const, label: 'Rubric', icon: ShieldCheck },
@@ -565,6 +614,78 @@ function SubmissionPanel({
 
       <ScrollArea className='min-h-0 flex-1'>
         <div className='max-w-full space-y-3 p-3'>
+          <div className='border-border/70 bg-background/90 rounded-md border p-3'>
+            <div className='flex items-start justify-between gap-3'>
+              <div className='min-w-0'>
+                <p className='text-muted-foreground text-[11px] tracking-[0.16em] uppercase'>
+                  Attendance
+                </p>
+                <p className='mt-1 truncate text-sm font-semibold'>
+                  {selectedStudent?.user?.full_name || 'Select a student from the roster'}
+                </p>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  {selectedStudent
+                    ? selectedStudent.user?.email || formatEnum(selectedStudent.enrollment?.status)
+                    : activeSchedule
+                      ? 'Choose a learner to mark this class instance.'
+                      : 'Select a class instance to begin attendance.'}
+                </p>
+              </div>
+              {selectedStudent ? (
+                <Badge
+                  variant={
+                    selectedStudentAttendanceState === 'present'
+                      ? 'success'
+                      : selectedStudentAttendanceState === 'absent'
+                        ? 'destructive'
+                        : 'secondary'
+                  }
+                  className='shrink-0 capitalize'
+                >
+                  {selectedStudentAttendanceState}
+                </Badge>
+              ) : null}
+            </div>
+
+            <div className='mt-3 flex gap-2'>
+              <Button
+                size='sm'
+                className='flex-1'
+                disabled={attendanceActionDisabled}
+                onClick={() => selectedStudent && onMarkAttendance(selectedStudent, true)}
+              >
+                Mark Present
+              </Button>
+              <Button
+                size='sm'
+                variant='outline'
+                className='flex-1'
+                disabled={attendanceActionDisabled}
+                onClick={() => selectedStudent && onMarkAttendance(selectedStudent, false)}
+              >
+                Mark Absent
+              </Button>
+            </div>
+
+            {selectedStudent?.enrollment?.attendance_marked_at ? (
+              <p className='text-muted-foreground mt-3 text-xs'>
+                Marked {formatDateTime(selectedStudent.enrollment.attendance_marked_at)}
+              </p>
+            ) : null}
+
+            {!selectedStudent && activeInstanceStudentsCount > 0 ? (
+              <p className='text-muted-foreground mt-3 text-xs'>
+                Select a student on the left to mark attendance for this session.
+              </p>
+            ) : null}
+
+            {!selectedStudent && !activeInstanceStudentsCount ? (
+              <p className='text-muted-foreground mt-3 text-xs'>
+                No students are attached to this class instance yet.
+              </p>
+            ) : null}
+          </div>
+
           {activePanel === 'submissions' ? (
             <>
               <div className='border-border/70 bg-background/80 min-w-0 rounded-md border p-3'>
@@ -702,6 +823,7 @@ function SubmissionPanel({
 export default function ClassTrainingPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const classId = params?.id as string;
   const requestedScheduleId = searchParams.get('schedule') ?? '';
   const requestedLessonId = searchParams.get('lesson') ?? '';
@@ -711,8 +833,10 @@ export default function ClassTrainingPage() {
   const { data, isLoading, isError } = useClassDetails(classId);
   const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
   const [studentSearch, setStudentSearch] = useState('');
+  const [pageSearch, setPageSearch] = useState('');
   const [selectedContentId, setSelectedContentId] = useState('');
   const [activeScheduleId, setActiveScheduleId] = useState('');
+  const [selectedStudentId, setSelectedStudentId] = useState('');
   const appliedRouteContentSelectionRef = useRef('');
 
   useEffect(() => {
@@ -844,6 +968,24 @@ export default function ClassTrainingPage() {
     [activeInstanceStudents, studentSearch]
   );
 
+  useEffect(() => {
+    if (activeInstanceStudents.length === 0) {
+      setSelectedStudentId('');
+      return;
+    }
+
+    const currentStudentExists = activeInstanceStudents.some(
+      entry => entry.enrollment?.uuid === selectedStudentId
+    );
+
+    if (!currentStudentExists) {
+      setSelectedStudentId(activeInstanceStudents[0]?.enrollment?.uuid ?? '');
+    }
+  }, [activeInstanceStudents, selectedStudentId]);
+
+  const selectedStudent =
+    activeInstanceStudents.find(entry => entry.enrollment?.uuid === selectedStudentId) ?? null;
+
   const submissionQueue = useMemo(() => {
     const statuses: Array<'submitted' | 'review' | 'missing'> = ['submitted', 'review', 'missing'];
 
@@ -859,6 +1001,74 @@ export default function ClassTrainingPage() {
   const instructorName =
     userProfile?.instructor?.full_name || userProfile?.full_name || 'Instructor';
   const instructorProfileImage = userProfile?.profile_image_url ?? undefined;
+  const markAttendanceMut = useMutation(markAttendanceMutation());
+
+  const handleMarkAttendance = (entry: RosterEntry, attended: boolean) => {
+    if (!entry.enrollment?.uuid) return;
+
+    markAttendanceMut.mutate(
+      {
+        path: { enrollmentUuid: entry.enrollment.uuid },
+        query: { attended },
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            `Marked ${entry.user?.full_name || 'student'} as ${attended ? 'present' : 'absent'}.`
+          );
+          queryClient.invalidateQueries({
+            queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
+          });
+        },
+        onError: error => {
+          toast.error(error instanceof Error ? error.message : 'Failed to mark attendance.');
+        },
+      }
+    );
+  };
+
+  const handleMarkAllPresent = async () => {
+    const pendingStudents = activeInstanceStudents.filter(
+      entry => getStudentAttendanceState(entry) === 'pending' && entry.enrollment?.uuid
+    );
+
+    if (pendingStudents.length === 0) {
+      toast.error('There are no pending attendance records to mark.');
+      return;
+    }
+
+    try {
+      await Promise.all(
+        pendingStudents.map(entry =>
+          markAttendanceMut.mutateAsync({
+            path: { enrollmentUuid: entry.enrollment.uuid },
+            query: { attended: true },
+          })
+        )
+      );
+
+      toast.success(`Marked ${pendingStudents.length} student(s) present.`);
+      queryClient.invalidateQueries({
+        queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to mark all students present.');
+    }
+  };
+
+  const handlePageSearch = () => {
+    if (!pageSearch.trim()) return;
+
+    if (typeof window !== 'undefined' && typeof window.find === 'function') {
+      const found = window.find(pageSearch.trim(), false, false, true, false, false, false);
+      if (!found) {
+        toast.error(`No match found for "${pageSearch.trim()}".`);
+      }
+      return;
+    }
+
+    toast.error('Page search is not supported in this browser.');
+  };
 
   if (isLoading || rosterLoading || lessonsLoading) {
     return <ConsoleSkeleton />;
@@ -917,9 +1127,25 @@ export default function ClassTrainingPage() {
         <div className='hidden min-w-0 flex-1 justify-center md:flex'>
           <div className='flex max-w-xl flex-1 items-center gap-2 rounded-full bg-white/12 px-3 py-2'>
             <Search className='text-primary-foreground/70 h-4 w-4 shrink-0' />
-            <span className='text-primary-foreground/75 truncate text-xs'>
-              Search class content, students, or tasks...
-            </span>
+            <Input
+              value={pageSearch}
+              onChange={event => setPageSearch(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === 'Enter') {
+                  handlePageSearch();
+                }
+              }}
+              placeholder='Search this page...'
+              className='border-0 bg-transparent px-0 text-xs text-white placeholder:text-white/70 focus-visible:ring-0'
+            />
+            <Button
+              size='sm'
+              variant='ghost'
+              className='h-7 shrink-0 text-primary-foreground hover:bg-white/10'
+              onClick={handlePageSearch}
+            >
+              Find
+            </Button>
           </div>
         </div>
 
@@ -944,10 +1170,15 @@ export default function ClassTrainingPage() {
               </SheetHeader>
               <RosterPanel
                 activeInstanceStudentsCount={activeInstanceStudents.length}
+                activeInstanceStudents={activeInstanceStudents}
                 filteredRoster={filteredRoster}
                 activeSchedule={activeSchedule}
                 studentSearch={studentSearch}
                 setStudentSearch={setStudentSearch}
+                selectedStudentId={selectedStudentId}
+                onSelectStudent={entry => setSelectedStudentId(entry.enrollment?.uuid ?? '')}
+                onMarkAllPresent={handleMarkAllPresent}
+                isMarkingAllAttendance={markAttendanceMut.isPending}
               />
             </SheetContent>
           </Sheet>
@@ -973,6 +1204,9 @@ export default function ClassTrainingPage() {
                 activeSchedule={activeSchedule}
                 activeInstanceStudentsCount={activeInstanceStudents.length}
                 selectedContentType={selectedContentType}
+                selectedStudent={selectedStudent}
+                onMarkAttendance={handleMarkAttendance}
+                isMarkingAttendance={markAttendanceMut.isPending}
               />
             </SheetContent>
           </Sheet>
@@ -995,10 +1229,15 @@ export default function ClassTrainingPage() {
         <aside className='border-border/70 hidden min-h-0 border-r xl:block'>
           <RosterPanel
             activeInstanceStudentsCount={activeInstanceStudents.length}
+            activeInstanceStudents={activeInstanceStudents}
             filteredRoster={filteredRoster}
             activeSchedule={activeSchedule}
             studentSearch={studentSearch}
             setStudentSearch={setStudentSearch}
+            selectedStudentId={selectedStudentId}
+            onSelectStudent={entry => setSelectedStudentId(entry.enrollment?.uuid ?? '')}
+            onMarkAllPresent={handleMarkAllPresent}
+            isMarkingAllAttendance={markAttendanceMut.isPending}
           />
         </aside>
 
@@ -1107,6 +1346,9 @@ export default function ClassTrainingPage() {
             activeSchedule={activeSchedule}
             activeInstanceStudentsCount={activeInstanceStudents.length}
             selectedContentType={selectedContentType}
+            selectedStudent={selectedStudent}
+            onMarkAttendance={handleMarkAttendance}
+            isMarkingAttendance={markAttendanceMut.isPending}
           />
         </aside>
       </section>
