@@ -9,7 +9,7 @@ import { ProjectDateBadge, StatusLine } from './ProjectMeta';
 import { ProjectThumbnail } from './ProjectThumbnail';
 import type { PortfolioAsset, PortfolioProject } from './portfolio-data';
 
-const getProjectHref = (projectId: string) => `/dashboard/my-portfolio/${projectId}`;
+const getProjectHref = (projectId: string) => `/dashboard/portfolio/${projectId}`;
 
 type RecentProjectCardProps = {
   project: PortfolioProject;

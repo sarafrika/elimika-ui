@@ -22,7 +22,7 @@ export function ProjectDetailsView({ project }: ProjectDetailsViewProps) {
         <header className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <Button variant='ghost' size='sm' className='text-primary mb-2 -ml-2' asChild>
-              <Link href='/dashboard/my-portfolio'>
+              <Link href='/dashboard/portfolio'>
                 <ArrowLeft className='size-4' />
                 Back to Portfolio
               </Link>
