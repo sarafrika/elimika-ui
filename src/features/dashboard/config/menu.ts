@@ -137,14 +137,14 @@ export default {
   ],
   student: [
     {
-      title: 'Home - All courses',
-      url: '/dashboard/all-courses',
-      icon: School,
-    },
-    {
       title: 'Overview',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
+    },
+    {
+      title: 'Home - All courses',
+      url: '/dashboard/all-courses',
+      icon: School,
     },
     {
       title: 'My Skills',
