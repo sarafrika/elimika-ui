@@ -1,4 +1,3 @@
-import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AssessmentTab } from './assessment-data';
 
@@ -33,10 +32,10 @@ export function AssessmentTopBar({
         <h2 className='text-foreground text-2xl font-semibold tracking-normal sm:text-3xl'>
           Assessments & Competencies
         </h2>
-        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+        {/* <div className='text-muted-foreground flex items-center gap-2 text-sm'>
           <Search className='size-4' />
           <span>Sarah Otieno</span>
-        </div>
+        </div> */}
       </div>
 
       <div className='text-muted-foreground flex flex-wrap items-center gap-3 text-sm'>

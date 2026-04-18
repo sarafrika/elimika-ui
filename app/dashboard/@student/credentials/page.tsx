@@ -1,8 +1,5 @@
+import { CredentialsVaultPage } from '@/components/profile-credentials';
 
-const CredentialsPage = () => {
-    return (
-        <div>CredentialsPage</div>
-    )
+export default function CredentialsPage() {
+  return <CredentialsVaultPage role='student' />;
 }
-
-export default CredentialsPage

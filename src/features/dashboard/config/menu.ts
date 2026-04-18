@@ -137,19 +137,29 @@ export default {
   ],
   student: [
     {
-      title: 'Home - All courses',
-      url: '/dashboard/all-courses',
-      icon: School,
-    },
-    {
       title: 'Overview',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
     {
-      title: 'My Skills',
+      title: 'Skills Wallet Profile',
       url: '/dashboard/my-skills',
       icon: BadgeCheck,
+    },
+    {
+      title: 'Courses',
+      url: '/dashboard/all-courses',
+      icon: GraduationCap,
+    },
+    {
+      title: 'Learning Hub',
+      url: '/dashboard/learning-hub',
+      icon: School,
+    },
+    {
+      title: 'Assessment & Competency',
+      url: '/dashboard/assessment',
+      icon: Award,
     },
     {
       title: 'Schedule',
@@ -161,11 +171,7 @@ export default {
       url: '/dashboard/assignment',
       icon: ClipboardCheck,
     },
-    {
-      title: 'Assessment (Grades)',
-      url: '/dashboard/assessment',
-      icon: Award,
-    },
+
     {
       title: 'Invites',
       url: '/dashboard/invites',

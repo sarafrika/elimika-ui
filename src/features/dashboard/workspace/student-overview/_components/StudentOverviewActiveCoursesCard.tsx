@@ -1,0 +1,95 @@
+'use client';
+
+import { Card } from '@/components/ui/card';
+import { ArrowRight, CalendarDays, GraduationCap } from 'lucide-react';
+import Link from 'next/link';
+import type { StudentOverviewActiveCourse } from '../useStudentOverviewData';
+
+type StudentOverviewActiveCoursesCardProps = {
+  courses: StudentOverviewActiveCourse[];
+  isLoading?: boolean;
+};
+
+export function StudentOverviewActiveCoursesCard({
+  courses,
+  isLoading,
+}: StudentOverviewActiveCoursesCardProps) {
+  return (
+    <Card className='rounded-[20px] border-slate-200 bg-white p-4 shadow-[0_24px_55px_-48px_rgba(15,23,42,0.22)] sm:p-6'>
+      <div className='flex items-center justify-between gap-3'>
+        <h2 className='text-[1rem] font-semibold text-slate-900'>Active Courses</h2>
+        <Link
+          prefetch
+          href='/dashboard/all-courses'
+          className='text-[0.8rem] font-medium text-primary transition hover:text-primary/80'
+        >
+          See All
+        </Link>
+      </div>
+
+      <div className='mt-2.5 space-y-2.5'>
+        {courses.map(course => (
+          <div
+            key={course.id}
+            className='rounded-[12px] border border-slate-200 bg-white p-3'
+          >
+            <div className='flex items-start gap-3'>
+              <div className='grid size-9 shrink-0 place-items-center rounded-[10px] bg-[linear-gradient(180deg,#4d97ff,#2a6fdd)] text-white shadow-sm'>
+                <GraduationCap className='size-4' />
+              </div>
+              <div className='min-w-0 flex-1'>
+                <div className='flex items-start justify-between gap-3'>
+                  <div className='min-w-0'>
+                    <h3 className='truncate text-[0.9rem] font-semibold text-slate-900'>{course.title}</h3>
+                    <p className='mt-0.5 text-[0.74rem] text-slate-500'>{course.subtitle}</p>
+                  </div>
+                  <div className='text-right'>
+                    <div className='text-[1.28rem] leading-none font-semibold text-slate-800'>
+                      {course.progress}%
+                    </div>
+                    <div className='mt-1.5 h-1.5 w-14 overflow-hidden rounded-full bg-slate-200'>
+                      <div
+                        className='h-full rounded-full bg-[linear-gradient(90deg,#7ed7a2,#5d8df6)]'
+                        style={{ width: `${course.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className='mt-2 flex flex-wrap items-center justify-between gap-2'>
+                  <span className='inline-flex items-center gap-1 rounded-[9px] bg-[color-mix(in_srgb,var(--primary)_8%,white)] px-2 py-1 text-[0.66rem] font-medium text-slate-600'>
+                    <CalendarDays className='size-3 text-primary' />
+                    {course.nextDateLabel}
+                  </span>
+                  <Link
+                    prefetch
+                    href='/dashboard/all-courses'
+                    className='inline-flex items-center gap-1 rounded-[8px] bg-primary px-2.5 py-1.5 text-[0.7rem] font-medium text-primary-foreground transition hover:bg-primary/90'
+                  >
+                    {course.buttonLabel}
+                    <ArrowRight className='size-3' />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {isLoading && courses.length === 0 ? (
+        <p className='mt-3 text-[0.78rem] text-slate-500'>Syncing your current courses...</p>
+      ) : null}
+
+      <div className='mt-3 flex justify-end'>
+        <Link
+          prefetch
+          href='/dashboard/all-courses'
+          className='inline-flex items-center gap-1 text-[0.8rem] font-medium text-primary transition hover:text-primary/80'
+        >
+          See All Courses
+          <ArrowRight className='size-3.5' />
+        </Link>
+      </div>
+    </Card>
+  );
+}
