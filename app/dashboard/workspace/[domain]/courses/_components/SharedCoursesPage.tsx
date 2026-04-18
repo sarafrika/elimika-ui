@@ -147,6 +147,15 @@ const createCatalogCards = (
           ? 'apply-program'
           : 'apply-course'
         : 'link',
+      ctaTone: isInstructorApplyCard
+        ? applicationStatus === 'approved'
+          ? 'approved'
+          : applicationStatus === 'pending'
+            ? 'pending'
+            : applicationStatus === 'revoked'
+              ? 'revoked'
+              : 'default'
+        : 'default',
       minimumRate: item.minimumRate,
       showInstructorCta: !isInstructorApplyCard,
       detailsHref: buildWorkspaceAliasPath(domain, item.href),

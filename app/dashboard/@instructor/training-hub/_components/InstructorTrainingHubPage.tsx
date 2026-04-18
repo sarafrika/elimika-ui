@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { BookingCard } from './BookingCard';
 import { LiveClassCard } from './LiveClassCard';
@@ -11,11 +11,14 @@ import { TrainingHubHeader } from './TrainingHubHeader';
 import { TrainingHubSectionHeader } from './TrainingHubSectionHeader';
 import { TrainingHubToolbar } from './TrainingHubToolbar';
 import { WaitingListItem } from './WaitingListItem';
-import { bookingPreviews, liveClasses, managedCourses, waitingList } from './training-hub-data';
+import { bookingPreviews, waitingList } from './training-hub-data';
+import { useInstructorTrainingHubData } from './useInstructorTrainingHubData';
 
 export function InstructorTrainingHubPage() {
   const { replaceBreadcrumbs } = useBreadcrumb();
   const [searchTerm, setSearchTerm] = useState('');
+  const { liveClasses, managedCourses, isLoading: isLoadingManagedCourses } =
+    useInstructorTrainingHubData();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -79,10 +82,17 @@ export function InstructorTrainingHubPage() {
               {filteredManagedCourses.map(course => (
                 <ManageCourseCard key={course.id} course={course} />
               ))}
-              {filteredManagedCourses.length === 0 ? (
+              {!isLoadingManagedCourses && filteredManagedCourses.length === 0 ? (
                 <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     No approved courses matched your search.
+                  </CardContent>
+                </Card>
+              ) : null}
+              {isLoadingManagedCourses ? (
+                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                  <CardContent className='py-10 text-center text-sm text-muted-foreground'>
+                    Loading approved courses...
                   </CardContent>
                 </Card>
               ) : null}

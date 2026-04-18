@@ -17,6 +17,16 @@ type CoursesCatalogCardProps = {
   onPrimaryAction?: (card: CoursesCatalogCardData) => void;
 };
 
+const ctaToneClasses: Record<NonNullable<CoursesCatalogCardData['ctaTone']>, string> = {
+  default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  pending:
+    'border border-[color:var(--warning)] bg-[color:var(--warning)] text-[color:var(--warning-foreground)] hover:brightness-95 disabled:opacity-100',
+  approved:
+    'border border-[color:var(--success)] bg-[color:var(--success)] text-[color:var(--success-foreground)] hover:brightness-95 disabled:opacity-100',
+  revoked:
+    'border border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-100',
+};
+
 export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
 
@@ -84,7 +94,10 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
           {card.ctaKind === 'apply-course' || card.ctaKind === 'apply-program' ? (
             <Button
               type='button'
-              className='h-9 rounded-xl text-sm shadow-none'
+              className={cn(
+                'h-9 rounded-xl text-sm shadow-none',
+                ctaToneClasses[card.ctaTone ?? 'default']
+              )}
               disabled={card.ctaDisabled}
               onClick={() => onPrimaryAction?.(card)}
             >

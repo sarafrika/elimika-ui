@@ -51,6 +51,7 @@ export type CoursesCatalogCardData = {
   ctaLabel: string;
   ctaDisabled?: boolean;
   ctaKind?: 'link' | 'apply-course' | 'apply-program';
+  ctaTone?: 'default' | 'pending' | 'approved' | 'revoked';
   minimumRate?: number;
   showInstructorCta?: boolean;
   detailsHref: string;

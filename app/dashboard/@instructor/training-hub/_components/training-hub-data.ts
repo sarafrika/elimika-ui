@@ -8,6 +8,7 @@ export type TrainingHubManagedCourse = {
   ctaLabel: string;
   ctaHref: string;
   accent: 'blue' | 'indigo' | 'orange' | 'yellow';
+  imageUrl?: string;
 };
 
 export type TrainingHubLiveClass = {

@@ -1,7 +1,9 @@
 'use client';
 
-import Link from 'next/link';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { BarChart3, Star, Users } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 import type { TrainingHubManagedCourse } from './training-hub-data';
 
 const accentClasses: Record<TrainingHubManagedCourse['accent'], string> = {
@@ -23,17 +25,13 @@ type ManageCourseCardProps = {
 };
 
 export function ManageCourseCard({ course }: ManageCourseCardProps) {
+  const imageUrl = toAuthenticatedMediaUrl(course.imageUrl);
+
   return (
     <article className='rounded-[12px] border border-border/60 bg-white p-2.5 shadow-[0_10px_24px_rgba(31,79,183,0.05)] sm:p-3'>
       <div className='flex gap-3'>
         <div className='min-w-0 flex-1'>
           <div className='flex items-start gap-2'>
-            <span
-              className={`mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-[4px] text-[0.68rem] font-semibold ${badgeClasses[course.accent]}`}
-            >
-              {course.title.slice(0, 1)}
-            </span>
-
             <div className='min-w-0'>
               <h3 className='truncate text-[0.98rem] font-semibold text-foreground sm:text-[1rem]'>
                 {course.title}
@@ -64,8 +62,18 @@ export function ManageCourseCard({ course }: ManageCourseCardProps) {
 
         <div
           aria-hidden='true'
-          className={`hidden w-[98px] shrink-0 rounded-[10px] border border-white/60 sm:block ${accentClasses[course.accent]}`}
-        />
+          className={`relative hidden h-[74px] w-[86px] shrink-0 overflow-hidden rounded-[10px] border border-white/60 sm:block ${accentClasses[course.accent]}`}
+        >
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={course.title}
+              fill
+              className='object-cover'
+              unoptimized={isAuthenticatedMediaUrl(imageUrl)}
+            />
+          ) : null}
+        </div>
       </div>
 
       <div className='mt-2 flex justify-end'>
