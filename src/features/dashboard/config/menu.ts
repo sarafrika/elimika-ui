@@ -148,7 +148,7 @@ export default {
     },
     {
       title: 'Courses',
-      url: '/dashboard/all-courses',
+      url: '/dashboard/courses',
       icon: GraduationCap,
     },
     {
