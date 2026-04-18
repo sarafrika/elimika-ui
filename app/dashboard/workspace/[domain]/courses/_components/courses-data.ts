@@ -49,6 +49,10 @@ export type CoursesCatalogCardData = {
   duration: string;
   secondaryMeta: string;
   ctaLabel: string;
+  ctaDisabled?: boolean;
+  ctaKind?: 'link' | 'apply-course' | 'apply-program';
+  minimumRate?: number;
+  showInstructorCta?: boolean;
   detailsHref: string;
   enrollHref: string;
   instructorHref: string;
@@ -165,6 +169,10 @@ export function getEnrollHref(domain: UserDomain, kind: 'course' | 'program', uu
 
 export function getInstructorHref(domain: UserDomain, uuid: string) {
   return `${domainBasePaths[domain]}/instructor?courseId=${uuid}`;
+}
+
+export function getApplyToTrainHref(uuid: string) {
+  return `/dashboard/apply-to-train/${uuid}`;
 }
 
 export function getDurationBucket(totalMinutes: number) {

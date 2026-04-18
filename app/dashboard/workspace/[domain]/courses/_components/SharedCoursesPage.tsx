@@ -1,5 +1,6 @@
 'use client';
 
+import NotesModal from '@/components/custom-modals/notes-modal';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -10,7 +11,9 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useInstructor } from '@/context/instructor-context';
 import type { UserDomain } from '@/lib/types';
+import { ApplicantTypeEnum } from '@/services/client';
 import {
   getAllCategoriesOptions,
   getAllDifficultyLevelsOptions,
@@ -19,13 +22,20 @@ import {
   getCourseReviewsOptions,
   getProgramCoursesOptions,
   getPublishedCoursesOptions,
+  searchProgramTrainingApplicationsOptions,
+  searchProgramTrainingApplicationsQueryKey,
+  searchTrainingApplicationsOptions,
+  searchTrainingApplicationsQueryKey,
+  submitProgramTrainingApplicationMutation,
+  submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Category } from '@/services/client/types.gen';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Filter, SquareDashedMousePointer } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { CoursesCatalogCard } from './CoursesCatalogCard';
 import { CoursesCategoryFilters } from './CoursesCategoryFilters';
 import { CoursesCategoryTile } from './CoursesCategoryTile';
@@ -34,13 +44,14 @@ import { CoursesRecommendationCard } from './CoursesRecommendationCard';
 import {
   catalogTabs,
   formatDurationFromParts,
+  getApplyToTrainHref,
   getCardPresentation,
   getCategoryTilePresentation,
   getContentHref,
   getDurationBucket,
   getEnrollHref,
-  heroActions,
   getInstructorHref,
+  heroActions,
   stripHtml,
   type CoursesCatalogCardData,
   type CoursesCatalogTab,
@@ -65,6 +76,7 @@ type UnifiedContentItem = {
   creatorName: string;
   levelLabel?: string;
   price?: number;
+  minimumRate?: number;
   imageUrl?: string;
   href: string;
   secondaryMeta: string;
@@ -92,10 +104,29 @@ const getCatalogBatchSize = (width: number) => {
 const createCatalogCards = (
   items: UnifiedContentItem[],
   domain: UserDomain,
-  creatorMap: Map<string, string>
+  creatorMap: Map<string, string>,
+  instructorCourseApplicationMap: Map<string, { status?: string | null }>,
+  instructorProgramApplicationMap: Map<string, { status?: string | null }>
 ): CoursesCatalogCardData[] =>
   items.map((item, index) => {
     const presentation = getCardPresentation(index);
+    const isInstructorApplyCard = domain === 'instructor';
+    const application =
+      item.kind === 'program'
+        ? instructorProgramApplicationMap.get(item.id)
+        : instructorCourseApplicationMap.get(item.id);
+    const applicationStatus = application?.status ?? null;
+    const ctaLabel = !isInstructorApplyCard
+      ? item.kind === 'program'
+        ? 'Apply Now'
+        : 'Enroll'
+      : applicationStatus === 'approved'
+        ? 'Approved'
+        : applicationStatus === 'pending'
+          ? 'Pending'
+          : applicationStatus === 'revoked'
+            ? 'Reapply to Train'
+            : 'Apply to Train';
 
     return {
       id: item.id,
@@ -107,9 +138,21 @@ const createCatalogCards = (
         item.levelLabel ||
         item.categoryLabels[0] ||
         (item.kind === 'program' ? 'Training Program' : 'Course'),
-      ctaLabel: item.kind === 'program' ? 'Apply Now' : 'Enroll',
+      ctaLabel,
+      ctaDisabled: isInstructorApplyCard
+        ? Boolean(applicationStatus && applicationStatus !== 'revoked')
+        : false,
+      ctaKind: isInstructorApplyCard
+        ? item.kind === 'program'
+          ? 'apply-program'
+          : 'apply-course'
+        : 'link',
+      minimumRate: item.minimumRate,
+      showInstructorCta: !isInstructorApplyCard,
       detailsHref: buildWorkspaceAliasPath(domain, item.href),
-      enrollHref: buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
+      enrollHref: isInstructorApplyCard
+        ? getApplyToTrainHref(item.id)
+        : buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
       instructorHref: buildWorkspaceAliasPath(domain, getInstructorHref(domain, item.id)),
       icon: presentation.icon,
       imageTone: presentation.imageTone,
@@ -142,9 +185,13 @@ const createRecommendationCards = (
   });
 
 export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
+  const qc = useQueryClient();
+  const instructor = useInstructor();
   const [activeTab, setActiveTab] = useState<CoursesCatalogTab>('all-courses');
   const [filters, setFilters] = useState<FilterValues>(defaultFilterValues);
   const [visibleCoursesCount, setVisibleCoursesCount] = useState(8);
+  const [applyModalOpen, setApplyModalOpen] = useState(false);
+  const [selectedApplicationCard, setSelectedApplicationCard] = useState<CoursesCatalogCardData | null>(null);
 
   useEffect(() => {
     const syncVisibleCountToViewport = () => {
@@ -211,6 +258,22 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
   const categories = useMemo(() => categoriesResponse?.data?.content ?? [], [categoriesResponse]);
 
+  const { data: instructorCourseApplications } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+    }),
+    enabled: domain === 'instructor' && Boolean(instructor?.uuid),
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: instructorProgramApplications } = useQuery({
+    ...searchProgramTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+    }),
+    enabled: domain === 'instructor' && Boolean(instructor?.uuid),
+    refetchOnWindowFocus: false,
+  });
+
   const categoryMap = useMemo(
     () => new Map(categories.map(category => [category.uuid ?? '', category.name])),
     [categories]
@@ -246,6 +309,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           creatorUuid: program.course_creator_uuid,
           creatorName: '',
           price: program.price,
+          minimumRate: program.price,
           imageUrl: undefined,
           href: getContentHref(domain, 'program', program.uuid ?? ''),
           secondaryMeta:
@@ -277,6 +341,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         creatorName: '',
         levelLabel: difficultyMap.get(course.difficulty_uuid ?? ''),
         price: course.price,
+        minimumRate: course.minimum_training_fee ?? course.price,
         imageUrl: course.banner_url ?? course.thumbnail_url,
         href: getContentHref(domain, 'course', course.uuid ?? ''),
         secondaryMeta:
@@ -464,6 +529,29 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     return map;
   }, [creatorIds, creatorQueries]);
 
+  const instructorCourseApplicationMap = useMemo(() => {
+    const map = new Map<string, { status?: string | null }>();
+    instructorCourseApplications?.data?.content?.forEach(application => {
+      if (application.course_uuid) {
+        map.set(application.course_uuid, { status: application.status });
+      }
+    });
+    return map;
+  }, [instructorCourseApplications]);
+
+  const instructorProgramApplicationMap = useMemo(() => {
+    const map = new Map<string, { status?: string | null }>();
+    instructorProgramApplications?.data?.content?.forEach(application => {
+      if (application.program_uuid) {
+        map.set(application.program_uuid, { status: application.status });
+      }
+    });
+    return map;
+  }, [instructorProgramApplications]);
+
+  const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
+  const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation());
+
   const recommendationReviewQueries = useQueries({
     queries: recommendedBase.map(item => ({
       ...getCourseReviewsOptions({ path: { courseUuid: item.id } }),
@@ -510,9 +598,19 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             : item
         ),
         domain,
-        creatorMap
+        creatorMap,
+        instructorCourseApplicationMap,
+        instructorProgramApplicationMap
       ),
-    [bundledCoursesCountMap, creatorMap, domain, filteredItems, visibleCoursesCount]
+    [
+      bundledCoursesCountMap,
+      creatorMap,
+      domain,
+      filteredItems,
+      instructorCourseApplicationMap,
+      instructorProgramApplicationMap,
+      visibleCoursesCount,
+    ]
   );
 
   const recommendationCards = useMemo(
@@ -563,6 +661,86 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       category: category.uuid ?? category.name,
     }));
     setVisibleCoursesCount(getCatalogBatchSize(window.innerWidth));
+  };
+
+  const handleCatalogCardAction = (card: CoursesCatalogCardData) => {
+    if (card.ctaKind !== 'apply-course' && card.ctaKind !== 'apply-program') {
+      return;
+    }
+
+    setSelectedApplicationCard(card);
+    setApplyModalOpen(true);
+  };
+
+  const handleApplyToTrain = (data: {
+    notes: string;
+    private_online_rate: number;
+    private_inperson_rate: number;
+    group_online_rate: number;
+    group_inperson_rate: number;
+    rate_currency: string;
+  }) => {
+    if (!selectedApplicationCard || !instructor?.uuid) return;
+
+    const body = {
+      applicant_type: ApplicantTypeEnum.INSTRUCTOR,
+      applicant_uuid: instructor.uuid,
+      rate_card: {
+        currency: data.rate_currency,
+        private_online_rate: data.private_online_rate,
+        private_inperson_rate: data.private_inperson_rate,
+        group_online_rate: data.group_online_rate,
+        group_inperson_rate: data.group_inperson_rate,
+      },
+      application_notes: data.notes,
+    };
+
+    if (selectedApplicationCard.ctaKind === 'apply-program') {
+      applyToTrainProgramMut.mutate(
+        {
+          body,
+          path: { programUuid: selectedApplicationCard.id },
+        },
+        {
+          onSuccess: response => {
+            qc.invalidateQueries({
+              queryKey: searchProgramTrainingApplicationsQueryKey({
+                query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor.uuid } },
+              }),
+            });
+            toast.success(response?.message);
+            setApplyModalOpen(false);
+            setSelectedApplicationCard(null);
+          },
+          onError: error => {
+            toast.error(error?.message ?? 'Unable to submit program application');
+          },
+        }
+      );
+      return;
+    }
+
+    applyToTrainCourseMut.mutate(
+      {
+        body,
+        path: { courseUuid: selectedApplicationCard.id },
+      },
+      {
+        onSuccess: response => {
+          qc.invalidateQueries({
+            queryKey: searchTrainingApplicationsQueryKey({
+              query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor.uuid } },
+            }),
+          });
+          toast.success(response?.message);
+          setApplyModalOpen(false);
+          setSelectedApplicationCard(null);
+        },
+        onError: error => {
+          toast.error(error?.message ?? 'Unable to submit course application');
+        },
+      }
+    );
   };
 
   return (
@@ -697,7 +875,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                   <div className='p-4'>
                     <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
                       {catalogCards.map(card => (
-                        <CoursesCatalogCard key={card.id} card={card} />
+                        <CoursesCatalogCard
+                          key={card.id}
+                          card={card}
+                          onPrimaryAction={handleCatalogCardAction}
+                        />
                       ))}
                     </div>
                     {hasMoreCatalogItems ? (
@@ -791,6 +973,50 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           </Button>
         </section>
       </div>
+      {selectedApplicationCard ? (
+        <NotesModal
+          open={applyModalOpen}
+          setOpen={open => {
+            setApplyModalOpen(open);
+            if (!open) {
+              setSelectedApplicationCard(null);
+            }
+          }}
+          title={
+            selectedApplicationCard.ctaKind === 'apply-program'
+              ? 'Apply to Train a Program'
+              : 'Apply to Train a Course'
+          }
+          description={
+            <div className='space-y-2'>
+              <p>
+                You are applying to train the{' '}
+                {selectedApplicationCard.ctaKind === 'apply-program' ? 'program' : 'course'} titled{' '}
+                <span className='font-semibold'>&ldquo;{selectedApplicationCard.title}&rdquo;</span>.
+              </p>
+              <p>
+                Provider: <span className='font-medium'>{selectedApplicationCard.provider}</span>
+                {selectedApplicationCard.duration
+                  ? ` · Duration: ${selectedApplicationCard.duration}`
+                  : ''}
+                {selectedApplicationCard.secondaryMeta
+                  ? ` · Focus: ${selectedApplicationCard.secondaryMeta}`
+                  : ''}
+              </p>
+              <p>
+                Submit your application notes and set the amount you want to charge students per
+                hour per head, while respecting the creator-set minimum shown below.
+              </p>
+            </div>
+          }
+          onSave={handleApplyToTrain}
+          saveText='Submit application'
+          cancelText='Cancel'
+          placeholder='Enter your application notes here...'
+          isLoading={applyToTrainCourseMut.isPending || applyToTrainProgramMut.isPending}
+          minimum_rate={selectedApplicationCard.minimumRate ?? 0}
+        />
+      ) : null}
     </div>
   );
 }

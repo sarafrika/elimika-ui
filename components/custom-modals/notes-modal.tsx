@@ -144,7 +144,8 @@ export default function NotesModal({
 
               {/* Minimum rate note */}
               <p className='text-muted-foreground text-sm'>
-                Minimum rate set by course creator:{' '}
+                Set the amount you want to charge students per hour per head. The minimum amount
+                you can charge has already been preset by the course creator:{' '}
                 <span className='font-semibold'>
                   {minimum_rate} {currency}
                 </span>{' '}
@@ -154,8 +155,12 @@ export default function NotesModal({
               {/* Private Training Rates */}
               <div className='rounded-md border p-3'>
                 <h3 className='mb-3 text-sm font-semibold'>
-                  Private Training Rates (Per Hour Per Head)
+                  Private Training Rates
                 </h3>
+                <p className='text-muted-foreground mb-3 text-xs'>
+                  Enter the amount you will charge one student per hour per head for private
+                  sessions.
+                </p>
                 <div className='flex gap-4'>
                   <div className='flex-1 space-y-1'>
                     <label className='text-muted-foreground text-sm font-medium'>Online</label>
@@ -185,8 +190,12 @@ export default function NotesModal({
               {/* Group Training Rates */}
               <div className='rounded-md border p-3'>
                 <h3 className='mb-3 text-sm font-semibold'>
-                  Group Training Rates (Per Hour Per Head)
+                  Group Training Rates
                 </h3>
+                <p className='text-muted-foreground mb-3 text-xs'>
+                  Enter the amount you will charge each student per hour per head for group
+                  sessions.
+                </p>
                 <div className='flex gap-4'>
                   <div className='flex-1 space-y-1'>
                     <label className='text-muted-foreground text-sm font-medium'>Online</label>

@@ -1,20 +1,5 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  BookOpen,
-  ChevronRight,
-  ClipboardList,
-  GraduationCap,
-  HelpCircle,
-  Play,
-  Search,
-  Star,
-  Users,
-} from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -38,6 +23,21 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  BookOpen,
+  ChevronRight,
+  ClipboardList,
+  GraduationCap,
+  HelpCircle,
+  Play,
+  Search,
+  Star,
+  Users,
+} from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { CustomLoadingState } from '../@course_creator/_components/loading-state';
 import { ReviewCard } from '../@instructor/reviews/review-card';
 import { VideoPlayer } from '../@student/schedule/classes/[id]/VideoPlayer';
@@ -210,8 +210,8 @@ export default function ReusableCourseDetailsPage({
   const avgRating =
     reviewCount > 0
       ? (reviewItems.reduce((sum, review) => sum + (review.rating || 0), 0) / reviewCount).toFixed(
-          1
-        )
+        1
+      )
       : null;
   const detailStats = [
     { label: 'Lessons', value: lessonsWithContent?.length || 0, icon: BookOpen },
@@ -254,11 +254,10 @@ export default function ReusableCourseDetailsPage({
                       {[1, 2, 3, 4, 5].map(s => (
                         <Star
                           key={s}
-                          className={`h-4 w-4 ${
-                            s <= Math.round(Number(avgRating))
-                              ? 'fill-warning text-warning'
-                              : 'text-muted-foreground/40'
-                          }`}
+                          className={`h-4 w-4 ${s <= Math.round(Number(avgRating))
+                            ? 'fill-warning text-warning'
+                            : 'text-muted-foreground/40'
+                            }`}
                         />
                       ))}
                     </div>
@@ -465,21 +464,19 @@ export default function ReusableCourseDetailsPage({
         </div>
 
         <div className='space-y-6'>
-          <Card className='rounded-[22px] border p-5 shadow-none sm:p-6'>
-            <CourseTrainingRequirements
-              requirements={courseData?.training_requirements}
-              viewerRole={
-                userRole as
-                  | 'admin'
-                  | 'course_creator'
-                  | 'instructor'
-                  | 'organization'
-                  | 'student'
-                  | undefined
-              }
-              description='Review what is required for this course before enrollment or delivery.'
-            />
-          </Card>
+          <CourseTrainingRequirements
+            requirements={courseData?.training_requirements}
+            viewerRole={
+              userRole as
+              | 'admin'
+              | 'course_creator'
+              | 'instructor'
+              | 'organization'
+              | 'student'
+              | undefined
+            }
+            description='Review what is required for this course before enrollment or delivery.'
+          />
 
           <Card className='rounded-[22px] border p-5 shadow-none sm:p-6'>
             <SectionLabel>Course Snapshot</SectionLabel>
@@ -489,9 +486,9 @@ export default function ReusableCourseDetailsPage({
                   <span className='bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-xl'>
                     <Icon className='h-4 w-4' />
                   </span>
-                  <div className='min-w-0'>
+                  <div className='min-w-0 flex flex-row items-center gap-1'>
+                    <p className='text-muted-foreground text-xl font-bold'>{value}</p>
                     <p className='text-foreground text-sm font-medium'>{label}</p>
-                    <p className='text-muted-foreground text-sm'>{value}</p>
                   </div>
                 </div>
               ))}

@@ -244,19 +244,18 @@ export default {
       url: '/dashboard/calendar',
       icon: CalendarClock,
     },
-    // {
-    //   title: 'Courses',
-    //   url: '/dashboard/courses',
-    //   icon: GraduationCap,
-    // },
     {
       title: 'Courses',
       url: '/dashboard/courses',
-      icon: BookOpen,
+      icon: GraduationCap,
     },
     {
-      title: 'Classes (Training Hub)',
-      // url: '/dashboard/trainings',
+      title: 'Training Hub',
+      url: '/dashboard/training-hub',
+      icon: ClipboardList,
+    },
+    {
+      title: 'Classes',
       url: '/dashboard/classes',
       icon: ClipboardList,
     },

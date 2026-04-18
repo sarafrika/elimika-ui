@@ -14,9 +14,10 @@ const imageToneClasses = {
 
 type CoursesCatalogCardProps = {
   card: CoursesCatalogCardData;
+  onPrimaryAction?: (card: CoursesCatalogCardData) => void;
 };
 
-export function CoursesCatalogCard({ card }: CoursesCatalogCardProps) {
+export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
 
   return (
@@ -71,19 +72,33 @@ export function CoursesCatalogCard({ card }: CoursesCatalogCardProps) {
           </span>
         </div>
 
-        <div className='grid gap-2 sm:grid-cols-2'>
-          <Button asChild variant='outline' className='h-9 rounded-xl text-sm shadow-none'>
-            <Link href={card.instructorHref}>
-              <UserRoundSearch className='size-4' />
-              Instructors
-            </Link>
-          </Button>
-          <Button asChild className='h-9 rounded-xl text-sm shadow-none'>
-            <Link href={card.enrollHref}>
+        <div className={cn('grid gap-2', card.showInstructorCta !== false && 'sm:grid-cols-2')}>
+          {card.showInstructorCta !== false ? (
+            <Button asChild variant='outline' className='h-9 rounded-xl text-sm shadow-none'>
+              <Link href={card.instructorHref}>
+                <UserRoundSearch className='size-4' />
+                Instructors
+              </Link>
+            </Button>
+          ) : null}
+          {card.ctaKind === 'apply-course' || card.ctaKind === 'apply-program' ? (
+            <Button
+              type='button'
+              className='h-9 rounded-xl text-sm shadow-none'
+              disabled={card.ctaDisabled}
+              onClick={() => onPrimaryAction?.(card)}
+            >
               <BookOpen className='size-4' />
               {card.ctaLabel}
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button asChild className='h-9 rounded-xl text-sm shadow-none' disabled={card.ctaDisabled}>
+              <Link href={card.enrollHref}>
+                <BookOpen className='size-4' />
+                {card.ctaLabel}
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </article>
