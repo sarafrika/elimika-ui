@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { BookOpen, Clock3, Tag } from 'lucide-react';
+import { BookOpen, Clock3, Tag, UserRoundSearch } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { CoursesCatalogCardData } from './courses-data';
@@ -21,7 +21,7 @@ export function CoursesCatalogCard({ card }: CoursesCatalogCardProps) {
 
   return (
     <article className='border-border bg-card overflow-hidden rounded-lg border'>
-      <Link href={card.href} className='block'>
+      <Link href={card.detailsHref} className='block'>
         <div
           className={cn(
             'border-border relative flex h-32 items-center justify-center overflow-hidden border-b',
@@ -50,7 +50,7 @@ export function CoursesCatalogCard({ card }: CoursesCatalogCardProps) {
 
       <div className='space-y-3 px-4 py-3.5'>
         <div>
-          <Link href={card.href} className='block'>
+          <Link href={card.detailsHref} className='block'>
             <h3 className='text-foreground text-[clamp(0.95rem,1vw,1.05rem)] font-semibold leading-tight'>
               {card.title}
             </h3>
@@ -71,12 +71,20 @@ export function CoursesCatalogCard({ card }: CoursesCatalogCardProps) {
           </span>
         </div>
 
-        <Button asChild className='h-9 w-full rounded-xl text-sm shadow-none'>
-          <Link href={card.href}>
-            <BookOpen className='size-4' />
-            {card.ctaLabel}
-          </Link>
-        </Button>
+        <div className='grid gap-2 sm:grid-cols-2'>
+          <Button asChild variant='outline' className='h-9 rounded-xl text-sm shadow-none'>
+            <Link href={card.instructorHref}>
+              <UserRoundSearch className='size-4' />
+              Instructors
+            </Link>
+          </Button>
+          <Button asChild className='h-9 rounded-xl text-sm shadow-none'>
+            <Link href={card.enrollHref}>
+              <BookOpen className='size-4' />
+              {card.ctaLabel}
+            </Link>
+          </Button>
+        </div>
       </div>
     </article>
   );

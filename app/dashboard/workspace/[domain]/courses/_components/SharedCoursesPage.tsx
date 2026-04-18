@@ -38,7 +38,9 @@ import {
   getCategoryTilePresentation,
   getContentHref,
   getDurationBucket,
+  getEnrollHref,
   heroActions,
+  getInstructorHref,
   stripHtml,
   type CoursesCatalogCardData,
   type CoursesCatalogTab,
@@ -106,7 +108,9 @@ const createCatalogCards = (
         item.categoryLabels[0] ||
         (item.kind === 'program' ? 'Training Program' : 'Course'),
       ctaLabel: item.kind === 'program' ? 'Apply Now' : 'Enroll',
-      href: buildWorkspaceAliasPath(domain, item.href),
+      detailsHref: buildWorkspaceAliasPath(domain, item.href),
+      enrollHref: buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
+      instructorHref: buildWorkspaceAliasPath(domain, getInstructorHref(domain, item.id)),
       icon: presentation.icon,
       imageTone: presentation.imageTone,
       imageUrl: item.imageUrl,
@@ -129,7 +133,8 @@ const createRecommendationCards = (
       rating: ratingsMap.get(item.id) ?? 'New',
       weeks: item.durationLabel,
       secondaryMeta: item.categoryLabels[0] ?? item.secondaryMeta ?? 'Published Course',
-      href: buildWorkspaceAliasPath(domain, item.href),
+      detailsHref: buildWorkspaceAliasPath(domain, item.href),
+      enrollHref: buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
       icon: presentation.icon,
       imageTone: presentation.imageTone,
       imageUrl: item.imageUrl,
@@ -602,7 +607,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
               </div>
 
               <Link
-                href={buildWorkspaceAliasPath(domain, '/dashboard/all-courses')}
+                href={buildWorkspaceAliasPath(domain, '/dashboard/courses')}
                 className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
               >
                 View All
@@ -739,7 +744,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
               Recommended for You
             </h2>
             <Link
-              href={buildWorkspaceAliasPath(domain, '/dashboard/all-courses')}
+              href={buildWorkspaceAliasPath(domain, '/dashboard/courses')}
               className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
             >
               View All

@@ -63,10 +63,10 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
   const maxRate = rates.length ? Math.max(...rates) : null;
 
   return (
-    <Card className='border-border/60 h-full overflow-hidden rounded-[28px] shadow-sm transition hover:-translate-y-1 hover:shadow-lg'>
-      <div className='flex h-full flex-col space-y-4 p-4 sm:p-6'>
+    <Card className='border-border/70 bg-card h-full overflow-hidden rounded-[24px] shadow-sm transition hover:-translate-y-1 hover:shadow-lg'>
+      <div className='flex h-full flex-col space-y-4 p-4'>
         <div className='flex items-start gap-4'>
-          <Avatar className='h-16 w-16'>
+          <Avatar className='h-14 w-14'>
             <AvatarImage src={user?.profile_image_url} alt={instructor.full_name} />
             <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
           </Avatar>
@@ -74,7 +74,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
           <div className='min-w-0 flex-1'>
             <div className='flex items-start justify-between gap-2'>
               <div className='min-w-0 flex-1'>
-                <h3 className='truncate'>{instructor.full_name}</h3>
+                <h3 className='truncate text-base font-semibold'>{instructor.full_name}</h3>
                 <p className='text-muted-foreground truncate text-sm'>
                   {instructor.professional_headline}
                 </p>
@@ -100,35 +100,34 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
         </div>
 
         {/* Stats */}
-        <div className='grid grid-cols-2 gap-3 text-sm'>
-          <div className='text-muted-foreground flex items-center gap-2'>
+        <div className='grid grid-cols-2 gap-2 text-sm'>
+          <div className='bg-muted/50 text-muted-foreground flex items-center gap-2 rounded-2xl px-3 py-2'>
             <Users className='h-4 w-4' />
             <span>N/A students</span>
-            {/* <span>{instructor.totalStudents} students</span> */}
           </div>
-          <div className='text-muted-foreground flex items-center gap-2'>
+          <div className='bg-muted/50 text-muted-foreground flex items-center gap-2 rounded-2xl px-3 py-2'>
             <Briefcase className='h-4 w-4' />
             <span>{instructor?.total_experience_years} years</span>
           </div>
         </div>
 
-        {/* Location and Mode */}
-        <div className='flex flex-wrap items-center gap-3 text-sm'>
-          <Badge variant='secondary'>Bookable for this course</Badge>
+        <div className='flex flex-wrap items-center gap-2 text-sm'>
+          <Badge variant='secondary' className='rounded-full'>
+            Bookable for this course
+          </Badge>
         </div>
 
-        {/* Specializations */}
         <div className='flex min-h-6 w-full flex-wrap gap-2'>
           {skillNames?.length > 0 ? (
             <>
               {skillNames.slice(0, 3).map((spec, index) => (
-                <Badge key={index} variant='outline' className='text-xs'>
+                <Badge key={index} variant='outline' className='rounded-full text-xs'>
                   {spec}
                 </Badge>
               ))}
 
               {skillNames.length > 3 && (
-                <Badge variant='outline' className='text-xs'>
+                <Badge variant='outline' className='rounded-full text-xs'>
                   +{skillNames.length - 3} more
                 </Badge>
               )}
@@ -155,8 +154,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
           )}
         </div>
 
-        {/* Rate */}
-        <div className='border-border mt-auto border-t pt-4'>
+        <div className='border-border/60 mt-auto border-t pt-4'>
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-muted-foreground text-sm'>Starting from</p>
@@ -172,7 +170,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
               )}
             </div>
 
-            <Button onClick={onViewProfile} size='sm' className='gap-2'>
+            <Button onClick={onViewProfile} size='sm' className='gap-2 rounded-xl'>
               View profile
               <ArrowRight className='h-4 w-4' />
             </Button>

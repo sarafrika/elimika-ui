@@ -21,7 +21,7 @@ export function CoursesRecommendationCard({ card }: CoursesRecommendationCardPro
 
   return (
     <article className='border-border bg-card overflow-hidden rounded-lg border min-w-[248px] max-w-[248px] sm:min-w-[270px] sm:max-w-[270px]'>
-      <Link href={card.href} className='block'>
+      <Link href={card.detailsHref} className='block'>
         <div
           className={cn(
             'border-border relative flex h-32 items-center justify-center overflow-hidden border-b',
@@ -50,7 +50,7 @@ export function CoursesRecommendationCard({ card }: CoursesRecommendationCardPro
 
       <div className='space-y-3 px-3.5 py-3.5'>
         <div>
-          <Link href={card.href} className='block'>
+          <Link href={card.detailsHref} className='block'>
             <h3 className='text-foreground text-[clamp(0.95rem,1vw,1.05rem)] font-semibold leading-tight'>
               {card.title}
             </h3>
@@ -76,7 +76,7 @@ export function CoursesRecommendationCard({ card }: CoursesRecommendationCardPro
             <span />
           )}
           <Button asChild variant='outline' className='h-8 rounded-xl px-4 text-sm shadow-none'>
-            <Link href={card.href}>Enroll</Link>
+            <Link href={card.enrollHref}>Enroll</Link>
           </Button>
         </div>
       </div>

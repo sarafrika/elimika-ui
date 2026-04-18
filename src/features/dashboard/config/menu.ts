@@ -137,7 +137,7 @@ export default {
   ],
   student: [
     {
-      title: 'Overview',
+      title: 'Dashboard',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
@@ -224,18 +224,18 @@ export default {
     },
   ],
   instructor: [
+    // {
+    //   title: 'Home - All courses',
+    //   url: '/dashboard/all-courses',
+    //   icon: School,
+    // },
     {
-      title: 'Home - All courses',
-      url: '/dashboard/all-courses',
-      icon: School,
-    },
-    {
-      title: 'Overview',
+      title: 'Dashboard',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
     {
-      title: 'My Skills',
+      title: 'Skills Wallet Profile',
       url: '/dashboard/my-skills',
       icon: BadgeCheck,
     },
@@ -244,6 +244,11 @@ export default {
       url: '/dashboard/calendar',
       icon: CalendarClock,
     },
+    // {
+    //   title: 'Courses',
+    //   url: '/dashboard/courses',
+    //   icon: GraduationCap,
+    // },
     {
       title: 'Courses',
       url: '/dashboard/courses',

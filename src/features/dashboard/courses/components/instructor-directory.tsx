@@ -1,9 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { DollarSign, Filter, MapPin, Search, Star, X } from 'lucide-react';
+import { DollarSign, Filter, MapPin, Search, SlidersHorizontal, Star, X } from 'lucide-react';
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { InstructorCard } from '@/app/dashboard/@student/_components/instructor-card';
 import { InstructorProfileComponent } from '@/app/dashboard/@student/_components/instructor-profile-modal';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Slider } from '@/components/ui/slider';
 import { searchSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { Booking } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
@@ -45,466 +53,486 @@ type Filters = {
   location: string;
 };
 
+const defaultFilters: Filters = {
+  searchQuery: '',
+  courseType: [],
+  instructorType: 'all',
+  gender: 'all',
+  minRating: 0,
+  experience: [0, 20],
+  specializations: [],
+  feeRange: [0, 1000],
+  skillLevel: [],
+  mode: [],
+  location: '',
+};
+
+const getInstructorBatchSize = (width: number) => {
+  if (width >= 1536) return 9;
+  if (width >= 768) return 6;
+  return 4;
+};
+
 export const InstructorDirectory: React.FC<Props> = ({
   instructors,
-  classes,
+  classes: _classes,
   onBookingComplete,
   courseId,
 }) => {
   const [selectedInstructor, setSelectedInstructor] = useState<SearchInstructor | null>(null);
-  const [showFilters, setShowFilters] = useState(true);
-  const [filters, setFilters] = useState<Filters>({
-    searchQuery: '',
-    courseType: [],
-    instructorType: 'all',
-    gender: 'all',
-    minRating: 0,
-    experience: [0, 20],
-    specializations: [],
-    feeRange: [0, 1000],
-    skillLevel: [],
-    mode: [],
-    location: '',
-  });
+  const [filters, setFilters] = useState<Filters>(defaultFilters);
+  const [visibleInstructorCount, setVisibleInstructorCount] = useState(6);
 
-  // specializations and skils
-  const { data: newSkllll } = useQuery(
+  useEffect(() => {
+    const syncVisibleCountToViewport = () => {
+      const batchSize = getInstructorBatchSize(window.innerWidth);
+      setVisibleInstructorCount(current => {
+        if (current <= batchSize) {
+          return batchSize;
+        }
+
+        return Math.ceil(current / batchSize) * batchSize;
+      });
+    };
+
+    syncVisibleCountToViewport();
+    window.addEventListener('resize', syncVisibleCountToViewport);
+
+    return () => {
+      window.removeEventListener('resize', syncVisibleCountToViewport);
+    };
+  }, []);
+
+  const { data: skillsResponse } = useQuery(
     searchSkillsOptions({ query: { pageable: {}, searchParams: {} } })
   );
 
-  const allSpecializations = useMemo(() => {
-    return [
-      ...new Set(
-        newSkllll?.data?.content
-          ?.map(skill => skill?.skill_name)
-          ?.filter((name): name is string => typeof name === 'string' && name.trim().length > 0)
-      ),
-    ];
-  }, [newSkllll]);
+  const allSpecializations = useMemo(
+    () =>
+      [
+        ...new Set(
+          skillsResponse?.data?.content
+            ?.map(skill => skill?.skill_name)
+            ?.filter((name): name is string => typeof name === 'string' && name.trim().length > 0)
+        ),
+      ],
+    [skillsResponse]
+  );
 
-  // Filter instructors based on criteria
-  const filteredInstructors = instructors
-    ?.filter(instructor => {
-      if (
-        filters.searchQuery &&
-        !(instructor.full_name ?? '').toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
-        !(instructor.professional_headline ?? '')
-          .toLowerCase()
-          .includes(filters.searchQuery.toLowerCase()) &&
-        !(instructor.bio ?? '').toLowerCase().includes(filters.searchQuery.toLowerCase())
-      ) {
-        return false;
-      }
+  const filteredInstructors = useMemo(
+    () =>
+      instructors
+        ?.filter(instructor => {
+          if (
+            filters.searchQuery &&
+            !(instructor.full_name ?? '').toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
+            !(instructor.professional_headline ?? '')
+              .toLowerCase()
+              .includes(filters.searchQuery.toLowerCase()) &&
+            !(instructor.bio ?? '').toLowerCase().includes(filters.searchQuery.toLowerCase())
+          ) {
+            return false;
+          }
 
-      // Instructor type
-      if (filters.instructorType !== 'all') {
-        const isOrganization = instructor.user_domain?.includes('organization');
-        const instructorType = isOrganization ? 'organization' : 'individual';
-        if (instructorType !== filters.instructorType) {
-          return false;
-        }
-      }
+          if (filters.instructorType !== 'all') {
+            const isOrganization = instructor.user_domain?.includes('organization');
+            const instructorType = isOrganization ? 'organization' : 'individual';
+            if (instructorType !== filters.instructorType) {
+              return false;
+            }
+          }
 
-      // Gender
-      if (filters.gender !== 'all' && (instructor.gender ?? '').toLowerCase() !== filters.gender) {
-        return false;
-      }
+          if (filters.gender !== 'all' && (instructor.gender ?? '').toLowerCase() !== filters.gender) {
+            return false;
+          }
 
-      // Rating
-      if ((instructor.rating ?? 0) < filters.minRating) {
-        return false;
-      }
+          if ((instructor.rating ?? 0) < filters.minRating) {
+            return false;
+          }
 
-      // Experience
-      if (
-        // @ts-expect-error
-        instructor.total_experience_years < filters.experience[0] ||
-        // @ts-expect-error
-        instructor.total_experience_years > filters.experience[1]
-      ) {
-        return false;
-      }
+          if (
+            instructor.total_experience_years < filters.experience[0] ||
+            instructor.total_experience_years > filters.experience[1]
+          ) {
+            return false;
+          }
 
-      // Specializations
-      // Specializations
-      if (filters.specializations.length > 0) {
-        const instructorSkillNames = instructor.specializations.map(s =>
-          s.skill_name.toLowerCase()
-        );
+          if (filters.specializations.length > 0) {
+            const instructorSkillNames = instructor.specializations.map(skill =>
+              skill.skill_name.toLowerCase()
+            );
 
-        const hasMatch = filters.specializations.some(spec =>
-          instructorSkillNames.includes(spec.toLowerCase())
-        );
+            const hasMatch = filters.specializations.some(spec =>
+              instructorSkillNames.includes(spec.toLowerCase())
+            );
 
-        if (!hasMatch) {
-          return false;
-        }
-      }
+            if (!hasMatch) {
+              return false;
+            }
+          }
 
-      // Fee range
-      // if (
-      //     instructor.rateCard.hourly < filters.feeRange[0] ||
-      //     instructor.rateCard.hourly > filters.feeRange[1]
-      // ) {
-      //     return false;
-      // }
+          if (
+            filters.location &&
+            !(instructor.location?.city ?? '').toLowerCase().includes(filters.location.toLowerCase())
+          ) {
+            return false;
+          }
 
-      // Mode
-      // if (
-      //   filters.mode.length > 0 &&
-      //   !filters.mode.some(m => instructor.mode.includes(m as 'online' | 'onsite'))
-      // ) {
-      //   return false;
-      // }
+          return true;
+        })
+        ?.sort((left, right) => {
+          if ((right.rating ?? 0) !== (left.rating ?? 0)) {
+            return (right.rating ?? 0) - (left.rating ?? 0);
+          }
 
-      // Location
-      if (
-        filters.location &&
-        !(instructor.location?.city ?? '').toLowerCase().includes(filters.location.toLowerCase())
-      ) {
-        return false;
-      }
+          if (right.total_experience_years !== left.total_experience_years) {
+            return right.total_experience_years - left.total_experience_years;
+          }
 
-      return true;
-    })
-    ?.sort((a, b) => {
-      if ((b.rating ?? 0) !== (a.rating ?? 0)) {
-        return (b.rating ?? 0) - (a.rating ?? 0);
-      }
+          const leftSpecs = left.specializations?.length ?? 0;
+          const rightSpecs = right.specializations?.length ?? 0;
 
-      if (b.total_experience_years !== a.total_experience_years) {
-        return b.total_experience_years - a.total_experience_years;
-      }
+          return rightSpecs - leftSpecs;
+        }),
+    [filters, instructors]
+  );
 
-      const aSpecs = a.specializations?.length ?? 0;
-      const bSpecs = b.specializations?.length ?? 0;
-
-      return bSpecs - aSpecs;
-    });
+  const visibleInstructors = filteredInstructors.slice(0, visibleInstructorCount);
+  const hasMoreInstructors = filteredInstructors.length > visibleInstructorCount;
 
   const clearFilters = () => {
-    setFilters({
-      searchQuery: '',
-      courseType: [],
-      instructorType: 'all',
-      gender: 'all',
-      minRating: 0,
-      experience: [0, 20],
-      specializations: [],
-      feeRange: [0, 1000],
-      skillLevel: [],
-      mode: [],
-      location: '',
-    });
+    setFilters(defaultFilters);
+    setVisibleInstructorCount(getInstructorBatchSize(window.innerWidth));
   };
 
-  const toggleSpecialization = (spec: string) => {
-    setFilters(prev => ({
-      ...prev,
-      specializations: prev.specializations.includes(spec)
-        ? prev.specializations.filter(s => s !== spec)
-        : [...prev.specializations, spec],
+  const toggleSpecialization = (specialization: string) => {
+    setFilters(current => ({
+      ...current,
+      specializations: current.specializations.includes(specialization)
+        ? current.specializations.filter(spec => spec !== specialization)
+        : [...current.specializations, specialization],
     }));
+    setVisibleInstructorCount(getInstructorBatchSize(window.innerWidth));
   };
 
   const toggleMode = (mode: string) => {
-    setFilters(prev => ({
-      ...prev,
-      mode: prev.mode.includes(mode) ? prev.mode.filter(m => m !== mode) : [...prev.mode, mode],
+    setFilters(current => ({
+      ...current,
+      mode: current.mode.includes(mode)
+        ? current.mode.filter(item => item !== mode)
+        : [...current.mode, mode],
     }));
+    setVisibleInstructorCount(getInstructorBatchSize(window.innerWidth));
   };
 
-  const handleInstructorTypeChange = (value: string) => {
-    if (value === 'all' || value === 'individual' || value === 'organization') {
-      setFilters({ ...filters, instructorType: value });
-    }
+  const updateFilter = <K extends keyof Filters>(key: K, value: Filters[K]) => {
+    setFilters(current => ({ ...current, [key]: value }));
+    setVisibleInstructorCount(getInstructorBatchSize(window.innerWidth));
   };
 
-  const handleGenderChange = (value: string) => {
-    if (value === 'all' || value === 'male' || value === 'female' || value === 'other') {
-      setFilters({ ...filters, gender: value });
-    }
-  };
+  const activeFilterCount =
+    filters.specializations.length +
+    filters.mode.length +
+    (filters.instructorType !== 'all' ? 1 : 0) +
+    (filters.gender !== 'all' ? 1 : 0) +
+    (filters.minRating > 0 ? 1 : 0) +
+    (filters.location ? 1 : 0);
+
+  const filterPanel = (
+    <Card className='space-y-4 rounded-[22px] border bg-card p-4 shadow-none'>
+      <div className='flex items-center justify-between gap-3'>
+        <h3 className='flex items-center gap-2 text-sm font-semibold'>
+          <Filter className='h-4 w-4' />
+          Filters
+        </h3>
+        <Button variant='ghost' size='sm' onClick={clearFilters} className='h-8 rounded-lg px-2'>
+          Clear All
+        </Button>
+      </div>
+
+      <div className='space-y-1'>
+        <Label className='text-xs font-medium'>Search</Label>
+        <div className='relative'>
+          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+          <Input
+            placeholder='Search instructors...'
+            value={filters.searchQuery}
+            onChange={event => updateFilter('searchQuery', event.target.value)}
+            className='h-10 rounded-xl pl-10'
+          />
+        </div>
+      </div>
+
+      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-1'>
+        <div className='space-y-1'>
+          <Label className='text-xs font-medium'>Instructor Type</Label>
+          <Select
+            value={filters.instructorType}
+            onValueChange={value =>
+              updateFilter('instructorType', value as Filters['instructorType'])
+            }
+          >
+            <SelectTrigger className='h-10 rounded-xl'>
+              <SelectValue placeholder='Select instructor type' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>All</SelectItem>
+              <SelectItem value='individual'>Individual</SelectItem>
+              <SelectItem value='organization'>Organization</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='space-y-1'>
+          <Label className='text-xs font-medium'>Gender</Label>
+          <Select
+            value={filters.gender}
+            onValueChange={value => updateFilter('gender', value as Filters['gender'])}
+          >
+            <SelectTrigger className='h-10 rounded-xl'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>All</SelectItem>
+              <SelectItem value='male'>Male</SelectItem>
+              <SelectItem value='female'>Female</SelectItem>
+              <SelectItem value='other'>Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-1'>
+        <div className='space-y-2'>
+          <div className='flex items-center justify-between gap-3'>
+            <Label className='text-xs font-medium'>Minimum Rating</Label>
+            <span className='text-muted-foreground text-xs'>{filters.minRating.toFixed(1)}</span>
+          </div>
+          <div className='flex items-center gap-2'>
+            <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
+            <Slider
+              value={[filters.minRating]}
+              onValueChange={value => updateFilter('minRating', value[0] ?? 0)}
+              max={5}
+              step={0.5}
+              className='flex-1'
+            />
+          </div>
+        </div>
+
+        <div className='space-y-2'>
+          <div className='flex items-center justify-between gap-3'>
+            <Label className='text-xs font-medium'>Experience</Label>
+            <span className='text-muted-foreground text-xs'>
+              {filters.experience[0]} - {filters.experience[1]} yrs
+            </span>
+          </div>
+          <Slider
+            value={filters.experience}
+            onValueChange={value => updateFilter('experience', value as Filters['experience'])}
+            max={20}
+            step={1}
+          />
+        </div>
+      </div>
+
+      <div className='space-y-2'>
+        <div className='flex items-center justify-between gap-3'>
+          <Label className='text-xs font-medium'>Specializations</Label>
+          <span className='text-muted-foreground text-xs'>
+            {filters.specializations.length} selected
+          </span>
+        </div>
+        <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-1'>
+          {allSpecializations.slice(0, 6).map(spec => (
+            <label key={spec} className='flex items-center gap-2 rounded-xl border px-3 py-2 text-sm'>
+              <Checkbox
+                checked={filters.specializations.includes(spec)}
+                onCheckedChange={() => toggleSpecialization(spec)}
+              />
+              <span className='line-clamp-1'>{spec}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-1'>
+        <div className='space-y-2'>
+          <div className='flex items-center justify-between gap-3'>
+            <Label className='text-xs font-medium'>Hourly Rate</Label>
+            <span className='text-muted-foreground text-xs'>
+              ${filters.feeRange[0]} - ${filters.feeRange[1]}
+            </span>
+          </div>
+          <div className='flex items-center gap-2'>
+            <DollarSign className='text-muted-foreground h-4 w-4' />
+            <Slider
+              value={filters.feeRange}
+              onValueChange={value => updateFilter('feeRange', value as Filters['feeRange'])}
+              max={1000}
+              step={10}
+              className='flex-1'
+            />
+          </div>
+        </div>
+
+        <div className='space-y-2'>
+          <Label className='text-xs font-medium'>Location</Label>
+          <div className='relative'>
+            <MapPin className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+            <Input
+              placeholder='City name...'
+              value={filters.location}
+              onChange={event => updateFilter('location', event.target.value)}
+              className='h-10 rounded-xl pl-10'
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className='space-y-2'>
+        <Label className='text-xs font-medium'>Mode</Label>
+        <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-1'>
+          {['online', 'onsite'].map(mode => (
+            <label key={mode} className='flex items-center gap-2 rounded-xl border px-3 py-2 text-sm capitalize'>
+              <Checkbox
+                checked={filters.mode.includes(mode)}
+                onCheckedChange={() => toggleMode(mode)}
+              />
+              <span>{mode}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
 
   return (
-    <div className='flex gap-6'>
-      {!selectedInstructor && (
+    <div className='grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]'>
+      {!selectedInstructor ? (
         <>
-          {/* Filter Sidebar */}
-          {showFilters && (
-            <div className='w-60 flex-shrink-0 space-y-4 xl:w-80'>
-              <Card className='space-y-6 p-4'>
-                <div className='flex items-center justify-between'>
-                  <h3 onClick={() => {}} className='flex items-center gap-2'>
-                    <Filter className='h-4 w-4' />
-                    Filters
-                  </h3>
-                  <Button variant='ghost' size='sm' onClick={clearFilters} className='h-8 px-2'>
-                    Clear All
-                  </Button>
-                </div>
+          <div className='hidden xl:block xl:sticky xl:top-4 xl:h-fit'>{filterPanel}</div>
 
-                {/* Search */}
+          <div className='min-w-0'>
+            <Card className='mb-5 rounded-[22px] border bg-card p-4 shadow-none sm:p-5'>
+              <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
                 <div>
-                  <Label>Search</Label>
-                  <div className='relative mt-2'>
-                    <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                    <Input
-                      placeholder='Search instructors...'
-                      value={filters.searchQuery}
-                      onChange={e => setFilters({ ...filters, searchQuery: e.target.value })}
-                      className='pl-10'
-                    />
-                  </div>
-                </div>
-
-                {/* Instructor Type */}
-                <div className='w-full'>
-                  <Label>Instructor Type</Label>
-                  <Select value={filters.instructorType} onValueChange={handleInstructorTypeChange}>
-                    <SelectTrigger className='mt-2 w-full'>
-                      <SelectValue placeholder='Select instructor type' />
-                    </SelectTrigger>
-                    <SelectContent className='w-full'>
-                      <SelectItem value='all'>All</SelectItem>
-                      <SelectItem value='individual'>Individual</SelectItem>
-                      <SelectItem value='organization'>Organization</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Gender */}
-                <div>
-                  <Label>Gender</Label>
-                  <Select value={filters.gender} onValueChange={handleGenderChange}>
-                    <SelectTrigger className='mt-2 w-full'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All</SelectItem>
-                      <SelectItem value='male'>Male</SelectItem>
-                      <SelectItem value='female'>Female</SelectItem>
-                      <SelectItem value='other'>Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Minimum Rating */}
-                <div>
-                  <Label>Minimum Rating</Label>
-                  <div className='mt-2 flex items-center gap-2'>
-                    <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
-                    <Slider
-                      value={[filters.minRating]}
-                      onValueChange={
-                        _value => setFilters({ ...filters })
-                        // setFilters({ ...filters, minRating: value[0] })
-                      }
-                      max={5}
-                      step={0.5}
-                      className='flex-1'
-                    />
-                    <span className='w-8 text-sm'>{filters.minRating.toFixed(1)}</span>
-                  </div>
-                </div>
-
-                {/* Experience */}
-                <div>
-                  <Label>Experience (years)</Label>
-                  <div className='mt-2 flex items-center gap-2'>
-                    <Slider
-                      value={filters.experience}
-                      onValueChange={value => setFilters({ ...filters, experience: value })}
-                      max={20}
-                      step={1}
-                      className='my-2 flex-1'
-                    />
-                  </div>
-                  <p className='text-muted-foreground mt-1 text-sm'>
-                    {filters.experience[0]} - {filters.experience[1]} years
+                  <p className='text-foreground text-sm font-semibold'>Instructor results</p>
+                  <p className='text-muted-foreground text-sm'>
+                    Showing {visibleInstructors.length} of {filteredInstructors.length} matching instructors
                   </p>
                 </div>
 
-                {/* Specializations */}
-                <div>
-                  <Label>Specializations</Label>
-                  <div className='mt-3 space-y-2'>
-                    {allSpecializations.slice(0, 5).map(spec => (
-                      <div key={spec} className='flex items-center gap-2.5'>
-                        <Checkbox
-                          id={`spec-${spec}`}
-                          checked={filters.specializations.includes(spec)}
-                          onCheckedChange={() => toggleSpecialization(spec)}
-                        />
-                        <label htmlFor={`spec-${spec}`} className='cursor-pointer text-sm'>
-                          {spec}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Fee Range */}
-                <div>
-                  <Label>Hourly Rate (USD)</Label>
-                  <div className='mt-2 flex items-center gap-2'>
-                    <DollarSign className='text-muted-foreground h-4 w-4' />
-                    <Slider
-                      value={filters.feeRange}
-                      onValueChange={value => setFilters({ ...filters, feeRange: value })}
-                      max={1000}
-                      step={10}
-                      className='flex-1'
-                    />
-                  </div>
-                  <p className='text-muted-foreground mt-1 text-sm'>
-                    ${filters.feeRange[0]} - ${filters.feeRange[1]}
-                  </p>
-                </div>
-
-                {/* Mode */}
-                <div>
-                  <Label>Mode</Label>
-                  <div className='mt-2 space-y-2'>
-                    <div className='flex items-center gap-2'>
-                      <Checkbox
-                        id='mode-online'
-                        checked={filters.mode.includes('online')}
-                        onCheckedChange={() => toggleMode('online')}
-                      />
-                      <label htmlFor='mode-online' className='cursor-pointer text-sm'>
-                        Online
-                      </label>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <Checkbox
-                        id='mode-onsite'
-                        checked={filters.mode.includes('onsite')}
-                        onCheckedChange={() => toggleMode('onsite')}
-                      />
-                      <label htmlFor='mode-onsite' className='cursor-pointer text-sm'>
-                        Onsite
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div className='pb-20'>
-                  <Label>Location</Label>
-                  <div className='relative mt-2'>
-                    <MapPin className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                    <Input
-                      placeholder='City name...'
-                      value={filters.location}
-                      onChange={e => setFilters({ ...filters, location: e.target.value })}
-                      className='pl-10'
-                    />
-                  </div>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {/* Main Content */}
-          <div className='flex-1'>
-            {/* Results Header */}
-            <div className='mb-6 flex items-center justify-between'>
-              <div>
-                <p className='text-muted-foreground'>
-                  Showing {filteredInstructors?.length} of {instructors?.length} instructors
-                </p>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant='outline' className='gap-2 rounded-xl shadow-none xl:hidden'>
+                      <SlidersHorizontal className='h-4 w-4' />
+                      Filters
+                      {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side='left' className='w-[88vw] max-w-sm overflow-y-auto p-0'>
+                    <SheetHeader className='border-b px-4 py-4'>
+                      <SheetTitle>Filter Instructors</SheetTitle>
+                      <SheetDescription>
+                        Refine the instructor list by search, experience, rating, mode and specialization.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className='p-4'>{filterPanel}</div>
+                  </SheetContent>
+                </Sheet>
               </div>
-              <Button
-                variant='outline'
-                onClick={() => setShowFilters(!showFilters)}
-                className='gap-2'
-              >
-                <Filter className='h-4 w-4' />
-                {showFilters ? 'Hide' : 'Show'} Filters
-              </Button>
-            </div>
+            </Card>
 
-            {/* Active Filters */}
-            {(filters.specializations.length > 0 ||
-              filters.mode.length > 0 ||
-              filters.instructorType !== 'all' ||
-              filters.minRating > 0) && (
-              <div className='mb-6 flex flex-wrap gap-2'>
+            {activeFilterCount > 0 ? (
+              <div className='mb-5 flex flex-wrap gap-2'>
                 {filters.specializations.map(spec => (
-                  <Badge key={spec} variant='secondary' className='gap-1'>
+                  <Badge key={spec} variant='secondary' className='gap-1 rounded-full px-3 py-1'>
                     {spec}
-                    <X
-                      className='h-3 w-3 cursor-pointer'
-                      onClick={() => toggleSpecialization(spec)}
-                    />
+                    <X className='h-3 w-3 cursor-pointer' onClick={() => toggleSpecialization(spec)} />
                   </Badge>
                 ))}
                 {filters.mode.map(mode => (
-                  <Badge key={mode} variant='secondary' className='gap-1'>
+                  <Badge key={mode} variant='secondary' className='gap-1 rounded-full px-3 py-1'>
                     {mode}
                     <X className='h-3 w-3 cursor-pointer' onClick={() => toggleMode(mode)} />
                   </Badge>
                 ))}
-                {filters.instructorType !== 'all' && (
-                  <Badge variant='secondary' className='gap-1'>
+                {filters.instructorType !== 'all' ? (
+                  <Badge variant='secondary' className='gap-1 rounded-full px-3 py-1'>
                     {filters.instructorType}
                     <X
                       className='h-3 w-3 cursor-pointer'
-                      onClick={() => setFilters({ ...filters, instructorType: 'all' })}
+                      onClick={() => updateFilter('instructorType', 'all')}
                     />
                   </Badge>
-                )}
-                {filters.minRating > 0 && (
-                  <Badge variant='secondary' className='gap-1'>
+                ) : null}
+                {filters.gender !== 'all' ? (
+                  <Badge variant='secondary' className='gap-1 rounded-full px-3 py-1'>
+                    {filters.gender}
+                    <X className='h-3 w-3 cursor-pointer' onClick={() => updateFilter('gender', 'all')} />
+                  </Badge>
+                ) : null}
+                {filters.minRating > 0 ? (
+                  <Badge variant='secondary' className='gap-1 rounded-full px-3 py-1'>
                     {filters.minRating}+ rating
-                    <X
-                      className='h-3 w-3 cursor-pointer'
-                      onClick={() => setFilters({ ...filters, minRating: 0 })}
-                    />
+                    <X className='h-3 w-3 cursor-pointer' onClick={() => updateFilter('minRating', 0)} />
                   </Badge>
-                )}
+                ) : null}
               </div>
-            )}
+            ) : null}
 
-            {/* Instructor Grid */}
-            {filteredInstructors?.length === 0 ? (
-              <Card className='p-12 text-center'>
+            {filteredInstructors.length === 0 ? (
+              <Card className='rounded-[22px] border border-dashed p-12 text-center shadow-none'>
                 <Search className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
                 <h3>No instructors found</h3>
                 <p className='text-muted-foreground mt-2'>
-                  Try adjusting your filters to see more results
+                  Try adjusting your filters to see more results.
                 </p>
-                <Button onClick={clearFilters} variant='outline' className='mt-4'>
+                <Button onClick={clearFilters} variant='outline' className='mt-4 rounded-xl shadow-none'>
                   Clear Filters
                 </Button>
               </Card>
             ) : (
-              <div className='grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3'>
-                {filteredInstructors?.map((instructor, index) => (
-                  <div key={index}>
+              <>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3'>
+                  {visibleInstructors.map(instructor => (
                     <InstructorCard
-                      key={instructor?.uuid}
+                      key={instructor.uuid}
                       instructor={instructor}
                       onViewProfile={() => setSelectedInstructor(instructor)}
                       courseId={courseId}
                     />
+                  ))}
+                </div>
+
+                {hasMoreInstructors ? (
+                  <div className='mt-5 flex justify-center'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      onClick={() =>
+                        setVisibleInstructorCount(current => current + getInstructorBatchSize(window.innerWidth))
+                      }
+                      className='rounded-xl px-5 shadow-none'
+                    >
+                      Show More
+                    </Button>
                   </div>
-                ))}
-              </div>
+                ) : null}
+              </>
             )}
           </div>
         </>
-      )}
+      ) : null}
 
-      {/* Instructor Profile Modal */}
-      {selectedInstructor && (
+      {selectedInstructor ? (
         <InstructorProfileComponent
           instructor={selectedInstructor}
           onClose={() => setSelectedInstructor(null)}
           onBookingComplete={onBookingComplete}
         />
-      )}
+      ) : null}
     </div>
   );
 };

@@ -1,11 +1,5 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, CheckCircle, MapPin, ShoppingCart, TrendingUp, Users } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
-import { toast } from 'sonner';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,8 +12,23 @@ import {
   createCartMutation,
   getCartQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useCartStore } from '@/store/cart-store';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { useCartStore } from '@/store/cart-store';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  BookOpen,
+  CalendarDays,
+  CheckCircle,
+  GraduationCap,
+  MapPin,
+  ShoppingCart,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { type BundledClass, getErrorMessage } from '../types';
 import AddToCartModal from './AddToCartModal';
 
@@ -128,179 +137,178 @@ export default function EnrollCourseCard({
   };
 
   return (
-    <div className='group cursor-pointer'>
-      <Card className='relative mt-6 h-full w-full max-w-full overflow-hidden rounded-3xl border-0 py-0 shadow-lg transition-all duration-300 hover:shadow-2xl sm:w-[380px]'>
-        {/* Gradient overlay on hover - light mode only */}
-        <div className='pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/60 via-black/0 to-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:hidden' />
+    <div className='group h-full w-full cursor-pointer'>
+      <Card className='border-border/70 bg-card relative flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[24px] py-0 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-w-[350px] sm:max-w-[400px]'>
+        <div className='pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-success/[0.05]' />
 
-        {/* Image Header */}
-        <div className='relative h-52 overflow-hidden'>
+        <div className='relative h-40 overflow-hidden'>
           {cls?.course?.banner_url ? (
             <Image
               src={toAuthenticatedMediaUrl(cls.course.banner_url) || cls.course.banner_url}
               alt={cls?.title || 'banner'}
               className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
               width={400}
-              height={208}
+              height={160}
               unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(cls.course.banner_url))}
             />
           ) : (
-            <div className='bg-primary/30 flex h-[208px] w-full items-center justify-center'>
-              <BookOpen className='h-14 w-14 text-white opacity-90' />
+            <div className='from-primary/80 to-success/60 flex h-40 w-full items-center justify-center bg-gradient-to-br'>
+              <BookOpen className='h-12 w-12 text-white/90' />
             </div>
           )}
 
-          {/* Top Badges */}
-          <div className='absolute top-4 left-4 z-20 flex flex-wrap gap-2'>
-            <Badge className='bg-card/95 text-foreground hover:bg-card border-border border shadow-lg backdrop-blur-sm'>
-              <MapPin className='mr-1.5 h-3.5 w-3.5' />
-              {/* {cls?.location_type.replace('_', ' ')} */}
-            </Badge>
-
-            {variant === 'full' && (
-              <Badge className='bg-primary/95 text-primary-foreground hover:bg-primary shadow-lg backdrop-blur-sm'>
-                {difficultyName}
+          <div className='absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4'>
+            <div className='flex flex-wrap gap-2'>
+              <Badge className='border-border/70 bg-background/90 text-foreground hover:bg-background rounded-full border shadow-none backdrop-blur'>
+                <MapPin className='mr-1.5 h-3.5 w-3.5' />
+                Open for enrollment
               </Badge>
-            )}
-          </div>
-
-          {isFull && (
-            <div className='absolute top-4 right-4 z-20'>
-              <Badge className='bg-destructive text-destructive-foreground animate-pulse shadow-lg backdrop-blur-sm'>
-                FULL
-              </Badge>
-            </div>
-          )}
-
-          {/* Add to Cart Button - Floating */}
-          {variant === 'full' && (
-            <Button
-              size='sm'
-              variant='secondary'
-              className='border-border/20 bg-card/95 text-foreground dark:bg-card/50 absolute right-4 bottom-4 z-30 flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-medium shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-2xl'
-              onClick={e => {
-                e.stopPropagation();
-                setSelectedClass(cls);
-                setShowCartModal(true);
-              }}
-            >
-              <ShoppingCart className='h-4 w-4' />
-              Add to cart
-            </Button>
-          )}
-        </div>
-
-        {/* Card Body */}
-        <div className='space-y-4 p-6'>
-          <Link href={href} className='block space-y-3'>
-            {/* Title & Course Info */}
-            <div className='space-y-2'>
-              <h3 className='text-foreground group-hover:text-primary line-clamp-2 min-h-[3.5rem] text-xl leading-tight font-bold transition-colors'>
-                {cls?.title}
-              </h3>
 
               {variant === 'full' && (
-                <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-                  <BookOpen className='text-primary h-4 w-4' />
-                  <span className='line-clamp-1 font-medium'>{cls?.course?.name}</span>
-                </div>
+                <Badge className='bg-primary text-primary-foreground hover:bg-primary rounded-full shadow-none'>
+                  {difficultyName}
+                </Badge>
               )}
             </div>
 
-            {/* Description */}
-            <div className='text-muted-foreground line-clamp-2 text-sm leading-relaxed'>
-              <RichTextRenderer htmlString={cls?.description ?? ''} maxChars={100} />
-            </div>
-          </Link>
-
-          {/* Categories */}
-          <div className='flex flex-wrap gap-2'>
-            {cls?.course?.category_names?.slice(0, 2).map((category, idx) => (
-              <Badge
-                key={idx}
-                variant='outline'
-                className='border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'
-              >
-                {category}
+            {isFull ? (
+              <Badge className='bg-destructive text-destructive-foreground rounded-full shadow-none'>
+                Full
               </Badge>
-            ))}
+            ) : null}
           </div>
 
-          {/* Instructor Card */}
           {variant === 'full' && (
-            <div className='border-border bg-muted hover:bg-muted/80 flex items-center gap-3 rounded-xl border p-3 transition-colors'>
-              <div className='from-primary to-primary/70 text-primary-foreground flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-lg font-semibold shadow-md'>
-                {cls?.instructor?.full_name?.charAt(0)}
+            <div className='absolute inset-x-0 bottom-0 p-4'>
+              <div className='bg-background/92 flex items-center justify-between gap-3 rounded-2xl border px-3 py-2 backdrop-blur'>
+                <div className='min-w-0'>
+                  <p className='text-muted-foreground text-[11px] font-medium uppercase tracking-[0.08em]'>
+                    Course
+                  </p>
+                  <p className='text-foreground line-clamp-1 text-sm font-semibold'>
+                    {cls?.course?.name}
+                  </p>
+                </div>
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  className='rounded-full px-3 shadow-none'
+                  onClick={e => {
+                    e.stopPropagation();
+                    setSelectedClass(cls);
+                    setShowCartModal(true);
+                  }}
+                >
+                  <ShoppingCart className='h-4 w-4' />
+                </Button>
               </div>
-              <div className='min-w-0 flex-1'>
-                <p className='text-muted-foreground text-xs font-medium'>Instructor</p>
-                <p className='text-foreground truncate text-sm font-semibold'>
-                  {cls?.instructor?.full_name}
+            </div>
+          )}
+        </div>
+
+        <div className='relative flex flex-1 flex-col space-y-4 p-4'>
+          <Link href={href} className='block space-y-3'>
+            <div className='space-y-2'>
+              <h3 className='text-foreground group-hover:text-primary line-clamp-2 text-lg leading-snug font-semibold tracking-[-0.02em] transition-colors'>
+                {cls?.title}
+              </h3>
+              <div className='text-muted-foreground line-clamp-2 text-sm leading-relaxed'>
+                <RichTextRenderer htmlString={cls?.description ?? ''} maxChars={110} />
+              </div>
+            </div>
+
+            <div className='grid grid-cols-2 gap-2'>
+              <div className='bg-muted/50 rounded-2xl px-3 py-2'>
+                <div className='text-muted-foreground mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.08em]'>
+                  <Users className='h-3.5 w-3.5' />
+                  Seats
+                </div>
+                <p className='text-foreground text-sm font-semibold'>
+                  {rosterLoading ? 'Loading...' : `${uniqueEnrollments}/${maxParticipants || 'N/A'}`}
+                </p>
+              </div>
+              <div className='bg-muted/50 rounded-2xl px-3 py-2'>
+                <div className='text-muted-foreground mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.08em]'>
+                  <TrendingUp className='h-3.5 w-3.5' />
+                  Fee
+                </div>
+                <p className='text-foreground text-sm font-semibold'>
+                  {cls?.training_fee ? `KES ${cls.training_fee}` : 'Free'}
                 </p>
               </div>
             </div>
-          )}
 
-          {/* Stats Grid */}
+            <div className='flex flex-wrap gap-2'>
+              {cls?.course?.category_names?.slice(0, 3).map((category, idx) => (
+                <Badge
+                  key={idx}
+                  variant='outline'
+                  className='border-primary/15 bg-primary/[0.03] text-primary rounded-full'
+                >
+                  {category}
+                </Badge>
+              ))}
+            </div>
+          </Link>
+
           {variant === 'full' && (
-            <div className='grid grid-cols-2 gap-3'>
-              {/* Enrollment Progress */}
-              <div className='border-border bg-muted rounded-xl border p-3'>
-                <div className='mb-2 flex items-center gap-2'>
-                  <Users className='text-primary h-4 w-4' />
-                  <span className='text-muted-foreground text-xs font-medium'>Enrollment</span>
-                </div>
-                <div className='space-y-2'>
-                  <div className='flex items-end gap-1'>
-                    <span
-                      className={`text-2xl font-bold ${
-                        enrolledPercentage >= 80
-                          ? 'text-amber-600 dark:text-amber-500'
-                          : 'text-primary'
-                      }`}
-                    >
-                      {enrolledPercentage?.toFixed(0)}
-                    </span>
-                    <span className='text-muted-foreground mb-1 text-sm'>%</span>
-                  </div>
-                  <div className='bg-muted h-1.5 overflow-hidden rounded-full'>
-                    <div
-                      className={`h-full transition-all duration-500 ${
-                        enrolledPercentage >= 80 ? 'bg-amber-600 dark:bg-amber-500' : 'bg-primary'
-                      }`}
-                      style={{ width: `${enrolledPercentage}%` }}
-                    />
-                  </div>
+            <div className='border-border/70 bg-background/70 grid gap-3 rounded-[20px] border p-3'>
+              <div className='flex items-center gap-3'>
+                <span className='from-primary to-primary/70 text-primary-foreground flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold shadow-sm'>
+                  {cls?.instructor?.full_name?.charAt(0) ?? <GraduationCap className='h-4 w-4' />}
+                </span>
+                <div className='min-w-0 flex-1'>
+                  <p className='text-muted-foreground text-[11px] font-medium uppercase tracking-[0.08em]'>
+                    Instructor
+                  </p>
+                  <p className='text-foreground truncate text-sm font-semibold'>
+                    {cls?.instructor?.full_name ?? 'Assigned instructor'}
+                  </p>
                 </div>
               </div>
 
-              {/* Price */}
-              <div className='border-border bg-muted rounded-xl border p-3'>
-                <div className='mb-2 flex items-center gap-2'>
-                  <TrendingUp className='text-primary h-4 w-4' />
-                  <span className='text-muted-foreground text-xs font-medium'>Price</span>
+              <div className='grid grid-cols-2 gap-2'>
+                <div className='bg-muted/60 rounded-2xl px-3 py-2'>
+                  <div className='text-muted-foreground mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.08em]'>
+                    <CalendarDays className='h-3.5 w-3.5' />
+                    Filled
+                  </div>
+                  <p
+                    className={`text-sm font-semibold ${enrolledPercentage >= 80 ? 'text-warning' : 'text-foreground'
+                      }`}
+                  >
+                    {enrolledPercentage.toFixed(0)}%
+                  </p>
                 </div>
-                <div className='flex items-baseline gap-1'>
-                  <span className='text-primary text-2xl font-bold'>
-                    {cls?.training_fee || 'Free'}
-                  </span>
-                  {cls?.training_fee && <span className='text-muted-foreground text-xs'>KES</span>}
+                <div className='bg-muted/60 rounded-2xl px-3 py-2'>
+                  <div className='text-muted-foreground mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.08em]'>
+                    <BookOpen className='h-3.5 w-3.5' />
+                    Capacity
+                  </div>
+                  <p className='text-foreground text-sm font-semibold'>
+                    {maxParticipants || 'N/A'} learners
+                  </p>
                 </div>
-                <p className='text-muted-foreground mt-1 text-[10px]'>per hour/head</p>
+              </div>
+
+              <div className='bg-muted h-1.5 overflow-hidden rounded-full'>
+                <div
+                  className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                    }`}
+                  style={{ width: `${Math.min(enrolledPercentage, 100)}%` }}
+                />
               </div>
             </div>
           )}
 
-          {/* Minimal Variant Price */}
           {variant === 'minimal' && cls?.training_fee && (
-            <div className='flex items-baseline gap-2 pt-2'>
-              <span className='text-primary text-2xl font-bold'>KES {cls?.training_fee}</span>
+            <div className='flex items-baseline gap-2 pt-1'>
+              <span className='text-primary text-xl font-semibold'>KES {cls?.training_fee}</span>
               <span className='text-muted-foreground text-sm'>/hour/head</span>
             </div>
           )}
 
-          {/* Enroll Button */}
-          <div className='pt-2'>
+          <div className='mt-auto pt-1'>
             <Button
               size='lg'
               onClick={e => {
@@ -308,11 +316,10 @@ export default function EnrollCourseCard({
                 handleEnroll(cls);
               }}
               disabled={disableEnroll}
-              className={`w-full rounded-xl font-semibold shadow-lg transition-all duration-300 ${
-                disableEnroll
+              className={`w-full rounded-xl font-semibold shadow-none transition-all duration-300 ${disableEnroll
                   ? 'bg-success text-success-foreground hover:bg-success/90'
-                  : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02] hover:shadow-xl'
-              }`}
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                }`}
             >
               {disableEnroll ? (
                 <div className='flex items-center gap-2'>
@@ -321,7 +328,7 @@ export default function EnrollCourseCard({
                 </div>
               ) : (
                 <div className='flex items-center gap-2'>
-                  <span>Enroll Now</span>
+                  <span>Continue to Enroll</span>
                   <svg
                     className='h-4 w-4 transition-transform duration-300 group-hover:translate-x-1'
                     fill='none'

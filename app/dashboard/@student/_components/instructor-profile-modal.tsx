@@ -148,14 +148,14 @@ export const InstructorProfileComponent: React.FC<Props> = ({
         variant='ghost'
         size='sm'
         onClick={onClose}
-        className='bg-primary absolute top-4 right-4 z-10 h-8 w-8 p-0 text-white dark:text-black'
+        className='bg-background/90 absolute top-4 right-4 z-10 h-9 w-9 rounded-full border p-0 shadow-sm backdrop-blur'
       >
         <X className='h-6 w-6' />
       </Button>
 
       <div className='space-y-6 pt-6 pr-6'>
-        {/* Header */}
-        <div className='flex items-start gap-6'>
+        <div className='border-border bg-card rounded-[24px] border p-5 sm:p-6'>
+          <div className='flex flex-col gap-5 lg:flex-row lg:items-start'>
           <Avatar className='h-24 w-24'>
             <AvatarImage
               src={instructor.profile_image_url ?? undefined}
@@ -164,61 +164,58 @@ export const InstructorProfileComponent: React.FC<Props> = ({
             <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
           </Avatar>
 
-          <div className='flex-1'>
-            <div className='flex items-start justify-between'>
+            <div className='flex-1'>
+              <div className='flex items-start justify-between'>
               <div>
-                <div className='mb-1 flex items-center gap-2'>
-                  <h2>{instructor?.full_name}</h2>
+                  <div className='mb-1 flex items-center gap-2'>
+                    <h2 className='text-2xl font-semibold tracking-[-0.03em]'>{instructor?.full_name}</h2>
+                  </div>
+                  <p className='text-muted-foreground'>{instructor?.professional_headline}</p>
                 </div>
-                <p className='text-muted-foreground'>{instructor?.professional_headline}</p>
               </div>
-            </div>
 
-            {/* Quick Stats */}
-            <div className='mt-4 flex flex-wrap items-center gap-4'>
-              <div className='flex items-center gap-1'>
-                <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
-                <span>{instructorReviews?.length} reviews</span>
-              </div>
-              <div className='text-muted-foreground flex items-center gap-1'>
-                <Users className='h-4 w-4' />
-                <span>N/A students</span>
-              </div>
-              <div className='text-muted-foreground flex items-center gap-1'>
-                <Briefcase className='h-4 w-4' />
-                <span>{instructor?.total_experience_years} years experience</span>
-              </div>
-              {instructor?.has_location_coordinates && (
-                <div className='text-muted-foreground flex items-center gap-1'>
-                  <MapPin className='h-4 w-4' />
-                  <span>{instructor?.formatted_location}</span>
+              <div className='mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+                <div className='bg-muted/50 flex items-center gap-2 rounded-2xl px-3 py-2'>
+                  <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
+                  <span className='text-sm'>{instructorReviews?.length} reviews</span>
                 </div>
-              )}
-            </div>
+                <div className='bg-muted/50 text-muted-foreground flex items-center gap-2 rounded-2xl px-3 py-2'>
+                  <Users className='h-4 w-4' />
+                  <span className='text-sm'>N/A students</span>
+                </div>
+                <div className='bg-muted/50 text-muted-foreground flex items-center gap-2 rounded-2xl px-3 py-2'>
+                  <Briefcase className='h-4 w-4' />
+                  <span className='text-sm'>{instructor?.total_experience_years} years experience</span>
+                </div>
+                {instructor?.has_location_coordinates && (
+                  <div className='bg-muted/50 text-muted-foreground flex items-center gap-2 rounded-2xl px-3 py-2'>
+                    <MapPin className='h-4 w-4' />
+                    <span className='text-sm'>{instructor?.formatted_location}</span>
+                  </div>
+                )}
+              </div>
 
-            {/* Mode badges */}
-            <div className='mt-3 flex gap-2'>
-              <Badge variant='secondary' className='gap-1'>
+              <div className='mt-3 flex gap-2'>
+                <Badge variant='secondary' className='gap-1 rounded-full'>
                 <Video className='h-3 w-3' />
                 Online / Onsite
               </Badge>
             </div>
           </div>
-        </div>
+          </div>
 
-        {/* Book Button */}
-        <div className='flex justify-end'>
-          <Button
-            onClick={() => setShowBooking(true)}
-            size='lg'
-            className='flex items-center gap-2'
-          >
+          <div className='mt-5 flex justify-end'>
+            <Button
+              onClick={() => setShowBooking(true)}
+              size='lg'
+              className='flex items-center gap-2 rounded-xl'
+            >
             <Calendar className='h-4 w-4' />
             Book Session
           </Button>
         </div>
+        </div>
 
-        {/* Booking Form */}
         {showBooking && (
           <>
             <BookInstructorTimeTableManager
@@ -238,20 +235,17 @@ export const InstructorProfileComponent: React.FC<Props> = ({
           </>
         )}
 
-        {/* Content Tabs */}
         <Tabs defaultValue='overview' className='w-full'>
-          <TabsList className='flex flex-row gap-4'>
-            <TabsTrigger value='overview'>Overview</TabsTrigger>
-            <TabsTrigger value='reviews'>Reviews ({instructorReviews.length})</TabsTrigger>
-            <TabsTrigger value='certifications'>Certifications</TabsTrigger>
-            <TabsTrigger value='rates'>Rates</TabsTrigger>
+          <TabsList className='bg-muted/50 flex h-auto flex-row gap-2 rounded-2xl p-1'>
+            <TabsTrigger value='overview' className='rounded-xl'>Overview</TabsTrigger>
+            <TabsTrigger value='reviews' className='rounded-xl'>Reviews ({instructorReviews.length})</TabsTrigger>
+            <TabsTrigger value='certifications' className='rounded-xl'>Certifications</TabsTrigger>
+            <TabsTrigger value='rates' className='rounded-xl'>Rates</TabsTrigger>
           </TabsList>
 
           <div className='relative'>
-            {/* Overview Tab */}
             <TabsContent value='overview' className='space-y-6'>
-              {/* Bio */}
-              <Card className='p-6'>
+              <Card className='rounded-[22px] p-6 shadow-none'>
                 <h3 className='mb-3'>About</h3>
                 <div className='text-muted-foreground'>
                   <RichTextRenderer htmlString={instructor.bio ?? ''} />
@@ -277,7 +271,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               </Card> */}
 
               {/* Specializations */}
-              <Card className='p-6'>
+              <Card className='rounded-[22px] p-6 shadow-none'>
                 <h3 className='mb-3'>Skills & Expertise</h3>
 
                 {instructor?.specializations?.length > 0 ? (
@@ -294,7 +288,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               </Card>
 
               {/* Classes */}
-              <Card className='mb-6 p-6'>
+              <Card className='mb-6 rounded-[22px] p-6 shadow-none'>
                 <div className='mb-4 flex items-center justify-between'>
                   <div>
                     <CardTitle className='text-lg font-semibold'>
@@ -338,7 +332,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               </Card>
             </TabsContent>
 
-            {/* Reviews Tab */}
             <TabsContent value='reviews' className='space-y-4'>
               {Array.isArray(instructorReviews) && instructorReviews.length > 0 ? (
                 instructorReviews.map(review => <ReviewCard key={review.uuid} review={review} />)
@@ -351,7 +344,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               )}
             </TabsContent>
 
-            {/* Certifications Tab */}
             <TabsContent value='certifications' className='space-y-4'>
               {Array.isArray(certifications) && certifications.length > 0 ? (
                 certifications.map(cert => (
@@ -383,9 +375,8 @@ export const InstructorProfileComponent: React.FC<Props> = ({
               )}
             </TabsContent>
 
-            {/* Rates Tab */}
             <TabsContent value='rates' className='space-y-4'>
-              <Card className='p-6'>
+              <Card className='rounded-[22px] p-6 shadow-none'>
                 <div>
                   <CardTitle className='mb-4'>Rate Card</CardTitle>
                 </div>
@@ -436,7 +427,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 </div>
               </Card>
 
-              <Card className='border-primary/30 bg-primary/10 mb-6 p-6'>
+              <Card className='border-primary/30 bg-primary/10 mb-6 rounded-[22px] p-6 shadow-none'>
                 <div className='flex gap-3'>
                   <DollarSign className='text-primary h-5 w-5' />
                   <div>

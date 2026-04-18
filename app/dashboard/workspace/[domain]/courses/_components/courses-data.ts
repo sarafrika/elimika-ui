@@ -49,7 +49,9 @@ export type CoursesCatalogCardData = {
   duration: string;
   secondaryMeta: string;
   ctaLabel: string;
-  href: string;
+  detailsHref: string;
+  enrollHref: string;
+  instructorHref: string;
   icon: LucideIcon;
   imageTone: 'primary' | 'warning' | 'success';
   imageUrl?: string;
@@ -62,7 +64,8 @@ export type CoursesRecommendationCardData = {
   rating: string;
   weeks: string;
   secondaryMeta: string;
-  href: string;
+  detailsHref: string;
+  enrollHref: string;
   icon: LucideIcon;
   imageTone: 'primary' | 'warning' | 'success';
   imageUrl?: string;
@@ -79,14 +82,14 @@ export const heroActions: CoursesHeroAction[] = [
   {
     title: 'Take a Short Course',
     subtitle: 'Fast skill boosts with concise lessons.',
-    href: '/dashboard/all-courses',
+    href: '/dashboard/courses',
     icon: BadgeCheck,
     tone: 'warning',
   },
   {
     title: 'Explore All Courses',
     subtitle: 'Browse role-ready learning paths.',
-    href: '/dashboard/all-courses',
+    href: '/dashboard/courses',
     icon: Search,
     tone: 'success',
   },
@@ -139,18 +142,29 @@ export function getCardPresentation(index: number) {
 }
 
 const domainBasePaths: Record<UserDomain, string> = {
-  admin: '/dashboard/all-courses',
-  course_creator: '/dashboard/all-courses',
-  instructor: '/dashboard/all-courses',
-  organisation: '/dashboard/all-courses',
-  organisation_user: '/dashboard/all-courses',
-  parent: '/dashboard/all-courses',
-  student: '/dashboard/all-courses',
+  admin: '/dashboard/courses',
+  course_creator: '/dashboard/courses',
+  instructor: '/dashboard/courses',
+  organisation: '/dashboard/courses',
+  organisation_user: '/dashboard/courses',
+  parent: '/dashboard/courses',
+  student: '/dashboard/courses',
 };
 
 export function getContentHref(domain: UserDomain, kind: 'course' | 'program', uuid: string) {
   const basePath = domainBasePaths[domain];
   return kind === 'program' ? `${basePath}/available-programs/${uuid}` : `${basePath}/${uuid}`;
+}
+
+export function getEnrollHref(domain: UserDomain, kind: 'course' | 'program', uuid: string) {
+  const basePath = domainBasePaths[domain];
+  return kind === 'program'
+    ? `${basePath}/available-programs/${uuid}`
+    : `${basePath}/available-classes/${uuid}`;
+}
+
+export function getInstructorHref(domain: UserDomain, uuid: string) {
+  return `${domainBasePaths[domain]}/instructor?courseId=${uuid}`;
 }
 
 export function getDurationBucket(totalMinutes: number) {
