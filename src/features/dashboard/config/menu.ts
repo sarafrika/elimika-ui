@@ -224,11 +224,6 @@ export default {
     },
   ],
   instructor: [
-    // {
-    //   title: 'Home - All courses',
-    //   url: '/dashboard/all-courses',
-    //   icon: School,
-    // },
     {
       title: 'Dashboard',
       url: '/dashboard/overview',

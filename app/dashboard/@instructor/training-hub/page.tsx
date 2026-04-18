@@ -1,8 +1,5 @@
+import { StudentTrainingHubPage } from './_components/StudentTrainingHubPage';
 
-const TrainingHubPage = () => {
-    return (
-        <div>TrainingHubPage</div>
-    )
+export default function Page() {
+  return <StudentTrainingHubPage />;
 }
-
-export default TrainingHubPage
