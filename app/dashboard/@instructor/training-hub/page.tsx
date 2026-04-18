@@ -1,5 +1,5 @@
-import { StudentTrainingHubPage } from './_components/StudentTrainingHubPage';
+import { InstructorTrainingHubPage } from './_components/InstructorTrainingHubPage';
 
 export default function Page() {
-  return <StudentTrainingHubPage />;
+  return <InstructorTrainingHubPage />;
 }

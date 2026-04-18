@@ -50,8 +50,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { BookingDetailsModal } from '../../_components/booking-details-modal';
-import { getStatusColor } from '../../_components/manage-bookings';
+import { BookingDetailsModal } from '../../../_components/booking-details-modal';
+import { getStatusColor } from '../../../_components/manage-bookings';
 
 type BookingTab = 'requests' | 'upcoming' | 'history';
 
@@ -175,7 +175,13 @@ function BookingsPage() {
   useEffect(() => {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      { id: 'bookings', title: 'Bookings', url: '/dashboard/bookings', isLast: true },
+      { id: 'training-hub', title: 'Training Hub', url: '/dashboard/training-hub' },
+      {
+        id: 'bookings',
+        title: 'Bookings',
+        url: '/dashboard/training-hub/bookings',
+        isLast: true,
+      },
     ]);
   }, [replaceBreadcrumbs]);
 

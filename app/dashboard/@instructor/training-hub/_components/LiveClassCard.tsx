@@ -1,7 +1,7 @@
 'use client';
 
+import Link from 'next/link';
 import { EllipsisVertical } from 'lucide-react';
-import { TrainingHubAvatarGroup } from './TrainingHubAvatarGroup';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
 type LiveClassCardProps = {
@@ -31,7 +31,6 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
 
           <div className='mt-3 flex flex-wrap items-center gap-2 text-[0.78rem] text-muted-foreground'>
             <span className='font-medium text-primary'>{liveClass.provider}</span>
-            <TrainingHubAvatarGroup names={['Nina Ray', 'Tom Cole', 'Jo Dee']} />
             <span>{liveClass.students}</span>
           </div>
         </div>
@@ -59,12 +58,12 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
       </div>
 
       <div className='mt-3 flex justify-end'>
-        <button
+        <Link
           className='inline-flex h-10 items-center justify-center rounded-[8px] bg-primary px-5 text-[0.84rem] font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
-          type='button'
+          href={liveClass.href}
         >
-          Invite Students
-        </button>
+          Open Class
+        </Link>
       </div>
     </article>
   );

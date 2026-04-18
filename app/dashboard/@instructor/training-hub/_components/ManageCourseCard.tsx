@@ -1,16 +1,17 @@
 'use client';
 
+import Link from 'next/link';
 import { BarChart3, Star, Users } from 'lucide-react';
-import type { TrainingHubCourse } from './training-hub-data';
+import type { TrainingHubManagedCourse } from './training-hub-data';
 
-const accentClasses: Record<TrainingHubCourse['accent'], string> = {
+const accentClasses: Record<TrainingHubManagedCourse['accent'], string> = {
   blue: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_16%,white),white)]',
   indigo: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,white),white)]',
   orange: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--warning)_18%,white),white)]',
   yellow: 'bg-[linear-gradient(135deg,color-mix(in_srgb,var(--warning)_12%,white),white)]',
 };
 
-const badgeClasses: Record<TrainingHubCourse['accent'], string> = {
+const badgeClasses: Record<TrainingHubManagedCourse['accent'], string> = {
   blue: 'bg-primary text-primary-foreground',
   indigo: 'bg-[color-mix(in_srgb,var(--primary)_88%,white)] text-primary-foreground',
   orange: 'bg-[color-mix(in_srgb,var(--warning)_90%,black_6%)] text-white',
@@ -18,7 +19,7 @@ const badgeClasses: Record<TrainingHubCourse['accent'], string> = {
 };
 
 type ManageCourseCardProps = {
-  course: TrainingHubCourse;
+  course: TrainingHubManagedCourse;
 };
 
 export function ManageCourseCard({ course }: ManageCourseCardProps) {
@@ -42,12 +43,10 @@ export function ManageCourseCard({ course }: ManageCourseCardProps) {
                 <span>|</span>
                 <span>{course.level}</span>
               </div>
-              {course.rating ? (
-                <div className='mt-1 flex items-center gap-1 text-[0.74rem] text-muted-foreground'>
-                  <Star className='size-3.5 fill-[currentColor]' />
-                  <span>{course.rating}</span>
-                </div>
-              ) : null}
+              <div className='mt-1 flex items-center gap-1 text-[0.74rem] text-muted-foreground'>
+                <Star className='size-3.5 fill-[currentColor]' />
+                <span>Approved to train</span>
+              </div>
             </div>
           </div>
 
@@ -70,12 +69,12 @@ export function ManageCourseCard({ course }: ManageCourseCardProps) {
       </div>
 
       <div className='mt-2 flex justify-end'>
-        <button
+        <Link
           className='inline-flex h-9 items-center justify-center rounded-[8px] bg-primary px-4 text-[0.8rem] font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
-          type='button'
+          href={course.ctaHref}
         >
           {course.ctaLabel}
-        </button>
+        </Link>
       </div>
     </article>
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TrainingHubBooking } from './training-hub-data';
@@ -49,17 +50,17 @@ export function BookingCard({ booking }: BookingCardProps) {
           ) : null}
         </div>
 
-        <button
+        <Link
           className={cn(
             'inline-flex h-10 items-center justify-center rounded-[8px] px-5 text-[0.82rem] font-medium transition focus-visible:outline-none focus-visible:ring-2',
             booking.actionTone === 'primary'
               ? 'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/30'
               : 'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/30',
           )}
-          type='button'
+          href={booking.href}
         >
           {booking.actionLabel}
-        </button>
+        </Link>
       </div>
     </article>
   );

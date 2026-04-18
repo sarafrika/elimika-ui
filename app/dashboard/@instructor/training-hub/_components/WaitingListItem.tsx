@@ -26,6 +26,9 @@ export function WaitingListItem({ student }: WaitingListItemProps) {
             <p className='truncate text-[0.79rem] text-muted-foreground sm:text-[0.82rem]'>
               {student.email}
             </p>
+            <p className='mt-1 truncate text-[0.75rem] text-muted-foreground/90 sm:text-[0.79rem]'>
+              {student.classTitle} • {student.scheduleLabel}
+            </p>
           </div>
           <span className='text-[0.78rem] font-medium text-muted-foreground'>{student.age}</span>
         </div>

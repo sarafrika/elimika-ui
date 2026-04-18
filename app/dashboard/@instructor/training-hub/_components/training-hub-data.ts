@@ -1,12 +1,12 @@
-export type TrainingHubCourse = {
+export type TrainingHubManagedCourse = {
   id: string;
   title: string;
   provider: string;
   level: string;
-  rating?: string;
   students: string;
   classes: string;
   ctaLabel: string;
+  ctaHref: string;
   accent: 'blue' | 'indigo' | 'orange' | 'yellow';
 };
 
@@ -19,6 +19,7 @@ export type TrainingHubLiveClass = {
   students: string;
   fee: string;
   sessions: string;
+  href: string;
 };
 
 export type TrainingHubWaitingStudent = {
@@ -27,6 +28,8 @@ export type TrainingHubWaitingStudent = {
   email: string;
   status: string;
   age: string;
+  classTitle: string;
+  scheduleLabel: string;
 };
 
 export type TrainingHubBooking = {
@@ -38,25 +41,21 @@ export type TrainingHubBooking = {
   meta: string;
   actionLabel: string;
   actionTone: 'primary' | 'destructive';
-  progress?: number;
+  href: string;
 };
 
-export const courseFilters = [
-  'All Types',
-  'All Statuses',
-  'Filter 4',
-] as const;
+export const courseFilters = ['All Types', 'All Statuses', 'Filter 4'] as const;
 
-export const managedCourses: TrainingHubCourse[] = [
+export const managedCourses: TrainingHubManagedCourse[] = [
   {
     id: 'data-analysis',
     title: 'Data Analysis Essentials',
     provider: 'Google',
     level: 'Beginner',
-    rating: '3.5 (2254)',
     students: '100 students',
     classes: '10 Classes',
     ctaLabel: 'Create Classes',
+    ctaHref: '/dashboard/classes/create-new',
     accent: 'blue',
   },
   {
@@ -67,6 +66,7 @@ export const managedCourses: TrainingHubCourse[] = [
     students: '65 students',
     classes: '10 Classes',
     ctaLabel: 'Create Classes',
+    ctaHref: '/dashboard/classes/create-new',
     accent: 'indigo',
   },
   {
@@ -77,6 +77,7 @@ export const managedCourses: TrainingHubCourse[] = [
     students: '60 students',
     classes: '10 Classes',
     ctaLabel: 'Create Classes',
+    ctaHref: '/dashboard/classes/create-new',
     accent: 'orange',
   },
   {
@@ -87,6 +88,7 @@ export const managedCourses: TrainingHubCourse[] = [
     students: '60 students',
     classes: '10 Classes',
     ctaLabel: 'Create Classes',
+    ctaHref: '/dashboard/classes/create-new',
     accent: 'blue',
   },
   {
@@ -97,6 +99,7 @@ export const managedCourses: TrainingHubCourse[] = [
     students: '6 Classes',
     classes: '10 Classes',
     ctaLabel: 'Create Classes',
+    ctaHref: '/dashboard/classes/create-new',
     accent: 'yellow',
   },
 ];
@@ -111,6 +114,7 @@ export const liveClasses: TrainingHubLiveClass[] = [
     students: '85 students',
     fee: 'KSh 3,300',
     sessions: '5',
+    href: '/dashboard/classes',
   },
   {
     id: 'data-analysis-live',
@@ -121,6 +125,7 @@ export const liveClasses: TrainingHubLiveClass[] = [
     students: '60 students',
     fee: 'KSh 2,000',
     sessions: '10',
+    href: '/dashboard/classes',
   },
   {
     id: 'advanced-photoshop-live',
@@ -131,6 +136,7 @@ export const liveClasses: TrainingHubLiveClass[] = [
     students: '100 students',
     fee: 'KSh 4,500',
     sessions: '5',
+    href: '/dashboard/classes',
   },
   {
     id: 'sql-analysis-live',
@@ -141,6 +147,7 @@ export const liveClasses: TrainingHubLiveClass[] = [
     students: '40 students',
     fee: 'KSh 3,500',
     sessions: '5',
+    href: '/dashboard/classes',
   },
   {
     id: 'creative-writing-live',
@@ -151,6 +158,7 @@ export const liveClasses: TrainingHubLiveClass[] = [
     students: '5 students',
     fee: 'KSh 2,000',
     sessions: '5',
+    href: '/dashboard/classes',
   },
 ];
 
@@ -161,6 +169,8 @@ export const waitingList: TrainingHubWaitingStudent[] = [
     email: 'tom.mwangi20@gmail.com',
     status: '',
     age: '2d',
+    classTitle: 'UI/UX Design Principles',
+    scheduleLabel: 'May 6, 2:00 PM',
   },
   {
     id: 'josh-patel',
@@ -168,6 +178,8 @@ export const waitingList: TrainingHubWaitingStudent[] = [
     email: 'josh.patel@email.com',
     status: 'Waiting',
     age: '6d',
+    classTitle: 'Data Analysis',
+    scheduleLabel: 'May 7, 10:30 AM',
   },
   {
     id: 'janet-kim',
@@ -175,10 +187,12 @@ export const waitingList: TrainingHubWaitingStudent[] = [
     email: 'janet.kim@email.com',
     status: 'Waiting',
     age: '8d',
+    classTitle: 'SQL for Data Analysis',
+    scheduleLabel: 'May 9, 11:00 AM',
   },
 ];
 
-export const bookings: TrainingHubBooking[] = [
+export const bookingPreviews: TrainingHubBooking[] = [
   {
     id: 'junior-web-dev',
     title: 'Junior Web Developer',
@@ -188,6 +202,7 @@ export const bookings: TrainingHubBooking[] = [
     meta: '5 bookings',
     actionLabel: 'Manage',
     actionTone: 'primary',
+    href: '/dashboard/training-hub/bookings',
   },
   {
     id: 'josh-booking',
@@ -196,8 +211,8 @@ export const bookings: TrainingHubBooking[] = [
     status: 'Waiting 8d',
     statusTone: 'warning',
     meta: '8 bookings',
-    actionLabel: 'Remove',
-    actionTone: 'destructive',
-    progress: 56,
+    actionLabel: 'View booking',
+    actionTone: 'primary',
+    href: '/dashboard/training-hub/bookings',
   },
 ];
