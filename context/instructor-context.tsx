@@ -6,12 +6,15 @@ const InstructrorContext = createContext<Instructor | null>(null);
 export default function InstructorProvider({ children }: { children: ReactNode }) {
   const user = useUserProfile();
   return (
-    <InstructrorContext.Provider value={user?.instructor as Instructor}>
+    <InstructrorContext.Provider value={(user?.instructor as Instructor | null) ?? null}>
       {children}
     </InstructrorContext.Provider>
   );
 }
 
 export function useInstructor() {
-  return useContext(InstructrorContext);
+  const instructor = useContext(InstructrorContext);
+  const profile = useUserProfile();
+
+  return instructor ?? ((profile?.instructor as Instructor | null) ?? null);
 }

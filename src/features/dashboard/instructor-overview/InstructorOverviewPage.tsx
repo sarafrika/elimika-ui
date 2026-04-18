@@ -1,14 +1,6 @@
 'use client';
 
 import { CalendarDays } from 'lucide-react';
-import {
-  coursePerformance,
-  earningOverview,
-  instructorOverviewStats,
-  classInvites,
-  liveClasses,
-  upcomingClasses,
-} from './_components/overview-data';
 import { OverviewClassInvitesPanel } from './_components/OverviewClassInvitesPanel';
 import { OverviewCourseListPanel } from './_components/OverviewCourseListPanel';
 import { OverviewEarningPanel } from './_components/OverviewEarningPanel';
@@ -16,12 +8,16 @@ import { OverviewHeader } from './_components/OverviewHeader';
 import { OverviewLiveClassesPanel } from './_components/OverviewLiveClassesPanel';
 import { OverviewStatCard } from './_components/OverviewStatCard';
 import { OverviewUpcomingClassesPanel } from './_components/OverviewUpcomingClassesPanel';
+import { useInstructorOverviewData } from './useInstructorOverviewData';
 
 type InstructorOverviewPageProps = {
   firstName: string;
 };
 
 export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProps) {
+  const { activeCourses, classInvites, courseSummary, earningOverview, liveClasses, stats, upcomingClasses } =
+    useInstructorOverviewData();
+
   return (
     <main className='w-full bg-white'>
       <div className='mx-auto max-w-[1480px] px-2 py-2 sm:px-3 lg:px-4'>
@@ -29,14 +25,14 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
           <OverviewHeader firstName={firstName} />
 
           <section className='grid gap-3 sm:grid-cols-2 2xl:grid-cols-4'>
-            {instructorOverviewStats.map(stat => (
+            {stats.map(stat => (
               <OverviewStatCard key={stat.label} stat={stat} />
             ))}
           </section>
 
           <section className='grid gap-3 xl:grid-cols-[minmax(0,0.94fr)_minmax(0,0.94fr)_minmax(240px,0.72fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(260px,0.78fr)]'>
             <div className='space-y-3'>
-              <OverviewCourseListPanel courses={coursePerformance} />
+              <OverviewCourseListPanel courses={activeCourses} summary={courseSummary} />
             </div>
 
             <div className='space-y-3'>

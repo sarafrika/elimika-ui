@@ -31,7 +31,7 @@ function InviteCard({ invite }: { invite: OverviewInvite }) {
           <CalendarDays className='size-4' />
           <span>{invite.schedule}</span>
         </div>
-        <ActionButton label={invite.actionLabel} tone={invite.actionTone === 'accept' ? 'success' : 'primary'} />
+        <ActionButton label={invite.actionLabel} tone={invite.actionTone === 'accept' ? 'success' : 'primary'} href={''} />
       </div>
     </article>
   );
@@ -39,12 +39,18 @@ function InviteCard({ invite }: { invite: OverviewInvite }) {
 
 export function OverviewClassInvitesPanel({ invites }: OverviewClassInvitesPanelProps) {
   return (
-    <OverviewSectionShell title='Class Invites' trailingMode='none'>
-      <div className='space-y-3'>
-        {invites.map(invite => (
-          <InviteCard key={invite.id} invite={invite} />
-        ))}
-      </div>
+    <OverviewSectionShell title='Class Invites' trailingMode='none' onActionHref=''>
+      {invites.length ? (
+        <div className='space-y-3'>
+          {invites.map(invite => (
+            <InviteCard key={invite.id} invite={invite} />
+          ))}
+        </div>
+      ) : (
+        <p className='rounded-[10px] border border-dashed border-[#d7dbfb] bg-white px-4 py-6 text-sm text-slate-500'>
+          No student enrollment interest has been recorded yet.
+        </p>
+      )}
     </OverviewSectionShell>
   );
 }

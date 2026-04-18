@@ -20,7 +20,7 @@ function EarningCard({ item }: { item: OverviewEarningCard }) {
           </h3>
         </div>
         {isTimeline ? (
-          <ActionButton label='eer Rport' tone='muted' />
+          <ActionButton href='#' label='eer Rport' tone='muted' />
         ) : (
           <InitialsGroup initials={item.attendeeInitials} />
         )}
@@ -39,7 +39,7 @@ function EarningCard({ item }: { item: OverviewEarningCard }) {
           </div>
         </div>
 
-        {item.actionLabel ? <ActionButton label={item.actionLabel} /> : null}
+        {item.actionLabel ? <ActionButton label={item.actionLabel} href={''} /> : null}
       </div>
     </article>
   );
@@ -47,12 +47,18 @@ function EarningCard({ item }: { item: OverviewEarningCard }) {
 
 export function OverviewEarningPanel({ earningOverview }: OverviewEarningPanelProps) {
   return (
-    <OverviewSectionShell title='Earning Overview' onActionLabel='See All'>
-      <div className='space-y-3'>
-        {earningOverview.map(item => (
-          <EarningCard key={item.id} item={item} />
-        ))}
-      </div>
+    <OverviewSectionShell title='Earning Overview' onActionLabel='See All' onActionHref='/dashboard/revenue'>
+      {earningOverview.length ? (
+        <div className='space-y-3'>
+          {earningOverview.map(item => (
+            <EarningCard key={item.id} item={item} />
+          ))}
+        </div>
+      ) : (
+        <p className='rounded-[10px] border border-dashed border-[#d7dbfb] bg-white px-4 py-6 text-sm text-slate-500'>
+          No payment activity is available for this instructor yet.
+        </p>
+      )}
     </OverviewSectionShell>
   );
 }

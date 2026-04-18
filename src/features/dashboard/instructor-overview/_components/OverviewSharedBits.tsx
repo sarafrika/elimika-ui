@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export function InitialsGroup({ initials }: { initials: string[] }) {
   return (
@@ -21,23 +22,27 @@ export function InitialsGroup({ initials }: { initials: string[] }) {
 
 export function ActionButton({
   label,
+  href,
   tone = 'primary',
 }: {
   label: string;
+  href: string;
   tone?: 'primary' | 'success' | 'danger' | 'muted';
 }) {
   return (
-    <Button
-      className={cn(
-        'h-8 rounded-[6px] px-4 text-[0.82rem] font-medium',
-        tone === 'primary' && 'bg-cyan-600 text-white hover:bg-cyan-700',
-        tone === 'success' && 'bg-emerald-500 text-white hover:bg-emerald-600',
-        tone === 'danger' && 'bg-cyan-600 text-white hover:bg-cyan-700',
-        tone === 'muted' && 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-      )}
-    >
-      {label}
-    </Button>
+    <Link href={href}>
+      <Button
+        className={cn(
+          'h-8 rounded-[6px] px-4 text-[0.82rem] font-medium',
+          tone === 'primary' && 'bg-cyan-600 text-white hover:bg-cyan-700',
+          tone === 'success' && 'bg-emerald-500 text-white hover:bg-emerald-600',
+          tone === 'danger' && 'bg-cyan-600 text-white hover:bg-cyan-700',
+          tone === 'muted' && 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+        )}
+      >
+        {label}
+      </Button>
+    </Link>
   );
 }
 
