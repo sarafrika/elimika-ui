@@ -18,18 +18,22 @@ export function StudentLearningHubPage() {
           firstName={data.firstName}
           studentName={data.studentName}
           stats={data.stats}
+          loading={data.loading}
         />
 
         <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_350px]'>
           <div className='space-y-4'>
-            <LearningHubContinueLearning courses={data.continueLearning} />
-            <LearningHubLiveClasses liveClass={data.scheduledLiveClass} />
-            <LearningHubAssignments assignments={data.assignments} />
-            <LearningHubClassInvite invite={data.invite} />
+            <LearningHubContinueLearning courses={data.continueLearning} loading={data.loading} />
+            <LearningHubLiveClasses liveClass={data.scheduledLiveClass} loading={data.loading} />
+            <LearningHubAssignments assignments={data.assignments} loading={data.loading} />
+            <LearningHubClassInvite invite={data.invite} loading={data.loading} />
           </div>
 
           <div>
-            <LearningHubRightRail recommendedCourses={data.recommendedCourses} />
+            <LearningHubRightRail
+              recommendedCourses={data.recommendedCourses}
+              loading={data.loading}
+            />
           </div>
         </div>
       </div>

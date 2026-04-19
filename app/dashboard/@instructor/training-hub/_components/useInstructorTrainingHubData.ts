@@ -201,6 +201,7 @@ export function useInstructorTrainingHubData() {
         ctaHref: '/dashboard/classes/create-new',
         accent: ACCENTS[index % ACCENTS.length],
         imageUrl: course.thumbnail_url ?? course.banner_url,
+        status: 'approved',
       };
     });
   }, [approvedCourses, classesByCourse, enrollmentsByClass]);
@@ -244,6 +245,12 @@ export function useInstructorTrainingHubData() {
         fee: formatCurrency(classItem.training_fee),
         sessions: `${classItem.schedule?.filter(isNonCancelledInstance).length ?? 0}`,
         href: '/dashboard/classes',
+        status:
+          formatDayLabel(instance.start_time) === 'Today'
+            ? 'today'
+            : formatDayLabel(instance.start_time) === 'Tomorrow'
+              ? 'tomorrow'
+              : 'upcoming',
       };
     });
   }, [enrollmentsByClass, liveClassItems]);

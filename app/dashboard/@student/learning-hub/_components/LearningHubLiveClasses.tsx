@@ -2,13 +2,41 @@
 
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { LearningHubLiveClass } from './useStudentLearningHubData';
 
 type LearningHubLiveClassesProps = {
   liveClass: LearningHubLiveClass | null;
+  loading?: boolean;
 };
 
-export function LearningHubLiveClasses({ liveClass }: LearningHubLiveClassesProps) {
+export function LearningHubLiveClasses({
+  liveClass,
+  loading = false,
+}: LearningHubLiveClassesProps) {
+  if (loading) {
+    return (
+      <Card className='rounded-[18px] border border-border/70 bg-background p-3.5 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
+        <div className='space-y-2'>
+          <Skeleton className='h-5 w-48' />
+          <Skeleton className='h-4 w-72' />
+        </div>
+        <div className='mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_164px] lg:items-end'>
+          <div className='rounded-[10px] border border-border/70 bg-background p-3'>
+            <div className='space-y-3 border-b border-border/50 pb-3'>
+              <Skeleton className='h-5 w-52' />
+              <Skeleton className='h-4 w-44' />
+            </div>
+            <div className='mt-3 flex justify-end'>
+              <Skeleton className='h-9 w-28 rounded-[8px]' />
+            </div>
+          </div>
+          <Skeleton className='h-[118px] rounded-[12px]' />
+        </div>
+      </Card>
+    );
+  }
+
   if (!liveClass) {
     return (
       <Card className='rounded-[18px] border border-border/70 bg-background p-3.5 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>

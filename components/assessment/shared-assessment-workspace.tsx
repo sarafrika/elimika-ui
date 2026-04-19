@@ -12,7 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import {
+  getStudentAssignmentSubmissionState,
+  useStudentAssignmentData,
+} from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
 import {
   ArrowUpRight,
   BookOpen,
@@ -32,11 +37,12 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { RichTextPreview } from '../../app/dashboard/@instructor/classes/class-training/[id]/_components/ClassTrainingPage';
 
 export type AssessmentWorkspaceRole = 'student' | 'instructor';
 type AssessmentTab = 'active' | 'completed' | 'competencies';
 
-type Assessment = {
+type AssessmentListItem = {
   category: string;
   dueLabel: string;
   fileName: string;
@@ -49,8 +55,8 @@ type Assessment = {
   status: 'in-progress' | 'pending-review' | 'completed' | 'overdue';
   statusLabel: string;
   submittedAt: string;
-  title: string;
   summary: string;
+  title: string;
 };
 
 type Competency = {
@@ -67,7 +73,7 @@ type Competency = {
   trend: string;
 };
 
-const assessments: Assessment[] = [
+const assessments: AssessmentListItem[] = [
   {
     category: 'Design',
     dueLabel: 'Due in 3 days',
@@ -221,10 +227,45 @@ const topStudents = [
   { avatar: '', due: '3 days', initials: 'DA', name: 'Daniel' },
 ];
 
-function getFilteredAssessments(tab: AssessmentTab, search: string, skill: string) {
+function formatDate(value?: string | Date | null, options?: Intl.DateTimeFormatOptions) {
+  if (!value) return 'No deadline';
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return 'No deadline';
+
+  return new Intl.DateTimeFormat(
+    'en-US',
+    options ?? { month: 'short', day: 'numeric', year: 'numeric' }
+  ).format(date);
+}
+
+function formatBytes(value?: bigint | number | null) {
+  if (value == null) return 'No file';
+
+  const size = typeof value === 'bigint' ? Number(value) : value;
+  if (!Number.isFinite(size) || size <= 0) return 'No file';
+
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let resolved = size;
+  let unitIndex = 0;
+
+  while (resolved >= 1024 && unitIndex < units.length - 1) {
+    resolved /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${resolved >= 10 || unitIndex === 0 ? Math.round(resolved) : resolved.toFixed(1)} ${units[unitIndex]}`;
+}
+
+function getFilteredAssessments(
+  data: AssessmentListItem[],
+  tab: AssessmentTab,
+  search: string,
+  skill: string
+) {
   const query = search.trim().toLowerCase();
 
-  return assessments.filter(assessment => {
+  return data.filter(assessment => {
     const matchesTab =
       tab === 'active'
         ? assessment.score === null
@@ -243,7 +284,7 @@ function getFilteredAssessments(tab: AssessmentTab, search: string, skill: strin
   });
 }
 
-function StatusBadge({ assessment }: { assessment: Assessment }) {
+function StatusBadge({ assessment }: { assessment: AssessmentListItem }) {
   return (
     <Badge
       className={cn(
@@ -330,11 +371,13 @@ function SearchAndFilters({
   onSkillChange,
   search,
   skill,
+  skills,
 }: {
   onSearchChange: (value: string) => void;
   onSkillChange: (value: string) => void;
   search: string;
   skill: string;
+  skills: string[];
 }) {
   return (
     <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_150px_130px]'>
@@ -354,7 +397,7 @@ function SearchAndFilters({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value='all'>All Skills</SelectItem>
-          {Array.from(new Set(assessments.map(assessment => assessment.skill))).map(item => (
+          {skills.map(item => (
             <SelectItem key={item} value={item}>
               {item}
             </SelectItem>
@@ -383,7 +426,7 @@ function AssessmentCard({
   assessment,
   role,
 }: {
-  assessment: Assessment;
+  assessment: AssessmentListItem;
   role: AssessmentWorkspaceRole;
 }) {
   const primaryAction =
@@ -407,9 +450,11 @@ function AssessmentCard({
         <StatusBadge assessment={assessment} />
       </div>
       <div className='border-border/60 space-y-4 border-b p-4'>
-        <p className='text-muted-foreground flex gap-2 text-sm leading-6'>
-          <Star className='text-warning mt-0.5 size-4 shrink-0 fill-warning' />
-          <span>{assessment.summary}</span>
+        <p className='flex items-center gap-2'>
+          <Star className='text-warning size-4 shrink-0 fill-warning' />
+          <div className='text-muted-foreground flex text-sm' >
+            <RichTextPreview html={assessment.summary} />
+          </div>
         </p>
         <div className='grid gap-3 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center'>
           <Badge className='bg-primary text-primary-foreground h-8 w-fit rounded-md px-4'>
@@ -442,7 +487,43 @@ function AssessmentCard({
   );
 }
 
-function AssessmentOverview() {
+function AssessmentCardSkeleton() {
+  return (
+    <article className='border-border/70 bg-card rounded-md border shadow-xs'>
+      <div className='border-border/60 flex items-start justify-between gap-4 border-b p-4'>
+        <div className='min-w-0 flex-1 space-y-2'>
+          <Skeleton className='h-6 w-52' />
+          <Skeleton className='h-4 w-60' />
+        </div>
+        <Skeleton className='h-6 w-24 rounded-md' />
+      </div>
+      <div className='border-border/60 space-y-4 border-b p-4'>
+        <Skeleton className='h-16 w-full' />
+        <div className='grid gap-3 md:grid-cols-[120px_minmax(0,1fr)_auto]'>
+          <Skeleton className='h-8 w-24 rounded-md' />
+          <Skeleton className='h-8 w-full rounded-md' />
+          <Skeleton className='h-9 w-36 rounded-md' />
+        </div>
+      </div>
+      <div className='flex flex-wrap items-center gap-x-6 gap-y-2 p-4'>
+        <Skeleton className='h-4 w-32' />
+        <Skeleton className='h-4 w-24' />
+      </div>
+    </article>
+  );
+}
+
+function AssessmentOverview({
+  activeCount,
+  completedCount,
+  overdueCount,
+  pendingCount,
+}: {
+  activeCount: number;
+  completedCount: number;
+  overdueCount: number;
+  pendingCount: number;
+}) {
   return (
     <section className='border-border/70 bg-card rounded-md border p-4 shadow-xs'>
       <div className='mb-4 flex items-center justify-between gap-3'>
@@ -454,10 +535,10 @@ function AssessmentOverview() {
       </div>
       <div className='grid grid-cols-4 gap-3 border-b pb-4 text-center'>
         {[
-          ['3', 'Active'],
-          ['1', 'Accepted'],
-          ['1', 'Rejected'],
-          ['1', 'Up'],
+          [String(activeCount), 'Active'],
+          [String(completedCount), 'Completed'],
+          [String(pendingCount), 'Pending'],
+          [String(overdueCount), 'Overdue'],
         ].map(([value, label]) => (
           <div key={label}>
             <p className='text-primary text-2xl font-semibold'>{value}</p>
@@ -468,22 +549,23 @@ function AssessmentOverview() {
       <div className='space-y-2 pt-4 text-sm'>
         <p className='text-muted-foreground flex items-center gap-2'>
           <BriefcaseBusiness className='text-primary size-4' />
-          In Progress
+          {activeCount} in progress
         </p>
         <p className='text-muted-foreground flex items-center gap-2'>
-          <Clock3 className='text-warning size-4' />1 Overdue
+          <Clock3 className='text-warning size-4' />
+          {overdueCount} overdue
         </p>
       </div>
     </section>
   );
 }
 
-function Deadlines() {
+function Deadlines({ items }: { items: AssessmentListItem[] }) {
   return (
     <section className='border-border/70 bg-card rounded-md border p-4 shadow-xs'>
       <h3 className='mb-4 font-semibold'>Upcoming Deadlines</h3>
       <div className='space-y-3'>
-        {assessments.slice(0, 2).map(assessment => (
+        {items.slice(0, 2).map(assessment => (
           <div className='flex gap-2 text-sm' key={assessment.id}>
             <CalendarDays className='text-primary mt-0.5 size-4 shrink-0' />
             <div>
@@ -524,7 +606,6 @@ function TopStudentsPanel() {
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );
@@ -595,18 +676,84 @@ function CompetenciesGrid() {
   );
 }
 
-export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceRole }) {
+function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
   const [activeTab, setActiveTab] = useState<AssessmentTab>('completed');
   const [search, setSearch] = useState('');
   const [skill, setSkill] = useState('all');
-  const filteredAssessments = useMemo(
-    () => getFilteredAssessments(activeTab, search, skill),
-    [activeTab, search, skill]
+  const { assignmentRows, isLoading } = useStudentAssignmentData();
+
+  const studentAssessments = useMemo<AssessmentListItem[]>(
+    () =>
+      assignmentRows.map(row => {
+        const status = getStudentAssignmentSubmissionState(row);
+        const primaryAttachment = row.attachments[0];
+        const dueAt = row.schedule?.due_at ?? row.assignment?.due_date;
+        const skillLabel =
+          row.classMeta.courseTitle || row.assignment.assignment_category || 'Assignment';
+
+        return {
+          category: row.assignment.assignment_category || 'Assignment',
+          dueLabel: dueAt ? `Due ${formatDate(dueAt)}` : 'Self paced',
+          fileName:
+            primaryAttachment?.original_filename ||
+            primaryAttachment?.stored_filename ||
+            'No attachment',
+          fileSize: formatBytes(primaryAttachment?.file_size_bytes),
+          id: row.assignment.uuid || `${row.classMeta.classUuid}-${row.assignment.title}`,
+          learnerName: 'You',
+          points: row.assignment.max_points ?? row.latestSubmission?.max_score ?? 100,
+          score: row.latestSubmission?.score ?? null,
+          skill: skillLabel,
+          status:
+            status.key === 'graded'
+              ? 'completed'
+              : status.key === 'submitted'
+                ? 'pending-review'
+                : status.label === 'Overdue'
+                  ? 'overdue'
+                  : 'in-progress',
+          statusLabel: status.label,
+          submittedAt: formatDate(
+            row.latestSubmission?.submitted_at ||
+            row.latestSubmission?.updated_date ||
+            row.latestSubmission?.created_date ||
+            dueAt
+          ),
+          summary:
+            row.assignment.description ||
+            row.assignment.instructions ||
+            `${row.classMeta.classTitle} in ${row.classMeta.courseTitle}`,
+          title: row.assignment.title,
+        };
+      }),
+    [assignmentRows]
   );
-  const activeCount = assessments.filter(assessment => assessment.score === null).length;
-  const completedCount = assessments.filter(
-    assessment => assessment.score !== null || assessment.status === 'pending-review'
+
+  const filteredAssessments = useMemo(
+    () => getFilteredAssessments(studentAssessments, activeTab, search, skill),
+    [activeTab, search, skill, studentAssessments]
+  );
+
+  const skills = useMemo(
+    () => Array.from(new Set(studentAssessments.map(assessment => assessment.skill))).sort(),
+    [studentAssessments]
+  );
+
+  const activeCount = studentAssessments.filter(assessment => assessment.score === null).length;
+  const completedCount = studentAssessments.filter(assessment => assessment.score !== null).length;
+  const pendingCount = studentAssessments.filter(
+    assessment => assessment.status === 'in-progress' || assessment.status === 'pending-review'
   ).length;
+  const overdueCount = studentAssessments.filter(
+    assessment => assessment.status === 'overdue'
+  ).length;
+  const upcomingDeadlines = useMemo(
+    () =>
+      [...studentAssessments]
+        .filter(assessment => assessment.dueLabel !== 'Self paced')
+        .sort((left, right) => left.dueLabel.localeCompare(right.dueLabel)),
+    [studentAssessments]
+  );
 
   return (
     <main className='bg-muted/30 min-h-screen overflow-hidden'>
@@ -637,6 +784,98 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
             onSkillChange={setSkill}
             search={search}
             skill={skill}
+            skills={skills}
+          />
+
+          {activeTab === 'competencies' ? (
+            <CompetenciesGrid />
+          ) : (
+            <div className='grid gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
+              <div className='space-y-5'>
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <AssessmentCardSkeleton key={`assessment-skeleton-${index}`} />
+                  ))
+                ) : filteredAssessments.length > 0 ? (
+                  filteredAssessments.map(assessment => (
+                    <AssessmentCard assessment={assessment} key={assessment.id} role={role} />
+                  ))
+                ) : (
+                  <div className='border-border bg-card text-muted-foreground rounded-md border p-6 text-sm'>
+                    No assessments match the selected filters.
+                  </div>
+                )}
+              </div>
+              <div className='grid gap-5 lg:grid-cols-2 min-[1400px]:block min-[1400px]:space-y-5'>
+                <AssessmentOverview
+                  activeCount={activeCount}
+                  completedCount={completedCount}
+                  overdueCount={overdueCount}
+                  pendingCount={pendingCount}
+                />
+                <Deadlines items={upcomingDeadlines} />
+              </div>
+            </div>
+          )}
+
+          <div className='grid gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
+            <CompetencyChart compact={activeTab !== 'competencies'} />
+            <TopStudentsPanel />
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceRole }) {
+  const [activeTab, setActiveTab] = useState<AssessmentTab>('completed');
+  const [search, setSearch] = useState('');
+  const [skill, setSkill] = useState('all');
+  const filteredAssessments = useMemo(
+    () => getFilteredAssessments(assessments, activeTab, search, skill),
+    [activeTab, search, skill]
+  );
+  const activeCount = assessments.filter(assessment => assessment.score === null).length;
+  const completedCount = assessments.filter(
+    assessment => assessment.score !== null || assessment.status === 'pending-review'
+  ).length;
+  const skills = Array.from(new Set(assessments.map(assessment => assessment.skill)));
+
+  if (role === 'student') {
+    return <StudentAssessmentList role={role} />;
+  }
+
+  return (
+    <main className='bg-muted/30 min-h-screen overflow-hidden'>
+      <section className='mx-auto w-full max-w-7xl space-y-5 px-4 py-4 sm:px-6 lg:px-8'>
+        <div className='border-border/70 bg-card rounded-md border p-4 shadow-xs sm:p-5'>
+          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+            <div className='min-w-0 space-y-4'>
+              <h1 className='truncate text-2xl font-semibold'>
+                {activeTab === 'competencies'
+                  ? `Competencies (${competencies.length})`
+                  : 'Assessments & Competencies'}
+              </h1>
+              <TabsBar
+                activeCount={activeCount}
+                activeTab={activeTab}
+                completedCount={completedCount}
+                competenciesCount={competencies.length}
+                onTabChange={setActiveTab}
+              />
+            </div>
+            <HeaderActions role={role} />
+          </div>
+        </div>
+
+        <div className='space-y-5'>
+          <SearchAndFilters
+            onSearchChange={setSearch}
+            onSkillChange={setSkill}
+            search={search}
+            skill={skill}
+            skills={skills}
           />
 
           {activeTab === 'competencies' ? (
@@ -655,8 +894,13 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
                 )}
               </div>
               <div className='grid gap-5 lg:grid-cols-2 min-[1400px]:block min-[1400px]:space-y-5'>
-                <AssessmentOverview />
-                <Deadlines />
+                <AssessmentOverview
+                  activeCount={activeCount}
+                  completedCount={completedCount}
+                  overdueCount={1}
+                  pendingCount={1}
+                />
+                <Deadlines items={assessments} />
               </div>
             </div>
           )}

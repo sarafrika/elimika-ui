@@ -9,6 +9,7 @@ export type TrainingHubManagedCourse = {
   ctaHref: string;
   accent: 'blue' | 'indigo' | 'orange' | 'yellow';
   imageUrl?: string;
+  status?: 'approved';
 };
 
 export type TrainingHubLiveClass = {
@@ -21,6 +22,7 @@ export type TrainingHubLiveClass = {
   fee: string;
   sessions: string;
   href: string;
+  status?: 'today' | 'tomorrow' | 'upcoming';
 };
 
 export type TrainingHubWaitingStudent = {
@@ -45,7 +47,19 @@ export type TrainingHubBooking = {
   href: string;
 };
 
-export const courseFilters = ['All Types', 'All Statuses', 'Filter 4'] as const;
+export const trainingHubTypeFilters = [
+  { label: 'All Types', value: 'all' },
+  { label: 'Manage Courses', value: 'manage-courses' },
+  { label: 'Live Classes', value: 'live-classes' },
+] as const;
+
+export const trainingHubStatusFilters = [
+  { label: 'All Statuses', value: 'all' },
+  { label: 'Approved', value: 'approved' },
+  { label: 'Today', value: 'today' },
+  { label: 'Tomorrow', value: 'tomorrow' },
+  { label: 'Upcoming', value: 'upcoming' },
+] as const;
 
 export const managedCourses: TrainingHubManagedCourse[] = [
   {

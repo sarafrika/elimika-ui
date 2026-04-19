@@ -118,7 +118,7 @@ const createCatalogCards = (
     const applicationStatus = application?.status ?? null;
     const ctaLabel = !isInstructorApplyCard
       ? item.kind === 'program'
-        ? 'Apply Now'
+        ? 'Enroll'
         : 'Enroll'
       : applicationStatus === 'approved'
         ? 'Approved'

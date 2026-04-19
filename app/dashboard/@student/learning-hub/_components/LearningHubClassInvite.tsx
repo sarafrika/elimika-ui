@@ -2,13 +2,34 @@
 
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { LearningHubInvite } from './useStudentLearningHubData';
 
 type LearningHubClassInviteProps = {
   invite: LearningHubInvite | null;
+  loading?: boolean;
 };
 
-export function LearningHubClassInvite({ invite }: LearningHubClassInviteProps) {
+export function LearningHubClassInvite({
+  invite,
+  loading = false,
+}: LearningHubClassInviteProps) {
+  if (loading) {
+    return (
+      <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
+        <Skeleton className='h-5 w-32' />
+        <div className='mt-3 rounded-[12px] border border-border/70 bg-background p-3'>
+          <div className='space-y-2'>
+            <Skeleton className='h-5 w-44' />
+            <Skeleton className='h-4 w-36' />
+            <Skeleton className='h-4 w-32' />
+          </div>
+          <Skeleton className='mt-4 h-9 w-full rounded-[8px]' />
+        </div>
+      </Card>
+    );
+  }
+
   if (!invite) {
     return null;
   }

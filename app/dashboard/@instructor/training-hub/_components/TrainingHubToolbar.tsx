@@ -1,20 +1,28 @@
 'use client';
 
-import { ChevronDown, LayoutGrid, Search, SlidersHorizontal } from 'lucide-react';
-import { courseFilters } from './training-hub-data';
-
-const filterIcons: Record<(typeof courseFilters)[number], typeof SlidersHorizontal | null> = {
-  'All Types': null,
-  'All Statuses': null,
-  'Filter 4': SlidersHorizontal,
-};
+import { ChevronDown, LayoutGrid, Search } from 'lucide-react';
+import {
+  trainingHubStatusFilters,
+  trainingHubTypeFilters,
+} from './training-hub-data';
 
 type TrainingHubToolbarProps = {
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
+  selectedStatus: (typeof trainingHubStatusFilters)[number]['value'];
+  selectedType: (typeof trainingHubTypeFilters)[number]['value'];
+  onStatusChange: (value: (typeof trainingHubStatusFilters)[number]['value']) => void;
+  onTypeChange: (value: (typeof trainingHubTypeFilters)[number]['value']) => void;
 };
 
-export function TrainingHubToolbar({ searchTerm, onSearchTermChange }: TrainingHubToolbarProps) {
+export function TrainingHubToolbar({
+  searchTerm,
+  onSearchTermChange,
+  selectedStatus,
+  selectedType,
+  onStatusChange,
+  onTypeChange,
+}: TrainingHubToolbarProps) {
   return (
     <section
       aria-label='Training hub filters'
@@ -36,28 +44,49 @@ export function TrainingHubToolbar({ searchTerm, onSearchTermChange }: TrainingH
         </label>
 
         <div className='flex flex-wrap gap-2 min-[900px]:justify-end'>
-          {courseFilters.map(filter => {
-            const Icon = filterIcons[filter];
+          <label className='relative inline-flex h-11 items-center rounded-[10px] border border-border/60 bg-white px-3 pr-9 text-[0.88rem] font-medium text-foreground transition hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20 sm:px-4 sm:text-[0.92rem]'>
+            <select
+              aria-label='Filter training hub by type'
+              className='h-full appearance-none bg-transparent pr-5 outline-none'
+              onChange={event =>
+                onTypeChange(
+                  event.target.value as (typeof trainingHubTypeFilters)[number]['value']
+                )
+              }
+              value={selectedType}
+            >
+              {trainingHubTypeFilters.map(filter => (
+                <option key={filter.value} value={filter.value}>
+                  {filter.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className='pointer-events-none absolute right-3 size-4 text-muted-foreground' />
+          </label>
 
-            return (
-              <button
-                key={filter}
-                aria-hidden='true'
-                className='inline-flex h-11 items-center gap-2 rounded-[10px] border border-border/60 bg-white px-3 text-[0.88rem] font-medium text-foreground transition hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 sm:px-4 sm:text-[0.92rem]'
-                disabled
-                type='button'
-              >
-                {Icon ? <Icon className='size-4 text-muted-foreground' /> : null}
-                <span>{filter}</span>
-                <ChevronDown className='size-4 text-muted-foreground' />
-              </button>
-            );
-          })}
+          <label className='relative inline-flex h-11 items-center rounded-[10px] border border-border/60 bg-white px-3 pr-9 text-[0.88rem] font-medium text-foreground transition hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20 sm:px-4 sm:text-[0.92rem]'>
+            <select
+              aria-label='Filter training hub by status'
+              className='h-full appearance-none bg-transparent pr-5 outline-none'
+              onChange={event =>
+                onStatusChange(
+                  event.target.value as (typeof trainingHubStatusFilters)[number]['value']
+                )
+              }
+              value={selectedStatus}
+            >
+              {trainingHubStatusFilters.map(filter => (
+                <option key={filter.value} value={filter.value}>
+                  {filter.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className='pointer-events-none absolute right-3 size-4 text-muted-foreground' />
+          </label>
 
           <button
             aria-label='Change view'
             className='inline-flex size-11 items-center justify-center rounded-[10px] border border-border/60 bg-white text-muted-foreground transition hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20'
-            disabled
             type='button'
           >
             <LayoutGrid className='size-4' />

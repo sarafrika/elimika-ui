@@ -1,7 +1,7 @@
 'use client';
 
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { BarChart3, Star, Users } from 'lucide-react';
+import { BadgeCheck, BarChart3, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { TrainingHubManagedCourse } from './training-hub-data';
@@ -41,9 +41,9 @@ export function ManageCourseCard({ course }: ManageCourseCardProps) {
                 <span>|</span>
                 <span>{course.level}</span>
               </div>
-              <div className='mt-1 flex items-center gap-1 text-[0.74rem] text-muted-foreground'>
-                <Star className='size-3.5 fill-[currentColor]' />
-                <span>Approved to train</span>
+              <div className='mt-1 flex items-center gap-1 text-[0.74rem] text-green-600'>
+                <BadgeCheck className='size-3.5' />
+                <span>Admin verified  •  Approved to train</span>
               </div>
             </div>
           </div>

@@ -291,7 +291,7 @@ export const RichTextPreview = ({ html }: { html: string }) => {
   return (
     <div
       className='
-          text-foreground mx-auto w-full text-[15px] leading-7
+          text-foreground mx-auto w-full text-[14px] leading-7
           [&_*]:max-w-full
           [&_h1]:mt-12 [&_h1]:mb-5 [&_h1]:text-[1.7rem] [&_h1]:font-bold [&_h1]:leading-tight
           [&_h1:first-child]:mt-0

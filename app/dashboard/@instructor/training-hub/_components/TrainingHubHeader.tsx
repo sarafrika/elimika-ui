@@ -15,7 +15,7 @@ export function TrainingHubHeader() {
       </div>
 
       <Link
-        href='/dashboard/all-courses'
+        href='/dashboard/workspace/instructor/courses'
         className='inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-[0.92rem] font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:self-start lg:h-12 lg:px-7 lg:text-[0.98rem]'
       >
         Explore All Courses

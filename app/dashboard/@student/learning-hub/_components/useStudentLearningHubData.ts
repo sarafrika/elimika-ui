@@ -87,6 +87,10 @@ const COURSE_PROGRESS_FALLBACK = [72, 61, 54, 45];
 const MOCK_RECOMMENDED_COURSES: LearningHubRecommendedCourse[] = [
   { id: 'seo', title: 'SEO Essentials', level: 'Beginner', duration: '6 h' },
   { id: 'excel', title: 'Advanced Excel Analysis', level: 'Intermediate', duration: '5 h' },
+  { id: 'product-design', title: 'Product Design Foundations', level: 'Beginner', duration: '4 h' },
+  { id: 'data-visualization', title: 'Data Visualization Studio', level: 'Intermediate', duration: '7 h' },
+  { id: 'copywriting', title: 'Copywriting for Creators', level: 'Beginner', duration: '3 h' },
+  { id: 'project-management', title: 'Project Management Essentials', level: 'Intermediate', duration: '8 h' },
 ];
 
 const MOCK_ASSIGNMENTS: LearningHubAssignment[] = [
@@ -396,7 +400,7 @@ export function useStudentLearningHubData(): LearningHubData {
   const recommendedCourses = useMemo<LearningHubRecommendedCourse[]>(() => {
     const realCourses = publishedCourses
       .filter((course): course is Course => Boolean(course?.name))
-      .slice(0, 2)
+      .slice(0, 6)
       .map(course => ({
         id: course.uuid ?? course.name,
         title: course.name,

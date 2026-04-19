@@ -3,13 +3,18 @@
 import Link from 'next/link';
 import { ChevronRight, FileText } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { LearningHubAssignment } from './useStudentLearningHubData';
 
 type LearningHubAssignmentsProps = {
   assignments: LearningHubAssignment[];
+  loading?: boolean;
 };
 
-export function LearningHubAssignments({ assignments }: LearningHubAssignmentsProps) {
+export function LearningHubAssignments({
+  assignments,
+  loading = false,
+}: LearningHubAssignmentsProps) {
   return (
     <Card className='rounded-[18px] border border-border/70 bg-background p-3.5 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -30,7 +35,26 @@ export function LearningHubAssignments({ assignments }: LearningHubAssignmentsPr
       </div>
 
       <div className='mt-3 space-y-3'>
-        {assignments.map(item => (
+        {loading
+          ? Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={`learning-assignment-skeleton-${index}`}
+                className='rounded-[10px] border border-border/70 bg-background px-3 py-3'
+              >
+                <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+                  <div className='min-w-0 flex-1 space-y-3'>
+                    <div className='flex items-center gap-2'>
+                      <Skeleton className='size-7 rounded-[8px]' />
+                      <Skeleton className='h-5 w-52' />
+                    </div>
+                    <Skeleton className='h-10 w-full' />
+                    <Skeleton className='h-4 w-40' />
+                  </div>
+                  <Skeleton className='h-9 w-28 rounded-[8px]' />
+                </div>
+              </div>
+            ))
+          : assignments.map(item => (
           <div
             key={item.id}
             className='rounded-[10px] border border-border/70 bg-background px-3 py-3'
@@ -62,7 +86,7 @@ export function LearningHubAssignments({ assignments }: LearningHubAssignmentsPr
               </div>
             </div>
           </div>
-        ))}
+            ))}
       </div>
     </Card>
   );

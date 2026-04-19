@@ -159,14 +159,14 @@ export default {
       icon: Award,
     },
     {
-      title: 'Schedule',
-      url: '/dashboard/schedule',
-      icon: Calendar,
-    },
-    {
       title: 'Assignment',
       url: '/dashboard/assignment',
       icon: ClipboardCheck,
+    },
+    {
+      title: 'Schedule',
+      url: '/dashboard/schedule',
+      icon: Calendar,
     },
     {
       title: 'Credentials',

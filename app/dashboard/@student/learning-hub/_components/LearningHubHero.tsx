@@ -1,6 +1,7 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { CheckSquare, Clock3, Gauge, GraduationCap, Plus } from 'lucide-react';
 import Link from 'next/link';
 import type { LearningHubStat } from './useStudentLearningHubData';
@@ -27,9 +28,15 @@ type LearningHubHeroProps = {
   firstName: string;
   studentName: string;
   stats: LearningHubStat[];
+  loading?: boolean;
 };
 
-export function LearningHubHero({ firstName, studentName, stats }: LearningHubHeroProps) {
+export function LearningHubHero({
+  firstName,
+  studentName: _studentName,
+  stats,
+  loading = false,
+}: LearningHubHeroProps) {
   return (
     <Card className="relative overflow-hidden rounded-[26px] border border-border/70 bg-background p-0 shadow-[0_26px_56px_-48px_rgba(15,23,42,0.2)]">
 
@@ -38,12 +45,21 @@ export function LearningHubHero({ firstName, studentName, stats }: LearningHubHe
         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
 
           <div className="min-w-0 max-w-2xl space-y-2">
-            <h1 className="text-[2rem] leading-[1.08] font-semibold tracking-tight text-foreground sm:text-[2.4rem] lg:text-[3rem]">
-              Welcome back, {firstName}!
-            </h1>
-            <p className="text-[0.92rem] text-muted-foreground sm:text-[1rem] lg:text-[1.04rem]">
-              Keep learning and track your progress here in your Learning Hub.
-            </p>
+            {loading ? (
+              <>
+                <Skeleton className='h-11 w-64 sm:h-12 sm:w-80 lg:h-14 lg:w-96' />
+                <Skeleton className='h-5 w-72 sm:w-96' />
+              </>
+            ) : (
+              <>
+                <h1 className="text-[2rem] leading-[1.08] font-semibold tracking-tight text-foreground sm:text-[2.4rem] lg:text-[3rem]">
+                  Welcome back, {firstName}!
+                </h1>
+                <p className="text-[0.92rem] text-muted-foreground sm:text-[1rem] lg:text-[1.04rem]">
+                  Keep learning and track your progress here in your Learning Hub.
+                </p>
+              </>
+            )}
           </div>
 
           {/* RIGHT: CTA */}
@@ -71,7 +87,21 @@ export function LearningHubHero({ firstName, studentName, stats }: LearningHubHe
 
       {/* STATS */}
       <div className="grid gap-3 px-4 pb-5 sm:px-6 sm:pb-6 md:grid-cols-2 xl:grid-cols-4 lg:px-7">
-        {stats.map(stat => {
+        {(loading
+          ? Array.from({ length: 4 }).map((_, index) => ({ id: `hero-stat-${index}` }))
+          : stats
+        ).map(stat => {
+          if (loading) {
+            return (
+              <div
+                key={stat.id}
+                className='rounded-[10px] px-4 py-3 shadow-[0_18px_35px_-24px_rgba(15,23,42,0.35)] sm:px-5 sm:py-4'
+              >
+                <Skeleton className='h-16 w-full rounded-[10px]' />
+              </div>
+            );
+          }
+
           const Icon = statIcons[stat.tone];
           return (
             <div
