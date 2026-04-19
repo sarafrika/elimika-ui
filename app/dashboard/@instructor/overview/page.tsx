@@ -1,3 +1,3 @@
-import InstructorOverviewPage from '@/src/features/dashboard/workspace/pages/InstructorOverviewPage';
+import { InstructorOverviewRoute } from '@/src/features/dashboard/instructor-overview/InstructorOverviewRoute';
 
-export default InstructorOverviewPage;
+export default InstructorOverviewRoute;

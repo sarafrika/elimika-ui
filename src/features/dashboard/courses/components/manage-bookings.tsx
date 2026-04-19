@@ -186,10 +186,8 @@ export const ManageBookings: React.FC<Props> = ({
       new Date(booking.start_time) < now || ['completed', 'cancelled'].includes(booking.status);
 
     return (
-      <Card key={booking.uuid} className='max-w-3xl p-4 sm:p-6'>
-        {/* Header */}
+      <Card key={booking.uuid} className='max-w-4xl rounded-[22px] border p-4 shadow-none sm:p-5'>
         <div className='mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-          {/* Instructor */}
           <div className='flex items-start gap-3'>
             <Avatar className='h-10 w-10 sm:h-12 sm:w-12'>
               <AvatarFallback>{instructor.full_name?.charAt(0)}</AvatarFallback>
@@ -201,7 +199,9 @@ export const ManageBookings: React.FC<Props> = ({
                 {instructor.professional_headline}
               </p>
 
-              <Badge className={`mt-2 ${getStatusColor(booking.status)}`}>{booking.status}</Badge>
+              <Badge className={`mt-2 rounded-full ${getStatusColor(booking.status)}`}>
+                {booking.status}
+              </Badge>
 
               <div>
                 {booking.status === 'payment_required' && countdown && (
@@ -213,7 +213,6 @@ export const ManageBookings: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Price */}
           <div className='text-left sm:text-right'>
             <p className='text-lg font-semibold sm:text-xl'>
               {booking.currency} {booking.price_amount}
@@ -222,10 +221,9 @@ export const ManageBookings: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Info Section */}
-        <div className='mb-4 flex flex-col gap-4 sm:flex-row sm:justify-between'>
-          {/* Session Info */}
-          <div className='space-y-2 text-sm'>
+        <div className='mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]'>
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='bg-muted/50 rounded-2xl p-3 text-sm'>
             <div className='flex items-center gap-2'>
               <Calendar className='text-muted-foreground h-4 w-4' />
               <span>
@@ -237,22 +235,24 @@ export const ManageBookings: React.FC<Props> = ({
                 })}
               </span>
             </div>
+            </div>
 
-            <div className='flex items-center gap-2'>
+            <div className='bg-muted/50 rounded-2xl p-3 text-sm'>
+              <div className='flex items-center gap-2'>
               <Clock className='text-muted-foreground h-4 w-4' />
               <span>
                 {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} –{' '}
                 {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
+            </div>
 
-            <div className='flex items-center gap-2'>
-              <span>Note: {booking?.purpose}</span>
+            <div className='bg-muted/50 rounded-2xl p-3 text-sm sm:col-span-2'>
+              <span className='font-medium'>Session note:</span> {booking?.purpose || 'No note added'}
             </div>
           </div>
 
-          {/* Payment Info */}
-          <div className='space-y-1 text-sm'>
+          <div className='bg-background rounded-2xl border p-3 text-sm'>
             <div className='flex justify-between sm:justify-start sm:gap-2'>
               <span className='font-medium'>Payment:</span>
               <span>{booking?.payment_engine}</span>
@@ -265,13 +265,12 @@ export const ManageBookings: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Actions */}
         <div className='flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end'>
           {!isPastBooking && booking.status !== 'cancelled' && (
             <Button
               variant='destructive'
               size='sm'
-              className='w-full gap-2 sm:w-auto'
+              className='w-full gap-2 rounded-xl sm:w-auto'
               onClick={() => {
                 setSelectedBooking(booking);
                 setShowCancelDialog(true);
@@ -285,7 +284,7 @@ export const ManageBookings: React.FC<Props> = ({
           <Button
             variant='outline'
             size='sm'
-            className='w-full gap-2 sm:w-auto'
+            className='w-full gap-2 rounded-xl shadow-none sm:w-auto'
             onClick={() => {
               setSelectedBooking(booking);
               setOpenBookingDetails(true);
@@ -296,7 +295,7 @@ export const ManageBookings: React.FC<Props> = ({
           </Button>
 
           {!isPastBooking && !booking?.payment_reference && (
-            <Button className='w-full gap-2 sm:w-auto' onClick={() => handlePayBooking(booking)}>
+            <Button className='w-full gap-2 rounded-xl sm:w-auto' onClick={() => handlePayBooking(booking)}>
               Pay {booking.currency} {booking.price_amount}
             </Button>
           )}
@@ -304,7 +303,7 @@ export const ManageBookings: React.FC<Props> = ({
           <Button
             variant='outline'
             size='sm'
-            className='w-full gap-2 sm:w-auto'
+            className='w-full gap-2 rounded-xl shadow-none sm:w-auto'
             onClick={() => {
               setOpenBookingDetails(false);
               setSelectedBooking(booking);
@@ -322,7 +321,7 @@ export const ManageBookings: React.FC<Props> = ({
   return (
     <div className='space-y-6'>
       {bookings?.length === 0 ? (
-        <Card className='p-12 text-center'>
+        <Card className='rounded-[22px] border border-dashed p-12 text-center shadow-none'>
           <Calendar className='text-muted-foreground mx-auto mb-4 h-16 w-16' />
           <h3>No bookings yet</h3>
           <p className='text-muted-foreground mt-2'>
@@ -330,15 +329,19 @@ export const ManageBookings: React.FC<Props> = ({
           </p>
         </Card>
       ) : (
-        <Tabs defaultValue='upcoming'>
-          <TabsList>
-            <TabsTrigger value='upcoming'>Upcoming ({upcomingBookings?.length})</TabsTrigger>
-            <TabsTrigger value='past'>Past ({pastBookings?.length})</TabsTrigger>
+        <Tabs defaultValue='upcoming' className='space-y-5'>
+          <TabsList className='bg-muted/50 h-auto rounded-2xl p-1'>
+            <TabsTrigger value='upcoming' className='rounded-xl px-4 py-2.5'>
+              Upcoming ({upcomingBookings?.length})
+            </TabsTrigger>
+            <TabsTrigger value='past' className='rounded-xl px-4 py-2.5'>
+              Past ({pastBookings?.length})
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value='upcoming' className='mt-6 space-y-4'>
+          <TabsContent value='upcoming' className='mt-0 space-y-4'>
             {upcomingBookings?.length === 0 ? (
-              <Card className='p-12 text-center'>
+              <Card className='rounded-[22px] border border-dashed p-12 text-center shadow-none'>
                 <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
                 <p className='text-muted-foreground'>No upcoming bookings</p>
               </Card>
@@ -347,9 +350,9 @@ export const ManageBookings: React.FC<Props> = ({
             )}
           </TabsContent>
 
-          <TabsContent value='past' className='mt-6 space-y-4'>
+          <TabsContent value='past' className='mt-0 space-y-4'>
             {pastBookings?.length === 0 ? (
-              <Card className='p-12 text-center'>
+              <Card className='rounded-[22px] border border-dashed p-12 text-center shadow-none'>
                 <Calendar className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
                 <p className='text-muted-foreground'>No past bookings</p>
               </Card>

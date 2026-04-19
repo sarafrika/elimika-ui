@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { LearningHubCourse } from './useStudentLearningHubData';
 
 const buttonAccentClasses = {
@@ -15,9 +16,13 @@ const buttonAccentClasses = {
 
 type LearningHubContinueLearningProps = {
   courses: LearningHubCourse[];
+  loading?: boolean;
 };
 
-export function LearningHubContinueLearning({ courses }: LearningHubContinueLearningProps) {
+export function LearningHubContinueLearning({
+  courses,
+  loading = false,
+}: LearningHubContinueLearningProps) {
   return (
     <Card className='rounded-[18px] border border-border/70 bg-background p-3.5 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
       <div className='flex items-center justify-between gap-3'>
@@ -26,7 +31,23 @@ export function LearningHubContinueLearning({ courses }: LearningHubContinueLear
       </div>
 
       <div className='mt-3 grid gap-3 md:grid-cols-2 min-[1450px]:grid-cols-4'>
-        {courses.map(course => (
+        {loading
+          ? Array.from({ length: 4 }).map((_, index) => (
+              <article key={`learning-course-skeleton-${index}`} className='space-y-2 rounded-[10px]'>
+                <Skeleton className='h-[86px] rounded-[8px]' />
+                <div className='space-y-2'>
+                  <Skeleton className='h-4 w-4/5' />
+                  <Skeleton className='h-3 w-20' />
+                </div>
+                <div className='flex items-center gap-1.5'>
+                  {Array.from({ length: 4 }).map((__, dotIndex) => (
+                    <Skeleton key={dotIndex} className='size-2 rounded-full' />
+                  ))}
+                </div>
+                <Skeleton className='h-9 w-full rounded-[8px]' />
+              </article>
+            ))
+          : courses.map(course => (
           <article key={course.id} className='space-y-2 rounded-[10px]'>
             <div className='h-[86px] rounded-[8px] border border-border/60 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,white),white)]' />
             <div>
@@ -53,7 +74,7 @@ export function LearningHubContinueLearning({ courses }: LearningHubContinueLear
               {course.ctaLabel}
             </Link>
           </article>
-        ))}
+            ))}
       </div>
     </Card>
   );

@@ -23,7 +23,6 @@ import {
   Layers2,
   LayoutDashboard,
   LibraryIcon,
-  LucideBookUser,
   LucideLandmark,
   PlusCircle,
   School,
@@ -31,14 +30,12 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  Star,
   TrendingUp,
   UserCircle,
   UserIcon,
-  UserPlus,
   Users,
   UsersIcon,
-  Wallet,
+  Wallet
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -137,7 +134,7 @@ export default {
   ],
   student: [
     {
-      title: 'Overview',
+      title: 'Dashboard',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
@@ -148,7 +145,7 @@ export default {
     },
     {
       title: 'Courses',
-      url: '/dashboard/all-courses',
+      url: '/dashboard/courses',
       icon: GraduationCap,
     },
     {
@@ -162,30 +159,34 @@ export default {
       icon: Award,
     },
     {
+      title: 'Assignment',
+      url: '/dashboard/assignment',
+      icon: ClipboardCheck,
+    },
+    {
       title: 'Schedule',
       url: '/dashboard/schedule',
       icon: Calendar,
     },
     {
-      title: 'Assignment',
-      url: '/dashboard/assignment',
-      icon: ClipboardCheck,
-    },
-
-    {
-      title: 'Invites',
-      url: '/dashboard/invites',
-      icon: UserPlus,
+      title: 'Credentials',
+      url: '/dashboard/credentials',
+      icon: Layers,
     },
     {
-      title: 'Skills Fund',
-      url: '/dashboard/skills-fund',
-      icon: Wallet,
+      title: 'Portfolio',
+      url: '/dashboard/portfolio',
+      icon: Handshake,
+    },
+    {
+      title: 'Opportunities',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
     },
     // {
-    //   title: 'Opportunities',
-    //   url: '/dashboard/opportunities',
-    //   icon: Handshake,
+    //   title: 'Invites',
+    //   url: '/dashboard/invites',
+    //   icon: UserPlus,
     // },
     // {
     //   title: 'Contacts',
@@ -203,12 +204,17 @@ export default {
     //   icon: LucideBookUser,
     // },
     {
-      title: 'Notifications',
-      url: '/dashboard/notifications',
+      title: 'Skills Fund',
+      url: '/dashboard/skills-fund',
+      icon: Wallet,
+    },
+    {
+      title: 'Messaging & Notifications',
+      url: '/dashboard/messaging-notifications',
       icon: Bell,
     },
     {
-      title: 'Progress Analytics',
+      title: 'Report & Analytics',
       url: '/dashboard/progress-analytics',
       icon: TrendingUp,
     },
@@ -225,17 +231,12 @@ export default {
   ],
   instructor: [
     {
-      title: 'Home - All courses',
-      url: '/dashboard/all-courses',
-      icon: School,
-    },
-    {
-      title: 'Overview',
+      title: 'Dashboard',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
     {
-      title: 'My Skills',
+      title: 'Skills Wallet Profile',
       url: '/dashboard/my-skills',
       icon: BadgeCheck,
     },
@@ -247,34 +248,43 @@ export default {
     {
       title: 'Courses',
       url: '/dashboard/courses',
-      icon: BookOpen,
+      icon: GraduationCap,
     },
     {
-      title: 'Classes (Training Hub)',
-      // url: '/dashboard/trainings',
+      title: 'Training Hub',
+      url: '/dashboard/training-hub',
+      icon: ClipboardList,
+    },
+    {
+      title: 'Classroom',
       url: '/dashboard/classes',
       icon: ClipboardList,
     },
     {
-      title: 'Assignment',
+      title: 'Assignments',
       url: '/dashboard/assignment',
       icon: Layers,
     },
     {
-      title: 'Assessment',
+      title: 'Assessment (Competency & Tracking)',
       url: '/dashboard/assessment',
       icon: Layers,
     },
     {
-      title: 'Enrollments',
-      url: '/dashboard/enrollments',
-      icon: BookOpen,
+      title: 'Credentials',
+      url: '/dashboard/credentials',
+      icon: Layers,
     },
     {
-      title: 'Waiting List',
-      url: '/dashboard/waiting-list',
-      icon: GraduationCap,
+      title: 'Portfolio',
+      url: '/dashboard/portfolio',
+      icon: BookOpen,
     },
+    // {
+    //   title: 'Enrollments',
+    //   url: '/dashboard/enrollments',
+    //   icon: BookOpen,
+    // },
     {
       title: 'Opportunities',
       url: '/dashboard/opportunities',
@@ -285,36 +295,36 @@ export default {
       url: '/dashboard/skills-fund',
       icon: Wallet,
     },
-    {
-      title: 'Communities',
-      url: '/dashboard/communities',
-      icon: Users,
-    },
-    {
-      title: 'Library',
-      url: '/dashboard/library',
-      icon: LucideBookUser,
-    },
+    // {
+    //   title: 'Communities',
+    //   url: '/dashboard/communities',
+    //   icon: Users,
+    // },
+    // {
+    //   title: 'Library',
+    //   url: '/dashboard/library',
+    //   icon: LucideBookUser,
+    // },
     {
       title: 'Revenue',
       url: '/dashboard/revenue',
       icon: DollarSign,
     },
     {
-      title: 'Notifications',
-      url: '/dashboard/notifications',
-      icon: Bell,
-    },
-    {
-      title: 'Analytics',
+      title: 'Reports & Analytics',
       url: '/dashboard/analytics',
       icon: ChartNoAxesCombined,
     },
     {
-      title: 'Reviews',
-      url: '/dashboard/reviews',
-      icon: Star,
+      title: 'Messaging & Notifications',
+      url: '/dashboard/messaging-notifications',
+      icon: Bell,
     },
+    // {
+    //   title: 'Reviews',
+    //   url: '/dashboard/reviews',
+    //   icon: Star,
+    // },
     {
       title: 'Profile',
       url: '/dashboard/profile',
@@ -325,22 +335,6 @@ export default {
       url: '/dashboard/settings',
       icon: Settings,
     },
-    // {
-    //   title: 'Catalogue XXX',
-    //   url: '/dashboard/catalogue',
-    //   icon: ShoppingBag,
-    // },
-
-    // {
-    //   title: 'Learning XXX',
-    //   url: '/dashboard/learning',
-    //   icon: GraduationCap,
-    // },
-    // {
-    //   title: 'Bookings XXX',
-    //   url: '/dashboard/bookings',
-    //   icon: CalendarClock,
-    // },
   ],
   course_creator: [
     {

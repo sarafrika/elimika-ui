@@ -92,6 +92,9 @@ export const EnrollmentCards = ({
             setOpenEnrollModal(false);
             toast.success(data?.message || 'Student enrolled successfully');
           },
+          onError: error => {
+            toast.error(getErrorMessage(error));
+          },
         }
       );
     } else {

@@ -9,7 +9,10 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import ConfirmModal from '../../../../../../components/custom-modals/confirm-modal';
 import { useInstructor } from '../../../../../../context/instructor-context';
-import type { BundledClass } from '../../../../../../src/features/dashboard/courses/types';
+import {
+  type BundledClass,
+  getErrorMessage,
+} from '../../../../../../src/features/dashboard/courses/types';
 import {
   enrollStudentMutation,
   getStudentScheduleQueryKey,
@@ -73,9 +76,12 @@ const EnrollmentPage = () => {
             setOpenEnrollModal(false);
             toast.success(data?.message || 'Student enrolled successfully');
           },
-          onError: () => {
+          onError: error => {
             toast.error(
-              'Enrollment requires a student account. Please log in as a student, or create a student profile to continue.'
+              getErrorMessage(
+                error,
+                'Enrollment requires a student account. Please log in as a student, or create a student profile to continue.'
+              )
             );
             setOpenEnrollModal(false);
           },

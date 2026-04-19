@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
-import { BookOpen, Plus, UserSquare2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { BookOpen, Plus, UserSquare2 } from 'lucide-react';
+import Link from 'next/link';
 
 type LearningHubSidebarProps = {
   studentName: string;
@@ -40,7 +40,7 @@ export function LearningHubSidebar({ studentName }: LearningHubSidebarProps) {
         <div className='mt-3 space-y-2'>
           <Link
             prefetch
-            href='/dashboard/all-courses'
+            href='/dashboard/workspace/student/courses'
             className='inline-flex w-full items-center justify-center gap-2 rounded-[8px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--success)_80%,black_6%),color-mix(in_srgb,var(--success)_70%,black_18%))] px-3 py-2.5 text-[0.84rem] font-medium text-white transition hover:opacity-95'
           >
             <Plus className='size-4' />
@@ -48,11 +48,11 @@ export function LearningHubSidebar({ studentName }: LearningHubSidebarProps) {
           </Link>
           <Link
             prefetch
-            href='/dashboard/schedule'
+            href="/dashboard/workspace/student/courses"
             className='inline-flex w-full items-center justify-center gap-2 rounded-[8px] border border-border/70 bg-background px-3 py-2.5 text-[0.84rem] font-medium text-muted-foreground transition hover:text-primary'
           >
             <Plus className='size-4' />
-            Join New Class
+            Enroll in New Course
           </Link>
         </div>
       </Card>

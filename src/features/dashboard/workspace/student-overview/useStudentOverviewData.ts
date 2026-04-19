@@ -1,9 +1,10 @@
 'use client';
 
+import { useStudent } from '@/context/student-context';
 import {
   getClassDefinitionOptions,
   getCourseByUuidOptions,
-  getPublishedCoursesOptions,
+  getCourseEnrollmentsOptions,
   getStudentCertificatesOptions,
   getStudentScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -11,9 +12,9 @@ import type {
   Certificate,
   ClassDefinition,
   Course,
+  CourseEnrollment,
   StudentSchedule,
 } from '@/services/client/types.gen';
-import { useStudent } from '@/context/student-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -25,6 +26,7 @@ export type StudentOverviewActiveCourse = {
   progress: number;
   nextDateLabel: string;
   buttonLabel: string;
+  href: string;
 };
 
 export type StudentOverviewOpportunity = {
@@ -126,6 +128,7 @@ const buildCourseProgress = (certificate: Certificate | undefined, index: number
 export function useStudentOverviewData(): StudentOverviewData {
   const profile = useUserProfile();
   const student = useStudent();
+
   const firstName =
     profile?.first_name || profile?.student?.first_name || profile?.user?.first_name || 'Sarah';
 
@@ -142,24 +145,11 @@ export function useStudentOverviewData(): StudentOverviewData {
         end: new Date('2027-12-31'),
       },
     }),
-    enabled: Boolean(student?.uuid),
-  });
-
-  const { data: publishedCoursesResponse } = useQuery({
-    ...getPublishedCoursesOptions({
-      query: {
-        pageable: {
-          page: 0,
-          size: 3,
-        },
-      },
-    }),
-    refetchOnWindowFocus: false,
+    enabled: true,
   });
 
   const certificates = certificatesResponse?.data ?? [];
   const schedules = scheduleResponse?.data ?? [];
-  const publishedCourses = publishedCoursesResponse?.data?.content ?? [];
 
   const uniqueClassIds = useMemo(
     () =>
@@ -229,6 +219,41 @@ export function useStudentOverviewData(): StudentOverviewData {
     return map;
   }, [courseIds, courseQueries]);
 
+  const courseEnrollmentQueries = useQueries({
+    queries: courseIds.map(courseUuid => ({
+      ...getCourseEnrollmentsOptions({
+        path: { courseUuid },
+        query: {
+          pageable: {
+            page: 0,
+            size: 100,
+          },
+        },
+      }),
+      enabled: Boolean(courseUuid),
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const courseEnrollmentsMap = useMemo(() => {
+    const map = new Map<string, CourseEnrollment>();
+
+    courseEnrollmentQueries.forEach((query, index) => {
+      const courseUuid = courseIds[index];
+      const matchingEnrollment =
+        query.data?.data?.content?.find(
+          enrollment => enrollment.student_uuid === student?.uuid
+        ) ?? null;
+
+      if (courseUuid && matchingEnrollment) {
+        map.set(courseUuid, matchingEnrollment);
+      }
+    });
+
+    return map;
+  }, [courseEnrollmentQueries, courseIds, student?.uuid]);
+
   const certificatesByCourse = useMemo(() => {
     const map = new Map<string, Certificate>();
 
@@ -246,42 +271,52 @@ export function useStudentOverviewData(): StudentOverviewData {
       .map(([classId, classDefinition]) => {
         const courseUuid = classDefinition.course_uuid;
         const course = courseUuid ? coursesMap.get(courseUuid) : undefined;
+        const enrollment = courseUuid ? courseEnrollmentsMap.get(courseUuid) : undefined;
         const relatedSchedules = schedules.filter(item => item.class_definition_uuid === classId);
         const nextSchedule = relatedSchedules
           .map(item => item.start_time)
           .filter((value): value is Date => value instanceof Date)
           .sort((a, b) => a.getTime() - b.getTime())[0];
 
+        if (!enrollment || (!enrollment.is_active && enrollment.status !== 'ACTIVE')) {
+          return null;
+        }
+
         return {
-          id: classId,
+          id: courseUuid ?? classId,
           title: course?.name ?? classDefinition.title,
           subtitle: buildCourseSubtitle(course),
-          progress: buildCourseProgress(
-            courseUuid ? certificatesByCourse.get(courseUuid) : undefined,
-            relatedSchedules.length
-          ),
+          progress:
+            typeof enrollment.progress_percentage === 'number'
+              ? Math.max(0, Math.min(100, Math.round(enrollment.progress_percentage)))
+              : buildCourseProgress(
+                courseUuid ? certificatesByCourse.get(courseUuid) : undefined,
+                relatedSchedules.length
+              ),
           nextDateLabel: formatDateLabel(nextSchedule),
           buttonLabel: 'Continue',
+          href: courseUuid ? `/dashboard/courses/${courseUuid}` : '/dashboard/courses',
           sortValue: nextSchedule?.getTime() ?? Number.MAX_SAFE_INTEGER,
         };
       })
+      .filter((course): course is StudentOverviewActiveCourse & { sortValue: number } => course !== null)
+      .reduce<Map<string, StudentOverviewActiveCourse & { sortValue: number }>>((map, course) => {
+        const existing = map.get(course.id);
+
+        if (!existing || course.sortValue < existing.sortValue) {
+          map.set(course.id, course);
+        }
+
+        return map;
+      }, new Map());
+
+    const dedupedCourses = Array.from(resolvedCourses.values())
       .sort((a, b) => a.sortValue - b.sortValue)
       .slice(0, 2)
       .map(({ sortValue: _sortValue, ...course }) => course);
 
-    if (resolvedCourses.length > 0) {
-      return resolvedCourses;
-    }
-
-    return publishedCourses.slice(0, 2).map((course, index) => ({
-      id: course.uuid ?? `published-${index}`,
-      title: course.name,
-      subtitle: buildCourseSubtitle(course),
-      progress: FALLBACK_PROGRESS[index % FALLBACK_PROGRESS.length],
-      nextDateLabel: index === 0 ? 'May 28, 2024' : 'May 27, 2024',
-      buttonLabel: 'Continue',
-    }));
-  }, [certificatesByCourse, classDefinitions, coursesMap, publishedCourses, schedules]);
+    return dedupedCourses;
+  }, [certificatesByCourse, classDefinitions, courseEnrollmentsMap, coursesMap, schedules]);
 
   const verifiedSkills = certificates.filter(item => item.is_valid).length || 9;
   const newSkillsThisMonth =
@@ -316,6 +351,7 @@ export function useStudentOverviewData(): StudentOverviewData {
     newSkillsThisMonth,
     activeCourses,
     opportunities: MOCK_OPPORTUNITIES,
-    isLoadingCourses,
+    isLoadingCourses:
+      isLoadingCourses || courseEnrollmentQueries.some(query => query.isLoading || query.isFetching),
   };
 }

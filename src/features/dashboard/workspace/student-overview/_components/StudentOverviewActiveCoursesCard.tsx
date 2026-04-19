@@ -20,7 +20,7 @@ export function StudentOverviewActiveCoursesCard({
         <h2 className='text-[1rem] font-semibold text-slate-900'>Active Courses</h2>
         <Link
           prefetch
-          href='/dashboard/all-courses'
+          href='/dashboard/courses'
           className='text-[0.8rem] font-medium text-primary transition hover:text-primary/80'
         >
           See All
@@ -63,7 +63,7 @@ export function StudentOverviewActiveCoursesCard({
                   </span>
                   <Link
                     prefetch
-                    href='/dashboard/all-courses'
+                    href={course.href}
                     className='inline-flex items-center gap-1 rounded-[8px] bg-primary px-2.5 py-1.5 text-[0.7rem] font-medium text-primary-foreground transition hover:bg-primary/90'
                   >
                     {course.buttonLabel}
@@ -80,10 +80,16 @@ export function StudentOverviewActiveCoursesCard({
         <p className='mt-3 text-[0.78rem] text-slate-500'>Syncing your current courses...</p>
       ) : null}
 
+      {!isLoading && courses.length === 0 ? (
+        <p className='mt-3 text-[0.78rem] text-slate-500'>
+          Your active enrollments will show up here once your courses are live.
+        </p>
+      ) : null}
+
       <div className='mt-3 flex justify-end'>
         <Link
           prefetch
-          href='/dashboard/all-courses'
+          href='/dashboard/courses'
           className='inline-flex items-center gap-1 text-[0.8rem] font-medium text-primary transition hover:text-primary/80'
         >
           See All Courses
