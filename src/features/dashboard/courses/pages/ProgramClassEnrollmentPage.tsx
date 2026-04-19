@@ -271,6 +271,7 @@ export default function ProgramClassEnrollmentPage({
           );
         },
         onError: err => {
+          toast.error(getErrorMessage(err, 'Failed to enroll in class'));
           handleCreateCartAndPay(enrollingClass);
         },
       }

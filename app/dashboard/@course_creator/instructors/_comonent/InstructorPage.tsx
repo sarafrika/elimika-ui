@@ -598,8 +598,8 @@ const InstructorsApplicationPage = () => {
       </section>
 
       <Card className='overflow-hidden p-0'>
-        <div className='flex flex-col lg:h-[calc(100vh-190px)] lg:flex-row'>
-          <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
+        <div className='flex flex-col min-[1450px]:h-[calc(100vh-190px)] min-[1450px]:flex-row'>
+          <div className='bg-background flex w-full flex-col border-b min-[1450px]:w-[22rem] min-[1450px]:border-r min-[1450px]:border-b-0'>
             <div className='space-y-4 border-b p-4'>
               <div className='flex items-center gap-2 lg:hidden'>
                 <button
@@ -752,9 +752,13 @@ const InstructorsApplicationPage = () => {
 
                 <div className='flex-1 overflow-y-auto p-6'>
                   <Tabs value={tabs} onValueChange={value => setTabs(value as InstructorTab)} className='gap-6'>
-                    <TabsList className='h-auto w-full justify-start rounded-2xl bg-muted/60 p-1'>
+                    <TabsList className='h-auto w-full flex-wrap justify-start gap-1 rounded-2xl bg-muted/60 p-1'>
                       {tabOptions.map(option => (
-                        <TabsTrigger key={option.value} value={option.value} className='flex-none px-4 py-2.5'>
+                        <TabsTrigger
+                          key={option.value}
+                          value={option.value}
+                          className='max-w-full flex-none px-4 py-2.5 text-left whitespace-normal'
+                        >
                           {option.label}
                         </TabsTrigger>
                       ))}
@@ -788,7 +792,7 @@ const InstructorsApplicationPage = () => {
                             </button>
                           </div>
 
-                          <div className='flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between'>
+                          <div className='flex flex-col gap-5 min-[1450px]:flex-row min-[1450px]:items-start min-[1450px]:justify-between'>
                             <div className='flex items-start gap-4'>
                               <Avatar className='h-16 w-16 border'>
                                 <AvatarImage src={instructor?.profile_picture_url} />
@@ -815,7 +819,7 @@ const InstructorsApplicationPage = () => {
                               </div>
                             </div>
 
-                            <div className='grid gap-4 text-left sm:grid-cols-2 xl:min-w-[220px] xl:text-right'>
+                            <div className='grid gap-4 text-left sm:grid-cols-2 min-[1450px]:min-w-[220px] min-[1450px]:text-right'>
                               <div>
                                 <p className='text-muted-foreground text-sm font-medium'>
                                   Instructor ID:
@@ -838,7 +842,7 @@ const InstructorsApplicationPage = () => {
 
                           <Separator className='my-6' />
 
-                          <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
+                          <div className='grid gap-6 md:grid-cols-2 min-[1450px]:grid-cols-3'>
                             <div>
                               <p className='text-muted-foreground text-sm font-medium'>Phone:</p>
                               <p className='mt-1 text-sm'>
@@ -864,7 +868,7 @@ const InstructorsApplicationPage = () => {
                           </div>
                         </Card>
 
-                        <div className='grid gap-6 xl:grid-cols-2'>
+                        <div className='grid gap-6 min-[1450px]:grid-cols-2'>
                           <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
                             <div className='mb-5 flex items-center gap-2'>
                               <User className='h-5 w-5' />
@@ -975,7 +979,7 @@ const InstructorsApplicationPage = () => {
                           </Card>
                         </div>
 
-                        <div className='grid gap-6 xl:grid-cols-[1.1fr_0.9fr]'>
+                        <div className='grid gap-6 min-[1450px]:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]'>
                           <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
                             <div className='mb-4 flex items-center gap-2'>
                               <Award className='text-primary h-5 w-5' />

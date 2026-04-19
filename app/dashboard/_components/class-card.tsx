@@ -22,6 +22,17 @@ type ClassCardData = ClassDefinition;
 
 type ClassCardCourse = Pick<Course, 'category_names'>;
 
+const getErrorMessage = (error: unknown) => {
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = error.message;
+    if (typeof message === 'string') {
+      return message;
+    }
+  }
+
+  return 'Something went wrong';
+};
+
 export const ClassCard = ({
   classData,
   course,
@@ -76,6 +87,9 @@ export const ClassCard = ({
             });
             setOpenEnrollModal(false);
             toast.success(data?.message || 'Student enrolled successfully');
+          },
+          onError: error => {
+            toast.error(getErrorMessage(error));
           },
         }
       );
