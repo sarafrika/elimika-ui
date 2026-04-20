@@ -125,9 +125,10 @@ export function StudentAssignmentWorkspace() {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [searchValue, setSearchValue] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('due');
-  const [selectedAssignment, setSelectedAssignment] = useState<AssignmentRow | null>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<StudentAssignmentRow | null>(null);
   const [submissionText, setSubmissionText] = useState('');
   const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
+  const { assignmentRows, isLoading } = useStudentAssignmentData();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -135,22 +136,6 @@ export function StudentAssignmentWorkspace() {
       { id: 'assignment', title: 'Assignment', url: '/dashboard/assignment', isLast: true },
     ]);
   }, [replaceBreadcrumbs]);
-
-  if (!student?.uuid) {
-    return (
-      <div className={getEmptyStateClasses()}>
-        <AlertCircle className='text-primary/70 h-10 w-10' />
-        <div className='space-y-1'>
-          <h3 className='text-lg font-semibold'>Student profile required</h3>
-          <p className='text-muted-foreground max-w-lg text-sm'>
-            Assignments become available once a student profile is active on this account.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const { assignmentRows, isLoading } = useStudentAssignmentData();
 
   const processedRows = useMemo(() => {
     return assignmentRows
@@ -281,7 +266,7 @@ export function StudentAssignmentWorkspace() {
     );
   };
 
-  const handleOpenAssignment = (row: AssignmentRow) => {
+  const handleOpenAssignment = (row: StudentAssignmentRow) => {
     setSelectedAssignment(row);
     setSubmissionText(
       row.latestSubmission?.status === 'RETURNED' ? row.latestSubmission?.submission_text || '' : ''
@@ -336,6 +321,20 @@ export function StudentAssignmentWorkspace() {
       toast.error(getErrorMessage(error, 'Unable to submit this assignment right now.'));
     }
   };
+
+  if (!student?.uuid) {
+    return (
+      <div className={getEmptyStateClasses()}>
+        <AlertCircle className='text-primary/70 h-10 w-10' />
+        <div className='space-y-1'>
+          <h3 className='text-lg font-semibold'>Student profile required</h3>
+          <p className='text-muted-foreground max-w-lg text-sm'>
+            Assignments become available once a student profile is active on this account.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

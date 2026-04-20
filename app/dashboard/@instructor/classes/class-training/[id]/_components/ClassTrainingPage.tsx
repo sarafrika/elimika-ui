@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -90,6 +91,7 @@ type AssignmentScheduleItem = ClassAssignmentSchedule & {
 };
 type QuizScheduleItem = ClassQuizSchedule & {
   class_lesson_plan_uuid?: string;
+  grading_due_at?: Date;
   quiz?: Quiz | null;
 };
 type AssignmentSchedulePayload = CreateAssignmentScheduleData['body'] & {
@@ -97,6 +99,7 @@ type AssignmentSchedulePayload = CreateAssignmentScheduleData['body'] & {
 };
 type QuizSchedulePayload = CreateQuizScheduleData['body'] & {
   class_lesson_plan_uuid?: string;
+  grading_due_at?: Date;
 };
 type NoteEntry = {
   id: string;
@@ -120,6 +123,34 @@ function formatDateTime(value?: string | Date | null) {
   return moment(value).format('ddd, MMM D · h:mm A');
 }
 
+function formatDateTimeInput(value?: string | Date | null) {
+  if (!value) return '';
+  const date = moment(value);
+  return date.isValid() ? date.format('YYYY-MM-DDTHH:mm') : '';
+}
+
+function getApiToastMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+
+  if (typeof error === 'object' && error !== null) {
+    const candidate = error as {
+      message?: unknown;
+      data?: { message?: unknown; error?: unknown };
+      response?: { data?: { message?: unknown; error?: unknown } };
+    };
+
+    if (typeof candidate.message === 'string') return candidate.message;
+    if (typeof candidate.data?.message === 'string') return candidate.data.message;
+    if (typeof candidate.response?.data?.message === 'string') {
+      return candidate.response.data.message;
+    }
+    if (typeof candidate.data?.error === 'string') return candidate.data.error;
+    if (typeof candidate.response?.data?.error === 'string') return candidate.response.data.error;
+  }
+
+  return fallback;
+}
+
 function formatRange(start?: string | Date | null, end?: string | Date | null) {
   if (!start || !end) return 'Time not available';
   return `${moment(start).format('ddd, MMM D')} · ${moment(start).format('h:mm A')} - ${moment(
@@ -134,6 +165,11 @@ function formatEnum(value?: string | null) {
     .split('_')
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
+}
+
+function toSortableNumber(value: unknown) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : 0;
 }
 
 function getInitials(value?: string | null) {
@@ -496,14 +532,18 @@ function SubmissionPanel({
   selectedAssignmentUuid,
   selectedQuizUuid,
   assignmentDueAt,
+  assignmentGradingDueAt,
   quizDueAt,
+  quizGradingDueAt,
   noteDraft,
   sentNotes,
   selectedStudentSubmissions,
   onAssignmentSelect,
   onQuizSelect,
   onAssignmentDueAtChange,
+  onAssignmentGradingDueAtChange,
   onQuizDueAtChange,
+  onQuizGradingDueAtChange,
   onNoteDraftChange,
   onAssignAssignment,
   onAssignQuiz,
@@ -527,7 +567,9 @@ function SubmissionPanel({
   selectedAssignmentUuid: string;
   selectedQuizUuid: string;
   assignmentDueAt: string;
+  assignmentGradingDueAt: string;
   quizDueAt: string;
+  quizGradingDueAt: string;
   noteDraft: string;
   sentNotes: NoteEntry[];
   selectedStudentSubmissions: Array<{
@@ -539,7 +581,9 @@ function SubmissionPanel({
   onAssignmentSelect: (value: string) => void;
   onQuizSelect: (value: string) => void;
   onAssignmentDueAtChange: (value: string) => void;
+  onAssignmentGradingDueAtChange: (value: string) => void;
   onQuizDueAtChange: (value: string) => void;
+  onQuizGradingDueAtChange: (value: string) => void;
   onNoteDraftChange: (value: string) => void;
   onAssignAssignment: () => void;
   onAssignQuiz: () => void;
@@ -850,29 +894,53 @@ function SubmissionPanel({
           {activePanel === 'tasks' ? (
             <div className='space-y-3'>
               <div className='border-border/70 bg-background/80 min-w-0 rounded-md border p-3'>
-                <p className='text-sm font-semibold'>Attach assignment</p>
-                <p className='text-muted-foreground mt-1 text-xs'>
-                  Assign a lesson assignment to students in this class instance.
-                </p>
-                <div className='mt-3 space-y-2'>
-                  <Select value={selectedAssignmentUuid} onValueChange={onAssignmentSelect}>
-                    <SelectTrigger className='h-9'>
-                      <SelectValue placeholder='Select assignment' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {lessonAssignments.map(assignment => (
-                        <SelectItem key={assignment.uuid} value={assignment.uuid ?? ''}>
-                          {assignment.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type='datetime-local'
-                    value={assignmentDueAt}
-                    onChange={event => onAssignmentDueAtChange(event.target.value)}
-                    className='h-9'
-                  />
+                <div className='flex items-start justify-between gap-3'>
+                  <div className='min-w-0'>
+                    <p className='text-sm font-semibold'>Attach assignment</p>
+                    <p className='text-muted-foreground mt-1 text-xs'>
+                      Pick an assignment, set the student deadline, then set when grading is due.
+                    </p>
+                  </div>
+                  <Badge variant='outline' className='shrink-0'>
+                    Assignment
+                  </Badge>
+                </div>
+                <div className='mt-4 grid gap-3'>
+                  <div className='space-y-1.5'>
+                    <Label className='text-xs'>Assignment</Label>
+                    <Select value={selectedAssignmentUuid} onValueChange={onAssignmentSelect}>
+                      <SelectTrigger className='h-9'>
+                        <SelectValue placeholder='Select assignment' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {lessonAssignments.map(assignment => (
+                          <SelectItem key={assignment.uuid} value={assignment.uuid ?? ''}>
+                            {assignment.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
+                    <div className='space-y-1.5'>
+                      <Label className='text-xs'>Due date</Label>
+                      <Input
+                        type='datetime-local'
+                        value={assignmentDueAt}
+                        onChange={event => onAssignmentDueAtChange(event.target.value)}
+                        className='h-9'
+                      />
+                    </div>
+                    <div className='space-y-1.5'>
+                      <Label className='text-xs'>Grading due</Label>
+                      <Input
+                        type='datetime-local'
+                        value={assignmentGradingDueAt}
+                        onChange={event => onAssignmentGradingDueAtChange(event.target.value)}
+                        className='h-9'
+                      />
+                    </div>
+                  </div>
                   <Button
                     onClick={onAssignAssignment}
                     disabled={!selectedAssignmentUuid || !activeSchedule || isAssigningAssignment}
@@ -885,29 +953,53 @@ function SubmissionPanel({
               </div>
 
               <div className='border-border/70 bg-background/80 min-w-0 rounded-md border p-3'>
-                <p className='text-sm font-semibold'>Attach quiz</p>
-                <p className='text-muted-foreground mt-1 text-xs'>
-                  Schedule a lesson quiz for the current training instance.
-                </p>
-                <div className='mt-3 space-y-2'>
-                  <Select value={selectedQuizUuid} onValueChange={onQuizSelect}>
-                    <SelectTrigger className='h-9'>
-                      <SelectValue placeholder='Select quiz' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {lessonQuizzes.map(quiz => (
-                        <SelectItem key={quiz.uuid} value={quiz.uuid ?? ''}>
-                          {quiz.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type='datetime-local'
-                    value={quizDueAt}
-                    onChange={event => onQuizDueAtChange(event.target.value)}
-                    className='h-9'
-                  />
+                <div className='flex items-start justify-between gap-3'>
+                  <div className='min-w-0'>
+                    <p className='text-sm font-semibold'>Attach quiz</p>
+                    <p className='text-muted-foreground mt-1 text-xs'>
+                      Schedule a lesson quiz and define its deadline details.
+                    </p>
+                  </div>
+                  <Badge variant='outline' className='shrink-0'>
+                    Quiz
+                  </Badge>
+                </div>
+                <div className='mt-4 grid gap-3'>
+                  <div className='space-y-1.5'>
+                    <Label className='text-xs'>Quiz</Label>
+                    <Select value={selectedQuizUuid} onValueChange={onQuizSelect}>
+                      <SelectTrigger className='h-9'>
+                        <SelectValue placeholder='Select quiz' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {lessonQuizzes.map(quiz => (
+                          <SelectItem key={quiz.uuid} value={quiz.uuid ?? ''}>
+                            {quiz.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
+                    <div className='space-y-1.5'>
+                      <Label className='text-xs'>Due date</Label>
+                      <Input
+                        type='datetime-local'
+                        value={quizDueAt}
+                        onChange={event => onQuizDueAtChange(event.target.value)}
+                        className='h-9'
+                      />
+                    </div>
+                    <div className='space-y-1.5'>
+                      <Label className='text-xs'>Grading due</Label>
+                      <Input
+                        type='datetime-local'
+                        value={quizGradingDueAt}
+                        onChange={event => onQuizGradingDueAtChange(event.target.value)}
+                        className='h-9'
+                      />
+                    </div>
+                  </div>
                   <Button
                     onClick={onAssignQuiz}
                     disabled={!selectedQuizUuid || !activeSchedule || isAssigningQuiz}
@@ -931,6 +1023,9 @@ function SubmissionPanel({
                       <p className='text-muted-foreground mt-1 text-[11px]'>
                         Due {formatDateTime(item.due_at)}
                       </p>
+                      <p className='text-muted-foreground mt-1 text-[11px]'>
+                        Grading due {formatDateTime(item.grading_due_at)}
+                      </p>
                     </div>
                   ))}
                   {activeScheduleQuizzes.map(item => (
@@ -938,6 +1033,9 @@ function SubmissionPanel({
                       <p className='text-xs font-medium'>{item.quiz?.title || 'Quiz'}</p>
                       <p className='text-muted-foreground mt-1 text-[11px]'>
                         Due {formatDateTime(item.due_at)}
+                      </p>
+                      <p className='text-muted-foreground mt-1 text-[11px]'>
+                        Grading due {formatDateTime(item.grading_due_at)}
                       </p>
                     </div>
                   ))}
@@ -1022,7 +1120,9 @@ export default function ClassTrainingPage() {
   const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState('');
   const [selectedQuizUuid, setSelectedQuizUuid] = useState('');
   const [assignmentDueAt, setAssignmentDueAt] = useState('');
+  const [assignmentGradingDueAt, setAssignmentGradingDueAt] = useState('');
   const [quizDueAt, setQuizDueAt] = useState('');
+  const [quizGradingDueAt, setQuizGradingDueAt] = useState('');
   const [noteDraft, setNoteDraft] = useState('');
   const [sentNotes, setSentNotes] = useState<NoteEntry[]>([]);
   const appliedRouteContentSelectionRef = useRef('');
@@ -1086,8 +1186,8 @@ export default function ClassTrainingPage() {
     const modules = (lessonsWithContent as LessonModule[]) ?? [];
     return [...modules].sort(
       (left, right) =>
-        (left.lesson.lesson_sequence ?? left.lesson.lesson_number ?? 0) -
-        (right.lesson.lesson_sequence ?? right.lesson.lesson_number ?? 0)
+        toSortableNumber(left.lesson.lesson_sequence ?? left.lesson.lesson_number) -
+        toSortableNumber(right.lesson.lesson_sequence ?? right.lesson.lesson_number)
     );
   }, [lessonsWithContent]);
 
@@ -1139,6 +1239,10 @@ export default function ClassTrainingPage() {
 
   const selectedContent =
     activeLessonContents.find(content => content.uuid === selectedContentId) ?? null;
+  const selectedContentDuration =
+    selectedContent && 'duration' in selectedContent
+      ? String(selectedContent.duration || '')
+      : '';
 
   const activeInstanceStudents = useMemo(
     () =>
@@ -1226,7 +1330,7 @@ export default function ClassTrainingPage() {
           [
             ...rubricAssociations.map(item => item.rubric_uuid),
             ...courseAssessments.map(item => item.rubric_uuid).filter(Boolean),
-          ].filter(Boolean)
+          ].filter((rubricUuid): rubricUuid is string => Boolean(rubricUuid))
         )
       ),
     [courseAssessments, rubricAssociations]
@@ -1313,12 +1417,24 @@ export default function ClassTrainingPage() {
 
   useEffect(() => {
     if (!assignmentDueAt && activeSchedule?.end_time) {
-      setAssignmentDueAt(moment(activeSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
+      setAssignmentDueAt(formatDateTimeInput(activeSchedule.end_time));
+    }
+    if (!assignmentGradingDueAt && activeSchedule?.end_time) {
+      setAssignmentGradingDueAt(moment(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
     }
     if (!quizDueAt && activeSchedule?.end_time) {
-      setQuizDueAt(moment(activeSchedule.end_time).format('YYYY-MM-DDTHH:mm'));
+      setQuizDueAt(formatDateTimeInput(activeSchedule.end_time));
     }
-  }, [activeSchedule, assignmentDueAt, quizDueAt]);
+    if (!quizGradingDueAt && activeSchedule?.end_time) {
+      setQuizGradingDueAt(moment(activeSchedule.end_time).add(7, 'days').format('YYYY-MM-DDTHH:mm'));
+    }
+  }, [
+    activeSchedule,
+    assignmentDueAt,
+    assignmentGradingDueAt,
+    quizDueAt,
+    quizGradingDueAt,
+  ]);
 
   const submissionQueries = useQueries({
     queries: activeScheduleAssignments.map(item => ({
@@ -1366,7 +1482,7 @@ export default function ClassTrainingPage() {
           });
         },
         onError: error => {
-          toast.error(error instanceof Error ? error.message : 'Failed to mark attendance.');
+          toast.error(getApiToastMessage(error, 'Failed to mark attendance.'));
         },
       }
     );
@@ -1384,12 +1500,17 @@ export default function ClassTrainingPage() {
 
     try {
       await Promise.all(
-        pendingStudents.map(entry =>
-          markAttendanceMut.mutateAsync({
-            path: { enrollmentUuid: entry.enrollment.uuid },
+        pendingStudents.map(entry => {
+          const enrollmentUuid = entry.enrollment?.uuid;
+          if (!enrollmentUuid) {
+            return Promise.resolve();
+          }
+
+          return markAttendanceMut.mutateAsync({
+            path: { enrollmentUuid },
             query: { attended: true },
-          })
-        )
+          });
+        })
       );
 
       toast.success(`Marked ${pendingStudents.length} student(s) present.`);
@@ -1397,15 +1518,28 @@ export default function ClassTrainingPage() {
         queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to mark all students present.');
+      toast.error(getApiToastMessage(error, 'Failed to mark all students present.'));
     }
   };
 
   const handlePageSearch = () => {
     if (!pageSearch.trim()) return;
 
-    if (typeof window !== 'undefined' && typeof window.find === 'function') {
-      const found = window.find(pageSearch.trim(), false, false, true, false, false, false);
+    const searchableWindow =
+      typeof window === 'undefined'
+        ? null
+        : (window as unknown as { find?: (...args: unknown[]) => boolean });
+
+    if (typeof searchableWindow?.find === 'function') {
+      const found = searchableWindow.find(
+        pageSearch.trim(),
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      );
       if (!found) {
         toast.error(`No match found for "${pageSearch.trim()}".`);
       }
@@ -1427,22 +1561,34 @@ export default function ClassTrainingPage() {
       return;
     }
 
+    const assignmentDueDate = assignmentDueAt
+      ? new Date(assignmentDueAt)
+      : activeSchedule.end_time
+        ? new Date(activeSchedule.end_time)
+        : undefined;
+    const assignmentGradingDueDate = assignmentGradingDueAt
+      ? new Date(assignmentGradingDueAt)
+      : assignmentDueDate
+        ? moment(assignmentDueDate).add(7, 'days').toDate()
+        : undefined;
+
+    if (
+      assignmentDueDate &&
+      assignmentGradingDueDate &&
+      assignmentGradingDueDate.getTime() < assignmentDueDate.getTime()
+    ) {
+      toast.error('Assignment grading due date cannot be before the assignment due date.');
+      return;
+    }
+
     const payload: AssignmentSchedulePayload = {
       class_definition_uuid: classId,
       lesson_uuid: assignment.lesson_uuid,
       assignment_uuid: assignment.uuid,
       class_lesson_plan_uuid: activeSchedule.uuid,
       visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
-      due_at: assignmentDueAt
-        ? new Date(assignmentDueAt)
-        : activeSchedule.end_time
-          ? new Date(activeSchedule.end_time)
-          : undefined,
-      grading_due_at: assignmentDueAt
-        ? new Date(assignmentDueAt)
-        : activeSchedule.end_time
-          ? new Date(activeSchedule.end_time)
-          : undefined,
+      due_at: assignmentDueDate,
+      grading_due_at: assignmentGradingDueDate,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Lagos',
       release_strategy: 'CUSTOM',
       max_attempts: 1,
@@ -1452,14 +1598,14 @@ export default function ClassTrainingPage() {
     addAssignmentScheduleMut.mutate(
       { path: { classUuid: classId }, body: payload },
       {
-        onSuccess: () => {
-          toast.success('Assignment attached to this lesson instance.');
+        onSuccess: response => {
+          toast.success(response?.message || 'Assignment attached to this lesson instance.');
           queryClient.invalidateQueries({
             queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: classId } }),
           });
         },
         onError: error => {
-          toast.error(error instanceof Error ? error.message : 'Failed to attach assignment.');
+          toast.error(getApiToastMessage(error, 'Failed to attach assignment.'));
         },
       }
     );
@@ -1477,17 +1623,34 @@ export default function ClassTrainingPage() {
       return;
     }
 
+    const quizDueDate = quizDueAt
+      ? new Date(quizDueAt)
+      : activeSchedule.end_time
+        ? new Date(activeSchedule.end_time)
+        : undefined;
+    const quizGradingDueDate = quizGradingDueAt
+      ? new Date(quizGradingDueAt)
+      : quizDueDate
+        ? moment(quizDueDate).add(7, 'days').toDate()
+        : undefined;
+
+    if (
+      quizDueDate &&
+      quizGradingDueDate &&
+      quizGradingDueDate.getTime() < quizDueDate.getTime()
+    ) {
+      toast.error('Quiz grading due date cannot be before the quiz due date.');
+      return;
+    }
+
     const payload: QuizSchedulePayload = {
       class_definition_uuid: classId,
       lesson_uuid: quiz.lesson_uuid,
       quiz_uuid: quiz.uuid,
       class_lesson_plan_uuid: activeSchedule.uuid,
       visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
-      due_at: quizDueAt
-        ? new Date(quizDueAt)
-        : activeSchedule.end_time
-          ? new Date(activeSchedule.end_time)
-          : undefined,
+      due_at: quizDueDate,
+      grading_due_at: quizGradingDueDate,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Lagos',
       release_strategy: 'CUSTOM',
       instructor_uuid: userProfile?.instructor?.uuid as string,
@@ -1496,14 +1659,14 @@ export default function ClassTrainingPage() {
     addQuizScheduleMut.mutate(
       { path: { classUuid: classId }, body: payload },
       {
-        onSuccess: () => {
-          toast.success('Quiz attached to this lesson instance.');
+        onSuccess: response => {
+          toast.success(response?.message || 'Quiz attached to this lesson instance.');
           queryClient.invalidateQueries({
             queryKey: getQuizSchedulesQueryKey({ path: { classUuid: classId } }),
           });
         },
         onError: error => {
-          toast.error(error instanceof Error ? error.message : 'Failed to attach quiz.');
+          toast.error(getApiToastMessage(error, 'Failed to attach quiz.'));
         },
       }
     );
@@ -1651,7 +1814,7 @@ export default function ClassTrainingPage() {
                 Work
               </Button>
             </SheetTrigger>
-            <SheetContent side='right' className='w-[92vw] max-w-sm p-0'>
+            <SheetContent side='right' className='w-[94vw] max-w-2xl p-0'>
               <SheetHeader className='sr-only'>
                 <SheetTitle>Class work</SheetTitle>
                 <SheetDescription>Submissions, rubric, notes, and assignments.</SheetDescription>
@@ -1671,14 +1834,18 @@ export default function ClassTrainingPage() {
                 selectedAssignmentUuid={selectedAssignmentUuid}
                 selectedQuizUuid={selectedQuizUuid}
                 assignmentDueAt={assignmentDueAt}
+                assignmentGradingDueAt={assignmentGradingDueAt}
                 quizDueAt={quizDueAt}
+                quizGradingDueAt={quizGradingDueAt}
                 noteDraft={noteDraft}
                 sentNotes={sentNotes}
                 selectedStudentSubmissions={selectedStudentSubmissions}
                 onAssignmentSelect={setSelectedAssignmentUuid}
                 onQuizSelect={setSelectedQuizUuid}
                 onAssignmentDueAtChange={setAssignmentDueAt}
+                onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
                 onQuizDueAtChange={setQuizDueAt}
+                onQuizGradingDueAtChange={setQuizGradingDueAt}
                 onNoteDraftChange={setNoteDraft}
                 onAssignAssignment={handleAssignAssignment}
                 onAssignQuiz={handleAssignQuiz}
@@ -1705,7 +1872,7 @@ export default function ClassTrainingPage() {
         </div>
       </header>
 
-      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden xl:grid-cols-[260px_minmax(0,1fr)_340px]'>
+      <section className='grid min-h-0 flex-1 gap-0 overflow-hidden xl:grid-cols-[260px_minmax(0,1fr)_420px] 2xl:grid-cols-[280px_minmax(0,1fr)_460px]'>
         <aside className='border-border/70 hidden min-h-0 border-r xl:block'>
           <RosterPanel
             activeInstanceStudentsCount={activeInstanceStudents.length}
@@ -1734,7 +1901,7 @@ export default function ClassTrainingPage() {
                   </Badge>
                   <span>Beginner</span>
                   <span>{activeInstanceStudents.length} students</span>
-                  <span>{selectedContent?.duration || 'Open during class'}</span>
+                  <span>{selectedContentDuration || 'Open during class'}</span>
                 </div>
               </div>
 
@@ -1846,14 +2013,18 @@ export default function ClassTrainingPage() {
             selectedAssignmentUuid={selectedAssignmentUuid}
             selectedQuizUuid={selectedQuizUuid}
             assignmentDueAt={assignmentDueAt}
+            assignmentGradingDueAt={assignmentGradingDueAt}
             quizDueAt={quizDueAt}
+            quizGradingDueAt={quizGradingDueAt}
             noteDraft={noteDraft}
             sentNotes={sentNotes}
             selectedStudentSubmissions={selectedStudentSubmissions}
             onAssignmentSelect={setSelectedAssignmentUuid}
             onQuizSelect={setSelectedQuizUuid}
             onAssignmentDueAtChange={setAssignmentDueAt}
+            onAssignmentGradingDueAtChange={setAssignmentGradingDueAt}
             onQuizDueAtChange={setQuizDueAt}
+            onQuizGradingDueAtChange={setQuizGradingDueAt}
             onNoteDraftChange={setNoteDraft}
             onAssignAssignment={handleAssignAssignment}
             onAssignQuiz={handleAssignQuiz}

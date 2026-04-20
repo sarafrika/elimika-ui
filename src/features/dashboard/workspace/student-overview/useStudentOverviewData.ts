@@ -41,6 +41,22 @@ export type StudentOverviewOpportunity = {
   footer: string;
 };
 
+export type StudentOverviewEnrolledClassCourse = {
+  id: string;
+  classId: string;
+  classTitle: string;
+  courseId: string | null;
+  courseTitle: string | null;
+  enrollmentUuid: string | null;
+  enrollmentStatus: StudentSchedule['enrollment_status'] | null;
+  courseEnrollmentUuid: string | null;
+  courseEnrollmentStatus: CourseEnrollment['status'] | null;
+  progress: number | null;
+  nextDateLabel: string;
+  scheduleCount: number;
+  href: string;
+};
+
 type StudentOverviewData = {
   firstName: string;
   searchPlaceholder: string;
@@ -48,6 +64,7 @@ type StudentOverviewData = {
   verifiedSkills: number;
   newSkillsThisMonth: number;
   activeCourses: StudentOverviewActiveCourse[];
+  enrolledClassesAndCourses: StudentOverviewEnrolledClassCourse[];
   opportunities: StudentOverviewOpportunity[];
   isLoadingCourses: boolean;
 };
@@ -129,15 +146,13 @@ export function useStudentOverviewData(): StudentOverviewData {
   const profile = useUserProfile();
   const student = useStudent();
 
-  const firstName =
-    profile?.first_name || profile?.student?.first_name || profile?.user?.first_name || 'Sarah';
+  const firstName = profile?.first_name || student?.full_name?.split(' ')[0] || 'Sarah';
 
   const { data: certificatesResponse } = useQuery({
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
     enabled: Boolean(student?.uuid),
   });
 
-  // ERROR FROM THIS ENDPOINT
   const { data: scheduleResponse, isLoading: isLoadingCourses } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: student?.uuid as string },
@@ -146,7 +161,7 @@ export function useStudentOverviewData(): StudentOverviewData {
         end: new Date('2027-12-31'),
       },
     }),
-    enabled: true,
+    enabled: Boolean(student?.uuid),
   });
 
   const certificates = certificatesResponse?.data ?? [];
@@ -267,6 +282,53 @@ export function useStudentOverviewData(): StudentOverviewData {
     return map;
   }, [certificates]);
 
+  const enrolledClassesAndCourses = useMemo<StudentOverviewEnrolledClassCourse[]>(() => {
+    const rows: Array<StudentOverviewEnrolledClassCourse & { sortValue: number }> = [];
+
+    Array.from(classDefinitions.entries()).forEach(([classId, classDefinition]) => {
+      const relatedSchedules = schedules.filter(item => item.class_definition_uuid === classId);
+      const enrolledSchedule =
+        relatedSchedules.find(item => item.enrollment_status !== 'CANCELLED') ??
+        relatedSchedules[0];
+
+      if (!enrolledSchedule || enrolledSchedule.enrollment_status === 'CANCELLED') {
+        return;
+      }
+      const courseUuid = classDefinition.course_uuid ?? null;
+      const course = courseUuid ? coursesMap.get(courseUuid) : undefined;
+      const courseEnrollment = courseUuid ? courseEnrollmentsMap.get(courseUuid) : undefined;
+      const nextSchedule = relatedSchedules
+        .map(item => item.start_time)
+        .filter((value): value is Date => value instanceof Date)
+        .sort((a, b) => a.getTime() - b.getTime())[0];
+
+      rows.push({
+        id: classId,
+        classId,
+        classTitle: classDefinition.title,
+        courseId: courseUuid,
+        courseTitle: course?.name ?? null,
+        enrollmentUuid: enrolledSchedule.enrollment_uuid ?? null,
+        enrollmentStatus: enrolledSchedule.enrollment_status ?? null,
+        courseEnrollmentUuid: courseEnrollment?.uuid ?? null,
+        courseEnrollmentStatus: courseEnrollment?.status ?? null,
+        progress:
+          typeof courseEnrollment?.progress_percentage === 'number'
+            ? Math.max(0, Math.min(100, Math.round(courseEnrollment.progress_percentage)))
+            : null,
+        nextDateLabel: formatDateLabel(nextSchedule),
+        scheduleCount: relatedSchedules.length,
+        href: `/dashboard/schedule/classes/${classId}`,
+        sortValue: nextSchedule?.getTime() ?? Number.MAX_SAFE_INTEGER,
+      });
+    });
+
+    return rows
+      .sort((a, b) => a.sortValue - b.sortValue)
+      .map(({ sortValue: _sortValue, ...item }) => item);
+  }, [classDefinitions, courseEnrollmentsMap, coursesMap, schedules]);
+
+
   const activeCourses = useMemo<StudentOverviewActiveCourse[]>(() => {
     const resolvedCourses = Array.from(classDefinitions.entries())
       .map(([classId, classDefinition]) => {
@@ -351,8 +413,12 @@ export function useStudentOverviewData(): StudentOverviewData {
     verifiedSkills,
     newSkillsThisMonth,
     activeCourses,
+    enrolledClassesAndCourses,
     opportunities: MOCK_OPPORTUNITIES,
     isLoadingCourses:
-      isLoadingCourses || courseEnrollmentQueries.some(query => query.isLoading || query.isFetching),
+      isLoadingCourses ||
+      classDefinitionQueries.some(query => query.isLoading || query.isFetching) ||
+      courseQueries.some(query => query.isLoading || query.isFetching) ||
+      courseEnrollmentQueries.some(query => query.isLoading || query.isFetching),
   };
 }

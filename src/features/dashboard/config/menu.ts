@@ -148,6 +148,11 @@ export default {
       url: '/dashboard/courses',
       icon: GraduationCap,
     },
+    // {
+    //   title: 'My Courses',
+    //   url: '/dashboard/courses/my-courses',
+    //   icon: School,
+    // },
     {
       title: 'Learning Hub',
       url: '/dashboard/learning-hub',
