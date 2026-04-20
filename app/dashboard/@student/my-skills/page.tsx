@@ -447,7 +447,7 @@ const MySkillsPage = () => {
             </p>
           </div>
           <Button
-            onClick={() => router.push('/dashboard/all-courses')}
+            onClick={() => router.push('/dashboard/courses')}
             size='default'
             className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2'
           >
@@ -669,7 +669,7 @@ const MySkillsPage = () => {
                           className='flex-1 sm:flex-none'
                           disabled={!course.course_uuid}
                           onClick={() =>
-                            window.open(`/dashboard/all-courses/${course.course_uuid}`, '_blank')
+                            window.open(`/dashboard/courses/${course.course_uuid}`, '_blank')
                           }
                         >
                           View Course
@@ -692,7 +692,7 @@ const MySkillsPage = () => {
                 Start your learning journey by enrolling in a course
               </p>
               <Button
-                onClick={() => router.push('/dashboard/all-courses')}
+                onClick={() => router.push('/dashboard/courses')}
                 className='bg-primary text-primary-foreground hover:bg-primary/90'
               >
                 Browse Courses

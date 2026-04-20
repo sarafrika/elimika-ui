@@ -70,11 +70,11 @@ function ClassInviteContent() {
 
   const getEnrollUrl = () => {
     if (course?.uuid) {
-      return `/dashboard/all-courses/available-classes/${course.uuid}/enroll?id=${uuid}`;
+      return `/dashboard/courses/available-classes/${course.uuid}/enroll?id=${uuid}`;
     }
 
     if (program?.uuid) {
-      return `/dashboard/all-courses/available-programs/${program.uuid}/enroll?id=${uuid}`;
+      return `/dashboard/courses/available-programs/${program.uuid}/enroll?id=${uuid}`;
     }
 
     return '';

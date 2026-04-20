@@ -39,7 +39,7 @@ export const ClassPreviewFormPage = ({
   };
 
   const registrationLink = courseData?.uuid
-    ? `https://elimika.sarafrika.com/dashboard/all-courses/enroll/${courseData.uuid}`
+    ? `https://elimika.sarafrika.com/dashboard/courses/enroll/${courseData.uuid}`
     : '';
   const [copied, setCopied] = useState(false);
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { ClassScheduleCalendar, type ClassScheduleItem } from '@/app/class-invite/page';
-import { CustomLoadingState } from '@/app/dashboard/@course_creator/_components/loading-state';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useStudent } from '../../../../../context/student-context';
+import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
 import { type BundledClass, getErrorMessage } from '../types';
 
 export default function ClassEnrollmentPage({
@@ -127,14 +127,14 @@ export default function ClassEnrollmentPage({
         {
           id: 'courses',
           title: 'Browse Courses',
-          url: buildWorkspaceAliasPath(activeDomain, '/dashboard/all-courses'),
+          url: buildWorkspaceAliasPath(activeDomain, '/dashboard/courses'),
         },
         {
           id: 'course-details',
           title: 'Available Classes',
           url: buildWorkspaceAliasPath(
             activeDomain,
-            `/dashboard/all-courses/available-classes/${courseId}`
+            `/dashboard/courses/available-classes/${courseId}`
           ),
         },
         {
@@ -142,7 +142,7 @@ export default function ClassEnrollmentPage({
           title: 'Enroll',
           url: buildWorkspaceAliasPath(
             activeDomain,
-            `/dashboard/all-courses/available-classes/${courseId}/enroll?id=${classId}`
+            `/dashboard/courses/available-classes/${courseId}/enroll?id=${classId}`
           ),
         },
       ]);
@@ -252,7 +252,7 @@ export default function ClassEnrollmentPage({
           router.push(
             buildWorkspaceAliasPath(
               activeDomain,
-              `/dashboard/all-courses/available-classes/${courseId}`
+              `/dashboard/courses/available-classes/${courseId}`
             )
           );
         },
@@ -265,13 +265,18 @@ export default function ClassEnrollmentPage({
   };
 
   const handleCancel = () => {
-    router.push(
-      buildWorkspaceAliasPath(activeDomain, `/dashboard/all-courses/available-classes/${courseId}`)
+    window.location.assign(
+      buildWorkspaceAliasPath(activeDomain, `/dashboard/courses/available-classes/${courseId}`)
     );
   };
 
   if (loading) {
-    return <CustomLoadingState subHeading='Loading class information...' />;
+    return (
+      <EnrollmentLoadingState
+        title='Preparing your class enrollment'
+        description='We are loading the class schedule, instructor details, and seat availability so you can review everything before joining.'
+      />
+    );
   }
 
   if (!enrollingClass) {

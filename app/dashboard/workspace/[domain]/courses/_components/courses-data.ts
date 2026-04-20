@@ -158,7 +158,7 @@ const domainBasePaths: Record<UserDomain, string> = {
 
 export function getContentHref(domain: UserDomain, kind: 'course' | 'program', uuid: string) {
   const basePath = domainBasePaths[domain];
-  return kind === 'program' ? `${basePath}/available-programs/${uuid}` : `${basePath}/${uuid}`;
+  return kind === 'program' ? `${basePath}/programs/${uuid}` : `${basePath}/${uuid}`;
 }
 
 export function getEnrollHref(domain: UserDomain, kind: 'course' | 'program', uuid: string) {

@@ -137,6 +137,7 @@ export function useStudentOverviewData(): StudentOverviewData {
     enabled: Boolean(student?.uuid),
   });
 
+  // ERROR FROM THIS ENDPOINT
   const { data: scheduleResponse, isLoading: isLoadingCourses } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: student?.uuid as string },

@@ -301,7 +301,7 @@ export function useStudentLearningHubData(): LearningHubData {
           level,
           progress,
           ctaLabel: progress >= 70 ? 'View Certificate' : 'Resume',
-          href: course?.uuid ? `/dashboard/all-courses/${course.uuid}` : '/dashboard/all-courses',
+          href: course?.uuid ? `/dashboard/courses/${course.uuid}` : '/dashboard/courses',
           accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
         };
       })
@@ -315,7 +315,7 @@ export function useStudentLearningHubData(): LearningHubData {
       level: (course.duration_hours ?? 0) >= 5 ? 'Intermediate' : 'Beginner',
       progress: COURSE_PROGRESS_FALLBACK[index % COURSE_PROGRESS_FALLBACK.length],
       ctaLabel: 'Resume',
-      href: course.uuid ? `/dashboard/all-courses/${course.uuid}` : '/dashboard/all-courses',
+      href: course.uuid ? `/dashboard/courses/${course.uuid}` : '/dashboard/courses',
       accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
     }));
   }, [certificateMap, classDefinitions, publishedCourses]);

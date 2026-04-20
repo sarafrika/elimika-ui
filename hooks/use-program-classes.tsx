@@ -13,8 +13,8 @@ import type { ProgramBundledClass } from '../src/features/dashboard/courses/type
 
 type StudentLike =
   | {
-      uuid?: string | null;
-    }
+    uuid?: string | null;
+  }
   | null
   | undefined;
 

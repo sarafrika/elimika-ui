@@ -1,22 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  AlertCircle,
-  Armchair,
-  ArrowLeft,
-  BookOpen,
-  Calendar,
-  DollarSign,
-  MapPin,
-  User,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { ClassScheduleCalendar, type ClassScheduleItem } from '@/app/class-invite/page';
-import { CustomLoadingState } from '@/app/dashboard/@course_creator/_components/loading-state';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +18,22 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  AlertCircle,
+  Armchair,
+  ArrowLeft,
+  BookOpen,
+  Calendar,
+  DollarSign,
+  MapPin,
+  User,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
 import { getErrorMessage, type ProgramBundledClass } from '../types';
 
 export default function ProgramClassEnrollmentPage({
@@ -141,14 +141,14 @@ export default function ProgramClassEnrollmentPage({
         {
           id: 'courses',
           title: 'Browse Courses',
-          url: buildWorkspaceAliasPath(activeDomain, '/dashboard/all-courses'),
+          url: buildWorkspaceAliasPath(activeDomain, '/dashboard/courses'),
         },
         {
           id: 'program-details',
           title: 'Available Programs',
           url: buildWorkspaceAliasPath(
             activeDomain,
-            `/dashboard/all-courses/available-programs/${programId}`
+            `/dashboard/courses/available-programs/${programId}`
           ),
         },
         {
@@ -156,7 +156,7 @@ export default function ProgramClassEnrollmentPage({
           title: 'Enroll',
           url: buildWorkspaceAliasPath(
             activeDomain,
-            `/dashboard/all-courses/available-programs/${programId}/enroll?id=${classId}`
+            `/dashboard/courses/available-programs/${programId}/enroll?id=${classId}`
           ),
         },
       ]);
@@ -266,7 +266,7 @@ export default function ProgramClassEnrollmentPage({
           router.push(
             buildWorkspaceAliasPath(
               activeDomain,
-              `/dashboard/all-courses/available-programs/${programId}`
+              `/dashboard/courses/available-programs/${programId}`
             )
           );
         },
@@ -279,16 +279,21 @@ export default function ProgramClassEnrollmentPage({
   };
 
   const handleCancel = () => {
-    router.push(
+    window.location.assign(
       buildWorkspaceAliasPath(
         activeDomain,
-        `/dashboard/all-courses/available-programs/${programId}`
+        `/dashboard/courses/available-programs/${programId}`
       )
     );
   };
 
   if (loading) {
-    return <CustomLoadingState subHeading='Loading class information...' />;
+    return (
+      <EnrollmentLoadingState
+        title='Preparing your program enrollment'
+        description='We are loading the cohort schedule, included courses, and enrollment details so you can confirm everything with confidence.'
+      />
+    );
   }
 
   if (!enrollingClass) {

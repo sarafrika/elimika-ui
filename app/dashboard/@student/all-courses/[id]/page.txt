@@ -94,12 +94,12 @@ export default function CourseDetailsPage() {
         {
           id: 'courses',
           title: 'Browse Courses',
-          url: `/dashboard/all-courses`,
+          url: `/dashboard/courses`,
         },
         {
           id: 'course-details',
           title: `${courseData?.name}`,
-          url: `/dashboard/all-courses/${courseData?.uuid}`,
+          url: `/dashboard/courses/${courseData?.uuid}`,
         },
       ]);
     }
@@ -239,7 +239,7 @@ export default function CourseDetailsPage() {
                 {/* Action Buttons */}
                 <div className='space-y-3 flex flex-col gap-1'>
                   <Button
-                    onClick={() => { router.push(`/dashboard/all-courses/enroll/${courseData?.uuid}`) }}
+                    onClick={() => { router.push(`/dashboard/courses/enroll/${courseData?.uuid}`) }}
                     className='w-full'
                     size='lg'
                   >
@@ -247,7 +247,7 @@ export default function CourseDetailsPage() {
                   </Button>
 
                   <Button
-                    onClick={() => { router.push(`/dashboard/all-courses/instructor/${courseData?.uuid}`) }}
+                    onClick={() => { router.push(`/dashboard/courses/instructor/${courseData?.uuid}`) }}
                     className='w-full'
                     size='lg'
                     variant={"outline"}

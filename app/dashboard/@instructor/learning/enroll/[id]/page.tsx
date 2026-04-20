@@ -17,9 +17,9 @@ import {
   enrollStudentMutation,
   getStudentScheduleQueryKey,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
+import { EnrollmentLoadingState } from '../../../../../../src/features/dashboard/courses/components/EnrollmentLoadingState';
 import {
   CustomEmptyState,
-  CustomLoadingState,
 } from '../../../../@course_creator/_components/loading-state';
 import EnrollCourseCard from '../../../../_components/enroll-course-card';
 
@@ -93,7 +93,12 @@ const EnrollmentPage = () => {
   };
 
   if (loading) {
-    return <CustomLoadingState subHeading='Loading available classes...' />;
+    return (
+      <EnrollmentLoadingState
+        title='Finding classes open for enrollment'
+        description='We are loading available sessions, instructors, and schedules so you can pick the right class with confidence.'
+      />
+    );
   }
 
   return (

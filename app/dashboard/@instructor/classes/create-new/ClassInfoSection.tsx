@@ -20,9 +20,9 @@ export const ClassInformationSection = ({
 
   const registrationUrl = originUrl
     ? data?.course_uuid
-      ? `${originUrl}/dashboard/all-courses/available-classes/${data.course_uuid}/enroll?id=${data.uuid}`
+      ? `${originUrl}/dashboard/courses/available-classes/${data.course_uuid}/enroll?id=${data.uuid}`
       : data?.program_uuid
-        ? `${originUrl}/dashboard/all-courses/available-classes/${data.program_uuid}/enroll?id=${data.uuid}`
+        ? `${originUrl}/dashboard/courses/available-programs/${data.program_uuid}/enroll?id=${data.uuid}`
         : ''
     : '';
 
