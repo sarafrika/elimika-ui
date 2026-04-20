@@ -10,11 +10,7 @@ import {
   getStudentCertificatesOptions,
   getStudentScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type {
-  Assignment,
-  AssignmentSubmission,
-  Course
-} from '@/services/client/types.gen';
+import type { Assignment, AssignmentSubmission, Course } from '@/services/client/types.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -26,13 +22,16 @@ export type LearningHubStat = {
   tone: 'blue' | 'green' | 'red' | 'orange';
 };
 
-export type LearningHubCourse = {
+export type LearningHubClass = {
   id: string;
   title: string;
-  level: string;
+  courseName: string;
+  statusLabel: string;
+  scheduleLabel: string;
   progress: number;
   ctaLabel: string;
   href: string;
+  bannerUrl?: string;
   accent: 'blue' | 'green' | 'slate';
 };
 
@@ -74,7 +73,7 @@ type LearningHubData = {
   studentName: string;
   firstName: string;
   stats: LearningHubStat[];
-  continueLearning: LearningHubCourse[];
+  continueLearning: LearningHubClass[];
   scheduledLiveClass: LearningHubLiveClass | null;
   assignments: LearningHubAssignment[];
   recommendedCourses: LearningHubRecommendedCourse[];
@@ -88,9 +87,19 @@ const MOCK_RECOMMENDED_COURSES: LearningHubRecommendedCourse[] = [
   { id: 'seo', title: 'SEO Essentials', level: 'Beginner', duration: '6 h' },
   { id: 'excel', title: 'Advanced Excel Analysis', level: 'Intermediate', duration: '5 h' },
   { id: 'product-design', title: 'Product Design Foundations', level: 'Beginner', duration: '4 h' },
-  { id: 'data-visualization', title: 'Data Visualization Studio', level: 'Intermediate', duration: '7 h' },
+  {
+    id: 'data-visualization',
+    title: 'Data Visualization Studio',
+    level: 'Intermediate',
+    duration: '7 h',
+  },
   { id: 'copywriting', title: 'Copywriting for Creators', level: 'Beginner', duration: '3 h' },
-  { id: 'project-management', title: 'Project Management Essentials', level: 'Intermediate', duration: '8 h' },
+  {
+    id: 'project-management',
+    title: 'Project Management Essentials',
+    level: 'Intermediate',
+    duration: '8 h',
+  },
 ];
 
 const MOCK_ASSIGNMENTS: LearningHubAssignment[] = [
@@ -142,7 +151,11 @@ const formatTime = (value?: Date | string | null) => {
   }).format(date);
 };
 
-const stripHtml = (value?: string | null) => value?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() ?? '';
+const stripHtml = (value?: string | null) =>
+  value
+    ?.replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() ?? '';
 
 const formatHours = (minutes: number) => `${Math.max(0.5, Math.round((minutes / 60) * 10) / 10)}h`;
 
@@ -158,6 +171,24 @@ const getSubmissionStatusLabel = (submission?: AssignmentSubmission | null) => {
   if (status === 'IN_REVIEW') return 'In Review';
 
   return 'Submitted';
+};
+
+const getClassStatusLabel = (
+  startValue?: Date | string | null,
+  endValue?: Date | string | null
+) => {
+  const start = startValue ? new Date(startValue) : null;
+  const end = endValue ? new Date(endValue) : null;
+  const now = Date.now();
+
+  if (!start || Number.isNaN(start.getTime()) || !end || Number.isNaN(end.getTime())) {
+    return 'Upcoming';
+  }
+
+  if (now < start.getTime()) return 'Upcoming';
+  if (now > end.getTime()) return 'Completed';
+
+  return 'In progress';
 };
 
 export function useStudentLearningHubData(): LearningHubData {
@@ -204,12 +235,16 @@ export function useStudentLearningHubData(): LearningHubData {
 
   const assignmentSchedules = useMemo(
     () =>
-      assignmentScheduleQueries.flatMap((query, index) =>
-        (query.data?.data ?? []).map(schedule => ({
+      assignmentScheduleQueries.flatMap((query, index) => {
+        const classInfo = classDefinitions[index];
+
+        if (!classInfo) return [];
+
+        return (query.data?.data ?? []).map(schedule => ({
           schedule,
-          classInfo: classDefinitions[index],
-        }))
-      ),
+          classInfo,
+        }));
+      }),
     [assignmentScheduleQueries, classDefinitions]
   );
 
@@ -285,40 +320,35 @@ export function useStudentLearningHubData(): LearningHubData {
     return map;
   }, [certificates]);
 
-  const continueLearning = useMemo<LearningHubCourse[]>(() => {
-    const resolved = classDefinitions
-      .map((item, index) => {
-        const course = item.course;
-        const level =
-          (course?.duration_hours ?? 0) >= 5 ? 'Intermediate' : 'Beginner';
-        const progress = course?.uuid
-          ? certificateMap.get(course.uuid) ?? COURSE_PROGRESS_FALLBACK[index % COURSE_PROGRESS_FALLBACK.length]
-          : COURSE_PROGRESS_FALLBACK[index % COURSE_PROGRESS_FALLBACK.length];
+  const continueLearning = useMemo<LearningHubClass[]>(() => {
+    return classDefinitions.map((item, index) => {
+      const course = item.course;
+      const classDetails = item.classDetails;
+      const fallbackProgress =
+        COURSE_PROGRESS_FALLBACK[index % COURSE_PROGRESS_FALLBACK.length] ?? 0;
+      const progress = course?.uuid
+        ? (certificateMap.get(course.uuid) ?? fallbackProgress)
+        : fallbackProgress;
+      const scheduleCount = item.schedules?.length ?? 0;
 
-        return {
-          id: item.uuid,
-          title: course?.name ?? item.classDetails?.title ?? 'Untitled class',
-          level,
-          progress,
-          ctaLabel: progress >= 70 ? 'View Certificate' : 'Resume',
-          href: course?.uuid ? `/dashboard/courses/${course.uuid}` : '/dashboard/courses',
-          accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
-        };
-      })
-      .slice(0, 4);
-
-    if (resolved.length > 0) return resolved;
-
-    return publishedCourses.slice(0, 4).map((course, index) => ({
-      id: course.uuid ?? `published-${index}`,
-      title: course.name,
-      level: (course.duration_hours ?? 0) >= 5 ? 'Intermediate' : 'Beginner',
-      progress: COURSE_PROGRESS_FALLBACK[index % COURSE_PROGRESS_FALLBACK.length],
-      ctaLabel: 'Resume',
-      href: course.uuid ? `/dashboard/courses/${course.uuid}` : '/dashboard/courses',
-      accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
-    }));
-  }, [certificateMap, classDefinitions, publishedCourses]);
+      return {
+        id: item.uuid,
+        title: classDetails?.title ?? course?.name ?? 'Untitled class',
+        courseName: course?.name ?? 'Standalone class',
+        statusLabel: getClassStatusLabel(
+          classDetails?.academic_period_start_date ?? classDetails?.default_start_time,
+          classDetails?.academic_period_end_date ?? classDetails?.default_end_time
+        ),
+        scheduleLabel:
+          scheduleCount === 1 ? '1 scheduled session' : `${scheduleCount} scheduled sessions`,
+        progress,
+        ctaLabel: progress >= 80 ? 'View class' : 'Resume class',
+        href: `/dashboard/schedule/classes/${item.uuid}`,
+        bannerUrl: course?.banner_url,
+        accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
+      };
+    });
+  }, [certificateMap, classDefinitions]);
 
   const upcomingSchedule = useMemo(
     () =>
@@ -327,7 +357,9 @@ export function useStudentLearningHubData(): LearningHubData {
           const start = item.start_time ? new Date(item.start_time) : null;
           return start && start.getTime() >= Date.now();
         })
-        .sort((a, b) => new Date(a.start_time ?? 0).getTime() - new Date(b.start_time ?? 0).getTime()),
+        .sort(
+          (a, b) => new Date(a.start_time ?? 0).getTime() - new Date(b.start_time ?? 0).getTime()
+        ),
     [studentSchedule]
   );
 
@@ -433,20 +465,20 @@ export function useStudentLearningHubData(): LearningHubData {
     .slice(0, 7)
     .reduce((sum, item) => sum + toMinutes(item.duration_minutes), 0);
 
-  const activeCoursesCount = continueLearning.length || classDefinitions.length;
+  const activeClassesCount = classDefinitions.length;
   const assignmentsDueCount = assignments.length;
   const overallProgress =
     continueLearning.length > 0
       ? Math.round(
-        continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
-      )
+          continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
+        )
       : 87;
 
   const stats: LearningHubStat[] = [
     {
-      id: 'active-courses',
-      value: String(activeCoursesCount || 3),
-      label: 'Active Courses',
+      id: 'active-classes',
+      value: String(activeClassesCount || 3),
+      label: 'Active Classes',
       tone: 'blue',
     },
     {
