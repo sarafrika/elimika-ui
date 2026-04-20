@@ -45,6 +45,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmissionAttachment } from '@/services/client/types.gen';
 import {
+  getDueSummary,
   getStudentAssignmentSubmissionState,
   useStudentAssignmentData,
   type StudentAssignmentFilterTab,

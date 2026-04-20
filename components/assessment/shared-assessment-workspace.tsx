@@ -41,9 +41,13 @@ import { RichTextPreview } from '../../app/dashboard/@instructor/classes/class-t
 
 export type AssessmentWorkspaceRole = 'student' | 'instructor';
 type AssessmentTab = 'active' | 'completed' | 'competencies';
+type AssessmentSort = 'newest' | 'due-soon' | 'title';
+type AssessmentStatus = 'in-progress' | 'pending-review' | 'completed' | 'overdue';
+type AssessmentStatusFilter = 'all' | AssessmentStatus;
 
 type AssessmentListItem = {
   category: string;
+  dueAt: number | null;
   dueLabel: string;
   fileName: string;
   fileSize: string;
@@ -52,7 +56,7 @@ type AssessmentListItem = {
   points: number;
   score: number | null;
   skill: string;
-  status: 'in-progress' | 'pending-review' | 'completed' | 'overdue';
+  status: AssessmentStatus;
   statusLabel: string;
   submittedAt: string;
   summary: string;
@@ -76,6 +80,7 @@ type Competency = {
 const assessments: AssessmentListItem[] = [
   {
     category: 'Design',
+    dueAt: new Date('2026-04-23T23:59:59').getTime(),
     dueLabel: 'Due in 3 days',
     fileName: 'Design.pdf',
     fileSize: '3.2 MB',
@@ -92,6 +97,7 @@ const assessments: AssessmentListItem[] = [
   },
   {
     category: 'Progress',
+    dueAt: new Date('2026-04-21T23:59:59').getTime(),
     dueLabel: 'Due in 1 day',
     fileName: 'Analysis.pdf',
     fileSize: '1.5 MB',
@@ -108,6 +114,7 @@ const assessments: AssessmentListItem[] = [
   },
   {
     category: 'Presentation',
+    dueAt: new Date('2026-04-19T23:59:59').getTime(),
     dueLabel: 'Completed',
     fileName: 'Speaking.mp4',
     fileSize: '18 MB',
@@ -124,6 +131,7 @@ const assessments: AssessmentListItem[] = [
   },
   {
     category: 'Marketing',
+    dueAt: new Date('2026-04-18T23:59:59').getTime(),
     dueLabel: 'Completed',
     fileName: 'Campaign.pdf',
     fileSize: '2.4 MB',
@@ -239,6 +247,15 @@ function formatDate(value?: string | Date | null, options?: Intl.DateTimeFormatO
   ).format(date);
 }
 
+function getDateTime(value?: string | Date | null) {
+  if (!value) return null;
+
+  const date = value instanceof Date ? value : new Date(value);
+  const time = date.getTime();
+
+  return Number.isNaN(time) ? null : time;
+}
+
 function formatBytes(value?: bigint | number | null) {
   if (value == null) return 'No file';
 
@@ -261,43 +278,125 @@ function getFilteredAssessments(
   data: AssessmentListItem[],
   tab: AssessmentTab,
   search: string,
-  skill: string
+  skill: string,
+  statusFilter: AssessmentStatusFilter,
+  sort: AssessmentSort
 ) {
   const query = search.trim().toLowerCase();
 
-  return data.filter(assessment => {
-    const matchesTab =
-      tab === 'active'
-        ? assessment.score === null
-        : tab === 'completed'
-          ? assessment.score !== null || assessment.status === 'pending-review'
-          : true;
-    const matchesSearch =
-      !query ||
-      [assessment.title, assessment.learnerName, assessment.summary, assessment.skill]
-        .join(' ')
-        .toLowerCase()
-        .includes(query);
-    const matchesSkill = skill === 'all' || assessment.skill === skill;
+  return data
+    .filter(assessment => {
+      const status = getAssessmentStatus(assessment);
+      const matchesTab =
+        tab === 'active'
+          ? status !== 'completed'
+          : tab === 'completed'
+            ? status === 'completed'
+            : true;
+      const matchesSearch =
+        !query ||
+        [assessment.title, assessment.learnerName, assessment.summary, assessment.skill]
+          .join(' ')
+          .toLowerCase()
+          .includes(query);
+      const matchesSkill = skill === 'all' || assessment.skill === skill;
+      const matchesStatus = statusFilter === 'all' || status === statusFilter;
 
-    return matchesTab && matchesSearch && matchesSkill;
-  });
+      return matchesTab && matchesSearch && matchesSkill && matchesStatus;
+    })
+    .sort((left, right) => {
+      if (sort === 'title') return left.title.localeCompare(right.title);
+
+      if (sort === 'due-soon') {
+        return (left.dueAt ?? Number.MAX_SAFE_INTEGER) - (right.dueAt ?? Number.MAX_SAFE_INTEGER);
+      }
+
+      const leftTime = new Date(left.submittedAt).getTime();
+      const rightTime = new Date(right.submittedAt).getTime();
+
+      return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
+    });
+}
+
+function getFilteredCompetencies(
+  data: Competency[],
+  search: string,
+  skill: string,
+  statusFilter: AssessmentStatusFilter,
+  sort: AssessmentSort
+) {
+  const query = search.trim().toLowerCase();
+
+  return data
+    .filter(competency => {
+      const matchesSearch =
+        !query ||
+        [
+          competency.title,
+          competency.level,
+          competency.metric,
+          competency.status,
+          competency.artifacts,
+          competency.trend,
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(query);
+      const matchesSkill = skill === 'all' || competency.title === skill;
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'completed'
+          ? competency.progress >= 80
+          : statusFilter === 'in-progress'
+            ? competency.progress > 0 && competency.progress < 80
+            : false);
+
+      return matchesSearch && matchesSkill && matchesStatus;
+    })
+    .sort((left, right) => {
+      if (sort === 'title') return left.title.localeCompare(right.title);
+      if (sort === 'due-soon') return left.dueLabel.localeCompare(right.dueLabel);
+
+      return right.progress - left.progress;
+    });
+}
+
+function isAssessmentOverdue(assessment: AssessmentListItem) {
+  return (
+    assessment.status !== 'completed' && assessment.dueAt != null && assessment.dueAt < Date.now()
+  );
+}
+
+function getAssessmentStatus(assessment: AssessmentListItem): AssessmentStatus {
+  return isAssessmentOverdue(assessment) ? 'overdue' : assessment.status;
+}
+
+function getAssessmentStatusLabel(assessment: AssessmentListItem) {
+  return getAssessmentStatus(assessment) === 'overdue' ? 'Overdue' : assessment.statusLabel;
+}
+
+function getAssessmentDueLabel(assessment: AssessmentListItem) {
+  if (isAssessmentOverdue(assessment)) {
+    return assessment.dueAt ? `Overdue since ${formatDate(new Date(assessment.dueAt))}` : 'Overdue';
+  }
+
+  return assessment.dueLabel;
 }
 
 function StatusBadge({ assessment }: { assessment: AssessmentListItem }) {
+  const status = getAssessmentStatus(assessment);
+
   return (
     <Badge
       className={cn(
         'h-6 rounded-md px-2.5 text-xs font-medium',
-        assessment.status === 'in-progress' && 'bg-primary/10 text-primary hover:bg-primary/10',
-        assessment.status === 'pending-review' &&
-        'bg-success/10 text-success hover:bg-success/10',
-        assessment.status === 'completed' && 'bg-success/10 text-success hover:bg-success/10',
-        assessment.status === 'overdue' &&
-        'bg-destructive/10 text-destructive hover:bg-destructive/10'
+        status === 'in-progress' && 'bg-primary/10 text-primary hover:bg-primary/10',
+        status === 'pending-review' && 'bg-success/10 text-success hover:bg-success/10',
+        status === 'completed' && 'bg-success/10 text-success hover:bg-success/10',
+        status === 'overdue' && 'bg-destructive/10 text-destructive hover:bg-destructive/10'
       )}
     >
-      {assessment.statusLabel}
+      {getAssessmentStatusLabel(assessment)}
     </Badge>
   );
 }
@@ -328,7 +427,7 @@ function TabsBar({
           aria-pressed={activeTab === tab.value}
           className={cn(
             'text-muted-foreground hover:text-foreground h-9 rounded-md px-3 text-sm font-medium transition',
-            activeTab === tab.value && 'bg-background text-foreground shadow-sm ring-1 ring-border'
+            activeTab === tab.value && 'bg-background text-foreground ring-border shadow-sm ring-1'
           )}
           key={tab.value}
           onClick={() => onTabChange(tab.value)}
@@ -369,22 +468,30 @@ function HeaderActions({ role }: { role: AssessmentWorkspaceRole }) {
 function SearchAndFilters({
   onSearchChange,
   onSkillChange,
+  onSortChange,
+  onStatusChange,
   search,
   skill,
   skills,
+  sort,
+  status,
 }: {
   onSearchChange: (value: string) => void;
   onSkillChange: (value: string) => void;
+  onSortChange: (value: AssessmentSort) => void;
+  onStatusChange: (value: AssessmentStatusFilter) => void;
   search: string;
   skill: string;
   skills: string[];
+  sort: AssessmentSort;
+  status: AssessmentStatusFilter;
 }) {
   return (
     <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_150px_130px]'>
       <div className='relative'>
         <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
         <Input
-          className='bg-background h-11 rounded-md pl-10 pr-10'
+          className='bg-background h-11 rounded-md pr-10 pl-10'
           onChange={event => onSearchChange(event.target.value)}
           placeholder='Search assessments...'
           value={search}
@@ -404,20 +511,49 @@ function SearchAndFilters({
           ))}
         </SelectContent>
       </Select>
-      <Button className='h-11 justify-between rounded-md' variant='outline' type='button'>
-        <span className='inline-flex items-center gap-2'>
-          <Menu className='size-4' />
-          Newest
-        </span>
-        <ChevronDown className='size-4' />
-      </Button>
-      <Button className='h-11 justify-between rounded-md' variant='outline' type='button'>
-        <span className='inline-flex items-center gap-2'>
-          <ListFilter className='size-4' />
-          Filters
-        </span>
-        <ChevronDown className='size-4' />
-      </Button>
+      <Select value={sort} onValueChange={value => onSortChange(value as AssessmentSort)}>
+        <SelectTrigger className='bg-background h-11 w-full rounded-md'>
+          <span className='inline-flex items-center gap-2'>
+            <Menu className='size-4' />
+            <SelectValue placeholder='Newest' />
+          </span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value='newest'>Newest</SelectItem>
+          <SelectItem value='due-soon'>Due soon</SelectItem>
+          <SelectItem value='title'>Title</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select
+        value={status}
+        onValueChange={value => onStatusChange(value as AssessmentStatusFilter)}
+      >
+        <SelectTrigger className='bg-background h-11 w-full rounded-md'>
+          <span className='inline-flex items-center gap-2'>
+            <ListFilter className='size-4' />
+            <SelectValue placeholder='Filters' />
+          </span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value='all'>All Statuses</SelectItem>
+          <SelectItem value='in-progress'>In Progress</SelectItem>
+          <SelectItem value='pending-review'>Pending Review</SelectItem>
+          <SelectItem value='completed'>Completed</SelectItem>
+          <SelectItem value='overdue'>Overdue</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function EmptyAssessmentsState() {
+  return (
+    <div className='border-border bg-card text-muted-foreground flex min-h-[220px] flex-col items-center justify-center rounded-md border p-8 text-center text-sm'>
+      <FileText className='text-primary/70 mb-3 size-10' />
+      <p className='text-foreground text-base font-semibold'>No assessments found</p>
+      <p className='mt-1 max-w-md'>
+        Try a different search term, skill, status, or sort option to find matching assessments.
+      </p>
     </div>
   );
 }
@@ -451,8 +587,8 @@ function AssessmentCard({
       </div>
       <div className='border-border/60 space-y-4 border-b p-4'>
         <p className='flex items-center gap-2'>
-          <Star className='text-warning size-4 shrink-0 fill-warning' />
-          <div className='text-muted-foreground flex text-sm' >
+          <Star className='text-warning fill-warning size-4 shrink-0' />
+          <div className='text-muted-foreground flex text-sm'>
             <RichTextPreview html={assessment.summary} />
           </div>
         </p>
@@ -478,8 +614,15 @@ function AssessmentCard({
             {assessment.score ?? '----'} / {assessment.points}
           </span>
         </span>
-        <span className='text-muted-foreground'>{assessment.dueLabel}</span>
-        <button className='ml-auto text-muted-foreground hover:text-foreground' type='button'>
+        <span
+          className={cn(
+            'text-muted-foreground',
+            isAssessmentOverdue(assessment) && 'text-destructive font-medium'
+          )}
+        >
+          {getAssessmentDueLabel(assessment)}
+        </span>
+        <button className='text-muted-foreground hover:text-foreground ml-auto' type='button'>
           <MoreHorizontal className='size-5' />
         </button>
       </footer>
@@ -565,15 +708,32 @@ function Deadlines({ items }: { items: AssessmentListItem[] }) {
     <section className='border-border/70 bg-card rounded-md border p-4 shadow-xs'>
       <h3 className='mb-4 font-semibold'>Upcoming Deadlines</h3>
       <div className='space-y-3'>
-        {items.slice(0, 2).map(assessment => (
-          <div className='flex gap-2 text-sm' key={assessment.id}>
-            <CalendarDays className='text-primary mt-0.5 size-4 shrink-0' />
-            <div>
-              <p className='font-medium'>{assessment.title}</p>
-              <p className='text-muted-foreground'>{assessment.dueLabel}</p>
+        {items.slice(0, 3).map(assessment => {
+          const overdue = isAssessmentOverdue(assessment);
+
+          return (
+            <div
+              className={cn(
+                'flex gap-2 rounded-md border border-transparent p-2 text-sm',
+                overdue && 'border-destructive/20 bg-destructive/10 text-destructive'
+              )}
+              key={assessment.id}
+            >
+              <CalendarDays
+                className={cn(
+                  'mt-0.5 size-4 shrink-0',
+                  overdue ? 'text-destructive' : 'text-primary'
+                )}
+              />
+              <div className='min-w-0'>
+                <p className='font-medium'>{assessment.title}</p>
+                <p className={cn('text-muted-foreground', overdue && 'text-destructive/80')}>
+                  {getAssessmentDueLabel(assessment)}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -620,13 +780,20 @@ function CompetencyCard({ competency }: { competency: Competency }) {
             <h3 className='font-semibold'>{competency.title}</h3>
             <p className='text-muted-foreground mt-1 text-xs'>{competency.artifacts}</p>
           </div>
-          <Badge className='bg-success/10 text-success hover:bg-success/10'>{competency.level}</Badge>
+          <Badge className='bg-success/10 text-success hover:bg-success/10'>
+            {competency.level}
+          </Badge>
         </div>
         <div className='flex items-center gap-2'>
-          <span className={cn('inline-flex size-6 items-center justify-center rounded-sm', competency.accent)}>
-            <BookOpen className='size-3.5 text-primary-foreground' />
+          <span
+            className={cn(
+              'inline-flex size-6 items-center justify-center rounded-sm',
+              competency.accent
+            )}
+          >
+            <BookOpen className='text-primary-foreground size-3.5' />
           </span>
-          <span className='bg-primary inline-flex size-6 items-center justify-center rounded-sm text-xs font-bold text-primary-foreground'>
+          <span className='bg-primary text-primary-foreground inline-flex size-6 items-center justify-center rounded-sm text-xs font-bold'>
             AI
           </span>
           <span className='text-muted-foreground ml-auto text-xs'>{competency.dueLabel}</span>
@@ -651,7 +818,10 @@ function CompetencyChart({ compact = false }: { compact?: boolean }) {
   return (
     <section className='border-border/70 bg-card rounded-md border p-4 shadow-xs'>
       <div className='mb-4 flex items-center justify-between gap-3'>
-        <h2 className='text-xl font-semibold'>Competency Chart</h2>
+        <div className='flex min-w-0 items-center gap-2'>
+          <h2 className='text-xl font-semibold'>Competency Chart</h2>
+          <Badge className='bg-warning/10 text-warning hover:bg-warning/10'>Mock data</Badge>
+        </div>
         <Button className='h-8 rounded-md text-xs' variant='outline' type='button'>
           Assessments
           <ChevronDown className='size-3.5' />
@@ -666,20 +836,26 @@ function CompetencyChart({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function CompetenciesGrid() {
+function CompetenciesGrid({ items }: { items: Competency[] }) {
   return (
-    <div className='grid gap-4 lg:grid-cols-2 min-[1400px]:grid-cols-3'>
-      {competencies.map(competency => (
-        <CompetencyCard competency={competency} key={competency.id} />
-      ))}
+    <div className='grid gap-4 min-[1400px]:grid-cols-3 lg:grid-cols-2'>
+      {items.length > 0 ? (
+        items.map(competency => <CompetencyCard competency={competency} key={competency.id} />)
+      ) : (
+        <div className='min-[1400px]:col-span-3 lg:col-span-2'>
+          <EmptyAssessmentsState />
+        </div>
+      )}
     </div>
   );
 }
 
 function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
-  const [activeTab, setActiveTab] = useState<AssessmentTab>('completed');
+  const [activeTab, setActiveTab] = useState<AssessmentTab>('active');
   const [search, setSearch] = useState('');
   const [skill, setSkill] = useState('all');
+  const [sort, setSort] = useState<AssessmentSort>('newest');
+  const [statusFilter, setStatusFilter] = useState<AssessmentStatusFilter>('all');
   const { assignmentRows, isLoading } = useStudentAssignmentData();
 
   const studentAssessments = useMemo<AssessmentListItem[]>(
@@ -688,11 +864,13 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
         const status = getStudentAssignmentSubmissionState(row);
         const primaryAttachment = row.attachments[0];
         const dueAt = row.schedule?.due_at ?? row.assignment?.due_date;
+        const dueTime = getDateTime(dueAt);
         const skillLabel =
           row.classMeta.courseTitle || row.assignment.assignment_category || 'Assignment';
 
         return {
           category: row.assignment.assignment_category || 'Assignment',
+          dueAt: dueTime,
           dueLabel: dueAt ? `Due ${formatDate(dueAt)}` : 'Self paced',
           fileName:
             primaryAttachment?.original_filename ||
@@ -715,9 +893,9 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
           statusLabel: status.label,
           submittedAt: formatDate(
             row.latestSubmission?.submitted_at ||
-            row.latestSubmission?.updated_date ||
-            row.latestSubmission?.created_date ||
-            dueAt
+              row.latestSubmission?.updated_date ||
+              row.latestSubmission?.created_date ||
+              dueAt
           ),
           summary:
             row.assignment.description ||
@@ -730,28 +908,44 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
   );
 
   const filteredAssessments = useMemo(
-    () => getFilteredAssessments(studentAssessments, activeTab, search, skill),
-    [activeTab, search, skill, studentAssessments]
+    () => getFilteredAssessments(studentAssessments, activeTab, search, skill, statusFilter, sort),
+    [activeTab, search, skill, sort, statusFilter, studentAssessments]
+  );
+  const filteredCompetencies = useMemo(
+    () => getFilteredCompetencies(competencies, search, skill, statusFilter, sort),
+    [search, skill, sort, statusFilter]
   );
 
   const skills = useMemo(
-    () => Array.from(new Set(studentAssessments.map(assessment => assessment.skill))).sort(),
+    () =>
+      Array.from(
+        new Set([
+          ...studentAssessments.map(assessment => assessment.skill),
+          ...competencies.map(competency => competency.title),
+        ])
+      ).sort(),
     [studentAssessments]
   );
 
-  const activeCount = studentAssessments.filter(assessment => assessment.score === null).length;
-  const completedCount = studentAssessments.filter(assessment => assessment.score !== null).length;
+  const activeCount = studentAssessments.filter(
+    assessment => getAssessmentStatus(assessment) !== 'completed'
+  ).length;
+  const completedCount = studentAssessments.filter(
+    assessment => getAssessmentStatus(assessment) === 'completed'
+  ).length;
   const pendingCount = studentAssessments.filter(
-    assessment => assessment.status === 'in-progress' || assessment.status === 'pending-review'
+    assessment =>
+      getAssessmentStatus(assessment) === 'in-progress' ||
+      getAssessmentStatus(assessment) === 'pending-review'
   ).length;
   const overdueCount = studentAssessments.filter(
-    assessment => assessment.status === 'overdue'
+    assessment => getAssessmentStatus(assessment) === 'overdue'
   ).length;
   const upcomingDeadlines = useMemo(
     () =>
       [...studentAssessments]
-        .filter(assessment => assessment.dueLabel !== 'Self paced')
-        .sort((left, right) => left.dueLabel.localeCompare(right.dueLabel)),
+        .filter(assessment => assessment.dueAt != null && assessment.status !== 'completed')
+        .sort((left, right) => (left.dueAt ?? 0) - (right.dueAt ?? 0)),
     [studentAssessments]
   );
 
@@ -782,16 +976,20 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
           <SearchAndFilters
             onSearchChange={setSearch}
             onSkillChange={setSkill}
+            onSortChange={setSort}
+            onStatusChange={setStatusFilter}
             search={search}
             skill={skill}
             skills={skills}
+            sort={sort}
+            status={statusFilter}
           />
 
           {activeTab === 'competencies' ? (
-            <CompetenciesGrid />
+            <CompetenciesGrid items={filteredCompetencies} />
           ) : (
-            <div className='grid gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
-              <div className='space-y-5'>
+            <div className='grid items-start gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
+              <div className='flex flex-col gap-5'>
                 {isLoading ? (
                   Array.from({ length: 3 }).map((_, index) => (
                     <AssessmentCardSkeleton key={`assessment-skeleton-${index}`} />
@@ -801,12 +999,10 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
                     <AssessmentCard assessment={assessment} key={assessment.id} role={role} />
                   ))
                 ) : (
-                  <div className='border-border bg-card text-muted-foreground rounded-md border p-6 text-sm'>
-                    No assessments match the selected filters.
-                  </div>
+                  <EmptyAssessmentsState />
                 )}
               </div>
-              <div className='grid gap-5 lg:grid-cols-2 min-[1400px]:block min-[1400px]:space-y-5'>
+              <div className='grid gap-5 min-[1400px]:block min-[1400px]:space-y-5 lg:grid-cols-2'>
                 <AssessmentOverview
                   activeCount={activeCount}
                   completedCount={completedCount}
@@ -829,18 +1025,42 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
 }
 
 export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceRole }) {
-  const [activeTab, setActiveTab] = useState<AssessmentTab>('completed');
+  const [activeTab, setActiveTab] = useState<AssessmentTab>('active');
   const [search, setSearch] = useState('');
   const [skill, setSkill] = useState('all');
+  const [sort, setSort] = useState<AssessmentSort>('newest');
+  const [statusFilter, setStatusFilter] = useState<AssessmentStatusFilter>('all');
   const filteredAssessments = useMemo(
-    () => getFilteredAssessments(assessments, activeTab, search, skill),
-    [activeTab, search, skill]
+    () => getFilteredAssessments(assessments, activeTab, search, skill, statusFilter, sort),
+    [activeTab, search, skill, sort, statusFilter]
   );
-  const activeCount = assessments.filter(assessment => assessment.score === null).length;
-  const completedCount = assessments.filter(
-    assessment => assessment.score !== null || assessment.status === 'pending-review'
+  const filteredCompetencies = useMemo(
+    () => getFilteredCompetencies(competencies, search, skill, statusFilter, sort),
+    [search, skill, sort, statusFilter]
+  );
+  const activeCount = assessments.filter(
+    assessment => getAssessmentStatus(assessment) !== 'completed'
   ).length;
-  const skills = Array.from(new Set(assessments.map(assessment => assessment.skill)));
+  const completedCount = assessments.filter(
+    assessment => getAssessmentStatus(assessment) === 'completed'
+  ).length;
+  const overdueCount = assessments.filter(
+    assessment => getAssessmentStatus(assessment) === 'overdue'
+  ).length;
+  const pendingCount = assessments.filter(
+    assessment =>
+      getAssessmentStatus(assessment) === 'in-progress' ||
+      getAssessmentStatus(assessment) === 'pending-review'
+  ).length;
+  const skills = Array.from(
+    new Set([
+      ...assessments.map(assessment => assessment.skill),
+      ...competencies.map(competency => competency.title),
+    ])
+  ).sort();
+  const upcomingDeadlines = [...assessments]
+    .filter(assessment => assessment.dueAt != null && assessment.status !== 'completed')
+    .sort((left, right) => (left.dueAt ?? 0) - (right.dueAt ?? 0));
 
   if (role === 'student') {
     return <StudentAssessmentList role={role} />;
@@ -873,34 +1093,36 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
           <SearchAndFilters
             onSearchChange={setSearch}
             onSkillChange={setSkill}
+            onSortChange={setSort}
+            onStatusChange={setStatusFilter}
             search={search}
             skill={skill}
             skills={skills}
+            sort={sort}
+            status={statusFilter}
           />
 
           {activeTab === 'competencies' ? (
-            <CompetenciesGrid />
+            <CompetenciesGrid items={filteredCompetencies} />
           ) : (
-            <div className='grid gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
-              <div className='space-y-5'>
+            <div className='grid items-start gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
+              <div className='flex flex-col gap-5'>
                 {filteredAssessments.length > 0 ? (
                   filteredAssessments.map(assessment => (
                     <AssessmentCard assessment={assessment} key={assessment.id} role={role} />
                   ))
                 ) : (
-                  <div className='border-border bg-card text-muted-foreground rounded-md border p-6 text-sm'>
-                    No assessments match the selected filters.
-                  </div>
+                  <EmptyAssessmentsState />
                 )}
               </div>
-              <div className='grid gap-5 lg:grid-cols-2 min-[1400px]:block min-[1400px]:space-y-5'>
+              <div className='grid gap-5 min-[1400px]:block min-[1400px]:space-y-5 lg:grid-cols-2'>
                 <AssessmentOverview
                   activeCount={activeCount}
                   completedCount={completedCount}
-                  overdueCount={1}
-                  pendingCount={1}
+                  overdueCount={overdueCount}
+                  pendingCount={pendingCount}
                 />
-                <Deadlines items={assessments} />
+                <Deadlines items={upcomingDeadlines} />
               </div>
             </div>
           )}

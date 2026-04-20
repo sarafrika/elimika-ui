@@ -58,9 +58,10 @@ function getClassTitle(classDetails?: ResolvedClassDetails) {
   );
 }
 
-function getDueSummary(value?: string | Date | null) {
+export function getDueSummary(value?: string | Date | null) {
   if (!value) {
     return {
+      badgeClassName: 'border-border/70 bg-muted/40 text-muted-foreground',
       label: 'Self paced',
       tone: 'neutral' as const,
     };
@@ -69,6 +70,7 @@ function getDueSummary(value?: string | Date | null) {
   const dueDate = new Date(value);
   if (Number.isNaN(dueDate.getTime())) {
     return {
+      badgeClassName: 'border-border/70 bg-muted/40 text-muted-foreground',
       label: 'No deadline',
       tone: 'neutral' as const,
     };
@@ -80,6 +82,7 @@ function getDueSummary(value?: string | Date | null) {
 
   if (diffDays < 0) {
     return {
+      badgeClassName: 'border-destructive/30 bg-destructive/10 text-destructive',
       label: 'Overdue',
       tone: 'danger' as const,
     };
@@ -87,6 +90,7 @@ function getDueSummary(value?: string | Date | null) {
 
   if (diffDays === 0) {
     return {
+      badgeClassName: 'border-warning/30 bg-warning/10 text-warning',
       label: 'Due today',
       tone: 'warning' as const,
     };
@@ -94,12 +98,14 @@ function getDueSummary(value?: string | Date | null) {
 
   if (diffDays <= 3) {
     return {
+      badgeClassName: 'border-warning/30 bg-warning/10 text-warning',
       label: `${diffDays} day${diffDays === 1 ? '' : 's'} left`,
       tone: 'warning' as const,
     };
   }
 
   return {
+    badgeClassName: 'border-success/30 bg-success/10 text-success',
     label: `${diffDays} days left`,
     tone: 'positive' as const,
   };
