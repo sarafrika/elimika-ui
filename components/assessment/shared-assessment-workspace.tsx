@@ -1,5 +1,7 @@
 'use client';
 
+import { useQueries } from '@tanstack/react-query';
+import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +16,20 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import {
+  getAssignmentByUuidOptions,
+  getAssignmentSchedulesOptions,
+  getAssignmentSubmissionsOptions,
+  getCourseLessonsOptions,
+  getEnrollmentsForClassOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import type {
+  Assignment,
+  AssignmentSubmission,
+  ClassAssignmentSchedule,
+} from '@/services/client/types.gen';
+import { useInstructor } from '@/context/instructor-context';
+import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import {
   getStudentAssignmentSubmissionState,
   useStudentAssignmentData,
@@ -46,21 +62,32 @@ type AssessmentStatus = 'in-progress' | 'pending-review' | 'completed' | 'overdu
 type AssessmentStatusFilter = 'all' | AssessmentStatus;
 
 type AssessmentListItem = {
+  assignmentUuid?: string;
   category: string;
+  comments?: string;
   dueAt: number | null;
   dueLabel: string;
   fileName: string;
   fileSize: string;
+  gradeDisplay?: string;
   id: string;
   learnerName: string;
   points: number;
+  percentage?: number | null;
   score: number | null;
   skill: string;
   status: AssessmentStatus;
   statusLabel: string;
+  submissionUuid?: string;
   submittedAt: string;
   summary: string;
   title: string;
+};
+
+type AssignmentScheduleWithClass = ClassAssignmentSchedule & {
+  classTitle: string;
+  classUuid: string;
+  courseTitle: string;
 };
 
 type Competency = {
@@ -76,77 +103,6 @@ type Competency = {
   title: string;
   trend: string;
 };
-
-const assessments: AssessmentListItem[] = [
-  {
-    category: 'Design',
-    dueAt: new Date('2026-04-23T23:59:59').getTime(),
-    dueLabel: 'Due in 3 days',
-    fileName: 'Design.pdf',
-    fileSize: '3.2 MB',
-    id: 'web-design-project',
-    learnerName: 'Sarah Otieno',
-    points: 16,
-    score: null,
-    skill: 'Web Design',
-    status: 'in-progress',
-    statusLabel: 'In Progress',
-    submittedAt: 'May 10, 2026',
-    summary: 'Revamp a nonprofit website with a new design',
-    title: 'Web Design Project',
-  },
-  {
-    category: 'Progress',
-    dueAt: new Date('2026-04-21T23:59:59').getTime(),
-    dueLabel: 'Due in 1 day',
-    fileName: 'Analysis.pdf',
-    fileSize: '1.5 MB',
-    id: 'data-analysis-report',
-    learnerName: 'John Mwangi',
-    points: 18,
-    score: null,
-    skill: 'Data Analysis',
-    status: 'pending-review',
-    statusLabel: 'Pending Review',
-    submittedAt: 'May 6, 2026',
-    summary: 'Analyze the provided dataset and compile a detailed report based on the findings.',
-    title: 'Data Analysis Report',
-  },
-  {
-    category: 'Presentation',
-    dueAt: new Date('2026-04-19T23:59:59').getTime(),
-    dueLabel: 'Completed',
-    fileName: 'Speaking.mp4',
-    fileSize: '18 MB',
-    id: 'public-speaking',
-    learnerName: 'Sarah Otieno',
-    points: 20,
-    score: 17,
-    skill: 'Public Speaking',
-    status: 'completed',
-    statusLabel: 'Completed',
-    submittedAt: 'Apr 26, 2026',
-    summary: 'Deliver a persuasive five-minute talk with clear pacing and visual support.',
-    title: 'Public Speaking',
-  },
-  {
-    category: 'Marketing',
-    dueAt: new Date('2026-04-18T23:59:59').getTime(),
-    dueLabel: 'Completed',
-    fileName: 'Campaign.pdf',
-    fileSize: '2.4 MB',
-    id: 'digital-marketing',
-    learnerName: 'Daniel Njoroge',
-    points: 20,
-    score: 14,
-    skill: 'Digital Marketing',
-    status: 'completed',
-    statusLabel: 'Completed',
-    submittedAt: 'Apr 18, 2026',
-    summary: 'Prepare a launch campaign and explain the channel strategy.',
-    title: 'Digital Marketing',
-  },
-];
 
 const competencies: Competency[] = [
   {
@@ -272,6 +228,94 @@ function formatBytes(value?: bigint | number | null) {
   }
 
   return `${resolved >= 10 || unitIndex === 0 ? Math.round(resolved) : resolved.toFixed(1)} ${units[unitIndex]}`;
+}
+
+function isSubmissionGraded(submission: AssignmentSubmission) {
+  const status = String(submission.status ?? '').toUpperCase();
+
+  return Boolean(submission.is_graded || submission.graded_at || status === 'GRADED');
+}
+
+function getAverageScore(submissions: AssignmentSubmission[]) {
+  const gradedScores = submissions
+    .map(submission => submission.score)
+    .filter((score): score is number => typeof score === 'number');
+
+  if (gradedScores.length === 0) return null;
+
+  return Math.round(
+    gradedScores.reduce((total, score) => total + score, 0) / gradedScores.length
+  );
+}
+
+function getAveragePercentage(submissions: AssignmentSubmission[]) {
+  const gradedPercentages = submissions
+    .map(submission => submission.percentage)
+    .filter((percentage): percentage is number => typeof percentage === 'number');
+
+  if (gradedPercentages.length === 0) return null;
+
+  return Math.round(
+    gradedPercentages.reduce((total, percentage) => total + percentage, 0) /
+      gradedPercentages.length
+  );
+}
+
+function mapAssignmentToAssessment({
+  assignment,
+  schedule,
+  submissions,
+  totalLearners,
+}: {
+  assignment: Assignment;
+  schedule: AssignmentScheduleWithClass;
+  submissions: AssignmentSubmission[];
+  totalLearners: number;
+}): AssessmentListItem {
+  const submittedCount = submissions.length;
+  const gradedCount = submissions.filter(isSubmissionGraded).length;
+  const dueAt = schedule.due_at ?? assignment.due_date;
+  const dueTime = getDateTime(dueAt);
+  const isFullyGraded = submittedCount > 0 && gradedCount === submittedCount;
+  const status: AssessmentStatus = isFullyGraded
+    ? 'completed'
+    : dueTime != null && dueTime < Date.now()
+      ? 'overdue'
+      : submittedCount > 0
+        ? 'pending-review'
+        : 'in-progress';
+
+  return {
+    assignmentUuid: assignment.uuid,
+    category: assignment.assignment_category || 'Assignment',
+    dueAt: dueTime,
+    dueLabel: dueAt ? `Due ${formatDate(dueAt)}` : 'No due date',
+    fileName: assignment.rubric_uuid ? 'Rubric attached' : 'No rubric',
+    fileSize: `${submittedCount}/${totalLearners || submittedCount} submitted`,
+    gradeDisplay:
+      submittedCount > 0 ? `${gradedCount}/${submittedCount} submissions graded` : 'No submissions',
+    id: `assignment_${assignment.uuid}_${schedule.classUuid}`,
+    learnerName: `${submittedCount}/${totalLearners || submittedCount} learners submitted`,
+    percentage: getAveragePercentage(submissions),
+    points: assignment.max_points ?? submissions[0]?.max_score ?? 100,
+    score: getAverageScore(submissions),
+    skill: schedule.courseTitle,
+    status,
+    statusLabel:
+      status === 'completed'
+        ? 'Graded'
+        : status === 'overdue'
+          ? 'Overdue'
+          : submittedCount > 0
+            ? 'Ready to grade'
+            : 'Awaiting submissions',
+    submittedAt: `${gradedCount}/${submittedCount} graded`,
+    summary:
+      assignment.description ||
+      assignment.instructions ||
+      `${schedule.classTitle} assignment for ${schedule.courseTitle}`,
+    title: assignment.title,
+  };
 }
 
 function getFilteredAssessments(
@@ -568,11 +612,14 @@ function AssessmentCard({
   const primaryAction =
     role === 'instructor'
       ? assessment.score === null
-        ? 'Update Review'
-        : 'View Report'
+        ? 'Grade Submissions'
+        : 'View Submissions'
       : assessment.score === null
-        ? 'Submit Assessment'
-        : 'View Assessment';
+        ? 'Awaiting Grade'
+        : 'View Grade';
+  const detailHref = assessment.assignmentUuid
+    ? `/dashboard/assignment/assignment_${assessment.assignmentUuid}`
+    : undefined;
 
   return (
     <article className='border-border/70 bg-card rounded-md border shadow-xs'>
@@ -601,19 +648,37 @@ function AssessmentCard({
             <span className='text-foreground truncate font-medium'>{assessment.fileName}</span>
             <span className='shrink-0'>({assessment.fileSize})</span>
           </div>
-          <Button className='h-9 rounded-md px-5' type='button'>
-            {primaryAction}
-            <ArrowUpRight className='size-4' />
-          </Button>
+          {detailHref && role === 'instructor' ? (
+            <Button asChild className='h-9 rounded-md px-5' type='button'>
+              <Link href={detailHref}>
+                {primaryAction}
+                <ArrowUpRight className='size-4' />
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              className='h-9 rounded-md px-5'
+              disabled={role === 'student' && assessment.score === null}
+              type='button'
+            >
+              {primaryAction}
+              <ArrowUpRight className='size-4' />
+            </Button>
+          )}
         </div>
       </div>
       <footer className='flex flex-wrap items-center gap-x-6 gap-y-2 p-4 text-sm'>
         <span className='text-muted-foreground'>
-          Total Score:{' '}
+          Grade:{' '}
           <span className='text-foreground font-medium'>
-            {assessment.score ?? '----'} / {assessment.points}
+            {assessment.gradeDisplay || `${assessment.score ?? '----'} / ${assessment.points}`}
           </span>
         </span>
+        {typeof assessment.percentage === 'number' ? (
+          <span className='text-muted-foreground'>
+            Percentage: <span className='text-foreground font-medium'>{assessment.percentage}%</span>
+          </span>
+        ) : null}
         <span
           className={cn(
             'text-muted-foreground',
@@ -1025,42 +1090,188 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
 }
 
 export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceRole }) {
+  const instructor = useInstructor();
   const [activeTab, setActiveTab] = useState<AssessmentTab>('active');
   const [search, setSearch] = useState('');
   const [skill, setSkill] = useState('all');
   const [sort, setSort] = useState<AssessmentSort>('newest');
   const [statusFilter, setStatusFilter] = useState<AssessmentStatusFilter>('all');
+  const { classes, loading: classesLoading } = useInstructorClassesWithDetails(instructor?.uuid);
+
+  const classEnrollmentQueries = useQueries({
+    queries: classes.map(classItem => ({
+      ...getEnrollmentsForClassOptions({ path: { uuid: classItem.uuid as string } }),
+      enabled: role === 'instructor' && Boolean(classItem.uuid),
+      staleTime: 60 * 1000,
+    })),
+  });
+
+  const lessonQueries = useQueries({
+    queries: classes.map(classItem => ({
+      ...getCourseLessonsOptions({
+        path: { courseUuid: classItem.course_uuid as string },
+        query: { pageable: { page: 0, size: 100, sort: [] } },
+      }),
+      enabled: role === 'instructor' && Boolean(classItem.course_uuid),
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const assignmentScheduleQueries = useQueries({
+    queries: classes.map(classItem => ({
+      ...getAssignmentSchedulesOptions({ path: { classUuid: classItem.uuid as string } }),
+      enabled: role === 'instructor' && Boolean(classItem.uuid),
+      staleTime: 60 * 1000,
+    })),
+  });
+
+  const assignmentSchedules = useMemo<AssignmentScheduleWithClass[]>(
+    () =>
+      classes.flatMap((classItem, index) =>
+        ((assignmentScheduleQueries[index]?.data?.data ?? []) as ClassAssignmentSchedule[]).map(
+          schedule => ({
+            ...schedule,
+            classTitle: classItem.title || 'Class',
+            classUuid: classItem.uuid as string,
+            courseTitle: classItem.course?.name || 'Course',
+          })
+        )
+      ),
+    [assignmentScheduleQueries, classes]
+  );
+
+  const uniqueAssignmentUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          assignmentSchedules
+            .map(item => item.assignment_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
+        )
+      ),
+    [assignmentSchedules]
+  );
+
+  const assignmentQueries = useQueries({
+    queries: uniqueAssignmentUuids.map(uuid => ({
+      ...getAssignmentByUuidOptions({ path: { uuid } }),
+      enabled: role === 'instructor' && Boolean(uuid),
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const assignmentSubmissionQueries = useQueries({
+    queries: uniqueAssignmentUuids.map(uuid => ({
+      ...getAssignmentSubmissionsOptions({ path: { assignmentUuid: uuid } }),
+      enabled: role === 'instructor' && Boolean(uuid),
+      staleTime: 60 * 1000,
+    })),
+  });
+
+  const assignmentMap = useMemo(() => {
+    const map = new Map<string, Assignment>();
+    uniqueAssignmentUuids.forEach((uuid, index) => {
+      const assignment = assignmentQueries[index]?.data?.data;
+      if (uuid && assignment) map.set(uuid, assignment);
+    });
+    return map;
+  }, [assignmentQueries, uniqueAssignmentUuids]);
+
+  const assignmentSubmissionMap = useMemo(() => {
+    const map = new Map<string, AssignmentSubmission[]>();
+    uniqueAssignmentUuids.forEach((uuid, index) => {
+      if (uuid) map.set(uuid, assignmentSubmissionQueries[index]?.data?.data ?? []);
+    });
+    return map;
+  }, [assignmentSubmissionQueries, uniqueAssignmentUuids]);
+
+  const lessonMap = useMemo(() => {
+    const map = new Map<string, { courseTitle: string; lessonTitle: string }>();
+
+    classes.forEach((classItem, index) => {
+      const lessons = lessonQueries[index]?.data?.data?.content ?? [];
+      lessons.forEach(lesson => {
+        if (lesson.uuid) {
+          map.set(lesson.uuid, {
+            courseTitle: classItem.course?.name || 'Course',
+            lessonTitle: lesson.title || 'Lesson',
+          });
+        }
+      });
+    });
+
+    return map;
+  }, [classes, lessonQueries]);
+
+  const enrollmentCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    classes.forEach((classItem, index) => {
+      map.set(classItem.uuid as string, classEnrollmentQueries[index]?.data?.data?.length ?? 0);
+    });
+    return map;
+  }, [classEnrollmentQueries, classes]);
+
+  const instructorAssessments = useMemo(
+    () =>
+      assignmentSchedules
+        .map(schedule => {
+          const assignmentUuid = schedule.assignment_uuid;
+          const assignment = assignmentUuid ? assignmentMap.get(assignmentUuid) : null;
+          if (!assignment?.uuid) return null;
+
+          const lessonInfo = schedule.lesson_uuid ? lessonMap.get(schedule.lesson_uuid) : null;
+
+          return mapAssignmentToAssessment({
+            assignment,
+            schedule: {
+              ...schedule,
+              courseTitle: lessonInfo?.courseTitle || schedule.courseTitle,
+            },
+            submissions: assignmentSubmissionMap.get(assignment.uuid) ?? [],
+            totalLearners: enrollmentCountMap.get(schedule.classUuid) ?? 0,
+          });
+        })
+        .filter((assessment): assessment is AssessmentListItem => assessment !== null),
+    [assignmentMap, assignmentSchedules, assignmentSubmissionMap, enrollmentCountMap, lessonMap]
+  );
   const filteredAssessments = useMemo(
-    () => getFilteredAssessments(assessments, activeTab, search, skill, statusFilter, sort),
-    [activeTab, search, skill, sort, statusFilter]
+    () =>
+      getFilteredAssessments(instructorAssessments, activeTab, search, skill, statusFilter, sort),
+    [activeTab, instructorAssessments, search, skill, sort, statusFilter]
   );
   const filteredCompetencies = useMemo(
     () => getFilteredCompetencies(competencies, search, skill, statusFilter, sort),
     [search, skill, sort, statusFilter]
   );
-  const activeCount = assessments.filter(
+  const activeCount = instructorAssessments.filter(
     assessment => getAssessmentStatus(assessment) !== 'completed'
   ).length;
-  const completedCount = assessments.filter(
+  const completedCount = instructorAssessments.filter(
     assessment => getAssessmentStatus(assessment) === 'completed'
   ).length;
-  const overdueCount = assessments.filter(
+  const overdueCount = instructorAssessments.filter(
     assessment => getAssessmentStatus(assessment) === 'overdue'
   ).length;
-  const pendingCount = assessments.filter(
+  const pendingCount = instructorAssessments.filter(
     assessment =>
       getAssessmentStatus(assessment) === 'in-progress' ||
       getAssessmentStatus(assessment) === 'pending-review'
   ).length;
   const skills = Array.from(
     new Set([
-      ...assessments.map(assessment => assessment.skill),
+      ...instructorAssessments.map(assessment => assessment.skill),
       ...competencies.map(competency => competency.title),
     ])
   ).sort();
-  const upcomingDeadlines = [...assessments]
+  const upcomingDeadlines = [...instructorAssessments]
     .filter(assessment => assessment.dueAt != null && assessment.status !== 'completed')
     .sort((left, right) => (left.dueAt ?? 0) - (right.dueAt ?? 0));
+
+  const isLoading =
+    classesLoading ||
+    assignmentScheduleQueries.some(query => query.isLoading || query.isFetching) ||
+    assignmentQueries.some(query => query.isLoading || query.isFetching) ||
+    assignmentSubmissionQueries.some(query => query.isLoading || query.isFetching);
 
   if (role === 'student') {
     return <StudentAssessmentList role={role} />;
@@ -1107,9 +1318,17 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
           ) : (
             <div className='grid items-start gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
               <div className='flex flex-col gap-5'>
-                {filteredAssessments.length > 0 ? (
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <AssessmentCardSkeleton key={`grading-skeleton-${index}`} />
+                  ))
+                ) : filteredAssessments.length > 0 ? (
                   filteredAssessments.map(assessment => (
-                    <AssessmentCard assessment={assessment} key={assessment.id} role={role} />
+                    <AssessmentCard
+                      assessment={assessment}
+                      key={assessment.id}
+                      role={role}
+                    />
                   ))
                 ) : (
                   <EmptyAssessmentsState />

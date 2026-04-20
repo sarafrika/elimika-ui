@@ -1,21 +1,21 @@
 'use client';
 
-import { useMemo, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useMemo, useState } from 'react';
 import { useUserProfile } from '@/context/profile-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import {
   getAssignmentByUuidOptions,
   getAssignmentSchedulesOptions,
+  getAssignmentSubmissionsOptions,
+  getCourseLessonsOptions,
   getEnrollmentsForClassOptions,
+  getPendingGradingOptions,
   getQuizAttemptsOptions,
   getQuizByUuidOptions,
   getQuizSchedulesOptions,
   getSubmissionAnalyticsOptions,
-  getCourseLessonsOptions,
-  getPendingGradingOptions,
-  getAssignmentSubmissionsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -35,6 +35,9 @@ import type { AssignmentCardData, AssignmentStatus } from './assignment-types';
 type AssignmentScheduleWithClass = ClassAssignmentSchedule & { classUuid: string };
 type QuizScheduleWithClass = ClassQuizSchedule & { classUuid: string };
 
+const isDefinedString = (value: unknown): value is string =>
+  typeof value === 'string' && value.length > 0;
+
 function formatDueLabel(value?: Date | string) {
   if (!value) return 'No due date';
   const dueDate = new Date(value);
@@ -47,7 +50,7 @@ function getTaskStatus(
   gradedCount: number,
   taskType: 'assignment' | 'quiz'
 ): Exclude<AssignmentStatus, 'all'> {
-  if (taskType === 'assignment' && submissionCount > 0 && gradedCount === submissionCount) {
+  if (taskType === 'assignment' && submissionCount > 0 && gradedCount >= submissionCount) {
     return 'graded';
   }
 
@@ -127,11 +130,12 @@ export function AssignmentPageClient() {
   );
 
   const uniqueAssignmentUuids = useMemo(
-    () => Array.from(new Set(assignmentSchedules.map(item => item.assignment_uuid).filter(Boolean))),
+    () =>
+      Array.from(new Set(assignmentSchedules.map(item => item.assignment_uuid).filter(isDefinedString))),
     [assignmentSchedules]
   );
   const uniqueQuizUuids = useMemo(
-    () => Array.from(new Set(quizSchedules.map(item => item.quiz_uuid).filter(Boolean))),
+    () => Array.from(new Set(quizSchedules.map(item => item.quiz_uuid).filter(isDefinedString))),
     [quizSchedules]
   );
 
@@ -249,18 +253,24 @@ export function AssignmentPageClient() {
 
         const submissions = assignmentSubmissionMap.get(assignment.uuid) ?? [];
         const submissionCount = submissions.length;
-        if (submissionCount === 0) return null;
 
         const gradedCount = submissions.filter(item => item.is_graded || item.graded_at).length;
         const lessonInfo = lessonMap.get(schedule.lesson_uuid);
         const classInfo = classMap.get(schedule.classUuid);
         const totalLearners = enrollmentCountMap.get(schedule.classUuid) ?? 0;
         const status = getTaskStatus(schedule.due_at, submissionCount, gradedCount, 'assignment');
+        const pendingBadge =
+          gradedCount < submissionCount ? `${submissionCount - gradedCount} Pending` : null;
+        const metricLabel =
+          totalLearners > 0
+            ? `${Math.round((submissionCount / totalLearners) * 100)}% received`
+            : null;
 
-        return {
-          badge:
-            gradedCount < submissionCount ? `${submissionCount - gradedCount} Pending` : undefined,
-          ctaLabel: gradedCount < submissionCount ? 'Grade Now' : 'View Submissions',
+        const assignmentCard: AssignmentCardData = {
+          ctaLabel:
+            submissionCount > 0 && gradedCount < submissionCount
+              ? 'Grade Now'
+              : 'View Submissions',
           classUuid: schedule.classUuid,
           classTitle: classInfo?.title || 'Class',
           courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || 'Course',
@@ -270,17 +280,26 @@ export function AssignmentPageClient() {
           instructor: instructorName,
           lesson: lessonInfo?.lessonTitle || 'Lesson',
           lessonUuid: schedule.lesson_uuid,
-          metricLabel:
-            totalLearners > 0 ? `${Math.round((submissionCount / totalLearners) * 100)}% received` : undefined,
           metricValue: `${submissionCount}/${totalLearners || submissionCount} submitted`,
-          rubricUuid: assignment.rubric_uuid,
           status,
           statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
-          studentSummary: classInfo?.title || classInfo?.course?.name || undefined,
-          subtitle: assignment.title,
+          studentSummary: classInfo?.title || classInfo?.course?.name || 'Class',
+          subtitle: assignment.title || 'Assignment',
           submissionCount,
           taskType: 'assignment',
-        } satisfies AssignmentCardData;
+        };
+
+        if (pendingBadge) {
+          assignmentCard.badge = pendingBadge;
+        }
+        if (metricLabel) {
+          assignmentCard.metricLabel = metricLabel;
+        }
+        if (assignment.rubric_uuid) {
+          assignmentCard.rubricUuid = assignment.rubric_uuid;
+        }
+
+        return assignmentCard;
       })
       .filter((item): item is AssignmentCardData => item !== null);
 
@@ -291,16 +310,20 @@ export function AssignmentPageClient() {
 
         const attempts = quizAttemptMap.get(quiz.uuid) ?? [];
         const submissionCount = attempts.length;
-        if (submissionCount === 0) return null;
 
         const completedCount = attempts.filter(item => item.is_completed || item.submitted_at).length;
         const lessonInfo = lessonMap.get(schedule.lesson_uuid);
         const classInfo = classMap.get(schedule.classUuid);
         const totalLearners = enrollmentCountMap.get(schedule.classUuid) ?? 0;
         const status = getTaskStatus(schedule.due_at, submissionCount, completedCount, 'quiz');
+        const pendingBadge =
+          completedCount < submissionCount ? `${submissionCount - completedCount} Pending` : null;
+        const metricLabel =
+          totalLearners > 0
+            ? `${Math.round((submissionCount / totalLearners) * 100)}% attempted`
+            : null;
 
-        return {
-          badge: completedCount < submissionCount ? `${submissionCount - completedCount} Pending` : undefined,
+        const quizCard: AssignmentCardData = {
           ctaLabel: 'View Submissions',
           classUuid: schedule.classUuid,
           classTitle: classInfo?.title || 'Class',
@@ -311,17 +334,26 @@ export function AssignmentPageClient() {
           instructor: instructorName,
           lesson: lessonInfo?.lessonTitle || 'Lesson',
           lessonUuid: schedule.lesson_uuid,
-          metricLabel:
-            totalLearners > 0 ? `${Math.round((submissionCount / totalLearners) * 100)}% attempted` : undefined,
           metricValue: `${submissionCount}/${totalLearners || submissionCount} attempts`,
-          rubricUuid: quiz.rubric_uuid,
           status,
           statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
-          studentSummary: classInfo?.title || classInfo?.course?.name || undefined,
-          subtitle: quiz.title,
+          studentSummary: classInfo?.title || classInfo?.course?.name || 'Class',
+          subtitle: quiz.title || 'Quiz',
           submissionCount,
           taskType: 'quiz',
-        } satisfies AssignmentCardData;
+        };
+
+        if (pendingBadge) {
+          quizCard.badge = pendingBadge;
+        }
+        if (metricLabel) {
+          quizCard.metricLabel = metricLabel;
+        }
+        if (quiz.rubric_uuid) {
+          quizCard.rubricUuid = quiz.rubric_uuid;
+        }
+
+        return quizCard;
       })
       .filter((item): item is AssignmentCardData => item !== null);
 
@@ -392,8 +424,8 @@ export function AssignmentPageClient() {
   }, [analyticsQuery, pendingGradingData?.data, taskCards]);
 
   return (
-    <main className='bg-background p-4 md:p-6'>
-      <div className='mx-auto max-w-7xl space-y-5'>
+    <main className='bg-background p-3 sm:p-4 md:p-6'>
+      <div className='mx-auto max-w-7xl space-y-4 sm:space-y-5'>
         <AssignmentHeader />
         <AssignmentToolbar
           activeFilter={activeFilter}
@@ -405,17 +437,17 @@ export function AssignmentPageClient() {
         <div className='grid gap-5 2xl:grid-cols-[minmax(0,1fr)_320px]'>
           <section className='space-y-5'>
             {loading ? (
-              <div className='rounded-2xl border bg-white p-6 text-sm text-muted-foreground shadow-sm'>
+              <div className='border-border/60 bg-card rounded-xl border p-4 text-xs text-muted-foreground shadow-sm sm:p-6 sm:text-sm'>
                 Loading lesson submissions...
               </div>
             ) : filteredAssignments.length > 0 ? (
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
+              <div className='grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
                 {filteredAssignments.map(assignment => (
                   <AssignmentCard key={assignment.id} assignment={assignment} />
                 ))}
               </div>
             ) : (
-              <div className='rounded-2xl border border-dashed bg-white p-6 text-sm text-muted-foreground shadow-sm'>
+              <div className='border-border/70 bg-card rounded-xl border border-dashed p-4 text-xs text-muted-foreground shadow-sm sm:p-6 sm:text-sm'>
                 No lesson tasks with student submissions were found for this instructor yet.
               </div>
             )}
