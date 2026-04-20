@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useQueries } from '@tanstack/react-query';
 import { useStudent } from '@/context/student-context';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import {
@@ -18,6 +16,8 @@ import type {
   ClassAssignmentSchedule,
   Enrollment,
 } from '@/services/client/types.gen';
+import { useQueries } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 type StudentClassDefinitionRow = ReturnType<
   typeof useStudentClassDefinitions
@@ -47,6 +47,13 @@ export type StudentAssignmentRow = {
   latestSubmission: AssignmentSubmission | null;
   schedule: ClassAssignmentSchedule;
   submissions: AssignmentSubmission[];
+};
+
+type StudentAssignmentClassItem = {
+  classTitle: string;
+  classUuid: string;
+  courseTitle: string;
+  enrollmentUuid?: string;
 };
 
 function getClassTitle(classDetails?: ResolvedClassDetails) {
@@ -158,31 +165,34 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
 export function useStudentAssignmentData() {
   const student = useStudent();
   const { classDefinitions, loading: classDefinitionsLoading } =
-    useStudentClassDefinitions(student);
+    useStudentClassDefinitions(student ?? undefined);
 
   const classItems = useMemo(
     () =>
       (classDefinitions ?? [])
-        .map((classDefinition: StudentClassDefinitionRow) => {
+        .map((classDefinition: StudentClassDefinitionRow): StudentAssignmentClassItem | null => {
           const classDetails = classDefinition.classDetails as ResolvedClassDetails | undefined;
+          const classUuid =
+            classDefinition.uuid || classDetails?.uuid || classDetails?.class_definition?.uuid;
+          const enrollmentUuid =
+            classDefinition.enrollments.find(
+              enrollment => enrollment.enrollment_status !== 'CANCELLED'
+            )?.enrollment_uuid ?? classDefinition.enrollments[0]?.enrollment_uuid;
 
-          return {
+          if (!classUuid) {
+            return null;
+          }
+
+          const classItem = {
             classTitle: getClassTitle(classDetails),
-            classUuid:
-              classDefinition.uuid || classDetails?.uuid || classDetails?.class_definition?.uuid,
+            classUuid,
             courseTitle:
               classDefinition.course?.name || classDetails?.course_name || 'Untitled course',
           };
+
+          return enrollmentUuid ? { ...classItem, enrollmentUuid } : classItem;
         })
-        .filter(
-          (
-            classItem
-          ): classItem is {
-            classTitle: string;
-            classUuid: string;
-            courseTitle: string;
-          } => Boolean(classItem.classUuid)
-        ),
+        .filter((classItem): classItem is StudentAssignmentClassItem => Boolean(classItem)),
     [classDefinitions]
   );
 
@@ -205,10 +215,12 @@ export function useStudentAssignmentData() {
           enrollments.find((enrollment: Enrollment) => enrollment.student_uuid === student?.uuid) ??
           null;
 
-        return {
+        const enrollmentUuid = matchingEnrollment?.uuid ?? classItem.enrollmentUuid;
+        const classMeta = {
           ...classItem,
-          enrollmentUuid: matchingEnrollment?.uuid,
         };
+
+        return enrollmentUuid ? { ...classMeta, enrollmentUuid } : classMeta;
       }),
     [classEnrollmentQueries, classItems, student?.uuid]
   );

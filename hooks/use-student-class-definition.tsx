@@ -1,9 +1,8 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import type {
   GetClassDefinitionResponse,
-  GetClassScheduleResponse,
   GetCourseByUuidResponse,
-  GetStudentScheduleResponse,
+  GetStudentScheduleResponse
 } from '../services/client';
 import {
   getClassDefinitionOptions,
@@ -53,6 +52,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
       })) || [],
   });
 
+
   // 3️⃣ Fetch each class definition
   const scheduleQueries = useQueries({
     queries:
@@ -61,6 +61,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
         enabled: !!uuid,
       })) || [],
   });
+
 
   // Extract class details after fetching
   const classDetailsArray = classQueries.map(q => q.data?.data?.class_definition ?? null);

@@ -19,7 +19,7 @@ const studentMenuItems = [
   },
   {
     title: 'My Courses',
-    url: '/dashboard/my-courses',
+    url: '/dashboard/courses/my-courses',
     icon: BookOpen,
   },
   {

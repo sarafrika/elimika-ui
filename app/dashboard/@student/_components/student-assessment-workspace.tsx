@@ -194,7 +194,7 @@ export function StudentAssessmentWorkspace() {
   }, [replaceBreadcrumbs]);
 
   const { classDefinitions, loading: classDefinitionsLoading } =
-    useStudentClassDefinitions(student);
+    useStudentClassDefinitions(student ?? undefined);
 
   const courseList = useMemo(() => {
     const courseMap = new Map<
