@@ -52,7 +52,7 @@ export function LearningHubRightRail({
               </div>
               <Link
                 prefetch
-                href='/dashboard/all-courses'
+                href='/dashboard/courses'
                 className='mt-4 inline-flex w-full items-center justify-center rounded-[8px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_88%,black_8%),color-mix(in_srgb,var(--primary)_74%,black_18%))] px-4 py-2 text-[0.78rem] font-medium text-white transition hover:opacity-95'
               >
                 Start
@@ -97,7 +97,7 @@ export function LearningHubRightRail({
               </div>
               <Link
                 prefetch
-                href='/dashboard/all-courses'
+                href='/dashboard/courses'
                 className='mt-4 inline-flex w-full items-center justify-center rounded-[8px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_88%,black_8%),color-mix(in_srgb,var(--primary)_74%,black_18%))] px-4 py-2 text-[0.78rem] font-medium text-white transition hover:opacity-95'
               >
                 Resume

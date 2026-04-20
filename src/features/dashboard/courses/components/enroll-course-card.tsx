@@ -221,10 +221,10 @@ export default function EnrollCourseCard({
               <div className='bg-muted/50 rounded-2xl px-3 py-2'>
                 <div className='text-muted-foreground mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.08em]'>
                   <Users className='h-3.5 w-3.5' />
-                  Seats
+                  Availabe Seats
                 </div>
                 <p className='text-foreground text-sm font-semibold'>
-                  {rosterLoading ? 'Loading...' : `${uniqueEnrollments}/${maxParticipants || 'N/A'}`}
+                  {rosterLoading ? 'Loading...' : `${maxParticipants - uniqueEnrollments.length}/${maxParticipants || 'N/A'}`}
                 </p>
               </div>
               <div className='bg-muted/50 rounded-2xl px-3 py-2'>
@@ -255,14 +255,14 @@ export default function EnrollCourseCard({
             <div className='border-border/70 bg-background/70 grid gap-3 rounded-[20px] border p-3'>
               <div className='flex items-center gap-3'>
                 <span className='from-primary to-primary/70 text-primary-foreground flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold shadow-sm'>
-                  {cls?.instructor?.full_name?.charAt(0) ?? <GraduationCap className='h-4 w-4' />}
+                  {cls?.instructor?.data?.full_name?.charAt(0) ?? <GraduationCap className='h-4 w-4' />}
                 </span>
                 <div className='min-w-0 flex-1'>
                   <p className='text-muted-foreground text-[11px] font-medium uppercase tracking-[0.08em]'>
                     Instructor
                   </p>
                   <p className='text-foreground truncate text-sm font-semibold'>
-                    {cls?.instructor?.full_name ?? 'Assigned instructor'}
+                    {cls?.instructor?.data?.full_name ?? 'Assigned instructor'}
                   </p>
                 </div>
               </div>
@@ -317,8 +317,8 @@ export default function EnrollCourseCard({
               }}
               disabled={disableEnroll}
               className={`w-full rounded-xl font-semibold shadow-none transition-all duration-300 ${disableEnroll
-                  ? 'bg-success text-success-foreground hover:bg-success/90'
-                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                ? 'bg-success text-success-foreground hover:bg-success/90'
+                : 'bg-primary text-primary-foreground hover:bg-primary/90'
                 }`}
             >
               {disableEnroll ? (

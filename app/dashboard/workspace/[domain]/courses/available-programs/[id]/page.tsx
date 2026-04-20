@@ -1,6 +1,6 @@
-import { notFound } from 'next/navigation';
 import AvailableProgramsPage from '@/src/features/dashboard/courses/pages/AvailableProgramsPage';
 import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
+import { notFound } from 'next/navigation';
 
 type WorkspaceAvailableProgramsPageProps = {
   params: Promise<{ domain: string; id: string }>;

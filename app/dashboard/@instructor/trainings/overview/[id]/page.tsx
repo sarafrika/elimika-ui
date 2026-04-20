@@ -203,11 +203,11 @@ export default function ClassPreviewPage() {
     if (typeof window === 'undefined') return '';
 
     if (course?.uuid) {
-      return `${window.location.origin}/dashboard/all-courses/available-classes/${course.uuid}/enroll?id=${classId}`;
+      return `${window.location.origin}/dashboard/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
     }
 
     if (program?.uuid) {
-      return `${window.location.origin}/dashboard/all-courses/available-programs/${program.uuid}/enroll?id=${classId}`;
+      return `${window.location.origin}/dashboard/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
     }
 
     return '';

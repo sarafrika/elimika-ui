@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BookOpen, MoreHorizontal, Search, Users } from 'lucide-react';
+import { BookOpen, MoreHorizontal, Search } from 'lucide-react';
 import type { ClassInstanceItem, DateFilter } from './new-class-page.utils';
 import {
   formatTimeRange,
@@ -23,6 +23,27 @@ function getClassIconClass(index: number) {
   ];
 
   return styles[index % styles.length] ?? styles[0];
+}
+
+// ✅ NEW: Format date like "3rd April 2026"
+function formatDateWithOrdinal(dateString: string) {
+  const date = new Date(dateString);
+
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const month = date.toLocaleString('en-GB', { month: 'long' });
+
+  const getOrdinal = (n: number) => {
+    if (n > 3 && n < 21) return 'th';
+    switch (n % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
+  return `${day}${getOrdinal(day)} ${month} ${year}`;
 }
 
 export function ClassSidebar({
@@ -125,15 +146,22 @@ export function ClassSidebar({
                     >
                       <BookOpen className='h-3.5 w-3.5' />
                     </span>
+
                     <div className='min-w-0'>
                       <p className='text-foreground truncate text-sm leading-5 font-semibold'>
                         {classItem.courseName || classItem.title}
                       </p>
 
-                      <div className='flex flex-row items-center justify-between' >
-                        <p className='text-muted-foreground mt-1 text-xs'>
-                          {formatTimeRange(classItem.start_time, classItem.end_time)}
-                        </p>
+                      <div className='flex flex-row items-center justify-between'>
+                        <div>
+                          <p className='text-muted-foreground mt-1 text-xs'>
+                            {formatTimeRange(classItem.start_time, classItem.end_time)}
+                          </p>
+                          <p className='text-muted-foreground text-[11px]'>
+                            {formatDateWithOrdinal(classItem.start_time)}
+                          </p>
+                        </div>
+
                         <span className='text-primary bg-primary/10 inline-flex rounded px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase'>
                           Lecture
                         </span>
@@ -142,18 +170,18 @@ export function ClassSidebar({
                   </div>
                 </div>
 
-                <div className='grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 pl-7'>
+                {/* <div className='grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 pl-7'>
                   <p className='text-muted-foreground flex items-center gap-1.5 text-xs'>
                     <Users className='h-3.5 w-3.5' />
                     <span>{classItem.classItem.max_participants ?? 0} students</span>
                   </p>
+
                   <div className='text-right'>
-                    <p className='text-foreground text-sm font-semibold'>{fee ? `$${fee}` : ''}</p>
-                    {/* <p className='text-foreground mt-2 text-sm font-semibold'>
-                      {fee ? `$${fee}` : formatDateTime(classItem.start_time).split(',')[0]}
-                    </p> */}
+                    <p className='text-foreground text-sm font-semibold'>
+                      {fee ? `$${fee}` : ''}
+                    </p>
                   </div>
-                </div>
+                </div> */}
               </button>
             );
           })

@@ -1,8 +1,8 @@
 'use client';
 
+import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { format } from 'date-fns';
 import { CalendarDays, CalendarRange, Filter, Layers3, Sparkles } from 'lucide-react';
-import { CustomLoadingState } from '@/app/dashboard/@course_creator/_components/loading-state';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -176,7 +176,10 @@ export function AvailabilityListingLayout({
       </Card>
 
       {isLoading ? (
-        <CustomLoadingState subHeading='Loading available classes...' />
+        <EnrollmentLoadingState
+          title='Finding available classes'
+          description='We are checking the current schedule window and preparing the best class options for this learner.'
+        />
       ) : !appliedStart || !appliedEnd ? (
         <Card className='rounded-[20px] border border-dashed p-8 text-center shadow-none'>
           <h3 className='text-foreground text-lg font-semibold'>Select a date range</h3>

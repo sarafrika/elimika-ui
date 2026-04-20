@@ -16,7 +16,7 @@ export default function CourseDetailsPage({ courseId }: CourseDetailsPageProps) 
     <ReusableCourseDetailsPage
       courseId={courseId}
       handleEnroll={() => {
-        router.push(`/dashboard/all-courses/enroll/${courseId}`);
+        router.push(`/dashboard/courses/enroll/${courseId}`);
       }}
       student_uuid={student?.uuid}
     />

@@ -23,7 +23,7 @@ export function StudentLearningHubPage() {
 
         <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_350px]'>
           <div className='space-y-4'>
-            <LearningHubContinueLearning courses={data.continueLearning} loading={data.loading} />
+            <LearningHubContinueLearning classes={data.continueLearning} loading={data.loading} />
             <LearningHubLiveClasses liveClass={data.scheduledLiveClass} loading={data.loading} />
             <LearningHubAssignments assignments={data.assignments} loading={data.loading} />
             <LearningHubClassInvite invite={data.invite} loading={data.loading} />

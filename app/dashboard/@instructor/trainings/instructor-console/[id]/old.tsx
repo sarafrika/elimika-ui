@@ -109,7 +109,7 @@ export default function ClassPreviewPage() {
   } = useCourseLessonsWithContent({ courseUuid: classData?.course_uuid as string });
 
   const [registrationLink] = useState(
-    `https://elimika.sarafrika.com/dashboard/all-courses/enroll/${course?.uuid}`
+    `https://elimika.sarafrika.com/dashboard/courses/enroll/${course?.uuid}`
   );
   const [copied, setCopied] = useState(false);
 

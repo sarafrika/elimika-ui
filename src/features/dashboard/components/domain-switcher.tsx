@@ -44,7 +44,7 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
 
     try {
       userDomain.setActiveDomain(nextDomain);
-      router.push(buildDashboardSwitchPath(nextDomain, '/dashboard/all-courses'));
+      router.push(buildDashboardSwitchPath(nextDomain, '/dashboard/courses'));
 
       toast.success(`Switched to ${dashboardDomainDisplayConfig[nextDomain].title}`, {
         id: 'domain-switch',

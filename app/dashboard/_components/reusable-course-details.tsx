@@ -38,7 +38,7 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { CustomLoadingState } from '../@course_creator/_components/loading-state';
+import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { ReviewCard } from '../@instructor/reviews/review-card';
 import { VideoPlayer } from '../@student/schedule/classes/[id]/VideoPlayer';
 import { FeedbackDialog } from './review-instructor-modal';
@@ -201,7 +201,12 @@ export default function ReusableCourseDetailsPage({
   );
 
   if (!isEverythingReady) {
-    return <CustomLoadingState subHeading='Loading your course details..' />;
+    return (
+      <EnrollmentLoadingState
+        title='Loading your course details'
+        description='We are gathering lessons, tasks, quizzes, and course information so the full learning overview is ready when the page opens.'
+      />
+    );
   }
 
   const difficultyName = getDifficultyName(courseData?.difficulty_uuid as string);

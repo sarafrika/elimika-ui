@@ -126,7 +126,7 @@ export default function MyClassesPage({ classDefinitions, isError, loading }: Pr
               </div>
 
               <Button
-                onClick={() => router.push('/dashboard/all-courses')}
+                onClick={() => router.push('/dashboard/courses')}
                 className='w-full sm:w-auto'
               >
                 <GraduationCap className='mr-2 h-4 w-4' />
@@ -276,7 +276,7 @@ export default function MyClassesPage({ classDefinitions, isError, loading }: Pr
                 Clear filters
               </Button>
             )}
-            <Button onClick={() => router.push('/dashboard/all-courses')}>Browse classes</Button>
+            <Button onClick={() => router.push('/dashboard/courses')}>Browse classes</Button>
           </div>
         </section>
       )}

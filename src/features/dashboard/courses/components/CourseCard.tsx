@@ -207,7 +207,7 @@ export function CourseCard({
                   onClick={e => {
                     e.stopPropagation();
                     handleSearchInstructor();
-                    // router.push(`/dashboard/all-courses/instructor/123`);
+                    // router.push(`/dashboard/courses/instructor/123`);
                   }}
                   size='sm'
                   variant='outline'
@@ -219,7 +219,7 @@ export function CourseCard({
                   onClick={e => {
                     e.stopPropagation();
                     handleEnroll();
-                    // router.push(`/dashboard/all-courses/enroll/${course.uuid}`);
+                    // router.push(`/dashboard/courses/enroll/${course.uuid}`);
                   }}
                 >
                   Enroll
