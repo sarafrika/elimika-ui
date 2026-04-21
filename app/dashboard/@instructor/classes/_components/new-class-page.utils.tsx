@@ -13,6 +13,20 @@ export type ClassTab =
 
 export type DateFilter = 'current-day' | 'current-week' | 'upcoming' | 'all';
 
+export const dateFilterHeadings: Record<DateFilter, string> = {
+  'current-day': "Today's Classes",
+  'current-week': "This Week's Classes",
+  upcoming: 'Upcoming Classes',
+  all: 'All Upcoming Scheduled Classes',
+};
+
+export const dateFilterDescriptions: Record<DateFilter, string> = {
+  'current-day': 'Classes scheduled for today are listed here.',
+  'current-week': 'Classes scheduled for this week are listed here.',
+  upcoming: 'Upcoming instructor class schedules are listed here.',
+  all: 'All of your future scheduled classes are listed here.',
+};
+
 export type StudentTableRow = {
   studentUuid: string;
   fullName: string;
@@ -245,7 +259,7 @@ export const useFilteredClassInstances = ({
             .includes(normalizedSearch);
 
         const matchesDateFilter =
-          dateFilter === 'all' ||
+          (dateFilter === 'all' && isUpcoming(instanceItem.start_time)) ||
           (dateFilter === 'current-day' && isCurrentDay(instanceItem.start_time)) ||
           (dateFilter === 'current-week' && isWithinCurrentWeek(instanceItem.start_time)) ||
           (dateFilter === 'upcoming' && isUpcoming(instanceItem.start_time));

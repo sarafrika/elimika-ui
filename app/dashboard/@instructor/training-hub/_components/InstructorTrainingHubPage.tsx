@@ -94,12 +94,16 @@ export function InstructorTrainingHubPage() {
           <div className='space-y-3'>
             <TrainingHubSectionHeader title='Manage Courses' />
             <div className='space-y-3'>
+              <p className='text-sm text-muted-foreground'>
+                List of courses approved to train.
+              </p>
+
               {filteredManagedCourses.map(course => (
                 <ManageCourseCard key={course.id} course={course} />
               ))}
               {!isLoadingManagedCourses &&
-              filteredManagedCourses.length === 0 &&
-              selectedType !== 'live-classes' ? (
+                filteredManagedCourses.length === 0 &&
+                selectedType !== 'live-classes' ? (
                 <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     No approved courses matched your search.

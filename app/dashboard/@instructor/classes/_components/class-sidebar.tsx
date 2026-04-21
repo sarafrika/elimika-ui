@@ -7,12 +7,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BookOpen, MoreHorizontal, Search } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, MoreHorizontal, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ClassInstanceItem, DateFilter } from './new-class-page.utils';
-import {
-  formatTimeRange,
-  getInstanceStatus
-} from './new-class-page.utils';
+import { dateFilterHeadings, formatTimeRange } from './new-class-page.utils';
+
+const CLASSES_PER_PAGE = 7;
 
 function getClassIconClass(index: number) {
   const styles = [
@@ -26,8 +26,11 @@ function getClassIconClass(index: number) {
 }
 
 // ✅ NEW: Format date like "3rd April 2026"
-function formatDateWithOrdinal(dateString: string) {
-  const date = new Date(dateString);
+function formatDateWithOrdinal(dateValue?: string | Date | null) {
+  if (!dateValue) return 'TBD';
+
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return 'TBD';
 
   const day = date.getDate();
   const year = date.getFullYear();
@@ -36,14 +39,34 @@ function formatDateWithOrdinal(dateString: string) {
   const getOrdinal = (n: number) => {
     if (n > 3 && n < 21) return 'th';
     switch (n % 10) {
-      case 1: return 'st';
-      case 2: return 'nd';
-      case 3: return 'rd';
-      default: return 'th';
+      case 1:
+        return 'st';
+      case 2:
+        return 'nd';
+      case 3:
+        return 'rd';
+      default:
+        return 'th';
     }
   };
 
   return `${day}${getOrdinal(day)} ${month} ${year}`;
+}
+
+function getVisiblePageNumbers(currentPage: number, totalPages: number) {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, totalPages];
+  }
+
+  if (currentPage >= totalPages - 2) {
+    return [1, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, currentPage - 1, currentPage, currentPage + 1, totalPages];
 }
 
 export function ClassSidebar({
@@ -68,11 +91,30 @@ export function ClassSidebar({
   onDateFilterChange: (value: DateFilter) => void;
 }) {
   const hasSearchTerm = searchTerm.trim().length > 0;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(Math.ceil(classes.length / CLASSES_PER_PAGE), 1);
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * CLASSES_PER_PAGE;
+  const paginatedClasses = classes.slice(pageStartIndex, pageStartIndex + CLASSES_PER_PAGE);
+  const visiblePageNumbers = useMemo(
+    () => getVisiblePageNumbers(safeCurrentPage, totalPages),
+    [safeCurrentPage, totalPages]
+  );
+  const resultStart = classes.length ? pageStartIndex + 1 : 0;
+  const resultEnd = Math.min(pageStartIndex + paginatedClasses.length, classes.length);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFilter, searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(page => Math.min(page, totalPages));
+  }, [totalPages]);
 
   return (
     <section className='border-border/70 bg-card/85 rounded-lg border p-3 shadow-sm backdrop-blur'>
       <div className='mb-4 flex items-center justify-between gap-3 px-1 pt-1'>
-        <h2 className='text-foreground text-lg font-semibold'>Today&apos;s Classes</h2>
+        <h2 className='text-foreground text-lg font-semibold'>{dateFilterHeadings[dateFilter]}</h2>
         <button
           type='button'
           className='text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none'
@@ -102,7 +144,7 @@ export function ClassSidebar({
             <SelectItem value='current-day'>Current day</SelectItem>
             <SelectItem value='current-week'>Current week</SelectItem>
             <SelectItem value='upcoming'>Upcoming</SelectItem>
-            <SelectItem value='all'>All scheduled dates</SelectItem>
+            <SelectItem value='all'>All future scheduled dates</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -124,25 +166,25 @@ export function ClassSidebar({
             </p>
           </div>
         ) : (
-          classes.slice(0, 7).map((classItem, index) => {
+          paginatedClasses.map((classItem, index) => {
             const isSelected = classItem.instanceUuid === selectedInstanceUuid;
-            const fee = classItem.classItem.training_fee ?? 0;
-            const status = getInstanceStatus(classItem.start_time, classItem.end_time);
+            const classIndex = pageStartIndex + index;
 
             return (
               <button
                 key={classItem.instanceUuid}
                 type='button'
                 onClick={() => onSelectClass(classItem.instanceUuid)}
-                className={`w-full rounded-lg border px-3.5 py-3 text-left transition-all ${isSelected
-                  ? 'border-primary/40 bg-primary/10 shadow-sm'
-                  : 'border-border/70 bg-background/70 hover:border-primary/30 hover:bg-primary/5'
-                  }`}
+                className={`w-full rounded-lg border px-3.5 py-3 text-left transition-all ${
+                  isSelected
+                    ? 'border-primary/40 bg-primary/10 shadow-sm'
+                    : 'border-border/70 bg-background/70 hover:border-primary/30 hover:bg-primary/5'
+                }`}
               >
                 <div className='grid grid-cols-[minmax(0,1fr)_auto] gap-3'>
                   <div className='flex min-w-0 gap-2.5'>
                     <span
-                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${getClassIconClass(index)}`}
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${getClassIconClass(classIndex)}`}
                     >
                       <BookOpen className='h-3.5 w-3.5' />
                     </span>
@@ -187,6 +229,64 @@ export function ClassSidebar({
           })
         )}
       </div>
+
+      {!isLoading && classes.length > CLASSES_PER_PAGE ? (
+        <div className='border-border/70 mt-4 space-y-3 border-t pt-3'>
+          <p className='text-muted-foreground px-1 text-xs'>
+            Showing {resultStart}-{resultEnd} of {classes.length} classes
+          </p>
+
+          <div className='flex items-center justify-between gap-2'>
+            <button
+              type='button'
+              onClick={() => setCurrentPage(page => Math.max(page - 1, 1))}
+              disabled={safeCurrentPage === 1}
+              className='border-border/70 bg-background/70 text-foreground hover:bg-muted focus-visible:ring-ring disabled:text-muted-foreground disabled:hover:bg-background/70 inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+              aria-label='Show previous classes'
+            >
+              <ChevronLeft className='h-4 w-4' />
+            </button>
+
+            <div className='flex min-w-0 items-center justify-center gap-1'>
+              {visiblePageNumbers.map((pageNumber, index) => {
+                const previousPageNumber = visiblePageNumbers[index - 1];
+                const shouldShowGap =
+                  previousPageNumber !== undefined && pageNumber - previousPageNumber > 1;
+
+                return (
+                  <div key={pageNumber} className='flex items-center gap-1'>
+                    {shouldShowGap ? (
+                      <span className='text-muted-foreground px-1 text-xs'>...</span>
+                    ) : null}
+                    <button
+                      type='button'
+                      onClick={() => setCurrentPage(pageNumber)}
+                      aria-current={pageNumber === safeCurrentPage ? 'page' : undefined}
+                      className={`focus-visible:ring-ring flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none ${
+                        pageNumber === safeCurrentPage
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              type='button'
+              onClick={() => setCurrentPage(page => Math.min(page + 1, totalPages))}
+              disabled={safeCurrentPage === totalPages}
+              className='border-border/70 bg-background/70 text-foreground hover:bg-muted focus-visible:ring-ring disabled:text-muted-foreground disabled:hover:bg-background/70 inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+              aria-label='Show next classes'
+            >
+              <ChevronRight className='h-4 w-4' />
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
