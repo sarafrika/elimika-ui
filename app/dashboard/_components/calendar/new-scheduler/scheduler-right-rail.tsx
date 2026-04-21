@@ -25,8 +25,10 @@ export function SchedulerRightRail({
   events: SchedulerEvent[];
   instructors: string[];
 }) {
-  const todayEvents = events.filter(event => isSameCalendarDay(event.startTime, new Date()));
-  const visibleSchedule = todayEvents.length ? todayEvents.slice(0, 5) : events.slice(0, 5);
+  const todayEvents = events
+    .filter(event => isSameCalendarDay(event.startTime, new Date()))
+    .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
+  const visibleSchedule = todayEvents.slice(0, 5);
   const visibleSeats =
     events.reduce((total, event) => total + (event.maxParticipants ?? event.students.length), 0) ||
     studentMetric.value;
@@ -35,46 +37,50 @@ export function SchedulerRightRail({
     <aside className='grid min-w-0 gap-3 2xl:w-80 2xl:shrink-0'>
       <section className='bg-card rounded-md border p-3 shadow-sm'>
         <div className='mb-3 flex items-center justify-between gap-3'>
-          <h2 className='text-foreground text-sm font-semibold sm:text-base truncate'>
+          <h2 className='text-foreground truncate text-sm font-semibold sm:text-base'>
             Today&apos;s Schedule
           </h2>
-          <span className='text-muted-foreground text-xs shrink-0'>
+          <span className='text-muted-foreground shrink-0 text-xs'>
             {visibleSchedule.length} sessions
           </span>
         </div>
 
         <div className='space-y-2'>
-          {visibleSchedule.map(event => (
-            <div
-              key={event.id}
-              className='grid grid-cols-[50px_minmax(0,1fr)_auto] items-start gap-2'
-            >
-              <span className='text-foreground text-[10px] font-semibold whitespace-nowrap shrink-0'>
-                {formatTime(event.startTime)}
-              </span>
-
-              <div className='min-w-0 overflow-hidden'>
-                <p className='mb-1 truncate text-[11px] font-bold text-muted-foreground'>
-                  {event.course}
-                </p>
-                <p className='text-foreground truncate text-xs font-semibold'>
-                  {event.title}
-                </p>
-
-                <p className='text-muted-foreground truncate text-[11px]'>
-                  {event.instructor} · {event.location}
-                </p>
-              </div>
-
-              <Button
-                size='sm'
-                variant='secondary'
-                className='h-7 shrink-0 rounded px-2 text-xs whitespace-nowrap'
+          {visibleSchedule.length ? (
+            visibleSchedule.map(event => (
+              <div
+                key={event.id}
+                className='grid grid-cols-[50px_minmax(0,1fr)_auto] items-start gap-2'
               >
-                Start
-              </Button>
-            </div>
-          ))}
+                <span className='text-foreground shrink-0 text-[10px] font-semibold whitespace-nowrap'>
+                  {formatTime(event.startTime)}
+                </span>
+
+                <div className='min-w-0 overflow-hidden'>
+                  <p className='text-muted-foreground mb-1 truncate text-[11px] font-bold'>
+                    {event.course}
+                  </p>
+                  <p className='text-foreground truncate text-xs font-semibold'>{event.title}</p>
+
+                  <p className='text-muted-foreground truncate text-[11px]'>
+                    {event.instructor} · {event.location}
+                  </p>
+                </div>
+
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  className='h-7 shrink-0 rounded px-2 text-xs whitespace-nowrap'
+                >
+                  Start
+                </Button>
+              </div>
+            ))
+          ) : (
+            <p className='bg-muted/40 text-muted-foreground rounded-md p-3 text-xs'>
+              No sessions scheduled for today.
+            </p>
+          )}
         </div>
       </section>
 

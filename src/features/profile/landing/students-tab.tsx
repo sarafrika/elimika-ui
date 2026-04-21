@@ -437,7 +437,7 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
             <p className='text-muted-foreground text-sm'>No enrolled courses yet.</p>
 
             <Link
-              href='/dashboard/all-courses'
+              href='/dashboard/courses'
               className='bg-primary hover:bg-primary/70 mt-1 mt-2 inline-block rounded-md px-4 py-2 text-xs font-medium text-white transition active:scale-95'
             >
               Take a new course

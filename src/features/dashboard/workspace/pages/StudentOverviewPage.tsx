@@ -31,8 +31,8 @@ export default function StudentOverviewPage() {
   );
 
   return (
-    <div className='mx-auto w-full max-w-[1280px] bg-white px-1 py-3 sm:px-0 sm:py-4'>
-      <div className='space-y-4'>
+    <div className='mx-auto w-full max-w-[1280px] overflow-x-clip bg-white px-1 py-3 sm:px-0 sm:py-4'>
+      <div className='space-y-4 min-w-0'>
         <StudentOverviewSearchBar
           value={searchValue}
           onChange={value => {
@@ -41,10 +41,10 @@ export default function StudentOverviewPage() {
           placeholder={data.searchPlaceholder}
         />
 
-        <div className='grid gap-4 xl:grid-cols-[minmax(0,1.24fr)_minmax(0,0.76fr)]'>
+        <div className='grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.24fr)_minmax(0,0.76fr)]'>
           <StudentOverviewHeroCard firstName={data.firstName} />
 
-          <div className='grid gap-4'>
+          <div className='grid min-w-0 gap-4'>
             <StudentOverviewSkillsCard
               progress={data.skillsProgress}
               verifiedSkills={data.verifiedSkills}
@@ -57,7 +57,7 @@ export default function StudentOverviewPage() {
           </div>
         </div>
 
-        <section className='rounded-[22px] border border-slate-200 bg-white p-3.5 shadow-[0_24px_55px_-48px_rgba(15,23,42,0.22)] sm:p-6'>
+        <section className='min-w-0 rounded-[22px] border border-slate-200 bg-white p-3.5 shadow-[0_24px_55px_-48px_rgba(15,23,42,0.22)] sm:p-6'>
           <div className='flex flex-wrap items-center justify-between gap-4 mb-6'>
             <h2 className='text-xl font-semibold tracking-tight text-slate-900'>Opportunities</h2>
             <Link
@@ -70,7 +70,7 @@ export default function StudentOverviewPage() {
             </Link>
           </div>
 
-          <div className='mt-3 grid gap-3 lg:grid-cols-2 min-[1500px]:grid-cols-3'>
+          <div className='mt-3 grid min-w-0 gap-3 lg:grid-cols-2 min-[1500px]:grid-cols-3'>
             {(filteredOpportunities.length > 0
               ? filteredOpportunities
               : data.opportunities

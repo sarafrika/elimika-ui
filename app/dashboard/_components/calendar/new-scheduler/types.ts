@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 
 export type SchedulerProfile = 'instructor' | 'organization' | 'student' | 'admin';
-export type SchedulerView = 'week' | 'day' | 'month';
+export type SchedulerView = 'week' | 'month' | 'year';
 export type SchedulerCategory = 'TVET / Vocational' | 'STEM' | 'Arts' | 'Sports' | 'Certifications';
 
 export type SchedulerEvent = {
@@ -17,6 +17,16 @@ export type SchedulerEvent = {
   category: SchedulerCategory;
   students: string[];
   maxParticipants?: number;
+};
+
+export type SchedulerFilterKey = 'course' | 'instructor' | 'location' | 'category';
+
+export type SchedulerFilterValues = Record<SchedulerFilterKey, string> & {
+  statuses: string[];
+};
+
+export type SchedulerFilterOptions = Record<SchedulerFilterKey, string[]> & {
+  statuses: string[];
 };
 
 export type SchedulerMetric = {

@@ -241,6 +241,7 @@ import type {
   SearchResponse,
   Search1Response,
   GetTrainingBranchesByOrganisation1Response,
+  GetStudentScheduleResponse,
   GetScheduledInstanceResponse,
   GetInstructorScheduleResponse,
   GetStudentBookingsResponse,
@@ -296,7 +297,10 @@ import type {
   SearchDocumentsResponse,
   GetStudentDashboardResponse,
   GetEnrollmentResponse,
-  GetStudentScheduleResponse,
+  GetScheduledInstanceEnrollmentsForStudentResponse,
+  GetEnrollmentOverviewForStudentResponse,
+  GetCourseEnrollmentsForStudentResponse,
+  GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsResponse,
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
@@ -4172,6 +4176,38 @@ export const getTrainingBranchesByOrganisation1ResponseTransformer = async (
   return data;
 };
 
+const studentScheduleSchemaResponseTransformer = (data: any) => {
+  if (data.start_time) {
+    data.start_time = new Date(data.start_time);
+  }
+  if (data.end_time) {
+    data.end_time = new Date(data.end_time);
+  }
+  if (data.attendance_marked_at) {
+    data.attendance_marked_at = new Date(data.attendance_marked_at);
+  }
+  if (data.duration_minutes) {
+    data.duration_minutes = BigInt(data.duration_minutes.toString());
+  }
+  return data;
+};
+
+const apiResponseListStudentScheduleSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return studentScheduleSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getStudentScheduleResponseTransformer = async (
+  data: any
+): Promise<GetStudentScheduleResponse> => {
+  data = apiResponseListStudentScheduleSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getScheduledInstanceResponseTransformer = async (
   data: any
 ): Promise<GetScheduledInstanceResponse> => {
@@ -4957,38 +4993,6 @@ export const getEnrollmentResponseTransformer = async (
   return data;
 };
 
-const studentScheduleSchemaResponseTransformer = (data: any) => {
-  if (data.start_time) {
-    data.start_time = new Date(data.start_time);
-  }
-  if (data.end_time) {
-    data.end_time = new Date(data.end_time);
-  }
-  if (data.attendance_marked_at) {
-    data.attendance_marked_at = new Date(data.attendance_marked_at);
-  }
-  if (data.duration_minutes) {
-    data.duration_minutes = BigInt(data.duration_minutes.toString());
-  }
-  return data;
-};
-
-const apiResponseListStudentScheduleSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = data.data.map((item: any) => {
-      return studentScheduleSchemaResponseTransformer(item);
-    });
-  }
-  return data;
-};
-
-export const getStudentScheduleResponseTransformer = async (
-  data: any
-): Promise<GetStudentScheduleResponse> => {
-  data = apiResponseListStudentScheduleSchemaResponseTransformer(data);
-  return data;
-};
-
 const pagedDtoEnrollmentSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -5005,6 +5009,110 @@ const apiResponsePagedDtoEnrollmentSchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = pagedDtoEnrollmentSchemaResponseTransformer(data.data);
   }
+  return data;
+};
+
+export const getScheduledInstanceEnrollmentsForStudentResponseTransformer = async (
+  data: any
+): Promise<GetScheduledInstanceEnrollmentsForStudentResponse> => {
+  data = apiResponsePagedDtoEnrollmentSchemaResponseTransformer(data);
+  return data;
+};
+
+const studentClassEnrollmentSummarySchemaResponseTransformer = (data: any) => {
+  if (data.latest_scheduled_instance_start_time) {
+    data.latest_scheduled_instance_start_time = new Date(data.latest_scheduled_instance_start_time);
+  }
+  if (data.latest_activity_date) {
+    data.latest_activity_date = new Date(data.latest_activity_date);
+  }
+  return data;
+};
+
+const pagedDtoStudentClassEnrollmentSummarySchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return studentClassEnrollmentSummarySchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const studentCourseEnrollmentSummarySchemaResponseTransformer = (data: any) => {
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const pagedDtoStudentCourseEnrollmentSummarySchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return studentCourseEnrollmentSummarySchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const studentEnrollmentOverviewSchemaResponseTransformer = (data: any) => {
+  if (data.class_enrollments) {
+    data.class_enrollments = pagedDtoStudentClassEnrollmentSummarySchemaResponseTransformer(
+      data.class_enrollments
+    );
+  }
+  if (data.course_enrollments) {
+    data.course_enrollments = pagedDtoStudentCourseEnrollmentSummarySchemaResponseTransformer(
+      data.course_enrollments
+    );
+  }
+  return data;
+};
+
+const apiResponseStudentEnrollmentOverviewSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = studentEnrollmentOverviewSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getEnrollmentOverviewForStudentResponseTransformer = async (
+  data: any
+): Promise<GetEnrollmentOverviewForStudentResponse> => {
+  data = apiResponseStudentEnrollmentOverviewSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponsePagedDtoStudentCourseEnrollmentSummarySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoStudentCourseEnrollmentSummarySchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseEnrollmentsForStudentResponseTransformer = async (
+  data: any
+): Promise<GetCourseEnrollmentsForStudentResponse> => {
+  data = apiResponsePagedDtoStudentCourseEnrollmentSummarySchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponsePagedDtoStudentClassEnrollmentSummarySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoStudentClassEnrollmentSummarySchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getClassEnrollmentsForStudentResponseTransformer = async (
+  data: any
+): Promise<GetClassEnrollmentsForStudentResponse> => {
+  data = apiResponsePagedDtoStudentClassEnrollmentSummarySchemaResponseTransformer(data);
   return data;
 };
 

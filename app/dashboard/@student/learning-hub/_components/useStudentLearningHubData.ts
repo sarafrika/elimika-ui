@@ -1,11 +1,11 @@
 'use client';
 
-import { useStudent } from '@/context/student-context';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import {
   getAssignmentByUuidOptions,
   getAssignmentSchedulesOptions,
   getAssignmentSubmissionsOptions,
+  getClassEnrollmentsForStudentOptions,
   getPublishedCoursesOptions,
   getStudentCertificatesOptions,
   getStudentScheduleOptions,
@@ -192,11 +192,17 @@ const getClassStatusLabel = (
 };
 
 export function useStudentLearningHubData(): LearningHubData {
-  const student = useStudent();
   const profile = useUserProfile();
+  const student = profile?.student
+
   const { classDefinitions, loading: classDefinitionsLoading } = useStudentClassDefinitions(
     student ?? undefined
   );
+
+  const { data: enrolledClassesResponse } = useQuery({
+    ...getClassEnrollmentsForStudentOptions({ path: { studentUuid: student?.uuid as string }, query: { pageable: {} } }),
+    enabled: Boolean(student?.uuid),
+  })
 
   const { data: studentScheduleResponse, isLoading: scheduleLoading } = useQuery({
     ...getStudentScheduleOptions({
@@ -470,8 +476,8 @@ export function useStudentLearningHubData(): LearningHubData {
   const overallProgress =
     continueLearning.length > 0
       ? Math.round(
-          continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
-        )
+        continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
+      )
       : 87;
 
   const stats: LearningHubStat[] = [

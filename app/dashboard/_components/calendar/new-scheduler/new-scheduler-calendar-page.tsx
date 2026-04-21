@@ -27,7 +27,7 @@ import {
   getStudentScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ScheduledInstance, StudentSchedule } from '@/services/client/types.gen';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import {
   CalendarDays,
   ChevronLeft,
@@ -45,7 +45,15 @@ import { SchedulerFilters } from './scheduler-filters';
 import { SchedulerGrid } from './scheduler-grid';
 import { SchedulerRightRail } from './scheduler-right-rail';
 import { SchedulerStatCard } from './scheduler-stat-card';
-import type { SchedulerCategory, SchedulerEvent, SchedulerMetric, SchedulerProfile } from './types';
+import type {
+  SchedulerCategory,
+  SchedulerEvent,
+  SchedulerFilterOptions,
+  SchedulerFilterValues,
+  SchedulerMetric,
+  SchedulerProfile,
+  SchedulerView,
+} from './types';
 
 type Props = {
   profile: SchedulerProfile;
@@ -96,20 +104,36 @@ const DEFAULT_PREFERENCES: SchedulePreferences = {
   workingHoursStart: '08:00',
 };
 
+const DEFAULT_FILTERS: SchedulerFilterValues = {
+  category: '',
+  course: '',
+  instructor: '',
+  location: '',
+  statuses: [],
+};
+
 const TIME_OPTIONS = Array.from({ length: 18 }, (_, index) => {
   const hour = index + 5;
   return `${hour.toString().padStart(2, '0')}:00`;
 });
 
-const addMonths = (date: Date, months: number) => {
-  const next = new Date(date);
-  next.setMonth(next.getMonth() + months);
-  return next;
+const toApiDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}` as unknown as Date;
 };
 
-const toApiDate = (date: Date) => date.toISOString().slice(0, 10) as unknown as Date;
+const formatDateRange = (date: Date, view: SchedulerView) => {
+  if (view === 'month') {
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
 
-const formatDateRange = (date: Date) => {
+  if (view === 'year') {
+    return String(date.getFullYear());
+  }
+
   const start = new Date(date);
   const day = start.getDay();
   start.setDate(start.getDate() - day + (day === 0 ? -6 : 1));
@@ -118,13 +142,30 @@ const formatDateRange = (date: Date) => {
   return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 };
 
+const getNavigationStep = (date: Date, view: SchedulerView, direction: -1 | 1) => {
+  const next = new Date(date);
+
+  if (view === 'month') {
+    next.setMonth(next.getMonth() + direction);
+    return next;
+  }
+
+  if (view === 'year') {
+    next.setFullYear(next.getFullYear() + direction);
+    return next;
+  }
+
+  next.setDate(next.getDate() + direction * 7);
+  return next;
+};
+
 const formatStatus = (status?: string | null) =>
   status
     ? status
-      .toLowerCase()
-      .split('_')
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ')
+        .toLowerCase()
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
     : 'Scheduled';
 
 const inferCategory = (value?: string | null): SchedulerCategory => {
@@ -223,11 +264,20 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [view, setView] = useState<SchedulerView>('week');
+  const [preloadAnchor] = useState(() => new Date());
+  const [filters, setFilters] = useState<SchedulerFilterValues>(DEFAULT_FILTERS);
   const [preferences, setPreferences] = useState<SchedulePreferences>(DEFAULT_PREFERENCES);
 
   const createLabel = profile === 'student' ? 'View Session' : 'Create Session';
-  const rangeStart = useMemo(() => toApiDate(addMonths(currentDate, -6)), [currentDate]);
-  const rangeEnd = useMemo(() => toApiDate(addMonths(currentDate, 6)), [currentDate]);
+  const rangeStart = useMemo(
+    () => toApiDate(new Date(preloadAnchor.getFullYear() - 1, 0, 1)),
+    [preloadAnchor]
+  );
+  const rangeEnd = useMemo(
+    () => toApiDate(new Date(preloadAnchor.getFullYear() + 1, 11, 31)),
+    [preloadAnchor]
+  );
 
   const instructorScheduleQuery = useQuery({
     ...getInstructorScheduleOptions({
@@ -235,6 +285,9 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
       query: { start: rangeStart, end: rangeEnd },
     }),
     enabled: profile === 'instructor' && !!instructor?.uuid,
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const studentScheduleQuery = useQuery({
@@ -243,6 +296,9 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
       query: { start: rangeStart, end: rangeEnd },
     }),
     enabled: profile === 'student' && !!student?.uuid,
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { classes: classData, loading: organizationLoading } = useAmdinClassesWithDetails();
@@ -276,7 +332,6 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
     return map;
   }, [studentInstructorQueries]);
 
-
   const schedulerEvents = useMemo<SchedulerEvent[]>(() => {
     if (profile === 'student') {
       return (studentScheduleQuery.data?.data ?? [])
@@ -286,13 +341,15 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
             studentInstructorNames.get(item.instructor_uuid || '') || 'Instructor pending'
           )
         )
-        .filter((item): item is SchedulerEvent => Boolean(item));
+        .filter((item): item is SchedulerEvent => Boolean(item))
+        .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
     }
 
     if (profile === 'instructor') {
       return (instructorScheduleQuery.data?.data ?? [])
         .map(item => mapScheduledInstance(item, instructor?.full_name || 'Instructor pending'))
-        .filter((item): item is SchedulerEvent => Boolean(item));
+        .filter((item): item is SchedulerEvent => Boolean(item))
+        .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
     }
 
     return ((classData ?? []) as ClassWithScheduleInput[])
@@ -313,6 +370,42 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
     [schedulerEvents]
   );
 
+  const filterOptions = useMemo<SchedulerFilterOptions>(
+    () => ({
+      category: Array.from(new Set(schedulerEvents.map(event => event.category))).sort(),
+      course: Array.from(
+        new Set(schedulerEvents.map(event => event.course).filter(Boolean))
+      ).sort(),
+      instructor: instructors,
+      location: Array.from(
+        new Set(schedulerEvents.map(event => event.location).filter(Boolean))
+      ).sort(),
+      statuses: Array.from(
+        new Set(schedulerEvents.map(event => event.status || 'Scheduled').filter(Boolean))
+      ).sort(),
+    }),
+    [instructors, schedulerEvents]
+  );
+
+  const filteredEvents = useMemo(
+    () =>
+      schedulerEvents.filter(event => {
+        if (filters.course && event.course !== filters.course) return false;
+        if (filters.instructor && event.instructor !== filters.instructor) return false;
+        if (filters.location && event.location !== filters.location) return false;
+        if (filters.category && event.category !== filters.category) return false;
+        if (filters.statuses.length && !filters.statuses.includes(event.status || 'Scheduled')) {
+          return false;
+        }
+        return true;
+      }),
+    [filters, schedulerEvents]
+  );
+
+  const visibleInstructors = useMemo(
+    () => Array.from(new Set(filteredEvents.map(event => event.instructor).filter(Boolean))).sort(),
+    [filteredEvents]
+  );
 
   const isLoading =
     profile === 'student'
@@ -325,21 +418,21 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
     () => [
       {
         ...(schedulerMetrics[0] as SchedulerMetric),
-        value: String(new Set(schedulerEvents.map(event => event.title)).size),
+        value: String(new Set(filteredEvents.map(event => event.title)).size),
       },
-      { ...(schedulerMetrics[1] as SchedulerMetric), value: String(instructors.length) },
+      { ...(schedulerMetrics[1] as SchedulerMetric), value: String(visibleInstructors.length) },
       {
         ...(schedulerMetrics[2] as SchedulerMetric),
-        value: `${new Set(schedulerEvents.map(event => event.location).filter(Boolean)).size}`,
+        value: `${new Set(filteredEvents.map(event => event.location).filter(Boolean)).size}`,
       },
       {
         ...(schedulerMetrics[3] as SchedulerMetric),
         value: String(
-          schedulerEvents.filter(event => event.startTime.getTime() >= Date.now()).length
+          filteredEvents.filter(event => event.startTime.getTime() >= Date.now()).length
         ),
       },
     ],
-    [instructors.length, schedulerEvents]
+    [filteredEvents, visibleInstructors.length]
   );
 
   return (
@@ -384,44 +477,37 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
             variant='outline'
             size='icon'
             className='h-10 w-10 shrink-0 rounded-md'
-            aria-label='Previous week'
-            onClick={() => {
-              const next = new Date(currentDate);
-              next.setDate(next.getDate() - 7);
-              setCurrentDate(next);
-            }}
+            aria-label={`Previous ${view}`}
+            onClick={() => setCurrentDate(date => getNavigationStep(date, view, -1))}
           >
             <ChevronLeft className='h-4 w-4' />
           </Button>
 
           {/* Date */}
           <div className='bg-card text-foreground flex h-10 shrink-0 items-center justify-center rounded-md border px-4 text-sm font-semibold whitespace-nowrap shadow-sm'>
-            {formatDateRange(currentDate)}
+            {formatDateRange(currentDate, view)}
           </div>
 
           <Button
             variant='outline'
             size='icon'
             className='h-10 w-10 shrink-0 rounded-md'
-            aria-label='Next week'
-            onClick={() => {
-              const next = new Date(currentDate);
-              next.setDate(next.getDate() + 7);
-              setCurrentDate(next);
-            }}
+            aria-label={`Next ${view}`}
+            onClick={() => setCurrentDate(date => getNavigationStep(date, view, 1))}
           >
             <ChevronRight className='h-4 w-4' />
           </Button>
 
           {/* View switcher */}
           <div className='bg-card flex h-10 shrink-0 overflow-hidden rounded-md border shadow-sm'>
-            {['Week', 'Month', 'Year'].map((view, index) => (
+            {(['week', 'month', 'year'] as SchedulerView[]).map(item => (
               <Button
-                key={view}
-                variant={index === 0 ? 'secondary' : 'ghost'}
+                key={item}
+                variant={view === item ? 'secondary' : 'ghost'}
                 className='h-10 shrink-0 rounded-none px-3 text-xs whitespace-nowrap sm:px-4 sm:text-sm'
+                onClick={() => setView(item)}
               >
-                {view}
+                {item.charAt(0).toUpperCase() + item.slice(1)}
               </Button>
             ))}
           </div>
@@ -429,7 +515,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
           {/* Schedule count */}
           <div className='bg-card text-foreground flex h-10 shrink-0 items-center gap-2 rounded-md border px-3 text-xs font-semibold whitespace-nowrap shadow-sm sm:text-sm'>
             <CalendarDays className='text-primary h-4 w-4' />
-            {schedulerEvents.length} schedules
+            {filteredEvents.length} schedules
           </div>
 
           <Button
@@ -476,26 +562,29 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
 
           <div className='flex min-w-0 flex-col gap-4 min-[1800px]:flex-row min-[1800px]:items-start'>
             <div className='hidden min-[1800px]:block'>
-              <SchedulerFilters />
+              <SchedulerFilters
+                options={filterOptions}
+                values={filters}
+                onChange={setFilters}
+                onClear={() => setFilters(DEFAULT_FILTERS)}
+              />
             </div>
 
             {isLoading ? (
-              <div className='bg-card w-full flex min-h-[420px] items-center justify-center rounded-md border p-6 shadow-sm'>
+              <div className='bg-card flex min-h-[420px] w-full items-center justify-center rounded-md border p-6 shadow-sm'>
                 <div className='flex flex-col items-center text-center'>
                   <div className='border-primary mb-3 h-10 w-10 animate-spin rounded-full border-2 border-t-transparent' />
-                  <p className='text-muted-foreground text-sm'>
-                    Loading schedule data...
-                  </p>
+                  <p className='text-muted-foreground text-sm'>Loading schedule data...</p>
                 </div>
               </div>
             ) : (
-              <SchedulerGrid currentDate={currentDate} events={schedulerEvents} />
+              <SchedulerGrid currentDate={currentDate} events={filteredEvents} view={view} />
             )}
           </div>
         </div>
 
         <div className='hidden min-[1800px]:block'>
-          <SchedulerRightRail events={schedulerEvents} instructors={instructors} />
+          <SchedulerRightRail events={filteredEvents} instructors={visibleInstructors} />
         </div>
       </div>
 
@@ -524,12 +613,18 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
 
       {/* Filters sheet */}
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side='left' className='w-[92vw] max-w-sm overflow-y-auto p-3'>
+        <SheetContent side='left' className='h-full w-screen max-w-none overflow-y-auto p-3'>
           <SheetHeader>
             <SheetTitle>Filters</SheetTitle>
             <SheetDescription>Filter classes without reducing calendar space.</SheetDescription>
           </SheetHeader>
-          <SchedulerFilters />
+
+          <SchedulerFilters
+            options={filterOptions}
+            values={filters}
+            onChange={setFilters}
+            onClear={() => setFilters(DEFAULT_FILTERS)}
+          />
         </SheetContent>
       </Sheet>
 
@@ -542,7 +637,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
               Today&apos;s sessions, students, location, notes, and sharing.
             </SheetDescription>
           </SheetHeader>
-          <SchedulerRightRail events={schedulerEvents} instructors={instructors} />
+          <SchedulerRightRail events={filteredEvents} instructors={visibleInstructors} />
         </SheetContent>
       </Sheet>
 
@@ -555,7 +650,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
             </SheetDescription>
           </SheetHeader>
 
-          <div className='space-y-6 pb-6 px-3 sm:px-6'>
+          <div className='space-y-6 px-3 pb-6 sm:px-6'>
             <section className='space-y-4'>
               <div>
                 <h3 className='text-foreground text-sm font-semibold'>View and appearance</h3>

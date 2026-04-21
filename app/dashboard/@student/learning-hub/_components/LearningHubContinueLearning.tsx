@@ -26,6 +26,7 @@ export function LearningHubContinueLearning({
   classes,
   loading = false,
 }: LearningHubContinueLearningProps) {
+
   const [showAll, setShowAll] = useState(false);
   const visibleClasses = useMemo(
     () => (showAll ? classes : classes.slice(0, INITIAL_VISIBLE_CLASSES)),

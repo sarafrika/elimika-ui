@@ -2,20 +2,22 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import type {
   GetClassDefinitionResponse,
   GetCourseByUuidResponse,
-  GetStudentScheduleResponse
+  GetClassEnrollmentsForStudentResponse,
 } from '../services/client';
 import {
+  getClassEnrollmentsForStudentOptions,
   getClassDefinitionOptions,
   getClassScheduleOptions,
   getCourseByUuidOptions,
-  getStudentScheduleOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
 type StudentLike = {
   uuid?: string;
 };
 
-type StudentEnrollment = NonNullable<GetStudentScheduleResponse['data']>[number];
+type StudentEnrollment = NonNullable<
+  NonNullable<GetClassEnrollmentsForStudentResponse['data']>['content']
+>[number];
 type ClassDetails = NonNullable<
   NonNullable<GetClassDefinitionResponse['data']>['class_definition']
 >;
@@ -24,19 +26,16 @@ type CourseDetails = NonNullable<GetCourseByUuidResponse['data']>;
 const isDefined = <T,>(value: T | null | undefined): value is T => value != null;
 
 function useStudentClassDefinitions(student?: StudentLike) {
-  // 1️⃣ Fetch student enrollments
+  // 1️⃣ Fetch student class enrollments
   const { data: enrollmentsData } = useQuery({
-    ...getStudentScheduleOptions({
+    ...getClassEnrollmentsForStudentOptions({
       path: { studentUuid: student?.uuid as string },
-      query: {
-        start: '2024-10-10' as unknown as Date,
-        end: '2060-10-10' as unknown as Date,
-      },
+      query: { pageable: {} },
     }),
     enabled: !!student?.uuid,
   });
 
-  const enrollments = enrollmentsData?.data ?? [];
+  const enrollments = enrollmentsData?.data?.content ?? [];
 
   // 2️⃣ Extract all unique class definition UUIDs
   const classDefinitionUuids = Array.from(
@@ -52,8 +51,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
       })) || [],
   });
 
-
-  // 3️⃣ Fetch each class definition
+  // 4️⃣ Fetch each class schedule
   const scheduleQueries = useQueries({
     queries:
       classDefinitionUuids.map((uuid: string) => ({
@@ -62,16 +60,15 @@ function useStudentClassDefinitions(student?: StudentLike) {
       })) || [],
   });
 
-
   // Extract class details after fetching
   const classDetailsArray = classQueries.map(q => q.data?.data?.class_definition ?? null);
 
-  // 4️⃣ Extract unique course UUIDs from the resolved class details
+  // 5️⃣ Extract unique course UUIDs from the resolved class details
   const courseUuids = Array.from(
     new Set(classDetailsArray.map(cls => cls?.course_uuid).filter(isDefined))
   );
 
-  // 5️⃣ Fetch courses associated with these class definitions
+  // 6️⃣ Fetch courses associated with these class definitions
   const courseQueries = useQueries({
     queries:
       courseUuids.map((uuid: string) => ({
@@ -83,7 +80,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
   const classScheduleArray = scheduleQueries.map(q => q.data?.data?.content);
   const courseDetailsArray = courseQueries.map(q => q.data?.data ?? null);
 
-  // 6️⃣ Merge class + course + enrollment data
+  // 7️⃣ Merge class + course + enrollment data
   const classDefinitions = classDefinitionUuids.map((uuid: string, i: number) => {
     const classDetails = classDetailsArray[i];
     const course = courseDetailsArray.find(
@@ -99,7 +96,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
     };
   });
 
-  // 7️⃣ Handle loading and error states
+  // 8️⃣ Handle loading and error states
   const loading =
     classQueries.some(q => q.isLoading || q.isFetching) ||
     courseQueries.some(q => q.isLoading || q.isFetching);

@@ -299,7 +299,7 @@ const MySkillsPage = () => {
               size='default'
               className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2'
               // onClick={() => { setShowStudentProfileNotice(true) }}
-              onClick={() => router.push('/dashboard/all-courses')}
+              onClick={() => router.push('/dashboard/courses')}
             >
               {/* Browse Courses */}
               <PlusCircle className='h-5 w-5' />
@@ -415,7 +415,7 @@ const MySkillsPage = () => {
                     size='default'
                     className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2'
                     // onClick={() => {  setShowStudentProfileNotice(true);}}
-                    onClick={() => router.push('/dashboard/all-courses')}
+                    onClick={() => router.push('/dashboard/courses')}
                   >
                     {/* Browse Courses */}
                     <PlusCircle className='h-5 w-5' />

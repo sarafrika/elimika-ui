@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { categoryStyles, schedulerHours } from './data';
-import type { SchedulerEvent } from './types';
+import type { SchedulerEvent, SchedulerView } from './types';
 
 const rowHeight = 58;
 const timeColumnClass =
@@ -36,6 +36,20 @@ function isSameCalendarDay(left: Date, right: Date) {
     left.getMonth() === right.getMonth() &&
     left.getDate() === right.getDate()
   );
+}
+
+function isSameMonth(left: Date, right: Date) {
+  return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth();
+}
+
+function getMonthDays(currentDate: Date) {
+  const firstOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const gridStart = getWeekStart(firstOfMonth);
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(gridStart);
+    date.setDate(gridStart.getDate() + index);
+    return date;
+  });
 }
 
 function getStartHour(event: SchedulerEvent) {
@@ -78,13 +92,34 @@ function EventBlock({ event }: { event: SchedulerEvent }) {
   );
 }
 
-export function SchedulerGrid({
-  currentDate,
-  events,
-}: {
-  currentDate: Date;
-  events: SchedulerEvent[];
-}) {
+function CompactEvent({ event }: { event: SchedulerEvent }) {
+  return (
+    <div
+      className={cn(
+        'min-w-0 rounded border px-2 py-1 text-left text-[10px] font-semibold',
+        categoryStyles[event.category]
+      )}
+    >
+      <p className='truncate'>{event.title}</p>
+      <p className='truncate opacity-75'>
+        {event.startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+      </p>
+    </div>
+  );
+}
+
+function EmptySchedule({ label }: { label: string }) {
+  return (
+    <section className='bg-card flex min-h-[420px] min-w-0 flex-1 items-center justify-center rounded-md border p-6 text-center shadow-sm'>
+      <div>
+        <p className='text-foreground text-sm font-semibold'>No schedules found</p>
+        <p className='text-muted-foreground mt-1 text-xs'>{label}</p>
+      </div>
+    </section>
+  );
+}
+
+function WeekGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
   const schedulerDays = getWeekDays(currentDate);
   const today = new Date();
 
@@ -127,17 +162,6 @@ export function SchedulerGrid({
             </div>
           ))}
 
-          <div className='pointer-events-none absolute top-0 right-0 left-[48px] h-full sm:left-[60px] lg:left-[68px]'>
-            <div
-              className='border-destructive absolute right-0 left-0 z-10 border-t'
-              style={{ top: `${rowHeight * 5}px` }}
-            >
-              <span className='bg-background text-destructive absolute -top-2 left-2 text-[10px] font-semibold'>
-                03:25 PM
-              </span>
-            </div>
-          </div>
-
           <div className='absolute top-0 right-0 left-[48px] sm:left-[60px] lg:left-[68px]'>
             <div className='grid grid-cols-7'>
               {schedulerDays.map(day => (
@@ -167,4 +191,135 @@ export function SchedulerGrid({
       </div>
     </section>
   );
+}
+
+function MonthGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
+  const days = getMonthDays(currentDate);
+  const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const today = new Date();
+
+  return (
+    <section className='bg-card min-w-0 flex-1 overflow-hidden rounded-md border shadow-sm'>
+      <div className='bg-muted/40 grid grid-cols-7 border-b'>
+        {weekLabels.map(label => (
+          <div key={label} className='px-2 py-2 text-center text-xs font-semibold'>
+            {label}
+          </div>
+        ))}
+      </div>
+
+      <div className='grid grid-cols-7'>
+        {days.map(day => {
+          const dayEvents = events
+            .filter(event => isSameCalendarDay(event.startTime, day))
+            .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
+
+          return (
+            <div
+              key={day.toISOString()}
+              className={cn(
+                'min-h-28 border-r border-b p-2 last:border-r-0 sm:min-h-32',
+                !isSameMonth(day, currentDate) && 'bg-muted/20 text-muted-foreground'
+              )}
+            >
+              <div className='mb-2 flex items-center justify-between gap-2'>
+                <span
+                  className={cn(
+                    'flex h-6 w-6 items-center justify-center rounded text-xs font-semibold',
+                    isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground'
+                  )}
+                >
+                  {day.getDate()}
+                </span>
+                {dayEvents.length ? (
+                  <span className='text-muted-foreground text-[10px]'>{dayEvents.length}</span>
+                ) : null}
+              </div>
+              <div className='space-y-1'>
+                {dayEvents.slice(0, 3).map(event => (
+                  <CompactEvent key={event.id} event={event} />
+                ))}
+                {dayEvents.length > 3 ? (
+                  <p className='text-muted-foreground text-[10px] font-semibold'>
+                    +{dayEvents.length - 3} more
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function YearGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
+  const months = Array.from(
+    { length: 12 },
+    (_, index) => new Date(currentDate.getFullYear(), index, 1)
+  );
+
+  return (
+    <section className='grid min-w-0 flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+      {months.map(month => {
+        const monthEvents = events
+          .filter(event => isSameMonth(event.startTime, month))
+          .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
+
+        return (
+          <div key={month.toISOString()} className='bg-card rounded-md border p-3 shadow-sm'>
+            <div className='mb-3 flex items-center justify-between gap-2'>
+              <h3 className='text-foreground text-sm font-semibold'>
+                {month.toLocaleDateString('en-US', { month: 'long' })}
+              </h3>
+              <span className='text-muted-foreground text-xs'>{monthEvents.length} sessions</span>
+            </div>
+            <div className='space-y-2'>
+              {monthEvents.slice(0, 4).map(event => (
+                <div key={event.id} className='bg-muted/40 min-w-0 rounded-md p-2'>
+                  <p className='text-foreground truncate text-xs font-semibold'>{event.title}</p>
+                  <p className='text-muted-foreground truncate text-[11px]'>
+                    {event.startTime.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}{' '}
+                    · {event.instructor}
+                  </p>
+                </div>
+              ))}
+              {!monthEvents.length ? (
+                <p className='text-muted-foreground bg-muted/40 rounded-md p-2 text-xs'>
+                  No sessions this month.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+export function SchedulerGrid({
+  currentDate,
+  events,
+  view,
+}: {
+  currentDate: Date;
+  events: SchedulerEvent[];
+  view: SchedulerView;
+}) {
+  if (!events.length) {
+    return <EmptySchedule label='Try changing the date range or clearing filters.' />;
+  }
+
+  if (view === 'month') {
+    return <MonthGrid currentDate={currentDate} events={events} />;
+  }
+
+  if (view === 'year') {
+    return <YearGrid currentDate={currentDate} events={events} />;
+  }
+
+  return <WeekGrid currentDate={currentDate} events={events} />;
 }

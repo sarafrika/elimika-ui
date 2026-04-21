@@ -7,52 +7,101 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import type { SchedulerFilterKey, SchedulerFilterOptions, SchedulerFilterValues } from './types';
 
-const filterGroups = [
-  {
-    label: 'Course',
-    placeholder: 'All Courses',
-    values: ['All Courses', 'AWS', 'AutoCAD', 'Robotics'],
-  },
-  {
-    label: 'Instructor',
-    placeholder: 'All Instructors',
-    values: ['All Instructors', 'Alex Patel', 'Emily Wong', 'Liam Brown'],
-  },
-  {
-    label: 'Venue',
-    placeholder: 'All Venues',
-    values: ['All Venues', 'Lab 201', 'Room 202', 'Court 1'],
-  },
-  {
-    label: 'Department',
-    placeholder: 'All Departments',
-    values: ['All Departments', 'STEM', 'Arts', 'Sports'],
-  },
-];
+const ALL_VALUE = '__all__';
 
-const statuses = ['Scheduled', 'In Progress', 'Completed', 'Cancelled'];
+const filterGroups: Array<{
+  key: SchedulerFilterKey;
+  label: string;
+  placeholder: string;
+}> = [
+    {
+      key: 'course',
+      label: 'Course',
+      placeholder: 'All Courses',
+    },
+    {
+      key: 'instructor',
+      label: 'Instructor',
+      placeholder: 'All Instructors',
+    },
+    {
+      key: 'location',
+      label: 'Venue',
+      placeholder: 'All Venues',
+    },
+    {
+      key: 'category',
+      label: 'Department',
+      placeholder: 'All Departments',
+    },
+  ];
 
-export function SchedulerFilters() {
+export function SchedulerFilters({
+  options,
+  values,
+  onChange,
+  onClear,
+}: {
+  options: SchedulerFilterOptions;
+  values: SchedulerFilterValues;
+  onChange: (values: SchedulerFilterValues) => void;
+  onClear: () => void;
+}) {
+  const updateFilter = (key: SchedulerFilterKey, value: string) => {
+    onChange({
+      ...values,
+      [key]: value === ALL_VALUE ? '' : value,
+    });
+  };
+
+  const updateStatus = (status: string, checked: boolean) => {
+    const activeStatuses = values.statuses.length ? values.statuses : options.statuses;
+
+    onChange({
+      ...values,
+      statuses: checked
+        ? Array.from(new Set([...activeStatuses, status]))
+        : activeStatuses.filter(item => item !== status),
+    });
+  };
+
   return (
-    <aside className='bg-card rounded-md border p-3 shadow-sm xl:w-56 xl:shrink-0'>
-      <div className='mb-4 flex items-center justify-between gap-2'>
-        <h2 className='text-foreground text-sm font-semibold sm:text-base'>Filters</h2>
-        <Button variant='ghost' size='sm' className='h-7 px-2 text-xs'>
+    <aside className="w-full bg-card rounded-md border p-3 shadow-sm xl:w-full">
+      <div className="mb-4 flex w-full items-center justify-between gap-2">
+        <h2 className="text-foreground text-sm font-semibold sm:text-base">
+          Filters
+        </h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          onClick={onClear}
+        >
           Clear All
         </Button>
       </div>
 
-      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-1'>
+      <div className="grid w-full gap-4 sm:grid-cols-1 xl:grid-cols-1">
         {filterGroups.map(group => (
-          <label key={group.label} className='space-y-2'>
-            <span className='text-foreground text-xs font-semibold sm:text-sm'>{group.label}</span>
-            <Select defaultValue={group.placeholder}>
-              <SelectTrigger className='h-9 rounded-md text-xs sm:text-sm'>
-                <SelectValue />
+          <label key={group.label} className="flex w-full flex-col space-y-2">
+            <span className="text-foreground text-xs font-semibold sm:text-sm">
+              {group.label}
+            </span>
+
+            <Select
+              value={values[group.key] || ALL_VALUE}
+              onValueChange={value => updateFilter(group.key, value)}
+            >
+              <SelectTrigger className="h-9 w-full rounded-md text-xs sm:text-sm">
+                <SelectValue placeholder={group.placeholder} />
               </SelectTrigger>
               <SelectContent>
-                {group.values.map(value => (
+                <SelectItem value={ALL_VALUE}>
+                  {group.placeholder}
+                </SelectItem>
+                {options[group.key].map(value => (
                   <SelectItem key={value} value={value}>
                     {value}
                   </SelectItem>
@@ -62,18 +111,35 @@ export function SchedulerFilters() {
           </label>
         ))}
 
-        <div className='space-y-2 sm:col-span-2 xl:col-span-1'>
-          <p className='text-foreground text-xs font-semibold sm:text-sm'>Status</p>
-          <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-1'>
-            {statuses.map((status, index) => (
+        <div className="w-full space-y-2">
+          <p className="text-foreground text-xs font-semibold sm:text-sm">
+            Status
+          </p>
+
+          <div className="grid w-full gap-2 sm:grid-cols-1 xl:grid-cols-1">
+            {options.statuses.map(status => (
               <label
                 key={status}
-                className='text-muted-foreground flex items-center gap-2 text-xs sm:text-sm'
+                className="flex w-full items-center gap-2 text-xs sm:text-sm text-muted-foreground"
               >
-                <Checkbox defaultChecked={index < 3} />
+                <Checkbox
+                  checked={
+                    !values.statuses.length ||
+                    values.statuses.includes(status)
+                  }
+                  onCheckedChange={checked =>
+                    updateStatus(status, checked === true)
+                  }
+                />
                 {status}
               </label>
             ))}
+
+            {!options.statuses.length && (
+              <p className="text-muted-foreground text-xs">
+                No schedule statuses yet.
+              </p>
+            )}
           </div>
         </div>
       </div>

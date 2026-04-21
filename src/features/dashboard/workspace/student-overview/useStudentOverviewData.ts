@@ -1,22 +1,17 @@
 'use client';
 
-import { useStudent } from '@/context/student-context';
 import {
-  getClassDefinitionOptions,
-  getCourseByUuidOptions,
-  getCourseEnrollmentsOptions,
+  getClassEnrollmentsForStudentOptions,
+  getCourseEnrollmentsForStudentOptions,
   getStudentCertificatesOptions,
-  getStudentScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Certificate,
-  ClassDefinition,
-  Course,
-  CourseEnrollment,
-  StudentSchedule,
+  StudentClassEnrollmentSummary,
+  StudentCourseEnrollmentSummary,
 } from '@/services/client/types.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 export type StudentOverviewActiveCourse = {
@@ -48,9 +43,9 @@ export type StudentOverviewEnrolledClassCourse = {
   courseId: string | null;
   courseTitle: string | null;
   enrollmentUuid: string | null;
-  enrollmentStatus: StudentSchedule['enrollment_status'] | null;
+  enrollmentStatus: string | null;
   courseEnrollmentUuid: string | null;
-  courseEnrollmentStatus: CourseEnrollment['status'] | null;
+  courseEnrollmentStatus: string | null;
   progress: number | null;
   nextDateLabel: string;
   scheduleCount: number;
@@ -69,6 +64,7 @@ type StudentOverviewData = {
   isLoadingCourses: boolean;
 };
 
+const DEFAULT_PAGE_SIZE = 100;
 const FALLBACK_PROGRESS = [60, 45, 72, 55];
 
 const MOCK_OPPORTUNITIES: StudentOverviewOpportunity[] = [
@@ -124,14 +120,20 @@ const formatDateLabel = (value?: Date | string) => {
   }).format(date);
 };
 
-const stripHtml = (value?: string) => value?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const humanizeStatus = (value?: string | null) => {
+  if (!value) {
+    return '';
+  }
 
-const buildCourseSubtitle = (course?: Course) => {
-  const details = [course?.category_names?.[0], `${course?.duration_hours ?? 0}h ${course?.duration_minutes ?? 0}m`]
+  return value.replace(/_/g, ' ').toLowerCase();
+};
+
+const buildCourseSubtitle = (course?: StudentCourseEnrollmentSummary) => {
+  const parts = [humanizeStatus(course?.enrollment_status), course?.updated_date ? `Updated ${formatDateLabel(course.updated_date)}` : '']
     .filter(Boolean)
-    .join(' | ');
+    .join(' · ');
 
-  return details || 'Google | Beginner';
+  return parts || 'Course enrollment';
 };
 
 const buildCourseProgress = (certificate: Certificate | undefined, index: number) => {
@@ -142,133 +144,66 @@ const buildCourseProgress = (certificate: Certificate | undefined, index: number
   return FALLBACK_PROGRESS[index % FALLBACK_PROGRESS.length];
 };
 
+const isActiveCourseEnrollment = (course?: StudentCourseEnrollmentSummary) => {
+  if (!course?.enrollment_status) {
+    return true;
+  }
+
+  const status = course.enrollment_status.toUpperCase();
+  return !['CANCELLED', 'COMPLETED', 'DROPPED', 'WITHDRAWN', 'ARCHIVED'].includes(status);
+};
+
+const isActiveClassEnrollment = (status?: StudentClassEnrollmentSummary['latest_enrollment_status']) => {
+  if (!status) {
+    return true;
+  }
+
+  return status !== 'CANCELLED';
+};
+
 export function useStudentOverviewData(): StudentOverviewData {
   const profile = useUserProfile();
-  const student = useStudent();
+  const student = profile?.student;
 
-  const firstName = profile?.first_name || student?.full_name?.split(' ')[0] || 'Sarah';
+  const firstName = profile?.first_name || student?.full_name?.split(' ')[0] || '';
+
+  const {
+    data: enrolledCoursesResponse,
+    isFetching: isFetchingEnrolledCourses,
+    isLoading: isLoadingEnrolledCourses,
+  } = useQuery({
+    ...getCourseEnrollmentsForStudentOptions({
+      path: { studentUuid: student?.uuid as string },
+      query: { pageable: { page: 0, size: DEFAULT_PAGE_SIZE } },
+    }),
+    enabled: Boolean(student?.uuid),
+  });
+  const enrolledCourses = enrolledCoursesResponse?.data?.content ?? [];
+
+  const {
+    data: enrolledClassesResponse,
+    isFetching: isFetchingEnrolledClasses,
+    isLoading: isLoadingEnrolledClasses,
+  } = useQuery({
+    ...getClassEnrollmentsForStudentOptions({
+      path: { studentUuid: student?.uuid as string },
+      query: { pageable: { page: 0, size: DEFAULT_PAGE_SIZE } },
+    }),
+    enabled: Boolean(student?.uuid),
+  });
+  const enrolledClasses = enrolledClassesResponse?.data?.content ?? [];
 
   const { data: certificatesResponse } = useQuery({
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
     enabled: Boolean(student?.uuid),
   });
-
-  const { data: scheduleResponse, isLoading: isLoadingCourses } = useQuery({
-    ...getStudentScheduleOptions({
-      path: { studentUuid: student?.uuid as string },
-      query: {
-        start: new Date('2025-01-01'),
-        end: new Date('2027-12-31'),
-      },
-    }),
-    enabled: Boolean(student?.uuid),
-  });
+  const isLoadingCourses =
+    isLoadingEnrolledCourses ||
+    isLoadingEnrolledClasses ||
+    isFetchingEnrolledCourses ||
+    isFetchingEnrolledClasses;
 
   const certificates = certificatesResponse?.data ?? [];
-  const schedules = scheduleResponse?.data ?? [];
-
-  const uniqueClassIds = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          schedules
-            .map((item: StudentSchedule) => item.class_definition_uuid)
-            .filter((value): value is string => Boolean(value))
-        )
-      ),
-    [schedules]
-  );
-
-  const classDefinitionQueries = useQueries({
-    queries: uniqueClassIds.map(uuid => ({
-      ...getClassDefinitionOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-    })),
-  });
-
-  const classDefinitions = useMemo(() => {
-    const map = new Map<string, ClassDefinition>();
-
-    classDefinitionQueries.forEach((query, index) => {
-      const uuid = uniqueClassIds[index];
-      const classDefinition = query.data?.data?.class_definition;
-
-      if (uuid && classDefinition) {
-        map.set(uuid, classDefinition);
-      }
-    });
-
-    return map;
-  }, [classDefinitionQueries, uniqueClassIds]);
-
-  const courseIds = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          Array.from(classDefinitions.values())
-            .map(item => item.course_uuid)
-            .filter((value): value is string => Boolean(value))
-        )
-      ),
-    [classDefinitions]
-  );
-
-  const courseQueries = useQueries({
-    queries: courseIds.map(uuid => ({
-      ...getCourseByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-    })),
-  });
-
-  const coursesMap = useMemo(() => {
-    const map = new Map<string, Course>();
-
-    courseQueries.forEach((query, index) => {
-      const uuid = courseIds[index];
-      const course = query.data?.data;
-
-      if (uuid && course) {
-        map.set(uuid, course);
-      }
-    });
-
-    return map;
-  }, [courseIds, courseQueries]);
-
-  const courseEnrollmentQueries = useQueries({
-    queries: courseIds.map(courseUuid => ({
-      ...getCourseEnrollmentsOptions({
-        path: { courseUuid },
-        query: {
-          pageable: {
-            page: 0,
-            size: 100,
-          },
-        },
-      }),
-      enabled: Boolean(courseUuid),
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000,
-    })),
-  });
-
-  const courseEnrollmentsMap = useMemo(() => {
-    const map = new Map<string, CourseEnrollment>();
-
-    courseEnrollmentQueries.forEach((query, index) => {
-      const courseUuid = courseIds[index];
-      const matchingEnrollment =
-        query.data?.data?.content?.find(
-          enrollment => enrollment.student_uuid === student?.uuid
-        ) ?? null;
-
-      if (courseUuid && matchingEnrollment) {
-        map.set(courseUuid, matchingEnrollment);
-      }
-    });
-
-    return map;
-  }, [courseEnrollmentQueries, courseIds, student?.uuid]);
 
   const certificatesByCourse = useMemo(() => {
     const map = new Map<string, Certificate>();
@@ -285,39 +220,28 @@ export function useStudentOverviewData(): StudentOverviewData {
   const enrolledClassesAndCourses = useMemo<StudentOverviewEnrolledClassCourse[]>(() => {
     const rows: Array<StudentOverviewEnrolledClassCourse & { sortValue: number }> = [];
 
-    Array.from(classDefinitions.entries()).forEach(([classId, classDefinition]) => {
-      const relatedSchedules = schedules.filter(item => item.class_definition_uuid === classId);
-      const enrolledSchedule =
-        relatedSchedules.find(item => item.enrollment_status !== 'CANCELLED') ??
-        relatedSchedules[0];
-
-      if (!enrolledSchedule || enrolledSchedule.enrollment_status === 'CANCELLED') {
+    enrolledClasses.forEach(classEnrollment => {
+      if (!isActiveClassEnrollment(classEnrollment.latest_enrollment_status)) {
         return;
       }
-      const courseUuid = classDefinition.course_uuid ?? null;
-      const course = courseUuid ? coursesMap.get(courseUuid) : undefined;
-      const courseEnrollment = courseUuid ? courseEnrollmentsMap.get(courseUuid) : undefined;
-      const nextSchedule = relatedSchedules
-        .map(item => item.start_time)
-        .filter((value): value is Date => value instanceof Date)
-        .sort((a, b) => a.getTime() - b.getTime())[0];
+
+      const classId = classEnrollment.class_definition_uuid;
+      const nextSchedule =
+        classEnrollment.latest_scheduled_instance_start_time ?? classEnrollment.latest_activity_date;
 
       rows.push({
         id: classId,
         classId,
-        classTitle: classDefinition.title,
-        courseId: courseUuid,
-        courseTitle: course?.name ?? null,
-        enrollmentUuid: enrolledSchedule.enrollment_uuid ?? null,
-        enrollmentStatus: enrolledSchedule.enrollment_status ?? null,
-        courseEnrollmentUuid: courseEnrollment?.uuid ?? null,
-        courseEnrollmentStatus: courseEnrollment?.status ?? null,
-        progress:
-          typeof courseEnrollment?.progress_percentage === 'number'
-            ? Math.max(0, Math.min(100, Math.round(courseEnrollment.progress_percentage)))
-            : null,
+        classTitle: classEnrollment.class_title ?? 'Class enrollment',
+        courseId: null,
+        courseTitle: null,
+        enrollmentUuid: classEnrollment.latest_enrollment_uuid ?? null,
+        enrollmentStatus: classEnrollment.latest_enrollment_status ?? null,
+        courseEnrollmentUuid: null,
+        courseEnrollmentStatus: null,
+        progress: null,
         nextDateLabel: formatDateLabel(nextSchedule),
-        scheduleCount: relatedSchedules.length,
+        scheduleCount: classEnrollment.scheduled_instance_count ?? 0,
         href: `/dashboard/schedule/classes/${classId}`,
         sortValue: nextSchedule?.getTime() ?? Number.MAX_SAFE_INTEGER,
       });
@@ -326,47 +250,37 @@ export function useStudentOverviewData(): StudentOverviewData {
     return rows
       .sort((a, b) => a.sortValue - b.sortValue)
       .map(({ sortValue: _sortValue, ...item }) => item);
-  }, [classDefinitions, courseEnrollmentsMap, coursesMap, schedules]);
-
+  }, [enrolledClasses]);
 
   const activeCourses = useMemo<StudentOverviewActiveCourse[]>(() => {
-    const resolvedCourses = Array.from(classDefinitions.entries())
-      .map(([classId, classDefinition]) => {
-        const courseUuid = classDefinition.course_uuid;
-        const course = courseUuid ? coursesMap.get(courseUuid) : undefined;
-        const enrollment = courseUuid ? courseEnrollmentsMap.get(courseUuid) : undefined;
-        const relatedSchedules = schedules.filter(item => item.class_definition_uuid === classId);
-        const nextSchedule = relatedSchedules
-          .map(item => item.start_time)
-          .filter((value): value is Date => value instanceof Date)
-          .sort((a, b) => a.getTime() - b.getTime())[0];
-
-        if (!enrollment || (!enrollment.is_active && enrollment.status !== 'ACTIVE')) {
+    const resolvedCourses = enrolledCourses
+      .map((courseEnrollment, index) => {
+        if (!isActiveCourseEnrollment(courseEnrollment)) {
           return null;
         }
 
+        const courseUuid = courseEnrollment.course_uuid;
+        const updatedDate = courseEnrollment.updated_date;
+
         return {
-          id: courseUuid ?? classId,
-          title: course?.name ?? classDefinition.title,
-          subtitle: buildCourseSubtitle(course),
+          id: courseUuid,
+          title: courseEnrollment.course_name ?? 'Course enrollment',
+          subtitle: buildCourseSubtitle(courseEnrollment),
           progress:
-            typeof enrollment.progress_percentage === 'number'
-              ? Math.max(0, Math.min(100, Math.round(enrollment.progress_percentage)))
-              : buildCourseProgress(
-                courseUuid ? certificatesByCourse.get(courseUuid) : undefined,
-                relatedSchedules.length
-              ),
-          nextDateLabel: formatDateLabel(nextSchedule),
+            typeof courseEnrollment.progress_percentage === 'number'
+              ? Math.max(0, Math.min(100, Math.round(courseEnrollment.progress_percentage)))
+              : buildCourseProgress(certificatesByCourse.get(courseUuid), index),
+          nextDateLabel: formatDateLabel(updatedDate),
           buttonLabel: 'Continue',
-          href: courseUuid ? `/dashboard/courses/${courseUuid}` : '/dashboard/courses',
-          sortValue: nextSchedule?.getTime() ?? Number.MAX_SAFE_INTEGER,
+          href: `/dashboard/courses/${courseUuid}`,
+          sortValue: updatedDate?.getTime() ?? 0,
         };
       })
       .filter((course): course is StudentOverviewActiveCourse & { sortValue: number } => course !== null)
       .reduce<Map<string, StudentOverviewActiveCourse & { sortValue: number }>>((map, course) => {
         const existing = map.get(course.id);
 
-        if (!existing || course.sortValue < existing.sortValue) {
+        if (!existing || course.sortValue > existing.sortValue) {
           map.set(course.id, course);
         }
 
@@ -374,12 +288,12 @@ export function useStudentOverviewData(): StudentOverviewData {
       }, new Map());
 
     const dedupedCourses = Array.from(resolvedCourses.values())
-      .sort((a, b) => a.sortValue - b.sortValue)
+      .sort((a, b) => b.sortValue - a.sortValue)
       .slice(0, 2)
       .map(({ sortValue: _sortValue, ...course }) => course);
 
     return dedupedCourses;
-  }, [certificatesByCourse, classDefinitions, courseEnrollmentsMap, coursesMap, schedules]);
+  }, [certificatesByCourse, enrolledCourses]);
 
   const verifiedSkills = certificates.filter(item => item.is_valid).length || 9;
   const newSkillsThisMonth =
@@ -415,10 +329,6 @@ export function useStudentOverviewData(): StudentOverviewData {
     activeCourses,
     enrolledClassesAndCourses,
     opportunities: MOCK_OPPORTUNITIES,
-    isLoadingCourses:
-      isLoadingCourses ||
-      classDefinitionQueries.some(query => query.isLoading || query.isFetching) ||
-      courseQueries.some(query => query.isLoading || query.isFetching) ||
-      courseEnrollmentQueries.some(query => query.isLoading || query.isFetching),
+    isLoadingCourses,
   };
 }

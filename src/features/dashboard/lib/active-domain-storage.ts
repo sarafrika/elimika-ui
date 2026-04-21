@@ -77,7 +77,11 @@ export function buildWorkspaceAliasPath(domain: UserDomain | null, path = '/dash
   }
 
   const normalizedPath = path.replace(/^\/dashboard/, '').replace(/^\//, '');
-  return normalizedPath
-    ? `/dashboard/workspace/${domain}/${normalizedPath}`
+  const [firstSegment, ...restSegments] = normalizedPath.split('/');
+  const rewrittenFirstSegment = firstSegment === 'all-courses' ? 'courses' : firstSegment;
+  const rewrittenPath = [rewrittenFirstSegment, ...restSegments].filter(Boolean).join('/');
+
+  return rewrittenPath
+    ? `/dashboard/workspace/${domain}/${rewrittenPath}`
     : `/dashboard/workspace/${domain}`;
 }
