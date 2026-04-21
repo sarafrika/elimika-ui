@@ -19,7 +19,7 @@ import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import { NotebookPen, PanelBottom, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
 import { ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassSidebar } from './_components/class-sidebar';
@@ -31,6 +31,7 @@ import {
   type ClassTab,
   type DateFilter,
   type LessonModule,
+  dateFilterDescriptions,
 } from './_components/new-class-page.utils';
 import { PlaceholderTab } from './_components/placeholder-tab';
 
@@ -194,12 +195,34 @@ export default function NewClassPage() {
     selectedModule?.lesson?.uuid,
   ]);
 
+  const getStartLessonHref = useCallback(
+    (lessonUuid?: string | null, contentUuid?: string | null) => {
+      if (!selectedClassUuid) return '#';
+
+      const params = new URLSearchParams();
+      if (selectedInstanceEntry?.instanceUuid) {
+        params.set('schedule', selectedInstanceEntry.instanceUuid);
+      }
+      if (lessonUuid) {
+        params.set('lesson', lessonUuid);
+      }
+      if (contentUuid) {
+        params.set('content', contentUuid);
+      }
+
+      const queryString = params.toString();
+      return `/dashboard/classes/class-training/${selectedClassUuid}${
+        queryString ? `?${queryString}` : ''
+      }`;
+    },
+    [selectedClassUuid, selectedInstanceEntry?.instanceUuid]
+  );
+
   return (
     <div className='min-h-full rounded-lg px-3 py-8 shadow-sm sm:px-5'>
       <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
         <p className='text-foreground text-md leading-tight sm:text-lg'>
-          All of your classes today are listed here.{' '}
-          <span className='font-semibold'>Start training</span>
+          {dateFilterDescriptions[dateFilter]} <span className='font-semibold'>Start training</span>
         </p>
         <Button
           type='button'
@@ -349,6 +372,7 @@ export default function NewClassPage() {
                 setExpandedModuleId={setExpandedModuleId}
                 setSelectedLessonUuid={setSelectedLessonUuid}
                 startLessonHref={startLessonHref}
+                getStartLessonHref={getStartLessonHref}
                 onAddClasses={() => router.push('/dashboard/classes/create-new')}
               />
             </TabsContent>

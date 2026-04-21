@@ -54,53 +54,63 @@ export function SubmissionStudentList({
       </div>
 
       <ScrollArea className='min-h-0 flex-1'>
-        <div className='space-y-2 p-2'>
-          {students.map(student => {
-            const isActive = student.id === selectedStudentId;
+        {students.length === 0 ? (
+          <div className='flex h-full flex-col items-center justify-center p-6 text-center'>
+            <p className='text-muted-foreground text-sm'>
+              No students have submitted their assignments yet.
+            </p>
+          </div>
+        ) : (
+          <div className='space-y-2 p-2'>
+            {students.map(student => {
+              const isActive = student.id === selectedStudentId;
 
-            return (
-              <button
-                key={student.id}
-                type='button'
-                onClick={() => onSelect(student.id)}
-                className={cn(
-                  'w-full rounded-lg border p-3 text-left transition-colors',
-                  isActive ? 'border-primary/20 bg-primary/10 shadow-sm' : 'hover:bg-muted/40'
-                )}
-              >
-                <div className='flex items-start gap-3'>
-                  <Avatar className='h-10 w-10 shrink-0'>
-                    <AvatarFallback>
-                      {student.name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+              return (
+                <button
+                  key={student.id}
+                  type='button'
+                  onClick={() => onSelect(student.id)}
+                  className={cn(
+                    'w-full rounded-lg border p-3 text-left transition-colors',
+                    isActive
+                      ? 'border-primary/20 bg-primary/10 shadow-sm'
+                      : 'hover:bg-muted/40'
+                  )}
+                >
+                  <div className='flex items-start gap-3'>
+                    <Avatar className='h-10 w-10 shrink-0'>
+                      <AvatarFallback>
+                        {student.name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
 
-                  <div className='min-w-0 flex-1'>
-                    <div className='flex items-center justify-between gap-2'>
-                      <p className='truncate text-base font-semibold'>
-                        {student.name}
+                    <div className='min-w-0 flex-1'>
+                      <div className='flex items-center justify-between gap-2'>
+                        <p className='truncate text-base font-semibold'>
+                          {student.name}
+                        </p>
+
+                        {isActive ? (
+                          <Badge variant='outline' className='shrink-0 rounded-full'>
+                            {student.attendanceLabel}
+                          </Badge>
+                        ) : student.attendanceLabel === 'Present' ? (
+                          <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
+                        ) : (
+                          <XCircle className='text-destructive h-4 w-4 shrink-0' />
+                        )}
+                      </div>
+
+                      <p className='text-muted-foreground mt-1 text-sm truncate'>
+                        {student.attendanceLabel}
                       </p>
-
-                      {isActive ? (
-                        <Badge variant='outline' className='shrink-0 rounded-full'>
-                          {student.attendanceLabel}
-                        </Badge>
-                      ) : student.attendanceLabel === 'Present' ? (
-                        <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
-                      ) : (
-                        <XCircle className='text-destructive h-4 w-4 shrink-0' />
-                      )}
                     </div>
-
-                    <p className='text-muted-foreground mt-1 text-sm truncate'>
-                      {student.attendanceLabel}
-                    </p>
                   </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </ScrollArea>
     </div>
   );

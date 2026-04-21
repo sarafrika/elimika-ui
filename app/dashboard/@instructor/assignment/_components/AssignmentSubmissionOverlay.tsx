@@ -1,10 +1,5 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { Bell, PanelLeft, PanelRight, Search } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -26,6 +21,11 @@ import {
   gradeSubmissionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmission, QuizAttempt, RubricMatrix } from '@/services/client/types.gen';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { Bell, PanelLeft, PanelRight, Search } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { SubmissionInsightsPanel } from './SubmissionInsightsPanel';
 import { SubmissionStudentList } from './SubmissionStudentList';
@@ -111,11 +111,11 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
   const rubricQuery = useQueries({
     queries: rubricUuid
       ? [
-          {
-            ...getRubricMatrixOptions({ path: { rubricUuid } }),
-            enabled: !!rubricUuid,
-          },
-        ]
+        {
+          ...getRubricMatrixOptions({ path: { rubricUuid } }),
+          enabled: !!rubricUuid,
+        },
+      ]
       : [],
   });
 

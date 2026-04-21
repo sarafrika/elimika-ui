@@ -23,7 +23,12 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import type { LessonContentItem, LessonModule } from './new-class-page.utils';
-import { formatDateOnly, formatTimeRange, getContentTypeLabel } from './new-class-page.utils';
+import {
+  formatDateOnly,
+  formatTimeRange,
+  getContentTypeLabel,
+  isUpcoming,
+} from './new-class-page.utils';
 
 function getContentTypeIcon(contentTypeMap: Record<string, string>, uuid?: string) {
   const typeName = uuid ? contentTypeMap[uuid] : '';
@@ -234,7 +239,7 @@ function CourseProgram({
   contentTypeMap,
   setExpandedModuleId,
   setSelectedLessonUuid,
-  startLessonHref,
+  getStartLessonHref,
   selectedClassUuid,
 }: {
   lessonModules: LessonModule[];
@@ -243,7 +248,7 @@ function CourseProgram({
   contentTypeMap: Record<string, string>;
   setExpandedModuleId: (value: string | null) => void;
   setSelectedLessonUuid: (value: string | null) => void;
-  startLessonHref: string;
+  getStartLessonHref: (lessonUuid?: string | null, contentUuid?: string | null) => string;
   selectedClassUuid: string | null;
 }) {
   return (
@@ -302,13 +307,13 @@ function CourseProgram({
                       {module.content?.data?.map((content, contentIndex) => {
                         const isSelected = selectedLesson?.uuid === content.uuid;
                         // const lessonProgress = getLessonProgress(moduleIndex, contentIndex);
-                        const lessonProgress = 0
+                        const lessonProgress = 0;
                         const typeLabel = getContentTypeLabel(
                           contentTypeMap,
                           content.content_type_uuid
                         );
                         const isWarmTrack = lessonProgress < 100;
-
+                        const lessonHref = getStartLessonHref(module.lesson.uuid, content.uuid);
 
                         return (
                           <div
@@ -349,15 +354,13 @@ function CourseProgram({
                                 </p>
                               </div>
 
-                              {isSelected ? (
-                                <Link
-                                  href={selectedClassUuid ? startLessonHref : '#'}
-                                  onClick={event => event.stopPropagation()}
-                                  className='bg-primary text-primary-foreground hover:bg-accent focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
-                                >
-                                  Start Lesson
-                                </Link>
-                              ) : null}
+                              <Link
+                                href={selectedClassUuid ? lessonHref : '#'}
+                                onClick={event => event.stopPropagation()}
+                                className='bg-primary text-primary-foreground hover:bg-accent focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                              >
+                                Start Lesson
+                              </Link>
                             </div>
 
                             <div className='mt-2 grid gap-3 pl-8 md:grid-cols-[72px_minmax(0,1fr)_56px] md:items-center'>
@@ -399,7 +402,13 @@ function UpcomingClassesPanel({
   contentTypeMap: Record<string, string>;
   rosterEntries: RosterEntry[];
 }) {
-  const upcoming = (selectedClass.schedule ?? []).slice(0, 3);
+  const upcoming = (selectedClass.schedule ?? [])
+    .filter(session => isUpcoming(session.start_time))
+    .sort(
+      (left, right) =>
+        new Date(left.start_time ?? 0).getTime() - new Date(right.start_time ?? 0).getTime()
+    )
+    .slice(0, 3);
   const visibleStudents = rosterEntries.slice(0, 3);
   const remainingStudentCount = Math.max(rosterEntries.length - visibleStudents.length, 0);
 
@@ -539,6 +548,7 @@ export function ClassOverviewTab({
   setExpandedModuleId,
   setSelectedLessonUuid,
   startLessonHref,
+  getStartLessonHref,
   onAddClasses,
 }: {
   isLoadingClasses: boolean;
@@ -559,6 +569,7 @@ export function ClassOverviewTab({
   setExpandedModuleId: (value: string | null) => void;
   setSelectedLessonUuid: (value: string | null) => void;
   startLessonHref: string;
+  getStartLessonHref: (lessonUuid?: string | null, contentUuid?: string | null) => string;
   onAddClasses: () => void;
 }) {
   if (isLoadingClasses || !selectedClass || isLoadingLessons) {
@@ -594,7 +605,7 @@ export function ClassOverviewTab({
           contentTypeMap={contentTypeMap}
           setExpandedModuleId={setExpandedModuleId}
           setSelectedLessonUuid={setSelectedLessonUuid}
-          startLessonHref={startLessonHref}
+          getStartLessonHref={getStartLessonHref}
           selectedClassUuid={selectedClassUuid}
         />
         <UpcomingClassesPanel

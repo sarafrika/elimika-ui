@@ -2,16 +2,17 @@ import type { UserDomain } from '@/lib/types';
 import {
   Award,
   BadgeCheck,
+  BarChart3,
   Bell,
   BoltIcon,
   BookAIcon,
   BookOpen,
+  Briefcase,
   Building,
   Building2,
   Calendar,
   CalendarClock,
   ChartNoAxesCombined,
-  ClipboardCheck,
   ClipboardList,
   DollarSign,
   FileCheck,
@@ -19,10 +20,10 @@ import {
   FileText,
   GraduationCap,
   Handshake,
-  Layers,
   Layers2,
   LayoutDashboard,
   LibraryIcon,
+  LineChart,
   LucideLandmark,
   PlusCircle,
   School,
@@ -30,7 +31,6 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  TrendingUp,
   UserCircle,
   UserIcon,
   Users,
@@ -156,17 +156,17 @@ export default {
     {
       title: 'Learning Hub',
       url: '/dashboard/learning-hub',
-      icon: School,
+      icon: BookOpen, // changed (content-focused vs physical place)
     },
     {
       title: 'Assessment & Competency',
       url: '/dashboard/assessment',
-      icon: Award,
+      icon: BarChart3, // changed (evaluation + progress tracking)
     },
     {
       title: 'Assignment',
       url: '/dashboard/assignment',
-      icon: ClipboardCheck,
+      icon: FileText, // changed (clearer than checklist for submissions)
     },
     {
       title: 'Schedule',
@@ -176,12 +176,12 @@ export default {
     {
       title: 'Credentials',
       url: '/dashboard/credentials',
-      icon: Layers,
+      icon: Award, // changed (certifications/badges)
     },
     {
       title: 'Portfolio',
       url: '/dashboard/portfolio',
-      icon: Handshake,
+      icon: Briefcase, // changed (personal work showcase)
     },
     {
       title: 'Opportunities',
@@ -221,7 +221,7 @@ export default {
     {
       title: 'Report & Analytics',
       url: '/dashboard/progress-analytics',
-      icon: TrendingUp,
+      icon: LineChart, // changed (clearer trend/progress than generic trending)
     },
     {
       title: 'Profile',
@@ -263,27 +263,27 @@ export default {
     {
       title: 'Classroom',
       url: '/dashboard/classes',
-      icon: ClipboardList,
+      icon: School, // changed (more "learning environment" than list)
     },
     {
       title: 'Assignments',
       url: '/dashboard/assignment',
-      icon: Layers,
+      icon: FileText, // changed (represents tasks/submissions better)
     },
     {
       title: 'Assessment (Competency & Tracking)',
       url: '/dashboard/assessment',
-      icon: Layers,
+      icon: BarChart3, // changed (analytics + evaluation feel)
     },
     {
       title: 'Credentials',
       url: '/dashboard/credentials',
-      icon: Layers,
+      icon: Award, // changed (certification/badges)
     },
     {
       title: 'Portfolio',
       url: '/dashboard/portfolio',
-      icon: BookOpen,
+      icon: Briefcase,
     },
     // {
     //   title: 'Enrollments',
@@ -318,7 +318,7 @@ export default {
     {
       title: 'Reports & Analytics',
       url: '/dashboard/analytics',
-      icon: ChartNoAxesCombined,
+      icon: LineChart, // changed (clearer analytics distinction)
     },
     {
       title: 'Messaging & Notifications',
