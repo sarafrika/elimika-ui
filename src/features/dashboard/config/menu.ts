@@ -353,6 +353,11 @@ export default {
       icon: LayoutDashboard,
     },
     {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: GraduationCap,
+    },
+    {
       title: 'My Courses',
       url: '/dashboard/course-management',
       icon: BookAIcon,
