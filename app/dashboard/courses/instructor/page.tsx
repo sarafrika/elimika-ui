@@ -1,18 +1,23 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
+import { getServerActiveDashboardDomain } from '@/src/features/dashboard/server/active-domain';
 import { resolveDashboardEntryTarget } from '@/src/features/dashboard/server/entry-target';
 
-type WorkspaceInstructorBookingPageProps = {
-  params: Promise<{ domain: string }>;
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
+type CoursesInstructorEntryPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function WorkspaceInstructorBookingPage({
-  params,
+export default async function CoursesInstructorEntryPage({
   searchParams,
-}: WorkspaceInstructorBookingPageProps) {
-  const { domain } = await params;
-  const normalizedDomain = normalizeStoredUserDomain(domain);
+}: CoursesInstructorEntryPageProps) {
+  const activeDomain = await getServerActiveDashboardDomain();
   const query = await searchParams;
   const search = new URLSearchParams();
 
@@ -26,12 +31,7 @@ export default async function WorkspaceInstructorBookingPage({
   const nextPath = queryString
     ? `/dashboard/courses/instructor?${queryString}`
     : '/dashboard/courses/instructor';
-
-  if (!normalizedDomain) {
-    redirect(nextPath);
-  }
-
-  const target = await resolveDashboardEntryTarget(normalizedDomain, nextPath);
+  const target = await resolveDashboardEntryTarget(activeDomain, nextPath);
 
   redirect(target.redirectTo);
 }

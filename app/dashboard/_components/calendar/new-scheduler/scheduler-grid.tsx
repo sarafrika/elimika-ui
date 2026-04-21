@@ -162,17 +162,6 @@ function WeekGrid({ currentDate, events }: { currentDate: Date; events: Schedule
             </div>
           ))}
 
-          <div className='pointer-events-none absolute top-0 right-0 left-[48px] h-full sm:left-[60px] lg:left-[68px]'>
-            <div
-              className='border-destructive absolute right-0 left-0 z-10 border-t'
-              style={{ top: `${rowHeight * 5}px` }}
-            >
-              <span className='bg-background text-destructive absolute -top-2 left-2 text-[10px] font-semibold'>
-                03:25 PM
-              </span>
-            </div>
-          </div>
-
           <div className='absolute top-0 right-0 left-[48px] sm:left-[60px] lg:left-[68px]'>
             <div className='grid grid-cols-7'>
               {schedulerDays.map(day => (

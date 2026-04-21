@@ -344,7 +344,7 @@ export default {
   course_creator: [
     {
       title: 'Home - All courses',
-      url: '/dashboard/all-courses',
+      url: '/dashboard/courses',
       icon: School,
     },
     {
@@ -426,12 +426,7 @@ export default {
   ],
   admin: [
     {
-      title: 'Home - All courses',
-      url: '/dashboard/all-courses',
-      icon: School,
-    },
-    {
-      title: 'Overview',
+      title: 'Dashboard',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
     },
@@ -441,13 +436,18 @@ export default {
       icon: UsersIcon,
     },
     {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: School,
+    },
+    {
       title: 'Manage Courses',
-      url: '/dashboard/approve-courses',
+      url: '/dashboard/manage-courses',
       icon: BookOpen,
     },
     {
-      title: 'Programs',
-      url: '/dashboard/programs',
+      title: 'Manage Programs',
+      url: '/dashboard/manage-programs',
       icon: Layers2,
     },
     {
@@ -456,7 +456,7 @@ export default {
       icon: FileStackIcon,
     },
     {
-      title: 'Calendar',
+      title: 'Classes Calendar',
       url: '/dashboard/calendar',
       icon: CalendarClock,
     },
@@ -508,14 +508,14 @@ export default {
   ],
   organisation_user: [
     {
-      title: 'Home - All courses',
-      url: '/dashboard/all-courses',
-      icon: School,
-    },
-    {
-      title: 'Overview',
+      title: 'Dashboard',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
+    },
+    {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: School,
     },
     {
       title: 'Calendar',
@@ -585,7 +585,7 @@ export default {
   parent: [
     {
       title: 'Home - All courses',
-      url: '/dashboard/all-courses',
+      url: '/dashboard/courses',
       icon: School,
     },
     {
