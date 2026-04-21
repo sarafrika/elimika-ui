@@ -4,15 +4,34 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Copy, MapPin } from 'lucide-react';
-import { categoryStyles, studentMetric, todaySchedule } from './data';
+import { categoryStyles, studentMetric } from './data';
+import type { SchedulerEvent } from './types';
 
-function formatTime(hour: number) {
-  const suffix = hour >= 12 ? 'PM' : 'AM';
-  const normalized = hour > 12 ? hour - 12 : hour;
-  return `${normalized}:00 ${suffix}`;
+function formatTime(date: Date) {
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
-export function SchedulerRightRail() {
+function isSameCalendarDay(left: Date, right: Date) {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+}
+
+export function SchedulerRightRail({
+  events,
+  instructors,
+}: {
+  events: SchedulerEvent[];
+  instructors: string[];
+}) {
+  const todayEvents = events.filter(event => isSameCalendarDay(event.startTime, new Date()));
+  const visibleSchedule = todayEvents.length ? todayEvents.slice(0, 5) : events.slice(0, 5);
+  const visibleSeats =
+    events.reduce((total, event) => total + (event.maxParticipants ?? event.students.length), 0) ||
+    studentMetric.value;
+
   return (
     <aside className='grid min-w-0 gap-3 2xl:w-80 2xl:shrink-0'>
       <section className='bg-card rounded-md border p-3 shadow-sm'>
@@ -20,13 +39,13 @@ export function SchedulerRightRail() {
           <h2 className='text-foreground text-sm font-semibold sm:text-base'>
             Today&apos;s Schedule
           </h2>
-          <span className='text-muted-foreground text-xs'>5 sessions</span>
+          <span className='text-muted-foreground text-xs'>{visibleSchedule.length} sessions</span>
         </div>
         <div className='space-y-2'>
-          {todaySchedule.map(event => (
+          {visibleSchedule.map(event => (
             <div key={event.id} className='grid grid-cols-[58px_1fr_auto] items-start gap-2'>
               <span className='text-foreground text-[11px] font-semibold'>
-                {formatTime(event.startHour)}
+                {formatTime(event.startTime)}
               </span>
               <div className='min-w-0'>
                 <Badge
@@ -49,12 +68,36 @@ export function SchedulerRightRail() {
 
       <section className='bg-card rounded-md border p-3 shadow-sm'>
         <div className='mb-2 flex items-center justify-between'>
-          <h2 className='text-foreground text-sm font-semibold'>Students</h2>
-          <span className='text-muted-foreground text-xs'>5 sessions</span>
+          <h2 className='text-foreground text-sm font-semibold'>Instructors</h2>
+          <span className='text-muted-foreground text-xs'>{instructors.length} visible</span>
         </div>
-        <p className='text-foreground text-sm font-semibold'>
-          {studentMetric.value} Students Today
-        </p>
+        <div className='space-y-2'>
+          {(instructors.length ? instructors : ['Instructor pending'])
+            .slice(0, 6)
+            .map(instructor => (
+              <div key={instructor} className='bg-muted/40 flex items-center gap-2 rounded-md p-2'>
+                <Avatar className='h-7 w-7 border'>
+                  <AvatarFallback className='text-[10px]'>
+                    {instructor
+                      .split(' ')
+                      .map(part => part.charAt(0))
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className='text-foreground truncate text-xs font-medium'>{instructor}</span>
+              </div>
+            ))}
+        </div>
+      </section>
+
+      <section className='bg-card rounded-md border p-3 shadow-sm'>
+        <div className='mb-2 flex items-center justify-between'>
+          <h2 className='text-foreground text-sm font-semibold'>Students</h2>
+          <span className='text-muted-foreground text-xs'>{events.length} sessions</span>
+        </div>
+        <p className='text-foreground text-sm font-semibold'>{visibleSeats} Seats Visible</p>
         <div className='mt-3 flex items-center gap-2'>
           {['AJ', 'MW', 'SK', 'DN', 'EL', 'TR'].map(student => (
             <Avatar key={student} className='h-8 w-8 border'>
@@ -79,8 +122,12 @@ export function SchedulerRightRail() {
             <MapPin className='h-5 w-5' />
           </span>
           <div className='min-w-0'>
-            <p className='text-foreground text-sm font-semibold'>Lab 204</p>
-            <p className='text-muted-foreground text-xs'>Capacity 30 · Room 104</p>
+            <p className='text-foreground text-sm font-semibold'>
+              {events[0]?.location || 'Location pending'}
+            </p>
+            <p className='text-muted-foreground text-xs'>
+              {instructors.length} instructor{instructors.length === 1 ? '' : 's'} visible
+            </p>
           </div>
         </div>
       </section>

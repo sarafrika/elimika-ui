@@ -9,12 +9,14 @@ export type SchedulerEvent = {
   title: string;
   course: string;
   instructor: string;
+  instructorUuid?: string;
   location: string;
-  dayIndex: number;
-  startHour: number;
-  duration: number;
+  startTime: Date;
+  endTime: Date;
+  status?: string;
   category: SchedulerCategory;
   students: string[];
+  maxParticipants?: number;
 };
 
 export type SchedulerMetric = {
