@@ -139,7 +139,7 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Skills Wallet Profile',
+      title: 'My Skills',
       url: '/dashboard/my-skills',
       icon: BadgeCheck,
     },
@@ -159,7 +159,7 @@ export default {
       icon: BookOpen, // changed (content-focused vs physical place)
     },
     {
-      title: 'Assessment & Competency',
+      title: 'Assessment',
       url: '/dashboard/assessment',
       icon: BarChart3, // changed (evaluation + progress tracking)
     },
@@ -174,7 +174,7 @@ export default {
       icon: Calendar,
     },
     {
-      title: 'Credentials',
+      title: 'Credentials Vault',
       url: '/dashboard/credentials',
       icon: Award, // changed (certifications/badges)
     },
@@ -214,13 +214,13 @@ export default {
       icon: Wallet,
     },
     {
-      title: 'Messaging & Notifications',
-      url: '/dashboard/messaging-notifications',
+      title: 'Notifications',
+      url: '/dashboard/notifications',
       icon: Bell,
     },
     {
-      title: 'Report & Analytics',
-      url: '/dashboard/progress-analytics',
+      title: 'Analytics',
+      url: '/dashboard/analytics',
       icon: LineChart, // changed (clearer trend/progress than generic trending)
     },
     {
@@ -241,7 +241,7 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Skills Wallet Profile',
+      title: 'My Skills',
       url: '/dashboard/my-skills',
       icon: BadgeCheck,
     },
@@ -271,12 +271,12 @@ export default {
       icon: FileText, // changed (represents tasks/submissions better)
     },
     {
-      title: 'Assessment (Competency & Tracking)',
+      title: 'Assessment',
       url: '/dashboard/assessment',
       icon: BarChart3, // changed (analytics + evaluation feel)
     },
     {
-      title: 'Credentials',
+      title: 'Credentials Vault',
       url: '/dashboard/credentials',
       icon: Award, // changed (certification/badges)
     },
@@ -316,13 +316,13 @@ export default {
       icon: DollarSign,
     },
     {
-      title: 'Reports & Analytics',
+      title: 'Analytics',
       url: '/dashboard/analytics',
       icon: LineChart, // changed (clearer analytics distinction)
     },
     {
-      title: 'Messaging & Notifications',
-      url: '/dashboard/messaging-notifications',
+      title: 'Notifications',
+      url: '/dashboard/notifications',
       icon: Bell,
     },
     // {
