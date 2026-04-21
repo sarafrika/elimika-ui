@@ -35,7 +35,7 @@ import {
   UserIcon,
   Users,
   UsersIcon,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -156,32 +156,32 @@ export default {
     {
       title: 'Learning Hub',
       url: '/dashboard/learning-hub',
-      icon: BookOpen, // changed (content-focused vs physical place)
+      icon: BookOpen,
     },
     {
       title: 'Assessment',
       url: '/dashboard/assessment',
-      icon: BarChart3, // changed (evaluation + progress tracking)
+      icon: BarChart3,
     },
     {
       title: 'Assignment',
       url: '/dashboard/assignment',
-      icon: FileText, // changed (clearer than checklist for submissions)
+      icon: FileText,
     },
     {
-      title: 'Schedule',
-      url: '/dashboard/schedule',
+      title: 'Calendar',
+      url: '/dashboard/calendar',
       icon: Calendar,
     },
     {
       title: 'Credentials Vault',
       url: '/dashboard/credentials',
-      icon: Award, // changed (certifications/badges)
+      icon: Award,
     },
     {
       title: 'Portfolio',
       url: '/dashboard/portfolio',
-      icon: Briefcase, // changed (personal work showcase)
+      icon: Briefcase,
     },
     {
       title: 'Opportunities',
@@ -221,7 +221,7 @@ export default {
     {
       title: 'Analytics',
       url: '/dashboard/analytics',
-      icon: LineChart, // changed (clearer trend/progress than generic trending)
+      icon: LineChart,
     },
     {
       title: 'Profile',
@@ -261,19 +261,19 @@ export default {
       icon: ClipboardList,
     },
     {
-      title: 'Classroom',
+      title: 'Classes',
       url: '/dashboard/classes',
-      icon: School, // changed (more "learning environment" than list)
+      icon: School,
     },
     {
       title: 'Assignments',
       url: '/dashboard/assignment',
-      icon: FileText, // changed (represents tasks/submissions better)
+      icon: FileText,
     },
     {
       title: 'Assessment',
       url: '/dashboard/assessment',
-      icon: BarChart3, // changed (analytics + evaluation feel)
+      icon: BarChart3,
     },
     {
       title: 'Credentials Vault',
@@ -318,7 +318,7 @@ export default {
     {
       title: 'Analytics',
       url: '/dashboard/analytics',
-      icon: LineChart, // changed (clearer analytics distinction)
+      icon: LineChart,
     },
     {
       title: 'Notifications',
@@ -351,6 +351,11 @@ export default {
       title: 'Overview',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
+    },
+    {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: GraduationCap,
     },
     {
       title: 'My Courses',
@@ -437,7 +442,7 @@ export default {
     },
     {
       title: 'Courses',
-      url: '/dashboard/courses',
+      url: '/dashboard/approve-courses',
       icon: BookOpen,
     },
     {
@@ -449,6 +454,11 @@ export default {
       title: 'Classes',
       url: '/dashboard/classes',
       icon: FileStackIcon,
+    },
+    {
+      title: 'Calendar',
+      url: '/dashboard/calendar',
+      icon: CalendarClock,
     },
     {
       title: 'Students',
@@ -506,6 +516,11 @@ export default {
       title: 'Overview',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
+    },
+    {
+      title: 'Calendar',
+      url: '/dashboard/calendar',
+      icon: CalendarClock,
     },
     {
       title: 'Catalogue',

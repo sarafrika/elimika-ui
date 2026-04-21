@@ -7,10 +7,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BookOpen, ChevronLeft, ChevronRight, MoreHorizontal, Search } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { ClassInstanceItem, DateFilter } from './new-class-page.utils';
-import { dateFilterHeadings, formatTimeRange } from './new-class-page.utils';
+import { formatTimeRange } from './new-class-page.utils';
 
 const CLASSES_PER_PAGE = 7;
 
@@ -113,15 +113,22 @@ export function ClassSidebar({
 
   return (
     <section className='border-border/70 bg-card/85 rounded-lg border p-3 shadow-sm backdrop-blur'>
-      <div className='mb-4 flex items-center justify-between gap-3 px-1 pt-1'>
-        <h2 className='text-foreground text-lg font-semibold'>{dateFilterHeadings[dateFilter]}</h2>
-        <button
-          type='button'
-          className='text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none'
-          aria-label='Open class options'
+      <div className='mb-4 flex items-center gap-3 px-1 pt-1'>
+        <Select
+          value={dateFilter}
+          onValueChange={value => onDateFilterChange(value as DateFilter)}
         >
-          <MoreHorizontal className='h-5 w-5' />
-        </button>
+          <SelectTrigger className='w-full border-border/70 bg-background/75 h-10 rounded-md shadow-none'>
+            <SelectValue placeholder='Filter by date' />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value='current-day'>Today's Classes</SelectItem>
+            <SelectItem value='current-week'>Current week</SelectItem>
+            <SelectItem value='upcoming'>Upcoming Classes</SelectItem>
+            <SelectItem value='all'>All scheduled dates</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className='mb-4 space-y-2'>
@@ -136,17 +143,7 @@ export function ClassSidebar({
           />
         </div>
 
-        <Select value={dateFilter} onValueChange={value => onDateFilterChange(value as DateFilter)}>
-          <SelectTrigger className='border-border/70 bg-background/75 h-10 rounded-md shadow-none'>
-            <SelectValue placeholder='Filter by date' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='current-day'>Current day</SelectItem>
-            <SelectItem value='current-week'>Current week</SelectItem>
-            <SelectItem value='upcoming'>Upcoming</SelectItem>
-            <SelectItem value='all'>All future scheduled dates</SelectItem>
-          </SelectContent>
-        </Select>
+
       </div>
 
       <div className='space-y-2'>
@@ -175,11 +172,10 @@ export function ClassSidebar({
                 key={classItem.instanceUuid}
                 type='button'
                 onClick={() => onSelectClass(classItem.instanceUuid)}
-                className={`w-full rounded-lg border px-3.5 py-3 text-left transition-all ${
-                  isSelected
-                    ? 'border-primary/40 bg-primary/10 shadow-sm'
-                    : 'border-border/70 bg-background/70 hover:border-primary/30 hover:bg-primary/5'
-                }`}
+                className={`w-full rounded-lg border px-3.5 py-3 text-left transition-all ${isSelected
+                  ? 'border-primary/40 bg-primary/10 shadow-sm'
+                  : 'border-border/70 bg-background/70 hover:border-primary/30 hover:bg-primary/5'
+                  }`}
               >
                 <div className='grid grid-cols-[minmax(0,1fr)_auto] gap-3'>
                   <div className='flex min-w-0 gap-2.5'>
@@ -262,11 +258,10 @@ export function ClassSidebar({
                       type='button'
                       onClick={() => setCurrentPage(pageNumber)}
                       aria-current={pageNumber === safeCurrentPage ? 'page' : undefined}
-                      className={`focus-visible:ring-ring flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none ${
-                        pageNumber === safeCurrentPage
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
+                      className={`focus-visible:ring-ring flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none ${pageNumber === safeCurrentPage
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        }`}
                     >
                       {pageNumber}
                     </button>

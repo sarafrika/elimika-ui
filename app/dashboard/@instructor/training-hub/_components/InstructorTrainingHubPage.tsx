@@ -92,12 +92,13 @@ export function InstructorTrainingHubPage() {
       <section className='grid gap-4 min-[1380px]:grid-cols-[minmax(0,1fr)_300px]'>
         <div className='grid gap-4 lg:grid-cols-[minmax(280px,0.92fr)_minmax(340px,1.18fr)] min-[1450px]:grid-cols-[minmax(300px,0.94fr)_minmax(420px,1.2fr)]'>
           <div className='space-y-3'>
-            <TrainingHubSectionHeader title='Manage Courses' />
-            <div className='space-y-3'>
+            <div className='flex flex-row items-center gap-1'>
+              <TrainingHubSectionHeader title='Manage Courses' />
               <p className='text-sm text-muted-foreground'>
                 List of courses approved to train.
               </p>
-
+            </div>
+            <div className='space-y-3'>
               {filteredManagedCourses.map(course => (
                 <ManageCourseCard key={course.id} course={course} />
               ))}

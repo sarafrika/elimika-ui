@@ -5,7 +5,6 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useStudent } from '@/context/student-context';
 import useProgramBundledClassInfo from '@/hooks/use-program-classes';
 import { useScheduleStats } from '@/hooks/use-schedule-stats';
 import {
@@ -33,6 +32,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useUserProfile } from '../../../profile/context/profile-context';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
 import { getErrorMessage, type ProgramBundledClass } from '../types';
 
@@ -46,11 +46,12 @@ export default function ProgramClassEnrollmentPage({
   const router = useRouter();
   const qc = useQueryClient();
   const { activeDomain } = useUserDomain();
+  const user = useUserProfile()
+  const student = user?.student
 
   const [enrollmentError, setEnrollmentError] = useState(false);
 
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const student = useStudent();
 
   // Fetch class information
   const { classes = [], loading } = useProgramBundledClassInfo(

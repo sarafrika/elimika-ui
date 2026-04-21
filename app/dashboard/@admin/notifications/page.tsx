@@ -1,5 +1,5 @@
-function Page() {
-  return <div>This page is under construction</div>;
-}
+import { SharedNotificationsPage } from '@/app/dashboard/_components/notifications/SharedNotificationsPage';
 
-export default Page;
+export default function AdminNotificationsPage() {
+  return <SharedNotificationsPage />;
+}

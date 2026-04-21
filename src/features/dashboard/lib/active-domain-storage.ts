@@ -72,6 +72,10 @@ export function buildWorkspaceAliasPath(domain: UserDomain | null, path = '/dash
     return path;
   }
 
+  if (path === '/dashboard/notifications') {
+    return path;
+  }
+
   const normalizedPath = path.replace(/^\/dashboard/, '').replace(/^\//, '');
   return normalizedPath
     ? `/dashboard/workspace/${domain}/${normalizedPath}`
