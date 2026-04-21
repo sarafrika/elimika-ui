@@ -196,6 +196,7 @@ const createRecommendationCards = (
 export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const qc = useQueryClient();
   const instructor = useInstructor();
+
   const [activeTab, setActiveTab] = useState<CoursesCatalogTab>('all-courses');
   const [filters, setFilters] = useState<FilterValues>(defaultFilterValues);
   const [visibleCoursesCount, setVisibleCoursesCount] = useState(8);

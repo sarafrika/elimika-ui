@@ -203,8 +203,6 @@ export function useStudentLearningHubData(): LearningHubData {
     ...getClassEnrollmentsForStudentOptions({ path: { studentUuid: student?.uuid as string }, query: { pageable: {} } }),
     enabled: Boolean(student?.uuid),
   })
-  console.log(enrolledClassesResponse?.data?.content, "here")
-
 
   const { data: studentScheduleResponse, isLoading: scheduleLoading } = useQuery({
     ...getStudentScheduleOptions({

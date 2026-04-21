@@ -343,11 +343,6 @@ export default {
   ],
   course_creator: [
     {
-      title: 'Home - All courses',
-      url: '/dashboard/courses',
-      icon: School,
-    },
-    {
       title: 'Overview',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
