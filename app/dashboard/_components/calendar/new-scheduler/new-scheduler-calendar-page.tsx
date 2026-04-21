@@ -247,6 +247,9 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
 
   const { classes: classData, loading: organizationLoading } = useAmdinClassesWithDetails();
 
+  // get student instrcutor for classes from the classData.
+  // or use the instructor uuid from the studentScheduleQuery to get the instructor name.
+  // but the instructor uuid from both sources must match for the same class schedule item.
   const studentInstructorUuids = useMemo(
     () =>
       Array.from(
@@ -272,6 +275,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
     });
     return map;
   }, [studentInstructorQueries]);
+
 
   const schedulerEvents = useMemo<SchedulerEvent[]>(() => {
     if (profile === 'student') {
@@ -308,6 +312,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
       Array.from(new Set(schedulerEvents.map(event => event.instructor).filter(Boolean))).sort(),
     [schedulerEvents]
   );
+
 
   const isLoading =
     profile === 'student'
@@ -475,10 +480,12 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
             </div>
 
             {isLoading ? (
-              <div className='bg-card flex min-h-[420px] items-center justify-center rounded-md border p-6 shadow-sm'>
-                <div className='text-center'>
-                  <div className='border-primary mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-2 border-t-transparent' />
-                  <p className='text-muted-foreground text-sm'>Loading schedule data...</p>
+              <div className='bg-card w-full flex min-h-[420px] items-center justify-center rounded-md border p-6 shadow-sm'>
+                <div className='flex flex-col items-center text-center'>
+                  <div className='border-primary mb-3 h-10 w-10 animate-spin rounded-full border-2 border-t-transparent' />
+                  <p className='text-muted-foreground text-sm'>
+                    Loading schedule data...
+                  </p>
                 </div>
               </div>
             ) : (

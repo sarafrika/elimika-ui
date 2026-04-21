@@ -78,7 +78,7 @@ export type CoursesRecommendationCardData = {
 
 export const heroActions: CoursesHeroAction[] = [
   {
-    title: 'Apply for Training',
+    title: 'Apply to Train',
     subtitle: 'Structured training made practical.',
     href: '/dashboard/skills-fund',
     icon: Rocket,

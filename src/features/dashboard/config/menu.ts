@@ -442,7 +442,7 @@ export default {
     },
     {
       title: 'Courses',
-      url: '/dashboard/courses',
+      url: '/dashboard/approve-courses',
       icon: BookOpen,
     },
     {
@@ -454,6 +454,11 @@ export default {
       title: 'Classes',
       url: '/dashboard/classes',
       icon: FileStackIcon,
+    },
+    {
+      title: 'Calendar',
+      url: '/dashboard/calendar',
+      icon: CalendarClock,
     },
     {
       title: 'Students',

@@ -23,7 +23,7 @@ import { AlertCircle, Armchair, ArrowLeft, Calendar, DollarSign, MapPin, User } 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { useStudent } from '../../../../../context/student-context';
+import { useUserProfile } from '../../../profile/context/profile-context';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
 import { type BundledClass, getErrorMessage } from '../types';
 
@@ -37,11 +37,12 @@ export default function ClassEnrollmentPage({
   const router = useRouter();
   const qc = useQueryClient();
   const { activeDomain } = useUserDomain();
+  const user = useUserProfile()
+  const student = user?.student
 
   const [enrollmentError, setEnrollmentError] = useState(false);
 
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const student = useStudent();
 
   // Fetch class information
   const { classes = [], loading } = useBundledClassInfo(courseId, undefined, undefined, student);

@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 
-export type SchedulerProfile = 'instructor' | 'organization' | 'student';
+export type SchedulerProfile = 'instructor' | 'organization' | 'student' | 'admin';
 export type SchedulerView = 'week' | 'day' | 'month';
 export type SchedulerCategory = 'TVET / Vocational' | 'STEM' | 'Arts' | 'Sports' | 'Certifications';
 

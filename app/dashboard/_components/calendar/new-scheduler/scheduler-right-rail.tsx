@@ -2,9 +2,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Copy, MapPin } from 'lucide-react';
-import { categoryStyles, studentMetric } from './data';
+import { studentMetric } from './data';
 import type { SchedulerEvent } from './types';
 
 function formatTime(date: Date) {
@@ -36,29 +35,42 @@ export function SchedulerRightRail({
     <aside className='grid min-w-0 gap-3 2xl:w-80 2xl:shrink-0'>
       <section className='bg-card rounded-md border p-3 shadow-sm'>
         <div className='mb-3 flex items-center justify-between gap-3'>
-          <h2 className='text-foreground text-sm font-semibold sm:text-base'>
+          <h2 className='text-foreground text-sm font-semibold sm:text-base truncate'>
             Today&apos;s Schedule
           </h2>
-          <span className='text-muted-foreground text-xs'>{visibleSchedule.length} sessions</span>
+          <span className='text-muted-foreground text-xs shrink-0'>
+            {visibleSchedule.length} sessions
+          </span>
         </div>
+
         <div className='space-y-2'>
           {visibleSchedule.map(event => (
-            <div key={event.id} className='grid grid-cols-[58px_1fr_auto] items-start gap-2'>
-              <span className='text-foreground text-[11px] font-semibold'>
+            <div
+              key={event.id}
+              className='grid grid-cols-[50px_minmax(0,1fr)_auto] items-start gap-2'
+            >
+              <span className='text-foreground text-[10px] font-semibold whitespace-nowrap shrink-0'>
                 {formatTime(event.startTime)}
               </span>
-              <div className='min-w-0'>
-                <Badge
-                  className={`mb-1 h-5 rounded px-1.5 text-[9px] ${categoryStyles[event.category]}`}
-                >
+
+              <div className='min-w-0 overflow-hidden'>
+                <p className='mb-1 truncate text-[11px] font-bold text-muted-foreground'>
                   {event.course}
-                </Badge>
-                <p className='text-foreground truncate text-xs font-semibold'>{event.title}</p>
+                </p>
+                <p className='text-foreground truncate text-xs font-semibold'>
+                  {event.title}
+                </p>
+
                 <p className='text-muted-foreground truncate text-[11px]'>
                   {event.instructor} · {event.location}
                 </p>
               </div>
-              <Button size='sm' variant='secondary' className='h-7 rounded px-2 text-xs'>
+
+              <Button
+                size='sm'
+                variant='secondary'
+                className='h-7 shrink-0 rounded px-2 text-xs whitespace-nowrap'
+              >
                 Start
               </Button>
             </div>
@@ -142,9 +154,6 @@ export function SchedulerRightRail({
         </div>
         <div className='flex gap-2'>
           <Input value='https://elimika.com/schedule' readOnly className='h-9 text-xs' />
-          <Button variant='secondary' size='sm' className='h-9 rounded px-3 text-xs'>
-            Copy
-          </Button>
         </div>
       </section>
 
