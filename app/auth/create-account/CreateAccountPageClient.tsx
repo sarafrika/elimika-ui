@@ -42,6 +42,8 @@ import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+const DASHBOARD_OVERVIEW_PATH = '/dashboard/overview';
+
 type AccountCreationStatus = 'idle' | 'submitting' | 'success' | 'error';
 
 type CreateAccountPageClientProps = {
@@ -328,7 +330,11 @@ export default function CreateAccountPageClient({ authRealm }: CreateAccountPage
             Register Another Account
           </Button>
           <Button
-            onClick={() => signIn('keycloak')}
+            onClick={() =>
+              signIn('keycloak', {
+                redirectTo: `${window.location.origin}${DASHBOARD_OVERVIEW_PATH}`,
+              })
+            }
             className='bg-primary hover:bg-primary/90 gap-2'
           >
             Go to Login
@@ -444,7 +450,11 @@ export default function CreateAccountPageClient({ authRealm }: CreateAccountPage
                 Already have an account?{' '}
                 <span
                   className='text-primary cursor-pointer hover:underline'
-                  onClick={() => signIn('keycloak')}
+                  onClick={() =>
+                    signIn('keycloak', {
+                      redirectTo: `${window.location.origin}${DASHBOARD_OVERVIEW_PATH}`,
+                    })
+                  }
                 >
                   Sign in
                 </span>
