@@ -441,7 +441,7 @@ export default {
       icon: UsersIcon,
     },
     {
-      title: 'Courses',
+      title: 'Manage Courses',
       url: '/dashboard/approve-courses',
       icon: BookOpen,
     },

@@ -922,6 +922,9 @@ import type {
   GetTrainingBranchesByOrganisation1Data,
   GetTrainingBranchesByOrganisation1Responses,
   GetTrainingBranchesByOrganisation1Errors,
+  GetStudentScheduleData,
+  GetStudentScheduleResponses,
+  GetStudentScheduleErrors,
   CancelScheduledClassData,
   CancelScheduledClassResponses,
   CancelScheduledClassErrors,
@@ -1132,9 +1135,18 @@ import type {
   GetEnrollmentData,
   GetEnrollmentResponses,
   GetEnrollmentErrors,
-  GetStudentScheduleData,
-  GetStudentScheduleResponses,
-  GetStudentScheduleErrors,
+  GetScheduledInstanceEnrollmentsForStudentData,
+  GetScheduledInstanceEnrollmentsForStudentResponses,
+  GetScheduledInstanceEnrollmentsForStudentErrors,
+  GetEnrollmentOverviewForStudentData,
+  GetEnrollmentOverviewForStudentResponses,
+  GetEnrollmentOverviewForStudentErrors,
+  GetCourseEnrollmentsForStudentData,
+  GetCourseEnrollmentsForStudentResponses,
+  GetCourseEnrollmentsForStudentErrors,
+  GetClassEnrollmentsForStudentData,
+  GetClassEnrollmentsForStudentResponses,
+  GetClassEnrollmentsForStudentErrors,
   SearchEnrollmentsData,
   SearchEnrollmentsResponses,
   SearchEnrollmentsErrors,
@@ -1669,6 +1681,7 @@ import {
   searchResponseTransformer,
   search1ResponseTransformer,
   getTrainingBranchesByOrganisation1ResponseTransformer,
+  getStudentScheduleResponseTransformer,
   getScheduledInstanceResponseTransformer,
   getInstructorScheduleResponseTransformer,
   getStudentBookingsResponseTransformer,
@@ -1724,7 +1737,10 @@ import {
   searchDocumentsResponseTransformer,
   getStudentDashboardResponseTransformer,
   getEnrollmentResponseTransformer,
-  getStudentScheduleResponseTransformer,
+  getScheduledInstanceEnrollmentsForStudentResponseTransformer,
+  getEnrollmentOverviewForStudentResponseTransformer,
+  getCourseEnrollmentsForStudentResponseTransformer,
+  getClassEnrollmentsForStudentResponseTransformer,
   searchEnrollmentsResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
@@ -10961,6 +10977,33 @@ export const getTrainingBranchesByOrganisation1 = <ThrowOnError extends boolean 
 };
 
 /**
+ * Get schedule for a specific student within a date range
+ */
+export const getStudentSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStudentScheduleResponses,
+    GetStudentScheduleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getStudentScheduleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/student/{studentUuid}',
+    ...options,
+  });
+};
+
+/**
  * Cancel a scheduled class instance
  */
 export const cancelScheduledClass = <ThrowOnError extends boolean = false>(
@@ -13093,17 +13136,17 @@ export const getEnrollment = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get schedule for a specific student within a date range
+ * Get scheduled instance enrollments for a specific student
  */
-export const getStudentSchedule = <ThrowOnError extends boolean = false>(
-  options: Options<GetStudentScheduleData, ThrowOnError>
+export const getScheduledInstanceEnrollmentsForStudent = <ThrowOnError extends boolean = false>(
+  options: Options<GetScheduledInstanceEnrollmentsForStudentData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).get<
-    GetStudentScheduleResponses,
-    GetStudentScheduleErrors,
+    GetScheduledInstanceEnrollmentsForStudentResponses,
+    GetScheduledInstanceEnrollmentsForStudentErrors,
     ThrowOnError
   >({
-    responseTransformer: getStudentScheduleResponseTransformer,
+    responseTransformer: getScheduledInstanceEnrollmentsForStudentResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -13114,7 +13157,89 @@ export const getStudentSchedule = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/enrollment/student/{studentUuid}',
+    url: '/api/v1/enrollment/student/{studentUuid}/scheduled-instances',
+    ...options,
+  });
+};
+
+/**
+ * Get overall student enrollment overview
+ * Retrieves overall class and course enrollments for a student without requiring scheduled-instance inspection.
+ */
+export const getEnrollmentOverviewForStudent = <ThrowOnError extends boolean = false>(
+  options: Options<GetEnrollmentOverviewForStudentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetEnrollmentOverviewForStudentResponses,
+    GetEnrollmentOverviewForStudentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getEnrollmentOverviewForStudentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/student/{studentUuid}/overview',
+    ...options,
+  });
+};
+
+/**
+ * Get course enrollments for a specific student
+ */
+export const getCourseEnrollmentsForStudent = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseEnrollmentsForStudentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseEnrollmentsForStudentResponses,
+    GetCourseEnrollmentsForStudentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseEnrollmentsForStudentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/student/{studentUuid}/courses',
+    ...options,
+  });
+};
+
+/**
+ * Get class enrollments for a specific student
+ */
+export const getClassEnrollmentsForStudent = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassEnrollmentsForStudentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassEnrollmentsForStudentResponses,
+    GetClassEnrollmentsForStudentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassEnrollmentsForStudentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/student/{studentUuid}/classes',
     ...options,
   });
 };

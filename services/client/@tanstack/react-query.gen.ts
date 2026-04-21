@@ -308,6 +308,7 @@ import {
   getProfileImage,
   search1,
   getTrainingBranchesByOrganisation1,
+  getStudentSchedule,
   cancelScheduledClass,
   getScheduledInstance,
   getInstructorSchedule,
@@ -378,7 +379,10 @@ import {
   getMyStudents,
   cancelEnrollment,
   getEnrollment,
-  getStudentSchedule,
+  getScheduledInstanceEnrollmentsForStudent,
+  getEnrollmentOverviewForStudent,
+  getCourseEnrollmentsForStudent,
+  getClassEnrollmentsForStudent,
   searchEnrollments,
   getEnrollmentsForInstance,
   getEnrollmentCount,
@@ -1293,6 +1297,9 @@ import type {
   GetTrainingBranchesByOrganisation1Data,
   GetTrainingBranchesByOrganisation1Error,
   GetTrainingBranchesByOrganisation1Response,
+  GetStudentScheduleData,
+  GetStudentScheduleError,
+  GetStudentScheduleResponse,
   CancelScheduledClassData,
   CancelScheduledClassError,
   CancelScheduledClassResponse,
@@ -1447,9 +1454,18 @@ import type {
   CancelEnrollmentError,
   CancelEnrollmentResponse,
   GetEnrollmentData,
-  GetStudentScheduleData,
-  GetStudentScheduleError,
-  GetStudentScheduleResponse,
+  GetScheduledInstanceEnrollmentsForStudentData,
+  GetScheduledInstanceEnrollmentsForStudentError,
+  GetScheduledInstanceEnrollmentsForStudentResponse,
+  GetEnrollmentOverviewForStudentData,
+  GetEnrollmentOverviewForStudentError,
+  GetEnrollmentOverviewForStudentResponse,
+  GetCourseEnrollmentsForStudentData,
+  GetCourseEnrollmentsForStudentError,
+  GetCourseEnrollmentsForStudentResponse,
+  GetClassEnrollmentsForStudentData,
+  GetClassEnrollmentsForStudentError,
+  GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsData,
   SearchEnrollmentsError,
   SearchEnrollmentsResponse,
@@ -14534,6 +14550,69 @@ export const getTrainingBranchesByOrganisation1InfiniteOptions = (
   );
 };
 
+export const getStudentScheduleQueryKey = (options: Options<GetStudentScheduleData>) =>
+  createQueryKey('getStudentSchedule', options);
+
+/**
+ * Get schedule for a specific student within a date range
+ */
+export const getStudentScheduleOptions = (options: Options<GetStudentScheduleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentSchedule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentScheduleQueryKey(options),
+  });
+};
+
+export const getStudentScheduleInfiniteQueryKey = (
+  options: Options<GetStudentScheduleData>
+): QueryKey<Options<GetStudentScheduleData>> => createQueryKey('getStudentSchedule', options, true);
+
+/**
+ * Get schedule for a specific student within a date range
+ */
+export const getStudentScheduleInfiniteOptions = (options: Options<GetStudentScheduleData>) => {
+  return infiniteQueryOptions<
+    GetStudentScheduleResponse,
+    GetStudentScheduleError,
+    InfiniteData<GetStudentScheduleResponse>,
+    QueryKey<Options<GetStudentScheduleData>>,
+    Date | Pick<QueryKey<Options<GetStudentScheduleData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetStudentScheduleData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getStudentSchedule({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getStudentScheduleInfiniteQueryKey(options),
+    }
+  );
+};
+
 /**
  * Cancel a scheduled class instance
  */
@@ -18305,16 +18384,19 @@ export const getEnrollmentOptions = (options: Options<GetEnrollmentData>) => {
   });
 };
 
-export const getStudentScheduleQueryKey = (options: Options<GetStudentScheduleData>) =>
-  createQueryKey('getStudentSchedule', options);
+export const getScheduledInstanceEnrollmentsForStudentQueryKey = (
+  options: Options<GetScheduledInstanceEnrollmentsForStudentData>
+) => createQueryKey('getScheduledInstanceEnrollmentsForStudent', options);
 
 /**
- * Get schedule for a specific student within a date range
+ * Get scheduled instance enrollments for a specific student
  */
-export const getStudentScheduleOptions = (options: Options<GetStudentScheduleData>) => {
+export const getScheduledInstanceEnrollmentsForStudentOptions = (
+  options: Options<GetScheduledInstanceEnrollmentsForStudentData>
+) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getStudentSchedule({
+      const { data } = await getScheduledInstanceEnrollmentsForStudent({
         ...options,
         ...queryKey[0],
         signal,
@@ -18322,40 +18404,47 @@ export const getStudentScheduleOptions = (options: Options<GetStudentScheduleDat
       });
       return data;
     },
-    queryKey: getStudentScheduleQueryKey(options),
+    queryKey: getScheduledInstanceEnrollmentsForStudentQueryKey(options),
   });
 };
 
-export const getStudentScheduleInfiniteQueryKey = (
-  options: Options<GetStudentScheduleData>
-): QueryKey<Options<GetStudentScheduleData>> => createQueryKey('getStudentSchedule', options, true);
+export const getScheduledInstanceEnrollmentsForStudentInfiniteQueryKey = (
+  options: Options<GetScheduledInstanceEnrollmentsForStudentData>
+): QueryKey<Options<GetScheduledInstanceEnrollmentsForStudentData>> =>
+  createQueryKey('getScheduledInstanceEnrollmentsForStudent', options, true);
 
 /**
- * Get schedule for a specific student within a date range
+ * Get scheduled instance enrollments for a specific student
  */
-export const getStudentScheduleInfiniteOptions = (options: Options<GetStudentScheduleData>) => {
+export const getScheduledInstanceEnrollmentsForStudentInfiniteOptions = (
+  options: Options<GetScheduledInstanceEnrollmentsForStudentData>
+) => {
   return infiniteQueryOptions<
-    GetStudentScheduleResponse,
-    GetStudentScheduleError,
-    InfiniteData<GetStudentScheduleResponse>,
-    QueryKey<Options<GetStudentScheduleData>>,
-    Date | Pick<QueryKey<Options<GetStudentScheduleData>>[0], 'body' | 'headers' | 'path' | 'query'>
+    GetScheduledInstanceEnrollmentsForStudentResponse,
+    GetScheduledInstanceEnrollmentsForStudentError,
+    InfiniteData<GetScheduledInstanceEnrollmentsForStudentResponse>,
+    QueryKey<Options<GetScheduledInstanceEnrollmentsForStudentData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetScheduledInstanceEnrollmentsForStudentData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
   >(
     {
       queryFn: async ({ pageParam, queryKey, signal }) => {
         const page: Pick<
-          QueryKey<Options<GetStudentScheduleData>>[0],
+          QueryKey<Options<GetScheduledInstanceEnrollmentsForStudentData>>[0],
           'body' | 'headers' | 'path' | 'query'
         > =
           typeof pageParam === 'object'
             ? pageParam
             : {
                 query: {
-                  start: pageParam,
+                  pageable: { page: pageParam },
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await getStudentSchedule({
+        const { data } = await getScheduledInstanceEnrollmentsForStudent({
           ...options,
           ...params,
           signal,
@@ -18363,7 +18452,228 @@ export const getStudentScheduleInfiniteOptions = (options: Options<GetStudentSch
         });
         return data;
       },
-      queryKey: getStudentScheduleInfiniteQueryKey(options),
+      queryKey: getScheduledInstanceEnrollmentsForStudentInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getEnrollmentOverviewForStudentQueryKey = (
+  options: Options<GetEnrollmentOverviewForStudentData>
+) => createQueryKey('getEnrollmentOverviewForStudent', options);
+
+/**
+ * Get overall student enrollment overview
+ * Retrieves overall class and course enrollments for a student without requiring scheduled-instance inspection.
+ */
+export const getEnrollmentOverviewForStudentOptions = (
+  options: Options<GetEnrollmentOverviewForStudentData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrollmentOverviewForStudent({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrollmentOverviewForStudentQueryKey(options),
+  });
+};
+
+export const getEnrollmentOverviewForStudentInfiniteQueryKey = (
+  options: Options<GetEnrollmentOverviewForStudentData>
+): QueryKey<Options<GetEnrollmentOverviewForStudentData>> =>
+  createQueryKey('getEnrollmentOverviewForStudent', options, true);
+
+/**
+ * Get overall student enrollment overview
+ * Retrieves overall class and course enrollments for a student without requiring scheduled-instance inspection.
+ */
+export const getEnrollmentOverviewForStudentInfiniteOptions = (
+  options: Options<GetEnrollmentOverviewForStudentData>
+) => {
+  return infiniteQueryOptions<
+    GetEnrollmentOverviewForStudentResponse,
+    GetEnrollmentOverviewForStudentError,
+    InfiniteData<GetEnrollmentOverviewForStudentResponse>,
+    QueryKey<Options<GetEnrollmentOverviewForStudentData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetEnrollmentOverviewForStudentData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetEnrollmentOverviewForStudentData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getEnrollmentOverviewForStudent({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getEnrollmentOverviewForStudentInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getCourseEnrollmentsForStudentQueryKey = (
+  options: Options<GetCourseEnrollmentsForStudentData>
+) => createQueryKey('getCourseEnrollmentsForStudent', options);
+
+/**
+ * Get course enrollments for a specific student
+ */
+export const getCourseEnrollmentsForStudentOptions = (
+  options: Options<GetCourseEnrollmentsForStudentData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseEnrollmentsForStudent({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseEnrollmentsForStudentQueryKey(options),
+  });
+};
+
+export const getCourseEnrollmentsForStudentInfiniteQueryKey = (
+  options: Options<GetCourseEnrollmentsForStudentData>
+): QueryKey<Options<GetCourseEnrollmentsForStudentData>> =>
+  createQueryKey('getCourseEnrollmentsForStudent', options, true);
+
+/**
+ * Get course enrollments for a specific student
+ */
+export const getCourseEnrollmentsForStudentInfiniteOptions = (
+  options: Options<GetCourseEnrollmentsForStudentData>
+) => {
+  return infiniteQueryOptions<
+    GetCourseEnrollmentsForStudentResponse,
+    GetCourseEnrollmentsForStudentError,
+    InfiniteData<GetCourseEnrollmentsForStudentResponse>,
+    QueryKey<Options<GetCourseEnrollmentsForStudentData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetCourseEnrollmentsForStudentData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseEnrollmentsForStudentData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseEnrollmentsForStudent({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseEnrollmentsForStudentInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getClassEnrollmentsForStudentQueryKey = (
+  options: Options<GetClassEnrollmentsForStudentData>
+) => createQueryKey('getClassEnrollmentsForStudent', options);
+
+/**
+ * Get class enrollments for a specific student
+ */
+export const getClassEnrollmentsForStudentOptions = (
+  options: Options<GetClassEnrollmentsForStudentData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassEnrollmentsForStudent({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassEnrollmentsForStudentQueryKey(options),
+  });
+};
+
+export const getClassEnrollmentsForStudentInfiniteQueryKey = (
+  options: Options<GetClassEnrollmentsForStudentData>
+): QueryKey<Options<GetClassEnrollmentsForStudentData>> =>
+  createQueryKey('getClassEnrollmentsForStudent', options, true);
+
+/**
+ * Get class enrollments for a specific student
+ */
+export const getClassEnrollmentsForStudentInfiniteOptions = (
+  options: Options<GetClassEnrollmentsForStudentData>
+) => {
+  return infiniteQueryOptions<
+    GetClassEnrollmentsForStudentResponse,
+    GetClassEnrollmentsForStudentError,
+    InfiniteData<GetClassEnrollmentsForStudentResponse>,
+    QueryKey<Options<GetClassEnrollmentsForStudentData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetClassEnrollmentsForStudentData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetClassEnrollmentsForStudentData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getClassEnrollmentsForStudent({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getClassEnrollmentsForStudentInfiniteQueryKey(options),
     }
   );
 };

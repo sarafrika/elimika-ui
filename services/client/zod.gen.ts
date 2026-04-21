@@ -808,16 +808,6 @@ export const zRubricCriteria = z
       )
       .readonly()
       .optional(),
-    weight_suggestion: z
-      .string()
-      .describe('**[READ-ONLY]** Suggested weight or priority level for this criteria.')
-      .readonly()
-      .optional(),
-    criteria_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted criteria number for display in assessment interface.')
-      .readonly()
-      .optional(),
     is_primary_criteria: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
@@ -826,6 +816,16 @@ export const zRubricCriteria = z
     criteria_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment criteria.')
+      .readonly()
+      .optional(),
+    weight_suggestion: z
+      .string()
+      .describe('**[READ-ONLY]** Suggested weight or priority level for this criteria.')
+      .readonly()
+      .optional(),
+    criteria_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted criteria number for display in assessment interface.')
       .readonly()
       .optional(),
   })
@@ -1682,16 +1682,16 @@ export const zProgramCourse = z
       )
       .readonly()
       .optional(),
+    has_prerequisites: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this course has prerequisite requirements.')
+      .readonly()
+      .optional(),
     association_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the course association based on requirement status.'
       )
-      .readonly()
-      .optional(),
-    has_prerequisites: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this course has prerequisite requirements.')
       .readonly()
       .optional(),
     sequence_display: z
@@ -1925,6 +1925,13 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    is_profile_complete: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
+      )
+      .readonly()
+      .optional(),
     has_location_coordinates: z
       .boolean()
       .describe(
@@ -1936,13 +1943,6 @@ export const zInstructor = z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.'
-      )
-      .readonly()
-      .optional(),
-    is_profile_complete: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
       )
       .readonly()
       .optional(),
@@ -2467,6 +2467,11 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .readonly()
+      .optional(),
     is_recent_qualification: z
       .boolean()
       .describe(
@@ -2477,11 +2482,6 @@ export const zInstructorEducation = z
     formatted_completion: z
       .string()
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
     years_since_completion: z
@@ -2700,16 +2700,16 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+      .readonly()
+      .optional(),
     file_url: z
       .string()
       .describe(
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
       )
-      .readonly()
-      .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
     file_size_formatted: z
@@ -3040,6 +3040,13 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
+      .readonly()
+      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
@@ -3060,11 +3067,9 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
       .readonly()
       .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
       .readonly()
       .optional(),
     has_multiple_categories: z
@@ -3083,11 +3088,6 @@ export const zCourse = z
       .describe(
         "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
       )
-      .readonly()
-      .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
       .readonly()
       .optional(),
   })
@@ -3568,16 +3568,6 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3593,6 +3583,16 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
+      .readonly()
+      .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -5874,11 +5874,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     can_be_cancelled: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
@@ -5887,6 +5882,11 @@ export const zEnrollment = z
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
     status_description: z
@@ -7109,6 +7109,113 @@ export const zApiResponsePagedDtoTrainingBranch = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+/**
+ * **[READ-ONLY]** Current enrollment status for the student.
+ */
+export const zEnrollmentStatusEnum = z
+  .enum(['ENROLLED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
+  .describe('**[READ-ONLY]** Current enrollment status for the student.');
+
+/**
+ * A student's view of their scheduled classes with enrollment information
+ */
+export const zStudentSchedule = z
+  .object({
+    enrollment_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique system identifier for the enrollment.')
+      .readonly()
+      .optional(),
+    scheduled_instance_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Reference to the scheduled instance.')
+      .readonly()
+      .optional(),
+    class_definition_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Reference to the class definition.')
+      .readonly()
+      .optional(),
+    instructor_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Reference to the instructor.')
+      .readonly()
+      .optional(),
+    title: z
+      .string()
+      .describe('**[READ-ONLY]** Title of the scheduled class.')
+      .readonly()
+      .optional(),
+    start_time: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Start date and time of the scheduled class.')
+      .readonly()
+      .optional(),
+    end_time: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** End date and time of the scheduled class.')
+      .readonly()
+      .optional(),
+    timezone: z
+      .string()
+      .describe('**[READ-ONLY]** Timezone for the scheduled class.')
+      .readonly()
+      .optional(),
+    location_type: zLocationTypeEnum.optional(),
+    location_name: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable location name for the scheduled class.')
+      .readonly()
+      .optional(),
+    location_latitude: z
+      .number()
+      .describe('**[READ-ONLY]** Latitude coordinate for the scheduled class location.')
+      .readonly()
+      .optional(),
+    location_longitude: z
+      .number()
+      .describe('**[READ-ONLY]** Longitude coordinate for the scheduled class location.')
+      .readonly()
+      .optional(),
+    scheduling_status: zStatusEnum4.optional(),
+    enrollment_status: zEnrollmentStatusEnum.optional(),
+    attendance_marked_at: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when attendance was marked (if applicable).')
+      .readonly()
+      .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
+      .readonly()
+      .optional(),
+    is_upcoming: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
+      .readonly()
+      .optional(),
+  })
+  .describe("A student's view of their scheduled classes with enrollment information");
+
+export const zApiResponseListStudentSchedule = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zStudentSchedule).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 export const zApiResponseListScheduledInstance = z.object({
   success: z.boolean().optional(),
   data: z.array(zScheduledInstance).optional(),
@@ -7171,8 +7278,8 @@ export const zPageableObject = z.object({
 });
 
 export const zPage = z.object({
-  totalPages: z.number().int().optional(),
   totalElements: z.coerce.bigint().optional(),
+  totalPages: z.number().int().optional(),
   first: z.boolean().optional(),
   last: z.boolean().optional(),
   size: z.number().int().optional(),
@@ -8072,113 +8179,6 @@ export const zApiResponseEnrollment = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
-/**
- * **[READ-ONLY]** Current enrollment status for the student.
- */
-export const zEnrollmentStatusEnum = z
-  .enum(['ENROLLED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
-  .describe('**[READ-ONLY]** Current enrollment status for the student.');
-
-/**
- * A student's view of their scheduled classes with enrollment information
- */
-export const zStudentSchedule = z
-  .object({
-    enrollment_uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** Unique system identifier for the enrollment.')
-      .readonly()
-      .optional(),
-    scheduled_instance_uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** Reference to the scheduled instance.')
-      .readonly()
-      .optional(),
-    class_definition_uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** Reference to the class definition.')
-      .readonly()
-      .optional(),
-    instructor_uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** Reference to the instructor.')
-      .readonly()
-      .optional(),
-    title: z
-      .string()
-      .describe('**[READ-ONLY]** Title of the scheduled class.')
-      .readonly()
-      .optional(),
-    start_time: z
-      .string()
-      .datetime()
-      .describe('**[READ-ONLY]** Start date and time of the scheduled class.')
-      .readonly()
-      .optional(),
-    end_time: z
-      .string()
-      .datetime()
-      .describe('**[READ-ONLY]** End date and time of the scheduled class.')
-      .readonly()
-      .optional(),
-    timezone: z
-      .string()
-      .describe('**[READ-ONLY]** Timezone for the scheduled class.')
-      .readonly()
-      .optional(),
-    location_type: zLocationTypeEnum.optional(),
-    location_name: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable location name for the scheduled class.')
-      .readonly()
-      .optional(),
-    location_latitude: z
-      .number()
-      .describe('**[READ-ONLY]** Latitude coordinate for the scheduled class location.')
-      .readonly()
-      .optional(),
-    location_longitude: z
-      .number()
-      .describe('**[READ-ONLY]** Longitude coordinate for the scheduled class location.')
-      .readonly()
-      .optional(),
-    scheduling_status: zStatusEnum4.optional(),
-    enrollment_status: zEnrollmentStatusEnum.optional(),
-    attendance_marked_at: z
-      .string()
-      .datetime()
-      .describe('**[READ-ONLY]** Timestamp when attendance was marked (if applicable).')
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
-      .readonly()
-      .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
-      .readonly()
-      .optional(),
-    is_upcoming: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
-      .readonly()
-      .optional(),
-  })
-  .describe("A student's view of their scheduled classes with enrollment information");
-
-export const zApiResponseListStudentSchedule = z.object({
-  success: z.boolean().optional(),
-  data: z.array(zStudentSchedule).optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
-
 export const zPagedDtoEnrollment = z.object({
   content: z.array(zEnrollment).optional(),
   metadata: zPageMetadata.optional(),
@@ -8188,6 +8188,99 @@ export const zPagedDtoEnrollment = z.object({
 export const zApiResponsePagedDtoEnrollment = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoEnrollment.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Overall class enrollment summary for a student, grouped by class definition
+ */
+export const zStudentClassEnrollmentSummary = z
+  .object({
+    class_definition_uuid: z.string().uuid().describe('Class definition identifier'),
+    class_title: z.string().describe('Class definition title').optional(),
+    latest_enrollment_uuid: z
+      .string()
+      .uuid()
+      .describe('Most recent scheduled-instance enrollment identifier for this class')
+      .optional(),
+    latest_enrollment_status: zStatusEnum7.optional(),
+    scheduled_instance_count: z
+      .number()
+      .int()
+      .describe('Number of scheduled-instance enrollments aggregated under this class')
+      .optional(),
+    latest_scheduled_instance_start_time: z
+      .string()
+      .datetime()
+      .describe('Latest scheduled instance start time found for this class')
+      .optional(),
+    latest_activity_date: z
+      .string()
+      .datetime()
+      .describe('Most recent class enrollment activity timestamp')
+      .optional(),
+  })
+  .describe('Overall class enrollment summary for a student, grouped by class definition');
+
+export const zPagedDtoStudentClassEnrollmentSummary = z.object({
+  content: z.array(zStudentClassEnrollmentSummary).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+/**
+ * Overall course enrollment summary for a student
+ */
+export const zStudentCourseEnrollmentSummary = z
+  .object({
+    enrollment_uuid: z.string().uuid().describe('Course enrollment identifier').optional(),
+    course_uuid: z.string().uuid().describe('Course identifier'),
+    course_name: z.string().describe('Course name').optional(),
+    enrollment_status: z.string().describe('Course enrollment status').optional(),
+    progress_percentage: z.number().describe('Course progress percentage').optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe('Most recent course enrollment update time')
+      .optional(),
+  })
+  .describe('Overall course enrollment summary for a student');
+
+export const zPagedDtoStudentCourseEnrollmentSummary = z.object({
+  content: z.array(zStudentCourseEnrollmentSummary).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+/**
+ * Aggregated course and class enrollments for a student
+ */
+export const zStudentEnrollmentOverview = z
+  .object({
+    student_uuid: z.string().uuid().describe('Student identifier'),
+    class_enrollments: zPagedDtoStudentClassEnrollmentSummary.optional(),
+    course_enrollments: zPagedDtoStudentCourseEnrollmentSummary.optional(),
+  })
+  .describe('Aggregated course and class enrollments for a student');
+
+export const zApiResponseStudentEnrollmentOverview = z.object({
+  success: z.boolean().optional(),
+  data: zStudentEnrollmentOverview.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponsePagedDtoStudentCourseEnrollmentSummary = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoStudentCourseEnrollmentSummary.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponsePagedDtoStudentClassEnrollmentSummary = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoStudentClassEnrollmentSummary.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -13580,6 +13673,22 @@ export const zGetTrainingBranchesByOrganisation1Data = z.object({
  */
 export const zGetTrainingBranchesByOrganisation1Response = zApiResponsePagedDtoTrainingBranch;
 
+export const zGetStudentScheduleData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    studentUuid: z.string().uuid().describe('UUID of the student'),
+  }),
+  query: z.object({
+    start: z.string().date().describe('Start date of the range (YYYY-MM-DD)'),
+    end: z.string().date().describe('End date of the range (YYYY-MM-DD)'),
+  }),
+});
+
+/**
+ * Student schedule retrieved successfully
+ */
+export const zGetStudentScheduleResponse = zApiResponseListStudentSchedule;
+
 export const zCancelScheduledClassData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -14622,21 +14731,67 @@ export const zGetEnrollmentData = z.object({
  */
 export const zGetEnrollmentResponse = zApiResponseEnrollment;
 
-export const zGetStudentScheduleData = z.object({
+export const zGetScheduledInstanceEnrollmentsForStudentData = z.object({
   body: z.never().optional(),
   path: z.object({
     studentUuid: z.string().uuid().describe('UUID of the student'),
   }),
   query: z.object({
-    start: z.string().date().describe('Start date of the range (YYYY-MM-DD)'),
-    end: z.string().date().describe('End date of the range (YYYY-MM-DD)'),
+    pageable: zPageable,
   }),
 });
 
 /**
- * Student schedule retrieved successfully
+ * Student scheduled instance enrollments retrieved successfully
  */
-export const zGetStudentScheduleResponse = zApiResponseListStudentSchedule;
+export const zGetScheduledInstanceEnrollmentsForStudentResponse = zApiResponsePagedDtoEnrollment;
+
+export const zGetEnrollmentOverviewForStudentData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    studentUuid: z.string().uuid().describe('UUID of the student'),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Student enrollment overview retrieved successfully
+ */
+export const zGetEnrollmentOverviewForStudentResponse = zApiResponseStudentEnrollmentOverview;
+
+export const zGetCourseEnrollmentsForStudentData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    studentUuid: z.string().uuid().describe('UUID of the student'),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Student course enrollments retrieved successfully
+ */
+export const zGetCourseEnrollmentsForStudentResponse =
+  zApiResponsePagedDtoStudentCourseEnrollmentSummary;
+
+export const zGetClassEnrollmentsForStudentData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    studentUuid: z.string().uuid().describe('UUID of the student'),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Student class enrollments retrieved successfully
+ */
+export const zGetClassEnrollmentsForStudentResponse =
+  zApiResponsePagedDtoStudentClassEnrollmentSummary;
 
 export const zSearchEnrollmentsData = z.object({
   body: z.never().optional(),
