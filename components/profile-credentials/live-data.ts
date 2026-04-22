@@ -602,7 +602,7 @@ function buildTimelineItems(items: ReturnType<typeof mapCredentialItems>): Growt
   const timelineIcons = [GraduationCap, BriefcaseBusiness, Building2, WalletCards, Cloud, Globe, Star];
 
   return items
-    .filter(item => item.level === 'Verified')
+    .filter(item => item.level === 'Verified' || !!item.recordKind)
     .slice(0, 6)
     .map((item, index) => ({
       id: `${item.id}-timeline`,
@@ -610,8 +610,11 @@ function buildTimelineItems(items: ReturnType<typeof mapCredentialItems>): Growt
       provider: item.issuer,
       documentName: item.documentLabel,
       documentUrl: item.documentUrl,
+      recordKind: item.recordKind,
+      recordSummary: item.recordSummary,
+      details: item.details,
       badge: item.level,
-      metadata: item.status,
+      metadata: item.recordSummary ?? item.status,
       footerLabel: item.actionLabel,
       actionLabel: item.actionLabel,
       accent: index % 3 === 0 ? 'green' : index % 3 === 1 ? 'amber' : 'blue',

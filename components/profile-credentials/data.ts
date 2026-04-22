@@ -68,6 +68,9 @@ export type GrowthItem = {
   provider: string;
   documentName?: string;
   documentUrl?: string;
+  recordKind?: 'education' | 'membership' | 'experience';
+  recordSummary?: string;
+  details?: CredentialDetail[];
   badge: string;
   metadata: string;
   footerLabel: string;

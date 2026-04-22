@@ -174,8 +174,6 @@ export function CredentialCertificateCard({
   const StatusIcon = item.statusIcon;
   const statusTone = getStatusTone(item.status);
 
-  console.log(item, "IT")
-
   return (
     <Card className='gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
       {item.documentUrl ? (
