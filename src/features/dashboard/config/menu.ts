@@ -182,11 +182,6 @@ export default {
       url: '/dashboard/portfolio',
       icon: Briefcase,
     },
-    {
-      title: 'Opportunities',
-      url: '/dashboard/opportunities',
-      icon: Handshake,
-    },
     // {
     //   title: 'Invites',
     //   url: '/dashboard/invites',
@@ -556,6 +551,11 @@ export default {
       title: 'People',
       url: '/dashboard/people',
       icon: Users,
+    },
+    {
+      title: 'Job Marketplace',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
     },
     {
       title: 'Course Management',

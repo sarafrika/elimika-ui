@@ -110,6 +110,15 @@ export function CredentialsUploadSheet({
     }
   };
 
+  const handleSuccess = async () => {
+    toast.success('Document saved successfully.');
+    resetDraft();
+    await onSaved();
+    setTimeout(() => {
+      onOpenChange(false);
+    }, 0);
+  };
+
   const submitDocument = async () => {
     if (role === 'student') {
       toast.info('Student document APIs are coming soon.');
@@ -185,6 +194,8 @@ export function CredentialsUploadSheet({
       resetDraft();
       await onSaved();
       onOpenChange(false);
+
+      await handleSuccess();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to save document.');
     }
