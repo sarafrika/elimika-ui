@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, MapPin, Share2, WalletCards } from 'lucide-react';
+import { Download, MapPin, Share2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -47,12 +47,14 @@ export function SkillsWalletHeader({
     <section className='border-border/60 bg-card overflow-hidden rounded-lg border'>
       <div className='bg-muted/40 flex min-h-28 flex-col gap-3 p-3 sm:p-4 md:flex-row md:items-end md:justify-between'>
         <div className='flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end'>
-          <div className='border-background bg-muted grid size-16 shrink-0 place-items-center overflow-hidden rounded-lg border-4 sm:size-[4.75rem]'>
+          <div className='border-background bg-muted grid size-16 shrink-0 self-start place-items-start overflow-hidden rounded-lg border-4 sm:size-[4.75rem]'>
             {profile.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={profile.avatarUrl} alt='' className='h-full w-full object-cover' />
             ) : (
-              <WalletCards className='text-primary size-8' aria-hidden='true' />
+              <span className='text-primary text-lg font-semibold'>
+                {getInitials(profile.name)}
+              </span>
             )}
           </div>
 
@@ -108,4 +110,13 @@ export function SkillsWalletHeader({
       </div>
     </section>
   );
+}
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase())
+    .join('');
 }

@@ -44,5 +44,6 @@ export type SharedMySkillsProfile = {
   avatarUrl?: string;
   email?: string;
   phone?: string;
+  website?: string;
   joinedLabel?: string;
 };

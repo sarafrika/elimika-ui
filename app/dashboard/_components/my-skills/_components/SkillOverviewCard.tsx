@@ -1,12 +1,4 @@
-import {
-  BriefcaseBusiness,
-  CalendarDays,
-  Globe,
-  Mail,
-  MapPin,
-  Phone,
-  Share2
-} from 'lucide-react';
+import { CalendarDays, Globe, Mail, MapPin, Phone, Share2 } from 'lucide-react';
 import type React from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -40,83 +32,84 @@ export function SkillOverviewCard({
       </div>
 
       {/* Level illustration */}
-      <div className='relative flex flex-col items-center justify-center overflow-hidden rounded-md bg-gradient-to-b from-primary/10 to-primary/5 py-5'>
+      <div className='from-primary/5 to-primary/0 relative flex flex-col items-center justify-center overflow-hidden rounded-md bg-gradient-to-b py-5'>
         {/* Decorative rings */}
-        <div className='absolute h-24 w-24 rounded-full border border-primary/10' />
-        <div className='absolute h-16 w-16 rounded-full border border-primary/15' />
+        <div className='border-primary/10 absolute h-24 w-24 rounded-full border' />
+        <div className='border-primary/15 absolute h-16 w-16 rounded-full border' />
 
         {/* Level badge */}
-        <div className='relative flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-primary/40 bg-background shadow-md shadow-primary/10'>
-          <span className='text-[9px] font-bold uppercase tracking-widest text-muted-foreground leading-none'>
+        <div className='border-primary/40 bg-background shadow-primary/10 relative flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 shadow-md'>
+          <span className='text-muted-foreground text-[9px] leading-none font-bold tracking-widest uppercase'>
             LV.
           </span>
-          <span className='text-xl font-black leading-none text-primary'>
-            {levelNumber}
-          </span>
+          <span className='text-primary text-xl leading-none font-black'>{levelNumber}</span>
         </div>
 
         {/* Label + score */}
-        <p className='mt-2 text-[11px] font-semibold text-foreground'>{levelLabel}</p>
-        <p className='text-[10px] text-muted-foreground'>Avg. Score: {averageScore.toFixed(1)}</p>
+        <p className='text-foreground mt-2 text-[11px] font-semibold'>{levelLabel}</p>
+        <p className='text-muted-foreground text-[10px]'>Avg. Score: {averageScore.toFixed(1)}</p>
 
         {/* Progress pips */}
         <div className='mt-2.5 flex items-center gap-1'>
           {Array.from({ length: 5 }).map((_, i) => (
             <span
               key={i}
-              className={`h-1.5 rounded-full transition-all ${i < levelNumber ? 'w-4 bg-primary' : 'w-1.5 bg-primary/20'
+              className={`h-1.5 rounded-full transition-all ${i < levelNumber ? 'bg-primary w-4' : 'bg-primary/20 w-1.5'
                 }`}
             />
           ))}
         </div>
       </div>
 
-      <div className='border-border/60 bg-background mb-3 rounded-md border p-2 mt-4'>
-        <div className='mb-2 flex items-start gap-2'>
-          <div className='bg-primary/10 text-primary grid size-10 shrink-0 place-items-center overflow-hidden rounded-md'>
+      <div className='border-border/60 bg-background mt-4 mb-3 rounded-md border p-3'>
+        {/* Avatar + name */}
+        <div className='mb-3 flex items-start gap-3'>
+          <div className='bg-primary/10 text-primary grid size-14 shrink-0 place-items-center overflow-hidden rounded-md'>
             {profile.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={profile.avatarUrl} alt='' className='h-full w-full object-cover' />
             ) : (
-              <BriefcaseBusiness className='size-4' aria-hidden='true' />
+              <span className='text-base font-semibold'>{getInitials(profile.name)}</span>
             )}
           </div>
           <div className='min-w-0'>
-            <p className='text-foreground truncate text-sm font-semibold sm:text-base'>
+            <p className='text-foreground truncate text-base font-semibold sm:text-lg'>
               {profile.name}
             </p>
-            <p className='text-muted-foreground truncate text-xs sm:text-sm'>{profile.title}</p>
+            <p className='text-muted-foreground truncate text-sm'>{profile.title}</p>
             {profile.location ? (
-              <p className='text-muted-foreground mt-1 inline-flex max-w-full items-center gap-1 truncate text-xs'>
-                <MapPin className='size-3.5 shrink-0' />
+              <p className='text-muted-foreground mt-1 inline-flex max-w-full items-center gap-1 truncate text-sm'>
+                <MapPin className='size-4 shrink-0' />
                 <span className='truncate'>{profile.location}</span>
               </p>
             ) : null}
           </div>
         </div>
 
-        <div className='mb-2 grid grid-cols-2 gap-2'>
-          <Button type='button' size='sm' className='h-7 rounded-md text-[10px]'>
+        {/* CTAs */}
+        <div className='mb-3 grid grid-cols-2 gap-2'>
+          <Button type='button' size='sm' className='h-9 rounded-md text-xs'>
             Contact Info
           </Button>
-          <Button type='button' variant='outline' size='sm' className='h-7 rounded-md text-[10px]'>
-            <Share2 className='size-3' />
+          <Button type='button' variant='outline' size='sm' className='h-9 gap-1.5 rounded-md text-xs'>
+            <Share2 className='size-3.5' />
             Share
           </Button>
         </div>
 
-        <div className='space-y-1.5'>
+        {/* Profile facts */}
+        <div className='space-y-2'>
           {profile.website ? (
-            <ProfileFact icon={<Globe className='size-3.5' />} value={profile.website} />
+            <ProfileFact icon={<Globe className='size-4' />} value={profile.website} />
           ) : null}
           {profile.email ? (
-            <ProfileFact icon={<Mail className='size-3.5' />} value={profile.email} />
+            <ProfileFact icon={<Mail className='size-4' />} value={profile.email} />
           ) : null}
           {profile.phone ? (
-            <ProfileFact icon={<Phone className='size-3.5' />} value={profile.phone} />
+            <ProfileFact icon={<Phone className='size-4' />} value={profile.phone} />
           ) : null}
           {profile.joinedLabel ? (
-            <ProfileFact icon={<CalendarDays className='size-3.5' />} value={profile.joinedLabel} />
+            <ProfileFact icon={<CalendarDays className='size-4' />} value={profile.joinedLabel} />
           ) : null}
         </div>
       </div>
@@ -126,9 +119,18 @@ export function SkillOverviewCard({
 
 function ProfileFact({ icon, value }: { icon: React.ReactNode; value: string }) {
   return (
-    <p className='text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs'>
+    <p className='text-muted-foreground flex min-w-0 items-center gap-2 text-sm'>
       <span className='text-primary shrink-0'>{icon}</span>
       <span className='truncate'>{value}</span>
     </p>
   );
+}
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase())
+    .join('');
 }

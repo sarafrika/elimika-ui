@@ -9,6 +9,7 @@ import {
   type SharedTimelineItem,
 } from '@/app/dashboard/_components/my-skills';
 import { useInstructor } from '@/context/instructor-context';
+import { useUserProfile } from '@/context/profile-context';
 import { useMultipleClassDetails } from '@/hooks/use-class-multiple-details';
 import type { InstructorSkill, StudentSchedule } from '@/services/client';
 import {
@@ -45,7 +46,9 @@ const getProfileName = (profile: unknown) => {
 };
 
 export default function InstructorMySkillsPage() {
-  const instructor = useInstructor();
+  const user = useUserProfile();
+  const instructorContext = useInstructor();
+  const instructor = user?.instructor ?? instructorContext;
   const instructorUuid = instructor?.uuid as string;
 
   const skillsQuery = useQuery({
@@ -158,18 +161,26 @@ export default function InstructorMySkillsPage() {
         ];
 
   const profile: SharedMySkillsProfile = {
-    name: getProfileName(instructor),
+    name: getProfileString(user, ['full_name', 'display_name']) ?? getProfileName(user),
     title:
       getProfileString(instructor, ['professional_headline', 'headline', 'title']) ??
+      getProfileString(user, ['professional_headline', 'headline', 'title']) ??
       'Instructor Skills Wallet',
     location:
       getProfileString(instructor, ['location', 'formatted_location', 'country']) ??
+      getProfileString(user, ['location', 'formatted_location', 'country']) ??
       'Training profile',
-    email: getProfileString(instructor, ['email', 'contact_email']),
-    phone: getProfileString(instructor, ['phone_number', 'phone', 'contact_phone']),
-    joinedLabel: getProfileString(instructor, ['created_date'])
-      ? `Joined ${new Date(getProfileString(instructor, ['created_date']) as string).toLocaleDateString()}`
-      : undefined,
+    avatarUrl: getProfileString(user, ['profile_image', 'profile_image_url', 'avatar_url']),
+    email: getProfileString(user, ['email', 'contact_email']),
+    phone: getProfileString(user, ['phone_number', 'phone', 'contact_phone']),
+    website: getProfileString(instructor, ['website']) ?? getProfileString(user, ['website']),
+    joinedLabel:
+      (getProfileString(user, ['created_date']) ?? getProfileString(instructor, ['created_date']))
+        ? `Joined ${new Date(
+            (getProfileString(user, ['created_date']) ??
+              getProfileString(instructor, ['created_date'])) as string
+          ).toLocaleDateString()}`
+        : undefined,
   };
 
   return (

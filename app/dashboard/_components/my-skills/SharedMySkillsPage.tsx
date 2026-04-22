@@ -4,7 +4,6 @@ import {
   Award,
   BadgeCheck,
   BookOpenCheck,
-  BriefcaseBusiness,
   ChevronRight,
   GraduationCap,
   Medal,

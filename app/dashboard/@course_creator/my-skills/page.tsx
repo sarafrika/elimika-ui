@@ -9,6 +9,7 @@ import {
   type SharedTimelineItem,
 } from '@/app/dashboard/_components/my-skills';
 import { useCourseCreator } from '@/context/course-creator-context';
+import { useUserProfile } from '@/context/profile-context';
 import { useMultipleClassDetails } from '@/hooks/use-class-multiple-details';
 import type { CourseCreatorSkill, Student, StudentSchedule } from '@/services/client';
 import {
@@ -45,8 +46,10 @@ const getProfileName = (profile: unknown) => {
 };
 
 export default function CourseCreatorMySkillsPage() {
+  const user = useUserProfile();
   const creator = useCourseCreator();
-  const creatorUuid = creator?.profile?.uuid as string;
+  const creatorProfile = user?.courseCreator ?? creator?.profile;
+  const creatorUuid = creatorProfile?.uuid as string;
 
   const skillsQuery = useQuery({
     ...getCourseCreatorSkillsOptions({
@@ -60,10 +63,10 @@ export default function CourseCreatorMySkillsPage() {
     ...searchStudentsOptions({
       query: {
         pageable: {},
-        searchParams: { user_uuid_eq: creator?.profile?.user_uuid as string },
+        searchParams: { user_uuid_eq: creatorProfile?.user_uuid as string },
       },
     }),
-    enabled: !!creator?.profile?.user_uuid,
+    enabled: !!creatorProfile?.user_uuid,
   });
 
   const studentSearchResults = (studentSearchQuery.data?.content ?? []) as Student[];
@@ -159,20 +162,27 @@ export default function CourseCreatorMySkillsPage() {
         ];
 
   const profile: SharedMySkillsProfile = {
-    name: getProfileName(creator?.profile),
+    name: getProfileString(user, ['full_name', 'display_name']) ?? getProfileName(user),
     title:
-      getProfileString(creator?.profile, ['professional_headline', 'headline', 'title']) ??
+      getProfileString(creatorProfile, ['professional_headline', 'headline', 'title']) ??
+      getProfileString(user, ['professional_headline', 'headline', 'title']) ??
       'Course Creator Skills Wallet',
     location:
-      getProfileString(creator?.profile, ['location', 'formatted_location', 'country']) ??
+      getProfileString(creatorProfile, ['location', 'formatted_location', 'country']) ??
+      getProfileString(user, ['location', 'formatted_location', 'country']) ??
       'Course design profile',
-    email: getProfileString(creator?.profile, ['email', 'contact_email']),
-    phone: getProfileString(creator?.profile, ['phone_number', 'phone', 'contact_phone']),
-    joinedLabel: getProfileString(creator?.profile, ['created_date'])
-      ? `Joined ${new Date(
-          getProfileString(creator?.profile, ['created_date']) as string
-        ).toLocaleDateString()}`
-      : undefined,
+    avatarUrl: getProfileString(user, ['profile_image', 'profile_image_url', 'avatar_url']),
+    email: getProfileString(user, ['email', 'contact_email']),
+    phone: getProfileString(user, ['phone_number', 'phone', 'contact_phone']),
+    website: getProfileString(creatorProfile, ['website']) ?? getProfileString(user, ['website']),
+    joinedLabel:
+      (getProfileString(user, ['created_date']) ??
+      getProfileString(creatorProfile, ['created_date']))
+        ? `Joined ${new Date(
+            (getProfileString(user, ['created_date']) ??
+              getProfileString(creatorProfile, ['created_date'])) as string
+          ).toLocaleDateString()}`
+        : undefined,
   };
 
   return (

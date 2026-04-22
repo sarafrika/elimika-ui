@@ -8,6 +8,7 @@ import {
   type SharedSkill,
   type SharedTimelineItem,
 } from '@/app/dashboard/_components/my-skills';
+import { useUserProfile } from '@/context/profile-context';
 import { useStudent } from '@/context/student-context';
 import {
   getClassDefinitionOptions,
@@ -58,7 +59,9 @@ const getProfileName = (profile: unknown) => {
 };
 
 export default function StudentMySkillsPage() {
-  const student = useStudent();
+  const user = useUserProfile();
+  const studentContext = useStudent();
+  const student = user?.student ?? studentContext;
 
   const certificatesQuery = useQuery({
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
@@ -256,18 +259,26 @@ export default function StudentMySkillsPage() {
         ];
 
   const profile: SharedMySkillsProfile = {
-    name: getProfileName(student),
+    name: getProfileString(user, ['full_name', 'display_name']) ?? getProfileName(user),
     title:
       getProfileString(student, ['professional_headline', 'headline', 'title']) ??
+      getProfileString(user, ['professional_headline', 'headline', 'title']) ??
       'Verified Learning Profile',
     location:
       getProfileString(student, ['location', 'formatted_location', 'country']) ??
+      getProfileString(user, ['location', 'formatted_location', 'country']) ??
       'Learning profile',
-    email: getProfileString(student, ['email', 'contact_email']),
-    phone: getProfileString(student, ['phone_number', 'phone', 'contact_phone']),
-    joinedLabel: getProfileString(student, ['created_date'])
-      ? `Joined ${new Date(getProfileString(student, ['created_date']) as string).toLocaleDateString()}`
-      : undefined,
+    avatarUrl: getProfileString(user, ['profile_image', 'profile_image_url', 'avatar_url']),
+    email: getProfileString(user, ['email', 'contact_email']),
+    phone: getProfileString(user, ['phone_number', 'phone', 'contact_phone']),
+    website: getProfileString(student, ['website']) ?? getProfileString(user, ['website']),
+    joinedLabel:
+      (getProfileString(user, ['created_date']) ?? getProfileString(student, ['created_date']))
+        ? `Joined ${new Date(
+            (getProfileString(user, ['created_date']) ??
+              getProfileString(student, ['created_date'])) as string
+          ).toLocaleDateString()}`
+        : undefined,
   };
 
   const isLoading =
