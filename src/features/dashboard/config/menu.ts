@@ -16,7 +16,6 @@ import {
   ClipboardList,
   DollarSign,
   FileCheck,
-  FileStackIcon,
   FileText,
   GraduationCap,
   Handshake,
@@ -35,7 +34,7 @@ import {
   UserIcon,
   Users,
   UsersIcon,
-  Wallet,
+  Wallet
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -348,6 +347,11 @@ export default {
       icon: LayoutDashboard,
     },
     {
+      title: 'My Skills',
+      url: '/dashboard/my-skills',
+      icon: BadgeCheck,
+    },
+    {
       title: 'Courses',
       url: '/dashboard/courses',
       icon: GraduationCap,
@@ -363,11 +367,6 @@ export default {
     //   icon: FileStack,
     // },
     {
-      title: 'My Skills',
-      url: '/dashboard/my-skills',
-      icon: BadgeCheck,
-    },
-    {
       title: 'Rubrics',
       url: '/dashboard/rubrics',
       icon: ClipboardList,
@@ -377,6 +376,16 @@ export default {
       url: '/dashboard/instructors',
       // url: '/dashboard/training-applications',
       icon: Users,
+    },
+    {
+      title: 'Credentials Vault',
+      url: '/dashboard/credentials',
+      icon: Award, // changed (certification/badges)
+    },
+    {
+      title: 'Portfolio',
+      url: '/dashboard/portfolio',
+      icon: Briefcase,
     },
     {
       title: 'Notifications',
@@ -445,16 +454,12 @@ export default {
       url: '/dashboard/manage-programs',
       icon: Layers2,
     },
-    {
-      title: 'Classes',
-      url: '/dashboard/classes',
-      icon: FileStackIcon,
-    },
-    {
-      title: 'Classes Calendar',
-      url: '/dashboard/calendar',
-      icon: CalendarClock,
-    },
+    // {
+    //   title: 'Classes',
+    //   url: '/dashboard/classes',
+    //   icon: FileStackIcon,
+    // },
+
     {
       title: 'Students',
       url: '/dashboard/students',
@@ -474,6 +479,16 @@ export default {
       title: 'Organizations',
       url: '/dashboard/organizations',
       icon: Building2,
+    },
+    {
+      title: 'Classes Calendar',
+      url: '/dashboard/calendar',
+      icon: CalendarClock,
+    },
+    {
+      title: 'Verifications',
+      url: '/dashboard/verifications',
+      icon: Award, // changed (certification/badges)
     },
     {
       title: 'Catalogue',
