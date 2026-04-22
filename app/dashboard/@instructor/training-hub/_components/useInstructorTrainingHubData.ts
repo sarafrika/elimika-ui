@@ -5,14 +5,24 @@ import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classe
 import {
   getAllCoursesOptions,
   getEnrollmentsForClassOptions,
+  getInstructorBookingsOptions,
+  getStudentByIdOptions,
+  getUserByUuidOptions,
+  searchEnrollmentsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Enrollment, ScheduledInstance } from '@/services/client/types.gen';
+import type { BookingResponse, Enrollment, ScheduledInstance, Student, User } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import type { TrainingHubLiveClass, TrainingHubManagedCourse } from './training-hub-data';
+import type {
+  TrainingHubBooking,
+  TrainingHubLiveClass,
+  TrainingHubManagedCourse,
+  TrainingHubWaitingStudent,
+} from './training-hub-data';
 
 const ACTIVE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
+const COMPLETED_BOOKING_STATUSES = new Set(['cancelled', 'declined', 'expired']);
 const ACCENTS: TrainingHubManagedCourse['accent'][] = ['blue', 'indigo', 'orange', 'yellow'];
 
 const formatCurrency = (amount?: number | null, currency = 'KES') => {
@@ -71,7 +81,58 @@ const formatTimeRange = (start?: Date | string | null, end?: Date | string | nul
   return `${formatter.format(startDate)} - ${formatter.format(endDate)}`;
 };
 
+const formatDateTime = (value?: Date | string | null) => {
+  if (!value) return 'Schedule pending';
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Schedule pending';
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+};
+
+const formatRelativeAge = (createdDate?: Date | string | null) => {
+  if (!createdDate) return 'New';
+
+  const date = createdDate instanceof Date ? createdDate : new Date(createdDate);
+  if (Number.isNaN(date.getTime())) return 'New';
+
+  const diffMs = Math.max(0, Date.now() - date.getTime());
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 0) return `${diffDays}d`;
+  if (diffHours > 0) return `${diffHours}h`;
+
+  const diffMinutes = Math.max(1, Math.floor(diffMs / (1000 * 60)));
+  return `${diffMinutes}m`;
+};
+
 const isNonCancelledInstance = (instance: ScheduledInstance) => instance.status !== 'CANCELLED';
+
+const normalizeStatusLabel = (value: string) =>
+  value
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+const resolvePersonName = (firstName?: string, lastName?: string, fallback = '') => {
+  const combined = [firstName, lastName].filter(Boolean).join(' ').trim();
+  return combined || fallback;
+};
+
+const isUpcomingBooking = (booking: BookingResponse, now: Date) => {
+  if (booking.start_time < now) return false;
+  return !COMPLETED_BOOKING_STATUSES.has(booking.status ?? '');
+};
+
+const getBookingStatusTone = (status?: BookingResponse['status']) =>
+  status && ['confirmed', 'accepted_confirmed'].includes(status) ? 'info' : 'warning';
 
 export function useInstructorTrainingHubData() {
   const instructor = useInstructor();
@@ -108,7 +169,6 @@ export function useInstructorTrainingHubData() {
     refetchOnWindowFocus: false,
   });
 
-
   const approvedApplications = useMemo(
     () =>
       (applicationsResponse?.data?.content ?? []).filter(
@@ -117,16 +177,21 @@ export function useInstructorTrainingHubData() {
     [applicationsResponse?.data?.content]
   );
 
-
   const approvedApplicationMap = useMemo(
-    () => new Map(approvedApplications.map(application => [application.course_uuid ?? '', application])),
+    () =>
+      new Map(
+        approvedApplications.map(application => [application.course_uuid ?? '', application])
+      ),
     [approvedApplications]
   );
 
   const approvedCourses = useMemo(
     () =>
       (coursesResponse?.data?.content ?? []).filter(
-        course => Boolean(course.uuid) && course.admin_approved && approvedApplicationMap.has(course.uuid ?? '')
+        course =>
+          Boolean(course.uuid) &&
+          course.admin_approved &&
+          approvedApplicationMap.has(course.uuid ?? '')
       ),
     [approvedApplicationMap, coursesResponse?.data?.content]
   );
@@ -181,10 +246,7 @@ export function useInstructorTrainingHubData() {
 
       courseClasses.forEach(classItem => {
         (enrollmentsByClass.get(classItem.uuid ?? '') ?? []).forEach(enrollment => {
-          if (
-            enrollment.student_uuid &&
-            ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
-          ) {
+          if (enrollment.student_uuid && ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')) {
             learnerIds.add(enrollment.student_uuid);
           }
         });
@@ -199,7 +261,7 @@ export function useInstructorTrainingHubData() {
         classes: `${courseClasses.length} classes`,
         ctaLabel: 'Create Classes',
         ctaHref: '/dashboard/classes/create-new',
-        accent: ACCENTS[index % ACCENTS.length],
+        accent: ACCENTS[index % ACCENTS.length] ?? 'blue',
         imageUrl: course.thumbnail_url ?? course.banner_url,
         status: 'approved',
       };
@@ -235,9 +297,11 @@ export function useInstructorTrainingHubData() {
           ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
       ).length;
 
+      const dayLabel = formatDayLabel(instance.start_time);
+
       return {
         id: instance.uuid ?? classItem.uuid ?? classItem.title,
-        day: formatDayLabel(instance.start_time),
+        day: dayLabel,
         time: formatTimeRange(instance.start_time, instance.end_time),
         title: instance.title || classItem.course?.name || classItem.title,
         provider: classItem.course?.category_names?.[0] ?? 'Approved course',
@@ -245,23 +309,266 @@ export function useInstructorTrainingHubData() {
         fee: formatCurrency(classItem.training_fee),
         sessions: `${classItem.schedule?.filter(isNonCancelledInstance).length ?? 0}`,
         href: '/dashboard/classes',
-        status:
-          formatDayLabel(instance.start_time) === 'Today'
-            ? 'today'
-            : formatDayLabel(instance.start_time) === 'Tomorrow'
-              ? 'tomorrow'
-              : 'upcoming',
+        status: dayLabel === 'Today' ? 'today' : dayLabel === 'Tomorrow' ? 'tomorrow' : 'upcoming',
       };
     });
   }, [enrollmentsByClass, liveClassItems]);
 
+  const waitlistQueries = useQueries({
+    queries: relevantClasses.map(classItem => ({
+      ...searchEnrollmentsOptions({
+        query: {
+          pageable: {
+            page: 0,
+            size: 100,
+          },
+          searchParams: {
+            class_definition_uuid_eq: classItem.uuid ?? '',
+            status_eq: 'WAITLISTED',
+          },
+        },
+      }),
+      enabled: Boolean(classItem.uuid),
+      staleTime: 60 * 1000,
+    })),
+  });
+
+  const waitlistEnrollmentsByClass = useMemo(() => {
+    const map = new Map<string, Enrollment[]>();
+    relevantClasses.forEach((classItem, index) => {
+      if (!classItem.uuid) return;
+      map.set(classItem.uuid, waitlistQueries[index]?.data?.data?.content ?? []);
+    });
+    return map;
+  }, [relevantClasses, waitlistQueries]);
+
+  const waitlistStudentUuids = useMemo(() => {
+    const studentUuids = Array.from(
+      new Set(
+        Array.from(waitlistEnrollmentsByClass.values())
+          .flat()
+          .map(enrollment => enrollment.student_uuid)
+          .filter(Boolean)
+      )
+    );
+
+    return studentUuids;
+  }, [waitlistEnrollmentsByClass]);
+
+  const waitlistStudentQueries = useQueries({
+    queries: waitlistStudentUuids.map(uuid => ({
+      ...getStudentByIdOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+      staleTime: 60 * 1000,
+    })),
+  });
+
+  const waitlistStudentsById = useMemo(() => {
+    const map: Record<string, Student> = {};
+    waitlistStudentQueries.forEach(queryResult => {
+      const student = queryResult.data;
+      if (student?.uuid) {
+        map[student.uuid] = student;
+      }
+    });
+    return map;
+  }, [waitlistStudentQueries]);
+
+  const waitlistUserUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          waitlistStudentQueries
+            .map(queryResult => queryResult.data?.user_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
+        )
+      ),
+    [waitlistStudentQueries]
+  );
+
+  const waitlistUserQueries = useQueries({
+    queries: waitlistUserUuids.map(uuid => ({
+      ...getUserByUuidOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+      staleTime: 60 * 1000,
+    })),
+  });
+
+  const waitlistUsersById = useMemo(() => {
+    const map: Record<string, User> = {};
+    waitlistUserQueries.forEach(queryResult => {
+      const user = queryResult.data?.data;
+      if (user?.uuid) {
+        map[user.uuid] = user;
+      }
+    });
+    return map;
+  }, [waitlistUserQueries]);
+
+  const waitingList = useMemo<TrainingHubWaitingStudent[]>(() => {
+    const items: TrainingHubWaitingStudent[] = [];
+
+    relevantClasses.forEach(classItem => {
+      const classUuid = classItem.uuid ?? '';
+      const classWaitlist = waitlistEnrollmentsByClass.get(classUuid) ?? [];
+
+      classWaitlist.forEach(enrollment => {
+        const student = waitlistStudentsById[enrollment.student_uuid];
+        const user = student?.user_uuid ? waitlistUsersById[student.user_uuid] : undefined;
+        const scheduledInstance = classItem.schedule?.find(
+          instance => instance.uuid === enrollment.scheduled_instance_uuid
+        );
+
+        items.push({
+          id:
+            enrollment.uuid ??
+            `${classUuid}-${enrollment.student_uuid}-${enrollment.scheduled_instance_uuid}`,
+          name:
+            resolvePersonName(user?.first_name, user?.last_name, user?.display_name ?? user?.email) ||
+            enrollment.student_uuid.slice(0, 8),
+          email: user?.email ?? 'No email available',
+          status:
+            enrollment.status === 'WAITLISTED'
+              ? 'Waitlisted'
+              : normalizeStatusLabel(enrollment.status ?? 'WAITLISTED'),
+          age: formatRelativeAge(enrollment.created_date),
+          classTitle: classItem.course?.name || classItem.title,
+          scheduleLabel: formatDateTime(scheduledInstance?.start_time),
+          classId: classUuid,
+        });
+      });
+    });
+
+    return items.sort((left, right) => left.name.localeCompare(right.name));
+  }, [relevantClasses, waitlistEnrollmentsByClass, waitlistStudentsById, waitlistUsersById]);
+
+  const bookingsQuery = useQuery({
+    ...getInstructorBookingsOptions({
+      path: { instructorUuid: instructorUuid ?? '' },
+      query: {
+        pageable: {
+          page: 0,
+          size: 100,
+        },
+      },
+    }),
+    enabled: Boolean(instructorUuid),
+    refetchOnWindowFocus: false,
+  });
+
+  const bookings = useMemo<BookingResponse[]>(
+    () => bookingsQuery.data?.data?.content ?? [],
+    [bookingsQuery.data]
+  );
+
+  const bookingStudentUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          bookings
+            .map(booking => booking.student_uuid)
+            .filter((studentUuid): studentUuid is string => Boolean(studentUuid))
+        )
+      ),
+    [bookings]
+  );
+
+  const bookingStudentQueries = useQueries({
+    queries: bookingStudentUuids.map(uuid => ({
+      ...getStudentByIdOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+      staleTime: 60 * 1000,
+    })),
+  });
+
+  const bookingStudentsById = useMemo(() => {
+    const map: Record<string, Student> = {};
+    bookingStudentQueries.forEach(queryResult => {
+      const student = queryResult.data;
+      if (student?.uuid) {
+        map[student.uuid] = student;
+      }
+    });
+    return map;
+  }, [bookingStudentQueries]);
+
+  const bookingUserUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          bookingStudentQueries
+            .map(queryResult => queryResult.data?.user_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
+        )
+      ),
+    [bookingStudentQueries]
+  );
+
+  const bookingUserQueries = useQueries({
+    queries: bookingUserUuids.map(uuid => ({
+      ...getUserByUuidOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+      staleTime: 60 * 1000,
+    })),
+  });
+
+  const bookingUsersById = useMemo(() => {
+    const map: Record<string, User> = {};
+    bookingUserQueries.forEach(queryResult => {
+      const user = queryResult.data?.data;
+      if (user?.uuid) {
+        map[user.uuid] = user;
+      }
+    });
+    return map;
+  }, [bookingUserQueries]);
+
+  const upcomingBookings = useMemo<TrainingHubBooking[]>(() => {
+    const now = new Date();
+
+    return bookings
+      .filter(booking => isUpcomingBooking(booking, now))
+      .sort((left, right) => left.start_time.getTime() - right.start_time.getTime())
+      .map(booking => {
+        const student = bookingStudentsById[booking.student_uuid];
+        const user = student?.user_uuid ? bookingUsersById[student.user_uuid] : undefined;
+        const title =
+          resolvePersonName(user?.first_name, user?.last_name, user?.display_name ?? user?.email) ||
+          booking.purpose ||
+          'Upcoming booking';
+
+        return {
+          id: booking.uuid ?? `${booking.student_uuid}-${booking.start_time.toISOString()}`,
+          title,
+          subtitle: booking.purpose || formatDateTime(booking.start_time),
+          status: normalizeStatusLabel(booking.status || 'confirmed'),
+          statusTone: getBookingStatusTone(booking.status),
+          meta: `${formatTimeRange(booking.start_time, booking.end_time)} • ${
+            booking.currency ? formatCurrency(booking.price_amount, booking.currency) : 'Booking'
+          }`,
+          actionLabel: 'View booking',
+          actionTone: 'primary',
+          href: '/dashboard/training-hub/bookings',
+        };
+      });
+  }, [bookingStudentsById, bookingUsersById, bookings]);
+
   return {
+    classes: relevantClasses,
     liveClasses,
     managedCourses,
+    waitingList,
+    upcomingBookings,
     isLoading:
       isLoadingClasses ||
       isLoadingCourses ||
       isLoadingApplications ||
-      enrollmentQueries.some(query => query.isLoading),
+      enrollmentQueries.some(query => query.isLoading) ||
+      waitlistQueries.some(query => query.isLoading) ||
+      waitlistStudentQueries.some(query => query.isLoading) ||
+      waitlistUserQueries.some(query => query.isLoading) ||
+      bookingsQuery.isLoading ||
+      bookingStudentQueries.some(query => query.isLoading) ||
+      bookingUserQueries.some(query => query.isLoading),
   };
 }

@@ -1,17 +1,26 @@
 'use client';
 
-import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { Search, Users } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { WaitingListItem } from '../../_components/WaitingListItem';
-import { waitingList } from '../../_components/training-hub-data';
+import { useInstructorTrainingHubData } from '../../_components/useInstructorTrainingHubData';
 
 export function InstructorWaitingListPage() {
   const { replaceBreadcrumbs } = useBreadcrumb();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedClass, setSelectedClass] = useState<'all' | string>('all');
+  const { classes, waitingList, isLoading } = useInstructorTrainingHubData();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -28,14 +37,31 @@ export function InstructorWaitingListPage() {
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
+  const classOptions = useMemo(
+    () =>
+      classes.map(classItem => ({
+        value: classItem.uuid ?? '',
+        label: classItem.title,
+      })),
+    [classes]
+  );
+
+  const activeClassCount = useMemo(
+    () => new Set(waitingList.map(student => student.classId).filter(Boolean)).size,
+    [waitingList]
+  );
+
   const filteredWaitingList = useMemo(
     () =>
-      waitingList.filter(student =>
-        [student.name, student.email, student.classTitle, student.scheduleLabel].some(value =>
-          value.toLowerCase().includes(normalizedSearch)
-        )
-      ),
-    [normalizedSearch, waitingList]
+      waitingList.filter(student => {
+        const matchesSearch = [student.name, student.email, student.classTitle, student.scheduleLabel]
+          .some(value => value.toLowerCase().includes(normalizedSearch));
+        const matchesClass =
+          selectedClass === 'all' || !student.classId ? true : student.classId === selectedClass;
+
+        return matchesSearch && matchesClass;
+      }),
+    [normalizedSearch, selectedClass, waitingList]
   );
 
   return (
@@ -59,28 +85,57 @@ export function InstructorWaitingListPage() {
       </section>
 
       <section className='rounded-[14px] border border-border/50 bg-white p-3 shadow-[0_12px_30px_rgba(31,79,183,0.06)] sm:p-4'>
-        <label className='flex h-11 items-center gap-2 rounded-[10px] border border-border/60 px-3'>
-          <Search className='size-4 text-muted-foreground' />
-          <Input
-            aria-label='Search waiting list'
-            className='h-auto border-0 p-0 shadow-none focus-visible:ring-0'
-            onChange={event => setSearchTerm(event.target.value)}
-            placeholder='Search by student, email, or class'
-            value={searchTerm}
-          />
-        </label>
+        <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px]'>
+          <label className='flex h-11 items-center gap-2 rounded-[10px] border border-border/60 px-3'>
+            <Search className='size-4 text-muted-foreground' />
+            <Input
+              aria-label='Search waiting list'
+              className='h-auto border-0 p-0 shadow-none focus-visible:ring-0'
+              onChange={event => setSearchTerm(event.target.value)}
+              placeholder='Search by student, email, or class'
+              value={searchTerm}
+            />
+          </label>
+
+          <Select onValueChange={value => setSelectedClass(value)} value={selectedClass}>
+            <SelectTrigger className='h-11 rounded-[10px] border-border/60'>
+              <SelectValue placeholder='Filter by class' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>All classes</SelectItem>
+              {classOptions.map(classOption => (
+                <SelectItem key={classOption.value} value={classOption.value}>
+                  {classOption.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </section>
 
       <section className='space-y-3'>
-        {filteredWaitingList.length === 0 ? (
+        {isLoading ? (
           <Card className='border-border/60'>
-            <CardContent className='flex min-h-[260px] flex-col items-center justify-center gap-3 text-center'>
+            <CardContent className='flex min-h-[280px] flex-col items-center justify-center gap-3 text-center'>
+              <Users className='size-8 text-muted-foreground' />
+              <div className='space-y-1'>
+                <h2 className='text-base font-semibold text-foreground'>Loading waiting list</h2>
+                <p className='text-sm text-muted-foreground'>
+                  Fetching waitlisted students across {activeClassCount || classes.length} classes.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : filteredWaitingList.length === 0 ? (
+          <Card className='border-border/60'>
+            <CardContent className='flex min-h-[280px] flex-col items-center justify-center gap-3 text-center'>
               <Users className='size-8 text-muted-foreground' />
               <div className='space-y-1'>
                 <h2 className='text-base font-semibold text-foreground'>No waitlisted students</h2>
                 <p className='text-sm text-muted-foreground'>
-                  Once a class reaches capacity, new enrollments with waitlist status will appear
-                  here.
+                  {selectedClass === 'all'
+                    ? 'Once a class reaches capacity, new enrollments with waitlist status will appear here.'
+                    : 'This class does not have any waitlisted students right now.'}
                 </p>
               </div>
             </CardContent>

@@ -1,10 +1,15 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
+import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 import type { CredentialItem } from '../data';
 
@@ -12,6 +17,113 @@ type CredentialCertificateCardProps = {
   item: CredentialItem;
   ownerName: string;
 };
+
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).toString();
+}
+
+function getStatusTone(status: string) {
+  const normalized = status.toLowerCase();
+
+  if (normalized.includes('verified')) {
+    return {
+      badgeClass: 'border-success/20 bg-success/10 text-success',
+      iconClass: 'text-success',
+    };
+  }
+
+  if (normalized.includes('reject')) {
+    return {
+      badgeClass: 'border-destructive/20 bg-destructive/10 text-destructive',
+      iconClass: 'text-destructive',
+    };
+  }
+
+  if (normalized.includes('pending') || normalized.includes('review')) {
+    return {
+      badgeClass:
+        'border-[color-mix(in_srgb,var(--el-accent-amber)_32%,white)] bg-[color-mix(in_srgb,var(--el-accent-amber)_16%,white)] text-[color-mix(in_srgb,var(--el-accent-amber)_90%,black)]',
+      iconClass: 'text-[color-mix(in_srgb,var(--el-accent-amber)_92%,var(--foreground))]',
+    };
+  }
+
+  return {
+    badgeClass: 'border-border/70 bg-background/80 text-muted-foreground',
+    iconClass: 'text-muted-foreground',
+  };
+}
+
+function PdfPreview({ documentUrl, documentLabel }: { documentUrl: string; documentLabel: string }) {
+  const resolvedUrl = toAuthenticatedMediaUrl(documentUrl) || documentUrl;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!documentUrl) return;
+
+    let cancelled = false;
+    let pdfDoc: PDFDocumentProxy | null = null;
+
+    const renderPage = async (pdf: PDFDocumentProxy) => {
+      const page: PDFPageProxy = await pdf.getPage(1);
+      const canvas = canvasRef.current;
+      if (!canvas || cancelled) return;
+
+      const viewport = page.getViewport({ scale: 1.15 });
+      const context = canvas.getContext('2d');
+      if (!context) return;
+
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+
+      await page.render({ canvasContext: context, viewport } as any).promise;
+    };
+
+    const load = async () => {
+      try {
+        setError(null);
+        const pdf = await pdfjsLib.getDocument(resolvedUrl).promise;
+        if (cancelled) return;
+        pdfDoc = pdf;
+        await renderPage(pdf);
+      } catch (loadError) {
+        if (cancelled) return;
+        setError(loadError instanceof Error ? loadError.message : 'PDF preview unavailable.');
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+      pdfDoc?.destroy().catch(() => {});
+    };
+  }, [resolvedUrl]);
+
+  return (
+    <div className='relative h-[180px] overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-3'>
+      <div className='pointer-events-none absolute inset-x-0 top-0 h-18 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_92%,white_8%),transparent)]' />
+      <div className='pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--background)_94%,white_6%))]' />
+      <div className='pointer-events-none absolute top-4 left-4 z-10 rounded-full border border-white/80 bg-background/85 px-3 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur'>
+        {error ? 'Preview unavailable' : documentLabel}
+      </div>
+      <div className='h-full overflow-hidden rounded-[12px] border border-border/70 bg-background shadow-[0_18px_40px_-28px_rgba(26,56,126,0.35)]'>
+        {error ? (
+          <div className='flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground'>
+            {error}
+          </div>
+        ) : (
+          <canvas ref={canvasRef} className='block w-full' />
+        )}
+      </div>
+    </div>
+  );
+}
 
 function CertificatePreview({
   ownerName,
@@ -49,23 +161,24 @@ export function CredentialCertificateCard({
   ownerName,
 }: CredentialCertificateCardProps) {
   const StatusIcon = item.statusIcon;
+  const statusTone = getStatusTone(item.status);
 
   return (
     <Card className='gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
-      <CertificatePreview
-        ownerName={ownerName}
-        issuer={item.issuer}
-        documentLabel={item.documentLabel}
-      />
+      {item.documentUrl ? (
+        <PdfPreview documentUrl={item.documentUrl} documentLabel={item.documentLabel} />
+      ) : (
+        <CertificatePreview ownerName={ownerName} issuer={item.issuer} documentLabel={item.documentLabel} />
+      )}
 
-      <div className='space-y-4 px-5 py-4'>
+      <div className={cn('space-y-4 px-5 py-4', item.documentUrl ? 'pt-5' : '')}>
         <div className='space-y-2'>
-          <h3 className='text-foreground text-[1.65rem] font-semibold tracking-tight'>
-            {item.title}
+          <h3 className='text-foreground text-[20px] font-semibold tracking-tight'>
+            {item.documentLabel}
           </h3>
           <div className='flex flex-wrap items-center gap-3 text-base'>
-            <span className='text-[1.45rem] font-semibold text-[color-mix(in_srgb,var(--primary)_62%,var(--el-accent-amber))]'>
-              {item.issuer}
+            <span className='text-[18px] font-semibold text-[color-mix(in_srgb,var(--primary)_62%,var(--el-accent-amber))]'>
+              {item.title}
             </span>
             <span className='text-muted-foreground'>|</span>
             <span className='text-muted-foreground'>{item.stage}</span>
@@ -76,20 +189,39 @@ export function CredentialCertificateCard({
               {item.level}
             </Badge>
           </div>
+          {item.metadata ? (
+            <p className='text-muted-foreground text-sm'>{item.metadata}</p>
+          ) : null}
         </div>
 
         <div className='flex flex-wrap gap-2'>
           <Badge
             variant='outline'
-            className='min-h-10 rounded-lg border-white/70 bg-background/80 px-3 text-sm font-medium text-muted-foreground'
+            className={cn(
+              'min-h-10 rounded-lg px-3 text-sm font-medium',
+              statusTone.badgeClass
+            )}
           >
-            <StatusIcon className='text-success size-4' />
+            <StatusIcon className={cn('size-4', statusTone.iconClass)} />
             {item.status}
           </Badge>
-          <Button variant='outline' className='min-h-10 rounded-lg border-white/70 bg-background/80 px-4'>
-            {item.actionLabel}
-            <ChevronRight className='size-4' />
-          </Button>
+          {item.documentUrl ? (
+            <Button
+              asChild
+              variant='outline'
+              className='min-h-10 rounded-lg border-white/70 bg-background/80 px-4'
+            >
+              <a href={toAuthenticatedMediaUrl(item.documentUrl) || item.documentUrl} target='_blank' rel='noreferrer'>
+                {item.actionLabel}
+                <ChevronRight className='size-4' />
+              </a>
+            </Button>
+          ) : (
+            <Button variant='outline' className='min-h-10 rounded-lg border-white/70 bg-background/80 px-4'>
+              {item.actionLabel}
+              <ChevronRight className='size-4' />
+            </Button>
+          )}
         </div>
       </div>
     </Card>

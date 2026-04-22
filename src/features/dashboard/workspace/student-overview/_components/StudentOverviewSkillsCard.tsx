@@ -16,9 +16,9 @@ export function StudentOverviewSkillsCard({
   newSkillsThisMonth,
 }: StudentOverviewSkillsCardProps) {
   return (
-    <Card className='rounded-[20px] border-slate-200 bg-white p-6 '>
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-        <div className='min-w-0'>
+    <Card className='rounded-[20px] border-slate-200 bg-white p-6'>
+      <div className='flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='min-w-0 flex-1'>
           <h2 className='text-[1rem] font-semibold text-slate-900'>Skills Progress</h2>
           <div className='mt-2 text-[2rem] leading-none font-semibold tracking-tight text-slate-900'>
             {progress}%
@@ -58,7 +58,7 @@ export function StudentOverviewSkillsCard({
         </div>
       </div>
 
-      <div className='flex flex-wrap items-end justify-end gap-2 bg-red px-3'>
+      <div className='flex min-w-0 flex-wrap items-end justify-end gap-2 px-3'>
         <Link
           prefetch
           href='/dashboard/my-skills'

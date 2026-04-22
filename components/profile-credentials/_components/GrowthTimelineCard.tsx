@@ -37,8 +37,11 @@ export function GrowthTimelineCard({ item }: GrowthTimelineCardProps) {
         </span>
 
         <div className='min-w-0 flex-1'>
-          <h3 className='text-foreground text-[1.1rem] font-semibold tracking-tight'>{item.title}</h3>
-          <p className='text-muted-foreground mt-1 text-base'>{item.provider}</p>
+          {/* <h3 className='text-foreground text-[1.1rem] font-semibold tracking-tight'>{item.title}</h3> */}
+          <p className='text-muted-foreground mt-1 text-base'>{item.title}</p>
+          {item.documentName ? (
+            <p className='text-muted-foreground mt-1 truncate text-sm'>{item.documentName}</p>
+          ) : null}
         </div>
 
         <Badge
@@ -70,12 +73,22 @@ export function GrowthTimelineCard({ item }: GrowthTimelineCardProps) {
           {item.footerLabel}
         </Badge>
         <Button
+          asChild={!!item.documentUrl}
           variant={item.actionLabel === 'Apply New' ? 'default' : 'outline'}
           size='sm'
           className='rounded-lg'
         >
-          {item.actionLabel}
-          <ChevronRight className='size-4' />
+          {item.documentUrl ? (
+            <a href={item.documentUrl} target='_blank' rel='noreferrer'>
+              {item.actionLabel}
+              <ChevronRight className='size-4' />
+            </a>
+          ) : (
+            <>
+              {item.actionLabel}
+              <ChevronRight className='size-4' />
+            </>
+          )}
         </Button>
       </div>
     </Card>

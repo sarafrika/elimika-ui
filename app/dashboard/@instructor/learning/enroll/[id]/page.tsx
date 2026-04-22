@@ -4,20 +4,20 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useCourseClassesWithDetails from '@/hooks/use-course-classes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import ConfirmModal from '../../../../../../components/custom-modals/confirm-modal';
 import { useInstructor } from '../../../../../../context/instructor-context';
 import {
-  type BundledClass,
-  getErrorMessage,
-} from '../../../../../../src/features/dashboard/courses/types';
-import {
   enrollStudentMutation,
   getStudentScheduleQueryKey,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
 import { EnrollmentLoadingState } from '../../../../../../src/features/dashboard/courses/components/EnrollmentLoadingState';
+import {
+  type BundledClass,
+  getErrorMessage,
+} from '../../../../../../src/features/dashboard/courses/types';
 import {
   CustomEmptyState,
 } from '../../../../@course_creator/_components/loading-state';
@@ -26,6 +26,7 @@ import EnrollCourseCard from '../../../../_components/enroll-course-card';
 const EnrollmentPage = () => {
   const { id: courseId } = useParams<{ id: string }>();
   const qc = useQueryClient();
+  const router = useRouter()
   const instructor = useInstructor();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
@@ -56,6 +57,21 @@ const EnrollmentPage = () => {
   );
 
   const enrollStudent = useMutation(enrollStudentMutation());
+  const formatDateTime = (value?: Date | string | null) => {
+    if (!value) return 'TBD';
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return 'TBD';
+
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
   const handleEnrollStudent = () => {
     if (instructor?.uuid && enrollingClass?.uuid) {
       enrollStudent.mutate(
@@ -75,6 +91,7 @@ const EnrollmentPage = () => {
             });
             setOpenEnrollModal(false);
             toast.success(data?.message || 'Student enrolled successfully');
+            router.replace('/dashboard/courses');
           },
           onError: error => {
             toast.error(
@@ -155,10 +172,10 @@ const EnrollmentPage = () => {
               </p>
               {/* <p><strong>Schedule:</strong> {enrollingCourse?.scheduleSummary}</p> */}
               <p>
-                <strong>Start Date:</strong> {enrollingClass?.default_start_time}
+                <strong>Start Date:</strong> {formatDateTime(enrollingClass?.default_start_time)}
               </p>
               <p>
-                <strong>End Date:</strong> {enrollingClass?.default_end_time}
+                <strong>End Date:</strong> {formatDateTime(enrollingClass?.default_end_time)}
               </p>
               {enrollingClass?.location_type && (
                 <p>

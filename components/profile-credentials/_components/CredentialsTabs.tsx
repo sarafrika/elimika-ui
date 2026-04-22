@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 type CredentialsTabConfig = {
   id: string;
   label: string;
+  countLabel?: string;
   icon: LucideIcon;
 };
 
@@ -30,7 +31,12 @@ export function CredentialsTabs({ tabs }: CredentialsTabsProps) {
             )}
           >
             <Icon className='size-4' />
-            {tab.label}
+            <span className='inline-flex items-center gap-2'>
+              <span>{tab.label}</span>
+              {tab.countLabel ? (
+                <span className='text-muted-foreground text-xs font-medium'>{tab.countLabel}</span>
+              ) : null}
+            </span>
           </TabsTrigger>
         );
       })}

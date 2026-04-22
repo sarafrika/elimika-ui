@@ -23,6 +23,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
 import { ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassSidebar } from './_components/class-sidebar';
+import { ClassWaitingListTab } from './_components/class-waiting-list-tab';
 import { ClassStudentsTab } from './_components/class-students-tab';
 import {
   classTabs,
@@ -382,9 +383,11 @@ export default function NewClassPage() {
             </TabsContent>
 
             <TabsContent value='waiting-list' className='mt-0'>
-              <PlaceholderTab
-                title='Waiting List'
-                description='This tab is ready for class-wide announcement tools and communication flows when you are ready to wire them in.'
+              <ClassWaitingListTab
+                isLoadingClasses={isLoadingClasses}
+                selectedClass={selectedClass}
+                selectedClassEntry={selectedInstanceEntry}
+                visibleInstances={visibleInstances}
               />
             </TabsContent>
 

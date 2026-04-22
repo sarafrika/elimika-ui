@@ -33,6 +33,7 @@ export type TrainingHubWaitingStudent = {
   age: string;
   classTitle: string;
   scheduleLabel: string;
+  classId?: string;
 };
 
 export type TrainingHubBooking = {

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ChangeEvent } from 'react';
 import { ChevronDown, Plus, Search } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,9 @@ type CredentialsHeaderProps = {
   description: string;
   searchPlaceholder: string;
   addLabel: string;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  onAddClick?: () => void;
 };
 
 export function CredentialsHeader({
@@ -17,6 +21,9 @@ export function CredentialsHeader({
   description,
   searchPlaceholder,
   addLabel,
+  searchValue,
+  onSearchChange,
+  onAddClick,
 }: CredentialsHeaderProps) {
   return (
     <header className='relative overflow-hidden rounded-[20px] border bg-[linear-gradient(135deg,color-mix(in_srgb,var(--background)_92%,var(--el-accent-azure)_8%),color-mix(in_srgb,var(--background)_88%,white_12%))] px-5 py-5 shadow-sm sm:px-6 lg:px-7'>
@@ -33,12 +40,14 @@ export function CredentialsHeader({
             <Input
               aria-label='Search credentials'
               placeholder={searchPlaceholder}
+              value={searchValue}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => onSearchChange?.(event.target.value)}
               className='h-11 rounded-xl border-white/60 bg-background/90 pr-12 pl-11 shadow-sm backdrop-blur'
             />
             <ChevronDown className='text-muted-foreground absolute top-1/2 right-4 size-4 -translate-y-1/2' />
           </label>
 
-          <Button className='h-11 rounded-xl px-5 sm:px-6'>
+          <Button type='button' className='h-11 rounded-xl px-5 sm:px-6' onClick={onAddClick}>
             <Plus className='size-4' />
             {addLabel}
           </Button>

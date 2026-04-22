@@ -4,22 +4,18 @@ import {
   BadgeCheck,
   BriefcaseBusiness,
   Building2,
-  CalendarDays,
   CheckCircle2,
   Cloud,
   Eye,
   Globe,
   GraduationCap,
-  Mail,
-  MapPin,
-  Phone,
-  Share2,
   Star,
-  WalletCards,
+  WalletCards
 } from 'lucide-react';
 
-export type CredentialsRole = 'student' | 'instructor';
+export type CredentialsRole = 'student' | 'instructor' | 'course_creator';
 export type CredentialsTabId = 'all' | 'badges' | 'certificates' | 'blockchain';
+export type CredentialsStatusFilter = 'all' | 'verified' | 'pending' | 'rejected';
 
 export type CredentialsTab = {
   id: CredentialsTabId;
@@ -52,12 +48,16 @@ export type CredentialItem = {
   statusIcon: LucideIcon;
   actionLabel: string;
   documentLabel: string;
+  documentUrl?: string;
+  metadata?: string;
 };
 
 export type GrowthItem = {
   id: string;
   title: string;
   provider: string;
+  documentName?: string;
+  documentUrl?: string;
   badge: string;
   metadata: string;
   footerLabel: string;
@@ -92,6 +92,13 @@ const studentTabs: CredentialsTab[] = [
 const instructorTabs: CredentialsTab[] = [
   { id: 'all', label: '28 Credentials', icon: WalletCards },
   { id: 'badges', label: 'Teaching Badges', icon: BadgeCheck },
+  { id: 'certificates', label: 'Certificates', icon: Award },
+  { id: 'blockchain', label: 'Blockchain', icon: CheckCircle2 },
+];
+
+const courseCreatorTabs: CredentialsTab[] = [
+  { id: 'all', label: '31 Credentials', icon: WalletCards },
+  { id: 'badges', label: 'Creator Badges', icon: BadgeCheck },
   { id: 'certificates', label: 'Certificates', icon: Award },
   { id: 'blockchain', label: 'Blockchain', icon: CheckCircle2 },
 ];
@@ -448,12 +455,81 @@ const instructorTimeline: GrowthItem[] = [
   },
 ];
 
+const courseCreatorTimeline: GrowthItem[] = [
+  {
+    id: 'creator-research',
+    title: 'Creator Research',
+    provider: 'Course Creator',
+    badge: 'Advanced',
+    metadata: 'Verified on Blockchain',
+    footerLabel: 'Share',
+    actionLabel: 'Share',
+    accent: 'green',
+    icon: GraduationCap,
+  },
+  {
+    id: 'creator-lesson-design',
+    title: 'Lesson Design',
+    provider: 'Course Creator',
+    badge: 'Mentor',
+    metadata: 'Verified on Blockchain',
+    footerLabel: 'Share',
+    actionLabel: 'Share',
+    accent: 'amber',
+    icon: BriefcaseBusiness,
+  },
+  {
+    id: 'creator-delivery',
+    title: 'Delivery Systems',
+    provider: 'Course Creator',
+    badge: 'Advanced',
+    metadata: 'Quality tracked',
+    footerLabel: 'Share',
+    actionLabel: 'Share',
+    accent: 'blue',
+    icon: Building2,
+  },
+  {
+    id: 'creator-content',
+    title: 'Content Systems',
+    provider: 'Course Creator',
+    badge: 'Earned',
+    metadata: 'Reviewed and shared',
+    footerLabel: 'Share',
+    actionLabel: 'Share',
+    accent: 'blue',
+    icon: Cloud,
+  },
+  {
+    id: 'creator-portfolio',
+    title: 'Portfolio Growth',
+    provider: 'Course Creator',
+    badge: 'Curriculum',
+    metadata: 'Reviewed and shared',
+    footerLabel: 'Share',
+    actionLabel: 'Share',
+    accent: 'amber',
+    icon: Globe,
+  },
+  {
+    id: 'creator-report',
+    title: 'Creator Report',
+    provider: 'Portfolio Verified',
+    badge: 'AI Match',
+    metadata: '82% 712',
+    footerLabel: 'View Report',
+    actionLabel: 'View Report',
+    accent: 'green',
+    icon: Star,
+  },
+];
+
 export function getCredentialsContent(role: CredentialsRole): CredentialsContent {
   if (role === 'instructor') {
     return {
       pageTitle: 'Credentials Vault',
       pageDescription: 'Manage and showcase your earned badges and certificates.',
-      addLabel: 'Add',
+      addLabel: 'Add Credential',
       searchPlaceholder: 'Search credentials...',
       tabs: instructorTabs,
       profile: {
@@ -478,10 +554,39 @@ export function getCredentialsContent(role: CredentialsRole): CredentialsContent
     };
   }
 
+  if (role === 'course_creator') {
+    return {
+      pageTitle: 'Credentials Vault',
+      pageDescription: 'Manage and showcase your earned badges and certificates.',
+      addLabel: 'Add Credential',
+      searchPlaceholder: 'Search credentials...',
+      tabs: courseCreatorTabs,
+      profile: {
+        name: 'Amina Yusuf',
+        title: 'Course Creator, Digital Learning',
+        location: 'Abuja, Nigeria',
+        website: 'aminayusuf.co',
+        email: 'amina@example.com',
+        phone: '+234 803 444 1200',
+        joined: 'June 2023',
+        entriesLabel: '22 Creator Entries',
+        levelLabel: 'Level 4 Verified',
+        initials: 'AY',
+      },
+      summary: {
+        badges: '11 Badges',
+        blockchain: 'Verified on Blockchain',
+        shares: '16 Share',
+      },
+      credentialsByTab: instructorCredentials,
+      timeline: courseCreatorTimeline,
+    };
+  }
+
   return {
     pageTitle: 'Credentials Vault',
     pageDescription: 'Manage and showcase your earned badges and certificates.',
-    addLabel: 'Add',
+    addLabel: 'Add Credential',
     searchPlaceholder: 'Search credentials...',
     tabs: studentTabs,
     profile: {
