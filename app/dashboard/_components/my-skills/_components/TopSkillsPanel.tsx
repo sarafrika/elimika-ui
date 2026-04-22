@@ -1,4 +1,5 @@
 import { BadgeCheck } from 'lucide-react';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -66,8 +67,8 @@ export function TopSkillsPanel({ skills }: TopSkillsPanelProps) {
           )}
         </div>
 
-        <Button type='button' variant='outline' size='sm' className='h-8 w-full rounded-md text-xs'>
-          View Verified Skills
+        <Button asChild variant='outline' size='sm' className='h-8 w-full rounded-md text-xs'>
+          <Link href='/dashboard/my-skills/verified-skills'>View Verified Skills</Link>
         </Button>
       </div>
     </article>
