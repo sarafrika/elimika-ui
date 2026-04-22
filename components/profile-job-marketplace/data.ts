@@ -3,18 +3,15 @@ import {
   BadgeCheck,
   BriefcaseBusiness,
   CheckCircle2,
-  Eye,
   FileText,
   FolderKanban,
   Globe2,
   GraduationCap,
-  Mail,
   MapPin,
-  ShieldCheck,
-  Star,
+  Star
 } from 'lucide-react';
 
-export type JobMarketplaceRole = 'student' | 'instructor';
+export type JobMarketplaceRole = 'organisations' | 'instructor';
 
 export type MarketplaceTab = {
   id: string;

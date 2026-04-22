@@ -47,10 +47,12 @@ export function CredentialsHeader({
             <ChevronDown className='text-muted-foreground absolute top-1/2 right-4 size-4 -translate-y-1/2' />
           </label>
 
-          <Button type='button' className='h-11 rounded-xl px-5 sm:px-6' onClick={onAddClick}>
-            <Plus className='size-4' />
-            {addLabel}
-          </Button>
+          {onAddClick ? (
+            <Button type='button' className='h-11 rounded-xl px-5 sm:px-6' onClick={onAddClick}>
+              <Plus className='size-4' />
+              {addLabel}
+            </Button>
+          ) : null}
         </div>
       </div>
     </header>

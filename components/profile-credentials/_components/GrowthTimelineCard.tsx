@@ -23,6 +23,7 @@ const accentStyles = {
 
 export function GrowthTimelineCard({ item }: GrowthTimelineCardProps) {
   const Icon = item.icon;
+  const recordKindLabel = item.recordKind ? item.recordKind.charAt(0).toUpperCase() + item.recordKind.slice(1) : null;
 
   return (
     <Card className='gap-4 rounded-[16px] border-white/60 bg-card/95 px-4 py-4 shadow-sm'>
@@ -37,10 +38,19 @@ export function GrowthTimelineCard({ item }: GrowthTimelineCardProps) {
         </span>
 
         <div className='min-w-0 flex-1'>
-          {/* <h3 className='text-foreground text-[1.1rem] font-semibold tracking-tight'>{item.title}</h3> */}
-          <p className='text-muted-foreground mt-1 text-base'>{item.title}</p>
-          {item.documentName ? (
-            <p className='text-muted-foreground mt-1 truncate text-sm'>{item.documentName}</p>
+          <div className='flex flex-row items-center gap-1'>
+            {recordKindLabel ? (
+              <Badge
+                variant='outline'
+                className='rounded-lg border-white/70 bg-background/90 py-1.5 text-sm text-muted-foreground'
+              >
+                {recordKindLabel}
+              </Badge>
+            ) : null}
+            <p className='text-foreground text-base font-semibold tracking-tight'>{item.title}</p>
+          </div>
+          {item.recordSummary ? (
+            <p className='text-foreground/80 mt-2 line-clamp-2 text-sm leading-5'>{item.recordSummary}</p>
           ) : null}
         </div>
 
@@ -53,30 +63,32 @@ export function GrowthTimelineCard({ item }: GrowthTimelineCardProps) {
       </div>
 
       <div className='flex flex-wrap gap-2'>
-        <Badge
-          variant='outline'
-          className='rounded-lg border-white/70 bg-background/80 px-3 py-1.5 text-sm text-muted-foreground'
-        >
-          {item.metadata}
-        </Badge>
+        {item.documentName ? (
+          <Badge
+            variant='outline'
+            className='rounded-lg border-white/70 bg-background/80 px-3 py-1.5 text-sm text-muted-foreground'
+          >
+            {item.documentName}
+          </Badge>
+        ) : null}
         <Button variant='outline' size='sm' className='rounded-lg border-white/70 bg-background/80'>
           <Share2 className='size-4' />
           Share
         </Button>
       </div>
 
-      <div className='flex flex-wrap justify-between gap-2 border-t pt-3'>
-        <Badge
+      <div className='flex flex-end flex-wrap justify-between gap-2 border-t pt-3'>
+        {/* <Badge
           variant='outline'
           className='rounded-lg border-white/70 bg-background/80 px-3 py-1.5 text-sm text-primary'
         >
           {item.footerLabel}
-        </Badge>
+        </Badge> */}
         <Button
           asChild={!!item.documentUrl}
           variant={item.actionLabel === 'Apply New' ? 'default' : 'outline'}
           size='sm'
-          className='rounded-lg'
+          className='rounded-lg self-end'
         >
           {item.documentUrl ? (
             <a href={item.documentUrl} target='_blank' rel='noreferrer'>

@@ -12,10 +12,13 @@ import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 import type { CredentialItem } from '../data';
+import { CredentialDetailGrid } from './CredentialDetailGrid';
 
 type CredentialCertificateCardProps = {
   item: CredentialItem;
   ownerName: string;
+  onDelete?: (item: CredentialItem) => void;
+  isDeleting?: boolean;
 };
 
 if (typeof window !== 'undefined') {
@@ -165,6 +168,8 @@ function CertificatePreview({
 export function CredentialCertificateCard({
   item,
   ownerName,
+  onDelete,
+  isDeleting,
 }: CredentialCertificateCardProps) {
   const StatusIcon = item.statusIcon;
   const statusTone = getStatusTone(item.status);
@@ -179,15 +184,17 @@ export function CredentialCertificateCard({
 
       <div className={cn('space-y-4 px-5 py-4', item.documentUrl ? 'pt-5' : '')}>
         <div className='space-y-2'>
-          <h3 className='text-foreground text-[20px] font-semibold tracking-tight'>
-            {item.documentLabel}
-          </h3>
+          {item.recordSummary ? (
+            <h3 className='text-foreground text-[20px] font-semibold tracking-tight'>
+              {item.recordSummary}
+            </h3>) : null}
+
           <div className='flex flex-wrap items-center gap-3 text-base'>
-            <span className='text-[18px] font-semibold text-[color-mix(in_srgb,var(--primary)_62%,var(--el-accent-amber))]'>
+            <span className='text-[16px] font-semibold text-[color-mix(in_srgb,var(--primary)_62%,var(--el-accent-amber))]'>
               {item.title}
             </span>
             <span className='text-muted-foreground'>|</span>
-            <span className='text-muted-foreground'>{item.stage}</span>
+            <span className='text-muted-foreground text-sm'>{item.stage}</span>
             <Badge
               variant='secondary'
               className='rounded-lg bg-[color-mix(in_srgb,var(--primary)_8%,white)] px-3 py-1 text-primary'
@@ -195,10 +202,9 @@ export function CredentialCertificateCard({
               {item.level}
             </Badge>
           </div>
-          {item.metadata ? (
-            <p className='text-muted-foreground text-sm'>{item.metadata}</p>
-          ) : null}
         </div>
+
+        <CredentialDetailGrid details={item.details} />
 
         <div className='flex flex-wrap gap-2'>
           <Badge
@@ -228,6 +234,17 @@ export function CredentialCertificateCard({
               <ChevronRight className='size-4' />
             </Button>
           )}
+          {onDelete ? (
+            <Button
+              type='button'
+              variant='destructive'
+              className='min-h-10 rounded-lg px-4'
+              onClick={() => onDelete(item)}
+              disabled={isDeleting}
+            >
+              Remove
+            </Button>
+          ) : null}
         </div>
       </div>
     </Card>

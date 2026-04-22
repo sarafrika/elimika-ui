@@ -37,11 +37,20 @@ export type CredentialsProfile = {
   initials: string;
 };
 
+export type CredentialDetail = {
+  label: string;
+  value: string;
+};
+
 export type CredentialItem = {
   id: string;
   title: string;
   issuer: string;
   issuerIconText: string;
+  recordKind?: 'education' | 'membership' | 'experience';
+  recordSummary?: string;
+  recordUuid?: string;
+  documentUuid?: string;
   stage: string;
   level: string;
   status: string;
@@ -50,6 +59,7 @@ export type CredentialItem = {
   documentLabel: string;
   documentUrl?: string;
   metadata?: string;
+  details?: CredentialDetail[];
 };
 
 export type GrowthItem = {
@@ -58,6 +68,9 @@ export type GrowthItem = {
   provider: string;
   documentName?: string;
   documentUrl?: string;
+  recordKind?: 'education' | 'membership' | 'experience';
+  recordSummary?: string;
+  details?: CredentialDetail[];
   badge: string;
   metadata: string;
   footerLabel: string;

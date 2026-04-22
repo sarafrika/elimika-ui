@@ -13,6 +13,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { CredentialDetailGrid } from '@/components/profile-credentials/_components/CredentialDetailGrid';
 import { CredentialsTabs } from '@/components/profile-credentials/_components/CredentialsTabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,9 +34,15 @@ import { cn } from '@/lib/utils';
 import type {
   CourseCreator,
   CourseCreatorDocumentDto,
+  CourseCreatorEducation,
+  CourseCreatorExperience,
+  CourseCreatorProfessionalMembership,
   DocumentTypeOption,
   Instructor,
   InstructorDocument,
+  InstructorEducation,
+  InstructorExperience,
+  InstructorProfessionalMembership,
   Student,
 } from '@/services/client';
 import {
@@ -44,11 +51,17 @@ import {
   getAllStudentsOptions,
   getCourseCreatorDocumentsOptions,
   getCourseCreatorDocumentsQueryKey,
+  getCourseCreatorEducationOptions,
+  getCourseCreatorExperienceOptions,
+  getCourseCreatorMembershipsOptions,
   getInstructorDocumentsOptions,
   getInstructorDocumentsQueryKey,
+  getInstructorEducationOptions,
+  getInstructorExperienceOptions,
+  getInstructorMembershipsOptions,
   listDocumentTypesOptions,
   verifyCourseCreatorDocumentMutation,
-  verifyDocumentMutation,
+  verifyDocumentMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
@@ -67,6 +80,9 @@ type ReviewItem = {
   documentUrl?: string;
   statusLabel: string;
   statusTone: 'success' | 'warning' | 'destructive' | 'outline';
+  recordKind?: 'education' | 'membership' | 'experience';
+  recordSummary?: string;
+  details?: Array<{ label: string; value: string }>;
   verifiedBy?: string;
   verifiedAt?: string;
   notes?: string;
@@ -185,6 +201,143 @@ function getStatusBadgeClass(tone: ReviewItem['statusTone']) {
   }
 }
 
+function formatYearValue(value?: number | string | Date | null) {
+  if (value === null || value === undefined || value === '') return 'Not specified';
+  if (typeof value === 'number') return `${value}`;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? 'Not specified' : `${value.getFullYear()}`;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? String(value) : `${parsed.getFullYear()}`;
+}
+
+function formatRange(start?: Date | string, end?: Date | string, active?: boolean) {
+  const formatDate = (value?: Date | string) => {
+    if (!value) return undefined;
+    const parsed = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(parsed.getTime())) return undefined;
+    return parsed.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+  };
+
+  return [formatDate(start), active ? 'Present' : formatDate(end)].filter(Boolean).join(' - ') || 'Not specified';
+}
+
+function buildRecordDetails(
+  record:
+    | InstructorEducation
+    | InstructorProfessionalMembership
+    | InstructorExperience
+    | CourseCreatorEducation
+    | CourseCreatorProfessionalMembership
+    | CourseCreatorExperience
+    | undefined,
+  kind: ReviewItem['recordKind']
+) {
+  if (!record || !kind) return [];
+
+  if (kind === 'education') {
+    const education = record as InstructorEducation | CourseCreatorEducation;
+    return [
+      { label: 'Institution', value: education.school_name || 'Not specified' },
+      { label: 'Qualification', value: education.qualification || 'Not specified' },
+      {
+        label: 'Field',
+        value: education.field_of_study || 'Not specified',
+      },
+      {
+        label: 'Completed',
+        value:
+          'formatted_completion' in education && education.formatted_completion
+            ? education.formatted_completion
+            : formatYearValue(education.year_completed),
+      },
+      { label: 'Certificate', value: education.certificate_number || 'Not specified' },
+    ];
+  }
+
+  if (kind === 'membership') {
+    const membership = record as
+      | InstructorProfessionalMembership
+      | CourseCreatorProfessionalMembership;
+    const organisation =
+      'organisation_name' in membership
+        ? membership.organisation_name
+        : 'organization_name' in membership
+          ? membership.organization_name
+          : 'Not specified';
+    const status = 'membership_status' in membership
+      ? membership.membership_status
+      : membership.status_label;
+    return [
+      { label: 'Organisation', value: organisation },
+      { label: 'Membership No.', value: membership.membership_number || 'Not specified' },
+      {
+        label: 'Period',
+        value:
+          ('membership_period' in membership && membership.membership_period) ||
+          formatRange(membership.start_date, membership.end_date, membership.is_active),
+      },
+      { label: 'Status', value: status || (membership.is_active ? 'Active' : 'Inactive') },
+    ];
+  }
+
+  const experienceRecord = record as InstructorExperience | CourseCreatorExperience;
+  return [
+    { label: 'Position', value: experienceRecord.position || 'Not specified' },
+    { label: 'Organisation', value: experienceRecord.organisation_name || 'Not specified' },
+    {
+      label: 'Period',
+      value:
+        ('tenure_label' in experienceRecord && experienceRecord.tenure_label) ||
+        formatRange(experienceRecord.start_date, experienceRecord.end_date, experienceRecord.is_current_position),
+    },
+    {
+      label: 'Years',
+      value: formatYearValue(experienceRecord.years_of_experience),
+    },
+    {
+      label: 'Responsibilities',
+      value: experienceRecord.responsibilities || 'Not specified',
+    },
+  ];
+}
+
+function summarizeLinkedRecord(
+  record:
+    | InstructorEducation
+    | InstructorProfessionalMembership
+    | InstructorExperience
+    | CourseCreatorEducation
+    | CourseCreatorProfessionalMembership
+    | CourseCreatorExperience
+    | undefined,
+  kind: ReviewItem['recordKind']
+) {
+  if (!record || !kind) return undefined;
+
+  if (kind === 'education') {
+    const education = record as InstructorEducation | CourseCreatorEducation;
+    if ('full_description' in education && education.full_description) return education.full_description;
+    return `${education.qualification || 'Education'} at ${education.school_name || 'Unknown institution'}`;
+  }
+
+  if (kind === 'membership') {
+    const membership = record as
+      | InstructorProfessionalMembership
+      | CourseCreatorProfessionalMembership;
+    if ('summary' in membership && membership.summary) return membership.summary;
+    const organisation =
+      'organisation_name' in membership
+        ? membership.organisation_name
+        : 'organization_name' in membership
+          ? membership.organization_name
+          : 'Unknown organisation';
+    return `${organisation} membership`;
+  }
+
+  const experience = record as InstructorExperience | CourseCreatorExperience;
+  if ('tenure_label' in experience && experience.tenure_label) return experience.tenure_label;
+  return `${experience.position || 'Experience'} at ${experience.organisation_name || 'Unknown organisation'}`;
+}
+
 
 function getDocumentUrl(document: InstructorDocument | CourseCreatorDocumentDto) {
   const resolved = toAuthenticatedMediaUrl(document.file_url ?? document.file_path ?? undefined);
@@ -194,9 +347,11 @@ function getDocumentUrl(document: InstructorDocument | CourseCreatorDocumentDto)
 function PdfPreview({
   documentUrl,
   documentLabel,
+  documentTitle
 }: {
   documentUrl: string;
   documentLabel: string;
+  documentTitle: string;
 }) {
   const resolvedUrl = toAuthenticatedMediaUrl(documentUrl) || documentUrl;
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -257,7 +412,7 @@ function PdfPreview({
       <div className='pointer-events-none absolute inset-x-0 top-0 h-18 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_92%,white_8%),transparent)]' />
       <div className='pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--background)_94%,white_6%))]' />
       <div className='pointer-events-none absolute top-4 left-4 z-10 rounded-full border border-white/80 bg-background/85 px-3 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur'>
-        {error ? 'Preview unavailable' : documentLabel}
+        {error ? 'Preview unavailable' : documentTitle}
       </div>
       <div className='h-full overflow-hidden rounded-[12px] border border-border/70 bg-background shadow-[0_18px_40px_-28px_rgba(26,56,126,0.35)]'>
         {error ? (
@@ -281,10 +436,16 @@ function ReviewCard({
 }) {
   const hasDocumentUrl = !!item.documentUrl;
 
+  console.log(item, "item here")
+
   return (
-    <Card className='gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
+    <Card className='w-full gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
       {hasDocumentUrl ? (
-        <PdfPreview documentUrl={item.documentUrl as string} documentLabel={item.documentLabel} />
+        <PdfPreview
+          documentUrl={item.documentUrl as string}
+          documentLabel={item.documentLabel}
+          documentTitle={item.documentTitle}
+        />
       ) : (
         <div className='flex h-[190px] items-center justify-center rounded-t-[16px] border-b bg-muted/20 px-4 text-center text-sm text-muted-foreground'>
           Preview unavailable
@@ -294,37 +455,37 @@ function ReviewCard({
       <div className='space-y-4 px-5 py-4'>
         <div className='space-y-2'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
-            {/* <h3 className='text-foreground text-[20px] font-semibold tracking-tight'>
-              {item.documentLabel}
-            </h3> */}
             <Badge
               variant='secondary'
               className='rounded-lg bg-[color-mix(in_srgb,var(--primary)_8%,white)] px-3 py-1 text-primary'
             >
               {item.documentLabel || 'Document'}
             </Badge>
+
             <Badge
               variant='outline'
-              className={cn('rounded-lg px-3 py-1 text-xs', getStatusBadgeClass(item.statusTone))}
+              className={cn(
+                'rounded-lg px-3 py-1 text-xs',
+                getStatusBadgeClass(item.statusTone)
+              )}
             >
               {item.statusLabel}
             </Badge>
           </div>
 
           <div className='flex flex-wrap items-center gap-3 text-base'>
-            <span className='text-[18px] font-semibold text-[color-mix(in_srgb,var(--primary)_62%,var(--el-accent-amber))]'>
-              {item.documentTitle}
+            <span className='text-muted-foreground'>
+              {item.ownerName}
+              {item.ownerMeta ? ` • ${item.ownerMeta}` : ''}
             </span>
-
             <span className='text-muted-foreground'>|</span>
-            <span className='text-muted-foreground'>{item.roleLabel}</span>
-
+            {item.recordSummary ? (
+              <p className='text-muted-foreground text-sm leading-6'>
+                {item.recordSummary}
+              </p>
+            ) : null}
           </div>
 
-          <p className='text-muted-foreground text-sm'>
-            {item.ownerName}
-            {item.ownerMeta ? ` • ${item.ownerMeta}` : ''}
-          </p>
           <p className='text-muted-foreground text-xs'>
             Uploaded {item.uploadedAt || 'Recently'}
             {item.verifiedAt ? ` • Verified ${item.verifiedAt}` : ''}
@@ -338,6 +499,7 @@ function ReviewCard({
           >
             {item.fileSize || 'Unknown size'}
           </Badge>
+
           {hasDocumentUrl ? (
             <Button
               asChild
@@ -360,6 +522,7 @@ function ReviewCard({
               <ChevronRight className='size-4' />
             </Button>
           )}
+
           <Button
             variant='outline'
             className='min-h-10 rounded-lg border-white/70 bg-background/80 px-4'
@@ -409,15 +572,29 @@ function ReviewSheet({
           <div className='space-y-5 px-6 py-5'>
             {item.documentUrl ? (
               <div className='overflow-hidden rounded-[18px] border bg-card shadow-sm'>
-                <PdfPreview documentUrl={item.documentUrl} documentLabel={item.documentLabel} />
+                <PdfPreview documentUrl={item.documentUrl} documentLabel={item.documentLabel} documentTitle={item.documentTitle} />
               </div>
             ) : null}
 
             <div className='grid gap-4 rounded-[18px] border bg-card p-4 shadow-sm'>
               <div className='flex flex-wrap items-start justify-between gap-3'>
                 <div className='space-y-1'>
-                  <h3 className='text-foreground text-xl font-semibold'>{item.documentTitle}</h3>
-                  <p className='text-muted-foreground text-sm'>{item.ownerName}</p>
+                  <h3 className='text-foreground text-xl font-semibold'>{item.ownerName}</h3>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {item.recordSummary && (
+                      <p className="text-muted-foreground text-sm truncate">
+                        {item.recordSummary}
+                      </p>
+                    )}
+
+                    {item.recordSummary && (
+                      <span className="text-muted-foreground shrink-0">-</span>
+                    )}
+
+                    <p className="text-muted-foreground text-sm truncate">
+                      {item.documentTitle}
+                    </p>
+                  </div>
                 </div>
                 <Badge
                   variant='outline'
@@ -436,6 +613,18 @@ function ReviewSheet({
                 <DetailRow label='Verifier' value={verifierName || 'Admin'} />
               </div>
             </div>
+
+            {item.details && item.details.length > 0 ? (
+              <div className='rounded-[18px] border bg-card p-4 shadow-sm'>
+                <div className='mb-3 space-y-1'>
+                  <h4 className='text-foreground font-semibold'>Linked credential</h4>
+                  <p className='text-muted-foreground text-sm'>
+                    This document supports the {item.recordKind ?? 'credential'} record below.
+                  </p>
+                </div>
+                <CredentialDetailGrid details={item.details} />
+              </div>
+            ) : null}
 
             <div className='rounded-[18px] border bg-card p-4 shadow-sm'>
               <div className='mb-2 flex items-center justify-between gap-3'>
@@ -563,6 +752,124 @@ export default function DocumentsVerificationPage() {
       getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid: courseCreator.uuid } })
     ),
   });
+  const instructorEducationQueries = useQueries({
+    queries: instructorsWithUuid.map(instructor =>
+      getInstructorEducationOptions({ path: { instructorUuid: instructor.uuid } })
+    ),
+  });
+  const instructorMembershipQueries = useQueries({
+    queries: instructorsWithUuid.map(instructor =>
+      getInstructorMembershipsOptions({
+        path: { instructorUuid: instructor.uuid },
+        query: { pageable: PAGEABLE },
+      })
+    ),
+  });
+  const instructorExperienceQueries = useQueries({
+    queries: instructorsWithUuid.map(instructor =>
+      getInstructorExperienceOptions({
+        path: { instructorUuid: instructor.uuid },
+        query: { pageable: PAGEABLE },
+      })
+    ),
+  });
+  const courseCreatorEducationQueries = useQueries({
+    queries: courseCreatorsWithUuid.map(courseCreator =>
+      getCourseCreatorEducationOptions({
+        path: { courseCreatorUuid: courseCreator.uuid },
+        query: { pageable: PAGEABLE },
+      })
+    ),
+  });
+  const courseCreatorMembershipQueries = useQueries({
+    queries: courseCreatorsWithUuid.map(courseCreator =>
+      getCourseCreatorMembershipsOptions({
+        path: { courseCreatorUuid: courseCreator.uuid },
+        query: { pageable: PAGEABLE },
+      })
+    ),
+  });
+  const courseCreatorExperienceQueries = useQueries({
+    queries: courseCreatorsWithUuid.map(courseCreator =>
+      getCourseCreatorExperienceOptions({
+        path: { courseCreatorUuid: courseCreator.uuid },
+        query: { pageable: PAGEABLE },
+      })
+    ),
+  });
+
+  const instructorEducationMaps = useMemo(
+    () =>
+      new Map(
+        instructorsWithUuid.map((instructor, index) => [
+          instructor.uuid,
+          ((instructorEducationQueries[index]?.data?.data ?? []) as InstructorEducation[]).filter(
+            item => !!item.uuid
+          ),
+        ])
+      ),
+    [instructorEducationQueries, instructorsWithUuid]
+  );
+  const instructorMembershipMaps = useMemo(
+    () =>
+      new Map(
+        instructorsWithUuid.map((instructor, index) => [
+          instructor.uuid,
+          ((instructorMembershipQueries[index]?.data?.data?.content ?? []) as InstructorProfessionalMembership[]).filter(
+            item => !!item.uuid
+          ),
+        ])
+      ),
+    [instructorMembershipQueries, instructorsWithUuid]
+  );
+  const instructorExperienceMaps = useMemo(
+    () =>
+      new Map(
+        instructorsWithUuid.map((instructor, index) => [
+          instructor.uuid,
+          ((instructorExperienceQueries[index]?.data?.data?.content ?? []) as InstructorExperience[]).filter(
+            item => !!item.uuid
+          ),
+        ])
+      ),
+    [instructorExperienceQueries, instructorsWithUuid]
+  );
+  const courseCreatorEducationMaps = useMemo(
+    () =>
+      new Map(
+        courseCreatorsWithUuid.map((courseCreator, index) => [
+          courseCreator.uuid,
+          ((courseCreatorEducationQueries[index]?.data?.data?.content ?? []) as CourseCreatorEducation[]).filter(
+            item => !!item.uuid
+          ),
+        ])
+      ),
+    [courseCreatorEducationQueries, courseCreatorsWithUuid]
+  );
+  const courseCreatorMembershipMaps = useMemo(
+    () =>
+      new Map(
+        courseCreatorsWithUuid.map((courseCreator, index) => [
+          courseCreator.uuid,
+          ((courseCreatorMembershipQueries[index]?.data?.data?.content ?? []) as CourseCreatorProfessionalMembership[]).filter(
+            item => !!item.uuid
+          ),
+        ])
+      ),
+    [courseCreatorMembershipQueries, courseCreatorsWithUuid]
+  );
+  const courseCreatorExperienceMaps = useMemo(
+    () =>
+      new Map(
+        courseCreatorsWithUuid.map((courseCreator, index) => [
+          courseCreator.uuid,
+          ((courseCreatorExperienceQueries[index]?.data?.data?.content ?? []) as CourseCreatorExperience[]).filter(
+            item => !!item.uuid
+          ),
+        ])
+      ),
+    [courseCreatorExperienceQueries, courseCreatorsWithUuid]
+  );
 
   const reviewItems = useMemo(() => {
     const instructorItems = instructorDocumentQueries.flatMap((query, index) => {
@@ -572,6 +879,31 @@ export default function DocumentsVerificationPage() {
 
       return documents.map(document => {
         const status = getInstructorDocumentStatus(document);
+        const education = document.education_uuid
+          ? instructorEducationMaps.get(owner.uuid)?.find(item => item.uuid === document.education_uuid)
+          : undefined;
+        const membership = (document as InstructorDocument & { membership_uuid?: string }).membership_uuid
+          ? instructorMembershipMaps.get(owner.uuid)?.find(
+            item =>
+              item.uuid ===
+              (document as InstructorDocument & { membership_uuid?: string }).membership_uuid
+          )
+          : undefined;
+        const experience = (document as InstructorDocument & { experience_uuid?: string }).experience_uuid
+          ? instructorExperienceMaps.get(owner.uuid)?.find(
+            item =>
+              item.uuid ===
+              (document as InstructorDocument & { experience_uuid?: string }).experience_uuid
+          )
+          : undefined;
+        const linkedRecord = education ?? membership ?? experience;
+        const recordKind = education
+          ? ('education' as const)
+          : membership
+            ? ('membership' as const)
+            : experience
+              ? ('experience' as const)
+              : undefined;
         return {
           id: `instructor-${document.uuid ?? `${owner.uuid}-${document.original_filename}`}`,
           role: 'instructor' as const,
@@ -587,6 +919,9 @@ export default function DocumentsVerificationPage() {
           documentUrl: getDocumentUrl(document),
           statusLabel: status.label,
           statusTone: status.tone,
+          recordKind,
+          recordSummary: summarizeLinkedRecord(linkedRecord, recordKind),
+          details: recordKind ? buildRecordDetails(linkedRecord as never, recordKind) : undefined,
           verifiedBy: document.verified_by,
           verifiedAt: document.verified_at ? formatDate(document.verified_at) : undefined,
           notes: document.verification_notes || undefined,
@@ -606,6 +941,31 @@ export default function DocumentsVerificationPage() {
 
       return documents.map(document => {
         const status = getCourseCreatorDocumentStatus(document);
+        const education = document.education_uuid
+          ? courseCreatorEducationMaps.get(owner.uuid)?.find(item => item.uuid === document.education_uuid)
+          : undefined;
+        const membership = (document as CourseCreatorDocumentDto & { membership_uuid?: string }).membership_uuid
+          ? courseCreatorMembershipMaps.get(owner.uuid)?.find(
+            item =>
+              item.uuid ===
+              (document as CourseCreatorDocumentDto & { membership_uuid?: string }).membership_uuid
+          )
+          : undefined;
+        const experience = (document as CourseCreatorDocumentDto & { experience_uuid?: string }).experience_uuid
+          ? courseCreatorExperienceMaps.get(owner.uuid)?.find(
+            item =>
+              item.uuid ===
+              (document as CourseCreatorDocumentDto & { experience_uuid?: string }).experience_uuid
+          )
+          : undefined;
+        const linkedRecord = education ?? membership ?? experience;
+        const recordKind = education
+          ? ('education' as const)
+          : membership
+            ? ('membership' as const)
+            : experience
+              ? ('experience' as const)
+              : undefined;
         return {
           id: `course-creator-${document.uuid ?? `${owner.uuid}-${document.original_filename}`}`,
           role: 'course_creator' as const,
@@ -621,6 +981,9 @@ export default function DocumentsVerificationPage() {
           documentUrl: getDocumentUrl(document),
           statusLabel: status.label,
           statusTone: status.tone,
+          recordKind,
+          recordSummary: summarizeLinkedRecord(linkedRecord, recordKind),
+          details: recordKind ? buildRecordDetails(linkedRecord as never, recordKind) : undefined,
           verifiedBy: document.verified_by,
           verifiedAt: document.verified_at ? formatDate(document.verified_at) : undefined,
           notes: document.verification_notes || undefined,
@@ -640,8 +1003,14 @@ export default function DocumentsVerificationPage() {
     });
   }, [
     courseCreatorDocumentQueries,
+    courseCreatorEducationMaps,
+    courseCreatorExperienceMaps,
+    courseCreatorMembershipMaps,
     courseCreatorsWithUuid,
     documentTypesMap,
+    instructorEducationMaps,
+    instructorExperienceMaps,
+    instructorMembershipMaps,
     instructorDocumentQueries,
     instructorsWithUuid,
   ]);
@@ -812,7 +1181,7 @@ export default function DocumentsVerificationPage() {
 
                 <Separator className='my-4' />
 
-                <div className='grid gap-3 text-sm'>
+                <div className='grid sm:grid-cols-3 2xl:grid-cols-1 gap-3 text-sm'>
                   <DetailRow
                     label='Documents visible'
                     value={`${filteredItems.length} matching record${filteredItems.length === 1 ? '' : 's'}`}
@@ -833,7 +1202,7 @@ export default function DocumentsVerificationPage() {
 
               <div className='space-y-4'>
                 {filteredItems.length > 0 ? (
-                  <div className='grid gap-4 xl:grid-cols-2'>
+                  <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
                     {filteredItems.map(item => (
                       <ReviewCard key={item.id} item={item} onOpenReview={selected => setSheetState({ open: true, item: selected })} />
                     ))}

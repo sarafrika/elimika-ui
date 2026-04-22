@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
 import { useState } from 'react';
 
@@ -8,14 +8,44 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
 import type { UserProfileType } from '@/lib/types';
 import {
+  deleteCourseCreatorDocumentMutation,
+  deleteCourseCreatorEducationMutation,
+  deleteCourseCreatorExperienceMutation,
+  deleteCourseCreatorMembershipMutation,
   getCourseCreatorDocumentsOptions,
+  getCourseCreatorEducationOptions,
+  getCourseCreatorExperienceOptions,
+  getCourseCreatorMembershipsOptions,
+  getCourseCreatorDocumentsQueryKey,
+  getCourseCreatorEducationQueryKey,
+  getCourseCreatorExperienceQueryKey,
+  getCourseCreatorMembershipsQueryKey,
+  deleteInstructorDocumentMutation,
+  deleteInstructorEducationMutation,
+  deleteInstructorExperienceMutation,
+  deleteInstructorMembershipMutation,
   getInstructorDocumentsOptions,
+  getInstructorEducationOptions,
+  getInstructorExperienceOptions,
+  getInstructorMembershipsOptions,
+  getInstructorDocumentsQueryKey,
+  getInstructorEducationQueryKey,
+  getInstructorExperienceQueryKey,
+  getInstructorMembershipsQueryKey,
+  getStudentCertificatesOptions,
   listDocumentTypesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
+  Certificate,
   CourseCreatorDocumentDto,
+  CourseCreatorEducation,
+  CourseCreatorExperience,
+  CourseCreatorProfessionalMembership,
   DocumentTypeOption,
   InstructorDocument,
+  InstructorEducation,
+  InstructorExperience,
+  InstructorProfessionalMembership,
 } from '@/services/client/types.gen';
 
 import type { CredentialsRole, CredentialsStatusFilter, CredentialsTabId } from '../data';
@@ -32,8 +62,12 @@ type CredentialsVaultPageProps = {
   role: CredentialsRole;
 };
 
+const PAGEABLE = { page: 0, size: 200 };
+type CredentialListItem = ReturnType<typeof buildCredentialsContent>['credentialsByTab'][CredentialsTabId][number];
+
 export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const user = useUserProfile();
+  const qc = useQueryClient();
   const [searchValue, setSearchValue] = useState('');
   const [statusFilter, setStatusFilter] = useState<CredentialsStatusFilter>('all');
   const [isUploadSheetOpen, setIsUploadSheetOpen] = useState(false);
@@ -47,6 +81,10 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const profileData = user as UserProfileType | undefined;
 
   const profileUuid = profile?.uuid;
+  const studentCertificatesQuery = useQuery({
+    ...getStudentCertificatesOptions({ path: { studentUuid: profileUuid ?? '' } }),
+    enabled: role === 'student' && !!profileUuid,
+  });
 
   const instructorDocumentsQuery = useQuery({
     ...getInstructorDocumentsOptions({ path: { instructorUuid: profileUuid ?? '' } }),
@@ -58,9 +96,59 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
     enabled: role === 'course_creator' && !!profileUuid,
   });
 
+  const instructorEducationQuery = useQuery({
+    ...getInstructorEducationOptions({ path: { instructorUuid: profileUuid ?? '' } }),
+    enabled: role === 'instructor' && !!profileUuid,
+  });
+  const instructorMembershipsQuery = useQuery({
+    ...getInstructorMembershipsOptions({
+      path: { instructorUuid: profileUuid ?? '' },
+      query: { pageable: PAGEABLE },
+    }),
+    enabled: role === 'instructor' && !!profileUuid,
+  });
+  const instructorExperienceQuery = useQuery({
+    ...getInstructorExperienceOptions({
+      path: { instructorUuid: profileUuid ?? '' },
+      query: { pageable: PAGEABLE },
+    }),
+    enabled: role === 'instructor' && !!profileUuid,
+  });
+
+  const courseCreatorEducationQuery = useQuery({
+    ...getCourseCreatorEducationOptions({
+      path: { courseCreatorUuid: profileUuid ?? '' },
+      query: { pageable: PAGEABLE },
+    }),
+    enabled: role === 'course_creator' && !!profileUuid,
+  });
+  const courseCreatorMembershipsQuery = useQuery({
+    ...getCourseCreatorMembershipsOptions({
+      path: { courseCreatorUuid: profileUuid ?? '' },
+      query: { pageable: PAGEABLE },
+    }),
+    enabled: role === 'course_creator' && !!profileUuid,
+  });
+  const courseCreatorExperienceQuery = useQuery({
+    ...getCourseCreatorExperienceOptions({
+      path: { courseCreatorUuid: profileUuid ?? '' },
+      query: { pageable: PAGEABLE },
+    }),
+    enabled: role === 'course_creator' && !!profileUuid,
+  });
+
   const documentTypesQuery = useQuery({
     ...listDocumentTypesOptions(),
   });
+
+  const deleteInstructorDocument = useMutation(deleteInstructorDocumentMutation());
+  const deleteCourseCreatorDocument = useMutation(deleteCourseCreatorDocumentMutation());
+  const deleteInstructorEducation = useMutation(deleteInstructorEducationMutation());
+  const deleteInstructorMembership = useMutation(deleteInstructorMembershipMutation());
+  const deleteInstructorExperience = useMutation(deleteInstructorExperienceMutation());
+  const deleteCourseCreatorEducation = useMutation(deleteCourseCreatorEducationMutation());
+  const deleteCourseCreatorMembership = useMutation(deleteCourseCreatorMembershipMutation());
+  const deleteCourseCreatorExperience = useMutation(deleteCourseCreatorExperienceMutation());
 
   const documents =
     role === 'instructor'
@@ -68,6 +156,32 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
       : role === 'course_creator'
         ? ((courseCreatorDocumentsQuery.data?.data ?? []) as CourseCreatorDocumentDto[])
         : [];
+  const certificates =
+    role === 'student'
+      ? ((studentCertificatesQuery.data?.data ?? []) as Certificate[])
+      : [];
+  const instructorEducations =
+    role === 'instructor' ? ((instructorEducationQuery.data?.data ?? []) as InstructorEducation[]) : [];
+  const instructorMemberships =
+    role === 'instructor'
+      ? ((instructorMembershipsQuery.data?.data?.content ?? []) as InstructorProfessionalMembership[])
+      : [];
+  const instructorExperiences =
+    role === 'instructor'
+      ? ((instructorExperienceQuery.data?.data?.content ?? []) as InstructorExperience[])
+      : [];
+  const courseCreatorEducations =
+    role === 'course_creator'
+      ? ((courseCreatorEducationQuery.data?.data?.content ?? []) as CourseCreatorEducation[])
+      : [];
+  const courseCreatorMemberships =
+    role === 'course_creator'
+      ? ((courseCreatorMembershipsQuery.data?.data?.content ?? []) as CourseCreatorProfessionalMembership[])
+      : [];
+  const courseCreatorExperiences =
+    role === 'course_creator'
+      ? ((courseCreatorExperienceQuery.data?.data?.content ?? []) as CourseCreatorExperience[])
+      : [];
 
   const documentTypes = (documentTypesQuery.data?.data ?? []) as DocumentTypeOption[];
 
@@ -75,6 +189,13 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
     role,
     profile: profileData,
     documents,
+    certificates,
+    educationRecords:
+      role === 'instructor' ? instructorEducations : courseCreatorEducations,
+    membershipRecords:
+      role === 'instructor' ? instructorMemberships : courseCreatorMemberships,
+    experienceRecords:
+      role === 'instructor' ? instructorExperiences : courseCreatorExperiences,
     documentTypes,
     searchValue,
     statusFilter,
@@ -82,12 +203,99 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
 
   const refreshDocuments = async () => {
     if (role === 'instructor' && profileUuid) {
-      await instructorDocumentsQuery.refetch();
+      await Promise.all([
+        instructorDocumentsQuery.refetch(),
+        instructorEducationQuery.refetch(),
+        instructorMembershipsQuery.refetch(),
+        instructorExperienceQuery.refetch(),
+      ]);
       return;
     }
 
     if (role === 'course_creator' && profileUuid) {
-      await courseCreatorDocumentsQuery.refetch();
+      await Promise.all([
+        courseCreatorDocumentsQuery.refetch(),
+        courseCreatorEducationQuery.refetch(),
+        courseCreatorMembershipsQuery.refetch(),
+        courseCreatorExperienceQuery.refetch(),
+      ]);
+      return;
+    }
+
+    if (role === 'student' && profileUuid) {
+      await studentCertificatesQuery.refetch();
+    }
+  };
+
+  const removeCredential = async (item: CredentialListItem) => {
+    if (!profileUuid) return;
+    if (!item.documentUuid && !item.recordUuid) {
+      toast.error('This credential is missing identifiers.');
+      return;
+    }
+
+    const confirmed = confirm(
+      item.recordKind
+        ? `Delete this ${item.recordKind} and its linked document?`
+        : 'Delete this document?'
+    );
+    if (!confirmed) return;
+
+    try {
+      if (role === 'instructor') {
+        if (item.documentUuid) {
+          await deleteInstructorDocument.mutateAsync({
+            path: { instructorUuid: profileUuid, documentUuid: item.documentUuid },
+          });
+        }
+
+        if (item.recordUuid && item.recordKind === 'education') {
+          await deleteInstructorEducation.mutateAsync({
+            path: { instructorUuid: profileUuid, educationUuid: item.recordUuid },
+          });
+        }
+
+        if (item.recordUuid && item.recordKind === 'membership') {
+          await deleteInstructorMembership.mutateAsync({
+            path: { instructorUuid: profileUuid, membershipUuid: item.recordUuid },
+          });
+        }
+
+        if (item.recordUuid && item.recordKind === 'experience') {
+          await deleteInstructorExperience.mutateAsync({
+            path: { instructorUuid: profileUuid, experienceUuid: item.recordUuid },
+          });
+        }
+      } else if (role === 'course_creator') {
+        if (item.documentUuid) {
+          await deleteCourseCreatorDocument.mutateAsync({
+            path: { courseCreatorUuid: profileUuid, documentUuid: item.documentUuid },
+          });
+        }
+
+        if (item.recordUuid && item.recordKind === 'education') {
+          await deleteCourseCreatorEducation.mutateAsync({
+            path: { courseCreatorUuid: profileUuid, educationUuid: item.recordUuid },
+          });
+        }
+
+        if (item.recordUuid && item.recordKind === 'membership') {
+          await deleteCourseCreatorMembership.mutateAsync({
+            path: { courseCreatorUuid: profileUuid, membershipUuid: item.recordUuid },
+          });
+        }
+
+        if (item.recordUuid && item.recordKind === 'experience') {
+          await deleteCourseCreatorExperience.mutateAsync({
+            path: { courseCreatorUuid: profileUuid, experienceUuid: item.recordUuid },
+          });
+        }
+      }
+
+      await refreshDocuments();
+      toast.success('Credential deleted successfully.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to delete this credential.');
     }
   };
 
@@ -101,7 +309,7 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
           addLabel={content.addLabel}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
-          onAddClick={() => setIsUploadSheetOpen(true)}
+          onAddClick={role === 'student' ? undefined : () => setIsUploadSheetOpen(true)}
         />
 
         <Tabs defaultValue='all' className='gap-4'>
@@ -118,6 +326,17 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
                 onStatusFilterChange={setStatusFilter}
                 items={content.credentialsByTab[tab.id as CredentialsTabId]}
                 timeline={content.timeline}
+                onDeleteItem={role === 'student' ? undefined : removeCredential}
+                deleting={
+                  deleteInstructorDocument.isPending ||
+                  deleteCourseCreatorDocument.isPending ||
+                  deleteInstructorEducation.isPending ||
+                  deleteInstructorMembership.isPending ||
+                  deleteInstructorExperience.isPending ||
+                  deleteCourseCreatorEducation.isPending ||
+                  deleteCourseCreatorMembership.isPending ||
+                  deleteCourseCreatorExperience.isPending
+                }
               />
             </TabsContent>
           ))}
@@ -145,6 +364,8 @@ type CredentialsPanelProps = {
   onStatusFilterChange: (value: CredentialsStatusFilter) => void;
   items: ReturnType<typeof buildCredentialsContent>['credentialsByTab'][CredentialsTabId];
   timeline: ReturnType<typeof buildCredentialsContent>['timeline'];
+  onDeleteItem?: (item: CredentialListItem) => void;
+  deleting?: boolean;
 };
 
 function CredentialsPanel({
@@ -156,6 +377,8 @@ function CredentialsPanel({
   onStatusFilterChange,
   items,
   timeline,
+  onDeleteItem,
+  deleting,
 }: CredentialsPanelProps) {
   return (
     <>
@@ -173,7 +396,13 @@ function CredentialsPanel({
           {items.length > 0 ? (
             <div className='grid gap-4 xl:grid-cols-2'>
               {items.map(item => (
-                <CredentialCertificateCard key={item.id} item={item} ownerName={profile.name} />
+                <CredentialCertificateCard
+                  key={item.id}
+                  item={item}
+                  ownerName={profile.name}
+                  onDelete={onDeleteItem}
+                  isDeleting={deleting}
+                />
               ))}
             </div>
           ) : (
