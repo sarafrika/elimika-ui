@@ -81,7 +81,13 @@ function PdfPreview({ documentUrl, documentLabel }: { documentUrl: string; docum
       canvas.style.width = '100%';
       canvas.style.height = 'auto';
 
-      await page.render({ canvasContext: context, viewport } as any).promise;
+      const renderParams: Parameters<PDFPageProxy['render']>[0] = {
+        canvasContext: context,
+        canvas,
+        viewport,
+      };
+
+      await page.render(renderParams).promise;
     };
 
     const load = async () => {
