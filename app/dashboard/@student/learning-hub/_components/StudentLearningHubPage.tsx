@@ -1,7 +1,6 @@
 'use client';
 
 import { LearningHubAssignments } from './LearningHubAssignments';
-import { LearningHubClassInvite } from './LearningHubClassInvite';
 import { LearningHubContinueLearning } from './LearningHubContinueLearning';
 import { LearningHubHero } from './LearningHubHero';
 import { LearningHubLiveClasses } from './LearningHubLiveClasses';
@@ -26,7 +25,6 @@ export function StudentLearningHubPage() {
             <LearningHubContinueLearning classes={data.continueLearning} loading={data.loading} />
             <LearningHubLiveClasses liveClass={data.scheduledLiveClass} loading={data.loading} />
             <LearningHubAssignments assignments={data.assignments} loading={data.loading} />
-            <LearningHubClassInvite invite={data.invite} loading={data.loading} />
           </div>
 
           <div>

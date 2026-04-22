@@ -248,14 +248,7 @@ export default function ClassEnrollmentPage({
           });
 
           toast.success(data?.message || 'Student enrolled successfully');
-
-          // Navigate back to available classes
-          router.push(
-            buildWorkspaceAliasPath(
-              activeDomain,
-              `/dashboard/courses/available-classes/${courseId}`
-            )
-          );
+          router.push('/dashboard/courses');
         },
         onError: err => {
           toast.error(getErrorMessage(err, 'Failed to enroll in class'));

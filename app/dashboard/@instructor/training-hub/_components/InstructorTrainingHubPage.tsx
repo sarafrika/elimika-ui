@@ -2,7 +2,6 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { BookingCard } from './BookingCard';
 import { LiveClassCard } from './LiveClassCard';
@@ -11,7 +10,6 @@ import { TrainingHubHeader } from './TrainingHubHeader';
 import { TrainingHubSectionHeader } from './TrainingHubSectionHeader';
 import { TrainingHubToolbar } from './TrainingHubToolbar';
 import { WaitingListItem } from './WaitingListItem';
-import { bookingPreviews, waitingList } from './training-hub-data';
 import { useInstructorTrainingHubData } from './useInstructorTrainingHubData';
 
 export function InstructorTrainingHubPage() {
@@ -21,8 +19,13 @@ export function InstructorTrainingHubPage() {
   const [selectedStatus, setSelectedStatus] = useState<
     'all' | 'approved' | 'today' | 'tomorrow' | 'upcoming'
   >('all');
-  const { liveClasses, managedCourses, isLoading: isLoadingManagedCourses } =
-    useInstructorTrainingHubData();
+  const {
+    liveClasses,
+    managedCourses,
+    upcomingBookings,
+    waitingList,
+    isLoading: isLoadingManagedCourses,
+  } = useInstructorTrainingHubData();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -69,12 +72,12 @@ export function InstructorTrainingHubPage() {
 
   const filteredBookings = useMemo(
     () =>
-      bookingPreviews.filter(booking =>
-        [booking.title, booking.subtitle, booking.status].some(value =>
+      upcomingBookings.filter(booking =>
+        [booking.title, booking.subtitle, booking.status, booking.meta].some(value =>
           value.toLowerCase().includes(normalizedSearch)
         )
       ),
-    [bookingPreviews, normalizedSearch]
+    [normalizedSearch, upcomingBookings]
   );
 
   return (
@@ -131,22 +134,22 @@ export function InstructorTrainingHubPage() {
               {filteredLiveClasses.map(liveClass => (
                 <LiveClassCard key={liveClass.id} liveClass={liveClass} />
               ))}
-              {filteredLiveClasses.length === 0 && selectedType !== 'manage-courses' ? (
+              {!isLoadingManagedCourses &&
+                filteredLiveClasses.length === 0 &&
+                selectedType !== 'manage-courses' ? (
                 <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     No upcoming class instances matched your search.
                   </CardContent>
                 </Card>
               ) : null}
-            </div>
-
-            <div className='flex justify-center pt-1'>
-              <Link
-                href='/dashboard/classes'
-                className='inline-flex items-center gap-1 text-[1rem] font-medium text-primary transition hover:text-primary/80'
-              >
-                View All Classes
-              </Link>
+              {isLoadingManagedCourses && selectedType !== 'manage-courses' ? (
+                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                  <CardContent className='py-10 text-center text-sm text-muted-foreground'>
+                    Loading upcoming classes...
+                  </CardContent>
+                </Card>
+              ) : null}
             </div>
           </div>
         </div>
@@ -163,52 +166,48 @@ export function InstructorTrainingHubPage() {
               {filteredWaitingList.slice(0, 3).map(student => (
                 <WaitingListItem key={student.id} student={student} />
               ))}
-              {filteredWaitingList.length === 0 ? (
+              {!isLoadingManagedCourses && filteredWaitingList.length === 0 ? (
                 <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
-                  <CardContent className='py-8 text-center text-sm text-muted-foreground'>
+                  <CardContent className='flex min-h-[176px] items-center justify-center py-8 text-center text-sm text-muted-foreground'>
                     No waitlisted students to show right now.
                   </CardContent>
                 </Card>
               ) : null}
-            </div>
-
-            <div className='flex justify-end'>
-              <Link
-                href='/dashboard/training-hub/waiting-list'
-                className='inline-flex items-center gap-1 text-[0.94rem] font-medium text-primary transition hover:text-primary/80'
-              >
-                View Waiting List
-              </Link>
+              {isLoadingManagedCourses ? (
+                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                  <CardContent className='py-10 text-center text-sm text-muted-foreground'>
+                    Loading waiting list...
+                  </CardContent>
+                </Card>
+              ) : null}
             </div>
           </section>
 
           <section className='space-y-3'>
             <TrainingHubSectionHeader
-              actionLabel={`Show All (${bookingPreviews.length})`}
+              actionLabel={`Show All (${upcomingBookings.length})`}
               href='/dashboard/training-hub/bookings'
               title='Bookings'
             />
 
             <div className='space-y-3'>
-              {filteredBookings.map(booking => (
+              {filteredBookings.slice(0, 3).map(booking => (
                 <BookingCard key={booking.id} booking={booking} />
               ))}
-              {filteredBookings.length === 0 ? (
+              {!isLoadingManagedCourses && filteredBookings.length === 0 ? (
                 <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
-                  <CardContent className='py-8 text-center text-sm text-muted-foreground'>
+                  <CardContent className='flex min-h-[176px] items-center justify-center py-8 text-center text-sm text-muted-foreground'>
                     No booking sessions matched your search.
                   </CardContent>
                 </Card>
               ) : null}
-            </div>
-
-            <div className='flex justify-end'>
-              <Link
-                href='/dashboard/training-hub/bookings'
-                className='inline-flex items-center gap-1 text-[0.94rem] font-medium text-primary transition hover:text-primary/80'
-              >
-                View Bookings
-              </Link>
+              {isLoadingManagedCourses ? (
+                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                  <CardContent className='py-10 text-center text-sm text-muted-foreground'>
+                    Loading bookings...
+                  </CardContent>
+                </Card>
+              ) : null}
             </div>
           </section>
         </aside>

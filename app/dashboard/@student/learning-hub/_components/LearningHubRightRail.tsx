@@ -32,33 +32,17 @@ export function LearningHubRightRail({
   return (
     <aside className='space-y-3'>
       <Card className='rounded-[18px] border border-border/70 bg-background p-3 shadow-[0_20px_45px_-40px_rgba(15,23,42,0.18)]'>
-        <h2 className='text-[1rem] font-semibold text-foreground'>Recommended Pathways</h2>
-        <div className='mt-3 rounded-[12px] border border-border/70 bg-background p-3'>
-          {loading ? (
-            <>
-              <Skeleton className='h-[118px] rounded-[10px]' />
-              <Skeleton className='mt-3 h-5 w-40' />
-              <Skeleton className='mt-2 h-4 w-24' />
-              <Skeleton className='mt-4 h-9 w-full rounded-[8px]' />
-            </>
-          ) : (
-            <>
-              <div className='h-[118px] rounded-[10px] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,white),white)]' />
-              <h3 className='mt-3 text-[1rem] font-semibold text-foreground'>Discover Career Paths</h3>
-              <div className='mt-2 flex items-center gap-2 text-[0.72rem] text-muted-foreground'>
-                <span>Advanced</span>
-                <span className='size-1 rounded-full bg-border' />
-                <span>7 - 2; 14 h</span>
-              </div>
-              <Link
-                prefetch
-                href='/dashboard/courses'
-                className='mt-4 inline-flex w-full items-center justify-center rounded-[8px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_88%,black_8%),color-mix(in_srgb,var(--primary)_74%,black_18%))] px-4 py-2 text-[0.78rem] font-medium text-white transition hover:opacity-95'
-              >
-                Start
-              </Link>
-            </>
-          )}
+        <div className='flex items-center justify-between gap-3'>
+          <h2 className='text-[1rem] font-semibold text-foreground'>Class Invites</h2>
+          <span className='inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[0.72rem] font-medium text-muted-foreground'>
+            0
+          </span>
+        </div>
+        <div className='mt-3 rounded-[12px] border border-dashed border-border/70 bg-background p-5 text-center'>
+          <p className='text-sm font-medium text-foreground'>No class invites yet</p>
+          <p className='mt-1 text-xs text-muted-foreground'>
+            Invite data will appear here once the endpoint is available.
+          </p>
         </div>
       </Card>
 
