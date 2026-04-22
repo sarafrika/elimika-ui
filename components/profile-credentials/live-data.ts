@@ -18,8 +18,14 @@ import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type {
   Certificate,
   CourseCreatorDocumentDto,
+  CourseCreatorEducation,
+  CourseCreatorExperience,
+  CourseCreatorProfessionalMembership,
   DocumentTypeOption,
   InstructorDocument,
+  InstructorEducation,
+  InstructorExperience,
+  InstructorProfessionalMembership,
 } from '@/services/client/types.gen';
 import type {
   CredentialItem,
@@ -34,6 +40,13 @@ import { getCredentialsContent as getFallbackCredentialsContent } from './data';
 
 type CredentialsDocument = InstructorDocument | CourseCreatorDocumentDto;
 type StudentCertificate = Certificate;
+type LinkedDocument = CredentialsDocument & {
+  education_uuid?: string;
+  membership_uuid?: string;
+  experience_uuid?: string;
+  title?: string;
+  description?: string;
+};
 
 const badgeKeywords = ['badge', 'award', 'badge'];
 const certificateKeywords = ['certificate', 'diploma', 'degree', 'qualification', 'transcript'];
@@ -65,6 +78,186 @@ function getInitials(name?: string) {
 
 function getFirstValue(...values: Array<string | undefined | null>) {
   return values.find(value => typeof value === 'string' && value.trim().length > 0)?.trim();
+}
+
+function formatYearValue(value?: number | string | Date | null) {
+  if (value === null || value === undefined || value === '') return undefined;
+  if (typeof value === 'number') return `${value}`;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? undefined : `${value.getFullYear()}`;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? String(value) : `${parsed.getFullYear()}`;
+}
+
+function formatDateRange(start?: Date | string, end?: Date | string, active?: boolean) {
+  const formatDate = (value?: Date | string) => {
+    if (!value) return undefined;
+    const parsed = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(parsed.getTime())) return undefined;
+    return parsed.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+  };
+
+  const startValue = formatDate(start);
+  const endValue = active ? 'Present' : formatDate(end);
+  return [startValue, endValue].filter(Boolean).join(' - ');
+}
+
+function buildEducationDetails(education?: InstructorEducation | CourseCreatorEducation) {
+  if (!education) return [];
+
+  return [
+    { label: 'Institution', value: education.school_name || 'Not specified' },
+    { label: 'Qualification', value: education.qualification || 'Not specified' },
+    {
+      label: 'Field',
+      value: education.field_of_study || 'Not specified',
+    },
+    {
+      label: 'Completed',
+      value:
+        education.formatted_completion ||
+        formatYearValue(education.year_completed) ||
+        'Not specified',
+    },
+    {
+      label: 'Certificate',
+      value: education.certificate_number || 'Not specified',
+    },
+  ];
+}
+
+function buildMembershipDetails(
+  membership?: InstructorProfessionalMembership | CourseCreatorProfessionalMembership
+) {
+  if (!membership) return [];
+
+  const organisationName =
+    'organisation_name' in membership
+      ? membership.organisation_name
+      : 'organization_name' in membership
+        ? membership.organization_name
+        : undefined;
+  const statusLabel =
+    'membership_status' in membership
+      ? membership.membership_status
+      : 'status_label' in membership
+        ? membership.status_label
+        : undefined;
+
+  return [
+    { label: 'Organisation', value: organisationName || 'Not specified' },
+    {
+      label: 'Membership No.',
+      value: membership.membership_number || 'Not specified',
+    },
+    {
+      label: 'Period',
+      value:
+        membership.membership_period ||
+        formatDateRange(membership.start_date, membership.end_date, membership.is_active) ||
+        'Not specified',
+    },
+    {
+      label: 'Status',
+      value:
+        statusLabel ||
+        (membership.is_active ? 'Active' : 'Inactive'),
+    },
+  ];
+}
+
+function buildExperienceDetails(
+  experience?: InstructorExperience | CourseCreatorExperience
+) {
+  if (!experience) return [];
+
+  const responsibilities = 'responsibilities' in experience ? experience.responsibilities : undefined;
+  return [
+    { label: 'Position', value: experience.position || 'Not specified' },
+    { label: 'Organisation', value: experience.organisation_name || 'Not specified' },
+    {
+      label: 'Period',
+      value:
+        ('tenure_label' in experience ? experience.tenure_label : undefined) ||
+        formatDateRange(experience.start_date, experience.end_date, experience.is_current_position) ||
+        'Not specified',
+    },
+    {
+      label: 'Experience',
+      value:
+        formatYearValue(experience.years_of_experience) ||
+        (experience.is_current_position ? 'Current role' : 'Not specified'),
+    },
+    {
+      label: 'Responsibilities',
+      value: responsibilities || 'Not specified',
+    },
+  ];
+}
+
+function getLinkedRecordData({
+  document,
+  educationMap,
+  membershipMap,
+  experienceMap,
+}: {
+  document: LinkedDocument;
+  educationMap?: Map<string, InstructorEducation | CourseCreatorEducation>;
+  membershipMap?: Map<string, InstructorProfessionalMembership | CourseCreatorProfessionalMembership>;
+  experienceMap?: Map<string, InstructorExperience | CourseCreatorExperience>;
+}) {
+  const educationUuid = document.education_uuid;
+  const membershipUuid = document.membership_uuid;
+  const experienceUuid = document.experience_uuid;
+
+  const education = educationUuid ? educationMap?.get(educationUuid) : undefined;
+  const membership = membershipUuid ? membershipMap?.get(membershipUuid) : undefined;
+  const experience = experienceUuid ? experienceMap?.get(experienceUuid) : undefined;
+
+  if (education) {
+    return {
+      recordKind: 'education' as const,
+      recordUuid: educationUuid,
+      recordSummary:
+        education.full_description ||
+        `${education.qualification || 'Education'} at ${education.school_name || 'Unknown institution'}`,
+      details: buildEducationDetails(education),
+    };
+  }
+
+  if (membership) {
+    const organisationName =
+      'organisation_name' in membership
+        ? membership.organisation_name
+        : 'organization_name' in membership
+          ? membership.organization_name
+          : undefined;
+    return {
+      recordKind: 'membership' as const,
+      recordUuid: membershipUuid,
+      recordSummary:
+        ('summary' in membership && membership.summary) ||
+        `${organisationName || 'Membership'} record`,
+      details: buildMembershipDetails(membership),
+    };
+  }
+
+  if (experience) {
+    return {
+      recordKind: 'experience' as const,
+      recordUuid: experienceUuid,
+      recordSummary:
+        ('tenure_label' in experience && experience.tenure_label) ||
+        `${experience.position || 'Experience'} at ${experience.organisation_name || 'Unknown organisation'}`,
+      details: buildExperienceDetails(experience),
+    };
+  }
+
+  return {
+    recordKind: undefined,
+    recordUuid: undefined,
+    recordSummary: undefined,
+    details: [] as ReturnType<typeof buildEducationDetails>,
+  };
 }
 
 function getDocumentTypeMap(documentTypes: DocumentTypeOption[]) {
@@ -354,6 +547,57 @@ function mapCredentialItems(
     });
 }
 
+function mapLinkedCredentialItems({
+  documents,
+  documentTypes,
+  educationMap,
+  membershipMap,
+  experienceMap,
+  searchValue = '',
+  statusFilter = 'all',
+}: {
+  documents: LinkedDocument[];
+  documentTypes: DocumentTypeOption[];
+  educationMap?: Map<string, InstructorEducation | CourseCreatorEducation>;
+  membershipMap?: Map<string, InstructorProfessionalMembership | CourseCreatorProfessionalMembership>;
+  experienceMap?: Map<string, InstructorExperience | CourseCreatorExperience>;
+  searchValue?: string;
+  statusFilter?: CredentialsStatusFilter;
+}) {
+  const baseItems = mapCredentialItems(documents, documentTypes, searchValue, statusFilter);
+
+  return baseItems.map(item => {
+    const sourceDocument = documents.find(document => {
+      const candidateUuid = document.uuid ?? `${document.document_type_uuid}-${document.original_filename}`;
+      return candidateUuid === item.id || document.original_filename === item.documentLabel;
+    });
+
+    if (!sourceDocument) return item;
+
+    const linked = getLinkedRecordData({
+      document: sourceDocument,
+      educationMap,
+      membershipMap,
+      experienceMap,
+    });
+
+    return {
+      ...item,
+      documentUuid:
+        sourceDocument.uuid ||
+        item.id ||
+        undefined,
+      recordKind: linked.recordKind,
+      recordUuid: linked.recordUuid,
+      recordSummary: linked.recordSummary,
+      details: linked.details,
+      title: item.title,
+      issuer: item.issuer,
+      metadata: linked.recordSummary ? linked.recordSummary : item.metadata,
+    } satisfies CredentialItem;
+  });
+}
+
 function buildTimelineItems(items: ReturnType<typeof mapCredentialItems>): GrowthItem[] {
   const timelineIcons = [GraduationCap, BriefcaseBusiness, Building2, WalletCards, Cloud, Globe, Star];
 
@@ -499,6 +743,9 @@ export function buildCredentialsContent({
   profile,
   documents,
   certificates,
+  educationRecords,
+  membershipRecords,
+  experienceRecords,
   documentTypes,
   searchValue,
   statusFilter = 'all',
@@ -507,6 +754,9 @@ export function buildCredentialsContent({
   profile?: UserProfileType;
   documents?: CredentialsDocument[];
   certificates?: StudentCertificate[];
+  educationRecords?: Array<InstructorEducation | CourseCreatorEducation>;
+  membershipRecords?: Array<InstructorProfessionalMembership | CourseCreatorProfessionalMembership>;
+  experienceRecords?: Array<InstructorExperience | CourseCreatorExperience>;
   documentTypes?: DocumentTypeOption[];
   searchValue?: string;
   statusFilter?: CredentialsStatusFilter;
@@ -514,8 +764,35 @@ export function buildCredentialsContent({
   const fallback = getFallbackCredentialsContent(role);
   const liveDocuments = (documents ?? []).filter(Boolean);
   const liveCertificates = (certificates ?? []).filter(Boolean);
+  const educationMap = new Map(
+    (educationRecords ?? [])
+      .filter(item => typeof item.uuid === 'string')
+      .map(item => [item.uuid as string, item])
+  );
+  const membershipMap = new Map(
+    (membershipRecords ?? [])
+      .filter(item => typeof item.uuid === 'string')
+      .map(item => [item.uuid as string, item])
+  );
+  const experienceMap = new Map(
+    (experienceRecords ?? [])
+      .filter(item => typeof item.uuid === 'string')
+      .map(item => [item.uuid as string, item])
+  );
   const types = documentTypes ?? [];
-  const liveItems = mapCredentialItems(liveDocuments, types, searchValue, statusFilter);
+  const linkedDocuments = liveDocuments as LinkedDocument[];
+  const liveItems =
+    role === 'student'
+      ? mapCredentialItems(liveDocuments, types, searchValue, statusFilter)
+      : mapLinkedCredentialItems({
+          documents: linkedDocuments,
+          documentTypes: types,
+          educationMap,
+          membershipMap,
+          experienceMap,
+          searchValue,
+          statusFilter,
+        });
   const verifiedItems = liveItems.filter(item => item.status.includes('Verified'));
   const groupedByTab = fallback.tabs.reduce<Record<CredentialsTabId, CredentialItem[]>>(
     (acc, tab) => {
