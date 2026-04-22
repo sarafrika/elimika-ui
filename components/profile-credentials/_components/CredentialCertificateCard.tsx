@@ -25,6 +25,37 @@ if (typeof window !== 'undefined') {
   ).toString();
 }
 
+function getStatusTone(status: string) {
+  const normalized = status.toLowerCase();
+
+  if (normalized.includes('verified')) {
+    return {
+      badgeClass: 'border-success/20 bg-success/10 text-success',
+      iconClass: 'text-success',
+    };
+  }
+
+  if (normalized.includes('reject')) {
+    return {
+      badgeClass: 'border-destructive/20 bg-destructive/10 text-destructive',
+      iconClass: 'text-destructive',
+    };
+  }
+
+  if (normalized.includes('pending') || normalized.includes('review')) {
+    return {
+      badgeClass:
+        'border-[color-mix(in_srgb,var(--el-accent-amber)_32%,white)] bg-[color-mix(in_srgb,var(--el-accent-amber)_16%,white)] text-[color-mix(in_srgb,var(--el-accent-amber)_90%,black)]',
+      iconClass: 'text-[color-mix(in_srgb,var(--el-accent-amber)_92%,var(--foreground))]',
+    };
+  }
+
+  return {
+    badgeClass: 'border-border/70 bg-background/80 text-muted-foreground',
+    iconClass: 'text-muted-foreground',
+  };
+}
+
 function PdfPreview({ documentUrl, documentLabel }: { documentUrl: string; documentLabel: string }) {
   const resolvedUrl = toAuthenticatedMediaUrl(documentUrl) || documentUrl;
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -50,7 +81,7 @@ function PdfPreview({ documentUrl, documentLabel }: { documentUrl: string; docum
       canvas.style.width = '100%';
       canvas.style.height = 'auto';
 
-      await page.render({ canvasContext: context, viewport }).promise;
+      await page.render({ canvasContext: context, viewport } as any).promise;
     };
 
     const load = async () => {
@@ -130,6 +161,7 @@ export function CredentialCertificateCard({
   ownerName,
 }: CredentialCertificateCardProps) {
   const StatusIcon = item.statusIcon;
+  const statusTone = getStatusTone(item.status);
 
   return (
     <Card className='gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
@@ -165,9 +197,12 @@ export function CredentialCertificateCard({
         <div className='flex flex-wrap gap-2'>
           <Badge
             variant='outline'
-            className='min-h-10 rounded-lg border-white/70 bg-background/80 px-3 text-sm font-medium text-muted-foreground'
+            className={cn(
+              'min-h-10 rounded-lg px-3 text-sm font-medium',
+              statusTone.badgeClass
+            )}
           >
-            <StatusIcon className='text-success size-4' />
+            <StatusIcon className={cn('size-4', statusTone.iconClass)} />
             {item.status}
           </Badge>
           {item.documentUrl ? (

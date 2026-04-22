@@ -1,8 +1,5 @@
+import DocumentsVerificationPage from './_components/DocumentsVerificationPage';
 
-const DocumentsVerificationPage = () => {
-    return (
-        <div>DocumentsVerificationPage</div>
-    )
+export default function Page() {
+  return <DocumentsVerificationPage />;
 }
-
-export default DocumentsVerificationPage

@@ -231,19 +231,22 @@ function mapCredentialItems(
 function buildTimelineItems(items: ReturnType<typeof mapCredentialItems>): GrowthItem[] {
   const timelineIcons = [GraduationCap, BriefcaseBusiness, Building2, WalletCards, Cloud, Globe, Star];
 
-  return items.slice(0, 6).map((item, index) => ({
-    id: `${item.id}-timeline`,
-    title: item.title,
-    provider: item.issuer,
-    documentName: item.documentLabel,
-    documentUrl: item.documentUrl,
-    badge: item.level,
-    metadata: item.status,
-    footerLabel: item.actionLabel,
-    actionLabel: item.actionLabel,
-    accent: index % 3 === 0 ? 'green' : index % 3 === 1 ? 'amber' : 'blue',
-    icon: timelineIcons[index % timelineIcons.length] ?? FileText,
-  }));
+  return items
+    .filter(item => item.level === 'Verified')
+    .slice(0, 6)
+    .map((item, index) => ({
+      id: `${item.id}-timeline`,
+      title: item.title,
+      provider: item.issuer,
+      documentName: item.documentLabel,
+      documentUrl: item.documentUrl,
+      badge: item.level,
+      metadata: item.status,
+      footerLabel: item.actionLabel,
+      actionLabel: item.actionLabel,
+      accent: index % 3 === 0 ? 'green' : index % 3 === 1 ? 'amber' : 'blue',
+      icon: timelineIcons[index % timelineIcons.length] ?? FileText,
+    }));
 }
 
 function resolveProfile(role: CredentialsRole, profile?: UserProfileType): CredentialsProfile {
