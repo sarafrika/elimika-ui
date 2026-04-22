@@ -10,9 +10,11 @@ import type { UserProfileType } from '@/lib/types';
 import {
   getCourseCreatorDocumentsOptions,
   getInstructorDocumentsOptions,
+  getStudentCertificatesOptions,
   listDocumentTypesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
+  Certificate,
   CourseCreatorDocumentDto,
   DocumentTypeOption,
   InstructorDocument,
@@ -47,6 +49,10 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   const profileData = user as UserProfileType | undefined;
 
   const profileUuid = profile?.uuid;
+  const studentCertificatesQuery = useQuery({
+    ...getStudentCertificatesOptions({ path: { studentUuid: profileUuid ?? '' } }),
+    enabled: role === 'student' && !!profileUuid,
+  });
 
   const instructorDocumentsQuery = useQuery({
     ...getInstructorDocumentsOptions({ path: { instructorUuid: profileUuid ?? '' } }),
@@ -68,6 +74,10 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
       : role === 'course_creator'
         ? ((courseCreatorDocumentsQuery.data?.data ?? []) as CourseCreatorDocumentDto[])
         : [];
+  const certificates =
+    role === 'student'
+      ? ((studentCertificatesQuery.data?.data ?? []) as Certificate[])
+      : [];
 
   const documentTypes = (documentTypesQuery.data?.data ?? []) as DocumentTypeOption[];
 
@@ -75,6 +85,7 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
     role,
     profile: profileData,
     documents,
+    certificates,
     documentTypes,
     searchValue,
     statusFilter,
@@ -88,6 +99,11 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
 
     if (role === 'course_creator' && profileUuid) {
       await courseCreatorDocumentsQuery.refetch();
+      return;
+    }
+
+    if (role === 'student' && profileUuid) {
+      await studentCertificatesQuery.refetch();
     }
   };
 
@@ -101,7 +117,7 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
           addLabel={content.addLabel}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
-          onAddClick={() => setIsUploadSheetOpen(true)}
+          onAddClick={role === 'student' ? undefined : () => setIsUploadSheetOpen(true)}
         />
 
         <Tabs defaultValue='all' className='gap-4'>

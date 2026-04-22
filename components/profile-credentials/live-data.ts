@@ -15,7 +15,12 @@ import {
 } from 'lucide-react';
 import type { UserProfileType } from '@/lib/types';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import type { CourseCreatorDocumentDto, DocumentTypeOption, InstructorDocument } from '@/services/client/types.gen';
+import type {
+  Certificate,
+  CourseCreatorDocumentDto,
+  DocumentTypeOption,
+  InstructorDocument,
+} from '@/services/client/types.gen';
 import type {
   CredentialItem,
   CredentialsContent,
@@ -28,6 +33,7 @@ import type {
 import { getCredentialsContent as getFallbackCredentialsContent } from './data';
 
 type CredentialsDocument = InstructorDocument | CourseCreatorDocumentDto;
+type StudentCertificate = Certificate;
 
 const badgeKeywords = ['badge', 'award', 'badge'];
 const certificateKeywords = ['certificate', 'diploma', 'degree', 'qualification', 'transcript'];
@@ -104,6 +110,126 @@ function formatFileSize(bytes?: bigint) {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getCertificateStatus(certificate: StudentCertificate) {
+  const verified = certificate.is_valid !== false && certificate.validity_status !== 'pending';
+  const rejected = certificate.is_valid === false;
+  const pending = certificate.validity_status === 'pending';
+
+  if (verified) {
+    return {
+      label: 'Verified on Blockchain',
+      stage: 'Verified',
+      icon: CheckCircle2,
+      tone: 'success' as const,
+    };
+  }
+
+  if (rejected) {
+    return {
+      label: 'Verification Rejected',
+      stage: 'Rejected',
+      icon: Award,
+      tone: 'destructive' as const,
+    };
+  }
+
+  if (pending) {
+    return {
+      label: 'Under Review',
+      stage: 'Pending',
+      icon: Eye,
+      tone: 'secondary' as const,
+    };
+  }
+
+  return {
+    label: certificate.validity_status ?? 'Pending',
+    stage: 'Pending',
+    icon: Eye,
+    tone: 'secondary' as const,
+  };
+}
+
+function getCertificateTimestamp(certificate: StudentCertificate) {
+  return certificate.issued_date ?? certificate.completion_date ?? certificate.created_date;
+}
+
+function getCertificateLabel(certificate: StudentCertificate) {
+  return (
+    getFirstValue(
+      certificate.certificate_type,
+      certificate.certificate_number,
+      certificate.template_uuid,
+      'Certificate'
+    ) ?? 'Certificate'
+  );
+}
+
+function getCertificateIssuer(certificate: StudentCertificate) {
+  return getFirstValue(certificate.certificate_type, certificate.template_uuid, 'Certificate') ?? 'Certificate';
+}
+
+function mapCertificateItems(
+  certificates: StudentCertificate[],
+  searchValue = '',
+  statusFilter: CredentialsStatusFilter = 'all'
+) {
+  const filter = searchValue.trim().toLowerCase();
+
+  return certificates
+    .slice()
+    .sort((left, right) => {
+      const leftDate = new Date(getCertificateTimestamp(left) ?? 0).getTime();
+      const rightDate = new Date(getCertificateTimestamp(right) ?? 0).getTime();
+      return rightDate - leftDate;
+    })
+    .filter(certificate => {
+      const status = getCertificateStatus(certificate);
+
+      if (!filter) return true;
+
+      return [
+        getCertificateLabel(certificate).toLowerCase(),
+        getCertificateIssuer(certificate).toLowerCase(),
+        certificate.certificate_number?.toLowerCase() ?? '',
+        status.label.toLowerCase(),
+      ].some(value => value.includes(filter));
+    })
+    .filter(certificate => {
+      if (statusFilter === 'all') return true;
+
+      const status = getCertificateStatus(certificate);
+
+      if (statusFilter === 'verified') return status.stage === 'Verified';
+      if (statusFilter === 'pending') return status.stage === 'Pending';
+      if (statusFilter === 'rejected') return status.stage === 'Rejected';
+
+      return true;
+    })
+    .map((certificate, index) => {
+      const status = getCertificateStatus(certificate);
+      const timestamp = getCertificateTimestamp(certificate);
+
+      return {
+        id: certificate.uuid ?? `${certificate.template_uuid}-${index}`,
+        title: getCertificateLabel(certificate),
+        issuer: getCertificateIssuer(certificate),
+        issuerIconText: getInitials(getCertificateIssuer(certificate)).slice(0, 1) || 'C',
+        stage: `Completed ${formatLongDate(timestamp)}`,
+        level: status.stage,
+        status: status.label,
+        statusIcon: status.icon,
+        actionLabel: certificate.certificate_url ? 'View' : 'Details',
+        documentLabel: certificate.certificate_number ?? certificate.template_uuid,
+        documentUrl: getFirstValue(certificate.certificate_url, undefined),
+        metadata: certificate.final_grade ? `${certificate.final_grade}%` : undefined,
+      } satisfies CredentialItem & {
+        documentUrl?: string;
+        metadata?: string;
+      };
+    });
 }
 
 function getDocumentStatus(document: CredentialsDocument) {
@@ -309,8 +435,13 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
   };
 }
 
-function buildSummary(itemCount: number, verifiedCount: number, documentTypes: DocumentTypeOption[]) {
-  const uploadCount = `${itemCount} Document${itemCount === 1 ? '' : 's'}`;
+function buildSummary(
+  itemCount: number,
+  verifiedCount: number,
+  documentTypes: DocumentTypeOption[],
+  noun = 'Document'
+) {
+  const uploadCount = `${itemCount} ${noun}${itemCount === 1 ? '' : 's'}`;
   const shares = `${Math.max(itemCount, verifiedCount)} Share${Math.max(itemCount, verifiedCount) === 1 ? '' : 's'}`;
   const blockchainLabel =
     verifiedCount > 0
@@ -367,6 +498,7 @@ export function buildCredentialsContent({
   role,
   profile,
   documents,
+  certificates,
   documentTypes,
   searchValue,
   statusFilter = 'all',
@@ -374,12 +506,14 @@ export function buildCredentialsContent({
   role: CredentialsRole;
   profile?: UserProfileType;
   documents?: CredentialsDocument[];
+  certificates?: StudentCertificate[];
   documentTypes?: DocumentTypeOption[];
   searchValue?: string;
   statusFilter?: CredentialsStatusFilter;
 }): CredentialsContent {
   const fallback = getFallbackCredentialsContent(role);
   const liveDocuments = (documents ?? []).filter(Boolean);
+  const liveCertificates = (certificates ?? []).filter(Boolean);
   const types = documentTypes ?? [];
   const liveItems = mapCredentialItems(liveDocuments, types, searchValue, statusFilter);
   const verifiedItems = liveItems.filter(item => item.status.includes('Verified'));
@@ -421,9 +555,51 @@ export function buildCredentialsContent({
   }
 
   if (role === 'student') {
+    const certificateItems = mapCertificateItems(liveCertificates, searchValue, statusFilter);
+    const verifiedCertificates = certificateItems.filter(item => item.status.includes('Verified'));
+    const groupedByTab = fallback.tabs.reduce<Record<CredentialsTabId, CredentialItem[]>>(
+      (acc, tab) => {
+        acc[tab.id as CredentialsTabId] = certificateItems.filter(item => {
+          const normalized = `${item.title} ${item.issuer} ${item.status} ${item.documentLabel}`.toLowerCase();
+
+          if (tab.id === 'all') return true;
+          if (tab.id === 'blockchain') return blockchainKeywords.some(keyword => normalized.includes(keyword));
+          if (tab.id === 'badges') return badgeKeywords.some(keyword => normalized.includes(keyword));
+          if (tab.id === 'certificates') return certificateKeywords.some(keyword => normalized.includes(keyword));
+
+          return true;
+        });
+        return acc;
+      },
+      {
+        all: certificateItems,
+        badges: [],
+        certificates: [],
+        blockchain: [],
+      }
+    );
+    const totalCount = certificateItems.length;
+    const liveTabs = fallback.tabs.map(tab => {
+      const tabItems = groupedByTab[tab.id as CredentialsTabId] ?? [];
+      const count = tab.id === 'all' ? totalCount : tabItems.length;
+
+      return {
+        ...tab,
+        label: tab.id === 'all' ? `${totalCount} Credentials` : tab.label,
+        countLabel: tab.id === 'all' ? undefined : `${count}`,
+      };
+    });
+
     return {
-      ...filterFallbackContentWithStatus(fallback, searchValue ?? '', statusFilter),
-      profile: resolveProfile(role, profile),
+      ...fallback,
+      tabs: liveTabs,
+      profile: {
+        ...resolveProfile(role, profile),
+        entriesLabel: `${totalCount} Certificate${totalCount === 1 ? '' : 's'}`,
+      },
+      summary: buildSummary(totalCount, verifiedCertificates.length, [], 'Certificate'),
+      credentialsByTab: groupedByTab,
+      timeline: buildTimelineItems(certificateItems),
     };
   }
 
