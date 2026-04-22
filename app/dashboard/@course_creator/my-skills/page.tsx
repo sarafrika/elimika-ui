@@ -160,9 +160,12 @@ export default function CourseCreatorMySkillsPage() {
 
   const profile: SharedMySkillsProfile = {
     name: getProfileName(creator?.profile),
-    title: 'Course Creator Skills Wallet',
+    title:
+      getProfileString(creator?.profile, ['professional_headline', 'headline', 'title']) ??
+      'Course Creator Skills Wallet',
     location:
-      getProfileString(creator?.profile, ['location', 'country']) ?? 'Course design profile',
+      getProfileString(creator?.profile, ['location', 'formatted_location', 'country']) ??
+      'Course design profile',
     email: getProfileString(creator?.profile, ['email', 'contact_email']),
     phone: getProfileString(creator?.profile, ['phone_number', 'phone', 'contact_phone']),
     joinedLabel: getProfileString(creator?.profile, ['created_date'])

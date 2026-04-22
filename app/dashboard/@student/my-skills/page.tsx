@@ -257,8 +257,12 @@ export default function StudentMySkillsPage() {
 
   const profile: SharedMySkillsProfile = {
     name: getProfileName(student),
-    title: 'Student Skills Wallet',
-    location: getProfileString(student, ['location', 'country']) ?? 'Learning profile',
+    title:
+      getProfileString(student, ['professional_headline', 'headline', 'title']) ??
+      'Verified Learning Profile',
+    location:
+      getProfileString(student, ['location', 'formatted_location', 'country']) ??
+      'Learning profile',
     email: getProfileString(student, ['email', 'contact_email']),
     phone: getProfileString(student, ['phone_number', 'phone', 'contact_phone']),
     joinedLabel: getProfileString(student, ['created_date'])

@@ -17,8 +17,8 @@ export function CredentialSummaryPanel({ summary, timeline }: CredentialSummaryP
   ];
 
   return (
-    <div className='grid gap-4'>
-      <article className='h-auto border-border/60 bg-card rounded-lg border p-3 shadow-sm'>
+    <div className='grid items-start gap-3'>
+      <article className='border-border/60 bg-card self-start rounded-lg border p-3 shadow-sm'>
         <h2 className='mb-3 text-sm font-semibold sm:text-base'>Credential Summary</h2>
         <div className='grid grid-cols-3 gap-2'>
           {values.map(item => (
@@ -29,7 +29,7 @@ export function CredentialSummaryPanel({ summary, timeline }: CredentialSummaryP
           ))}
         </div>
 
-        <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2'>
+        <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2'>
           <div className='border-border/60 bg-background flex items-center gap-2 rounded-md border p-2'>
             <span className='bg-primary/10 text-primary grid size-8 place-items-center rounded-md'>
               <ShieldCheck className='size-4' />
@@ -51,7 +51,7 @@ export function CredentialSummaryPanel({ summary, timeline }: CredentialSummaryP
         </div>
       </article>
 
-      {/* <article className='border-border/60 bg-card rounded-lg border p-3 shadow-sm'>
+      <article className='border-border/60 bg-card self-start rounded-lg border p-3 shadow-sm'>
         <h2 className='mb-3 text-sm font-semibold sm:text-base'>Growth Timeline</h2>
         <div className='space-y-2'>
           {timeline.slice(0, 3).map(item => (
@@ -72,7 +72,7 @@ export function CredentialSummaryPanel({ summary, timeline }: CredentialSummaryP
             </div>
           ))}
         </div>
-      </article> */}
+      </article>
     </div>
   );
 }

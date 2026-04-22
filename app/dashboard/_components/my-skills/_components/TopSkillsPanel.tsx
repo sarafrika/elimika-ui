@@ -1,4 +1,3 @@
-import { BadgeCheck } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -11,38 +10,17 @@ type TopSkillsPanelProps = {
 };
 
 export function TopSkillsPanel({ skills }: TopSkillsPanelProps) {
-  const topSkills = skills.slice(0, 4);
+  const topSkills = skills.slice(0, 5);
 
   return (
-    <article className='border-border/60 bg-card rounded-lg border p-3 shadow-sm'>
+    <article className='border-border/60 bg-card self-start rounded-lg border p-3 shadow-sm'>
       <div className='mb-3 flex items-center justify-between gap-3'>
         <h2 className='text-foreground text-sm font-semibold sm:text-base'>Top Skills</h2>
-        <span className='text-muted-foreground text-[10px]'>Credential strength</span>
+        <span className='text-muted-foreground text-[10px]'>Skill graph</span>
       </div>
 
       <div className='space-y-3'>
-        <div className='relative mx-auto grid aspect-square w-full max-w-52 place-items-center'>
-          <div className='border-border absolute inset-[7%] rounded-full border' />
-          <div className='border-border absolute inset-[22%] rounded-full border' />
-          <div className='border-border absolute inset-[37%] rounded-full border' />
-          <div
-            className='bg-primary/20 border-primary/70 absolute inset-[16%] border'
-            style={{
-              clipPath: 'polygon(50% 4%, 91% 29%, 79% 82%, 23% 82%, 8% 29%)',
-            }}
-          />
-          <div className='bg-card text-primary relative grid size-11 place-items-center rounded-full border shadow-sm'>
-            <BadgeCheck className='size-5' aria-hidden='true' />
-          </div>
-          <span className='text-muted-foreground absolute top-0 text-[10px]'>Web Design</span>
-          <span className='text-muted-foreground absolute top-[42%] right-0 text-[10px]'>
-            Strategy
-          </span>
-          <span className='text-muted-foreground absolute right-4 bottom-2 text-[10px]'>Data</span>
-          <span className='text-muted-foreground absolute bottom-2 left-2 text-[10px]'>
-            Marketing
-          </span>
-        </div>
+        <SkillsRadarChart skills={topSkills} />
 
         <div className='min-w-0 space-y-2'>
           <p className='text-foreground text-xs font-semibold sm:text-sm'>Top Skills</p>
@@ -73,4 +51,83 @@ export function TopSkillsPanel({ skills }: TopSkillsPanelProps) {
       </div>
     </article>
   );
+}
+
+function SkillsRadarChart({ skills }: { skills: SharedSkill[] }) {
+  const chartSkills = skills.length > 0 ? skills : [];
+  const center = 100;
+  const maxRadius = 58;
+  const sides = Math.max(chartSkills.length, 3);
+  const gridLevels = [0.33, 0.66, 1];
+  const dataPoints = chartSkills
+    .map((skill, index) => getRadarPoint(index, sides, center, maxRadius * (skill.score / 100)))
+    .join(' ');
+
+  return (
+    <div className='mx-auto w-full max-w-60'>
+      <svg viewBox='0 0 200 190' role='img' aria-label='Top skills radar chart' className='w-full'>
+        {gridLevels.map(level => (
+          <polygon
+            key={level}
+            points={Array.from({ length: sides })
+              .map((_, index) => getRadarPoint(index, sides, center, maxRadius * level))
+              .join(' ')}
+            className='stroke-border fill-transparent'
+            strokeWidth='1'
+          />
+        ))}
+
+        {Array.from({ length: sides }).map((_, index) => {
+          const outer = getRadarPoint(index, sides, center, maxRadius);
+          return (
+            <line
+              key={index}
+              x1={center}
+              y1={center}
+              x2={outer.split(',')[0]}
+              y2={outer.split(',')[1]}
+              className='stroke-border'
+              strokeWidth='1'
+            />
+          );
+        })}
+
+        {dataPoints ? (
+          <polygon points={dataPoints} className='fill-primary/20 stroke-primary' strokeWidth='2' />
+        ) : null}
+
+        {chartSkills.map((skill, index) => {
+          const [x, y] = getRadarCoordinates(index, sides, center, maxRadius * (skill.score / 100));
+          const [labelX, labelY] = getRadarCoordinates(index, sides, center, maxRadius + 22);
+
+          return (
+            <g key={skill.id}>
+              <circle cx={x} cy={y} r='3' className='fill-primary' />
+              <text
+                x={labelX}
+                y={labelY}
+                textAnchor={labelX > center + 8 ? 'start' : labelX < center - 8 ? 'end' : 'middle'}
+                dominantBaseline='middle'
+                className='fill-muted-foreground text-[9px]'
+              >
+                {skill.name.length > 14 ? `${skill.name.slice(0, 12)}...` : skill.name}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function getRadarPoint(index: number, sides: number, center: number, radius: number) {
+  const [x, y] = getRadarCoordinates(index, sides, center, radius);
+  return `${x.toFixed(2)},${y.toFixed(2)}`;
+}
+
+function getRadarCoordinates(index: number, sides: number, center: number, radius: number) {
+  const angle = -Math.PI / 2 + (2 * Math.PI * index) / sides;
+  const x = center + radius * Math.cos(angle);
+  const y = center + radius * Math.sin(angle);
+  return [x, y] as const;
 }

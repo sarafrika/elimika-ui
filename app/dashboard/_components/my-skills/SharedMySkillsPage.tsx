@@ -91,11 +91,10 @@ export function SharedMySkillsPage({
           primaryActionLabel={actionLabel}
           onPrimaryAction={onAction}
           qrTargetUrl={qrTargetUrl}
+          levelLabel={levelLabel}
         />
 
-        <LevelAttainmentStrip activeLevel={levelLabel} />
-
-        <section className='grid gap-4 xl:grid-cols-[minmax(230px,0.82fr)_minmax(320px,1.18fr)_minmax(320px,1fr)]'>
+        <section className='grid items-start gap-3 xl:grid-cols-[minmax(230px,0.88fr)_minmax(300px,1.05fr)_minmax(280px,0.95fr)]'>
           <SkillOverviewCard
             profile={profile}
             skills={sortedSkills}
@@ -109,32 +108,6 @@ export function SharedMySkillsPage({
         <FullWidthGrowthTimeline items={bottomTimeline} />
       </div>
     </main>
-  );
-}
-
-function LevelAttainmentStrip({ activeLevel }: { activeLevel: string }) {
-  const levels = ['Level 1 Prep', 'Level 2 Developing', 'Level 3 Skilled', 'Level 4 Advanced'];
-
-  return (
-    <div className='flex flex-wrap items-center gap-2' aria-label='Attained skill level'>
-      {levels.map(level => (
-        <span
-          key={level}
-          className={
-            level === activeLevel
-              ? 'bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-xs font-medium'
-              : 'bg-muted text-muted-foreground rounded-md px-3 py-1.5 text-xs font-medium'
-          }
-        >
-          {level}
-        </span>
-      ))}
-      {!levels.includes(activeLevel) ? (
-        <span className='bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-xs font-medium'>
-          {activeLevel}
-        </span>
-      ) : null}
-    </div>
   );
 }
 

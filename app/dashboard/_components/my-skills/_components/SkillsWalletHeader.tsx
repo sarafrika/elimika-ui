@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, Share2, WalletCards } from 'lucide-react';
+import { Download, MapPin, Share2, WalletCards } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -12,6 +12,7 @@ type SkillsWalletHeaderProps = {
   onPrimaryAction?: () => void;
   primaryActionLabel: string;
   qrTargetUrl?: string;
+  levelLabel: string;
 };
 
 export function SkillsWalletHeader({
@@ -19,6 +20,7 @@ export function SkillsWalletHeader({
   onPrimaryAction,
   primaryActionLabel,
   qrTargetUrl,
+  levelLabel,
 }: SkillsWalletHeaderProps) {
   const handleShare = async () => {
     if (onPrimaryAction) {
@@ -43,9 +45,9 @@ export function SkillsWalletHeader({
 
   return (
     <section className='border-border/60 bg-card overflow-hidden rounded-lg border'>
-      <div className='bg-muted/40 flex min-h-32 flex-col gap-4 p-3 sm:p-4 md:flex-row md:items-end md:justify-between'>
+      <div className='bg-muted/40 flex min-h-28 flex-col gap-3 p-3 sm:p-4 md:flex-row md:items-end md:justify-between'>
         <div className='flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end'>
-          <div className='border-background bg-muted grid size-16 shrink-0 place-items-center overflow-hidden rounded-lg border-4 sm:size-20'>
+          <div className='border-background bg-muted grid size-16 shrink-0 place-items-center overflow-hidden rounded-lg border-4 sm:size-[4.75rem]'>
             {profile.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={profile.avatarUrl} alt='' className='h-full w-full object-cover' />
@@ -55,13 +57,26 @@ export function SkillsWalletHeader({
           </div>
 
           <div className='min-w-0'>
-            <h1 className='text-foreground truncate text-lg font-semibold sm:text-xl lg:text-2xl'>
+            <h1 className='text-foreground truncate text-lg font-semibold sm:text-xl'>
               {profile.name}
             </h1>
-            <p className='text-muted-foreground text-xs font-medium sm:text-sm'>{profile.title}</p>
+            <p className='text-foreground/80 truncate text-xs font-medium sm:text-sm'>
+              {profile.title}
+            </p>
             {profile.location ? (
-              <p className='text-muted-foreground mt-1 text-xs'>{profile.location}</p>
+              <p className='text-muted-foreground mt-1 inline-flex max-w-full items-center gap-1 truncate text-xs'>
+                <MapPin className='size-3 shrink-0' />
+                <span className='truncate'>{profile.location}</span>
+              </p>
             ) : null}
+            <div className='mt-2 flex flex-wrap items-center gap-2'>
+              <span className='bg-primary/10 text-primary rounded-md px-2 py-1 text-[10px] font-medium'>
+                {levelLabel}
+              </span>
+              <span className='bg-warning/15 text-warning rounded-md px-2 py-1 text-[10px] font-medium'>
+                Wallet Advanced
+              </span>
+            </div>
           </div>
         </div>
 

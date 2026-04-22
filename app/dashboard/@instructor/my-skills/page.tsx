@@ -159,8 +159,12 @@ export default function InstructorMySkillsPage() {
 
   const profile: SharedMySkillsProfile = {
     name: getProfileName(instructor),
-    title: 'Instructor Skills Wallet',
-    location: getProfileString(instructor, ['location', 'country']) ?? 'Training profile',
+    title:
+      getProfileString(instructor, ['professional_headline', 'headline', 'title']) ??
+      'Instructor Skills Wallet',
+    location:
+      getProfileString(instructor, ['location', 'formatted_location', 'country']) ??
+      'Training profile',
     email: getProfileString(instructor, ['email', 'contact_email']),
     phone: getProfileString(instructor, ['phone_number', 'phone', 'contact_phone']),
     joinedLabel: getProfileString(instructor, ['created_date'])
