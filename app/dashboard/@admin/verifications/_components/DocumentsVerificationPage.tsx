@@ -436,8 +436,6 @@ function ReviewCard({
 }) {
   const hasDocumentUrl = !!item.documentUrl;
 
-  console.log(item, "item here")
-
   return (
     <Card className='w-full gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
       {hasDocumentUrl ? (
