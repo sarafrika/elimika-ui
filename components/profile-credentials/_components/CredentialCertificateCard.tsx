@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import * as pdfjsLib from 'pdfjs-dist';
+import { useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,7 @@ function getStatusTone(status: string) {
   };
 }
 
-function PdfPreview({ documentUrl, documentLabel }: { documentUrl: string; documentLabel: string }) {
+export function GeneralPdfPreview({ documentUrl, documentLabel }: { documentUrl: string; documentLabel: string }) {
   const resolvedUrl = toAuthenticatedMediaUrl(documentUrl) || documentUrl;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +107,7 @@ function PdfPreview({ documentUrl, documentLabel }: { documentUrl: string; docum
 
     return () => {
       cancelled = true;
-      pdfDoc?.destroy().catch(() => {});
+      pdfDoc?.destroy().catch(() => { });
     };
   }, [resolvedUrl]);
 
@@ -172,7 +172,7 @@ export function CredentialCertificateCard({
   return (
     <Card className='gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
       {item.documentUrl ? (
-        <PdfPreview documentUrl={item.documentUrl} documentLabel={item.documentLabel} />
+        <GeneralPdfPreview documentUrl={item.documentUrl} documentLabel={item.documentLabel} />
       ) : (
         <CertificatePreview ownerName={ownerName} issuer={item.issuer} documentLabel={item.documentLabel} />
       )}
