@@ -86,7 +86,7 @@ export function CredentialsUploadSheet({
   const [draft, setDraft] = useState<UploadDraft>(initialDraft);
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const addInstructorDocument = useMutation(addInstructorDocumentMutation());
   const uploadInstructorDocument = useMutation(uploadInstructorDocumentMutation());

@@ -3,8 +3,8 @@ const ALLOWED_MEDIA_HOSTS = new Set([
   'api.elimika.staging.sarafrika.com',
 ]);
 
-const ALLOWED_MEDIA_PATH_PREFIXES = ['/api/v1/courses/media/', '/api/v1/courses/content-media/'];
-const AUTHENTICATED_MEDIA_ROUTE = '/api/media';
+const ALLOWED_MEDIA_PATH_PREFIXES = ['/api/v1', '/api/v1'];
+const AUTHENTICATED_MEDIA_ROUTE = '/api';
 const PROXY_MEDIA_ROUTE = '/api/proxy';
 
 function isAllowedMediaPath(pathname: string) {
@@ -25,7 +25,7 @@ export function toAuthenticatedMediaUrl(url?: string | null) {
       return url;
     }
 
-    return url.startsWith('/api/v1/courses/content-media/') ? toProxyMediaUrl(url) : url;
+    return url.startsWith('/api/v1/') ? toProxyMediaUrl(url) : url;
   }
 
   try {
@@ -38,7 +38,7 @@ export function toAuthenticatedMediaUrl(url?: string | null) {
       return url;
     }
 
-    if (parsedUrl.pathname.startsWith('/api/v1/courses/content-media/')) {
+    if (parsedUrl.pathname.startsWith('/api/v1')) {
       return toProxyMediaUrl(parsedUrl.pathname);
     }
 

@@ -107,6 +107,8 @@ import {
   deactivateClassDefinition,
   getClassDefinition,
   updateClassDefinition,
+  getJob,
+  updateJob,
   deleteCertificate,
   getCertificateByUuid,
   updateCertificate,
@@ -256,6 +258,13 @@ import {
   createAssignmentSchedule,
   getClassDefinitionsForProgram,
   createClassDefinitionForProgram,
+  listJobs,
+  createJob,
+  cancelJob,
+  assignInstructor,
+  listJobApplications,
+  applyToJob,
+  reviewApplication,
   getAllCertificates,
   createCertificate,
   uploadCertificatePdf,
@@ -431,6 +440,7 @@ import {
   getClassSchedule,
   getEnrollmentsForClass,
   getClassDefinitionsForOrganisation,
+  listMyApplications,
   getClassDefinitionsForInstructor,
   getClassDefinitionsForCourse,
   getAllActiveClassDefinitions,
@@ -741,6 +751,10 @@ import type {
   UpdateClassDefinitionData,
   UpdateClassDefinitionError,
   UpdateClassDefinitionResponse,
+  GetJobData,
+  UpdateJobData,
+  UpdateJobError,
+  UpdateJobResponse,
   DeleteCertificateData,
   DeleteCertificateError,
   DeleteCertificateResponse,
@@ -1151,6 +1165,27 @@ import type {
   CreateClassDefinitionForProgramData,
   CreateClassDefinitionForProgramError,
   CreateClassDefinitionForProgramResponse,
+  ListJobsData,
+  ListJobsError,
+  ListJobsResponse,
+  CreateJobData,
+  CreateJobError,
+  CreateJobResponse,
+  CancelJobData,
+  CancelJobError,
+  CancelJobResponse,
+  AssignInstructorData,
+  AssignInstructorError,
+  AssignInstructorResponse,
+  ListJobApplicationsData,
+  ListJobApplicationsError,
+  ListJobApplicationsResponse,
+  ApplyToJobData,
+  ApplyToJobError,
+  ApplyToJobResponse,
+  ReviewApplicationData,
+  ReviewApplicationError,
+  ReviewApplicationResponse,
   GetAllCertificatesData,
   GetAllCertificatesError,
   GetAllCertificatesResponse,
@@ -1562,6 +1597,9 @@ import type {
   GetClassScheduleResponse,
   GetEnrollmentsForClassData,
   GetClassDefinitionsForOrganisationData,
+  ListMyApplicationsData,
+  ListMyApplicationsError,
+  ListMyApplicationsResponse,
   GetClassDefinitionsForInstructorData,
   GetClassDefinitionsForCourseData,
   GetAllActiveClassDefinitionsData,
@@ -4435,6 +4473,49 @@ export const updateClassDefinitionMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateClassDefinition({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getJobQueryKey = (options: Options<GetJobData>) => createQueryKey('getJob', options);
+
+/**
+ * Get a marketplace class job
+ */
+export const getJobOptions = (options: Options<GetJobData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getJob({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getJobQueryKey(options),
+  });
+};
+
+/**
+ * Update a marketplace class job
+ */
+export const updateJobMutation = (
+  options?: Partial<Options<UpdateJobData>>
+): UseMutationOptions<UpdateJobResponse, UpdateJobError, Options<UpdateJobData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateJobResponse,
+    UpdateJobError,
+    Options<UpdateJobData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateJob({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -12132,6 +12213,362 @@ export const createClassDefinitionForProgramMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await createClassDefinitionForProgram({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listJobsQueryKey = (options: Options<ListJobsData>) =>
+  createQueryKey('listJobs', options);
+
+/**
+ * List marketplace class jobs
+ */
+export const listJobsOptions = (options: Options<ListJobsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listJobs({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listJobsQueryKey(options),
+  });
+};
+
+export const listJobsInfiniteQueryKey = (
+  options: Options<ListJobsData>
+): QueryKey<Options<ListJobsData>> => createQueryKey('listJobs', options, true);
+
+/**
+ * List marketplace class jobs
+ */
+export const listJobsInfiniteOptions = (options: Options<ListJobsData>) => {
+  return infiniteQueryOptions<
+    ListJobsResponse,
+    ListJobsError,
+    InfiniteData<ListJobsResponse>,
+    QueryKey<Options<ListJobsData>>,
+    number | Pick<QueryKey<Options<ListJobsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListJobsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listJobs({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listJobsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const createJobQueryKey = (options: Options<CreateJobData>) =>
+  createQueryKey('createJob', options);
+
+/**
+ * Create a marketplace class job
+ */
+export const createJobOptions = (options: Options<CreateJobData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createJob({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createJobQueryKey(options),
+  });
+};
+
+/**
+ * Create a marketplace class job
+ */
+export const createJobMutation = (
+  options?: Partial<Options<CreateJobData>>
+): UseMutationOptions<CreateJobResponse, CreateJobError, Options<CreateJobData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateJobResponse,
+    CreateJobError,
+    Options<CreateJobData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createJob({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const cancelJobQueryKey = (options: Options<CancelJobData>) =>
+  createQueryKey('cancelJob', options);
+
+/**
+ * Cancel a marketplace class job
+ */
+export const cancelJobOptions = (options: Options<CancelJobData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await cancelJob({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: cancelJobQueryKey(options),
+  });
+};
+
+/**
+ * Cancel a marketplace class job
+ */
+export const cancelJobMutation = (
+  options?: Partial<Options<CancelJobData>>
+): UseMutationOptions<CancelJobResponse, CancelJobError, Options<CancelJobData>> => {
+  const mutationOptions: UseMutationOptions<
+    CancelJobResponse,
+    CancelJobError,
+    Options<CancelJobData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await cancelJob({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const assignInstructorQueryKey = (options: Options<AssignInstructorData>) =>
+  createQueryKey('assignInstructor', options);
+
+/**
+ * Assign an approved instructor and create the actual class
+ */
+export const assignInstructorOptions = (options: Options<AssignInstructorData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await assignInstructor({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: assignInstructorQueryKey(options),
+  });
+};
+
+/**
+ * Assign an approved instructor and create the actual class
+ */
+export const assignInstructorMutation = (
+  options?: Partial<Options<AssignInstructorData>>
+): UseMutationOptions<
+  AssignInstructorResponse,
+  AssignInstructorError,
+  Options<AssignInstructorData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AssignInstructorResponse,
+    AssignInstructorError,
+    Options<AssignInstructorData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await assignInstructor({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listJobApplicationsQueryKey = (options: Options<ListJobApplicationsData>) =>
+  createQueryKey('listJobApplications', options);
+
+/**
+ * List applications for a marketplace class job
+ */
+export const listJobApplicationsOptions = (options: Options<ListJobApplicationsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listJobApplications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listJobApplicationsQueryKey(options),
+  });
+};
+
+export const listJobApplicationsInfiniteQueryKey = (
+  options: Options<ListJobApplicationsData>
+): QueryKey<Options<ListJobApplicationsData>> =>
+  createQueryKey('listJobApplications', options, true);
+
+/**
+ * List applications for a marketplace class job
+ */
+export const listJobApplicationsInfiniteOptions = (options: Options<ListJobApplicationsData>) => {
+  return infiniteQueryOptions<
+    ListJobApplicationsResponse,
+    ListJobApplicationsError,
+    InfiniteData<ListJobApplicationsResponse>,
+    QueryKey<Options<ListJobApplicationsData>>,
+    | number
+    | Pick<QueryKey<Options<ListJobApplicationsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListJobApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listJobApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listJobApplicationsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const applyToJobQueryKey = (options: Options<ApplyToJobData>) =>
+  createQueryKey('applyToJob', options);
+
+/**
+ * Apply to a marketplace class job
+ */
+export const applyToJobOptions = (options: Options<ApplyToJobData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await applyToJob({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: applyToJobQueryKey(options),
+  });
+};
+
+/**
+ * Apply to a marketplace class job
+ */
+export const applyToJobMutation = (
+  options?: Partial<Options<ApplyToJobData>>
+): UseMutationOptions<ApplyToJobResponse, ApplyToJobError, Options<ApplyToJobData>> => {
+  const mutationOptions: UseMutationOptions<
+    ApplyToJobResponse,
+    ApplyToJobError,
+    Options<ApplyToJobData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await applyToJob({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const reviewApplicationQueryKey = (options: Options<ReviewApplicationData>) =>
+  createQueryKey('reviewApplication', options);
+
+/**
+ * Approve or reject a marketplace class job application
+ */
+export const reviewApplicationOptions = (options: Options<ReviewApplicationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await reviewApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: reviewApplicationQueryKey(options),
+  });
+};
+
+/**
+ * Approve or reject a marketplace class job application
+ */
+export const reviewApplicationMutation = (
+  options?: Partial<Options<ReviewApplicationData>>
+): UseMutationOptions<
+  ReviewApplicationResponse,
+  ReviewApplicationError,
+  Options<ReviewApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReviewApplicationResponse,
+    ReviewApplicationError,
+    Options<ReviewApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await reviewApplication({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -21018,6 +21455,70 @@ export const getClassDefinitionsForOrganisationOptions = (
     },
     queryKey: getClassDefinitionsForOrganisationQueryKey(options),
   });
+};
+
+export const listMyApplicationsQueryKey = (options: Options<ListMyApplicationsData>) =>
+  createQueryKey('listMyApplications', options);
+
+/**
+ * List my marketplace class job applications
+ */
+export const listMyApplicationsOptions = (options: Options<ListMyApplicationsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listMyApplications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listMyApplicationsQueryKey(options),
+  });
+};
+
+export const listMyApplicationsInfiniteQueryKey = (
+  options: Options<ListMyApplicationsData>
+): QueryKey<Options<ListMyApplicationsData>> => createQueryKey('listMyApplications', options, true);
+
+/**
+ * List my marketplace class job applications
+ */
+export const listMyApplicationsInfiniteOptions = (options: Options<ListMyApplicationsData>) => {
+  return infiniteQueryOptions<
+    ListMyApplicationsResponse,
+    ListMyApplicationsError,
+    InfiniteData<ListMyApplicationsResponse>,
+    QueryKey<Options<ListMyApplicationsData>>,
+    | number
+    | Pick<QueryKey<Options<ListMyApplicationsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListMyApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listMyApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listMyApplicationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getClassDefinitionsForInstructorQueryKey = (

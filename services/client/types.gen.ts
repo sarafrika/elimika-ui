@@ -367,6 +367,10 @@ export type AssessmentRubric = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
+   */
+  readonly is_published?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the rubric based on its type.
    */
   readonly rubric_category?: string;
@@ -378,10 +382,6 @@ export type AssessmentRubric = {
    * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
   readonly usage_status?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
-   */
-  readonly is_published?: boolean;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -622,13 +622,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1148,13 +1148,13 @@ export type ProgramCourse = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this course has prerequisite requirements.
-   */
-  readonly has_prerequisites?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the course association based on requirement status.
    */
   readonly association_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this course has prerequisite requirements.
+   */
+  readonly has_prerequisites?: boolean;
   /**
    * **[READ-ONLY]** Formatted display of the course position within the program sequence.
    */
@@ -1435,7 +1435,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
-  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -1461,6 +1460,7 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
+  membership_status?: MembershipStatusEnum;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1919,10 +1919,6 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
@@ -1938,6 +1934,10 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
@@ -2338,6 +2338,10 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -2353,10 +2357,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Category classification of the assessment type.
    */
   readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -3236,6 +3236,139 @@ export type ClassDefinitionResponse = {
 };
 
 /**
+ * Draft class advert posted by an organisation before a final instructor is assigned
+ */
+export type ClassMarketplaceJobRequest = {
+  /**
+   * **[REQUIRED]** Organisation posting the marketplace class job.
+   */
+  organisation_uuid: string;
+  /**
+   * **[REQUIRED]** Course backing the advertised class.
+   */
+  course_uuid: string;
+  /**
+   * **[REQUIRED]** Advert title for the class job.
+   */
+  title: string;
+  /**
+   * Optional description for instructors evaluating the class job.
+   */
+  description?: string;
+  class_visibility: ClassVisibilityEnum;
+  session_format: SessionFormatEnum;
+  /**
+   * **[REQUIRED]** Default start date-time for the advertised class (UTC).
+   */
+  default_start_time: Date;
+  /**
+   * **[REQUIRED]** Default end date-time for the advertised class (UTC).
+   */
+  default_end_time: Date;
+  /**
+   * Optional academic period start date.
+   */
+  academic_period_start_date?: Date;
+  /**
+   * Optional academic period end date.
+   */
+  academic_period_end_date?: Date;
+  /**
+   * Optional registration period start date.
+   */
+  registration_period_start_date?: Date;
+  /**
+   * Optional registration period end date.
+   */
+  registration_period_end_date?: Date;
+  /**
+   * Optional reminder lead time in minutes.
+   */
+  class_reminder_minutes?: number;
+  /**
+   * Optional UI color for the class advert.
+   */
+  class_color?: string;
+  location_type: LocationTypeEnum;
+  /**
+   * Optional human-readable location name. Required for IN_PERSON and HYBRID.
+   */
+  location_name?: string;
+  /**
+   * Optional location latitude. Required for IN_PERSON and HYBRID.
+   */
+  location_latitude?: number;
+  /**
+   * Optional location longitude. Required for IN_PERSON and HYBRID.
+   */
+  location_longitude?: number;
+  /**
+   * Optional virtual meeting link for ONLINE or HYBRID delivery.
+   */
+  meeting_link?: string;
+  /**
+   * Optional maximum participant count.
+   */
+  max_participants?: number;
+  /**
+   * Optional waitlist toggle for the eventual class.
+   */
+  allow_waitlist?: boolean;
+  /**
+   * **[REQUIRED]** Session templates that will be used when the class is assigned and created.
+   */
+  session_templates: Array<ClassSessionTemplate>;
+};
+
+export type ApiResponseClassMarketplaceJob = {
+  success?: boolean;
+  data?: ClassMarketplaceJob;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Marketplace job advert for an organisation-owned class awaiting instructor assignment
+ */
+export type ClassMarketplaceJob = {
+  readonly uuid?: string;
+  readonly title?: string;
+  readonly description?: string;
+  status?: StatusEnum4;
+  readonly organisation_uuid?: string;
+  readonly course_uuid?: string;
+  class_visibility?: ClassVisibilityEnum;
+  session_format?: SessionFormatEnum;
+  readonly default_start_time?: Date;
+  readonly default_end_time?: Date;
+  readonly academic_period_start_date?: Date;
+  readonly academic_period_end_date?: Date;
+  readonly registration_period_start_date?: Date;
+  readonly registration_period_end_date?: Date;
+  readonly class_reminder_minutes?: number;
+  readonly class_color?: string;
+  location_type?: LocationTypeEnum;
+  readonly location_name?: string;
+  readonly location_latitude?: number;
+  readonly location_longitude?: number;
+  readonly meeting_link?: string;
+  readonly max_participants?: number;
+  readonly allow_waitlist?: boolean;
+  readonly assigned_instructor_uuid?: string;
+  readonly assigned_application_uuid?: string;
+  readonly assigned_class_definition_uuid?: string;
+  readonly filled_at?: Date;
+  readonly session_templates?: Array<ClassSessionTemplate>;
+  readonly created_date?: Date;
+  readonly updated_date?: Date;
+  readonly created_by?: string;
+  readonly updated_by?: string;
+  readonly duration_minutes?: bigint;
+};
+
+/**
  * Issued certificate documenting course or program completion
  */
 export type Certificate = {
@@ -3768,7 +3901,7 @@ export type ScheduledInstance = {
    * **[OPTIONAL]** Maximum number of participants for this session (cached from class definition).
    */
   max_participants?: number;
-  status?: StatusEnum4;
+  status?: StatusEnum5;
   /**
    * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
    */
@@ -3936,7 +4069,7 @@ export type ProgramTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum5;
+  status?: StatusEnum6;
   /**
    * Submission notes provided by the applicant.
    */
@@ -4100,7 +4233,7 @@ export type GuardianStudentLink = {
   guardianDisplayName?: string;
   relationshipType?: RelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum6;
+  status?: StatusEnum7;
   primaryGuardian?: boolean;
   linkedDate?: Date;
   revokedDate?: Date;
@@ -4170,7 +4303,7 @@ export type Enrollment = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum7;
+  status?: StatusEnum8;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -4260,7 +4393,7 @@ export type CourseTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum8;
+  status?: StatusEnum9;
   /**
    * Submission notes provided by the applicant.
    */
@@ -4780,6 +4913,74 @@ export type ApiResponseClassAssignmentSchedule = {
 };
 
 /**
+ * Selects an approved instructor application and creates the actual class
+ */
+export type ClassMarketplaceJobAssignmentRequest = {
+  application_uuid: string;
+};
+
+export type ApiResponseClassMarketplaceJobAssignmentResponse = {
+  success?: boolean;
+  data?: ClassMarketplaceJobAssignmentResponse;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Result of assigning an instructor to a marketplace class job
+ */
+export type ClassMarketplaceJobAssignmentResponse = {
+  job?: ClassMarketplaceJob;
+  class_definition?: ClassDefinition;
+};
+
+/**
+ * Application submitted by an instructor against a marketplace class job
+ */
+export type ClassMarketplaceJobApplicationRequest = {
+  /**
+   * Optional note to support the instructor application.
+   */
+  application_note?: string;
+};
+
+export type ApiResponseClassMarketplaceJobApplication = {
+  success?: boolean;
+  data?: ClassMarketplaceJobApplication;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Instructor application to deliver a marketplace class job
+ */
+export type ClassMarketplaceJobApplication = {
+  readonly uuid?: string;
+  status?: StatusEnum10;
+  readonly job_uuid?: string;
+  readonly instructor_uuid?: string;
+  readonly application_note?: string;
+  readonly review_notes?: string;
+  readonly reviewed_by?: string;
+  readonly reviewed_at?: Date;
+  readonly created_date?: Date;
+  readonly updated_date?: Date;
+  readonly created_by?: string;
+  readonly updated_by?: string;
+};
+
+/**
+ * Organisation review notes when approving or rejecting an instructor application
+ */
+export type ClassMarketplaceJobDecisionRequest = {
+  review_notes?: string;
+};
+
+/**
  * Request payload for creating a booking for an instructor and course
  */
 export type CreateBookingRequest = {
@@ -4854,7 +5055,7 @@ export type BookingResponse = {
    * End time for the session
    */
   end_time: Date;
-  status: StatusEnum9;
+  status: StatusEnum11;
   /**
    * Price amount agreed for the booking
    */
@@ -5002,7 +5203,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum10;
+  status: StatusEnum12;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -5485,7 +5686,7 @@ export type StudentSchedule = {
    * **[READ-ONLY]** Longitude coordinate for the scheduled class location.
    */
   readonly location_longitude?: number;
-  scheduling_status?: StatusEnum4;
+  scheduling_status?: StatusEnum5;
   enrollment_status?: EnrollmentStatusEnum;
   /**
    * **[READ-ONLY]** Timestamp when attendance was marked (if applicable).
@@ -5955,7 +6156,7 @@ export type QuizAttempt = {
    * **[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.
    */
   is_passed?: boolean;
-  status: StatusEnum11;
+  status: StatusEnum13;
   /**
    * **[READ-ONLY]** Timestamp when the attempt was created. Automatically set by the system.
    */
@@ -6093,7 +6294,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum12;
+  status: StatusEnum14;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -6357,7 +6558,7 @@ export type InstructorCalendarEntry = {
    * Flag indicating availability; false represents blocked time or scheduled instances occupying the slot
    */
   is_available?: boolean;
-  status?: StatusEnum13;
+  status?: StatusEnum15;
   /**
    * Optional title (for scheduled instances)
    */
@@ -6410,7 +6611,7 @@ export type GuardianStudentDashboardDto = {
   studentUuid?: string;
   studentName?: string;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum6;
+  status?: StatusEnum7;
   courseProgress?: Array<LearnerCourseProgressView>;
   programProgress?: Array<LearnerProgramProgressView>;
 };
@@ -6448,7 +6649,7 @@ export type GuardianStudentSummaryDto = {
   studentName?: string;
   relationshipType?: RelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum6;
+  status?: StatusEnum7;
   primaryGuardian?: boolean;
 };
 
@@ -6513,7 +6714,7 @@ export type StudentClassEnrollmentSummary = {
    * Most recent scheduled-instance enrollment identifier for this class
    */
   latest_enrollment_uuid?: string;
-  latest_enrollment_status?: StatusEnum7;
+  latest_enrollment_status?: StatusEnum8;
   /**
    * Number of scheduled-instance enrollments aggregated under this class
    */
@@ -6918,7 +7119,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum12;
+  status: StatusEnum14;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -7337,6 +7538,36 @@ export type ApiResponseListClassDefinitionResponse = {
   error?: {
     [key: string]: unknown;
   };
+};
+
+export type ApiResponsePagedDtoClassMarketplaceJob = {
+  success?: boolean;
+  data?: PagedDtoClassMarketplaceJob;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoClassMarketplaceJob = {
+  content?: Array<ClassMarketplaceJob>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoClassMarketplaceJobApplication = {
+  success?: boolean;
+  data?: PagedDtoClassMarketplaceJobApplication;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoClassMarketplaceJobApplication = {
+  content?: Array<ClassMarketplaceJobApplication>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
 };
 
 export type ApiResponsePagedDtoCertificateTemplate = {
@@ -7984,21 +8215,6 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -8014,6 +8230,21 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -8232,6 +8463,14 @@ export const ConflictResolutionEnum = {
 export type ConflictResolutionEnum =
   (typeof ConflictResolutionEnum)[keyof typeof ConflictResolutionEnum];
 
+export const StatusEnum4 = {
+  OPEN: 'open',
+  FILLED: 'filled',
+  CANCELLED: 'cancelled',
+} as const;
+
+export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
+
 /**
  * **[REQUIRED]** Type of certificate this template is designed for.
  */
@@ -8267,7 +8506,7 @@ export type SubmissionTypesEnum = (typeof SubmissionTypesEnum)[keyof typeof Subm
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export const StatusEnum4 = {
+export const StatusEnum5 = {
   SCHEDULED: 'SCHEDULED',
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',
@@ -8277,7 +8516,7 @@ export const StatusEnum4 = {
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
+export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
 
 /**
  * **[REQUIRED]** Applicant type initiating the request.
@@ -8295,7 +8534,7 @@ export type ApplicantTypeEnum = (typeof ApplicantTypeEnum)[keyof typeof Applican
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum5 = {
+export const StatusEnum6 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -8305,7 +8544,7 @@ export const StatusEnum5 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
 
 export const RelationshipTypeEnum = {
   PARENT: 'PARENT',
@@ -8323,18 +8562,18 @@ export const ShareScopeEnum = {
 
 export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
 
-export const StatusEnum6 = {
+export const StatusEnum7 = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   REVOKED: 'REVOKED',
 } as const;
 
-export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum7 = {
+export const StatusEnum8 = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -8345,12 +8584,12 @@ export const StatusEnum7 = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
 
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum8 = {
+export const StatusEnum9 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -8359,7 +8598,7 @@ export const StatusEnum8 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 /**
  * How the platform fee was configured
@@ -8388,10 +8627,20 @@ export const ReleaseStrategyEnum = {
  */
 export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof ReleaseStrategyEnum];
 
+export const StatusEnum10 = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  ASSIGNED: 'assigned',
+  NOT_SELECTED: 'not_selected',
+} as const;
+
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
+
 /**
  * Current status of the booking
  */
-export const StatusEnum9 = {
+export const StatusEnum11 = {
   PAYMENT_REQUIRED: 'payment_required',
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
@@ -8405,7 +8654,7 @@ export const StatusEnum9 = {
 /**
  * Current status of the booking
  */
-export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
+export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
 
 /**
  * Payment status reported by the engine
@@ -8423,7 +8672,7 @@ export type PaymentStatusEnum = (typeof PaymentStatusEnum)[keyof typeof PaymentS
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum10 = {
+export const StatusEnum12 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -8434,7 +8683,7 @@ export const StatusEnum10 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
+export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
 
 /**
  * Type of assignment - global or organization-specific
@@ -8498,7 +8747,7 @@ export type EnrollmentStatusEnum = (typeof EnrollmentStatusEnum)[keyof typeof En
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const StatusEnum11 = {
+export const StatusEnum13 = {
   IN_PROGRESS: 'IN_PROGRESS',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
@@ -8507,12 +8756,12 @@ export const StatusEnum11 = {
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
+export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum12 = {
+export const StatusEnum14 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -8522,7 +8771,7 @@ export const StatusEnum12 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
+export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
 
 /**
  * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
@@ -8556,7 +8805,7 @@ export type AvailabilityTypeEnum = (typeof AvailabilityTypeEnum)[keyof typeof Av
 /**
  * Scheduled instance status when applicable
  */
-export const StatusEnum13 = {
+export const StatusEnum15 = {
   SCHEDULED: 'SCHEDULED',
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',
@@ -8567,7 +8816,7 @@ export const StatusEnum13 = {
 /**
  * Scheduled instance status when applicable
  */
-export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
+export type StatusEnum15 = (typeof StatusEnum15)[keyof typeof StatusEnum15];
 
 export type DeleteUserData = {
   body?: never;
@@ -12049,6 +12298,68 @@ export type UpdateClassDefinitionResponses = {
 
 export type UpdateClassDefinitionResponse =
   UpdateClassDefinitionResponses[keyof UpdateClassDefinitionResponses];
+
+export type GetJobData = {
+  body?: never;
+  path: {
+    jobUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}';
+};
+
+export type GetJobErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetJobError = GetJobErrors[keyof GetJobErrors];
+
+export type GetJobResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJob;
+};
+
+export type GetJobResponse = GetJobResponses[keyof GetJobResponses];
+
+export type UpdateJobData = {
+  body: ClassMarketplaceJobRequest;
+  path: {
+    jobUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}';
+};
+
+export type UpdateJobErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateJobError = UpdateJobErrors[keyof UpdateJobErrors];
+
+export type UpdateJobResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJob;
+};
+
+export type UpdateJobResponse = UpdateJobResponses[keyof UpdateJobResponses];
 
 export type DeleteCertificateData = {
   body?: never;
@@ -17117,6 +17428,232 @@ export type CreateClassDefinitionForProgramResponses = {
 
 export type CreateClassDefinitionForProgramResponse =
   CreateClassDefinitionForProgramResponses[keyof CreateClassDefinitionForProgramResponses];
+
+export type ListJobsData = {
+  body?: never;
+  path?: never;
+  query: {
+    organisation_uuid?: string;
+    course_uuid?: string;
+    status?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/classes/jobs';
+};
+
+export type ListJobsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListJobsError = ListJobsErrors[keyof ListJobsErrors];
+
+export type ListJobsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoClassMarketplaceJob;
+};
+
+export type ListJobsResponse = ListJobsResponses[keyof ListJobsResponses];
+
+export type CreateJobData = {
+  body: ClassMarketplaceJobRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/classes/jobs';
+};
+
+export type CreateJobErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateJobError = CreateJobErrors[keyof CreateJobErrors];
+
+export type CreateJobResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJob;
+};
+
+export type CreateJobResponse = CreateJobResponses[keyof CreateJobResponses];
+
+export type CancelJobData = {
+  body?: never;
+  path: {
+    jobUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}/cancel';
+};
+
+export type CancelJobErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CancelJobError = CancelJobErrors[keyof CancelJobErrors];
+
+export type CancelJobResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJob;
+};
+
+export type CancelJobResponse = CancelJobResponses[keyof CancelJobResponses];
+
+export type AssignInstructorData = {
+  body: ClassMarketplaceJobAssignmentRequest;
+  path: {
+    jobUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}/assignments';
+};
+
+export type AssignInstructorErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AssignInstructorError = AssignInstructorErrors[keyof AssignInstructorErrors];
+
+export type AssignInstructorResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJobAssignmentResponse;
+};
+
+export type AssignInstructorResponse = AssignInstructorResponses[keyof AssignInstructorResponses];
+
+export type ListJobApplicationsData = {
+  body?: never;
+  path: {
+    jobUuid: string;
+  };
+  query: {
+    status?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/classes/jobs/{jobUuid}/applications';
+};
+
+export type ListJobApplicationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListJobApplicationsError = ListJobApplicationsErrors[keyof ListJobApplicationsErrors];
+
+export type ListJobApplicationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoClassMarketplaceJobApplication;
+};
+
+export type ListJobApplicationsResponse =
+  ListJobApplicationsResponses[keyof ListJobApplicationsResponses];
+
+export type ApplyToJobData = {
+  body?: ClassMarketplaceJobApplicationRequest;
+  path: {
+    jobUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}/applications';
+};
+
+export type ApplyToJobErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ApplyToJobError = ApplyToJobErrors[keyof ApplyToJobErrors];
+
+export type ApplyToJobResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJobApplication;
+};
+
+export type ApplyToJobResponse = ApplyToJobResponses[keyof ApplyToJobResponses];
+
+export type ReviewApplicationData = {
+  body?: ClassMarketplaceJobDecisionRequest;
+  path: {
+    jobUuid: string;
+    applicationUuid: string;
+  };
+  query: {
+    action: string;
+  };
+  url: '/api/v1/classes/jobs/{jobUuid}/applications/{applicationUuid}';
+};
+
+export type ReviewApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ReviewApplicationError = ReviewApplicationErrors[keyof ReviewApplicationErrors];
+
+export type ReviewApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJobApplication;
+};
+
+export type ReviewApplicationResponse =
+  ReviewApplicationResponses[keyof ReviewApplicationResponses];
 
 export type GetAllCertificatesData = {
   body?: never;
@@ -23372,6 +23909,39 @@ export type GetClassDefinitionsForOrganisationResponses = {
 
 export type GetClassDefinitionsForOrganisationResponse =
   GetClassDefinitionsForOrganisationResponses[keyof GetClassDefinitionsForOrganisationResponses];
+
+export type ListMyApplicationsData = {
+  body?: never;
+  path?: never;
+  query: {
+    status?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/classes/jobs/applications/mine';
+};
+
+export type ListMyApplicationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListMyApplicationsError = ListMyApplicationsErrors[keyof ListMyApplicationsErrors];
+
+export type ListMyApplicationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoClassMarketplaceJobApplication;
+};
+
+export type ListMyApplicationsResponse =
+  ListMyApplicationsResponses[keyof ListMyApplicationsResponses];
 
 export type GetClassDefinitionsForInstructorData = {
   body?: never;

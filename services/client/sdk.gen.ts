@@ -319,6 +319,12 @@ import type {
   UpdateClassDefinitionData,
   UpdateClassDefinitionResponses,
   UpdateClassDefinitionErrors,
+  GetJobData,
+  GetJobResponses,
+  GetJobErrors,
+  UpdateJobData,
+  UpdateJobResponses,
+  UpdateJobErrors,
   DeleteCertificateData,
   DeleteCertificateResponses,
   DeleteCertificateErrors,
@@ -766,6 +772,27 @@ import type {
   CreateClassDefinitionForProgramData,
   CreateClassDefinitionForProgramResponses,
   CreateClassDefinitionForProgramErrors,
+  ListJobsData,
+  ListJobsResponses,
+  ListJobsErrors,
+  CreateJobData,
+  CreateJobResponses,
+  CreateJobErrors,
+  CancelJobData,
+  CancelJobResponses,
+  CancelJobErrors,
+  AssignInstructorData,
+  AssignInstructorResponses,
+  AssignInstructorErrors,
+  ListJobApplicationsData,
+  ListJobApplicationsResponses,
+  ListJobApplicationsErrors,
+  ApplyToJobData,
+  ApplyToJobResponses,
+  ApplyToJobErrors,
+  ReviewApplicationData,
+  ReviewApplicationResponses,
+  ReviewApplicationErrors,
   GetAllCertificatesData,
   GetAllCertificatesResponses,
   GetAllCertificatesErrors,
@@ -1291,6 +1318,9 @@ import type {
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForOrganisationResponses,
   GetClassDefinitionsForOrganisationErrors,
+  ListMyApplicationsData,
+  ListMyApplicationsResponses,
+  ListMyApplicationsErrors,
   GetClassDefinitionsForInstructorData,
   GetClassDefinitionsForInstructorResponses,
   GetClassDefinitionsForInstructorErrors,
@@ -1505,6 +1535,8 @@ import {
   updateCatalogItemResponseTransformer,
   getClassDefinitionResponseTransformer,
   updateClassDefinitionResponseTransformer,
+  getJobResponseTransformer,
+  updateJobResponseTransformer,
   getCertificateByUuidResponseTransformer,
   updateCertificateResponseTransformer,
   updateCertificateTemplateResponseTransformer,
@@ -1641,6 +1673,13 @@ import {
   createAssignmentScheduleResponseTransformer,
   getClassDefinitionsForProgramResponseTransformer,
   createClassDefinitionForProgramResponseTransformer,
+  listJobsResponseTransformer,
+  createJobResponseTransformer,
+  cancelJobResponseTransformer,
+  assignInstructorResponseTransformer,
+  listJobApplicationsResponseTransformer,
+  applyToJobResponseTransformer,
+  reviewApplicationResponseTransformer,
   getAllCertificatesResponseTransformer,
   createCertificateResponseTransformer,
   uploadCertificatePdfResponseTransformer,
@@ -1777,6 +1816,7 @@ import {
   getClassScheduleResponseTransformer,
   getEnrollmentsForClassResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
+  listMyApplicationsResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
   getClassDefinitionsForCourseResponseTransformer,
   getAllActiveClassDefinitionsResponseTransformer,
@@ -4889,6 +4929,56 @@ export const updateClassDefinition = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get a marketplace class job
+ */
+export const getJob = <ThrowOnError extends boolean = false>(
+  options: Options<GetJobData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetJobResponses, GetJobErrors, ThrowOnError>({
+    responseTransformer: getJobResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a marketplace class job
+ */
+export const updateJob = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateJobData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<UpdateJobResponses, UpdateJobErrors, ThrowOnError>({
+    responseTransformer: updateJobResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -9487,6 +9577,199 @@ export const createClassDefinitionForProgram = <ThrowOnError extends boolean = f
       },
     ],
     url: '/api/v1/classes/program/{programUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List marketplace class jobs
+ */
+export const listJobs = <ThrowOnError extends boolean = false>(
+  options: Options<ListJobsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<ListJobsResponses, ListJobsErrors, ThrowOnError>({
+    responseTransformer: listJobsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs',
+    ...options,
+  });
+};
+
+/**
+ * Create a marketplace class job
+ */
+export const createJob = <ThrowOnError extends boolean = false>(
+  options: Options<CreateJobData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<CreateJobResponses, CreateJobErrors, ThrowOnError>({
+    responseTransformer: createJobResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Cancel a marketplace class job
+ */
+export const cancelJob = <ThrowOnError extends boolean = false>(
+  options: Options<CancelJobData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<CancelJobResponses, CancelJobErrors, ThrowOnError>({
+    responseTransformer: cancelJobResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/cancel',
+    ...options,
+  });
+};
+
+/**
+ * Assign an approved instructor and create the actual class
+ */
+export const assignInstructor = <ThrowOnError extends boolean = false>(
+  options: Options<AssignInstructorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AssignInstructorResponses,
+    AssignInstructorErrors,
+    ThrowOnError
+  >({
+    responseTransformer: assignInstructorResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/assignments',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List applications for a marketplace class job
+ */
+export const listJobApplications = <ThrowOnError extends boolean = false>(
+  options: Options<ListJobApplicationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListJobApplicationsResponses,
+    ListJobApplicationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listJobApplicationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/applications',
+    ...options,
+  });
+};
+
+/**
+ * Apply to a marketplace class job
+ */
+export const applyToJob = <ThrowOnError extends boolean = false>(
+  options: Options<ApplyToJobData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ApplyToJobResponses,
+    ApplyToJobErrors,
+    ThrowOnError
+  >({
+    responseTransformer: applyToJobResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/applications',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Approve or reject a marketplace class job application
+ */
+export const reviewApplication = <ThrowOnError extends boolean = false>(
+  options: Options<ReviewApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ReviewApplicationResponses,
+    ReviewApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: reviewApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/applications/{applicationUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -14665,6 +14948,33 @@ export const getClassDefinitionsForOrganisation = <ThrowOnError extends boolean 
       },
     ],
     url: '/api/v1/classes/organisation/{organisationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * List my marketplace class job applications
+ */
+export const listMyApplications = <ThrowOnError extends boolean = false>(
+  options: Options<ListMyApplicationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListMyApplicationsResponses,
+    ListMyApplicationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listMyApplicationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/applications/mine',
     ...options,
   });
 };
