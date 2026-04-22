@@ -1,0 +1,1 @@
+export { SharedVerifiedSkillsPage } from './SharedVerifiedSkillsPage';
