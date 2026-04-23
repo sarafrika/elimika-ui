@@ -35,9 +35,7 @@ export default function InstructorMySkillsPage() {
   const user = useUserProfile();
   const instructorContext = useInstructor();
   const instructor = user?.instructor ?? instructorContext;
-  const { skills, summary, timeline, isLoading: walletLoading } = useVerifiedSkillsContent(
-    'instructor'
-  );
+  const verifiedSkillsContent = useVerifiedSkillsContent('instructor');
 
   const studentSearchQuery = useQuery({
     ...searchStudentsOptions({
@@ -114,11 +112,9 @@ export default function InstructorMySkillsPage() {
   return (
     <SharedMySkillsPage
       profile={profile}
-      skills={skills}
-      summary={summary}
-      timeline={timeline}
+      content={verifiedSkillsContent}
       opportunities={opportunities}
-      isLoading={walletLoading || classDetailsQuery.isLoading}
+      isLoading={verifiedSkillsContent.isLoading || classDetailsQuery.isLoading}
       actionLabel='Share Profile'
     />
   );

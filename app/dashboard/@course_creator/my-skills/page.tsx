@@ -35,9 +35,7 @@ export default function CourseCreatorMySkillsPage() {
   const user = useUserProfile();
   const creator = useCourseCreator();
   const creatorProfile = user?.courseCreator ?? creator?.profile;
-  const { skills, summary, timeline, isLoading: walletLoading } = useVerifiedSkillsContent(
-    'course_creator'
-  );
+  const verifiedSkillsContent = useVerifiedSkillsContent('course_creator');
 
   const studentSearchQuery = useQuery({
     ...searchStudentsOptions({
@@ -105,22 +103,20 @@ export default function CourseCreatorMySkillsPage() {
     website: getProfileString(creatorProfile, ['website']) ?? getProfileString(user, ['website']),
     joinedLabel:
       (getProfileString(user, ['created_date']) ??
-      getProfileString(creatorProfile, ['created_date']))
+        getProfileString(creatorProfile, ['created_date']))
         ? `Joined ${new Date(
-            (getProfileString(user, ['created_date']) ??
-              getProfileString(creatorProfile, ['created_date'])) as string
-          ).toLocaleDateString()}`
+          (getProfileString(user, ['created_date']) ??
+            getProfileString(creatorProfile, ['created_date'])) as string
+        ).toLocaleDateString()}`
         : undefined,
   };
 
   return (
     <SharedMySkillsPage
       profile={profile}
-      skills={skills}
-      summary={summary}
-      timeline={timeline}
+      content={verifiedSkillsContent}
       opportunities={opportunities}
-      isLoading={walletLoading || classDetailsQuery.isLoading}
+      isLoading={verifiedSkillsContent.isLoading || classDetailsQuery.isLoading}
       actionLabel='Share Profile'
     />
   );

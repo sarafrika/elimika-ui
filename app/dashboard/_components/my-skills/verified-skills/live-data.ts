@@ -479,6 +479,7 @@ export function useVerifiedSkillsContent(role?: VerifiedSkillsRole): VerifiedSki
     const walletTimeline = buildWalletTimeline(credentialsContent.credentialsByTab.all);
 
     return {
+      credentialsContent,
       categories,
       insights: buildInsights(categories),
       suggestions: buildSuggestions(categories),

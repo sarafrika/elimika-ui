@@ -4,6 +4,7 @@ import type {
   SharedSkill,
   SharedTimelineItem,
 } from '../types';
+import type { CredentialsContent } from '@/components/profile-credentials/data';
 
 export type VerifiedSkillLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 export type VerifiedSkillGroup =
@@ -70,6 +71,7 @@ export type SuggestedSkill = {
 };
 
 export type VerifiedSkillsContent = {
+  credentialsContent: CredentialsContent;
   categories: VerifiedSkillCategory[];
   insights: SkillInsight[];
   suggestions: SuggestedSkill[];

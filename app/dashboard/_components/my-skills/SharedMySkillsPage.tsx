@@ -13,15 +13,13 @@ import type {
   SharedCredentialSummary,
   SharedMySkillsProfile,
   SharedOpportunity,
-  SharedSkill,
   SharedTimelineItem,
 } from './types';
+import type { VerifiedSkillsContent } from './verified-skills/types';
 
 type SharedMySkillsPageProps = {
   profile: SharedMySkillsProfile;
-  skills: SharedSkill[];
-  summary: SharedCredentialSummary;
-  timeline: SharedTimelineItem[];
+  content: VerifiedSkillsContent;
   opportunities: SharedOpportunity[];
   isLoading?: boolean;
   actionLabel: string;
@@ -31,15 +29,15 @@ type SharedMySkillsPageProps = {
 
 export function SharedMySkillsPage({
   profile,
-  skills,
-  summary,
-  timeline,
+  content,
   opportunities: _opportunities,
   isLoading,
   actionLabel,
   onAction,
   qrTargetUrl,
 }: SharedMySkillsPageProps) {
+  const { skills, summary, timeline } = content;
+
   const orderedTimeline = [...timeline].sort(
     (left, right) => (left.timestamp ?? 0) - (right.timestamp ?? 0)
   );
@@ -93,8 +91,6 @@ export function SharedMySkillsPage({
 }
 
 function FullWidthGrowthTimeline({ items }: { items: SharedTimelineItem[] }) {
-  console.log(items, "its")
-
   return (
     <section className='border-border/60 bg-card rounded-lg border p-3 shadow-sm sm:p-4'>
       <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>

@@ -57,7 +57,7 @@ export default function StudentMySkillsPage() {
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
     enabled: !!student?.uuid,
   });
-  const { skills, summary, timeline, isLoading: walletLoading } = useVerifiedSkillsContent('student');
+  const verifiedSkillsContent = useVerifiedSkillsContent('student');
 
   const enrollmentsQuery = useQuery({
     ...getStudentScheduleOptions({
@@ -213,7 +213,6 @@ export default function StudentMySkillsPage() {
   };
 
   const isLoading =
-    walletLoading ||
     certificatesQuery.isLoading ||
     enrollmentsQuery.isLoading ||
     classDefinitionQueries.some(query => query.isLoading) ||
@@ -223,11 +222,9 @@ export default function StudentMySkillsPage() {
   return (
     <SharedMySkillsPage
       profile={profile}
-      skills={skills}
-      summary={summary}
-      timeline={timeline}
+      content={verifiedSkillsContent}
       opportunities={opportunities}
-      isLoading={isLoading}
+      isLoading={verifiedSkillsContent.isLoading || isLoading}
       actionLabel='Share Profile'
     />
   );
