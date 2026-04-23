@@ -25,9 +25,9 @@ export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
     'Profile';
   const website = profile?.instructor?.website ?? profile?.courseCreator?.website ?? 'Website not set';
   const entriesLabel = profile?.instructor
-    ? `${profile.instructor.educations.length} Education Entries`
+    ? `${profile?.instructor?.educations?.length} Education Entries`
     : profile?.courseCreator
-      ? `${profile.courseCreator.uuid ? 1 : 0} Creator Entries`
+      ? `${profile?.courseCreator?.uuid ? 1 : 0} Creator Entries`
       : profile?.student
         ? 'Student Profile'
         : 'Profile';

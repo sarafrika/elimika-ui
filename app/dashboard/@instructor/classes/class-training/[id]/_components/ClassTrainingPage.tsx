@@ -325,7 +325,7 @@ function getVimeoEmbedUrl(source: string) {
 
 export const RichTextPreview = ({ html }: { html: string }) => {
   return (
-    <div
+    <p
       className='
           text-foreground mx-auto w-full text-[14px] leading-7
           [&_*]:max-w-full

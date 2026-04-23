@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronDown, Loader2, Users } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -23,6 +24,7 @@ interface DomainSwitcherProps {
 export function DomainSwitcher({ className }: DomainSwitcherProps) {
   const userDomain = useUserDomain();
   const router = useRouter();
+  const pathname = usePathname();
   const [isSwitching, setIsSwitching] = useState(false);
 
   // Don't show if user has only one domain or is loading
@@ -44,7 +46,7 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
 
     try {
       userDomain.setActiveDomain(nextDomain);
-      router.push(buildDashboardSwitchPath(nextDomain, '/dashboard/courses'));
+      router.push(buildDashboardSwitchPath(nextDomain, pathname || '/dashboard/overview'));
 
       toast.success(`Switched to ${dashboardDomainDisplayConfig[nextDomain].title}`, {
         id: 'domain-switch',
