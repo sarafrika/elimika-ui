@@ -528,6 +528,11 @@ export default {
       icon: CalendarClock,
     },
     {
+      title: 'Job Marketplace',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
+    },
+    {
       title: 'Catalogue',
       url: '/dashboard/catalogue',
       icon: ShoppingBag,
@@ -552,11 +557,7 @@ export default {
       url: '/dashboard/people',
       icon: Users,
     },
-    {
-      title: 'Job Marketplace',
-      url: '/dashboard/opportunities',
-      icon: Handshake,
-    },
+
     {
       title: 'Course Management',
       url: '/dashboard/course-management',

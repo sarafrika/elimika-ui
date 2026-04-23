@@ -63,9 +63,9 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
     );
     const averageScore = filteredCategories.length
       ? Math.round(
-          filteredCategories.reduce((total, category) => total + category.score, 0) /
-            filteredCategories.length
-        )
+        filteredCategories.reduce((total, category) => total + category.score, 0) /
+        filteredCategories.length
+      )
       : 0;
 
     return {
@@ -79,7 +79,7 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
 
   return (
     <main className='bg-background min-h-screen px-3 py-3 sm:px-4 lg:px-5'>
-      <div className='mx-auto grid w-full max-w-[1180px] gap-4'>
+      <div className='mx-auto grid w-full max-w-7xl gap-4'>
         <VerifiedSkillsTopBar
           activeGroup={activeGroup}
           proficiencyFilter={proficiencyFilter}

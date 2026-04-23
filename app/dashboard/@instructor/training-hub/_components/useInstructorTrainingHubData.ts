@@ -268,6 +268,34 @@ export function useInstructorTrainingHubData() {
     });
   }, [approvedCourses, classesByCourse, enrollmentsByClass]);
 
+  const waitlistQueries = useQueries({
+    queries: relevantClasses.map(classItem => ({
+      ...searchEnrollmentsOptions({
+        query: {
+          pageable: {
+            page: 0,
+            size: 100,
+          },
+          searchParams: {
+            class_definition_uuid_eq: classItem.uuid ?? '',
+            status_eq: 'WAITLISTED',
+          },
+        },
+      }),
+      enabled: Boolean(classItem.uuid),
+      staleTime: 60 * 1000,
+    })),
+  });
+
+  const waitlistEnrollmentsByClass = useMemo(() => {
+    const map = new Map<string, Enrollment[]>();
+    relevantClasses.forEach((classItem, index) => {
+      if (!classItem.uuid) return;
+      map.set(classItem.uuid, waitlistQueries[index]?.data?.data?.content ?? []);
+    });
+    return map;
+  }, [relevantClasses, waitlistQueries]);
+
   const liveClassItems = useMemo(() => {
     const now = new Date();
 
@@ -296,6 +324,9 @@ export function useInstructorTrainingHubData() {
           enrollment.scheduled_instance_uuid === instance.uuid &&
           ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
       ).length;
+      const waitlistedStudents = (waitlistEnrollmentsByClass.get(classItem.uuid ?? '') ?? []).filter(
+        enrollment => enrollment.scheduled_instance_uuid === instance.uuid
+      ).length;
 
       const dayLabel = formatDayLabel(instance.start_time);
 
@@ -306,41 +337,14 @@ export function useInstructorTrainingHubData() {
         title: instance.title || classItem.course?.name || classItem.title,
         provider: classItem.course?.category_names?.[0] ?? 'Approved course',
         students: `${students} students`,
+        waitlistedStudents: `${waitlistedStudents} students`,
         fee: formatCurrency(classItem.training_fee),
         sessions: `${classItem.schedule?.filter(isNonCancelledInstance).length ?? 0}`,
         href: '/dashboard/classes',
         status: dayLabel === 'Today' ? 'today' : dayLabel === 'Tomorrow' ? 'tomorrow' : 'upcoming',
       };
     });
-  }, [enrollmentsByClass, liveClassItems]);
-
-  const waitlistQueries = useQueries({
-    queries: relevantClasses.map(classItem => ({
-      ...searchEnrollmentsOptions({
-        query: {
-          pageable: {
-            page: 0,
-            size: 100,
-          },
-          searchParams: {
-            class_definition_uuid_eq: classItem.uuid ?? '',
-            status_eq: 'WAITLISTED',
-          },
-        },
-      }),
-      enabled: Boolean(classItem.uuid),
-      staleTime: 60 * 1000,
-    })),
-  });
-
-  const waitlistEnrollmentsByClass = useMemo(() => {
-    const map = new Map<string, Enrollment[]>();
-    relevantClasses.forEach((classItem, index) => {
-      if (!classItem.uuid) return;
-      map.set(classItem.uuid, waitlistQueries[index]?.data?.data?.content ?? []);
-    });
-    return map;
-  }, [relevantClasses, waitlistQueries]);
+  }, [enrollmentsByClass, liveClassItems, waitlistEnrollmentsByClass]);
 
   const waitlistStudentUuids = useMemo(() => {
     const studentUuids = Array.from(

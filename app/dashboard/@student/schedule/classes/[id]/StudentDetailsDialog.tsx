@@ -11,6 +11,7 @@ export type ClassScheduleItem = {
   end_time: string;
   title: string;
   location_type: 'ONLINE' | 'PHYSICAL';
+  location_name?: string | null;
   status: 'SCHEDULED' | 'CANCELLED';
   duration_formatted: string;
   instructor_name?: string;
@@ -22,6 +23,9 @@ interface ScheduleDetailsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onJoinClass?: (schedule: ClassScheduleItem) => void;
+  joinHref?: string | null;
+  joinLabel?: string;
+  locationNote?: string | null;
 }
 
 export function ScheduleDetailsDialog({
@@ -29,6 +33,9 @@ export function ScheduleDetailsDialog({
   isOpen,
   onClose,
   onJoinClass,
+  joinHref,
+  joinLabel,
+  locationNote,
 }: ScheduleDetailsDialogProps) {
   if (!schedule) return null;
 
@@ -137,12 +144,29 @@ export function ScheduleDetailsDialog({
             <>
               <Separator />
               <div className='pt-2'>
-                <Button className='w-full gap-2' size='lg' onClick={() => onJoinClass?.(schedule)}>
-                  <Video className='h-5 w-5' />
-                  Join Class
-                </Button>
+                {joinHref ? (
+                  <Button asChild className='w-full gap-2' size='lg'>
+                    <a href={joinHref} target='_blank' rel='noreferrer noopener'>
+                      <Video className='h-5 w-5' />
+                      {joinLabel ?? 'Join Class'}
+                    </a>
+                  </Button>
+                ) : (
+                  <Button className='w-full gap-2' size='lg' onClick={() => onJoinClass?.(schedule)}>
+                    <MapPin className='h-5 w-5' />
+                    {joinLabel ?? 'View Location'}
+                  </Button>
+                )}
               </div>
             </>
+          )}
+
+          {!isPast && schedule.status === 'SCHEDULED' && !joinHref && locationNote && (
+            <div className='bg-muted/50 rounded-lg p-3 sm:p-4'>
+              <p className='text-muted-foreground text-sm leading-6'>
+                {locationNote}
+              </p>
+            </div>
           )}
 
           {/* Past Class Info */}

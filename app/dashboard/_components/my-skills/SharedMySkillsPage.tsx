@@ -64,7 +64,7 @@ export function SharedMySkillsPage({
 
   return (
     <main className='bg-background min-h-screen px-3 py-3 sm:px-4 lg:px-5'>
-      <div className='mx-auto flex w-full max-w-[1180px] flex-col gap-4'>
+      <div className='mx-auto flex w-full max-w-7xl flex-col gap-4'>
         <SkillsWalletHeader
           profile={profile}
           primaryActionLabel={actionLabel}
@@ -153,7 +153,7 @@ function hasSummaryData(summary: SharedCredentialSummary) {
 function SharedMySkillsSkeleton() {
   return (
     <main className='bg-background min-h-screen px-3 py-3 sm:px-4 lg:px-5'>
-      <div className='mx-auto flex w-full max-w-[1180px] flex-col gap-4'>
+      <div className='mx-auto flex w-full max-w-7xl flex-col gap-4'>
         <Skeleton className='h-32 w-full rounded-lg' />
         <div className='flex gap-2'>
           <Skeleton className='h-8 w-20 rounded-md' />

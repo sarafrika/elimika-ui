@@ -1,6 +1,6 @@
 'use client';
 
-import { ClassScheduleCalendar, type ClassScheduleItem } from '@/app/class-invite/page';
+import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,12 +12,16 @@ import {
   createCartMutation,
   enrollStudentMutation,
   getCartQueryKey,
+  getClassEnrollmentsForStudentQueryKey,
+  getEnrollmentsForClassOptions,
+  getEnrollmentsForClassQueryKey,
   getStudentScheduleQueryKey,
+  joinWaitlistMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { AlertCircle, Armchair, ArrowLeft, Calendar, DollarSign, MapPin, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -26,6 +30,10 @@ import { toast } from 'sonner';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
 import { type BundledClass, getErrorMessage } from '../types';
+
+const STUDENT_SCHEDULE_START = new Date('2024-10-10');
+const STUDENT_SCHEDULE_END = new Date('2030-10-10');
+const ACTIVE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
 
 export default function ClassEnrollmentPage({
   courseId,
@@ -47,12 +55,17 @@ export default function ClassEnrollmentPage({
   // Fetch class information
   const { classes = [], loading } = useBundledClassInfo(courseId, undefined, undefined, student);
 
+  const { data: classEnrollmentsResponse } = useQuery({
+    ...getEnrollmentsForClassOptions({ path: { uuid: classId } }),
+    enabled: Boolean(classId),
+  });
+
   // Find the specific class
   const enrollingClass = useMemo(() => {
     return classes.find(cls => cls.uuid === classId);
   }, [classes, classId]);
   const schedule = enrollingClass?.schedule ?? [];
-  const calendarSchedule: ClassScheduleItem[] = schedule.flatMap(item => {
+  const calendarSchedule = schedule.flatMap(item => {
     if (
       !item.uuid ||
       !item.class_definition_uuid ||
@@ -69,11 +82,13 @@ export default function ClassEnrollmentPage({
       {
         uuid: item.uuid,
         class_definition_uuid: item.class_definition_uuid,
-        start_time: new Date(item.start_time).toISOString(),
-        end_time: new Date(item.end_time).toISOString(),
+        instructor_uuid: String(item.instructor_uuid ?? enrollingClass?.instructor?.uuid ?? ''),
+        start_time: item.start_time,
+        end_time: item.end_time,
         timezone: item.timezone,
         title: item.title,
         location_type: item.location_type === 'ONLINE' ? 'ONLINE' : 'PHYSICAL',
+        location_name: item.location_name ?? undefined,
         status: item.status === 'CANCELLED' ? 'CANCELLED' : 'SCHEDULED',
         duration_minutes: Number(item.duration_minutes ?? 0),
         duration_formatted: item.duration_formatted ?? '',
@@ -82,7 +97,7 @@ export default function ClassEnrollmentPage({
         can_be_cancelled: item.can_be_cancelled ?? false,
       },
     ];
-  });
+  }) as unknown as Parameters<typeof ClassScheduleCalendar>[0]['schedules'];
 
   const totalMinutes = enrollingClass?.schedule?.reduce((sum, item) => {
     const minutes = Number(item?.duration_minutes);
@@ -91,7 +106,29 @@ export default function ClassEnrollmentPage({
   const totalHours = (totalMinutes ?? 0) / 60;
   const totalHoursRounded = `${Math.round(totalHours)}`;
 
-  const scheduleStats = useScheduleStats(calendarSchedule);
+  const scheduleStats = useScheduleStats(
+    schedule.map(item => ({
+      duration_minutes: Number(item.duration_minutes ?? 0),
+    }))
+  );
+  const enrolledCount = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (classEnrollmentsResponse?.data ?? [])
+            .filter(enrollment =>
+              ACTIVE_ENROLLMENT_STATUSES.has(String(enrollment.status ?? 'ENROLLED').toUpperCase())
+            )
+            .map(enrollment => enrollment.student_uuid)
+            .filter(Boolean)
+        )
+      ).length,
+    [classEnrollmentsResponse?.data]
+  );
+
+  const maxParticipants = enrollingClass?.max_participants ?? 0;
+  const isClassFull = maxParticipants > 0 && enrolledCount >= maxParticipants;
+
 
   // Format dates
   const { formattedStart, formattedEnd } = useMemo(() => {
@@ -223,10 +260,77 @@ export default function ClassEnrollmentPage({
 
   // Enrollment mutation
   const enrollStudent = useMutation(enrollStudentMutation());
+  const waitlistStudent = useMutation(joinWaitlistMutation());
+
+  const invalidateStudentEnrollmentData = () => {
+    if (!student?.uuid) return;
+
+    qc.invalidateQueries({
+      queryKey: getStudentScheduleQueryKey({
+        path: { studentUuid: student.uuid as string },
+        query: {
+          start: STUDENT_SCHEDULE_START,
+          end: STUDENT_SCHEDULE_END,
+        },
+      }),
+    });
+
+    qc.invalidateQueries({
+      queryKey: getClassEnrollmentsForStudentQueryKey({
+        path: { studentUuid: student.uuid as string },
+        query: { pageable: {} },
+      }),
+    });
+
+    qc.invalidateQueries({
+      queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
+    });
+  };
+
+  const handleEnrollmentSuccess = (data: { message?: string } | undefined, successText: string) => {
+    invalidateStudentEnrollmentData();
+    toast.success(data?.message || successText);
+    router.push('/dashboard/courses');
+  };
+
+  const handleWaitlist = () => {
+    if (!student?.uuid) {
+      toast.error('Student not found, log into your student profile or create a new one');
+      return;
+    }
+
+    waitlistStudent.mutate(
+      {
+        body: {
+          class_definition_uuid: classId,
+          student_uuid: student.uuid,
+        },
+      },
+      {
+        onSuccess: data => {
+          handleEnrollmentSuccess(data, 'Student added to waitlist successfully');
+        },
+        onError: err => {
+          toast.error(getErrorMessage(err, 'Failed to join the waitlist'));
+        },
+      }
+    );
+  };
+
+  const isCapacityError = (error: unknown) => {
+    const message = getErrorMessage(error, '').toLowerCase();
+    return message.includes('capacity') || message.includes('full') || message.includes('waitlist');
+  };
+
   const handleEnrollStudent = () => {
     if (!student?.uuid)
       return toast.error('Student not found, log into your student profile or create a new one');
     if (!classId) return toast.error('Class not found');
+
+    if (isClassFull) {
+      handleWaitlist();
+      return;
+    }
 
     enrollStudent.mutate(
       {
@@ -237,20 +341,14 @@ export default function ClassEnrollmentPage({
       },
       {
         onSuccess: data => {
-          qc.invalidateQueries({
-            queryKey: getStudentScheduleQueryKey({
-              path: { studentUuid: student.uuid as string },
-              query: {
-                start: new Date('2025-11-02'),
-                end: new Date('2026-12-19'),
-              },
-            }),
-          });
-
-          toast.success(data?.message || 'Student enrolled successfully');
-          router.push('/dashboard/courses');
+          handleEnrollmentSuccess(data, 'Student enrolled successfully');
         },
         onError: err => {
+          if (isCapacityError(err)) {
+            handleWaitlist();
+            return;
+          }
+
           toast.error(getErrorMessage(err, 'Failed to enroll in class'));
           handleCreateCartAndPay(enrollingClass);
         },
@@ -291,6 +389,8 @@ export default function ClassEnrollmentPage({
     );
   }
 
+  console.log(enrollingClass, "EC")
+
   return (
     <div className='space-y-6 pb-20'>
       {/* Header */}
@@ -330,7 +430,7 @@ export default function ClassEnrollmentPage({
                 <div className='space-y-1'>
                   <p className='text-sm font-medium'>Instructor</p>
                   <p className='text-muted-foreground text-sm'>
-                    {enrollingClass?.instructor?.full_name || 'N/A'}
+                    {enrollingClass?.instructor?.data?.full_name || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -394,6 +494,8 @@ export default function ClassEnrollmentPage({
                 </div>
               </div>
 
+              {/* // available seats is supposed to reduce as students are enrolled to this class */}
+
               <div className='flex items-start gap-3'>
                 <div className='bg-primary/10 rounded-lg p-2'>
                   <Armchair className='text-primary h-5 w-5' />
@@ -401,9 +503,13 @@ export default function ClassEnrollmentPage({
                 <div className='space-y-1'>
                   <p className='text-sm font-medium'>Available Seats</p>
                   <p className='text-muted-foreground text-sm'>
-                    {(enrollingClass?.max_participants ?? 0) - enrollingClass?.enrollments?.length}{' '}
-                    of {enrollingClass?.max_participants ?? 0} seats
+                    {Math.max(0, maxParticipants - enrolledCount)} of {maxParticipants} seats
                   </p>
+                  {isClassFull && (
+                    <p className='text-sm text-yellow-700 dark:text-yellow-300'>
+                      This class is full. We&apos;ll add you to the waitlist instead.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -463,7 +569,11 @@ export default function ClassEnrollmentPage({
             className='w-full min-w-[120px] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto'
             variant='success'
           >
-            {enrollStudent.isPending ? 'Enrolling...' : 'Yes, Enroll Me'}
+            {enrollStudent.isPending || waitlistStudent.isPending
+              ? 'Processing...'
+              : isClassFull
+                ? 'Join Waitlist'
+                : 'Yes, Enroll Me'}
           </Button>
         </div>
       </div>

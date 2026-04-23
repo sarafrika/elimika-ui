@@ -23,6 +23,7 @@ export type ClassScheduleItem = {
   timezone: string;
   title: string;
   location_type: 'ONLINE' | 'PHYSICAL';
+  location_name?: string | null;
   status: 'SCHEDULED' | 'CANCELLED';
   duration_minutes: number;
   duration_formatted: string;

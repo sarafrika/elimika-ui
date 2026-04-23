@@ -56,6 +56,7 @@ function toScheduleDetailsItem(schedule: ClassScheduleItem): ScheduleDetailsItem
     end_time: schedule.end_time,
     title: schedule.title,
     location_type: schedule.location_type,
+    location_name: schedule.location_name,
     status: schedule.status,
     duration_formatted: schedule.duration_formatted,
     instructor_name: schedule.instructor_name,
@@ -82,6 +83,7 @@ function normalizeScheduleItem(
     timezone: schedule.timezone,
     title: schedule.title,
     location_type: schedule.location_type === 'ONLINE' ? 'ONLINE' : 'PHYSICAL',
+    location_name: schedule.location_name ?? null,
     status: schedule.status === 'CANCELLED' ? 'CANCELLED' : 'SCHEDULED',
     duration_minutes: Number(schedule.duration_minutes ?? 0),
     duration_formatted:
@@ -232,6 +234,28 @@ export default function ClassDetailsPage() {
     return upcoming[0] || null;
   }, [normalizedSchedules]);
 
+  const joinClassHref = useMemo(() => {
+    const link = classDefinition?.meeting_link?.trim();
+    return link ? link : null;
+  }, [classDefinition?.meeting_link]);
+
+  const nextClassLocationLabel = useMemo(() => {
+    if (!nextClass) return 'your class location';
+
+    return (
+      nextClass.location_name ||
+      classDefinition?.location_name ||
+      (nextClass.location_type === 'ONLINE' ? 'online classroom' : 'the classroom listed for this class')
+    );
+  }, [classDefinition?.location_name, nextClass]);
+
+  const joinClassNote = useMemo(() => {
+    if (joinClassHref) return null;
+    if (!nextClass) return null;
+
+    return `This session does not have a meeting link. Please attend the physical class at ${nextClassLocationLabel}.`;
+  }, [joinClassHref, nextClass, nextClassLocationLabel]);
+
   const progress = useMemo(() => {
     const totalLessons =
       lessonsWithContent?.reduce((total, item) => {
@@ -380,9 +404,18 @@ export default function ClassDetailsPage() {
       {/* Next Class Section */}
       <NextClassCard
         nextClass={nextClass}
+        joinHref={joinClassHref}
+        joinLabel='Join Class'
+        locationNote={joinClassNote}
         onJoinClass={schedule => {
-          // TODO: Implement join class logic
-          toast.success(`Joining ${schedule.title}...`);
+          if (joinClassHref) {
+            window.open(joinClassHref, '_blank', 'noopener,noreferrer');
+            return;
+          }
+
+          toast.message(
+            `${schedule.title} is a physical session. Please attend at ${nextClassLocationLabel}.`
+          );
         }}
       />
 
@@ -474,8 +507,18 @@ export default function ClassDetailsPage() {
         schedule={selectedSchedule}
         isOpen={!!selectedSchedule}
         onClose={() => setSelectedSchedule(null)}
+        joinHref={joinClassHref}
+        joinLabel='Join Class'
+        locationNote={joinClassNote}
         onJoinClass={schedule => {
-          toast.success(`Joining ${schedule.title}...`);
+          if (joinClassHref) {
+            window.open(joinClassHref, '_blank', 'noopener,noreferrer');
+            return;
+          }
+
+          toast.message(
+            `${schedule.title} is a physical session. Please attend at ${nextClassLocationLabel}.`
+          );
         }}
       />
 

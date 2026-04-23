@@ -30,7 +30,7 @@ export function JobMarketplacePage({ role }: JobMarketplacePageProps) {
   const content = getJobMarketplaceContent(role);
 
   return (
-    <main className='min-h-screen bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,var(--el-accent-azure)_4%),color-mix(in_srgb,var(--background)_94%,white_6%))] px-3 py-4 sm:px-5 lg:px-7'>
+    <main className='min-h-screen px-3 py-4 sm:px-5 lg:px-7'>
       <div className='mx-auto max-w-[1560px]'>
         <div className='grid gap-4 xl:grid-cols-[270px_minmax(0,1fr)] 2xl:grid-cols-[270px_minmax(0,1fr)_300px]'>
           <div className='hidden xl:sticky xl:top-4 xl:block xl:self-start'>
