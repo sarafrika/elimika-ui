@@ -60,6 +60,7 @@ export type CredentialItem = {
   documentUrl?: string;
   metadata?: string;
   details?: CredentialDetail[];
+  timestamp?: number;
 };
 
 export type GrowthItem = {
@@ -77,6 +78,7 @@ export type GrowthItem = {
   actionLabel: string;
   accent: 'green' | 'amber' | 'blue';
   icon: LucideIcon;
+  timestamp?: number;
 };
 
 export type CredentialsContent = {

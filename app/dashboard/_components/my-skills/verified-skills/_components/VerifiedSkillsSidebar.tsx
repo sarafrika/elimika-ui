@@ -9,6 +9,11 @@ import type { SkillInsight, SuggestedSkill } from '../types';
 type VerifiedSkillsSidebarProps = {
   insights: SkillInsight[];
   suggestions: SuggestedSkill[];
+  report: {
+    verifiedRecords: number;
+    categories: number;
+    averageScore: number;
+  };
 };
 
 const suggestionToneClassNames = {
@@ -17,7 +22,7 @@ const suggestionToneClassNames = {
   warning: 'bg-warning/15 text-warning',
 } as const;
 
-export function VerifiedSkillsSidebar({ insights, suggestions }: VerifiedSkillsSidebarProps) {
+export function VerifiedSkillsSidebar({ insights, suggestions, report }: VerifiedSkillsSidebarProps) {
   return (
     <aside className='grid gap-4 lg:sticky lg:top-4 lg:self-start'>
       <section className='border-border/60 bg-card rounded-lg border p-3 shadow-sm'>
@@ -68,12 +73,16 @@ export function VerifiedSkillsSidebar({ insights, suggestions }: VerifiedSkillsS
         <h2 className='text-foreground mb-3 text-sm font-semibold sm:text-base'>Skill Report</h2>
         <div className='space-y-3'>
           <div>
-            <p className='text-muted-foreground text-xs'>Proficiency</p>
-            <p className='text-foreground text-sm font-semibold'>10 Skills Logged</p>
+            <p className='text-muted-foreground text-xs'>Verified records</p>
+            <p className='text-foreground text-sm font-semibold'>{report.verifiedRecords}</p>
           </div>
           <div>
-            <p className='text-muted-foreground text-xs'>Performance</p>
-            <p className='text-foreground text-sm font-semibold'>32 Total Achievements</p>
+            <p className='text-muted-foreground text-xs'>Skill groups</p>
+            <p className='text-foreground text-sm font-semibold'>{report.categories}</p>
+          </div>
+          <div>
+            <p className='text-muted-foreground text-xs'>Average strength</p>
+            <p className='text-foreground text-sm font-semibold'>{report.averageScore}%</p>
           </div>
           <Button type='button' size='sm' className='h-8 w-full rounded-md text-xs'>
             View Report

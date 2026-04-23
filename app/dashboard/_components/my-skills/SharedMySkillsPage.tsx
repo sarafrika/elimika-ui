@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  Award,
-  BadgeCheck,
-  BookOpenCheck,
-  ChevronRight,
-  GraduationCap,
-  Medal,
-  Sparkles,
-} from 'lucide-react';
+import { BadgeCheck, ChevronRight, Sparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,41 +34,31 @@ export function SharedMySkillsPage({
   skills,
   summary,
   timeline,
-  opportunities,
+  opportunities: _opportunities,
   isLoading,
   actionLabel,
   onAction,
   qrTargetUrl,
 }: SharedMySkillsPageProps) {
-  const displaySkills = skills.length > 0 ? skills : mockSkills;
-  const displayTimeline = timeline.length > 0 ? timeline : mockTimeline;
-  const displayOpportunities = opportunities.length > 0 ? opportunities : mockOpportunities;
+  const orderedTimeline = [...timeline].sort(
+    (left, right) => (left.timestamp ?? 0) - (right.timestamp ?? 0)
+  );
   const displaySummary = hasSummaryData(summary)
     ? summary
     : {
-        badgesEarned: displaySkills.length,
-        certificatesEarned: Math.max(3, Math.round(displaySkills.length * 0.7)),
-        shares: 8,
-      };
+      badgesEarned: skills.length,
+      certificatesEarned: 0,
+      shares: 0,
+    };
 
-  const sortedSkills = [...displaySkills].sort((a, b) => b.score - a.score);
+  const sortedSkills = [...skills].sort((a, b) => b.score - a.score);
   const averageScore =
     sortedSkills.length > 0
       ? Math.round(
-          sortedSkills.reduce((total, skill) => total + skill.score, 0) / sortedSkills.length
-        )
+        sortedSkills.reduce((total, skill) => total + skill.score, 0) / sortedSkills.length
+      )
       : 0;
   const levelLabel = getLevelLabel(averageScore);
-  const bottomTimeline =
-    displayTimeline.length > 0
-      ? displayTimeline
-      : displayOpportunities.slice(0, 3).map(opportunity => ({
-          id: opportunity.id,
-          title: opportunity.title,
-          provider: opportunity.provider,
-          description: `${opportunity.match}% match - ${opportunity.mode}`,
-          metric: opportunity.status,
-        }));
 
   if (isLoading) {
     return <SharedMySkillsSkeleton />;
@@ -101,16 +83,18 @@ export function SharedMySkillsPage({
             levelLabel={levelLabel}
           />
           <TopSkillsPanel skills={sortedSkills} />
-          <CredentialSummaryPanel summary={displaySummary} timeline={displayTimeline} />
+          <CredentialSummaryPanel summary={displaySummary} timeline={orderedTimeline} />
         </section>
 
-        <FullWidthGrowthTimeline items={bottomTimeline} />
+        <FullWidthGrowthTimeline items={orderedTimeline} />
       </div>
     </main>
   );
 }
 
 function FullWidthGrowthTimeline({ items }: { items: SharedTimelineItem[] }) {
+  console.log(items, "its")
+
   return (
     <section className='border-border/60 bg-card rounded-lg border p-3 shadow-sm sm:p-4'>
       <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
@@ -169,140 +153,6 @@ function getLevelLabel(score: number) {
 function hasSummaryData(summary: SharedCredentialSummary) {
   return summary.badgesEarned > 0 || summary.certificatesEarned > 0 || summary.shares > 0;
 }
-
-const mockSkills: SharedSkill[] = [
-  {
-    id: 'mock-data-analysis',
-    name: 'Data Analysis',
-    level: 'Advanced',
-    score: 92,
-    category: 'Analytics',
-    verified: true,
-    version: 'v4.2',
-  },
-  {
-    id: 'mock-python',
-    name: 'Python Programming',
-    level: 'Advanced',
-    score: 88,
-    category: 'Software',
-    verified: true,
-    version: 'v4.0',
-  },
-  {
-    id: 'mock-web-design',
-    name: 'Web Design',
-    level: 'Intermediate',
-    score: 76,
-    category: 'Design',
-    verified: true,
-    version: 'v3.4',
-  },
-  {
-    id: 'mock-marketing',
-    name: 'Digital Marketing',
-    level: 'Intermediate',
-    score: 71,
-    category: 'Marketing',
-    verified: true,
-    version: 'v3.1',
-  },
-  {
-    id: 'mock-sql',
-    name: 'SQL',
-    level: 'Beginner',
-    score: 64,
-    category: 'Database',
-    verified: true,
-    version: 'v2.8',
-  },
-];
-
-const mockTimeline: SharedTimelineItem[] = [
-  {
-    id: 'mock-google-certificate',
-    title: 'Google Data Analytics',
-    provider: 'Google',
-    description: 'Completed a verified analytics credential and added it to the skills wallet.',
-    metric: '92%',
-    icon: <Award className='size-4' />,
-  },
-  {
-    id: 'mock-meta-certificate',
-    title: 'Meta Digital Marketing',
-    provider: 'Meta',
-    description: 'Earned a marketing credential covering campaign strategy and reporting.',
-    metric: '88%',
-    icon: <Medal className='size-4' />,
-  },
-  {
-    id: 'mock-coursera-certificate',
-    title: 'UI / UX Design Certificate',
-    provider: 'Coursera',
-    description: 'Verified design training was added to the learner growth timeline.',
-    metric: '75%',
-    icon: <GraduationCap className='size-4' />,
-  },
-  {
-    id: 'mock-sql-course',
-    title: 'SQL for Data Workflows',
-    provider: 'Elimika',
-    description: 'Skill evidence was updated after completing a practical database module.',
-    metric: '64%',
-    icon: <BookOpenCheck className='size-4' />,
-  },
-];
-
-const mockOpportunities: SharedOpportunity[] = [
-  {
-    id: 'mock-junior-web-dev',
-    title: 'Junior Web Developer',
-    provider: 'BrightWave Marketing',
-    mode: 'Hybrid',
-    match: 82,
-    status: 'Apply',
-  },
-  {
-    id: 'mock-graphic-design',
-    title: 'Earned Graphic Design Basics',
-    provider: 'In-Office',
-    mode: 'Nairobi',
-    match: 89,
-    status: 'Pending',
-  },
-  {
-    id: 'mock-ux-certificate',
-    title: 'UI / UX Design Certificate',
-    provider: 'Internship',
-    mode: 'Remote',
-    match: 75,
-    status: 'Matched',
-  },
-  {
-    id: 'mock-analytics-intern',
-    title: 'Data Analytics Intern',
-    provider: 'Future Skills Lab',
-    mode: 'Part-Time',
-    match: 91,
-    status: 'Recommended',
-  },
-  {
-    id: 'mock-training-assistant',
-    title: 'Training Assistant',
-    provider: 'Elimika Partner Network',
-    mode: 'On-site',
-    match: 78,
-    status: 'Open',
-  },
-  {
-    id: 'mock-content-creator',
-    title: 'Learning Content Creator',
-    provider: 'Course Studio',
-    mode: 'Contract',
-    match: 84,
-    status: 'Apply',
-  },
-];
 
 function SharedMySkillsSkeleton() {
   return (

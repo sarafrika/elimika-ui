@@ -2,36 +2,22 @@
 
 import {
   SharedMySkillsPage,
-  type SharedCredentialSummary,
   type SharedMySkillsProfile,
   type SharedOpportunity,
-  type SharedSkill,
-  type SharedTimelineItem,
 } from '@/app/dashboard/_components/my-skills';
+import { useVerifiedSkillsContent } from '@/app/dashboard/_components/my-skills/verified-skills/live-data';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { useUserProfile } from '@/context/profile-context';
 import { useMultipleClassDetails } from '@/hooks/use-class-multiple-details';
-import type { CourseCreatorSkill, Student, StudentSchedule } from '@/services/client';
+import type { Student, StudentSchedule } from '@/services/client';
 import {
-  getCourseCreatorSkillsOptions,
   getStudentScheduleOptions,
   searchStudentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { Award, BookOpenCheck, GraduationCap } from 'lucide-react';
 import { useMemo } from 'react';
 
-const proficiencyScoreMap: Record<string, number> = {
-  beginner: 25,
-  intermediate: 50,
-  advanced: 75,
-  expert: 100,
-};
-
 type MultipleClassDetail = NonNullable<ReturnType<typeof useMultipleClassDetails>['data']>[number];
-
-const titleCase = (value?: string) =>
-  value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : 'Beginner';
 
 const getProfileString = (profile: unknown, keys: string[]) => {
   const value = (profile ?? {}) as Record<string, unknown>;
@@ -49,15 +35,9 @@ export default function CourseCreatorMySkillsPage() {
   const user = useUserProfile();
   const creator = useCourseCreator();
   const creatorProfile = user?.courseCreator ?? creator?.profile;
-  const creatorUuid = creatorProfile?.uuid as string;
-
-  const skillsQuery = useQuery({
-    ...getCourseCreatorSkillsOptions({
-      path: { courseCreatorUuid: creatorUuid },
-      query: { pageable: {} },
-    }),
-    enabled: !!creatorUuid,
-  });
+  const { skills, summary, timeline, isLoading: walletLoading } = useVerifiedSkillsContent(
+    'course_creator'
+  );
 
   const studentSearchQuery = useQuery({
     ...searchStudentsOptions({
@@ -95,24 +75,6 @@ export default function CourseCreatorMySkillsPage() {
 
   const classDetailsQuery = useMultipleClassDetails(uniqueClassDefinitionUuids);
   const classDetails = (classDetailsQuery.data ?? []) as MultipleClassDetail[];
-  const apiSkills: CourseCreatorSkill[] = skillsQuery.data?.data?.content ?? [];
-
-  const skills = useMemo<SharedSkill[]>(
-    () =>
-      apiSkills.map((skill, index) => {
-        const level = titleCase(skill.proficiency_level);
-        return {
-          id: skill.uuid ?? `course-creator-skill-${index}`,
-          name: skill.skill_name,
-          level,
-          score: proficiencyScoreMap[skill.proficiency_level.toLowerCase()] ?? 0,
-          category: 'Course Design',
-          verified: true,
-          version: level,
-        };
-      }),
-    [apiSkills]
-  );
 
   const opportunities = useMemo<SharedOpportunity[]>(
     () =>
@@ -126,40 +88,6 @@ export default function CourseCreatorMySkillsPage() {
       })),
     [classDetails]
   );
-
-  const summary: SharedCredentialSummary = {
-    badgesEarned: skills.length,
-    certificatesEarned: Math.round(skills.length / 2),
-    shares: classDetails.length,
-  };
-
-  const timeline: SharedTimelineItem[] =
-    skills.length > 0
-      ? skills.slice(0, 4).map((skill, index) => ({
-          id: `course-creator-timeline-${skill.id}`,
-          title: skill.name,
-          provider: index === 0 ? 'Google' : index === 1 ? 'Meta' : 'Coursera',
-          description: `${skill.level} creator credential`,
-          metric: `${skill.score}%`,
-          icon:
-            index === 0 ? (
-              <Award className='size-4' />
-            ) : index === 1 ? (
-              <GraduationCap className='size-4' />
-            ) : (
-              <BookOpenCheck className='size-4' />
-            ),
-        }))
-      : [
-          {
-            id: 'course-creator-empty-timeline',
-            title: 'Skills wallet ready',
-            provider: 'Elimika',
-            description: 'Verified course design skills will appear in your wallet.',
-            metric: '0%',
-            icon: <BookOpenCheck className='size-4' />,
-          },
-        ];
 
   const profile: SharedMySkillsProfile = {
     name: getProfileString(user, ['full_name', 'display_name']) ?? getProfileName(user),
@@ -192,7 +120,7 @@ export default function CourseCreatorMySkillsPage() {
       summary={summary}
       timeline={timeline}
       opportunities={opportunities}
-      isLoading={skillsQuery.isLoading || classDetailsQuery.isLoading}
+      isLoading={walletLoading || classDetailsQuery.isLoading}
       actionLabel='Share Profile'
     />
   );
