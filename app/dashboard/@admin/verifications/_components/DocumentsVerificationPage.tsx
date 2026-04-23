@@ -4,6 +4,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import {
   BriefcaseBusiness,
   ChevronRight,
+  Filter,
   GraduationCap,
   Search,
   Users,
@@ -19,6 +20,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
@@ -66,6 +74,7 @@ import {
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 type ReviewRole = 'instructor' | 'course_creator' | 'student';
+type ReviewStatusFilter = 'all' | 'pending' | 'verified' | 'rejected';
 
 type ReviewItem = {
   id: string;
@@ -90,6 +99,7 @@ type ReviewItem = {
   uploadedAt?: string;
   uploadedTimestamp?: number;
   documentTypeLabel?: string;
+  documentTypeUuid?: string;
   rawDocument: InstructorDocument | CourseCreatorDocumentDto;
 };
 
@@ -260,9 +270,7 @@ function buildRecordDetails(
     const organisation =
       'organisation_name' in membership
         ? membership.organisation_name
-        : 'organization_name' in membership
-          ? membership.organization_name
-          : 'Not specified';
+        : 'Not specified';
     const status = 'membership_status' in membership
       ? membership.membership_status
       : membership.status_label;
@@ -327,9 +335,7 @@ function summarizeLinkedRecord(
     const organisation =
       'organisation_name' in membership
         ? membership.organisation_name
-        : 'organization_name' in membership
-          ? membership.organization_name
-          : 'Unknown organisation';
+        : 'Unknown organisation';
     return `${organisation} membership`;
   }
 
@@ -437,7 +443,7 @@ function ReviewCard({
   const hasDocumentUrl = !!item.documentUrl;
 
   return (
-    <Card className='w-full gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
+    <Card className='w-full gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm max-w-[450px]'>
       {hasDocumentUrl ? (
         <PdfPreview
           documentUrl={item.documentUrl as string}
@@ -691,6 +697,8 @@ export default function DocumentsVerificationPage() {
   const admin = useUserProfile();
   const qc = useQueryClient();
   const [searchValue, setSearchValue] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ReviewStatusFilter>('all');
+  const [documentTypeFilter, setDocumentTypeFilter] = useState('all');
   const [activeTab, setActiveTab] = useState<ReviewRole>('instructor');
   const [sheetState, setSheetState] = useState<ReviewSheetState>({
     open: false,
@@ -927,6 +935,7 @@ export default function DocumentsVerificationPage() {
           uploadedAt: formatDate(document.upload_date || document.created_date),
           uploadedTimestamp: new Date(document.upload_date || document.created_date || 0).getTime(),
           documentTypeLabel: getDocumentTypeLabel(document.document_type_uuid, documentTypesMap),
+          documentTypeUuid: document.document_type_uuid,
           rawDocument: document,
         } satisfies ReviewItem;
       });
@@ -989,6 +998,7 @@ export default function DocumentsVerificationPage() {
           uploadedAt: formatDate(document.created_date),
           uploadedTimestamp: new Date(document.created_date || 0).getTime(),
           documentTypeLabel: getDocumentTypeLabel(document.document_type_uuid, documentTypesMap),
+          documentTypeUuid: document.document_type_uuid,
           rawDocument: document,
         } satisfies ReviewItem;
       });
@@ -1018,13 +1028,28 @@ export default function DocumentsVerificationPage() {
 
     return reviewItems.filter(item => {
       if (item.role !== activeTab) return false;
+      if (statusFilter !== 'all') {
+        const toneToStatus: Record<ReviewItem['statusTone'], ReviewStatusFilter> = {
+          success: 'verified',
+          warning: 'pending',
+          destructive: 'rejected',
+          outline: 'pending',
+        };
+
+        if (toneToStatus[item.statusTone] !== statusFilter) return false;
+      }
+
+      if (documentTypeFilter !== 'all' && item.documentTypeUuid !== documentTypeFilter) {
+        return false;
+      }
+
       if (!term) return true;
 
       return [item.ownerName, item.documentTitle, item.documentLabel, item.statusLabel].some(
         value => value.toLowerCase().includes(term)
       );
     });
-  }, [activeTab, reviewItems, searchValue]);
+  }, [activeTab, documentTypeFilter, reviewItems, searchValue, statusFilter]);
 
   const instructorsCount = useMemo(
     () => reviewItems.filter(item => item.role === 'instructor').length,
@@ -1098,11 +1123,10 @@ export default function DocumentsVerificationPage() {
   };
 
   return (
-    <main className='bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,var(--el-accent-azure)_4%),color-mix(in_srgb,var(--background)_94%,white_6%))] px-3 py-4 sm:px-5 lg:px-7'>
+    <main className='bg-background px-3 py-4 sm:px-5 lg:px-7'>
       <div className='mx-auto flex w-full max-w-[1520px] flex-col gap-4'>
-        <header className='relative overflow-hidden rounded-[20px] border bg-[linear-gradient(135deg,color-mix(in_srgb,var(--background)_92%,var(--el-accent-azure)_8%),color-mix(in_srgb,var(--background)_88%,white_12%))] px-5 py-5 shadow-sm sm:px-6 lg:px-7'>
-          <div className='pointer-events-none absolute inset-y-0 right-0 hidden w-[42%] bg-[radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--el-accent-azure)_18%,transparent),transparent_62%)] lg:block' />
-          <div className='relative flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
+        <header className='rounded-[20px] border bg-card px-5 py-5 shadow-sm sm:px-6 lg:px-7'>
+          <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
             <div className='space-y-1.5'>
               <h1 className='text-foreground text-3xl font-semibold tracking-tight'>
                 Document verification
@@ -1112,26 +1136,13 @@ export default function DocumentsVerificationPage() {
                 the platform.
               </p>
             </div>
-
-            <div className='flex w-full flex-col gap-3 sm:flex-row xl:w-auto xl:flex-nowrap'>
-              <label className='relative block min-w-0 flex-1 sm:min-w-[320px] xl:min-w-[360px]'>
-                <Search className='text-muted-foreground absolute top-1/2 left-4 size-4 -translate-y-1/2' />
-                <Input
-                  aria-label='Search documents'
-                  placeholder='Search documents or owners'
-                  value={searchValue}
-                  onChange={event => setSearchValue(event.target.value)}
-                  className='h-11 rounded-xl border-white/60 bg-background/90 pr-12 pl-11 shadow-sm backdrop-blur'
-                />
-              </label>
-            </div>
           </div>
         </header>
 
         <Tabs
           value={activeTab}
           onValueChange={value => setActiveTab(value as ReviewRole)}
-          className='gap-4'
+          className="gap-4"
         >
           <CredentialsTabs
             tabs={[
@@ -1154,39 +1165,102 @@ export default function DocumentsVerificationPage() {
                 icon: Users,
               },
             ]}
+            rightSlot={
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+                {/* Search — grows to fill available space */}
+                <div className="relative min-w-0 flex-1">
+                  <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2" />
+                  <Input
+                    aria-label="Search documents"
+                    placeholder="Search documents or owners"
+                    value={searchValue}
+                    onChange={event => setSearchValue(event.target.value)}
+                    className="h-11 w-full rounded-xl border-border/70 bg-background pl-11 pr-4 shadow-sm"
+                  />
+                </div>
+
+                {/* Filters — fixed width, sit beside search on sm+ */}
+                <div className="flex shrink-0 gap-3">
+                  <Select
+                    value={statusFilter}
+                    onValueChange={value => setStatusFilter(value as ReviewStatusFilter)}
+                  >
+                    <SelectTrigger className="h-11 w-full min-w-[148px] rounded-xl border-border/70 bg-background px-3 shadow-sm sm:w-auto">
+                      <Filter className="text-muted-foreground size-4" />
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="verified">Verified</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={documentTypeFilter}
+                    onValueChange={setDocumentTypeFilter}
+                  >
+                    <SelectTrigger className="h-11 w-full min-w-[176px] rounded-xl border-border/70 bg-background px-3 shadow-sm sm:w-auto">
+                      <SelectValue placeholder="Document type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All document types</SelectItem>
+                      {documentTypes
+                        .filter(item => !!item.uuid)
+                        .map(item => (
+                          <SelectItem key={item.uuid} value={item.uuid as string}>
+                            {item.name || item.description || 'Document type'}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            }
+            className="gap-4"
+            listClassName="bg-background"
+            triggerClassName="data-[state=active]:bg-muted data-[state=active]:text-foreground"
           />
 
-          <TabsContent value={activeTab} className='mt-0 space-y-4'>
-            <section className='grid gap-4 2xl:grid-cols-[320px_minmax(0,1fr)]'>
-              <Card className='rounded-[18px] border-white/60 bg-card/95 p-5 shadow-sm'>
-                <div className='space-y-2'>
-                  <p className='text-muted-foreground text-sm uppercase tracking-wide'>
+          <TabsContent value={activeTab} className="mt-0 space-y-4">
+            {/* Sidebar + content: stacked on mobile, side-by-side from xl */}
+            <section className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
+
+              {/* Sidebar info card */}
+              <Card className="h-fit rounded-[18px] border-white/60 bg-card/95 p-5 shadow-sm">
+                <div className="space-y-2">
+                  <p className="text-muted-foreground text-sm uppercase tracking-wide">
                     Active workspace
                   </p>
-                  <h2 className='text-foreground text-2xl font-semibold'>
+                  <h2 className="text-foreground text-2xl font-semibold">
                     {activeTab === 'instructor'
                       ? 'Instructor documents'
                       : activeTab === 'course_creator'
                         ? 'Course creator documents'
                         : 'Student documents'}
                   </h2>
-                  <p className='text-muted-foreground text-sm leading-6'>
+                  <p className="text-muted-foreground text-sm leading-6">
                     {activeTab === 'student'
                       ? 'Student documents are not wired to a verification API yet, so this tab currently shows profiles only.'
                       : 'Open a document to inspect the preview and verify it from the side sheet.'}
                   </p>
                 </div>
 
-                <Separator className='my-4' />
+                <Separator className="my-4" />
 
-                <div className='grid sm:grid-cols-3 2xl:grid-cols-1 gap-3 text-sm'>
+                {/* Detail rows: 3 cols on sm–xl, 1 col otherwise */}
+                <div className="grid gap-3 text-sm sm:grid-cols-3 xl:grid-cols-1">
                   <DetailRow
-                    label='Documents visible'
+                    label="Documents visible"
                     value={`${filteredItems.length} matching record${filteredItems.length === 1 ? '' : 's'}`}
                   />
-                  <DetailRow label='Search term' value={searchValue.trim() || 'None'} />
                   <DetailRow
-                    label='Profiles loaded'
+                    label="Search term"
+                    value={searchValue.trim() || 'None'}
+                  />
+                  <DetailRow
+                    label="Profiles loaded"
                     value={
                       activeTab === 'instructor'
                         ? `${instructors.length}`
@@ -1198,22 +1272,29 @@ export default function DocumentsVerificationPage() {
                 </div>
               </Card>
 
-              <div className='space-y-4'>
+              {/* Document cards grid */}
+              <div className="min-w-0">
                 {filteredItems.length > 0 ? (
-                  <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
                     {filteredItems.map(item => (
-                      <ReviewCard key={item.id} item={item} onOpenReview={selected => setSheetState({ open: true, item: selected })} />
+                      <ReviewCard
+                        key={item.id}
+                        item={item}
+                        onOpenReview={selected =>
+                          setSheetState({ open: true, item: selected })
+                        }
+                      />
                     ))}
                   </div>
                 ) : (
-                  <Card className='border-border/60 bg-card/90 flex min-h-[360px] items-center justify-center rounded-[18px] border border-dashed px-6 py-10 text-center shadow-sm'>
-                    <div className='max-w-md space-y-2'>
-                      <h3 className='text-foreground text-xl font-semibold'>
+                  <Card className="flex min-h-[360px] items-center justify-center rounded-[18px] border border-dashed border-border/60 bg-card/90 px-6 py-10 text-center shadow-sm">
+                    <div className="max-w-md space-y-2">
+                      <h3 className="text-foreground text-xl font-semibold">
                         {activeTab === 'student'
                           ? 'Student review queue coming soon'
                           : 'No documents found'}
                       </h3>
-                      <p className='text-muted-foreground text-sm leading-6'>
+                      <p className="text-muted-foreground text-sm leading-6">
                         {activeTab === 'student'
                           ? 'Student profile records are loaded, but the client does not yet have a student document verification endpoint.'
                           : 'Try adjusting the search term or wait for more documents to be uploaded.'}
