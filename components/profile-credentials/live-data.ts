@@ -636,9 +636,7 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
     return {
       name: displayName,
       title: getFirstValue(instructor?.professional_headline, 'Instructor') ?? 'Instructor',
-      location:
-        getFirstValue(instructor?.formatted_location, user?.organisation_affiliations?.[0]?.branch_name, user?.organisation_affiliations?.[0]?.organisation_name) ??
-        'Location not set',
+      profileImageUrl: user?.profile_image_url,
       website: getFirstValue(instructor?.website, 'Website not set') ?? 'Website not set',
       email: user?.email ?? 'Email not set',
       phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',
@@ -653,9 +651,7 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
     return {
       name: getFirstValue(courseCreator?.full_name, displayName) ?? displayName,
       title: getFirstValue(courseCreator?.professional_headline, 'Course Creator') ?? 'Course Creator',
-      location:
-        getFirstValue(user?.organisation_affiliations?.[0]?.organisation_name, user?.organisation_affiliations?.[0]?.branch_name) ??
-        'Location not set',
+      profileImageUrl: user?.profile_image_url,
       website: getFirstValue(courseCreator?.website, 'Website not set') ?? 'Website not set',
       email: user?.email ?? 'Email not set',
       phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',
@@ -669,9 +665,7 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
   return {
     name: displayName,
     title: getFirstValue(student?.bio, 'Student') ?? 'Student',
-    location:
-      getFirstValue(user?.organisation_affiliations?.[0]?.branch_name, user?.organisation_affiliations?.[0]?.organisation_name) ??
-      'Location not set',
+    profileImageUrl: user?.profile_image_url,
     website: 'Website not set',
     email: user?.email ?? 'Email not set',
     phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',
