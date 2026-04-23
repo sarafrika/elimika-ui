@@ -2,12 +2,10 @@
 
 import {
   SharedMySkillsPage,
-  type SharedCredentialSummary,
   type SharedMySkillsProfile,
   type SharedOpportunity,
-  type SharedSkill,
-  type SharedTimelineItem,
 } from '@/app/dashboard/_components/my-skills';
+import { useVerifiedSkillsContent } from '@/app/dashboard/_components/my-skills/verified-skills/live-data';
 import { useUserProfile } from '@/context/profile-context';
 import { useStudent } from '@/context/student-context';
 import {
@@ -18,14 +16,12 @@ import {
   getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
-  Certificate,
   ClassDefinition,
   Course,
   StudentSchedule,
   TrainingProgram,
 } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { Award, BookOpenCheck, GraduationCap } from 'lucide-react';
 import { useMemo } from 'react';
 
 type CourseOrProgram = Course | TrainingProgram;
@@ -46,12 +42,6 @@ const getProfileString = (profile: unknown, keys: string[]) => {
 const getName = (item?: CourseOrProgram) =>
   !item ? 'Verified Skill' : 'name' in item ? item.name : item.title;
 
-const getCategory = (item?: CourseOrProgram) =>
-  item && 'category_names' in item ? item.category_names?.[0] || 'General' : 'General';
-
-const getLevel = (score?: number) =>
-  score && score >= 90 ? 'Advanced' : score && score >= 75 ? 'Intermediate' : 'Beginner';
-
 const getProfileName = (profile: unknown) => {
   const value = (profile ?? {}) as Record<string, unknown>;
   const names = [value.first_name, value.last_name].filter(Boolean).join(' ');
@@ -67,6 +57,7 @@ export default function StudentMySkillsPage() {
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
     enabled: !!student?.uuid,
   });
+  const verifiedSkillsContent = useVerifiedSkillsContent('student');
 
   const enrollmentsQuery = useQuery({
     ...getStudentScheduleOptions({
@@ -76,7 +67,6 @@ export default function StudentMySkillsPage() {
     enabled: !!student?.uuid,
   });
 
-  const certificates = (certificatesQuery.data?.data ?? []) as Certificate[];
   const enrollments = (enrollmentsQuery.data?.data ?? []) as StudentSchedule[];
 
   const uniqueEnrollments = useMemo(() => {
@@ -122,7 +112,7 @@ export default function StudentMySkillsPage() {
     const courses = new Set<string>();
     const programs = new Set<string>();
 
-    certificates.forEach(certificate => {
+    (certificatesQuery.data?.data ?? []).forEach(certificate => {
       if (certificate.course_uuid) courses.add(certificate.course_uuid);
       if (certificate.program_uuid) programs.add(certificate.program_uuid);
     });
@@ -136,7 +126,7 @@ export default function StudentMySkillsPage() {
     });
 
     return { courseUuids: Array.from(courses), programUuids: Array.from(programs) };
-  }, [certificates, classDefinitionsMap, uniqueEnrollments]);
+  }, [certificatesQuery.data?.data, classDefinitionsMap, uniqueEnrollments]);
 
   const courseQueries = useQueries({
     queries: courseUuids.map(uuid => ({
@@ -169,31 +159,6 @@ export default function StudentMySkillsPage() {
     return map;
   }, [programQueries, programUuids]);
 
-  const skills = useMemo<SharedSkill[]>(
-    () =>
-      certificates
-        .filter(certificate => certificate.is_valid)
-        .map((certificate, index) => {
-          const item = certificate.course_uuid
-            ? coursesMap.get(certificate.course_uuid)
-            : certificate.program_uuid
-              ? programsMap.get(certificate.program_uuid)
-              : undefined;
-          const score = Math.round(certificate.final_grade ?? 0);
-
-          return {
-            id: certificate.uuid ?? `student-skill-${index}`,
-            name: getName(item),
-            level: getLevel(score),
-            score,
-            category: getCategory(item),
-            verified: certificate.is_valid,
-            version: certificate.grade_letter ? `Grade ${certificate.grade_letter}` : 'Verified',
-          };
-        }),
-    [certificates, coursesMap, programsMap]
-  );
-
   const opportunities = useMemo<SharedOpportunity[]>(
     () =>
       uniqueEnrollments.slice(0, 3).map((enrollment, index) => {
@@ -223,40 +188,6 @@ export default function StudentMySkillsPage() {
       }),
     [classDefinitionsMap, coursesMap, programsMap, uniqueEnrollments]
   );
-
-  const summary: SharedCredentialSummary = {
-    badgesEarned: skills.length,
-    certificatesEarned: certificates.filter(certificate => certificate.is_valid).length,
-    shares: Math.max(0, uniqueEnrollments.length),
-  };
-
-  const timeline: SharedTimelineItem[] =
-    skills.length > 0
-      ? skills.slice(0, 4).map((skill, index) => ({
-          id: `student-timeline-${skill.id}`,
-          title: skill.name,
-          provider: index === 0 ? 'Google' : index === 1 ? 'Meta' : 'Coursera',
-          description: `${skill.level} credential in ${skill.category ?? 'General'}`,
-          metric: `${skill.score}%`,
-          icon:
-            index === 0 ? (
-              <Award className='size-4' />
-            ) : index === 1 ? (
-              <GraduationCap className='size-4' />
-            ) : (
-              <BookOpenCheck className='size-4' />
-            ),
-        }))
-      : [
-          {
-            id: 'student-empty-timeline',
-            title: 'Start learning',
-            provider: 'Elimika',
-            description: 'Complete courses to build your verified skills wallet.',
-            metric: '0%',
-            icon: <BookOpenCheck className='size-4' />,
-          },
-        ];
 
   const profile: SharedMySkillsProfile = {
     name: getProfileString(user, ['full_name', 'display_name']) ?? getProfileName(user),
@@ -291,11 +222,9 @@ export default function StudentMySkillsPage() {
   return (
     <SharedMySkillsPage
       profile={profile}
-      skills={skills}
-      summary={summary}
-      timeline={timeline}
+      content={verifiedSkillsContent}
       opportunities={opportunities}
-      isLoading={isLoading}
+      isLoading={verifiedSkillsContent.isLoading || isLoading}
       actionLabel='Share Profile'
     />
   );

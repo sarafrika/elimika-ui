@@ -103,24 +103,26 @@ function formatDateRange(start?: Date | string, end?: Date | string, active?: bo
 
 function buildEducationDetails(education?: InstructorEducation | CourseCreatorEducation) {
   if (!education) return [];
+  const record = education as Record<string, unknown>;
 
   return [
-    { label: 'Institution', value: education.school_name || 'Not specified' },
-    { label: 'Qualification', value: education.qualification || 'Not specified' },
+    { label: 'Institution', value: String(record.school_name ?? 'Not specified') },
+    { label: 'Qualification', value: String(record.qualification ?? 'Not specified') },
     {
       label: 'Field',
-      value: education.field_of_study || 'Not specified',
+      value: String(record.field_of_study ?? 'Not specified'),
     },
     {
       label: 'Completed',
-      value:
-        education.formatted_completion ||
-        formatYearValue(education.year_completed) ||
-        'Not specified',
+      value: String(
+        record.formatted_completion ||
+          formatYearValue(record.year_completed as number | string | Date | null) ||
+          'Not specified'
+      ),
     },
     {
       label: 'Certificate',
-      value: education.certificate_number || 'Not specified',
+      value: String(record.certificate_number ?? 'Not specified'),
     },
   ];
 }
@@ -129,38 +131,46 @@ function buildMembershipDetails(
   membership?: InstructorProfessionalMembership | CourseCreatorProfessionalMembership
 ) {
   if (!membership) return [];
+  const record = membership as Record<string, unknown>;
 
   const organisationName =
-    'organisation_name' in membership
-      ? membership.organisation_name
-      : 'organization_name' in membership
-        ? membership.organization_name
+    typeof record.organisation_name === 'string'
+      ? record.organisation_name
+      : typeof record.organization_name === 'string'
+        ? record.organization_name
         : undefined;
   const statusLabel =
-    'membership_status' in membership
-      ? membership.membership_status
-      : 'status_label' in membership
-        ? membership.status_label
+    typeof record.membership_status === 'string'
+      ? record.membership_status
+      : typeof record.status_label === 'string'
+        ? record.status_label
         : undefined;
+  const membershipNumber = typeof record.membership_number === 'string' ? record.membership_number : undefined;
+  const membershipPeriod = typeof record.membership_period === 'string' ? record.membership_period : undefined;
+  const isActive = typeof record.is_active === 'boolean' ? record.is_active : undefined;
 
   return [
     { label: 'Organisation', value: organisationName || 'Not specified' },
     {
       label: 'Membership No.',
-      value: membership.membership_number || 'Not specified',
+      value: membershipNumber || 'Not specified',
     },
     {
       label: 'Period',
       value:
-        membership.membership_period ||
-        formatDateRange(membership.start_date, membership.end_date, membership.is_active) ||
+        membershipPeriod ||
+        formatDateRange(
+          record.start_date as Date | string | undefined,
+          record.end_date as Date | string | undefined,
+          isActive
+        ) ||
         'Not specified',
     },
     {
       label: 'Status',
       value:
         statusLabel ||
-        (membership.is_active ? 'Active' : 'Inactive'),
+        (isActive ? 'Active' : 'Inactive'),
     },
   ];
 }
@@ -172,8 +182,8 @@ function buildExperienceDetails(
 
   const responsibilities = 'responsibilities' in experience ? experience.responsibilities : undefined;
   return [
-    { label: 'Position', value: experience.position || 'Not specified' },
-    { label: 'Organisation', value: experience.organisation_name || 'Not specified' },
+    { label: 'Position', value: String(experience.position || 'Not specified') },
+    { label: 'Organisation', value: String(experience.organisation_name || 'Not specified') },
     {
       label: 'Period',
       value:
@@ -214,28 +224,30 @@ function getLinkedRecordData({
   const experience = experienceUuid ? experienceMap?.get(experienceUuid) : undefined;
 
   if (education) {
+    const record = education as Record<string, unknown>;
     return {
       recordKind: 'education' as const,
       recordUuid: educationUuid,
       recordSummary:
-        education.full_description ||
-        `${education.qualification || 'Education'} at ${education.school_name || 'Unknown institution'}`,
+        (typeof record.full_description === 'string' ? record.full_description : undefined) ||
+        `${String(record.qualification ?? 'Education')} at ${String(record.school_name ?? 'Unknown institution')}`,
       details: buildEducationDetails(education),
     };
   }
 
   if (membership) {
+    const record = membership as Record<string, unknown>;
     const organisationName =
-      'organisation_name' in membership
-        ? membership.organisation_name
-        : 'organization_name' in membership
-          ? membership.organization_name
+      typeof record.organisation_name === 'string'
+        ? record.organisation_name
+        : typeof record.organization_name === 'string'
+          ? record.organization_name
           : undefined;
     return {
       recordKind: 'membership' as const,
       recordUuid: membershipUuid,
       recordSummary:
-        ('summary' in membership && membership.summary) ||
+        (typeof record.summary === 'string' ? record.summary : undefined) ||
         `${organisationName || 'Membership'} record`,
       details: buildMembershipDetails(membership),
     };
@@ -418,6 +430,7 @@ function mapCertificateItems(
         documentLabel: certificate.certificate_number ?? certificate.template_uuid,
         documentUrl: getFirstValue(certificate.certificate_url, undefined),
         metadata: certificate.final_grade ? `${certificate.final_grade}%` : undefined,
+        timestamp: timestamp ? new Date(timestamp).getTime() : undefined,
       } satisfies CredentialItem & {
         documentUrl?: string;
         metadata?: string;
@@ -490,7 +503,7 @@ function mapCredentialItems(
   documentTypes: DocumentTypeOption[],
   searchValue = '',
   statusFilter: CredentialsStatusFilter = 'all'
-) {
+): CredentialItem[] {
   const filter = searchValue.trim().toLowerCase();
 
   return documents
@@ -540,10 +553,8 @@ function mapCredentialItems(
         documentLabel: document.original_filename,
         documentUrl: getDocumentFileUrl(document),
         metadata: fileSize ?? undefined,
-      } satisfies CredentialItem & {
-        documentUrl?: string;
-        metadata?: string;
-      };
+        timestamp: stageDate ? new Date(stageDate).getTime() : undefined,
+      } as CredentialItem;
     });
 }
 
@@ -563,7 +574,7 @@ function mapLinkedCredentialItems({
   experienceMap?: Map<string, InstructorExperience | CourseCreatorExperience>;
   searchValue?: string;
   statusFilter?: CredentialsStatusFilter;
-}) {
+}): CredentialItem[] {
   const baseItems = mapCredentialItems(documents, documentTypes, searchValue, statusFilter);
 
   return baseItems.map(item => {
@@ -594,15 +605,18 @@ function mapLinkedCredentialItems({
       title: item.title,
       issuer: item.issuer,
       metadata: linked.recordSummary ? linked.recordSummary : item.metadata,
-    } satisfies CredentialItem;
+      timestamp: item.timestamp,
+    } as CredentialItem;
   });
 }
 
-function buildTimelineItems(items: ReturnType<typeof mapCredentialItems>): GrowthItem[] {
+function buildTimelineItems(items: CredentialItem[]): GrowthItem[] {
   const timelineIcons = [GraduationCap, BriefcaseBusiness, Building2, WalletCards, Cloud, Globe, Star];
 
   return items
     .filter(item => item.level === 'Verified' || !!item.recordKind)
+    .slice()
+    .sort((left, right) => (left.timestamp ?? 0) - (right.timestamp ?? 0))
     .slice(0, 6)
     .map((item, index) => ({
       id: `${item.id}-timeline`,
@@ -619,6 +633,7 @@ function buildTimelineItems(items: ReturnType<typeof mapCredentialItems>): Growt
       actionLabel: item.actionLabel,
       accent: index % 3 === 0 ? 'green' : index % 3 === 1 ? 'amber' : 'blue',
       icon: timelineIcons[index % timelineIcons.length] ?? FileText,
+      timestamp: item.timestamp,
     }));
 }
 
@@ -636,9 +651,7 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
     return {
       name: displayName,
       title: getFirstValue(instructor?.professional_headline, 'Instructor') ?? 'Instructor',
-      location:
-        getFirstValue(instructor?.formatted_location, user?.organisation_affiliations?.[0]?.branch_name, user?.organisation_affiliations?.[0]?.organisation_name) ??
-        'Location not set',
+      profileImageUrl: user?.profile_image_url,
       website: getFirstValue(instructor?.website, 'Website not set') ?? 'Website not set',
       email: user?.email ?? 'Email not set',
       phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',
@@ -653,9 +666,7 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
     return {
       name: getFirstValue(courseCreator?.full_name, displayName) ?? displayName,
       title: getFirstValue(courseCreator?.professional_headline, 'Course Creator') ?? 'Course Creator',
-      location:
-        getFirstValue(user?.organisation_affiliations?.[0]?.organisation_name, user?.organisation_affiliations?.[0]?.branch_name) ??
-        'Location not set',
+      profileImageUrl: user?.profile_image_url,
       website: getFirstValue(courseCreator?.website, 'Website not set') ?? 'Website not set',
       email: user?.email ?? 'Email not set',
       phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',
@@ -669,9 +680,7 @@ function resolveProfile(role: CredentialsRole, profile?: UserProfileType): Crede
   return {
     name: displayName,
     title: getFirstValue(student?.bio, 'Student') ?? 'Student',
-    location:
-      getFirstValue(user?.organisation_affiliations?.[0]?.branch_name, user?.organisation_affiliations?.[0]?.organisation_name) ??
-      'Location not set',
+    profileImageUrl: user?.profile_image_url,
     website: 'Website not set',
     email: user?.email ?? 'Email not set',
     phone: getFirstValue(user?.phone_number, 'Phone not set') ?? 'Phone not set',

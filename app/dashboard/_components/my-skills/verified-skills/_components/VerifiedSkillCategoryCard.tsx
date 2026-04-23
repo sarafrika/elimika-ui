@@ -8,6 +8,7 @@ import type { VerifiedSkill, VerifiedSkillCategory } from '../types';
 
 type VerifiedSkillCategoryCardProps = {
   category: VerifiedSkillCategory;
+  onOpenDetails: (category: VerifiedSkillCategory) => void;
 };
 
 const toneClassNames = {
@@ -17,7 +18,7 @@ const toneClassNames = {
   muted: 'bg-muted text-muted-foreground',
 } as const;
 
-export function VerifiedSkillCategoryCard({ category }: VerifiedSkillCategoryCardProps) {
+export function VerifiedSkillCategoryCard({ category, onOpenDetails }: VerifiedSkillCategoryCardProps) {
   const CategoryIcon = category.skills[0]?.icon;
   const featured = category.skills.slice(0, 3);
   const supporting = category.skills.slice(3);
@@ -51,11 +52,13 @@ export function VerifiedSkillCategoryCard({ category }: VerifiedSkillCategoryCar
         </div>
 
         <div className='flex items-center gap-2 sm:justify-end'>
-          <Button variant='outline' size='sm' className='h-7 rounded-md text-xs'>
+          <Button
+            variant='outline'
+            size='sm'
+            className='h-7 rounded-md text-xs'
+            onClick={() => onOpenDetails(category)}
+          >
             Details
-          </Button>
-          <Button variant='outline' size='sm' className='h-7 rounded-md text-xs'>
-            Enroll
           </Button>
         </div>
       </div>
@@ -81,18 +84,16 @@ export function VerifiedSkillCategoryCard({ category }: VerifiedSkillCategoryCar
       {supporting.length > 0 ? (
         <div className='mt-2 flex flex-wrap items-center gap-2'>
           {supporting.map(skill => (
-            <button
+            <div
               key={skill.id}
-              type='button'
-              className='bg-muted text-primary hover:bg-muted/80 flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium'
+              className='bg-muted text-primary flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium'
             >
               <ExternalLink className='size-3.5 shrink-0' />
               <span className='truncate'>
                 {skill.name}
                 {skill.hours ? ` (${skill.hours})` : ''}
               </span>
-              <span className='text-muted-foreground'>Enroll</span>
-            </button>
+            </div>
           ))}
         </div>
       ) : null}

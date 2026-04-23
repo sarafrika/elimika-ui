@@ -27,7 +27,7 @@ export type CredentialsTab = {
 export type CredentialsProfile = {
   name: string;
   title: string;
-  location: string;
+  profileImageUrl?: string;
   website: string;
   email: string;
   phone: string;
@@ -60,6 +60,7 @@ export type CredentialItem = {
   documentUrl?: string;
   metadata?: string;
   details?: CredentialDetail[];
+  timestamp?: number;
 };
 
 export type GrowthItem = {
@@ -77,6 +78,7 @@ export type GrowthItem = {
   actionLabel: string;
   accent: 'green' | 'amber' | 'blue';
   icon: LucideIcon;
+  timestamp?: number;
 };
 
 export type CredentialsContent = {
@@ -548,7 +550,7 @@ export function getCredentialsContent(role: CredentialsRole): CredentialsContent
       profile: {
         name: 'Daniel Adebayo',
         title: 'Instructor, Product Design',
-        location: 'Lagos, Nigeria',
+        profileImageUrl: undefined,
         website: 'daniel-portfolio.dev',
         email: 'daniel@elimika.com',
         phone: '+234 801 555 8944',
@@ -577,7 +579,7 @@ export function getCredentialsContent(role: CredentialsRole): CredentialsContent
       profile: {
         name: 'Amina Yusuf',
         title: 'Course Creator, Digital Learning',
-        location: 'Abuja, Nigeria',
+        profileImageUrl: undefined,
         website: 'aminayusuf.co',
         email: 'amina@example.com',
         phone: '+234 803 444 1200',
@@ -605,7 +607,7 @@ export function getCredentialsContent(role: CredentialsRole): CredentialsContent
     profile: {
       name: 'Sarah Otieno',
       title: 'Web Design & Data Analytics',
-      location: 'Nairobi, Kenya',
+      profileImageUrl: undefined,
       website: 'sarahotieno.com',
       email: 'sarah@example.com',
       phone: '+254 200 125456',

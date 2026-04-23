@@ -12,28 +12,20 @@ import {
   deleteCourseCreatorEducationMutation,
   deleteCourseCreatorExperienceMutation,
   deleteCourseCreatorMembershipMutation,
-  getCourseCreatorDocumentsOptions,
-  getCourseCreatorEducationOptions,
-  getCourseCreatorExperienceOptions,
-  getCourseCreatorMembershipsOptions,
-  getCourseCreatorDocumentsQueryKey,
-  getCourseCreatorEducationQueryKey,
-  getCourseCreatorExperienceQueryKey,
-  getCourseCreatorMembershipsQueryKey,
   deleteInstructorDocumentMutation,
   deleteInstructorEducationMutation,
   deleteInstructorExperienceMutation,
   deleteInstructorMembershipMutation,
+  getCourseCreatorDocumentsOptions,
+  getCourseCreatorEducationOptions,
+  getCourseCreatorExperienceOptions,
+  getCourseCreatorMembershipsOptions,
   getInstructorDocumentsOptions,
   getInstructorEducationOptions,
   getInstructorExperienceOptions,
   getInstructorMembershipsOptions,
-  getInstructorDocumentsQueryKey,
-  getInstructorEducationQueryKey,
-  getInstructorExperienceQueryKey,
-  getInstructorMembershipsQueryKey,
   getStudentCertificatesOptions,
-  listDocumentTypesOptions,
+  listDocumentTypesOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Certificate,
@@ -318,7 +310,7 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
           {content.tabs.map(tab => (
             <TabsContent key={tab.id} value={tab.id} className='mt-0 space-y-4'>
               <CredentialsPanel
-                profile={content.profile}
+                profile={profileData}
                 badges={content.summary.badges}
                 blockchain={content.summary.blockchain}
                 shares={content.summary.shares}
@@ -356,7 +348,7 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
 }
 
 type CredentialsPanelProps = {
-  profile: ReturnType<typeof buildCredentialsContent>['profile'];
+  profile?: UserProfileType;
   badges: string;
   blockchain: string;
   shares: string;
@@ -380,6 +372,7 @@ function CredentialsPanel({
   onDeleteItem,
   deleting,
 }: CredentialsPanelProps) {
+
   return (
     <>
       <section className='grid gap-4 2xl:grid-cols-[320px_minmax(0,1fr)]'>

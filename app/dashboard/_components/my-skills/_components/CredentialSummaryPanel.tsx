@@ -53,25 +53,34 @@ export function CredentialSummaryPanel({ summary, timeline }: CredentialSummaryP
 
       <article className='border-border/60 bg-card self-start rounded-lg border p-3 shadow-sm'>
         <h2 className='mb-3 text-sm font-semibold sm:text-base'>Growth Timeline</h2>
-        <div className='space-y-2'>
-          {timeline.slice(0, 3).map(item => (
-            <div
-              key={item.id}
-              className='border-border/60 bg-background grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-md border px-2 py-2'
-            >
-              <span className='bg-primary/10 text-primary grid size-7 place-items-center rounded-md'>
-                {item.icon ?? <ShieldCheck className='size-4' />}
-              </span>
-              <div className='min-w-0'>
-                <p className='text-foreground truncate text-xs font-medium'>{item.provider}</p>
-                <p className='text-muted-foreground truncate text-[10px]'>{item.description}</p>
+        {timeline.length > 0 ? (
+          <div className='space-y-2'>
+            {timeline.slice(0, 3).map(item => (
+              <div
+                key={item.id}
+                className='border-border/60 bg-background grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-md border px-2 py-2'
+              >
+                <span className='bg-primary/10 text-primary grid size-7 place-items-center rounded-md'>
+                  {item.icon ?? <ShieldCheck className='size-4' />}
+                </span>
+                <div className='min-w-0'>
+                  <p className='text-foreground truncate text-xs font-medium'>{item.provider}</p>
+                  <p className='text-muted-foreground truncate text-[10px]'>{item.description}</p>
+                </div>
+                {item.metric ? (
+                  <span className='text-muted-foreground text-[10px]'>{item.metric}</span>
+                ) : null}
               </div>
-              {item.metric ? (
-                <span className='text-muted-foreground text-[10px]'>{item.metric}</span>
-              ) : null}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className='border-border/60 bg-background rounded-md border border-dashed px-4 py-6 text-center'>
+            <p className='text-foreground text-xs font-medium'>No verified activity yet</p>
+            <p className='text-muted-foreground mt-1 text-[10px]'>
+              Your credential history will show here once records are verified.
+            </p>
+          </div>
+        )}
       </article>
     </div>
   );

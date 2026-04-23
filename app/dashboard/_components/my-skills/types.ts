@@ -25,6 +25,7 @@ export type SharedTimelineItem = {
   description: string;
   icon?: ReactNode;
   metric?: string;
+  timestamp?: number;
 };
 
 export type SharedOpportunity = {
