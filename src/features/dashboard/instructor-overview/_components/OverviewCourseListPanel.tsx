@@ -1,4 +1,5 @@
 import { BriefcaseBusiness, EllipsisVertical, Users } from 'lucide-react';
+import Link from 'next/link';
 import { OverviewSectionShell } from './OverviewSectionShell';
 import { ActionButton } from './OverviewSharedBits';
 import type { OverviewCourse, OverviewCourseSummary } from './overview-data';
@@ -94,8 +95,14 @@ function CourseRow({ course }: { course: OverviewCourse }) {
           </div>
 
           {/* Action button (separate row) */}
-          <div className='mt-4 flex justify-end'>
-            <ActionButton href='#' label={course.actionLabel} />
+          <div className='mt-4 flex flex-wrap justify-end gap-2'>
+            <ActionButton href={course.viewHref} label={course.actionLabel} />
+            <Link
+              href={course.editHref}
+              className='inline-flex h-8 items-center justify-center rounded-[6px] border border-slate-200 bg-white px-4 text-[0.82rem] font-medium text-slate-700 transition hover:bg-slate-50'
+            >
+              Edit Class
+            </Link>
           </div>
         </div>
       </div>

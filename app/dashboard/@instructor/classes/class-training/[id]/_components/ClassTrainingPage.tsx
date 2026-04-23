@@ -1100,12 +1100,20 @@ function SubmissionPanel({
   );
 }
 
-export default function ClassTrainingPage() {
+type ClassTrainingPageProps = {
+  classId?: string;
+  requestedScheduleId?: string;
+};
+
+export default function ClassTrainingPage({
+  classId: classIdProp,
+  requestedScheduleId: requestedScheduleIdProp,
+}: ClassTrainingPageProps = {}) {
   const params = useParams();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const classId = params?.id as string;
-  const requestedScheduleId = searchParams.get('schedule') ?? '';
+  const classId = classIdProp ?? (params?.id as string);
+  const requestedScheduleId = requestedScheduleIdProp ?? searchParams.get('schedule') ?? '';
   const requestedLessonId = searchParams.get('lesson') ?? '';
   const requestedContentId = searchParams.get('content') ?? '';
   const { replaceBreadcrumbs } = useBreadcrumb();

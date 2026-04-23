@@ -23,6 +23,8 @@ export type OverviewCourse = {
   students: number;
   progress: number;
   actionLabel: string;
+  viewHref: string;
+  editHref: string;
   icon: LucideIcon;
 };
 
@@ -33,6 +35,7 @@ export type OverviewLiveClass = {
   provider: string;
   students: string;
   actionLabel: string;
+  href: string;
   attendeeInitials: string[];
 };
 
@@ -42,6 +45,7 @@ export type OverviewUpcomingClass = {
   scheduleLabel: string;
   metaLabel: string;
   status?: string;
+  href: string;
 };
 
 export type OverviewEarningCard = {
