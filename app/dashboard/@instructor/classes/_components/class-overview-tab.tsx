@@ -115,6 +115,7 @@ function ClassHero({
   selectedClass,
   difficultyMap,
   instructorName,
+  roleLabel = 'Instructor view',
   sessionProgress,
   remainingSessions,
   startLessonHref,
@@ -124,6 +125,7 @@ function ClassHero({
   selectedClass: InstructorClassWithSchedule;
   difficultyMap: Record<string, string>;
   instructorName?: string | null;
+  roleLabel?: string;
   sessionProgress: number;
   remainingSessions: number;
   startLessonHref: string;
@@ -144,7 +146,7 @@ function ClassHero({
 
   return (
     <section className='border-border/70 bg-card/90 overflow-hidden rounded-lg border shadow-sm backdrop-blur'>
-      <div className='m-3 flex justify-start sm:justify-end'>
+      {roleLabel === "Instructor view" && <div className='m-3 flex justify-start sm:justify-end'>
         <Button
           type='button'
           variant='outline'
@@ -153,7 +155,9 @@ function ClassHero({
         >
           Add Classes
         </Button>
-      </div>
+      </div>}
+
+
 
       <div className='border-border/70 grid gap-5 border-b p-4 md:grid-cols-[220px_minmax(0,1fr)] md:p-5'>
         <CourseArtwork imageUrl={courseImageUrl} courseName={courseName} />
@@ -197,16 +201,17 @@ function ClassHero({
             <span className='bg-border hidden h-4 w-px sm:block' />
             <span className='inline-flex items-center gap-1.5'>
               <UserRound className='h-4 w-4' />
-              {instructorName || 'Instructor view'}
+              {instructorName || roleLabel}
             </span>
           </div>
 
-          <div className='text-muted-foreground mt-5 grid gap-3 text-[12px] sm:grid-cols-2'>
+          {roleLabel === "Instructor View" && <div className='text-muted-foreground mt-5 grid gap-3 text-[12px] sm:grid-cols-2'>
             <p>{selectedClass.max_participants ?? 0} students</p>
             <p>
               {selectedClass.training_fee ? `$${selectedClass.training_fee}` : 'Class fee not set'}
             </p>
-          </div>
+          </div>}
+
         </div>
       </div>
 
@@ -240,7 +245,9 @@ function CourseProgram({
   setExpandedModuleId,
   setSelectedLessonUuid,
   getStartLessonHref,
+  getResumeLessonHref,
   selectedClassUuid,
+  roleLabel = "Instructor view"
 }: {
   lessonModules: LessonModule[];
   expandedModuleId: string | null;
@@ -249,19 +256,21 @@ function CourseProgram({
   setExpandedModuleId: (value: string | null) => void;
   setSelectedLessonUuid: (value: string | null) => void;
   getStartLessonHref: (lessonUuid?: string | null, contentUuid?: string | null) => string;
+  getResumeLessonHref?: (lessonUuid?: string | null, contentUuid?: string | null) => string;
   selectedClassUuid: string | null;
+  roleLabel: string
 }) {
   return (
     <section className='border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur'>
       <div className='mb-3 flex items-center justify-between gap-4'>
         <h2 className='text-foreground text-xl font-semibold'>Course Program</h2>
-        <button
+        {/* <button
           type='button'
           className='text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none'
         >
           See All
           <ChevronDown className='h-4 w-4 -rotate-90' />
-        </button>
+        </button> */}
       </div>
 
       {lessonModules.length === 0 ? (
@@ -354,13 +363,20 @@ function CourseProgram({
                                 </p>
                               </div>
 
-                              <Link
+                              {roleLabel === "Instructor view" ? <Link
                                 href={selectedClassUuid ? lessonHref : '#'}
                                 onClick={event => event.stopPropagation()}
                                 className='bg-primary text-primary-foreground hover:bg-accent focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
                               >
                                 Start Lesson
-                              </Link>
+                              </Link> : <Link
+                                href={selectedClassUuid ? lessonHref : '#'}
+                                onClick={event => event.stopPropagation()}
+                                className='bg-primary text-primary-foreground hover:bg-accent focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                              >
+                                Resume Lesson
+                              </Link>}
+
                             </div>
 
                             <div className='mt-2 grid gap-3 pl-8 md:grid-cols-[72px_minmax(0,1fr)_56px] md:items-center'>
@@ -542,6 +558,7 @@ export function ClassOverviewTab({
   contentTypeMap,
   difficultyMap,
   instructorName,
+  roleLabel = 'Instructor view',
   rosterEntries = [],
   sessionProgress,
   remainingSessions,
@@ -549,6 +566,7 @@ export function ClassOverviewTab({
   setSelectedLessonUuid,
   startLessonHref,
   getStartLessonHref,
+  getResumeLessonHref,
   onAddClasses,
 }: {
   isLoadingClasses: boolean;
@@ -563,6 +581,7 @@ export function ClassOverviewTab({
   contentTypeMap: Record<string, string>;
   difficultyMap: Record<string, string>;
   instructorName?: string | null;
+  roleLabel?: string;
   rosterEntries?: RosterEntry[];
   sessionProgress: number;
   remainingSessions: number;
@@ -570,6 +589,7 @@ export function ClassOverviewTab({
   setSelectedLessonUuid: (value: string | null) => void;
   startLessonHref: string;
   getStartLessonHref: (lessonUuid?: string | null, contentUuid?: string | null) => string;
+  getResumeLessonHref: (lessonUuid?: string | null, contentUuid?: string | null) => string;
   onAddClasses: () => void;
 }) {
   if (isLoadingClasses || !selectedClass || isLoadingLessons) {
@@ -590,6 +610,7 @@ export function ClassOverviewTab({
         selectedClass={selectedClass}
         difficultyMap={difficultyMap}
         instructorName={instructorName}
+        roleLabel={roleLabel}
         sessionProgress={sessionProgress}
         remainingSessions={remainingSessions}
         startLessonHref={startLessonHref}
@@ -606,7 +627,9 @@ export function ClassOverviewTab({
           setExpandedModuleId={setExpandedModuleId}
           setSelectedLessonUuid={setSelectedLessonUuid}
           getStartLessonHref={getStartLessonHref}
+          getResumeLessonHref={getResumeLessonHref}
           selectedClassUuid={selectedClassUuid}
+          roleLabel={roleLabel}
         />
         <UpcomingClassesPanel
           selectedClass={selectedClass}

@@ -56,11 +56,9 @@ export type ClassInstanceItem = {
 
 export const classTabs: { value: ClassTab; label: string }[] = [
   { value: 'overview', label: 'Overview' },
-  { value: 'students', label: 'Students' },
-  { value: 'waiting-list', label: 'Waiting List' },
+  { value: 'tasks', label: 'Tasks' },
   { value: 'delivery-status', label: 'Delivery Status' },
   { value: 'announcements', label: 'Announcements' },
-  { value: 'tasks', label: 'Tasks' },
 ];
 
 const getStartOfWeek = (date: Date) => {

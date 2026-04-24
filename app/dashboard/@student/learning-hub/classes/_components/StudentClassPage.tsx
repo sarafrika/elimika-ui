@@ -15,33 +15,50 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
-import { NotebookPen, PanelBottom, Search } from 'lucide-react';
+import { type InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
+import {
+  getClassDefinitionOptions,
+  getClassScheduleOptions,
+  getCourseByUuidOptions
+} from '@/services/client/@tanstack/react-query.gen';
+import type { ClassDefinition, Course, StudentSchedule } from '@/services/client/types.gen';
+import { useQueries } from '@tanstack/react-query';
+import { PanelBottom, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useUserProfile } from '../../../../context/profile-context';
-import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
-import { ClassOverviewTab } from './_components/class-overview-tab';
-import { ClassSidebar } from './_components/class-sidebar';
-import { ClassStudentsTab } from './_components/class-students-tab';
-import { ClassWaitingListTab } from './_components/class-waiting-list-tab';
+import { useEffect, useMemo, useState } from 'react';
+import { useUserProfile } from '../../../../../../context/profile-context';
+import { ClassDeliveryStatusTab } from '../../../../@instructor/classes/_components/class-delivery-status-tab';
+import { ClassOverviewTab } from '../../../../@instructor/classes/_components/class-overview-tab';
+import { ClassSidebar } from '../../../../@instructor/classes/_components/class-sidebar';
 import {
   classTabs,
-  dateFilterDescriptions,
   useFilteredClassInstances,
   type ClassInstanceItem,
   type ClassTab,
   type DateFilter,
   type LessonModule,
-} from './_components/new-class-page.utils';
-import { PlaceholderTab } from './_components/placeholder-tab';
+} from '../../../../@instructor/classes/_components/new-class-page.utils';
+import { PlaceholderTab } from '../../../../@instructor/classes/_components/placeholder-tab';
 
-export default function NewClassPage() {
-  const profile = useUserProfile()
-  const instructor = profile?.instructor;
+type StudentClassDefinition = ClassDefinition & {
+  course?: Course | null;
+  schedule: StudentSchedule[];
+};
+
+type StudentClassPageProps = {
+  studentEnrolledClasses: StudentSchedule[];
+  loading?: boolean;
+};
+
+export default function StudentClassPage({
+  studentEnrolledClasses,
+  loading = false,
+}: StudentClassPageProps) {
+  const router = useRouter();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { difficultyMap } = useDifficultyLevels();
-  const router = useRouter();
+  const profile = useUserProfile()
+  const student = profile?.student
 
   const [selectedInstanceUuid, setSelectedInstanceUuid] = useState<string | null>(null);
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
@@ -58,17 +75,114 @@ export default function NewClassPage() {
       {
         id: 'classes',
         title: 'Classes',
-        url: '/dashboard/classes',
+        url: '/dashboard/learning-hub/classes',
         isLast: true,
       },
     ]);
   }, [replaceBreadcrumbs]);
 
-  const {
-    classes,
-    isLoading: isLoadingClasses,
-    isError: hasClassesError,
-  } = useInstructorClassesWithSchedules(instructor?.uuid);
+  const classDefinitionUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          studentEnrolledClasses
+            .map(enrollment => enrollment.class_definition_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
+        )
+      ),
+    [studentEnrolledClasses]
+  );
+
+  const classDefinitionQueries = useQueries({
+    queries: classDefinitionUuids.map(uuid => ({
+      ...getClassDefinitionOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+    })),
+  });
+
+  // for each of the classes, get the schedule and return in the class definitions
+  const classScheduleQueries = useQueries({
+    queries: classDefinitionUuids.map(uuid => ({
+      ...getClassScheduleOptions({
+        path: { uuid },
+        query: { pageable: {} },
+      }),
+      enabled: Boolean(uuid),
+    })),
+  });
+
+  const classSchedulesMap = useMemo(() => {
+    const map = new Map<string, StudentSchedule[]>();
+
+    classScheduleQueries.forEach((query, index) => {
+      const uuid = classDefinitionUuids[index];
+      const schedules = query.data?.data?.content ?? [];
+
+      if (uuid) {
+        map.set(uuid, schedules);
+      }
+    });
+
+    return map;
+  }, [classScheduleQueries, classDefinitionUuids]);
+
+  const classDefinitions = useMemo<StudentClassDefinition[]>(() => {
+    return classDefinitionQueries
+      .map((query, index) => {
+        const classDefinition = query.data?.data?.class_definition;
+        const uuid = classDefinitionUuids[index];
+
+        if (!classDefinition || !uuid) return null;
+
+        return {
+          ...classDefinition,
+          schedule: classSchedulesMap.get(uuid) ?? [],
+        };
+      })
+      .filter((value): value is StudentClassDefinition => Boolean(value));
+  }, [classDefinitionQueries, classDefinitionUuids, classSchedulesMap]);
+
+  const courseUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          classDefinitions
+            .map(classItem => classItem.course_uuid)
+            .filter((uuid): uuid is string => Boolean(uuid))
+        )
+      ),
+    [classDefinitions]
+  );
+
+  const courseQueries = useQueries({
+    queries: courseUuids.map(uuid => ({
+      ...getCourseByUuidOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+    })),
+  });
+
+  const courseMap = useMemo(() => {
+    const map = new Map<string, Course>();
+
+    courseQueries.forEach((query, index) => {
+      const course = query.data?.data;
+      const uuid = courseUuids[index];
+
+      if (course && uuid) {
+        map.set(uuid, course);
+      }
+    });
+
+    return map;
+  }, [courseQueries, courseUuids]);
+
+  const classes = useMemo<InstructorClassWithSchedule[]>(() => {
+    return classDefinitions.map(classItem => ({
+      ...classItem,
+      course: classItem.course_uuid ? courseMap.get(classItem.course_uuid) ?? null : null,
+      schedule: classItem.schedule,
+    })) as InstructorClassWithSchedule[];
+  }, [classDefinitions, courseMap]);
 
   const filteredClasses = useFilteredClassInstances({
     classes,
@@ -187,8 +301,7 @@ export default function NewClassPage() {
     }
 
     const queryString = params.toString();
-    return `/dashboard/classes/class-training/${selectedClassUuid}${queryString ? `?${queryString}` : ''
-      }`;
+    return `/dashboard/schedule/classes/${selectedClassUuid}${queryString ? `?${queryString}` : ''}`;
   }, [
     selectedClassUuid,
     selectedInstanceEntry?.instanceUuid,
@@ -196,61 +309,57 @@ export default function NewClassPage() {
     selectedModule?.lesson?.uuid,
   ]);
 
-  const getStartLessonHref = useCallback(
-    (lessonUuid?: string | null, contentUuid?: string | null) => {
-      if (!selectedClassUuid) return '#';
+  const getStartLessonHref = (lessonUuid?: string | null, contentUuid?: string | null) => {
+    if (!selectedClassUuid) return '#';
 
-      const params = new URLSearchParams();
-      if (selectedInstanceEntry?.instanceUuid) {
-        params.set('schedule', selectedInstanceEntry.instanceUuid);
-      }
-      if (lessonUuid) {
-        params.set('lesson', lessonUuid);
-      }
-      if (contentUuid) {
-        params.set('content', contentUuid);
-      }
+    const params = new URLSearchParams();
+    if (selectedInstanceEntry?.instanceUuid) {
+      params.set('schedule', selectedInstanceEntry.instanceUuid);
+    }
+    if (lessonUuid) {
+      params.set('lesson', lessonUuid);
+    }
+    if (contentUuid) {
+      params.set('content', contentUuid);
+    }
 
-      const queryString = params.toString();
-      return `/dashboard/classes/class-training/${selectedClassUuid}${queryString ? `?${queryString}` : ''
-        }`;
-    },
-    [selectedClassUuid, selectedInstanceEntry?.instanceUuid]
-  );
+    const queryString = params.toString();
+    return `/dashboard/schedule/classes/${selectedClassUuid}${queryString ? `?${queryString}` : ''}`;
+  };
+
+  const getResumeLessonHref = (lessonUuid?: string | null, contentUuid?: string | null) => {
+    if (!selectedClassUuid) return '#';
+
+    const params = new URLSearchParams();
+    if (selectedInstanceEntry?.instanceUuid) {
+      params.set('schedule', selectedInstanceEntry.instanceUuid);
+    }
+    if (lessonUuid) {
+      params.set('lesson', lessonUuid);
+    }
+    if (contentUuid) {
+      params.set('content', contentUuid);
+    }
+
+    const queryString = params.toString();
+    return `/dashboard/schedule/classes/${selectedClassUuid}${queryString ? `?${queryString}` : ''}`;
+  };
 
   return (
-    <div className='min-h-full rounded-lg px-3 py-8 shadow-sm sm:px-5'>
-      <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-        <p className='text-foreground text-md leading-tight sm:text-lg'>
-          {dateFilterDescriptions[dateFilter]} <span className='font-semibold'>Start training</span>
-        </p>
-        <Button
-          type='button'
-          onClick={() => router.push('/dashboard/classes/create-new')}
-          className='bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success h-11 rounded-full px-10 text-base font-semibold sm:min-w-[236px]'
-        >
-          Create Class
-        </Button>
+    <div className='space-y-3 mb-20'>
+      <div className='border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur'>
+        <div className='flex items-center justify-between gap-3'>
+          <div>
+            <p className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Learning Hub</p>
+            <h1 className='text-foreground mt-1 text-2xl font-semibold'>Your Classes</h1>
+          </div>
+        </div>
       </div>
 
-      {hasClassesError ? (
-        <Card className='border-destructive/40'>
-          <CardContent className='flex min-h-48 flex-col items-center justify-center gap-3 p-8 text-center'>
-            <NotebookPen className='text-destructive h-8 w-8' />
-            <div className='space-y-1'>
-              <p className='text-foreground font-semibold'>Unable to load class workspace</p>
-              <p className='text-muted-foreground text-sm'>
-                We hit a problem while loading classes, instances, or student enrollments.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <div className='grid gap-3 xl:grid-cols-[290px_minmax(0,1fr)]'>
-        <aside>
+      <div className='grid gap-3 xl:grid-cols-[350px_minmax(0,1fr)]'>
+        <aside className='xl:sticky xl:top-4 xl:self-start'>
           <ClassSidebar
-            isLoading={isLoadingClasses}
+            isLoading={loading || classDefinitionQueries.some(query => query.isLoading)}
             classes={filteredClasses}
             selectedInstanceUuid={selectedInstanceUuid}
             searchTerm={searchTerm}
@@ -265,7 +374,7 @@ export default function NewClassPage() {
           />
         </aside>
 
-        {!selectedInstanceEntry && !isLoadingClasses ? (
+        {!selectedInstanceEntry && !loading && classDefinitionQueries.every(query => !query.isLoading) ? (
           <Card className='border-border/70 bg-card/90 shadow-sm'>
             <CardContent className='flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center'>
               <div className='bg-primary/10 text-primary rounded-full p-4'>
@@ -353,7 +462,7 @@ export default function NewClassPage() {
 
             <TabsContent value='overview' className='mt-0'>
               <ClassOverviewTab
-                isLoadingClasses={isLoadingClasses}
+                isLoadingClasses={loading || classDefinitionQueries.some(query => query.isLoading)}
                 isLoadingLessons={isLoadingLessons}
                 selectedClass={selectedClass}
                 selectedClassUuid={selectedClassUuid}
@@ -364,7 +473,6 @@ export default function NewClassPage() {
                 selectedModuleResources={selectedModuleResources}
                 contentTypeMap={contentTypeMap}
                 difficultyMap={difficultyMap}
-                instructorName={instructor?.full_name}
                 rosterEntries={roster}
                 sessionProgress={sessionProgress}
                 remainingSessions={remainingSessions}
@@ -372,37 +480,25 @@ export default function NewClassPage() {
                 setSelectedLessonUuid={setSelectedLessonUuid}
                 startLessonHref={startLessonHref}
                 getStartLessonHref={getStartLessonHref}
-                getResumeLessonHref={getStartLessonHref}
-                onAddClasses={() => router.push('/dashboard/classes/create-new')}
-              />
-            </TabsContent>
-
-            <TabsContent value='students' className='mt-0'>
-              <ClassStudentsTab isLoadingStudents={isLoadingStudents} rosterEntries={roster} />
-            </TabsContent>
-
-            <TabsContent value='waiting-list' className='mt-0'>
-              <ClassWaitingListTab
-                isLoadingClasses={isLoadingClasses}
-                selectedClass={selectedClass}
-                selectedClassEntry={selectedInstanceEntry}
-                visibleInstances={visibleInstances}
+                getResumeLessonHref={getResumeLessonHref}
+                onAddClasses={() => router.push('/dashboard/workspace/student/courses')}
+                roleLabel='Student view'
               />
             </TabsContent>
 
             <TabsContent value='delivery-status' className='mt-0'>
               <ClassDeliveryStatusTab
-                isLoadingClasses={isLoadingClasses}
+                isLoadingClasses={loading}
                 selectedClass={selectedClass}
                 selectedClassEntry={selectedInstanceEntry}
                 dateFilter={dateFilter}
                 difficultyMap={difficultyMap}
-                instructorName={instructor?.full_name}
                 studentCount={roster.length}
                 totalInstances={totalInstances}
                 completionRate={completionRate}
                 visibleInstances={visibleInstances}
-                onAddClasses={() => router.push('/dashboard/classes/create-new')}
+                onAddClasses={() => router.push('/dashboard/workspace/student/courses')}
+                roleLabel='Student view'
               />
             </TabsContent>
 
