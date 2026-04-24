@@ -193,7 +193,7 @@ const getClassStatusLabel = (
 
 export function useStudentLearningHubData(): LearningHubData {
   const profile = useUserProfile();
-  const student = profile?.student
+  const student = profile?.student;
 
   const { classDefinitions, loading: classDefinitionsLoading } = useStudentClassDefinitions(
     student ?? undefined
@@ -349,7 +349,7 @@ export function useStudentLearningHubData(): LearningHubData {
           scheduleCount === 1 ? '1 scheduled session' : `${scheduleCount} scheduled sessions`,
         progress,
         ctaLabel: progress >= 80 ? 'View class' : 'Resume class',
-        href: `/dashboard/schedule/classes/${item.uuid}`,
+        href: `/dashboard/learning-hub/classes/${classDetails?.uuid}`,
         bannerUrl: course?.banner_url,
         accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
       };

@@ -26,6 +26,7 @@ export function ClassDeliveryStatusTab({
   dateFilter,
   difficultyMap,
   instructorName,
+  roleLabel = 'Instructor view',
   studentCount,
   totalInstances,
   completionRate,
@@ -38,6 +39,7 @@ export function ClassDeliveryStatusTab({
   dateFilter: DateFilter;
   difficultyMap: Record<string, string>;
   instructorName?: string | null;
+  roleLabel?: string;
   studentCount: number;
   totalInstances: number;
   completionRate: number;
@@ -112,7 +114,7 @@ export function ClassDeliveryStatusTab({
                   </span>
                   <span className='inline-flex items-center gap-1.5'>
                     <UserRound className='h-4 w-4' />
-                    {instructorName || 'Instructor view'}
+                    {instructorName || roleLabel}
                   </span>
                 </div>
               </div>

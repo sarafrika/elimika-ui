@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 import type { LearningHubLiveClass } from './useStudentLearningHubData';
 
 type LearningHubLiveClassesProps = {
