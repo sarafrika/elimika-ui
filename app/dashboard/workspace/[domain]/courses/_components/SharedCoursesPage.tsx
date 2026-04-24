@@ -36,6 +36,7 @@ import { ArrowRight, Filter, SquareDashedMousePointer } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useUserProfile } from '../../../../../../context/profile-context';
 import { CoursesCatalogCard } from './CoursesCatalogCard';
 import { CoursesCategoryFilters } from './CoursesCategoryFilters';
 import { CoursesCategoryTile } from './CoursesCategoryTile';
@@ -105,12 +106,13 @@ const createCatalogCards = (
   items: UnifiedContentItem[],
   domain: UserDomain,
   creatorMap: Map<string, string>,
+  canApplyToTrain: boolean,
   instructorCourseApplicationMap: Map<string, { status?: string | null }>,
   instructorProgramApplicationMap: Map<string, { status?: string | null }>
 ): CoursesCatalogCardData[] =>
   items.map((item, index) => {
     const presentation = getCardPresentation(index);
-    const isInstructorApplyCard = domain === 'instructor';
+    const isInstructorApplyCard = canApplyToTrain;
     const application =
       item.kind === 'program'
         ? instructorProgramApplicationMap.get(item.id)
@@ -195,7 +197,18 @@ const createRecommendationCards = (
 
 export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const qc = useQueryClient();
+  const user = useUserProfile()
   const instructor = useInstructor();
+  // const organisation = useOrganisation();
+  const organisation = user?.organisation_affiliations?.[0]
+
+  const isInstructorDomain = domain === 'instructor';
+  const isOrganisationDomain = domain === 'organisation' || domain === 'organisation_user';
+  const canApplyToTrain = isInstructorDomain || isOrganisationDomain;
+  const applicantUuid = isInstructorDomain ? instructor?.uuid : organisation?.organisation_uuid;
+  const applicantType = isInstructorDomain
+    ? ApplicantTypeEnum.INSTRUCTOR
+    : ApplicantTypeEnum.ORGANISATION;
 
   const [activeTab, setActiveTab] = useState<CoursesCatalogTab>('all-courses');
   const [filters, setFilters] = useState<FilterValues>(defaultFilterValues);
@@ -272,7 +285,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     ...searchTrainingApplicationsOptions({
       query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
     }),
-    enabled: domain === 'instructor' && Boolean(instructor?.uuid),
+    enabled: isInstructorDomain && Boolean(instructor?.uuid),
     refetchOnWindowFocus: false,
   });
 
@@ -280,7 +293,23 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     ...searchProgramTrainingApplicationsOptions({
       query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
     }),
-    enabled: domain === 'instructor' && Boolean(instructor?.uuid),
+    enabled: isInstructorDomain && Boolean(instructor?.uuid),
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: organisationCourseApplications } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: organisation?.organisation_uuid as string } },
+    }),
+    enabled: isOrganisationDomain && Boolean(organisation?.organisation_uuid),
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: organisationProgramApplications } = useQuery({
+    ...searchProgramTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: organisation?.organisation_uuid as string } },
+    }),
+    enabled: isOrganisationDomain && Boolean(organisation?.organisation_uuid),
     refetchOnWindowFocus: false,
   });
 
@@ -559,6 +588,33 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     return map;
   }, [instructorProgramApplications]);
 
+  const organisationCourseApplicationMap = useMemo(() => {
+    const map = new Map<string, { status?: string | null }>();
+    organisationCourseApplications?.data?.content?.forEach(application => {
+      if (application.course_uuid) {
+        map.set(application.course_uuid, { status: application.status });
+      }
+    });
+    return map;
+  }, [organisationCourseApplications]);
+
+  const organisationProgramApplicationMap = useMemo(() => {
+    const map = new Map<string, { status?: string | null }>();
+    organisationProgramApplications?.data?.content?.forEach(application => {
+      if (application.program_uuid) {
+        map.set(application.program_uuid, { status: application.status });
+      }
+    });
+    return map;
+  }, [organisationProgramApplications]);
+
+  const activeCourseApplicationMap = isOrganisationDomain
+    ? organisationCourseApplicationMap
+    : instructorCourseApplicationMap;
+  const activeProgramApplicationMap = isOrganisationDomain
+    ? organisationProgramApplicationMap
+    : instructorProgramApplicationMap;
+
   const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
   const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation());
 
@@ -609,16 +665,18 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         ),
         domain,
         creatorMap,
-        instructorCourseApplicationMap,
-        instructorProgramApplicationMap
+        canApplyToTrain,
+        activeCourseApplicationMap,
+        activeProgramApplicationMap
       ),
     [
       bundledCoursesCountMap,
+      activeCourseApplicationMap,
+      activeProgramApplicationMap,
+      canApplyToTrain,
       creatorMap,
       domain,
       filteredItems,
-      instructorCourseApplicationMap,
-      instructorProgramApplicationMap,
       visibleCoursesCount,
     ]
   );
@@ -674,7 +732,16 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   };
 
   const handleCatalogCardAction = (card: CoursesCatalogCardData) => {
+    if (!canApplyToTrain) {
+      return;
+    }
+
     if (card.ctaKind !== 'apply-course' && card.ctaKind !== 'apply-program') {
+      return;
+    }
+
+    if (!applicantUuid) {
+      toast.error('Please wait for your organisation profile to load.');
       return;
     }
 
@@ -690,11 +757,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     group_inperson_rate: number;
     rate_currency: string;
   }) => {
-    if (!selectedApplicationCard || !instructor?.uuid) return;
+    if (!selectedApplicationCard || !applicantUuid) return;
 
     const body = {
-      applicant_type: ApplicantTypeEnum.INSTRUCTOR,
-      applicant_uuid: instructor.uuid,
+      applicant_type: applicantType,
+      applicant_uuid: applicantUuid,
       rate_card: {
         currency: data.rate_currency,
         private_online_rate: data.private_online_rate,
@@ -715,7 +782,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           onSuccess: response => {
             qc.invalidateQueries({
               queryKey: searchProgramTrainingApplicationsQueryKey({
-                query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor.uuid } },
+                query: { pageable: {}, searchParams: { applicant_uuid_eq: applicantUuid } },
               }),
             });
             toast.success(response?.message);
@@ -739,7 +806,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         onSuccess: response => {
           qc.invalidateQueries({
             queryKey: searchTrainingApplicationsQueryKey({
-              query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor.uuid } },
+              query: { pageable: {}, searchParams: { applicant_uuid_eq: applicantUuid } },
             }),
           });
           toast.success(response?.message);
@@ -892,6 +959,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                         />
                       ))}
                     </div>
+
                     {hasMoreCatalogItems ? (
                       <div className='mt-5 flex justify-center'>
                         <Button

@@ -27,6 +27,7 @@ import {
   InstructorEducation,
   InstructorReview,
   InstructorSkill,
+  Organisation,
   ProgramTrainingApplication,
 } from '@/services/client';
 import {
@@ -92,6 +93,14 @@ import {
 import { Textarea } from '../../../../../components/ui/textarea';
 
 type TrainingApplication = CourseTrainingApplication | ProgramTrainingApplication;
+type ApplicantType = 'instructor' | 'organisation';
+type ApplicantRecord = {
+  uuid: string;
+  type: ApplicantType;
+  data: InstructorProfile | Organisation | undefined;
+  isLoading: boolean;
+  isError: boolean;
+};
 type InstructorListItem = {
   uuid: string;
   data: InstructorProfile;
@@ -162,7 +171,7 @@ const InstructorsApplicationPage = () => {
     'all'
   );
 
-  const [selectedInstructorUuid, setSelectedInstructorUuid] = useState<string | null>(null);
+  const [selectedApplicantUuid, setSelectedApplicantUuid] = useState<string | null>(null);
 
   const applicationsQuery = useQuery({
     ...searchTrainingApplicationsOptions({
@@ -201,11 +210,31 @@ const InstructorsApplicationPage = () => {
     );
   }, [allApplications, allProgramApplications]);
 
-  // Fetch all instructor details in parallel
+  const organisationUuids = useMemo(() => {
+    const combined = [...(allApplications ?? []), ...(allProgramApplications ?? [])];
+
+    return Array.from(
+      new Set(
+        combined
+          .filter(app => app.applicant_type === 'organisation')
+          .map(app => app.applicant_uuid)
+          .filter(Boolean)
+      )
+    );
+  }, [allApplications, allProgramApplications]);
+
+  // Fetch all applicant details in parallel
   const instructorQueries = useQueries({
     queries: instructorUuids.map(uuid => ({
       queryKey: getInstructorByUuidQueryKey({ path: { uuid: uuid as string } }),
       queryFn: () => getInstructorByUuid({ path: { uuid: uuid as string } }),
+      enabled: !!uuid,
+    })),
+  });
+
+  const organisationQueries = useQueries({
+    queries: organisationUuids.map(uuid => ({
+      ...getOrganisationByUuidOptions({ path: { uuid: uuid as string } }),
       enabled: !!uuid,
     })),
   });
@@ -222,25 +251,65 @@ const InstructorsApplicationPage = () => {
       .filter((instructor): instructor is InstructorListItem => Boolean(instructor.data));
   }, [instructorQueries, instructorUuids]);
 
-  const isLoadingInstructors = instructorQueries.some(query => query.isLoading);
+  const organisations = useMemo(() => {
+    return organisationQueries
+      .map((query, index) => ({
+        uuid: organisationUuids[index] as string,
+        data: query.data?.data as Organisation | undefined,
+        isLoading: query.isLoading,
+        isError: query.isError,
+        type: 'organisation' as const,
+      }))
+      .filter((organisation): organisation is ApplicantRecord => Boolean(organisation.data));
+  }, [organisationQueries, organisationUuids]);
 
-  // Auto-select first instructor if none selected
-  useMemo(() => {
-    const firstInstructor = instructors[0];
+  const applicants = useMemo(() => {
+    const instructorApplicants: ApplicantRecord[] = instructors.map(instructorItem => ({
+      uuid: instructorItem.uuid,
+      type: 'instructor',
+      data: instructorItem.data,
+      isLoading: instructorItem.isLoading,
+      isError: instructorItem.isError,
+    }));
 
-    if (firstInstructor && !selectedInstructorUuid) {
-      setSelectedInstructorUuid(firstInstructor.uuid);
+    return [...instructorApplicants, ...organisations].sort((a, b) => {
+      const dateA = new Date(a.data?.created_date || '').getTime();
+      const dateB = new Date(b.data?.created_date || '').getTime();
+
+      if (Number.isNaN(dateA) || Number.isNaN(dateB)) {
+        return sortOrder === 'asc'
+          ? (a.data?.full_name || a.data?.name || '').localeCompare(
+              b.data?.full_name || b.data?.name || ''
+            )
+          : (b.data?.full_name || b.data?.name || '').localeCompare(
+              a.data?.full_name || a.data?.name || ''
+            );
+      }
+
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+  }, [instructors, organisations, sortOrder]);
+
+  const isLoadingApplicants = instructorQueries.some(query => query.isLoading) ||
+    organisationQueries.some(query => query.isLoading);
+
+  // Auto-select first applicant if none selected
+  useEffect(() => {
+    const firstApplicant = applicants[0];
+
+    if (firstApplicant && !selectedApplicantUuid) {
+      setSelectedApplicantUuid(firstApplicant.uuid);
     }
-  }, [instructors, selectedInstructorUuid]);
+  }, [applicants, selectedApplicantUuid]);
 
-  const filteredInstructors = useMemo(() => {
-    let filtered = instructors;
+  const filteredApplicants = useMemo(() => {
+    let filtered = applicants;
 
     // Approved / Pending filter
     if (verificationFilter !== 'all') {
-      filtered = filtered.filter(instructorItem => {
-        const instructorData = instructorItem.data;
-        const isVerified = instructorData?.admin_verified ?? false;
+      filtered = filtered.filter(applicantItem => {
+        const applicantData = applicantItem.data;
+        const isVerified = applicantData?.admin_verified ?? false;
         return verificationFilter === 'approved' ? isVerified : !isVerified;
       });
     }
@@ -248,83 +317,109 @@ const InstructorsApplicationPage = () => {
     // Search filter
     if (instructorSearchQuery) {
       const searchLower = instructorSearchQuery.toLowerCase();
-      filtered = filtered.filter(instructorItem => {
-        const instructorData = instructorItem.data;
-        const fullName = instructorData?.full_name || '';
-        const email = instructorData?.email || '';
-        const bio = instructorData?.bio || '';
-        const professionalHeadline = instructorData?.professional_headline || '';
+      filtered = filtered.filter(applicantItem => {
+        const applicantData = applicantItem.data;
+        const fullName =
+          applicantItem.type === 'instructor'
+            ? applicantData?.full_name || ''
+            : applicantData?.name || '';
+        const email = applicantItem.type === 'instructor' ? applicantData?.email || '' : '';
+        const bio =
+          applicantItem.type === 'instructor'
+            ? applicantData?.bio || ''
+            : applicantData?.description || '';
+        const professionalHeadline =
+          applicantItem.type === 'instructor' ? applicantData?.professional_headline || '' : '';
+        const location =
+          applicantItem.type === 'organisation' ? applicantData?.location || '' : '';
 
         return (
           fullName.toLowerCase().includes(searchLower) ||
           email.toLowerCase().includes(searchLower) ||
           bio.toLowerCase().includes(searchLower) ||
-          professionalHeadline.toLowerCase().includes(searchLower)
+          professionalHeadline.toLowerCase().includes(searchLower) ||
+          location.toLowerCase().includes(searchLower)
         );
       });
     }
 
-    return [...filtered].sort((a, b) => {
-      const dateA = new Date(a.data.created_date || '').getTime();
-      const dateB = new Date(b.data.created_date || '').getTime();
-
-      if (Number.isNaN(dateA) || Number.isNaN(dateB)) {
-        return sortOrder === 'asc'
-          ? (a.data.full_name || '').localeCompare(b.data.full_name || '')
-          : (b.data.full_name || '').localeCompare(a.data.full_name || '');
-      }
-
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-    });
-  }, [
-    instructors,
-    instructorSearchQuery,
-    verificationFilter,
-    sortOrder,
-  ]);
-
-  // Auto-select first instructor
-  useEffect(() => {
-    const firstInstructor = filteredInstructors[0];
-
-    if (firstInstructor && !selectedInstructorUuid) {
-      setSelectedInstructorUuid(firstInstructor.uuid);
-    }
-  }, [filteredInstructors, selectedInstructorUuid]);
+    return filtered;
+  }, [applicants, instructorSearchQuery, verificationFilter]);
 
   // Get selected instructor data
   const selectedInstructor = useMemo(() => {
-    return instructors.find(i => i.uuid === selectedInstructorUuid);
-  }, [instructors, selectedInstructorUuid]);
-  const instructor = selectedInstructor?.data?.data;
+    return applicants.find(i => i.uuid === selectedApplicantUuid) ?? null;
+  }, [applicants, selectedApplicantUuid]);
+  const selectedApplicantType = selectedInstructor?.type ?? null;
+  const organisation =
+    selectedApplicantType === 'organisation' ? (selectedInstructor?.data as Organisation) : undefined;
+  const instructor =
+    selectedApplicantType === 'instructor'
+      ? (selectedInstructor?.data as InstructorProfile)
+      : selectedApplicantType === 'organisation'
+        ? ({
+            uuid: organisation?.uuid,
+            full_name: organisation?.name,
+            professional_headline: organisation?.description,
+            formatted_location: organisation?.location || organisation?.country,
+            location: organisation?.location || organisation?.country,
+            profile_picture_url: undefined,
+            admin_verified: organisation?.admin_verified,
+            status: organisation?.admin_verified ? 'Verified' : 'Pending',
+            email: undefined,
+            phone: undefined,
+            organization: organisation?.country || organisation?.location,
+            bio: organisation?.description,
+            is_profile_complete: false,
+          } as InstructorProfile)
+        : undefined;
+  const selectedApplicantName =
+    selectedApplicantType === 'organisation' ? organisation?.name : instructor?.full_name;
+  const selectedApplicantHeadline =
+    selectedApplicantType === 'organisation'
+      ? organisation?.description || 'Organisation applicant'
+      : instructor?.professional_headline || 'Professional';
+  const selectedApplicantLocation =
+    selectedApplicantType === 'organisation'
+      ? organisation?.location || organisation?.country || 'Location not specified'
+      : instructor?.formatted_location || instructor?.location || 'Location not specified';
+  const selectedApplicantInitials = (selectedApplicantName || 'IN')
+    .split(' ')
+    .map(namePart => namePart[0])
+    .join('')
+    .toUpperCase();
+  const selectedApplicantId =
+    (selectedApplicantType === 'organisation'
+      ? organisation?.uuid?.slice(0, 8)
+      : instructor?.uuid?.slice(0, 8)) || 'N/A';
 
   const { data: skillsData } = useQuery({
     ...getInstructorSkillsOptions({
-      path: { instructorUuid: selectedInstructorUuid as string },
+      path: { instructorUuid: selectedApplicantUuid as string },
       query: { pageable: {} },
     }),
-    enabled: !!selectedInstructorUuid,
+    enabled: selectedApplicantType === 'instructor' && !!selectedApplicantUuid,
   });
 
   const { data: educationData } = useQuery({
     ...getInstructorEducationOptions({
-      path: { instructorUuid: selectedInstructorUuid as string },
+      path: { instructorUuid: selectedApplicantUuid as string },
     }),
-    enabled: !!selectedInstructorUuid,
+    enabled: selectedApplicantType === 'instructor' && !!selectedApplicantUuid,
   });
 
   const { data: documentsData } = useQuery({
     ...getInstructorDocumentsOptions({
-      path: { instructorUuid: selectedInstructorUuid as string },
+      path: { instructorUuid: selectedApplicantUuid as string },
     }),
-    enabled: !!selectedInstructorUuid,
+    enabled: selectedApplicantType === 'instructor' && !!selectedApplicantUuid,
   });
 
   const { data: reviewsData } = useQuery({
     ...getInstructorReviewsOptions({
-      path: { instructorUuid: selectedInstructorUuid as string },
+      path: { instructorUuid: selectedApplicantUuid as string },
     }),
-    enabled: !!selectedInstructorUuid,
+    enabled: selectedApplicantType === 'instructor' && !!selectedApplicantUuid,
   });
 
   const { data: instructorUserData } = useQuery({
@@ -348,16 +443,23 @@ const InstructorsApplicationPage = () => {
       }
     });
 
+    organisationQueries.forEach(q => {
+      const org = q.data?.data;
+      if (org?.uuid) {
+        map.set(org.uuid, org.name ?? '');
+      }
+    });
+
     return map;
-  }, [instructorQueries]);
+  }, [instructorQueries, organisationQueries]);
 
   // COURSE APPLICATIONS
   // Apply filters
   const filteredApplications = useMemo(() => {
     let items = allApplications;
 
-    if (selectedInstructorUuid) {
-      items = items.filter(app => app.applicant_uuid === selectedInstructorUuid);
+    if (selectedApplicantUuid) {
+      items = items.filter(app => app.applicant_uuid === selectedApplicantUuid);
     }
     if (statusFilter) {
       items = items.filter(app => app.status?.toLowerCase() === statusFilter.toLowerCase());
@@ -382,7 +484,14 @@ const InstructorsApplicationPage = () => {
     }
 
     return items;
-  }, [allApplications, selectedInstructorUuid, statusFilter, applicantTypeFilter, searchValue]);
+  }, [
+    allApplications,
+    selectedApplicantUuid,
+    statusFilter,
+    applicantTypeFilter,
+    searchValue,
+    applicantNameMap,
+  ]);
 
   const totalPages = Math.max(Math.ceil(filteredApplications.length / pageSize), 1);
 
@@ -404,8 +513,8 @@ const InstructorsApplicationPage = () => {
   // Apply filters
   const filteredProgramApplications = useMemo(() => {
     let items = allProgramApplications;
-    if (selectedInstructorUuid) {
-      items = items.filter(app => app.applicant_uuid === selectedInstructorUuid);
+    if (selectedApplicantUuid) {
+      items = items.filter(app => app.applicant_uuid === selectedApplicantUuid);
     }
     if (statusFilter) {
       items = items.filter(app => app.status?.toLowerCase() === statusFilter.toLowerCase());
@@ -432,10 +541,11 @@ const InstructorsApplicationPage = () => {
     return items;
   }, [
     allProgramApplications,
-    selectedInstructorUuid,
+    selectedApplicantUuid,
     statusFilter,
     applicantTypeFilter,
     searchValue,
+    applicantNameMap,
   ]);
 
   const programTotalPages = Math.max(Math.ceil(filteredProgramApplications.length / pageSize), 1);
@@ -464,13 +574,14 @@ const InstructorsApplicationPage = () => {
     { value: 'program-application', label: `Programs (${programStats.pending})` },
   ];
   const activeTabLabel = tabOptions.find(option => option.value === tabs)?.label ?? 'Profile';
-  const selectedInstructorInitials =
-    instructor?.full_name
-      ?.split(' ')
-      .map((namePart: string) => namePart[0])
-      .join('')
-      .toUpperCase() || 'IN';
-  const selectedInstructorStatus = instructor?.admin_verified ? 'Verified' : 'Pending';
+  const selectedApplicantStatusBadge =
+    selectedApplicantType === 'organisation'
+      ? organisation?.admin_verified
+        ? 'Verified'
+        : 'Pending'
+      : instructor?.admin_verified
+        ? 'Verified'
+        : 'Pending';
   const courseClosedCount = stats.revoked + stats.rejected;
   const programClosedCount = programStats.revoked + programStats.rejected;
 
@@ -612,7 +723,7 @@ const InstructorsApplicationPage = () => {
                   <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                   <Input
                     type='text'
-                    placeholder='Search Instructors'
+                    placeholder='Search applicants'
                     value={instructorSearchQuery}
                     onChange={e => setInstructorSearchQuery(e.target.value)}
                     className='pl-10'
@@ -624,7 +735,7 @@ const InstructorsApplicationPage = () => {
                 <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                 <Input
                   type='text'
-                  placeholder='Search Instructors'
+                  placeholder='Search applicants'
                   value={instructorSearchQuery}
                   onChange={e => setInstructorSearchQuery(e.target.value)}
                   className='pl-10'
@@ -661,7 +772,7 @@ const InstructorsApplicationPage = () => {
             </div>
 
             <div className='flex-1 space-y-3 overflow-y-auto p-3'>
-              {isLoadingInstructors ? (
+              {isLoadingApplicants ? (
                 [...Array(3)].map((_, i) => (
                   <div
                     key={i}
@@ -676,15 +787,21 @@ const InstructorsApplicationPage = () => {
                     </div>
                   </div>
                 ))
-              ) : filteredInstructors.length === 0 ? (
+              ) : filteredApplicants.length === 0 ? (
                 <div className='text-muted-foreground py-10 text-center text-sm'>
-                  No instructors found
+                  No applicants found
                 </div>
               ) : (
-                filteredInstructors?.map(instructorItem => {
-                  const instructorData = instructorItem.data.data;
-                  const fullName = instructorData?.full_name || 'Unknown Instructor';
-                  const bio = instructorData?.professional_headline || 'Professional Instructor';
+                filteredApplicants?.map(applicantItem => {
+                  const applicantData = applicantItem.data;
+                  const fullName =
+                    applicantItem.type === 'organisation'
+                      ? applicantData?.name || 'Unknown Organisation'
+                      : applicantData?.full_name || 'Unknown Instructor';
+                  const bio =
+                    applicantItem.type === 'organisation'
+                      ? applicantData?.description || 'Organisation applicant'
+                      : applicantData?.professional_headline || 'Professional Instructor';
                   const initials = fullName
                     .split(' ')
                     .map((namePart: string) => namePart[0])
@@ -693,22 +810,22 @@ const InstructorsApplicationPage = () => {
 
                   return (
                     <button
-                      key={instructorItem.uuid}
+                      key={applicantItem.uuid}
                       onClick={() => {
-                        setSelectedInstructorUuid(instructorItem.uuid);
+                        setSelectedApplicantUuid(applicantItem.uuid);
                         // Open mobile details sheet on mobile
                         if (window.innerWidth < 1024) {
                           setIsMobileDetailsOpen(true);
                         }
                       }}
-                      className={`relative w-full rounded-2xl border p-4 text-left transition-colors ${selectedInstructorUuid === instructorItem.uuid
+                      className={`relative w-full rounded-2xl border p-4 text-left transition-colors ${selectedApplicantUuid === applicantItem.uuid
                         ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-1'
                         : 'border-border/60 bg-card hover:bg-muted/40'
                         }`}
                     >
                       <div className='flex items-start gap-3'>
                         <Avatar className='h-11 w-11 flex-shrink-0'>
-                          <AvatarImage src={instructorData?.profile_picture_url} />
+                          <AvatarImage src={applicantData?.profile_picture_url} />
                           <AvatarFallback>{initials}</AvatarFallback>
                         </Avatar>
                         <div className='min-w-0 flex-1'>
@@ -716,14 +833,14 @@ const InstructorsApplicationPage = () => {
                           <p className='text-muted-foreground mt-1 truncate text-xs'>{bio}</p>
                           <div className='mt-3 flex items-center justify-between gap-2'>
                             <Badge
-                              variant={instructorData?.admin_verified ? 'success' : 'secondary'}
+                              variant={applicantData?.admin_verified ? 'success' : 'secondary'}
                               className='text-xs'
                             >
-                              {instructorData?.admin_verified ? 'Verified' : 'Pending'}
+                              {applicantData?.admin_verified ? 'Verified' : 'Pending'}
                             </Badge>
                             <span className='text-muted-foreground text-xs'>
-                              {instructorData?.created_date
-                                ? format(new Date(instructorData.created_date), 'dd/MM/yyyy')
+                              {applicantData?.created_date
+                                ? format(new Date(applicantData.created_date), 'dd/MM/yyyy')
                                 : 'N/A'}
                             </span>
                           </div>
@@ -737,17 +854,17 @@ const InstructorsApplicationPage = () => {
           </div>
 
           <div className='hidden flex-1 flex-col lg:flex'>
-            {!selectedInstructorUuid ? (
+            {!selectedApplicantUuid ? (
               <div className='flex flex-1 items-center justify-center p-8'>
                 <div className='text-muted-foreground text-center'>
                   <User className='mx-auto mb-3 h-10 w-10 md:mb-4 md:h-12 md:w-12' />
-                  <p className='text-sm md:text-base'>Select an instructor to view details</p>
+                  <p className='text-sm md:text-base'>Select an applicant to view details</p>
                 </div>
               </div>
             ) : (
               <div className='flex h-full flex-col'>
                 <div className='flex items-center justify-between border-b px-6 py-5'>
-                  <h2 className='text-2xl font-semibold'>Instructor Details</h2>
+                  <h2 className='text-2xl font-semibold'>Applicant Details</h2>
                 </div>
 
                 <div className='flex-1 overflow-y-auto p-6'>
@@ -768,53 +885,66 @@ const InstructorsApplicationPage = () => {
                       <div className='space-y-4 md:space-y-6'>
                         <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
                           <div className='mb-6 flex flex-wrap items-center gap-4 text-sm'>
-                            <a
-                              href={`/profile-user/${instructor?.user_uuid}?domain=${'instructor'}`}
-                              target='_blank'
-                              rel='noopener noreferrer'
-                              className='text-primary inline-flex items-center gap-2'
-                            >
-                              <Send size={16} />
-                              <span>View full profile</span>
-                            </a>
+                            {selectedApplicantType === 'instructor' ? (
+                              <>
+                                <a
+                                  href={`/profile-user/${instructor?.user_uuid}?domain=instructor`}
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='text-primary inline-flex items-center gap-2'
+                                >
+                                  <Send size={16} />
+                                  <span>View full profile</span>
+                                </a>
 
-                            <button
-                              type='button'
-                              onClick={() => {
-                                const fullUrl = `${window.location.origin}/profile-user/${instructor?.user_uuid}?domain=instructor`;
-                                navigator.clipboard.writeText(fullUrl);
-                                toast.success('Profile link copied to clipboard');
-                              }}
-                              className='text-primary inline-flex items-center gap-2'
-                            >
-                              <Copy size={16} />
-                              <span>Copy profile link</span>
-                            </button>
+                                <button
+                                  type='button'
+                                  onClick={() => {
+                                    const fullUrl = `${window.location.origin}/profile-user/${instructor?.user_uuid}?domain=instructor`;
+                                    navigator.clipboard.writeText(fullUrl);
+                                    toast.success('Profile link copied to clipboard');
+                                  }}
+                                  className='text-primary inline-flex items-center gap-2'
+                                >
+                                  <Copy size={16} />
+                                  <span>Copy profile link</span>
+                                </button>
+                              </>
+                            ) : (
+                              <Badge variant='secondary' className='gap-2'>
+                                <Building className='h-3.5 w-3.5' />
+                                Organisation applicant
+                              </Badge>
+                            )}
                           </div>
 
                           <div className='flex flex-col gap-5 min-[1450px]:flex-row min-[1450px]:items-start min-[1450px]:justify-between'>
                             <div className='flex items-start gap-4'>
                               <Avatar className='h-16 w-16 border'>
-                                <AvatarImage src={instructor?.profile_picture_url} />
+                                <AvatarImage
+                                  src={
+                                    selectedApplicantType === 'instructor'
+                                      ? instructor?.profile_picture_url
+                                      : undefined
+                                  }
+                                />
                                 <AvatarFallback className='text-lg'>
-                                  {selectedInstructorInitials}
+                                  {selectedApplicantInitials}
                                 </AvatarFallback>
                               </Avatar>
 
                               <div className='space-y-2'>
                                 <div>
                                   <h3 className='text-3xl font-bold tracking-tight'>
-                                    {instructor?.full_name || 'Unknown Instructor'}
+                                    {selectedApplicantName || 'Unknown Applicant'}
                                   </h3>
                                   <p className='text-muted-foreground text-lg'>
-                                    {instructor?.professional_headline || 'Professional'}
+                                    {selectedApplicantHeadline}
                                   </p>
                                 </div>
                                 <p className='text-muted-foreground flex items-center gap-2 text-sm'>
                                   <MapPin className='h-4 w-4' />
-                                  {instructor?.formatted_location ||
-                                    instructor?.location ||
-                                    'Location not specified'}
+                                  {selectedApplicantLocation}
                                 </p>
                               </div>
                             </div>
@@ -822,19 +952,25 @@ const InstructorsApplicationPage = () => {
                             <div className='grid gap-4 text-left sm:grid-cols-2 min-[1450px]:min-w-[220px] min-[1450px]:text-right'>
                               <div>
                                 <p className='text-muted-foreground text-sm font-medium'>
-                                  Instructor ID:
+                                  {selectedApplicantType === 'organisation'
+                                    ? 'Organisation ID:'
+                                    : 'Instructor ID:'}
                                 </p>
                                 <p className='text-base font-semibold'>
-                                  {instructor?.uuid?.slice(0, 8) || 'N/A'}
+                                  {selectedApplicantId}
                                 </p>
                               </div>
                               <div>
                                 <p className='text-muted-foreground text-sm font-medium'>Status:</p>
                                 <Badge
-                                  variant={instructor?.admin_verified ? 'success' : 'secondary'}
+                                  variant={
+                                    selectedApplicantStatusBadge === 'Verified'
+                                      ? 'success'
+                                      : 'secondary'
+                                  }
                                   className='mt-1'
                                 >
-                                  {selectedInstructorStatus}
+                                  {selectedApplicantStatusBadge}
                                 </Badge>
                               </div>
                             </div>
@@ -863,7 +999,11 @@ const InstructorsApplicationPage = () => {
                               <p className='text-muted-foreground text-sm font-medium'>
                                 Organization:
                               </p>
-                              <p className='mt-1 text-sm'>{instructor?.organization || 'Not specified'}</p>
+                              <p className='mt-1 text-sm'>
+                                {selectedApplicantType === 'organisation'
+                                  ? organisation?.country || 'Not specified'
+                                  : instructor?.organization || 'Not specified'}
+                              </p>
                             </div>
                           </div>
                         </Card>
@@ -1569,11 +1709,11 @@ const InstructorsApplicationPage = () => {
               <div className='space-y-2 text-sm'>
                 <div className='flex items-center justify-between'>
                   <span className='text-muted-foreground'>Total</span>
-                  <span className='font-semibold'>{instructors.length}</span>
+                  <span className='font-semibold'>{applicants.length}</span>
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-muted-foreground'>Showing</span>
-                  <span className='font-semibold'>{filteredInstructors.length}</span>
+                  <span className='font-semibold'>{filteredApplicants.length}</span>
                 </div>
               </div>
             </div>
@@ -1584,10 +1724,10 @@ const InstructorsApplicationPage = () => {
         <Sheet open={isMobileDetailsOpen} onOpenChange={setIsMobileDetailsOpen}>
           <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-2xl'>
             <SheetHeader>
-              <SheetTitle>Instructor Details</SheetTitle>
+              <SheetTitle>Applicant Details</SheetTitle>
             </SheetHeader>
             <div className='mt-6 mb-8 px-4'>
-              {selectedInstructorUuid && (
+              {selectedApplicantUuid && (
                 <div>
                   <div className='mb-4 sm:hidden'>
                     <Button

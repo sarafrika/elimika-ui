@@ -38,7 +38,7 @@ function LiveClassRow({ liveClass }: { liveClass: OverviewLiveClass }) {
 
         <div className='flex items-center gap-3'>
           <InitialsGroup initials={liveClass.attendeeInitials} />
-          <ActionButton href='#' label={liveClass.actionLabel} />
+          <ActionButton href={liveClass.href} label={liveClass.actionLabel} />
         </div>
       </div>
     </article>

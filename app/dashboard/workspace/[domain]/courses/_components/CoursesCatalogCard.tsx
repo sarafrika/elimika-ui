@@ -91,6 +91,7 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
               </Link>
             </Button>
           ) : null}
+
           {card.ctaKind === 'apply-course' || card.ctaKind === 'apply-program' ? (
             <Button
               type='button'

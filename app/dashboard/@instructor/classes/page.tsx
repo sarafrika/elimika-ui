@@ -23,16 +23,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
 import { ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassSidebar } from './_components/class-sidebar';
-import { ClassWaitingListTab } from './_components/class-waiting-list-tab';
 import { ClassStudentsTab } from './_components/class-students-tab';
+import { ClassWaitingListTab } from './_components/class-waiting-list-tab';
 import {
   classTabs,
+  dateFilterDescriptions,
   useFilteredClassInstances,
   type ClassInstanceItem,
   type ClassTab,
   type DateFilter,
   type LessonModule,
-  dateFilterDescriptions,
 } from './_components/new-class-page.utils';
 import { PlaceholderTab } from './_components/placeholder-tab';
 
@@ -47,7 +47,7 @@ export default function NewClassPage() {
   const [selectedLessonUuid, setSelectedLessonUuid] = useState<string | null>(null);
   const [draftSearchTerm, setDraftSearchTerm] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState<DateFilter>('current-week');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('current-day');
   const [activeTab, setActiveTab] = useState<ClassTab>('overview');
   const [isTabsSheetOpen, setIsTabsSheetOpen] = useState(false);
 
@@ -186,9 +186,8 @@ export default function NewClassPage() {
     }
 
     const queryString = params.toString();
-    return `/dashboard/classes/class-training/${selectedClassUuid}${
-      queryString ? `?${queryString}` : ''
-    }`;
+    return `/dashboard/classes/class-training/${selectedClassUuid}${queryString ? `?${queryString}` : ''
+      }`;
   }, [
     selectedClassUuid,
     selectedInstanceEntry?.instanceUuid,
@@ -212,9 +211,8 @@ export default function NewClassPage() {
       }
 
       const queryString = params.toString();
-      return `/dashboard/classes/class-training/${selectedClassUuid}${
-        queryString ? `?${queryString}` : ''
-      }`;
+      return `/dashboard/classes/class-training/${selectedClassUuid}${queryString ? `?${queryString}` : ''
+        }`;
     },
     [selectedClassUuid, selectedInstanceEntry?.instanceUuid]
   );
@@ -227,7 +225,7 @@ export default function NewClassPage() {
         </p>
         <Button
           type='button'
-          onClick={() => router.push('/dashboard/trainings/create-new')}
+          onClick={() => router.push('/dashboard/classes/create-new')}
           className='bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success h-11 rounded-full px-10 text-base font-semibold sm:min-w-[236px]'
         >
           Create Class
@@ -323,11 +321,10 @@ export default function NewClassPage() {
                             setActiveTab(tab.value);
                             setIsTabsSheetOpen(false);
                           }}
-                          className={`h-12 w-full justify-between rounded-[18px] border px-4 ${
-                            isActive
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-border/70 bg-background text-foreground'
-                          }`}
+                          className={`h-12 w-full justify-between rounded-[18px] border px-4 ${isActive
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border/70 bg-background text-foreground'
+                            }`}
                         >
                           <span>{tab.label}</span>
                           {isActive ? (

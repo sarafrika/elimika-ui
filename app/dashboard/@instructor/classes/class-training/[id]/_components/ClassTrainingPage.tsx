@@ -325,7 +325,7 @@ function getVimeoEmbedUrl(source: string) {
 
 export const RichTextPreview = ({ html }: { html: string }) => {
   return (
-    <div
+    <p
       className='
           text-foreground mx-auto w-full text-[14px] leading-7
           [&_*]:max-w-full
@@ -1100,12 +1100,20 @@ function SubmissionPanel({
   );
 }
 
-export default function ClassTrainingPage() {
+type ClassTrainingPageProps = {
+  classId?: string;
+  requestedScheduleId?: string;
+};
+
+export default function ClassTrainingPage({
+  classId: classIdProp,
+  requestedScheduleId: requestedScheduleIdProp,
+}: ClassTrainingPageProps = {}) {
   const params = useParams();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const classId = params?.id as string;
-  const requestedScheduleId = searchParams.get('schedule') ?? '';
+  const classId = classIdProp ?? (params?.id as string);
+  const requestedScheduleId = requestedScheduleIdProp ?? searchParams.get('schedule') ?? '';
   const requestedLessonId = searchParams.get('lesson') ?? '';
   const requestedContentId = searchParams.get('content') ?? '';
   const { replaceBreadcrumbs } = useBreadcrumb();

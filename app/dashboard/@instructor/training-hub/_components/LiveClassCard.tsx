@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { EllipsisVertical } from 'lucide-react';
+import Link from 'next/link';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
 type LiveClassCardProps = {
@@ -31,7 +31,9 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
 
           <div className='mt-3 flex flex-wrap items-center gap-2 text-[0.78rem] text-muted-foreground'>
             <span className='font-medium text-primary'>{liveClass.provider}</span>
-            <span>{liveClass.students}</span>
+            <span>{liveClass.students} enrolled</span>
+            <span>•</span>
+            <span>{liveClass.waitlistedStudents} waiting</span>
           </div>
         </div>
 
@@ -47,6 +49,7 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
             </div>
           </dl>
 
+
           <button
             aria-label='More options'
             className='inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20'
@@ -57,7 +60,7 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
         </div>
       </div>
 
-      <div className='mt-3 flex justify-end'>
+      <div className='mt-3 flex flex-row justify-end'>
         <Link
           className='inline-flex h-10 items-center justify-center rounded-[8px] bg-primary px-5 text-[0.84rem] font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
           href={liveClass.href}

@@ -3,6 +3,7 @@ import {
   ACTIVE_DASHBOARD_COOKIE,
   ACTIVE_DASHBOARD_COOKIE_MAX_AGE,
   normalizeStoredUserDomain,
+  resolveWorkspaceSwitchPath,
 } from '@/src/features/dashboard/lib/active-domain-storage';
 
 function buildPublicRequestUrl(request: NextRequest, path: string) {
@@ -23,9 +24,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const { domain } = await context.params;
   const normalizedDomain = normalizeStoredUserDomain(domain);
   const requestedNextPath = request.nextUrl.searchParams.get('next');
-  const nextPath = requestedNextPath?.startsWith('/dashboard/')
-    ? requestedNextPath
-    : '/dashboard/overview';
+  const nextPath = resolveWorkspaceSwitchPath(normalizedDomain, requestedNextPath);
 
   const response = NextResponse.redirect(buildPublicRequestUrl(request, nextPath));
 

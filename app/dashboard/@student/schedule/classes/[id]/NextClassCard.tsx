@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { Calendar, Clock, MapPin, User, Video } from 'lucide-react';
+import Link from 'next/link';
 
 export type ClassScheduleItem = {
   uuid: string;
@@ -10,6 +11,7 @@ export type ClassScheduleItem = {
   end_time: string;
   title: string;
   location_type: 'ONLINE' | 'PHYSICAL';
+  location_name?: string | null;
   duration_formatted: string;
   instructor_name?: string;
 };
@@ -17,9 +19,18 @@ export type ClassScheduleItem = {
 interface NextClassCardProps {
   nextClass: ClassScheduleItem | null;
   onJoinClass?: (schedule: ClassScheduleItem) => void;
+  joinHref?: string | null;
+  joinLabel?: string;
+  locationNote?: string | null;
 }
 
-export function NextClassCard({ nextClass, onJoinClass }: NextClassCardProps) {
+export function NextClassCard({
+  nextClass,
+  onJoinClass,
+  joinHref,
+  joinLabel,
+  locationNote,
+}: NextClassCardProps) {
   return (
     <div className='bg-muted/30 border-b'>
       <div className='mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6'>
@@ -79,18 +90,33 @@ export function NextClassCard({ nextClass, onJoinClass }: NextClassCardProps) {
                       <span>{nextClass.instructor_name}</span>
                     </div>
                   )}
+
+                  {locationNote && !joinHref && (
+                    <div className='bg-background/80 border-border/60 rounded-2xl border px-3 py-2 text-xs leading-5 text-muted-foreground'>
+                      {locationNote}
+                    </div>
+                  )}
                 </div>
 
                 {/* Join Button */}
                 <div className='flex items-center justify-start md:justify-end'>
-                  <Button
-                    size='lg'
-                    className='w-full gap-2 sm:w-auto'
-                    onClick={() => onJoinClass?.(nextClass)}
-                  >
-                    <Video className='h-5 w-5' />
-                    Join Class
-                  </Button>
+                  {joinHref ? (
+                    <Button asChild size='lg' className='w-full gap-2 sm:w-auto'>
+                      <Link href={joinHref} target='_blank' rel='noopener noreferrer'>
+                        <Video className='h-5 w-5' />
+                        {joinLabel ?? 'Join Class'}
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      size='lg'
+                      className='w-full gap-2 sm:w-auto'
+                      onClick={() => onJoinClass?.(nextClass)}
+                    >
+                      <MapPin className='h-5 w-5' />
+                      {joinLabel ?? 'View Location'}
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>

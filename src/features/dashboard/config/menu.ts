@@ -383,6 +383,11 @@ export default {
       icon: Briefcase,
     },
     {
+      title: 'Opportunities',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
+    },
+    {
       title: 'Notifications',
       url: '/dashboard/notifications',
       icon: Bell,
@@ -476,6 +481,11 @@ export default {
       icon: Building2,
     },
     {
+      title: 'Opportunities',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
+    },
+    {
       title: 'Classes Calendar',
       url: '/dashboard/calendar',
       icon: CalendarClock,
@@ -528,6 +538,11 @@ export default {
       icon: CalendarClock,
     },
     {
+      title: 'Opportunities',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
+    },
+    {
       title: 'Catalogue',
       url: '/dashboard/catalogue',
       icon: ShoppingBag,
@@ -552,11 +567,7 @@ export default {
       url: '/dashboard/people',
       icon: Users,
     },
-    {
-      title: 'Job Marketplace',
-      url: '/dashboard/opportunities',
-      icon: Handshake,
-    },
+
     {
       title: 'Course Management',
       url: '/dashboard/course-management',
@@ -617,6 +628,11 @@ export default {
       title: 'Billing',
       url: '/dashboard/billing',
       icon: DollarSign,
+    },
+    {
+      title: 'Opportunities',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
     },
   ],
 } as Menu;

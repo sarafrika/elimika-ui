@@ -67,21 +67,118 @@ export function isInternalDashboardPath(path?: string | null) {
   return Boolean(path?.startsWith('/dashboard'));
 }
 
+function splitDashboardPath(path: string) {
+  const [pathname, search = ''] = path.split('?');
+
+  return {
+    pathname,
+    search: search ? `?${search}` : '',
+  };
+}
+
+function normalizeRequestedDashboardPath(path?: string | null) {
+  if (!path || !isInternalDashboardPath(path)) {
+    return '/dashboard/overview';
+  }
+
+  const { pathname, search } = splitDashboardPath(path);
+
+  if (pathname.startsWith('/dashboard/workspace/')) {
+    const segments = pathname.split('/');
+    const remainder = segments.slice(4).filter(Boolean);
+    const workspacePath = remainder.length ? `/dashboard/${remainder.join('/')}` : '/dashboard/overview';
+    return `${workspacePath}${search}`;
+  }
+
+  return `${pathname}${search}`;
+}
+
+function getWorkspaceRouteSegments(path: string) {
+  const { pathname } = splitDashboardPath(path);
+  const normalizedPath = pathname.replace(/^\/dashboard/, '').replace(/^\//, '');
+  const [firstSegment = '', ...restSegments] = normalizedPath.split('/');
+
+  const normalizedFirstSegment = firstSegment === 'all-courses' ? 'courses' : firstSegment;
+
+  return {
+    root: normalizedFirstSegment,
+    segments: [normalizedFirstSegment, ...restSegments].filter(Boolean),
+  };
+}
+
+function supportsWorkspaceAliasPath(domain: UserDomain, path: string) {
+  const { root, segments } = getWorkspaceRouteSegments(path);
+
+  if (root === 'overview') {
+    return true;
+  }
+
+  if (root !== 'courses') {
+    return false;
+  }
+
+  const child = segments[1];
+
+  if (!child) {
+    return true;
+  }
+
+  if (child === 'my-courses') {
+    return domain === 'student';
+  }
+
+  if (child === 'instructor') {
+    return domain === 'student' || domain === 'instructor' || domain === 'course_creator';
+  }
+
+  if (
+    child === 'programs' ||
+    child === 'available-programs' ||
+    child === 'available-classes'
+  ) {
+    return domain === 'student' || domain === 'instructor' || domain === 'course_creator';
+  }
+
+  if (segments.length === 2) {
+    return domain === 'student' || domain === 'instructor' || domain === 'course_creator';
+  }
+
+  return false;
+}
+
 export function buildWorkspaceAliasPath(domain: UserDomain | null, path = '/dashboard/overview') {
   if (!domain || !isInternalDashboardPath(path)) {
     return path;
   }
 
-  if (path === '/dashboard/notifications') {
-    return path;
+  const normalizedPath = normalizeRequestedDashboardPath(path);
+  const { pathname, search } = splitDashboardPath(normalizedPath);
+
+  if (!supportsWorkspaceAliasPath(domain, pathname)) {
+    return `${pathname}${search}`;
   }
 
-  const normalizedPath = path.replace(/^\/dashboard/, '').replace(/^\//, '');
-  const [firstSegment, ...restSegments] = normalizedPath.split('/');
-  const rewrittenFirstSegment = firstSegment === 'all-courses' ? 'courses' : firstSegment;
-  const rewrittenPath = [rewrittenFirstSegment, ...restSegments].filter(Boolean).join('/');
+  const { segments } = getWorkspaceRouteSegments(pathname);
+  const rewrittenPath = segments.join('/');
 
   return rewrittenPath
-    ? `/dashboard/workspace/${domain}/${rewrittenPath}`
-    : `/dashboard/workspace/${domain}`;
+    ? `/dashboard/workspace/${domain}/${rewrittenPath}${search}`
+    : `/dashboard/workspace/${domain}${search}`;
+}
+
+export function resolveWorkspaceSwitchPath(domain: UserDomain | null, requestedPath?: string | null) {
+  const fallbackPath = '/dashboard/overview';
+  const normalizedRequestedPath = normalizeRequestedDashboardPath(requestedPath);
+
+  if (!domain) {
+    return buildWorkspaceAliasPath(null, fallbackPath);
+  }
+
+  const { pathname } = splitDashboardPath(normalizedRequestedPath);
+
+  if (supportsWorkspaceAliasPath(domain, pathname)) {
+    return buildWorkspaceAliasPath(domain, normalizedRequestedPath);
+  }
+
+  return buildWorkspaceAliasPath(domain, fallbackPath);
 }

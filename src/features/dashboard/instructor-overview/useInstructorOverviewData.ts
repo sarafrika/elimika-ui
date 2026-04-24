@@ -226,7 +226,7 @@ export function useInstructorOverviewData() {
 
   const waitlistedStudentQueries = useQueries({
     queries: waitlistedStudentIds.map(studentId => ({
-      ...getStudentByIdOptions({ path: { id: studentId } }),
+      ...getStudentByIdOptions({ path: { uuid: studentId } }),
       enabled: Boolean(studentId),
       staleTime: 5 * 60 * 1000,
     })),
@@ -235,7 +235,7 @@ export function useInstructorOverviewData() {
   const studentMap = useMemo(() => {
     const map = new Map<string, Student>();
     waitlistedStudentIds.forEach((studentId, index) => {
-      const student = waitlistedStudentQueries[index]?.data?.data;
+      const student = waitlistedStudentQueries[index]?.data;
       if (student) {
         map.set(studentId, student);
       }
@@ -285,6 +285,21 @@ export function useInstructorOverviewData() {
     [classes, classSchedulesMap, classEnrollmentsMap]
   );
 
+  const courseInstanceMap = useMemo(() => {
+    const map = new Map<string, typeof allSchedules>();
+
+    allSchedules.forEach(item => {
+      const courseId = item.course?.uuid;
+      if (!courseId) return;
+
+      const current = map.get(courseId) ?? [];
+      current.push(item);
+      map.set(courseId, current);
+    });
+
+    return map;
+  }, [allSchedules]);
+
   const activeCourses = useMemo<OverviewCourse[]>(() => {
     const uniqueCourses = new Map<string, OverviewCourse>();
 
@@ -293,6 +308,16 @@ export function useInstructorOverviewData() {
       const courseId = course?.uuid;
 
       if (!courseId || uniqueCourses.has(courseId)) return;
+
+      const courseInstances = [...(courseInstanceMap.get(courseId) ?? [])].sort((left, right) => {
+        const leftTime = new Date(left.instance.start_time).getTime();
+        const rightTime = new Date(right.instance.start_time).getTime();
+        return leftTime - rightTime;
+      });
+      const selectedInstance =
+        courseInstances.find(item => isFutureLikeInstance(item.instance, new Date())) ??
+        courseInstances[0] ??
+        null;
 
       const enrollments = (classEnrollmentsMap.get(cls.uuid ?? '') ?? []).filter(
         enrollment => ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
@@ -321,12 +346,16 @@ export function useInstructorOverviewData() {
         students: uniqueStudents.size,
         progress,
         actionLabel: 'View Class',
-        icon: COURSE_ICONS[index % COURSE_ICONS.length],
+        viewHref: selectedInstance?.instance.uuid
+          ? `/dashboard/class-instance/${selectedInstance.instance.uuid}`
+          : `/dashboard/classes/class-training/${cls.uuid ?? ''}`,
+        editHref: `/dashboard/classes/overview/${cls.uuid ?? ''}`,
+        icon: COURSE_ICONS[index % COURSE_ICONS.length]!,
       });
     });
 
     return Array.from(uniqueCourses.values());
-  }, [classes, classEnrollmentsMap, classSchedulesMap]);
+  }, [classes, classEnrollmentsMap, classSchedulesMap, courseInstanceMap]);
 
   const totalStudents = useMemo(
     () =>
@@ -401,6 +430,9 @@ export function useInstructorOverviewData() {
           provider: item.course?.category_names?.[0] ?? formatSessionFormat(item.classDefinition.session_format),
           students: `${enrolledCount} students`,
           actionLabel: 'Manage',
+          href: item.instance.uuid
+            ? `/dashboard/class-instance/${item.instance.uuid}`
+            : `/dashboard/classes/class-training/${item.classDefinition.uuid ?? ''}`,
           attendeeInitials: [],
         };
       }),
@@ -418,6 +450,9 @@ export function useInstructorOverviewData() {
           formatSessionFormat(item.classDefinition.location_type) ||
           'Scheduled class',
         status: item.instance.status === 'ONGOING' ? 'Ongoing' : 'Scheduled',
+        href: item.instance.uuid
+          ? `/dashboard/class-instance/${item.instance.uuid}`
+          : `/dashboard/classes/class-training/${item.classDefinition.uuid ?? ''}`,
       })),
     [upcomingSource]
   );
@@ -456,7 +491,7 @@ export function useInstructorOverviewData() {
             host: student?.full_name ?? 'Interested student',
             schedule: formatDateTime(relatedInstance?.start_time ?? enrollment.created_date),
             actionLabel: 'Review',
-            actionTone: 'accept',
+            actionTone: 'accept' as const,
           };
         })
         .slice(0, 3),

@@ -19,6 +19,7 @@ export type TrainingHubLiveClass = {
   title: string;
   provider: string;
   students: string;
+  waitlistedStudents: string;
   fee: string;
   sessions: string;
   href: string;
@@ -128,6 +129,7 @@ export const liveClasses: TrainingHubLiveClass[] = [
     title: 'UI/UX Design Principles',
     provider: 'Google',
     students: '85 students',
+    waitlistedStudents: '12 students',
     fee: 'KSh 3,300',
     sessions: '5',
     href: '/dashboard/classes',
@@ -139,6 +141,7 @@ export const liveClasses: TrainingHubLiveClass[] = [
     title: 'Data Analysis',
     provider: 'Google',
     students: '60 students',
+    waitlistedStudents: '8 students',
     fee: 'KSh 2,000',
     sessions: '10',
     href: '/dashboard/classes',
@@ -150,6 +153,7 @@ export const liveClasses: TrainingHubLiveClass[] = [
     title: 'Advanced Photoshop',
     provider: 'Google',
     students: '100 students',
+    waitlistedStudents: '5 students',
     fee: 'KSh 4,500',
     sessions: '5',
     href: '/dashboard/classes',
@@ -161,6 +165,7 @@ export const liveClasses: TrainingHubLiveClass[] = [
     title: 'SQL for Data Analysis',
     provider: 'Acaiemy',
     students: '40 students',
+    waitlistedStudents: '3 students',
     fee: 'KSh 3,500',
     sessions: '5',
     href: '/dashboard/classes',
@@ -172,6 +177,7 @@ export const liveClasses: TrainingHubLiveClass[] = [
     title: 'Creative Writing for UX',
     provider: 'CreativeMinds',
     students: '5 students',
+    waitlistedStudents: '1 student',
     fee: 'KSh 2,000',
     sessions: '5',
     href: '/dashboard/classes',

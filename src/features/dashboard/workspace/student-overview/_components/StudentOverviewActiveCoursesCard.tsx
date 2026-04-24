@@ -22,10 +22,11 @@ export function StudentOverviewActiveCoursesCard({
         </h2>
         <Link
           prefetch
-          href='/dashboard/courses'
-          className='shrink-0 text-[0.8rem] font-medium text-primary transition hover:text-primary/80'
+          href='/dashboard/workspace/student/courses/my-courses'
+          className='flex flex-row items-center gap-1 shrink-0 text-[0.8rem] font-medium text-primary transition hover:text-primary/80'
         >
-          See All
+          See All Courses
+          <ArrowRight className='size-3' />
         </Link>
       </div>
 
@@ -103,7 +104,7 @@ export function StudentOverviewActiveCoursesCard({
         </p>
       ) : null}
 
-      <div className='mt-3 flex justify-end'>
+      {/* <div className='mt-3 flex justify-end'>
         <Link
           prefetch
           href='/dashboard/courses'
@@ -112,7 +113,7 @@ export function StudentOverviewActiveCoursesCard({
           See All Courses
           <ArrowRight className='size-3.5' />
         </Link>
-      </div>
+      </div> */}
     </Card>
   );
 }
