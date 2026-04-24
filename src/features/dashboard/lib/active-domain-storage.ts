@@ -131,6 +131,14 @@ function supportsWorkspaceAliasPath(domain: UserDomain, path: string) {
     return domain === 'student' || domain === 'instructor' || domain === 'course_creator';
   }
 
+  if (
+    child === 'programs' ||
+    child === 'available-programs' ||
+    child === 'available-classes'
+  ) {
+    return domain === 'student' || domain === 'instructor' || domain === 'course_creator';
+  }
+
   if (segments.length === 2) {
     return domain === 'student' || domain === 'instructor' || domain === 'course_creator';
   }
