@@ -22,7 +22,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
@@ -68,7 +68,6 @@ import {
   BookOpen,
   ClipboardCheck,
   ListChecks,
-  Loader2,
   MessageSquareText,
   PanelLeft,
   PanelRight,
@@ -82,8 +81,6 @@ import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-
-
 
 type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
 type LessonContentItem = CourseLessonContent;
@@ -366,12 +363,6 @@ export const RichTextPreview = ({ html }: { html: string }) => {
   );
 };
 
-const TAB_ITEMS = [
-  { value: 'content', label: 'Content' },
-  { value: 'practice', label: 'Practice Activities' },
-  { value: 'assessment', label: 'Assessment Tasks' },
-];
-
 function renderLessonContentPreview(
   content: LessonContentItem | null,
   contentTypeDetailsMap: Record<
@@ -384,21 +375,12 @@ function renderLessonContentPreview(
 
 function ConsoleSkeleton() {
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm'>
-      <div className='flex flex-col items-center gap-4 text-center'>
-        <div className='flex items-center justify-center rounded-full bg-primary/10 p-4'>
-          <Loader2 className='text-primary h-8 w-8 animate-spin' />
-        </div>
-
-        {/* Text */}
-        <div className='space-y-1'>
-          <p className='text-foreground text-base font-semibold'>
-            Loading class session
-          </p>
-          <p className='text-muted-foreground text-sm'>
-            Please wait while we retrieve session details...
-          </p>
-        </div>
+    <div className='fixed inset-0 z-50 p-3'>
+      <Skeleton className='mb-3 h-14 w-full rounded-lg' />
+      <div className='grid h-[calc(100vh-5rem)] gap-3 xl:grid-cols-[260px_minmax(0,1fr)_330px]'>
+        <Skeleton className='hidden h-full rounded-lg xl:block' />
+        <Skeleton className='h-full rounded-lg' />
+        <Skeleton className='hidden h-full rounded-lg xl:block' />
       </div>
     </div>
   );
@@ -1153,8 +1135,6 @@ export default function ClassTrainingPage({
   const [sentNotes, setSentNotes] = useState<NoteEntry[]>([]);
   const appliedRouteContentSelectionRef = useRef('');
 
-  const [activeTab, setActiveTab] = useState('content');
-
   useEffect(() => {
     if (!classId) return;
 
@@ -1718,9 +1698,9 @@ export default function ClassTrainingPage({
     toast.success('Note shared for this session view.');
   };
 
-  // if (isLoading || rosterLoading || lessonsLoading) {
-  //   return <ConsoleSkeleton />;
-  // }
+  if (isLoading || rosterLoading || lessonsLoading) {
+    return <ConsoleSkeleton />;
+  }
 
   if (isError) {
     return (
@@ -1919,90 +1899,70 @@ export default function ClassTrainingPage({
         <section className='min-h-0 overflow-hidden bg-[color-mix(in_oklch,var(--el-brand-50)_35%,var(--background))]'>
           <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
             <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-              <div className='min-w-0 w-full'>
+              <div className='min-w-0'>
                 <h2 className='truncate text-lg font-semibold'>
                   {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
                 </h2>
-
-                <div className='flex flex-row items-center justify-between mt-2 bg-red-500 py-1'>
-                  <div>
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full max-w-md'>
-                      <TabsList className='grid w-full grid-cols-3'>
-                        {TAB_ITEMS.map(tab => (
-                          <TabsTrigger
-                            key={tab.value}
-                            value={tab.value}
-                            className='truncate text-xs sm:text-sm'
-                          >
-                            {tab.label}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                    </Tabs>
-                  </div>
-
-                  <div className="flex flex-row items-center gap-4 w-40">
-                    <p className='text-sm' >
-                      Lessons
-                    </p>
-                    <Select
-                      value={selectedContentId}
-                      onValueChange={setSelectedContentId}
-                      disabled={activeLessonContents.length === 0}
-                    >
-                      <SelectTrigger className="h-8 px-2 text-sm">
-
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        {activeLessonContents.map((content, index) => (
-                          <SelectItem
-                            key={content.uuid ?? `content-${index}`}
-                            value={content.uuid ?? `content-${index}`}
-                          >
-                            {getContentTitle(content, index)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                  <Badge variant='outline' className='capitalize'>
+                    {selectedContentType}
+                  </Badge>
+                  <span>Beginner</span>
+                  <span>{activeInstanceStudents.length} students</span>
+                  <span>{selectedContentDuration || 'Open during class'}</span>
                 </div>
+              </div>
+
+              <div className="flex flex-row items-center gap-4 w-40">
+                <p className='text-sm' >
+                  Lessons
+                </p>
+                <Select
+                  value={selectedContentId}
+                  onValueChange={setSelectedContentId}
+                  disabled={activeLessonContents.length === 0}
+                >
+                  <SelectTrigger className="h-8 px-2 text-sm">
+
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {activeLessonContents.map((content, index) => (
+                      <SelectItem
+                        key={content.uuid ?? `content-${index}`}
+                        value={content.uuid ?? `content-${index}`}
+                      >
+                        {getContentTitle(content, index)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
 
           <ScrollArea className='h-[calc(100vh-8.5rem)]'>
-            {activeTab === "content" &&
-              <div className='mx-auto space-y-4 p-2 md:p-2'>
-                <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                  <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
-                    <Badge variant='outline' className='capitalize'>
-                      {selectedContentType}
-                    </Badge>
-                    <span>Beginner</span>
-                    <span>{activeInstanceStudents.length} students</span>
-                    <span>{selectedContentDuration || 'Open during class'}</span>
-                  </div>
+            <div className='mx-auto space-y-4 p-4 md:p-5'>
+              <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
+                <div className='border-border/70 border-b p-4'>
+                  <p className='text-muted-foreground text-xs'>{course?.name}</p>
+                  <h3 className='mt-1 text-xl font-semibold'>
+                    {activeLesson?.title}
+                  </h3>
+                </div>
+                <div className='p-4'>
+                  {selectedContent?.title ? (
+                    <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
+                      <p className='text-muted-foreground text-sm leading-7'>
+                        {selectedContent.title}
+                      </p>
+                    </div>
+                  ) : null}
+                  {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
+                </div>
+              </article>
 
-                  <div className='border-border/70 border-b p-4'>
-                    <p className='text-muted-foreground text-xs'>{course?.name}</p>
-                    <h3 className='mt-1 text-xl font-semibold'>
-                      {activeLesson?.title}
-                    </h3>
-                  </div>
-                  <div className='p-4'>
-                    {selectedContent?.title ? (
-                      <div className='border-border/60 bg-background mb-4 rounded-md border p-4'>
-                        <p className='text-muted-foreground text-sm leading-7'>
-                          {selectedContent.title}
-                        </p>
-                      </div>
-                    ) : null}
-                    {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
-                  </div>
-                </article>
-
-                {/* <section className='border-border/70 bg-card rounded-lg border p-4 shadow-sm'>
+              <section className='border-border/70 bg-card rounded-lg border p-4 shadow-sm'>
                 <div className='mb-3 flex items-center justify-between gap-3'>
                   <h3 className='font-semibold'>Class discussion</h3>
                   <Button variant='outline' size='sm'>
@@ -2040,25 +2000,8 @@ export default function ClassTrainingPage({
                     <Send className='h-4 w-4' />
                   </Button>
                 </div>
-              </section> */}
-              </div>
-            }
-
-            {activeTab === "practice" &&
-              <div className='mx-auto space-y-4 p-2 md:p-2'>
-                <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                  Practive activitysdf
-                </article>
-              </div>
-            }
-
-            {activeTab === "assessment" &&
-              <div className='mx-auto space-y-4 p-2 md:p-2'>
-                <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
-                  Assessment component here
-                </article>
-              </div>
-            }
+              </section>
+            </div>
           </ScrollArea>
         </section>
 
