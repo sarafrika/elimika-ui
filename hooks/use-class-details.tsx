@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import type {
   GetClassDefinitionResponse,
   GetClassScheduleResponse,
@@ -8,14 +7,17 @@ import type {
   GetProgramCoursesResponse,
   GetTrainingProgramByUuidResponse,
 } from '@/services/client/types.gen';
+import { useQuery } from '@tanstack/react-query';
 import {
   getClassDefinitionOptions,
   getClassScheduleOptions,
   getCourseByUuidOptions,
   getCourseLessonsOptions,
   getEnrollmentsForClassOptions,
+  getInstructorByUuidOptions,
   getProgramCoursesOptions,
   getTrainingProgramByUuidOptions,
+  getUserByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
 export type ClassDetailsClass = NonNullable<
@@ -102,6 +104,22 @@ export const useClassDetails = (classId?: string) => {
     enabled: !!courseUuid,
   });
 
+  // Fetch instructor details
+  const { data: instructorResp } = useQuery({
+    ...getInstructorByUuidOptions({
+      path: { uuid: classDefinition?.default_instructor_uuid as string },
+    }),
+    enabled: !!classDefinition?.default_instructor_uuid,
+  });
+
+  const { data: instructorProfile } = useQuery({
+    ...getUserByUuidOptions({
+      path: { uuid: instructorResp?.data?.user_uuid as string },
+    }),
+    enabled: !!instructorResp?.data?.user_uuid,
+  });
+
+
   // 🧩 Combined loading state
   const isLoading =
     isLoadingClass ||
@@ -121,6 +139,8 @@ export const useClassDetails = (classId?: string) => {
       program: programDetailData?.data,
       lessons: courseLessonsData?.data?.content ?? [],
       enrollments: classEnrollments?.data ?? [],
+      instructor: instructorResp?.data || {},
+      instructorProfile: instructorProfile?.data || {}
     },
     isLoading,
     isError: isClassError,
