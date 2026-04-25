@@ -37,7 +37,12 @@ export function LearningHubHero({
 }: LearningHubHeroProps) {
   return (
     <Card className='border-border/70 bg-background relative overflow-hidden rounded-[26px] border p-0 shadow-[0_26px_56px_-48px_rgba(15,23,42,0.2)]'>
-      <div className='relative min-h-[150px] overflow-hidden rounded-t-[26px] bg-[linear-gradient(90deg,rgba(255,255,255,0.98),rgba(242,246,255,0.94),rgba(236,242,255,0.92))] px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7'>
+      <div className="
+  relative min-h-[150px] overflow-hidden rounded-t-[26px]
+  bg-[linear-gradient(90deg,rgba(255,255,255,0.98),rgba(242,246,255,0.94),rgba(236,242,255,0.92))]
+  dark:bg-[linear-gradient(90deg,rgba(17,24,39,0.98),rgba(30,41,59,0.95),rgba(51,65,85,0.92))]
+  px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7
+">
         <div className='relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
           <div className='max-w-2xl min-w-0 space-y-2'>
             {loading ? (
@@ -84,34 +89,34 @@ export function LearningHubHero({
       <div className='grid gap-3 px-4 pb-5 sm:px-6 sm:pb-6 md:grid-cols-2 lg:px-7 xl:grid-cols-4'>
         {loading
           ? Array.from({ length: 4 }).map((_, index) => (
-              <div
-                key={`hero-stat-${index}`}
-                className='rounded-[10px] px-4 py-3 shadow-[0_18px_35px_-24px_rgba(15,23,42,0.35)] sm:px-5 sm:py-4'
-              >
-                <Skeleton className='h-16 w-full rounded-[10px]' />
-              </div>
-            ))
+            <div
+              key={`hero-stat-${index}`}
+              className='rounded-[10px] px-4 py-3 shadow-[0_18px_35px_-24px_rgba(15,23,42,0.35)] sm:px-5 sm:py-4'
+            >
+              <Skeleton className='h-16 w-full rounded-[10px]' />
+            </div>
+          ))
           : stats.map(stat => {
-              const Icon = statIcons[stat.tone];
-              return (
-                <div
-                  key={stat.id}
-                  className={`rounded-[10px] px-4 py-3 text-white shadow-[0_18px_35px_-24px_rgba(15,23,42,0.35)] sm:px-5 sm:py-4 ${statToneClasses[stat.tone]}`}
-                >
-                  <div className='flex items-start gap-3'>
-                    <Icon className='mt-0.5 size-5 shrink-0 text-white/95' />
-                    <div className='min-w-0'>
-                      <div className='text-[1.5rem] leading-none font-semibold sm:text-[1.75rem] lg:text-[2rem]'>
-                        {stat.value}
-                      </div>
-                      <div className='mt-1.5 text-[0.82rem] font-medium text-white/95 sm:mt-2 sm:text-[0.9rem] lg:text-[0.95rem]'>
-                        {stat.label}
-                      </div>
+            const Icon = statIcons[stat.tone];
+            return (
+              <div
+                key={stat.id}
+                className={`rounded-[10px] px-4 py-3 text-white shadow-[0_18px_35px_-24px_rgba(15,23,42,0.35)] sm:px-5 sm:py-4 ${statToneClasses[stat.tone]}`}
+              >
+                <div className='flex items-start gap-3'>
+                  <Icon className='mt-0.5 size-5 shrink-0 text-white/95' />
+                  <div className='min-w-0'>
+                    <div className='text-[1.5rem] leading-none font-semibold sm:text-[1.75rem] lg:text-[2rem]'>
+                      {stat.value}
+                    </div>
+                    <div className='mt-1.5 text-[0.82rem] font-medium text-white/95 sm:mt-2 sm:text-[0.9rem] lg:text-[0.95rem]'>
+                      {stat.label}
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
       </div>
     </Card>
   );

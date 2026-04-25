@@ -19,9 +19,9 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
     useInstructorOverviewData();
 
   return (
-    <main className='w-full bg-white'>
+    <main className='w-full'>
       <div className='mx-auto max-w-[1480px] px-2 py-2 sm:px-3 lg:px-4'>
-        <div className='space-y-3 border border-[#e6e8fb] bg-white p-3 sm:p-4'>
+        <div className='space-y-3 border border-border bg-card p-3 sm:p-4'>
           <OverviewHeader firstName={firstName} />
 
           <section className='grid gap-3 sm:grid-cols-2 2xl:grid-cols-4'>

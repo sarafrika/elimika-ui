@@ -15,9 +15,9 @@ export function StudentOverviewActiveCoursesCard({
   isLoading,
 }: StudentOverviewActiveCoursesCardProps) {
   return (
-    <Card className='rounded-[20px] border-slate-200 bg-white p-4 shadow-[0_24px_55px_-48px_rgba(15,23,42,0.22)] sm:p-6'>
+    <Card className='rounded-[20px] border-border p-4 shadow-sm sm:p-6'>
       <div className='flex min-w-0 items-center justify-between gap-3'>
-        <h2 className='min-w-0 truncate text-[1rem] font-semibold text-slate-900'>
+        <h2 className='min-w-0 truncate text-[1rem] font-semibold text-foreground'>
           Active Courses
         </h2>
         <Link
@@ -34,10 +34,10 @@ export function StudentOverviewActiveCoursesCard({
         {courses.map(course => (
           <div
             key={course.id}
-            className='overflow-hidden rounded-[12px] border border-slate-200 bg-white p-3'
+            className='overflow-hidden rounded-[12px] border border-border bg-card p-3'
           >
             <div className='flex min-w-0 items-start gap-3'>
-              <div className='grid size-9 shrink-0 place-items-center rounded-[10px] bg-[linear-gradient(180deg,#4d97ff,#2a6fdd)] text-white shadow-sm'>
+              <div className='grid size-9 shrink-0 place-items-center rounded-[10px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_86%,white),color-mix(in_srgb,var(--primary)_68%,black_6%))] text-primary-foreground shadow-sm'>
                 <GraduationCap className='size-4' />
               </div>
 
@@ -45,13 +45,13 @@ export function StudentOverviewActiveCoursesCard({
                 <div className='flex min-w-0 items-start justify-between gap-3'>
                   <div className='min-w-0 w-0 flex-1'>
                     <h3
-                      className='block max-w-full truncate text-[14px] font-semibold text-slate-900'
+                      className='block max-w-full truncate text-[14px] font-semibold text-foreground'
                       title={course.title}
                     >
                       {course.title}
                     </h3>
                     <p
-                      className='mt-0.5 block max-w-full truncate text-[0.74rem] text-slate-500'
+                      className='mt-0.5 block max-w-full truncate text-[0.74rem] text-muted-foreground'
                       title={course.subtitle}
                     >
                       {course.subtitle}
@@ -59,12 +59,12 @@ export function StudentOverviewActiveCoursesCard({
                   </div>
 
                   <div className='min-w-0 shrink-0 text-right'>
-                    <div className='text-[1.28rem] leading-none font-semibold text-slate-800'>
+                    <div className='text-[1.28rem] leading-none font-semibold text-foreground'>
                       {course.progress}%
                     </div>
-                    <div className='mt-1.5 h-1.5 w-14 overflow-hidden rounded-full bg-slate-200'>
+                    <div className='mt-1.5 h-1.5 w-14 overflow-hidden rounded-full bg-muted'>
                       <div
-                        className='h-full rounded-full bg-[linear-gradient(90deg,#7ed7a2,#5d8df6)]'
+                        className='h-full rounded-full bg-[linear-gradient(90deg,color-mix(in_srgb,var(--success)_78%,white),color-mix(in_srgb,var(--primary)_76%,white))]'
                         style={{ width: `${course.progress}%` }}
                       />
                     </div>
@@ -73,7 +73,7 @@ export function StudentOverviewActiveCoursesCard({
 
                 <div className='mt-2 flex min-w-0 flex-wrap items-center justify-between gap-2'>
                   <span
-                    className='inline-flex min-w-0 max-w-full items-center gap-1 truncate rounded-[9px] bg-[color-mix(in_srgb,var(--primary)_8%,white)] px-2 py-1 text-[0.66rem] font-medium text-slate-600'
+                    className='inline-flex min-w-0 max-w-full items-center gap-1 truncate rounded-[9px] bg-primary/10 px-2 py-1 text-[0.66rem] font-medium text-muted-foreground'
                     title={course.nextDateLabel}
                   >
                     <CalendarDays className='size-3 shrink-0 text-primary' />
@@ -95,11 +95,11 @@ export function StudentOverviewActiveCoursesCard({
       </div>
 
       {isLoading && courses.length === 0 ? (
-        <p className='mt-3 text-[0.78rem] text-slate-500'>Syncing your current courses...</p>
+        <p className='mt-3 text-[0.78rem] text-muted-foreground'>Syncing your current courses...</p>
       ) : null}
 
       {!isLoading && courses.length === 0 ? (
-        <p className='mt-3 text-[0.78rem] text-slate-500'>
+        <p className='mt-3 text-[0.78rem] text-muted-foreground'>
           Your active enrollments will show up here once your courses are live.
         </p>
       ) : null}

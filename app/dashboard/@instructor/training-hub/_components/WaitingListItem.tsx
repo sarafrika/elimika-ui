@@ -14,8 +14,8 @@ export function WaitingListItem({ student }: WaitingListItemProps) {
     .slice(0, 2);
 
   return (
-    <article className='flex items-center gap-3 rounded-[12px] border border-border/60 bg-white px-3 py-2.5 shadow-[0_10px_24px_rgba(31,79,183,0.04)]'>
-      <span className='inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_18%,white),color-mix(in_srgb,var(--primary)_8%,white))] text-[0.82rem] font-semibold text-primary'>
+    <article className='flex items-center gap-3 rounded-[12px] border border-border/60 bg-card px-3 py-2.5 shadow-sm'>
+      <span className='inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_18%,transparent),color-mix(in_srgb,var(--primary)_8%,transparent))] text-[0.82rem] font-semibold text-primary'>
         {initials}
       </span>
 
@@ -35,7 +35,7 @@ export function WaitingListItem({ student }: WaitingListItemProps) {
       </div>
 
       {student.status ? (
-        <span className='inline-flex rounded-full bg-[color-mix(in_srgb,var(--warning)_18%,white)] px-3 py-1 text-[0.74rem] font-medium text-[color-mix(in_srgb,var(--warning)_90%,black)]'>
+        <span className='inline-flex rounded-full bg-warning/10 px-3 py-1 text-[0.74rem] font-medium text-warning dark:text-amber-300'>
           {student.status}
         </span>
       ) : null}

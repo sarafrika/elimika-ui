@@ -1,15 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getSkillsFundContent, type SkillsFundRole, type SkillsFundSortValue, type SkillsFundTabId } from './data';
+import { ChevronRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { SkillsFundHeader } from './_components/SkillsFundHeader';
 import { SkillsFundMiniTrackerCard } from './_components/SkillsFundMiniTrackerCard';
 import { SkillsFundOpportunityCard } from './_components/SkillsFundOpportunityCard';
 import { SkillsFundSidebar } from './_components/SkillsFundSidebar';
 import { SkillsFundTabs } from './_components/SkillsFundTabs';
 import { SkillsFundToolbar } from './_components/SkillsFundToolbar';
+import { getSkillsFundContent, type SkillsFundRole, type SkillsFundSortValue, type SkillsFundTabId } from './data';
 
 type SkillsFundHubPageProps = {
   role: SkillsFundRole;
@@ -50,9 +50,9 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
   const featuredOpportunities = visibleOpportunities.slice(0, 4);
 
   return (
-    <main className='w-full bg-white'>
+    <main className='w-full'>
       <div className='mx-auto max-w-[1520px] px-2 py-2 sm:px-3 lg:px-4'>
-        <section className='overflow-hidden border border-slate-200 bg-white'>
+        <section className='overflow-hidden border border-border bg-card'>
           <SkillsFundHeader profileName={content.profileName} title={content.title} />
           <SkillsFundTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={content.tabs} />
 
@@ -71,14 +71,14 @@ export function SkillsFundHubPage({ role, profileName }: SkillsFundHubPageProps)
                 ))}
               </section>
 
-              <section className='rounded-[12px] border border-slate-200 bg-[#f8faff] p-3 sm:p-4'>
+              <section className='rounded-[12px] border border-border bg-muted/20 p-3 sm:p-4'>
                 <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
-                  <h2 className='text-[1.2rem] font-semibold text-slate-900 sm:text-[1.35rem]'>
+                  <h2 className='text-[1.2rem] font-semibold text-foreground sm:text-[1.35rem]'>
                     Application Tracker
                   </h2>
                   <Button
                     variant='ghost'
-                    className='h-auto px-0 text-sm font-semibold text-blue-600 hover:bg-transparent hover:text-blue-700'
+                    className='h-auto px-0 text-sm font-semibold text-primary hover:bg-transparent hover:text-primary/80'
                   >
                     View All Applications
                     <ChevronRight className='size-4' />
