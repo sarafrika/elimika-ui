@@ -9,9 +9,9 @@ export function InitialsGroup({ initials }: { initials: string[] }) {
       {initials.map((value, index) => (
         <Avatar
           key={`${value}-${index + 1}`}
-          className='-ml-2 size-7 border-2 border-white first:ml-0'
+          className='-ml-2 size-7 border-2 border-background first:ml-0'
         >
-          <AvatarFallback className='bg-slate-200 text-[0.63rem] font-semibold text-slate-700'>
+          <AvatarFallback className='bg-muted text-[0.63rem] font-semibold text-foreground'>
             {value}
           </AvatarFallback>
         </Avatar>
@@ -34,10 +34,10 @@ export function ActionButton({
       <Button
         className={cn(
           'h-8 rounded-[6px] px-4 text-[0.82rem] font-medium',
-          tone === 'primary' && 'bg-cyan-600 text-white hover:bg-cyan-700',
-          tone === 'success' && 'bg-emerald-500 text-white hover:bg-emerald-600',
-          tone === 'danger' && 'bg-cyan-600 text-white hover:bg-cyan-700',
-          tone === 'muted' && 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          tone === 'primary' && 'bg-primary text-primary-foreground hover:bg-primary/90',
+          tone === 'success' && 'bg-success text-success-foreground hover:bg-success/90',
+          tone === 'danger' && 'bg-destructive text-white hover:bg-destructive/90',
+          tone === 'muted' && 'bg-muted text-foreground hover:bg-muted/80'
         )}
       >
         {label}
@@ -61,8 +61,8 @@ export function PersonAvatar({
     .toUpperCase();
 
   return (
-    <Avatar className={cn(sizeClass, 'border border-[#d8dbf6]')}>
-      <AvatarFallback className='bg-[#eef1ff] text-xs font-semibold text-slate-700'>
+    <Avatar className={cn(sizeClass, 'border border-border')}>
+      <AvatarFallback className='bg-muted text-xs font-semibold text-foreground'>
         {initials}
       </AvatarFallback>
     </Avatar>

@@ -17,7 +17,7 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
         : 'bg-[color-mix(in_srgb,var(--primary)_10%,white)] text-primary';
 
   return (
-    <article className='rounded-[12px] border border-border/60 bg-white p-3 shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+    <article className='rounded-[12px] border border-border/60 bg-card p-3 shadow-sm'>
       <div className='flex flex-col gap-3 min-[560px]:flex-row min-[560px]:items-start min-[560px]:justify-between'>
         <div className='min-w-0 flex-1'>
           <div className='flex flex-wrap items-center gap-2 text-[0.78rem] text-muted-foreground'>

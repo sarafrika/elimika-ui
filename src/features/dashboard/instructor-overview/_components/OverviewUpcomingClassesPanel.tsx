@@ -10,24 +10,24 @@ type OverviewUpcomingClassesPanelProps = {
 function UpcomingClassRow({ upcomingClass }: { upcomingClass: OverviewUpcomingClass }) {
   return (
     <Link href={upcomingClass.href} className='block'>
-      <article className='flex items-start gap-3 border-b border-[#eef0fc] px-2 py-3 last:border-b-0'>
+      <article className='flex items-start gap-3 border-b border-border/60 px-2 py-3 last:border-b-0'>
         <PersonAvatar name={upcomingClass.title} />
         <div className='min-w-0 flex-1'>
           <div className='flex items-start justify-between gap-3'>
             <div className='min-w-0'>
-              <h3 className='truncate text-[1rem] font-semibold text-slate-800 sm:text-[1.05rem]'>
+              <h3 className='truncate text-[1rem] font-semibold text-foreground sm:text-[1.05rem]'>
                 {upcomingClass.title}
               </h3>
-              <p className='truncate text-sm text-slate-500'>{upcomingClass.metaLabel}</p>
+              <p className='truncate text-sm text-muted-foreground'>{upcomingClass.metaLabel}</p>
             </div>
 
             <div className='flex flex-col items-end gap-1'>
               {upcomingClass.status ? (
-                <span className='rounded-full bg-[#fdf0e6] px-3 py-1 text-[0.75rem] font-medium text-[#9a7a50]'>
+                <span className='rounded-full bg-warning/10 px-3 py-1 text-[0.75rem] font-medium text-warning dark:text-amber-300'>
                   {upcomingClass.status}
                 </span>
               ) : null}
-              <span className='text-right text-sm text-slate-500'>
+              <span className='text-right text-sm text-muted-foreground'>
                 {upcomingClass.scheduleLabel}
               </span>
             </div>
@@ -42,15 +42,15 @@ export function OverviewUpcomingClassesPanel({
   upcomingClasses,
 }: OverviewUpcomingClassesPanelProps) {
   return (
-    <OverviewSectionShell title='Upcoming Classes' onActionLabel='See All' onActionHref='/dashboard/calendar' >
+      <OverviewSectionShell title='Upcoming Classes' onActionLabel='See All' onActionHref='/dashboard/calendar'>
       {upcomingClasses.length ? (
-        <div className='rounded-[10px] border border-[#e6e8fb] bg-white px-2 py-1 shadow-[0_6px_18px_rgba(99,102,241,0.04)]'>
+        <div className='rounded-[10px] border border-border bg-card px-2 py-1 shadow-sm'>
           {upcomingClasses.map(upcomingClass => (
             <UpcomingClassRow key={upcomingClass.id} upcomingClass={upcomingClass} />
           ))}
         </div>
       ) : (
-        <p className='rounded-[10px] border border-dashed border-[#d7dbfb] bg-white px-4 py-6 text-sm text-slate-500'>
+        <p className='rounded-[10px] border border-dashed border-border bg-card px-4 py-6 text-sm text-muted-foreground'>
           No upcoming class instances are scheduled right now.
         </p>
       )}

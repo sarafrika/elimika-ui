@@ -16,23 +16,23 @@ export function StudentOverviewSkillsCard({
   newSkillsThisMonth,
 }: StudentOverviewSkillsCardProps) {
   return (
-    <Card className='rounded-[20px] border-slate-200 bg-white p-6'>
+    <Card className='rounded-[20px] border-border p-6'>
       <div className='flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0 flex-1'>
-          <h2 className='text-[1rem] font-semibold text-slate-900'>Skills Progress</h2>
-          <div className='mt-2 text-[2rem] leading-none font-semibold tracking-tight text-slate-900'>
+          <h2 className='text-[1rem] font-semibold text-foreground'>Skills Progress</h2>
+          <div className='mt-2 text-[2rem] leading-none font-semibold tracking-tight text-foreground'>
             {progress}%
           </div>
-          <div className='mt-2 h-1.5 w-full max-w-[140px] overflow-hidden rounded-full bg-slate-200'>
+          <div className='mt-2 h-1.5 w-full max-w-[140px] overflow-hidden rounded-full bg-muted'>
             <div
-              className='h-full rounded-full bg-[linear-gradient(90deg,#7ed7a2,#5d8df6)]'
+              className='h-full rounded-full bg-[linear-gradient(90deg,color-mix(in_srgb,var(--success)_78%,white),color-mix(in_srgb,var(--primary)_76%,white))]'
               style={{ width: `${progress}%` }}
             />
           </div>
-          <div className='mt-1.5 text-[0.96rem] font-semibold text-slate-900'>
-            {verifiedSkills} <span className='font-medium text-slate-600'>Verified Skills</span>
+          <div className='mt-1.5 text-[0.96rem] font-semibold text-foreground'>
+            {verifiedSkills} <span className='font-medium text-muted-foreground'>Verified Skills</span>
           </div>
-          <p className='mt-1 text-[0.8rem] text-slate-500'>+{newSkillsThisMonth} this month</p>
+          <p className='mt-1 text-[0.8rem] text-muted-foreground'>+{newSkillsThisMonth} this month</p>
         </div>
 
         <div
@@ -46,13 +46,13 @@ export function StudentOverviewSkillsCard({
             )`,
           }}
         >
-          <div className='grid size-[82px] place-items-center rounded-full bg-white text-center'>
+          <div className='grid size-[82px] place-items-center rounded-full bg-card text-center'>
             <div>
-              <div className='text-[1.55rem] leading-none font-semibold text-slate-900'>{progress}%</div>
-              <div className='mt-0.5 text-[0.5rem] uppercase tracking-[0.12em] text-slate-400'>
+              <div className='text-[1.55rem] leading-none font-semibold text-foreground'>{progress}%</div>
+              <div className='mt-0.5 text-[0.5rem] uppercase tracking-[0.12em] text-muted-foreground'>
                 skill progress
               </div>
-              <div className='text-[0.55rem] text-slate-400'>+{newSkillsThisMonth} this month</div>
+              <div className='text-[0.55rem] text-muted-foreground'>+{newSkillsThisMonth} this month</div>
             </div>
           </div>
         </div>
@@ -62,7 +62,7 @@ export function StudentOverviewSkillsCard({
         <Link
           prefetch
           href='/dashboard/my-skills'
-          className='inline-flex items-center gap-1.5 rounded-[9px] border border-slate-200 bg-white px-2.5 py-1.5 text-[0.76rem] font-medium text-slate-600 transition hover:text-primary'
+          className='inline-flex items-center gap-1.5 rounded-[9px] border border-border bg-card px-2.5 py-1.5 text-[0.76rem] font-medium text-muted-foreground transition hover:text-primary'
         >
           View My Skills
           <ArrowRight className='size-3.5' />

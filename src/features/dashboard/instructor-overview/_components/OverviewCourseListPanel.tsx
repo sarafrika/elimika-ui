@@ -11,27 +11,27 @@ type OverviewCourseListPanelProps = {
 
 function SkillsProgressCard({ summary }: { summary: OverviewCourseSummary }) {
   return (
-    <div className='rounded-[10px] border border-[#e6e8fb] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(99,102,241,0.06)]'>
+    <div className='rounded-[10px] border border-border bg-card px-4 py-3 shadow-sm'>
       <div className='flex flex-wrap items-center justify-between gap-4'>
         <div className='space-y-1'>
-          <div className='flex items-center gap-2 text-[1rem] font-medium text-slate-700'>
-            <BriefcaseBusiness className='size-4 text-blue-600' />
+          <div className='flex items-center gap-2 text-[1rem] font-medium text-foreground'>
+            <BriefcaseBusiness className='size-4 text-primary' />
             {summary.title}
           </div>
           <div className='space-y-0.5'>
-            <p className='text-[1.05rem] font-semibold text-slate-900 sm:text-[1.1rem]'>
+            <p className='text-[1.05rem] font-semibold text-foreground sm:text-[1.1rem]'>
               {summary.primaryValue}
             </p>
-            <p className='text-sm text-slate-500'>{summary.secondaryValue}</p>
+            <p className='text-sm text-muted-foreground'>{summary.secondaryValue}</p>
           </div>
         </div>
 
-        <div className='relative flex h-[112px] w-[112px] items-center justify-center rounded-full bg-[conic-gradient(#2fbfa8_0deg_306deg,#60a5fa_306deg_360deg,#e7ebff_360deg)]'>
-          <div className='flex h-[82px] w-[82px] flex-col items-center justify-center rounded-full bg-white text-center'>
-            <span className='text-[2rem] font-semibold leading-none text-slate-900'>
+        <div className='relative flex h-[112px] w-[112px] items-center justify-center rounded-full bg-[conic-gradient(color-mix(in_srgb,var(--success)_76%,white)_0deg_306deg,color-mix(in_srgb,var(--primary)_76%,white)_306deg_360deg,color-mix(in_srgb,var(--muted)_80%,white)_360deg)]'>
+          <div className='flex h-[82px] w-[82px] flex-col items-center justify-center rounded-full bg-card text-center'>
+            <span className='text-[2rem] font-semibold leading-none text-foreground'>
               {summary.percent}%
             </span>
-            <span className='mt-1 text-[0.54rem] uppercase tracking-[0.08em] text-slate-400'>
+            <span className='mt-1 text-[0.54rem] uppercase tracking-[0.08em] text-muted-foreground'>
               Overall progress
             </span>
           </div>
@@ -50,9 +50,9 @@ function CourseRow({ course }: { course: OverviewCourse }) {
   const Icon = course.icon;
 
   return (
-    <article className='rounded-[10px] border border-[#e6e8fb] bg-white px-3 py-3 shadow-[0_6px_18px_rgba(99,102,241,0.04)]'>
+    <article className='rounded-[10px] border border-border bg-card px-3 py-3 shadow-sm'>
       <div className='flex items-start gap-3'>
-        <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] bg-blue-600 text-white'>
+        <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] bg-primary text-primary-foreground'>
           <Icon className='size-4' />
         </div>
 
@@ -60,18 +60,18 @@ function CourseRow({ course }: { course: OverviewCourse }) {
           {/* Header */}
           <div className='flex items-start justify-between gap-3'>
             <div className='min-w-0'>
-              <h3 className='truncate text-[1rem] font-semibold text-slate-900 sm:text-[1.05rem]'>
+              <h3 className='truncate text-[1rem] font-semibold text-foreground sm:text-[1.05rem]'>
                 {course.title}
               </h3>
-              <p className='truncate text-sm text-slate-500'>
-                <span className='text-blue-600'>{course.provider}</span> | {course.level}
+              <p className='truncate text-sm text-muted-foreground'>
+                <span className='text-primary'>{course.provider}</span> | {course.level}
               </p>
             </div>
 
             <button
               type='button'
               aria-label={`${course.title} options`}
-              className='text-slate-400 transition hover:text-slate-600'
+              className='text-muted-foreground transition hover:text-foreground'
             >
               <EllipsisVertical className='size-4' />
             </button>
@@ -79,16 +79,16 @@ function CourseRow({ course }: { course: OverviewCourse }) {
 
           {/* Students + Progress */}
           <div className='mt-3 flex items-center gap-3'>
-            <div className='flex items-center gap-1 text-slate-700'>
-              <Users className='size-4 text-slate-500' />
+            <div className='flex items-center gap-1 text-foreground'>
+              <Users className='size-4 text-muted-foreground' />
               <span className='text-[0.95rem] font-medium'>
                 {course.students} students
               </span>
             </div>
 
-            <div className='h-2 w-full max-w-[120px] overflow-hidden rounded-full bg-[#e8ecff]'>
+            <div className='h-2 w-full max-w-[120px] overflow-hidden rounded-full bg-muted'>
               <div
-                className='h-full rounded-full bg-cyan-500'
+                className='h-full rounded-full bg-primary'
                 style={{ width: `${course.progress}%` }}
               />
             </div>
@@ -99,7 +99,7 @@ function CourseRow({ course }: { course: OverviewCourse }) {
             <ActionButton href={course.viewHref} label={course.actionLabel} />
             <Link
               href={course.editHref}
-              className='inline-flex h-8 items-center justify-center rounded-[6px] border border-slate-200 bg-white px-4 text-[0.82rem] font-medium text-slate-700 transition hover:bg-slate-50'
+              className='inline-flex h-8 items-center justify-center rounded-[6px] border border-border bg-card px-4 text-[0.82rem] font-medium text-foreground transition hover:bg-muted/50'
             >
               Edit Class
             </Link>
@@ -125,7 +125,7 @@ export function OverviewCourseListPanel({ courses, summary }: OverviewCourseList
             ))}
           </div>
         ) : (
-          <p className='rounded-[10px] border border-dashed border-[#d7dbfb] bg-white px-4 py-6 text-sm text-slate-500'>
+          <p className='rounded-[10px] border border-dashed border-border bg-card px-4 py-6 text-sm text-muted-foreground'>
             No active classes found for this instructor yet.
           </p>
         )}

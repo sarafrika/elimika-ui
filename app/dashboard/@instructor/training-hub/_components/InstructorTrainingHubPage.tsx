@@ -81,7 +81,7 @@ export function InstructorTrainingHubPage() {
   );
 
   return (
-    <main className='mx-auto flex w-full max-w-[1450px] flex-col gap-4 bg-white px-3 py-3 sm:px-4 sm:py-4 lg:px-5'>
+    <main className='mx-auto flex w-full max-w-[1450px] flex-col gap-4 bg-background px-3 py-3 sm:px-4 sm:py-4 lg:px-5'>
       <TrainingHubHeader />
       <TrainingHubToolbar
         onSearchTermChange={setSearchTerm}
@@ -108,14 +108,14 @@ export function InstructorTrainingHubPage() {
               {!isLoadingManagedCourses &&
                 filteredManagedCourses.length === 0 &&
                 selectedType !== 'live-classes' ? (
-                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                <Card className='border-border/60 shadow-sm'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     No approved courses matched your search.
                   </CardContent>
                 </Card>
               ) : null}
               {isLoadingManagedCourses ? (
-                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                <Card className='border-border/60 shadow-sm'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     Loading approved courses...
                   </CardContent>
@@ -137,14 +137,14 @@ export function InstructorTrainingHubPage() {
               {!isLoadingManagedCourses &&
                 filteredLiveClasses.length === 0 &&
                 selectedType !== 'manage-courses' ? (
-                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                <Card className='border-border/60 shadow-sm'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     No upcoming class instances matched your search.
                   </CardContent>
                 </Card>
               ) : null}
               {isLoadingManagedCourses && selectedType !== 'manage-courses' ? (
-                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                <Card className='border-border/60 shadow-sm'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     Loading upcoming classes...
                   </CardContent>
@@ -167,14 +167,14 @@ export function InstructorTrainingHubPage() {
                 <WaitingListItem key={student.id} student={student} />
               ))}
               {!isLoadingManagedCourses && filteredWaitingList.length === 0 ? (
-                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                <Card className='border-border/60 shadow-sm'>
                   <CardContent className='flex min-h-[176px] items-center justify-center py-8 text-center text-sm text-muted-foreground'>
                     No waitlisted students to show right now.
                   </CardContent>
                 </Card>
               ) : null}
               {isLoadingManagedCourses ? (
-                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                <Card className='border-border/60 shadow-sm'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     Loading waiting list...
                   </CardContent>
@@ -195,14 +195,14 @@ export function InstructorTrainingHubPage() {
                 <BookingCard key={booking.id} booking={booking} />
               ))}
               {!isLoadingManagedCourses && filteredBookings.length === 0 ? (
-                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                <Card className='border-border/60 shadow-sm'>
                   <CardContent className='flex min-h-[176px] items-center justify-center py-8 text-center text-sm text-muted-foreground'>
                     No booking sessions matched your search.
                   </CardContent>
                 </Card>
               ) : null}
               {isLoadingManagedCourses ? (
-                <Card className='border-border/60 bg-white shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+                <Card className='border-border/60 shadow-sm'>
                   <CardContent className='py-10 text-center text-sm text-muted-foreground'>
                     Loading bookings...
                   </CardContent>

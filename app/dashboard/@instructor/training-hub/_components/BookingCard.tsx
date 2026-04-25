@@ -11,7 +11,7 @@ type BookingCardProps = {
 
 export function BookingCard({ booking }: BookingCardProps) {
   return (
-    <article className='rounded-[12px] border border-border/60 bg-white px-3 py-3 shadow-[0_10px_24px_rgba(31,79,183,0.05)]'>
+    <article className='rounded-[12px] border border-border/60 bg-card px-3 py-3 shadow-sm'>
       <div className='flex items-start justify-between gap-3'>
         <div className='min-w-0'>
           <h3 className='truncate text-[0.98rem] font-semibold text-foreground sm:text-[1rem]'>
@@ -24,8 +24,8 @@ export function BookingCard({ booking }: BookingCardProps) {
           className={cn(
             'inline-flex shrink-0 rounded-full px-3 py-1 text-[0.74rem] font-medium',
             booking.statusTone === 'info'
-              ? 'bg-[color-mix(in_srgb,var(--primary)_10%,white)] text-primary'
-              : 'bg-[color-mix(in_srgb,var(--warning)_18%,white)] text-[color-mix(in_srgb,var(--warning)_92%,black)]',
+              ? 'bg-primary/10 text-primary'
+              : 'bg-warning/10 text-warning dark:text-amber-300',
           )}
         >
           {booking.status}
@@ -40,7 +40,7 @@ export function BookingCard({ booking }: BookingCardProps) {
           </div>
 
           {typeof booking.progress === 'number' ? (
-            <div className='mt-3 h-2.5 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--primary)_10%,white)]'>
+            <div className='mt-3 h-2.5 overflow-hidden rounded-full bg-primary/10'>
               <div
                 aria-hidden='true'
                 className='h-full rounded-full bg-primary'

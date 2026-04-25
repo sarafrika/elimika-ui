@@ -65,8 +65,8 @@ export function InstructorWaitingListPage() {
   );
 
   return (
-    <main className='mx-auto flex w-full max-w-[1280px] flex-col gap-5 bg-white px-3 py-4 sm:px-4 lg:px-5'>
-      <section className='flex flex-col gap-4 rounded-[14px] border border-border/50 bg-white p-4 shadow-[0_12px_30px_rgba(31,79,183,0.06)] sm:flex-row sm:items-end sm:justify-between sm:p-5'>
+    <main className='mx-auto flex w-full max-w-[1280px] flex-col gap-5 bg-background px-3 py-4 sm:px-4 lg:px-5'>
+      <section className='flex flex-col gap-4 rounded-[14px] border border-border/50 bg-card p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-5'>
         <div className='space-y-1'>
           <h1 className='text-[1.6rem] font-semibold tracking-[-0.03em] text-foreground sm:text-[1.85rem]'>
             Class Waiting List
@@ -84,9 +84,9 @@ export function InstructorWaitingListPage() {
         </Link>
       </section>
 
-      <section className='rounded-[14px] border border-border/50 bg-white p-3 shadow-[0_12px_30px_rgba(31,79,183,0.06)] sm:p-4'>
+      <section className='rounded-[14px] border border-border/50 bg-card p-3 shadow-sm sm:p-4'>
         <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px]'>
-          <label className='flex h-11 items-center gap-2 rounded-[10px] border border-border/60 px-3'>
+          <label className='flex h-11 items-center gap-2 rounded-[10px] border border-border/60 bg-background px-3'>
             <Search className='size-4 text-muted-foreground' />
             <Input
               aria-label='Search waiting list'

@@ -28,7 +28,7 @@ export function ManageCourseCard({ course }: ManageCourseCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(course.imageUrl);
 
   return (
-    <article className='rounded-[12px] border border-border/60 bg-white p-2.5 shadow-[0_10px_24px_rgba(31,79,183,0.05)] sm:p-3'>
+    <article className='rounded-[12px] border border-border/60 bg-card p-2.5 shadow-sm sm:p-3'>
       <div className='flex gap-3'>
         <div className='min-w-0 flex-1'>
           <div className='flex items-start gap-2'>
@@ -62,7 +62,7 @@ export function ManageCourseCard({ course }: ManageCourseCardProps) {
 
         <div
           aria-hidden='true'
-          className={`relative hidden h-[74px] w-[86px] shrink-0 overflow-hidden rounded-[10px] border border-white/60 sm:block ${accentClasses[course.accent]}`}
+          className={`relative hidden h-[74px] w-[86px] shrink-0 overflow-hidden rounded-[10px] border border-border/60 sm:block ${accentClasses[course.accent]}`}
         >
           {imageUrl ? (
             <Image
