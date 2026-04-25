@@ -1,5 +1,5 @@
-import ClassTrainingPage from './_components/ClassTrainingPage';
+import StudentClassTrainingPage from './_components/StudentClassTrainingPage';
 
 export default function TrainingInterfacePage() {
-  return <ClassTrainingPage />;
+  return <StudentClassTrainingPage />;
 }

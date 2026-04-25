@@ -1720,9 +1720,9 @@ export default function ClassTrainingPage({
     toast.success('Note shared for this session view.');
   };
 
-  // if (isLoading || rosterLoading || lessonsLoading) {
-  //   return <ConsoleSkeleton />;
-  // }
+  if (isLoading || rosterLoading || lessonsLoading) {
+    return <ConsoleSkeleton />;
+  }
 
   if (isError) {
     return (
