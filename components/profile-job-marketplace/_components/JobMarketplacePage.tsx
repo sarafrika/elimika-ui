@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BriefcaseBusiness,
   CalendarDays,
@@ -8,13 +8,18 @@ import {
   Filter,
   Globe2,
   GraduationCap,
+  Loader2,
   MapPin,
   Pencil,
   Plus,
+  Search,
+  ShieldCheck,
   SlidersHorizontal,
   Star,
   Trash2,
 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -47,8 +52,10 @@ import {
   cancelJobMutation,
   createJobMutation,
   getAllCoursesOptions,
+  listJobApplicationsOptions,
   listJobsOptions,
-  updateJobMutation,
+  listMyApplicationsOptions,
+  updateJobMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ApplyToJobData,
@@ -61,7 +68,7 @@ import type {
   LocationTypeEnum,
   SessionFormatEnum,
   StatusEnum4,
-  UpdateJobData,
+  UpdateJobData
 } from '@/services/client/types.gen';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
@@ -73,7 +80,8 @@ import { MarketplaceSidebar } from './MarketplaceSidebar';
 import { MarketplaceTabs } from './MarketplaceTabs';
 
 type JobFilter = 'all' | StatusEnum4;
-type MarketplaceTabId = 'full-time' | 'freelance' | 'internship' | 'remote';
+type MarketplaceTabId = 'all' | 'full-time' | 'freelance' | 'internship' | 'remote';
+type JobSort = 'newest' | 'oldest' | 'title-asc' | 'title-desc';
 
 type JobFormState = {
   organisation_uuid: string;
@@ -113,12 +121,19 @@ const statusOptions: Array<{ label: string; value: JobFilter }> = [
   { label: 'Filled', value: 'filled' },
   { label: 'Cancelled', value: 'cancelled' },
 ];
+const sortOptions: Array<{ label: string; value: JobSort }> = [
+  { label: 'Most Recent', value: 'newest' },
+  { label: 'Oldest First', value: 'oldest' },
+  { label: 'Title A-Z', value: 'title-asc' },
+  { label: 'Title Z-A', value: 'title-desc' },
+];
 const marketplaceTabs: Array<{
   id: MarketplaceTabId;
   label: string;
   count: number;
   icon: typeof BriefcaseBusiness;
 }> = [
+    { id: 'all', label: 'All', count: 0, icon: BriefcaseBusiness },
     { id: 'full-time', label: 'Full-Time', count: 0, icon: BriefcaseBusiness },
     { id: 'internship', label: 'Internship', count: 0, icon: GraduationCap },
     { id: 'freelance', label: 'Freelance', count: 0, icon: Star },
@@ -145,6 +160,8 @@ function matchesMarketplaceTab(job: ClassMarketplaceJob, tabId: MarketplaceTabId
     searchable.includes('consult');
 
   switch (tabId) {
+    case 'all':
+      return true;
     case 'remote':
       return isRemote;
     case 'internship':
@@ -195,6 +212,32 @@ function formatEnumLabel(value?: string | null) {
     .replace(/_/g, ' ')
     .toLowerCase()
     .replace(/(^|\s)\S/g, letter => letter.toUpperCase());
+}
+
+function getApplicationStatusLabel(status?: string | null) {
+  if (!status) return 'Not applied';
+  return formatEnumLabel(status);
+}
+
+function sortJobs(jobs: ClassMarketplaceJob[], sortBy: JobSort) {
+  return [...jobs].sort((left, right) => {
+    const leftTitle = (left.title ?? '').toLowerCase();
+    const rightTitle = (right.title ?? '').toLowerCase();
+    const leftCreated = left.created_date ? new Date(left.created_date).getTime() : 0;
+    const rightCreated = right.created_date ? new Date(right.created_date).getTime() : 0;
+
+    switch (sortBy) {
+      case 'oldest':
+        return leftCreated - rightCreated;
+      case 'title-asc':
+        return leftTitle.localeCompare(rightTitle);
+      case 'title-desc':
+        return rightTitle.localeCompare(leftTitle);
+      case 'newest':
+      default:
+        return rightCreated - leftCreated;
+    }
+  });
 }
 
 function shortId(value?: string | null) {
@@ -375,6 +418,9 @@ function JobCard({
   isManagementView,
   course,
   organisationName,
+  applicationStatus,
+  applicationCount,
+  applicationsHref,
 }: {
   job: ClassMarketplaceJob;
   onView: () => void;
@@ -383,8 +429,12 @@ function JobCard({
   isManagementView: boolean;
   course?: Course | null;
   organisationName?: string | null;
+  applicationStatus?: string | null;
+  applicationCount?: number;
+  applicationsHref?: string;
 }) {
   const title = job.title ?? 'Untitled job';
+  const applicationLabel = getApplicationStatusLabel(applicationStatus);
 
   return (
     <Card className='group flex gap-4 rounded-[22px] border-white/60 bg-card/95 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md'>
@@ -395,7 +445,14 @@ function JobCard({
       <div className='min-w-0 flex-1 space-y-3'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='min-w-0'>
-            <h3 className='truncate text-lg font-semibold text-foreground'>{title}</h3>
+            <div className='flex flex-wrap items-center gap-2'>
+              <h3 className='truncate text-lg font-semibold text-foreground'>{title}</h3>
+              {!isManagementView && applicationStatus ? (
+                <Badge variant='secondary' className='rounded-full px-3 py-1'>
+                  {applicationLabel}
+                </Badge>
+              ) : null}
+            </div>
             <p className='mt-0.5 text-sm text-muted-foreground'>
               {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayCourseLabel(job, course)}
             </p>
@@ -426,6 +483,13 @@ function JobCard({
           <Button variant='outline' className='rounded-xl' onClick={onView}>
             View
           </Button>
+          {isManagementView && applicationsHref ? (
+            <Button asChild variant='secondary' className='rounded-xl'>
+              <Link href={applicationsHref}>
+                View applications{typeof applicationCount === 'number' ? ` (${applicationCount})` : ''}
+              </Link>
+            </Button>
+          ) : null}
           {isManagementView && onEdit ? (
             <Button variant='outline' className='rounded-xl' onClick={onEdit}>
               <Pencil className='mr-1 size-4' />
@@ -453,6 +517,8 @@ function JobDetailsSheet({
   course,
   onEdit,
   onCancel,
+  application,
+  myApplicationsHref,
 }: {
   job: ClassMarketplaceJob | null;
   open: boolean;
@@ -462,9 +528,14 @@ function JobDetailsSheet({
   course?: Course | null;
   onEdit?: () => void;
   onCancel?: () => void;
+  application?: { status?: string | null; application_note?: string | null } | null;
+  myApplicationsHref?: string;
 }) {
   const queryClient = useQueryClient();
   const [applicationNote, setApplicationNote] = useState('');
+  const [showAllSessions, setShowAllSessions] = useState(false);
+  const alreadyApplied = Boolean(application);
+
 
   const applyMutation = useMutation({
     ...applyToJobMutation(),
@@ -473,6 +544,7 @@ function JobDetailsSheet({
       setApplicationNote('');
       onOpenChange(false);
       await queryClient.invalidateQueries({ queryKey: ['listJobApplications'] });
+      await queryClient.invalidateQueries({ queryKey: ['listMyApplications'] });
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to apply for this posting.');
@@ -492,8 +564,9 @@ function JobDetailsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='w-[94vw] max-w-2xl overflow-y-auto p-0'>
-        <div className='space-y-6 p-6'>
+      <SheetContent side='right' className='flex w-[min(98vw,650px)] max-w-none flex-col overflow-y-auto sm:max-w-none'
+      >
+        <div className='space-y-6 p-3 sm:p-6 mb-10'>
           <SheetHeader className='space-y-3 pr-10 text-left'>
             <div className='flex flex-wrap items-center gap-2'>
               <Badge variant='secondary' className='rounded-full px-2.5 py-1 text-xs font-medium'>
@@ -514,6 +587,84 @@ function JobDetailsSheet({
 
           <div className='space-y-4'>
             <JobStatsRow job={job} />
+
+            {!isManagementView && application ? (
+              <div className='rounded-2xl border bg-background/70 p-4'>
+                <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+                  Your application
+                </h3>
+                <div className='mt-2 flex flex-wrap items-center gap-2'>
+                  <Badge variant='secondary' className='rounded-full px-3 py-1'>
+                    {getApplicationStatusLabel(application.status)}
+                  </Badge>
+                  {myApplicationsHref ? (
+                    <Button asChild variant='outline' className='rounded-xl'>
+                      <Link href={myApplicationsHref}>View my applications</Link>
+                    </Button>
+                  ) : null}
+                </div>
+                {application.application_note ? (
+                  <p className='mt-3 whitespace-pre-line text-sm leading-6 text-muted-foreground'>
+                    {application.application_note}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="rounded-2xl border bg-background/70 p-4">
+              <h3 className="flex flex-row items-center gap-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Sessions
+                <p>                  ({job?.session_templates?.length})                </p>
+              </h3>
+
+              <div className="mt-3 space-y-2">
+                {(showAllSessions
+                  ? job.session_templates
+                  : job.session_templates?.slice(0, 10)
+                )?.map((session, idx) => {
+                  const start = new Date(session.start_time);
+                  const end = new Date(session.end_time);
+
+                  const hours =
+                    (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+
+                  return (
+                    <div
+                      key={idx}
+                      className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                    >
+                      <div className='flex flex-row gap-2'>
+                        <p className="font-medium">
+                          {start.toLocaleDateString()}
+                        </p>
+                        <p className="text-muted-foreground">(
+                          {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{" "}
+                          -{" "}
+                          {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                        </p>
+                      </div>
+
+                      <Badge className="bg-primary text-primary-foreground">
+                        {hours} hr{hours !== 1 ? "s" : ""}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {job?.session_templates?.length > 10 && (
+                <div className="mt-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="px-0"
+                    onClick={() => setShowAllSessions(prev => !prev)}
+                  >
+                    {showAllSessions ? "Show less" : `Show all (${job.session_templates.length})`}
+                  </Button>
+                </div>
+              )}
+            </div>
 
             <div className='rounded-2xl border bg-background/70 p-4'>
               <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
@@ -557,6 +708,17 @@ function JobDetailsSheet({
                 <Trash2 className='mr-1 size-4' />
                 Cancel job
               </Button>
+            </div>
+          ) : alreadyApplied ? (
+            <div className='space-y-3 rounded-2xl border bg-background/70 p-4'>
+              <p className='text-sm text-muted-foreground'>
+                You have already applied to this opportunity. Check your applications page for the latest status.
+              </p>
+              {myApplicationsHref ? (
+                <Button asChild className='rounded-xl'>
+                  <Link href={myApplicationsHref}>Go to my applications</Link>
+                </Button>
+              ) : null}
             </div>
           ) : (
             <div className='space-y-3 rounded-2xl border bg-background/70 p-4'>
@@ -714,7 +876,7 @@ function JobFormSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='flex w-[min(98vw,650px)] max-w-none flex-col overflow-y-auto p-3 sm:p-6 sm:max-w-none'
+      <SheetContent side='right' className='flex w-[min(98vw,700px)] max-w-none flex-col overflow-y-auto p-3 sm:p-6 sm:max-w-none'
       >
         <div className='space-y-6'>
           <SheetHeader className='space-y-3 pr-10 text-left'>
@@ -730,7 +892,7 @@ function JobFormSheet({
               {isEditMode ? 'Edit job posting' : 'Create a new job posting'}
             </SheetTitle>
             <SheetDescription>
-              Use the class creation layout to publish a job advert with the same payload shape.
+              Use the class creation layout to publish a job advert.
             </SheetDescription>
           </SheetHeader>
 
@@ -994,8 +1156,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const organisation = useOrganisation();
   const profile = useUserProfile();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const isOrganizationView = role === 'organization';
   const organisationUuid = organisation?.uuid ?? '';
+  const userUuid = profile?.uuid ?? '';
   const organisationName = organisation?.name ?? profile?.organizations?.[0]?.name ?? null;
 
   const [search, setSearch] = useState('');
@@ -1003,34 +1167,55 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const [visibilityFilter, setVisibilityFilter] = useState<'all' | ClassVisibilityEnum>('all');
   const [sessionFormatFilter, setSessionFormatFilter] = useState<'all' | SessionFormatEnum>('all');
   const [locationFilter, setLocationFilter] = useState<'all' | LocationTypeEnum>('all');
-  const [marketplaceTab, setMarketplaceTab] = useState<MarketplaceTabId>('full-time');
+  const [marketplaceTab, setMarketplaceTab] = useState<MarketplaceTabId>('all');
+  const [sortBy, setSortBy] = useState<JobSort>('newest');
   const [selectedJobUuid, setSelectedJobUuid] = useState<string | null>(null);
   const [pendingCancelJob, setPendingCancelJob] = useState<ClassMarketplaceJob | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<ClassMarketplaceJob | null>(null);
 
-  const query = useMemo(
-    () => ({
-      pageable: {
-        page: 0,
-        size: PAGE_SIZE,
-        sort: ['created_date,desc'],
-      },
-      ...(isOrganizationView
-        ? { organisation_uuid: organisationUuid || undefined }
-        : { status: 'open' }),
-    }),
-    [isOrganizationView, organisationUuid]
-  );
+  // const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
+  //   ...listJobsOptions({
+  //     query: {
+  //       pageable: {
+  //         page: 0,
+  //         size: PAGE_SIZE,
+  //         sort: ['created_date,desc'],
+  //       },
+  //       ...(isOrganizationView && organisationUuid ? { organisation_uuid: organisationUuid } : {}),
+  //     },
+  //   }),
+  //   enabled: true,
+  // });
+  const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
+    ...listJobsOptions({ query: { pageable: {}, organisation_uuid: "ec237ec5-f13c-4248-bf70-8d0099cb3a15" } }),
+    enabled: true,
+  });
+  const jobs = jobsResponse?.data?.content ?? [];
 
-  const { data: jobsResponse, isLoading } = useQuery({
-    ...listJobsOptions({
-      query,
-    }),
-    enabled: isOrganizationView ? Boolean(organisationUuid) : true,
+  const jobApplicationsQueryResults = useQueries({
+    queries: jobs.map(job => ({
+      ...listJobApplicationsOptions({
+        path: { jobUuid: job.uuid ?? '' },
+        query: { pageable: { page: 0, size: 1 } },
+      }),
+      enabled: Boolean(isOrganizationView && job.uuid),
+    })),
   });
 
-  const jobs = jobsResponse?.data?.content ?? [];
+  const myApplicationsQuery = useQuery({
+    ...listMyApplicationsOptions({
+      query: {
+        pageable: {
+          page: 0,
+          size: PAGE_SIZE,
+          sort: ['created_date,desc'],
+        },
+        status: undefined,
+      },
+    }),
+    enabled: Boolean(!isOrganizationView && userUuid),
+  });
 
   const { data: coursesResponse } = useQuery({
     ...getAllCoursesOptions({
@@ -1045,6 +1230,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   });
 
   const courses = coursesResponse?.data?.content ?? [];
+  const myApplications = myApplicationsQuery.data?.data?.content ?? [];
   const jobsByCourseId = useMemo(
     () =>
       new Map(
@@ -1060,14 +1246,34 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     [jobs, selectedJobUuid]
   );
 
-  const visibleJobs = useMemo(() => {
+  const applicationByJobUuid = useMemo(() => {
+    return new Map(myApplications.map(application => [application.job_uuid ?? '', application]));
+  }, [myApplications]);
+
+  const applicationCountsByJobUuid = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    jobApplicationsQueryResults.forEach((queryResult, index) => {
+      const jobUuid = jobs[index]?.uuid ?? '';
+      if (!jobUuid) return;
+
+      const totalValue =
+        queryResult.data?.data?.metadata?.totalElements ??
+        queryResult.data?.data?.content?.length ??
+        0;
+      counts.set(jobUuid, Number(totalValue));
+    });
+
+    return counts;
+  }, [jobApplicationsQueryResults, jobs]);
+
+  const jobsBeforeStatusFilter = useMemo(() => {
     return jobs.filter(job => {
       const searchable = [
         job.title,
         job.description,
         job.location_name,
         job.meeting_link,
-        job.status,
         job.location_type,
         job.class_visibility,
         job.session_format,
@@ -1079,30 +1285,31 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         .toLowerCase();
 
       const matchesSearch = !search.trim() || searchable.includes(search.trim().toLowerCase());
-      const matchesStatus = statusFilter === 'all' || job.status === statusFilter;
       const matchesVisibility =
         visibilityFilter === 'all' || job.class_visibility === visibilityFilter;
       const matchesSessionFormat =
         sessionFormatFilter === 'all' || job.session_format === sessionFormatFilter;
       const matchesLocation = locationFilter === 'all' || job.location_type === locationFilter;
 
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesVisibility &&
-        matchesSessionFormat &&
-        matchesLocation
-      );
+      return matchesSearch && matchesVisibility && matchesSessionFormat && matchesLocation;
     });
-  }, [jobs, locationFilter, search, sessionFormatFilter, statusFilter, visibilityFilter]);
+  }, [jobs, locationFilter, search, sessionFormatFilter, visibilityFilter]);
+
+  const filteredJobs = useMemo(() => {
+    return jobsBeforeStatusFilter.filter(job => statusFilter === 'all' || job.status === statusFilter);
+  }, [jobsBeforeStatusFilter, statusFilter]);
 
   const tabDefinitions = useMemo(
     () =>
       marketplaceTabs.map(tab => ({
         ...tab,
-        count: String(visibleJobs.filter(job => matchesMarketplaceTab(job, tab.id)).length),
+        count: String(
+          tab.id === 'all'
+            ? filteredJobs.length
+            : filteredJobs.filter(job => matchesMarketplaceTab(job, tab.id)).length
+        ),
       })),
-    [visibleJobs]
+    [filteredJobs]
   );
 
   const cancelMutation = useMutation({
@@ -1127,6 +1334,14 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     setFormOpen(true);
   };
 
+  if (isJobsLoading && !jobsResponse) {
+    return (
+      <main className='flex min-h-[60vh] items-center justify-center px-3 py-4 sm:px-5 lg:px-7'>
+        <Loader2 className='text-muted-foreground size-8 animate-spin' />
+      </main>
+    );
+  }
+
   return (
     <main className='min-h-screen px-3 py-4 sm:px-5 lg:px-7'>
       <div className='mx-auto max-w-[1560px]'>
@@ -1134,15 +1349,21 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
           <div className='hidden xl:sticky xl:top-4 xl:block xl:self-start'>
             <MarketplaceSidebar
               heading='Filters'
-              count={`${jobs.length} job posting${jobs.length === 1 ? '' : 's'}`}
+              count={`${filteredJobs.length} job posting${filteredJobs.length === 1 ? '' : 's'}`}
               groups={[
                 {
                   title: 'Status',
                   icon: Filter,
                   items: statusOptions.map(option => ({
                     label: option.label,
-                    count: option.value === 'all' ? String(jobs.length) : String(jobs.filter(job => job.status === option.value).length),
+                    count:
+                      option.value === 'all'
+                        ? String(jobsBeforeStatusFilter.length)
+                        : String(
+                          jobsBeforeStatusFilter.filter(job => job.status === option.value).length
+                        ),
                     active: statusFilter === option.value,
+                    onSelect: () => setStatusFilter(option.value),
                   })),
                 },
                 {
@@ -1150,13 +1371,17 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                   icon: MapPin,
                   items: locationTypeOptions.map(option => ({
                     label: formatEnumLabel(option),
-                    count: String(jobs.filter(job => job.location_type === option).length),
+                    count: String(jobsBeforeStatusFilter.filter(job => job.location_type === option).length),
                     active: locationFilter === option,
+                    onSelect: () => setLocationFilter(option),
                   })),
                 },
               ]}
               setAlertLabel='Set Alerts'
               applicationsLabel='My Applications'
+              onApplicationsClick={
+                !isOrganizationView ? () => router.push('/dashboard/opportunities/my-applications') : undefined
+              }
             />
           </div>
 
@@ -1177,6 +1402,45 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 ) : null}
               </div>
 
+              <div className='grid gap-3 border-b px-5 py-4 lg:grid-cols-[minmax(0,1fr)_220px_180px]'>
+                <label className='relative block'>
+                  <span className='sr-only'>Search jobs</span>
+                  <Input
+                    value={search}
+                    onChange={event => setSearch(event.target.value)}
+                    placeholder='Search job title, company, course, or location'
+                    className='h-11 rounded-xl pl-10'
+                  />
+                  <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+                </label>
+
+                <Select value={statusFilter} onValueChange={value => setStatusFilter(value as JobFilter)}>
+                  <SelectTrigger className='h-11 rounded-xl border-white/70 bg-background/80'>
+                    <SelectValue placeholder='All statuses' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={sortBy} onValueChange={value => setSortBy(value as JobSort)}>
+                  <SelectTrigger className='h-11 rounded-xl border-white/70 bg-background/80'>
+                    <SelectValue placeholder='Sort by' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Tabs
                 value={marketplaceTab}
                 onValueChange={value => setMarketplaceTab(value as MarketplaceTabId)}
@@ -1187,7 +1451,13 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 </div>
 
                 {tabDefinitions.map(tab => {
-                  const tabJobs = visibleJobs.filter(job => matchesMarketplaceTab(job, tab.id));
+                  const tabJobs =
+                    tab.id === 'all'
+                      ? sortJobs(filteredJobs, sortBy)
+                      : sortJobs(
+                        filteredJobs.filter(job => matchesMarketplaceTab(job, tab.id)),
+                        sortBy
+                      );
 
                   return (
                     <TabsContent key={tab.id} value={tab.id} className='mt-0 space-y-4 px-4 py-4 sm:px-5'>
@@ -1241,9 +1511,14 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                                         label: option.label,
                                         count:
                                           option.value === 'all'
-                                            ? String(jobs.length)
-                                            : String(jobs.filter(job => job.status === option.value).length),
+                                            ? String(jobsBeforeStatusFilter.length)
+                                            : String(
+                                              jobsBeforeStatusFilter.filter(
+                                                job => job.status === option.value
+                                              ).length
+                                            ),
                                         active: statusFilter === option.value,
+                                        onSelect: () => setStatusFilter(option.value),
                                       })),
                                     },
                                     {
@@ -1251,13 +1526,21 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                                       icon: MapPin,
                                       items: locationTypeOptions.map(option => ({
                                         label: formatEnumLabel(option),
-                                        count: String(jobs.filter(job => job.location_type === option).length),
+                                        count: String(
+                                          jobsBeforeStatusFilter.filter(job => job.location_type === option).length
+                                        ),
                                         active: locationFilter === option,
+                                        onSelect: () => setLocationFilter(option),
                                       })),
                                     },
                                   ]}
                                   setAlertLabel='Set Alerts'
                                   applicationsLabel='My Applications'
+                                  onApplicationsClick={
+                                    !isOrganizationView
+                                      ? () => router.push('/dashboard/opportunities/my-applications')
+                                      : undefined
+                                  }
                                 />
                               </SheetContent>
                             </Sheet>
@@ -1267,6 +1550,8 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                         <div className='grid gap-4 3xl:grid-cols-2'>
                           {tabJobs.map(job => {
                             const course = jobsByCourseId.get(job.course_uuid ?? '') ?? null;
+                            const application = applicationByJobUuid.get(job.uuid ?? '') ?? null;
+                            const applicationCount = applicationCountsByJobUuid.get(job.uuid ?? '') ?? 0;
 
                             return (
                               <JobCard
@@ -1278,6 +1563,13 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                                 onView={() => setSelectedJobUuid(job.uuid ?? null)}
                                 onEdit={isOrganizationView ? () => handleEdit(job) : undefined}
                                 onCancel={isOrganizationView ? () => setPendingCancelJob(job) : undefined}
+                                applicationStatus={application?.status ?? null}
+                                applicationCount={isOrganizationView ? applicationCount : undefined}
+                                applicationsHref={
+                                  isOrganizationView && job.uuid
+                                    ? `/dashboard/opportunities/${job.uuid}`
+                                    : undefined
+                                }
                               />
                             );
                           })}
@@ -1326,6 +1618,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         course={selectedJob ? jobsByCourseId.get(selectedJob.course_uuid ?? '') ?? null : null}
         onEdit={selectedJob ? () => handleEdit(selectedJob) : undefined}
         onCancel={selectedJob ? () => setPendingCancelJob(selectedJob) : undefined}
+        application={
+          selectedJob ? (applicationByJobUuid.get(selectedJob.uuid ?? '') ?? null) : null
+        }
+        myApplicationsHref={!isOrganizationView ? '/dashboard/opportunities/my-applications' : undefined}
       />
 
       <div className='w-full'>
