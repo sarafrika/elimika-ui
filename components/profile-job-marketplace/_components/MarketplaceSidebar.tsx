@@ -14,6 +14,8 @@ type MarketplaceSidebarProps = {
   groups: FilterGroup[];
   setAlertLabel: string;
   applicationsLabel: string;
+  onSetAlertsClick?: () => void;
+  onApplicationsClick?: () => void;
 };
 
 export function MarketplaceSidebar({
@@ -22,6 +24,8 @@ export function MarketplaceSidebar({
   groups,
   setAlertLabel,
   applicationsLabel,
+  onSetAlertsClick,
+  onApplicationsClick,
 }: MarketplaceSidebarProps) {
   return (
     <aside className='space-y-4'>
@@ -46,9 +50,12 @@ export function MarketplaceSidebar({
 
               <div className='space-y-2'>
                 {group.items.map(item => (
-                  <label
+                  <button
                     key={item.label}
-                    className='hover:bg-muted/40 flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-1.5 transition-colors'
+                    type='button'
+                    onClick={item.onSelect}
+                    className='hover:bg-muted/40 flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left transition-colors'
+                    aria-pressed={item.active}
                   >
                     <span className='flex items-center gap-3'>
                       <span
@@ -70,16 +77,23 @@ export function MarketplaceSidebar({
                         {item.count}
                       </Badge>
                     ) : null}
-                  </label>
+                  </button>
                 ))}
               </div>
             </section>
           );
         })}
 
-        <Button className='w-full rounded-xl'>{setAlertLabel}</Button>
+        <Button className='w-full rounded-xl' onClick={onSetAlertsClick} disabled={!onSetAlertsClick}>
+          {setAlertLabel}
+        </Button>
 
-        <Button variant='outline' className='w-full justify-between rounded-xl border-white/70 bg-background/80'>
+        <Button
+          variant='outline'
+          className='w-full justify-between rounded-xl border-white/70 bg-background/80'
+          onClick={onApplicationsClick}
+          disabled={!onApplicationsClick}
+        >
           {applicationsLabel}
           <ChevronRight className='size-4' />
         </Button>
