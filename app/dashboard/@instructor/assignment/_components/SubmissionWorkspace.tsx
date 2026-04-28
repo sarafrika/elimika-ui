@@ -42,8 +42,8 @@ export function SubmissionWorkspace({
   const displayScore = score || `${currentScore}`;
 
   return (
-    <section className='flex h-full min-h-0 flex-col overflow-hidden bg-[color-mix(in_oklch,var(--el-brand-50)_35%,var(--background))]'>
-      <div className='shrink-0 border-b bg-white px-4 py-4'>
+    <section className='flex h-full min-h-0 flex-col overflow-hidden bg-background'>
+      <div className='shrink-0 border-b bg-background px-4 py-4'>
         <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
           <div className='space-y-2'>
             <div className='flex flex-wrap items-center gap-2'>
@@ -74,7 +74,7 @@ export function SubmissionWorkspace({
 
       <div className='min-h-0 flex-1 overflow-y-auto p-4 md:p-5'>
         <div className='mx-auto max-w-5xl space-y-4 pb-6'>
-          <article className='border-border/60 rounded-2xl border bg-white shadow-sm'>
+          <article className='border-border/60 rounded-2xl border bg-background shadow-sm'>
             <div className='space-y-4 p-4'>
               <div className='rounded-xl border bg-background p-4'>
                 <div className='mb-3 flex items-center justify-between gap-3'>

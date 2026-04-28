@@ -1,8 +1,5 @@
 'use client';
 
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { useMemo, useState } from 'react';
 import { useUserProfile } from '@/context/profile-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import {
@@ -25,6 +22,9 @@ import type {
   Quiz,
   QuizAttempt,
 } from '@/services/client/types.gen';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { useMemo, useState } from 'react';
 import { AssignmentCard } from './AssignmentCard';
 import { AssignmentHeader } from './AssignmentHeader';
 import { AssignmentInsights } from './AssignmentInsights';
@@ -248,6 +248,7 @@ export function AssignmentPageClient() {
   const taskCards = useMemo<AssignmentCardData[]>(() => {
     const assignmentCards = assignmentSchedules
       .map(schedule => {
+        console.log(schedule, "SCHED")
         const assignment = schedule.assignment_uuid ? assignmentMap.get(schedule.assignment_uuid) : null;
         if (!assignment?.uuid || !schedule.lesson_uuid) return null;
 
@@ -272,6 +273,7 @@ export function AssignmentPageClient() {
               ? 'Grade Now'
               : 'View Submissions',
           classUuid: schedule.classUuid,
+          scheduleUuid: schedule?.uuid as string,
           classTitle: classInfo?.title || 'Class',
           courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || 'Course',
           dueLabel: formatDueLabel(schedule.due_at || assignment.due_date),
@@ -326,6 +328,7 @@ export function AssignmentPageClient() {
         const quizCard: AssignmentCardData = {
           ctaLabel: 'View Submissions',
           classUuid: schedule.classUuid,
+          scheduleUuid: schedule?.uuid as string,
           classTitle: classInfo?.title || 'Class',
           courseTitle: lessonInfo?.courseTitle || classInfo?.course?.name || 'Course',
           dueLabel: formatDueLabel(schedule.due_at),
@@ -427,6 +430,7 @@ export function AssignmentPageClient() {
     <main className='bg-background p-3 sm:p-4 md:p-6'>
       <div className='mx-auto max-w-7xl space-y-4 sm:space-y-5'>
         <AssignmentHeader />
+
         <AssignmentToolbar
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
@@ -437,8 +441,21 @@ export function AssignmentPageClient() {
         <div className='grid gap-5 2xl:grid-cols-[minmax(0,1fr)_320px]'>
           <section className='space-y-5'>
             {loading ? (
-              <div className='border-border/60 bg-card rounded-xl border p-4 text-xs text-muted-foreground shadow-sm sm:p-6 sm:text-sm'>
-                Loading lesson submissions...
+              <div className="border-border/60 bg-card rounded-xl border p-5 shadow-sm sm:p-6">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative items-center text-center size-10 shrink-0">
+                    <div className="absolute inset-0 rounded-full border-2 border-muted" />
+                    <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  </div>
+                  <div className="flex text-center flex-col gap-1 text-sm">
+                    <p className="font-semibold text-foreground">
+                      Loading lesson data...
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Fetching classes, assignments, and submissions
+                    </p>
+                  </div>
+                </div>
               </div>
             ) : filteredAssignments.length > 0 ? (
               <div className='grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>

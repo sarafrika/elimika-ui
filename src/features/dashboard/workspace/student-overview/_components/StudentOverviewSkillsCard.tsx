@@ -17,7 +17,7 @@ export function StudentOverviewSkillsCard({
 }: StudentOverviewSkillsCardProps) {
   return (
     <Card className='rounded-[20px] border-border p-6'>
-      <div className='flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+      <div className='flex min-w-0 gap-4 flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0 flex-1'>
           <h2 className='text-[1rem] font-semibold text-foreground'>Skills Progress</h2>
           <div className='mt-2 text-[2rem] leading-none font-semibold tracking-tight text-foreground'>
@@ -36,7 +36,7 @@ export function StudentOverviewSkillsCard({
         </div>
 
         <div
-          className='grid size-[108px] shrink-0 place-items-center rounded-full'
+          className='grid size-[106px] sm:size-[108px] shrink-0 place-items-center rounded-full'
           style={{
             background: `conic-gradient(
               color-mix(in srgb, var(--primary) 78%, white) 0 ${progress}%,
@@ -46,7 +46,7 @@ export function StudentOverviewSkillsCard({
             )`,
           }}
         >
-          <div className='grid size-[82px] place-items-center rounded-full bg-card text-center'>
+          <div className='grid size-[88px] sm:size-[88px] place-items-center rounded-full bg-card text-center'>
             <div>
               <div className='text-[1.55rem] leading-none font-semibold text-foreground'>{progress}%</div>
               <div className='mt-0.5 text-[0.5rem] uppercase tracking-[0.12em] text-muted-foreground'>

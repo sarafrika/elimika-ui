@@ -638,6 +638,12 @@ function RosterPanel({
     entry => getStudentAttendanceState(entry) === 'pending'
   ).length;
 
+  const total = presentCount + pendingCount + absentCount;
+
+  const presentPct = total ? (presentCount / total) * 100 : 0;
+  const pendingPct = total ? (pendingCount / total) * 100 : 0;
+  const absentPct = total ? (absentCount / total) * 100 : 0;
+
   return (
     <div className='flex h-full min-h-0 flex-col'>
       <div className='border-border/70 bg-card/90 space-y-3 border-b p-3'>
@@ -669,7 +675,7 @@ function RosterPanel({
           />
         </div>
       </div>
-      <ScrollArea className='min-h-0 flex-1'>
+      <ScrollArea className='min-h-0 flex-1 bg-background'>
         <div className='space-y-1.5 p-2'>
           {filteredRoster.map((entry: RosterEntry) => {
             const attendanceState = getStudentAttendanceState(entry);
@@ -716,19 +722,61 @@ function RosterPanel({
           )}
         </div>
       </ScrollArea>
+
       <div className='border-border/70 bg-card/90 border-t p-3'>
-        <div className='grid grid-cols-3 gap-2 text-xs'>
-          <div>
-            <p className='text-muted-foreground'>Present</p>
-            <p className='font-semibold'>{presentCount}</p>
+        <p className='text-xs text-muted-foreground mb-2'>Attendance rubric tracker</p>
+
+        <div className='grid grid-cols-2 items-center gap-3'>
+
+          {/* Donut */}
+          <div
+            className="grid size-[72px] shrink-0 place-items-center rounded-full"
+            style={{
+              background: `conic-gradient(
+          color-mix(in srgb, var(--primary) 85%, white) 0 ${presentPct}%,
+          color-mix(in srgb, var(--warning) 70%, white) ${presentPct}% ${presentPct + pendingPct}%,
+          color-mix(in srgb, var(--destructive) 80%, white) ${presentPct + pendingPct}% 100%
+        )`,
+            }}
+          >
+            <div className="grid size-[62px] place-items-center rounded-full bg-card text-center">
+              <div>
+                <div className="text-[0.9rem] font-semibold leading-none text-foreground">
+                  {total}
+                </div>
+                <div className="mt-0.5 text-[0.5rem] uppercase tracking-wide text-muted-foreground">
+                  students
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className='text-muted-foreground'>Pending</p>
-            <p className='font-semibold'>{pendingCount}</p>
-          </div>
-          <div>
-            <p className='text-muted-foreground'>Absent</p>
-            <p className='font-semibold'>{absentCount}</p>
+
+          {/* Legend */}
+          <div className='flex flex-col gap-2 text-xs'>
+            <div className='flex items-center gap-4'>
+              <div className='flex items-center gap-2'>
+                <span className='h-2.5 w-2.5 rounded-sm bg-primary' />
+                <p className='text-muted-foreground'>Present</p>
+              </div>
+              <p className='font-semibold text-foreground'>{presentCount}</p>
+            </div>
+
+            <div className='flex items-center gap-4'>
+              <div className='flex items-center gap-2'>
+                <span className='h-2.5 w-2.5 rounded-sm bg-warning/70' />
+                <p className='text-muted-foreground'>Pending</p>
+              </div>
+              <p className='font-semibold text-foreground'>{pendingCount}</p>
+            </div>
+
+            <div className='flex items-center gap-4'>
+              <div className='flex items-center gap-2'>
+                <span className='h-2.5 w-2.5 rounded-sm bg-destructive' />
+                <p className='text-muted-foreground'>Absent</p>
+              </div>
+              <p className='font-semibold text-foreground'>{absentCount}</p>
+            </div>
+
           </div>
         </div>
       </div>
@@ -797,7 +845,7 @@ function SubmissionPanel({
             View Rubric
           </Button>
         </div>
-        <div className='bg-muted grid grid-cols-3 gap-1 rounded-md p-1'>
+        <div className="bg-muted dark:bg-muted/40 grid grid-cols-3 gap-1 rounded-md p-1">
           {panelTabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activePanel === tab.value;
@@ -805,15 +853,27 @@ function SubmissionPanel({
             return (
               <button
                 key={tab.value}
-                type='button'
+                type="button"
                 onClick={() => setActivePanel(tab.value)}
-                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded px-1 text-[11px] font-medium transition-colors ${isActive
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={`
+          flex h-8 min-w-0 items-center justify-center gap-1.5
+          overflow-hidden rounded px-1 text-[11px] font-medium
+          transition-all
+
+          ${isActive
+                    ? `
+              bg-background text-foreground shadow-sm
+              dark:bg-primary dark:text-primary-foreground
+              dark:shadow-md
+            `
+                    : `
+              text-muted-foreground hover:text-foreground
+              dark:text-muted-foreground/70 dark:hover:text-foreground
+            `}
+        `}
               >
-                <Icon className='h-3.5 w-3.5 shrink-0' />
-                <span className='truncate'>{tab.label}</span>
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{tab.label}</span>
               </button>
             );
           })}
@@ -1898,7 +1958,7 @@ export default function ClassTrainingPage({
           />
         </aside>
 
-        <section className='min-h-0 overflow-hidden bg-[color-mix(in_oklch,var(--el-brand-50)_35%,var(--background))]'>
+        <section className='min-h-0 overflow-hidden bg-background'>
           <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
             <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
               <div className='min-w-0 w-full'>
@@ -1907,13 +1967,24 @@ export default function ClassTrainingPage({
                 </h2>
 
                 <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full max-w-xl'>
-                    <TabsList className='grid w-full grid-cols-3'>
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-xl">
+                    <TabsList className="grid w-full grid-cols-3 bg-muted dark:bg-muted/40 p-1 rounded-lg">
                       {TAB_ITEMS.map(tab => (
                         <TabsTrigger
                           key={tab.value}
                           value={tab.value}
-                          className='truncate text-xs sm:text-sm'
+                          className="
+          truncate text-xs sm:text-sm rounded-md px-2 py-1.5
+          text-muted-foreground dark:text-muted-foreground/70
+
+          data-[state=active]:bg-white
+          data-[state=active]:text-foreground
+          data-[state=active]:shadow-sm
+
+          dark:data-[state=active]:bg-primary
+          dark:data-[state=active]:text-primary-foreground
+          dark:data-[state=active]:shadow-md
+        "
                         >
                           {tab.label}
                         </TabsTrigger>

@@ -29,7 +29,7 @@ export function SubmissionStudentList({
   students,
 }: SubmissionStudentListProps) {
   return (
-    <div className='flex h-full min-h-0 flex-col border-r bg-white'>
+    <div className='flex h-full min-h-0 flex-col border-r bg-background'>
       <div className='space-y-3 border-b p-4'>
         <div className='flex items-center justify-between gap-3'>
           <div>

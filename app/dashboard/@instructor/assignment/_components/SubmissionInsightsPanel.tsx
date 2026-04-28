@@ -20,7 +20,7 @@ export function SubmissionInsightsPanel({
   const summaryMetrics = rubricMatrix?.criteria.slice(0, 4) ?? [];
 
   return (
-    <aside className='flex h-full min-h-0 flex-col border-l bg-white'>
+    <aside className='flex h-full min-h-0 flex-col border-l bg-background'>
       <div className='border-b p-4'>
         <p className='text-lg font-semibold'>Score: {student.score}</p>
         <p className='text-muted-foreground text-sm'>{student.name}</p>
@@ -28,7 +28,7 @@ export function SubmissionInsightsPanel({
 
       <div className='min-h-0 flex-1 overflow-auto p-4'>
         <div className='space-y-4'>
-          <div className='rounded-xl border bg-background/80 p-4'>
+          <div className='rounded-xl border bg-background p-4'>
             <div className='flex items-center justify-between gap-3'>
               <p className='text-2xl font-semibold'>
                 {student.score} <span className='text-muted-foreground text-xl'>points</span>
@@ -40,7 +40,7 @@ export function SubmissionInsightsPanel({
             </div>
           </div>
 
-          <div className='rounded-xl border bg-background/80'>
+          <div className='rounded-xl border bg-background'>
             <div className='border-b px-4 py-3'>
               <p className='font-medium'>Assessment Rubric</p>
             </div>

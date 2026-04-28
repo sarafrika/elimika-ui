@@ -162,10 +162,10 @@ const getNavigationStep = (date: Date, view: SchedulerView, direction: -1 | 1) =
 const formatStatus = (status?: string | null) =>
   status
     ? status
-        .toLowerCase()
-        .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
+      .toLowerCase()
+      .split('_')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
     : 'Scheduled';
 
 const inferCategory = (value?: string | null): SchedulerCategory => {
@@ -302,6 +302,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
   });
 
   const { classes: classData, loading: organizationLoading } = useAmdinClassesWithDetails();
+  console.log(classData, "CLSDATA")
 
   // get student instrcutor for classes from the classData.
   // or use the instructor uuid from the studentScheduleQuery to get the instructor name.

@@ -2,6 +2,7 @@ export type AssignmentStatus = 'all' | 'ongoing' | 'graded' | 'overdue';
 
 export type AssignmentCardData = {
   badge?: string;
+  scheduleUuid: string;
   classUuid?: string;
   ctaLabel: string;
   classTitle?: string;
