@@ -168,7 +168,7 @@ export function AlertsTab() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value={activeTab} className='mt-5'>
+        <TabsContent value={activeTab} className='mt-5 mb-20'>
           <div className='space-y-4'>
             {filteredNotifications.length === 0 ? (
               <Card className='p-8 sm:p-12'>

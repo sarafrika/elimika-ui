@@ -1,7 +1,107 @@
 import { Award, BriefcaseBusiness, ClipboardList } from 'lucide-react';
 import type { AlertNotification, ChatMessage, MessagePreview, ResourceItem } from './types';
 
-export const sampleAlertNotifications: AlertNotification[] = [];
+export const sampleAlertNotifications: AlertNotification[] = [
+  {
+    id: '1',
+    type: 'message',
+    title: 'New Message from Instructor',
+    message: 'You have received a new message regarding your last assignment.',
+    timestamp: new Date(),
+    status: 'unread',
+    priority: 'medium',
+    sender: {
+      name: 'John Doe',
+      avatar: '/avatars/john.png',
+      role: 'Instructor',
+    },
+    actions: [
+      { label: 'Reply', type: 'reply' },
+      { label: 'View', type: 'view', variant: 'secondary' },
+    ],
+  },
+  {
+    id: '2',
+    type: 'request',
+    title: 'Enrollment Request',
+    message: 'Jane Smith has requested to join your course.',
+    timestamp: new Date(),
+    status: 'unread',
+    priority: 'high',
+    sender: {
+      name: 'Jane Smith',
+      avatar: '/avatars/jane.png',
+      role: 'Student',
+    },
+    metadata: {
+      courseName: 'Frontend Development Bootcamp',
+    },
+    actions: [
+      { label: 'Approve', type: 'approve' },
+      { label: 'Reject', type: 'reject', variant: 'destructive' },
+    ],
+  },
+  {
+    id: '3',
+    type: 'payment',
+    title: 'Payment Received',
+    message: 'You have received a payment for your course.',
+    timestamp: new Date(),
+    status: 'read',
+    priority: 'low',
+    metadata: {
+      amount: 5000,
+      courseName: 'UI/UX Design Masterclass',
+    },
+    actions: [{ label: 'View', type: 'view' }],
+  },
+  {
+    id: '4',
+    type: 'class_update',
+    title: 'Class Schedule Updated',
+    message: 'Your React class has been rescheduled to Friday.',
+    timestamp: new Date(),
+    status: 'unread',
+    priority: 'medium',
+    metadata: {
+      className: 'React Advanced Patterns',
+    },
+    actions: [{ label: 'View', type: 'view' }],
+  },
+  {
+    id: '5',
+    type: 'achievement',
+    title: 'New Achievement Unlocked',
+    message: 'You have completed 5 courses! Keep going!',
+    timestamp: new Date(),
+    status: 'read',
+    priority: 'low',
+    actions: [{ label: 'View', type: 'view' }],
+  },
+  {
+    id: '6',
+    type: 'reminder',
+    title: 'Assignment Deadline Reminder',
+    message: 'Your assignment is due in 24 hours.',
+    timestamp: new Date(),
+    status: 'unread',
+    priority: 'urgent',
+    metadata: {
+      className: 'Data Structures',
+    },
+    actions: [{ label: 'View', type: 'view' }],
+  },
+  {
+    id: '7',
+    type: 'system',
+    title: 'System Maintenance',
+    message: 'The platform will undergo maintenance at midnight.',
+    timestamp: new Date(),
+    status: 'read',
+    priority: 'low',
+    actions: [{ label: 'Dismiss', type: 'dismiss' }],
+  },
+];
 
 export const messagePreviews: MessagePreview[] = [
   {

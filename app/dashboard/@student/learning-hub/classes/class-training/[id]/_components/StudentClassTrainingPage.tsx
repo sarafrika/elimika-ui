@@ -665,7 +665,7 @@ function RosterPanel({
           />
         </div>
       </div>
-      <ScrollArea className='min-h-0 flex-1'>
+      <ScrollArea className='min-h-0 flex-1 bg-background'>
         <div className='space-y-1.5 p-2'>
           {filteredRoster.map((entry: RosterEntry) => {
             const attendanceState = getStudentAttendanceState(entry);

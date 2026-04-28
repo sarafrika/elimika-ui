@@ -275,7 +275,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
     <div className='fixed inset-0 z-[100] bg-[color-mix(in_oklch,var(--el-brand-50)_80%,var(--background))]'>
       <header className='bg-primary text-primary-foreground flex h-16 items-center justify-between gap-3 border-b px-4 shadow-sm'>
         <div className='flex min-w-0 items-center gap-3'>
-          <span className='flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-lg font-semibold'>
+          <span className='flex h-9 w-9 items-center justify-center rounded-full text-lg font-semibold'>
             {filteredStudents.length}
           </span>
           <div className='min-w-0'>
@@ -395,7 +395,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
           />
         </div>
 
-        <div className='hidden min-h-0 min-w-0 overflow-hidden xl:block'>
+        <div className='min-h-0 min-w-0 overflow-hidden xl:block'>
           {selectedStudent ? (
             <SubmissionInsightsPanel
               rubricMatrix={rubricMatrix}

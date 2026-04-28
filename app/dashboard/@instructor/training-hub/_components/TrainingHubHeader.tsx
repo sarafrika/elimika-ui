@@ -4,7 +4,15 @@ import Link from 'next/link';
 
 export function TrainingHubHeader() {
   return (
-    <header className='flex flex-col gap-4 rounded-[14px] border border-border/50 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_4%,white),white_54%,color-mix(in_srgb,var(--primary)_9%,white))] px-4 py-4 shadow-[0_12px_30px_rgba(31,79,183,0.08)] sm:px-5 sm:py-5 lg:flex-row lg:items-start lg:justify-between lg:px-6 lg:py-5'>
+    <header
+      className="flex flex-col gap-4 rounded-[14px] border border-border/50 
+bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_4%,white),white_54%,color-mix(in_srgb,var(--primary)_9%,white))]
+dark:border-border/30
+dark:bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_12%,var(--background)),var(--background)_60%,color-mix(in_srgb,var(--primary)_18%,var(--background)))]
+px-4 py-4 shadow-[0_12px_30px_rgba(31,79,183,0.08)]
+dark:shadow-[0_12px_30px_rgba(0,0,0,0.6)]
+sm:px-5 sm:py-5 lg:flex-row lg:items-start lg:justify-between lg:px-6 lg:py-5"
+    >
       <div className='min-w-0'>
         <h1 className='text-[1.7rem] leading-none font-semibold tracking-[-0.03em] text-foreground sm:text-[1.85rem] lg:text-[1.95rem]'>
           Training Hub

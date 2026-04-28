@@ -1,11 +1,14 @@
 'use client';
 
-import { ArrowUpRight, BookText, CalendarClock, Files, GraduationCap, Layers3 } from 'lucide-react';
-import Link from 'next/link';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowUpRight, BookText, CalendarClock, Files, GraduationCap, Layers3 } from 'lucide-react';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { deleteAssignmentScheduleMutation, deleteQuizScheduleMutation, getAssignmentSchedulesQueryKey, getQuizSchedulesQueryKey } from '../../../../../services/client/@tanstack/react-query.gen';
 import type { AssignmentCardData } from './assignment-types';
 
 type AssignmentCardProps = {
@@ -24,6 +27,52 @@ const iconTone: Record<AssignmentCardData['iconTone'], string> = {
 };
 
 export function AssignmentCard({ assignment }: AssignmentCardProps) {
+  const qc = useQueryClient()
+  const deleteAssignmentSchedule = useMutation(deleteAssignmentScheduleMutation())
+  const deleteQuizSchedule = useMutation(deleteQuizScheduleMutation())
+
+  const handleDelete = () => {
+    const isQuiz = assignment.taskType === 'quiz';
+
+    const confirmed = confirm(
+      `Are you sure you want to remove this ${isQuiz ? 'quiz' : 'assignment'}?`
+    );
+    if (!confirmed) return;
+
+    const payload = {
+      path: {
+        classUuid: assignment?.classUuid as string,
+        scheduleUuid: assignment.scheduleUuid,
+      },
+    };
+
+    if (isQuiz) {
+      deleteQuizSchedule.mutate(payload, {
+        onSuccess: () => {
+          qc.invalidateQueries({
+            queryKey: getQuizSchedulesQueryKey({ path: { classUuid: assignment.classUuid as string } }),
+          });
+          toast.success('Quiz removed successfully');
+        },
+        onError: (error) => {
+          toast.error(error?.message);
+        },
+      });
+    } else {
+      deleteAssignmentSchedule.mutate(payload, {
+        onSuccess: (data) => {
+          qc.invalidateQueries({
+            queryKey: getAssignmentSchedulesQueryKey({ path: { classUuid: assignment.classUuid as string } }),
+          });
+          toast.success('Assignment removed successfully');
+        },
+        onError: (error) => {
+          toast.error(error?.message);
+        },
+      });
+    }
+  };
+
   return (
     <article className='group border-border/70 bg-card relative overflow-hidden rounded-xl border p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md sm:p-4 lg:p-5'>
       <div
@@ -151,25 +200,40 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
           <p className='text-muted-foreground text-xs sm:text-sm'>
             {assignment.taskType === 'quiz' ? 'Quiz task' : 'Assignment task'}
           </p>
-          <Button
-            asChild
-            className={cn(
-              'h-10 w-full rounded-xl px-4 text-xs font-semibold sm:w-auto sm:text-sm',
-              assignment.ctaLabel === 'Grade Now'
-                ? 'bg-warning text-warning-foreground hover:bg-warning/90'
-                : 'bg-primary hover:bg-primary/90'
-            )}
-          >
-            <Link
-              href={{
-                pathname: `/dashboard/assignment/${assignment.id}`,
-                query: assignment.classUuid ? { classId: assignment.classUuid } : undefined,
-              }}
+
+          <div className='flex flex-row items-center gap-4' >
+            <Button
+              onClick={handleDelete}
+              disabled={deleteAssignmentSchedule.isPending}
+              className="h-10 w-full rounded-md px-4 text-xs font-semibold sm:w-auto sm:text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {assignment.ctaLabel}
-              <ArrowUpRight className='h-4 w-4' />
-            </Link>
-          </Button>
+              {deleteAssignmentSchedule.isPending
+                ? 'Removing...'
+                : assignment.taskType === 'quiz'
+                  ? 'Remove Quiz'
+                  : 'Remove Assignment'}
+            </Button>
+
+            <Button
+              asChild
+              className={cn(
+                'h-10 w-full rounded-md px-4 text-xs font-semibold sm:w-auto sm:text-sm',
+                assignment.ctaLabel === 'Grade Now'
+                  ? 'bg-warning text-warning-foreground hover:bg-warning/90'
+                  : 'bg-primary hover:bg-primary/90'
+              )}
+            >
+              <Link
+                href={{
+                  pathname: `/dashboard/assignment/${assignment.id}`,
+                  query: assignment.classUuid ? { classId: assignment.classUuid } : undefined,
+                }}
+              >
+                {assignment.ctaLabel}
+                <ArrowUpRight className='h-4 w-4' />
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </article>
