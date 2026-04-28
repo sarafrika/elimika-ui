@@ -248,7 +248,6 @@ export function AssignmentPageClient() {
   const taskCards = useMemo<AssignmentCardData[]>(() => {
     const assignmentCards = assignmentSchedules
       .map(schedule => {
-        console.log(schedule, "SCHED")
         const assignment = schedule.assignment_uuid ? assignmentMap.get(schedule.assignment_uuid) : null;
         if (!assignment?.uuid || !schedule.lesson_uuid) return null;
 
