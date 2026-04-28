@@ -55,7 +55,7 @@ function FilterPill({
     <button
       onClick={onClick}
       className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${active
-        ? 'bg-blue-600 text-white shadow-sm'
+        ? 'bg-primary text-white shadow-sm'
         : 'bg-muted text-muted-foreground hover:bg-muted/80'
         }`}
     >
@@ -91,9 +91,9 @@ function CourseProgressWidget({
           </div>
         ))}
       </div>
-      <div className='h-2 overflow-hidden rounded-full bg-gray-200'>
+      <div className='h-2 overflow-hidden rounded-full bg-muted'>
         <div
-          className='h-full rounded-full bg-emerald-500 transition-all'
+          className='h-full rounded-full bg-success/50 transition-all'
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -112,8 +112,8 @@ function RecommendedItem({
 }) {
   return (
     <div className='flex items-center gap-3'>
-      <div className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-100'>
-        <Star className='size-5 text-blue-600' />
+      <div className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10'>
+        <Star className='size-5 text-primary/60' />
       </div>
       <div className='min-w-0 flex-1'>
         <p className='text-foreground truncate text-sm font-semibold'>{title}</p>
@@ -140,29 +140,37 @@ function MilestoneItem({
   return (
     <div className='flex items-start gap-3'>
       <div
-        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${icon === 'award' ? 'bg-orange-100' : 'bg-blue-100'
+        className={`flex size-9 shrink-0 items-center justify-center rounded-full ${icon === 'award' ? 'bg-accent/20' : 'bg-primary/10'
           }`}
       >
         {icon === 'award' ? (
-          <Award className='size-5 text-orange-500' />
+          <Award className='size-5 text-accent-foreground' />
         ) : (
-          <Trophy className='size-5 text-blue-500' />
+          <Trophy className='size-5 text-primary' />
         )}
       </div>
+
       <div className='min-w-0 flex-1'>
         <p className='text-foreground text-sm font-semibold'>{title}</p>
+
         {rating !== undefined && (
           <div className='mt-0.5 flex items-center gap-0.5'>
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`size-3 ${i < rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
+                className={`size-3 ${i < rating
+                  ? 'fill-primary text-primary'
+                  : 'text-muted-foreground'
+                  }`}
               />
             ))}
           </div>
         )}
+
         {subtitle && (
-          <p className='text-muted-foreground mt-0.5 text-[11px]'>{subtitle}</p>
+          <p className='text-muted-foreground mt-0.5 text-[11px]'>
+            {subtitle}
+          </p>
         )}
       </div>
     </div>
@@ -248,7 +256,7 @@ export function StudentMyCoursesPage() {
         ctaKind: 'link',
         showInstructorCta: false,
         detailsHref: buildWorkspaceAliasPath('student', `/dashboard/courses/${course.uuid}`),
-        enrollHref: buildWorkspaceAliasPath('student', `/dashboard/schedule/classes/${classId}`),
+        enrollHref: buildWorkspaceAliasPath('student', `/dashboard/learning-hub/classes/${classId}`),
         instructorHref: buildWorkspaceAliasPath(
           'student',
           `/dashboard/courses/instructor?courseId=${course.uuid}`
@@ -308,7 +316,7 @@ export function StudentMyCoursesPage() {
         </div>
         <Button
           asChild
-          className='h-9 gap-1.5 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-none hover:bg-blue-700'
+          className='h-9 gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-none hover:bg-primary/80'
         >
           <Link href='/dashboard/workspace/student/courses'>
             <Plus className='size-4' />
@@ -320,9 +328,9 @@ export function StudentMyCoursesPage() {
       {/* ── Main layout: content + sidebar ──────────────────────────────── */}
       <div className='flex flex-col gap-5 lg:flex-row lg:items-start'>
         {/* ── Left: Course list ──────────────────────────────────────────── */}
-        <div className='min-w-0 flex-1 space-y-4'>
+        <div className='min-w-0 flex-1 space-y-8'>
           {/* Filters & controls */}
-          <div className='flex flex-col gap-3'>
+          <div className='flex flex-col gap-6'>
             {/* Tab row */}
             <div className='flex flex-wrap items-center gap-2'>
               <FilterPill
@@ -350,7 +358,7 @@ export function StudentMyCoursesPage() {
                   <select
                     value={sortBy}
                     onChange={e => setSortBy(e.target.value)}
-                    className='border-border bg-card text-foreground appearance-none rounded-lg border py-1.5 pl-3 pr-8 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500'
+                    className='border-border bg-card text-foreground appearance-none rounded-md border py-1.5 pl-3 pr-8 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/50'
                   >
                     {['Auto-Suggested', 'A-Z', 'Z-A', 'Recently Accessed', 'Progress'].map(opt => (
                       <option key={opt}>{opt}</option>
@@ -370,10 +378,10 @@ export function StudentMyCoursesPage() {
                   placeholder='Search'
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className='border-border bg-card text-foreground placeholder:text-muted-foreground w-full rounded-xl border py-2 pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+                  className='border-border bg-card text-foreground placeholder:text-muted-foreground w-full rounded-md border py-2 pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary/50'
                 />
               </div>
-              <button className='border-border bg-card text-muted-foreground flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium'>
+              <button className='border-border bg-card text-muted-foreground flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium'>
                 <Filter className='size-4' />
                 Filter by All Categories
                 <ChevronDown className='size-4' />
@@ -539,7 +547,7 @@ export function StudentMyCoursesPage() {
                 <Button
                   asChild
                   size='sm'
-                  className='mt-4 w-full rounded-xl bg-blue-600 text-xs font-semibold text-white shadow-none hover:bg-blue-700'
+                  className='mt-4 w-full rounded-xl bg-primary/60 text-xs font-semibold text-white shadow-none hover:bg-primary/70'
                 >
                   <Link href='/dashboard/workspace/student/report'>
                     View Report
