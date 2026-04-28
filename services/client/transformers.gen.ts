@@ -251,6 +251,8 @@ import type {
   Search1Response,
   GetTrainingBranchesByOrganisation1Response,
   GetStudentScheduleResponse,
+  StartScheduledInstanceResponse,
+  EndScheduledInstanceResponse,
   GetScheduledInstanceResponse,
   GetInstructorScheduleResponse,
   GetStudentBookingsResponse,
@@ -1950,6 +1952,12 @@ const scheduledInstanceSchemaResponseTransformer = (data: any) => {
   if (data.updated_date) {
     data.updated_date = new Date(data.updated_date);
   }
+  if (data.started_at) {
+    data.started_at = new Date(data.started_at);
+  }
+  if (data.concluded_at) {
+    data.concluded_at = new Date(data.concluded_at);
+  }
   if (data.duration_minutes) {
     data.duration_minutes = BigInt(data.duration_minutes.toString());
   }
@@ -1973,6 +1981,20 @@ export const scheduleClassResponseTransformer = async (
 export const blockInstructorTimeResponseTransformer = async (
   data: any
 ): Promise<BlockInstructorTimeResponse> => {
+  data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
+  return data;
+};
+
+export const startScheduledInstanceResponseTransformer = async (
+  data: any
+): Promise<StartScheduledInstanceResponse> => {
+  data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
+  return data;
+};
+
+export const endScheduledInstanceResponseTransformer = async (
+  data: any
+): Promise<EndScheduledInstanceResponse> => {
   data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
   return data;
 };

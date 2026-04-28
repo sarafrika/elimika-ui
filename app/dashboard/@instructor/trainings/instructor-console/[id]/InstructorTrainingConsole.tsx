@@ -581,6 +581,10 @@ export default function InstructorTrainingConsole() {
         session_format: classData?.session_format,
         meeting_url: schedule.meeting_url ?? classData?.meeting_link,
         status: schedule.status,
+        started_at: schedule.started_at,
+        concluded_at: schedule.concluded_at,
+        can_be_started: schedule.can_be_started,
+        can_be_ended: schedule.can_be_ended,
       })),
     [classData, classId, course?.name, sortedSchedules]
   );

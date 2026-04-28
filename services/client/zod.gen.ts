@@ -4656,6 +4656,27 @@ export const zClassDefinition = z
       .describe(
         '**[REQUIRED]** Inline session templates with time slots and recurrence rules to schedule class instances during creation.\nconflict_resolution per template:\n- FAIL: stop scheduling if any conflict; response 409 with conflicts.\n- SKIP: schedule non-conflicting occurrences; return conflicts for skipped dates.\n- ROLLOVER: push conflicting dates forward by the recurrence interval (bounded retries) and extend the series; return unrecoverable conflicts.\n'
       ),
+    scheduled_session_count: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Number of countable scheduled sessions for this class definition.'
+      )
+      .readonly()
+      .optional(),
+    completed_session_count: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Number of completed scheduled sessions for this class definition.'
+      )
+      .readonly()
+      .optional(),
+    class_progress_percentage: z
+      .number()
+      .describe('**[READ-ONLY]** Completion percentage for scheduled class sessions.')
+      .readonly()
+      .optional(),
     created_date: z
       .string()
       .datetime()
@@ -5464,7 +5485,7 @@ export const zApiResponseBoolean = z.object({
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
 export const zStatusEnum5 = z
-  .enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'])
+  .enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'])
   .describe('**[OPTIONAL]** Current status of the scheduled instance.');
 
 /**
@@ -5533,6 +5554,18 @@ export const zScheduledInstance = z
       .string()
       .describe('**[OPTIONAL]** Reason for cancellation if status is CANCELLED.')
       .optional(),
+    started_at: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the scheduled instance was started.')
+      .readonly()
+      .optional(),
+    concluded_at: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the scheduled instance was concluded.')
+      .readonly()
+      .optional(),
     created_date: z
       .string()
       .datetime()
@@ -5588,6 +5621,16 @@ export const zScheduledInstance = z
     can_be_cancelled: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be ended.')
       .readonly()
       .optional(),
   })
@@ -13845,6 +13888,32 @@ export const zUpdateScheduledInstanceStatusData = z.object({
  * Status updated successfully
  */
 export const zUpdateScheduledInstanceStatusResponse = zApiResponseVoid;
+
+export const zStartScheduledInstanceData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instanceUuid: z.string().uuid().describe('UUID of the scheduled instance'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Scheduled instance started successfully
+ */
+export const zStartScheduledInstanceResponse = zApiResponseScheduledInstance;
+
+export const zEndScheduledInstanceData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instanceUuid: z.string().uuid().describe('UUID of the scheduled instance'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Scheduled instance ended successfully
+ */
+export const zEndScheduledInstanceResponse = zApiResponseScheduledInstance;
 
 export const zReorderScoringLevelsData = z.object({
   body: z.record(z.number().int()),

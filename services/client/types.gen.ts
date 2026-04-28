@@ -3137,6 +3137,18 @@ export type ClassDefinition = {
    */
   session_templates: Array<ClassSessionTemplate>;
   /**
+   * **[READ-ONLY]** Number of countable scheduled sessions for this class definition.
+   */
+  readonly scheduled_session_count?: number;
+  /**
+   * **[READ-ONLY]** Number of completed scheduled sessions for this class definition.
+   */
+  readonly completed_session_count?: number;
+  /**
+   * **[READ-ONLY]** Completion percentage for scheduled class sessions.
+   */
+  readonly class_progress_percentage?: number;
+  /**
    * **[READ-ONLY]** Timestamp when the class definition was first created. Automatically set by the system.
    */
   readonly created_date?: Date;
@@ -3907,6 +3919,14 @@ export type ScheduledInstance = {
    */
   cancellation_reason?: string;
   /**
+   * **[READ-ONLY]** Timestamp when the scheduled instance was started.
+   */
+  readonly started_at?: Date;
+  /**
+   * **[READ-ONLY]** Timestamp when the scheduled instance was concluded.
+   */
+  readonly concluded_at?: Date;
+  /**
    * **[READ-ONLY]** Timestamp when the scheduled instance was first created. Automatically set by the system.
    */
   readonly created_date?: Date;
@@ -3942,6 +3962,14 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be started.
+   */
+  readonly can_be_started?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be ended.
+   */
+  readonly can_be_ended?: boolean;
 };
 
 /**
@@ -8511,6 +8539,7 @@ export const StatusEnum5 = {
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
+  BLOCKED: 'BLOCKED',
 } as const;
 
 /**
@@ -18967,6 +18996,85 @@ export type UpdateScheduledInstanceStatusResponses = {
 
 export type UpdateScheduledInstanceStatusResponse =
   UpdateScheduledInstanceStatusResponses[keyof UpdateScheduledInstanceStatusResponses];
+
+export type StartScheduledInstanceData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the scheduled instance
+     */
+    instanceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/timetable/schedule/{instanceUuid}/start';
+};
+
+export type StartScheduledInstanceErrors = {
+  /**
+   * Scheduled instance cannot be started
+   */
+  400: ApiResponseVoid;
+  /**
+   * Scheduled instance not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type StartScheduledInstanceError =
+  StartScheduledInstanceErrors[keyof StartScheduledInstanceErrors];
+
+export type StartScheduledInstanceResponses = {
+  /**
+   * Scheduled instance started successfully
+   */
+  200: ApiResponseScheduledInstance;
+};
+
+export type StartScheduledInstanceResponse =
+  StartScheduledInstanceResponses[keyof StartScheduledInstanceResponses];
+
+export type EndScheduledInstanceData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the scheduled instance
+     */
+    instanceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/timetable/schedule/{instanceUuid}/end';
+};
+
+export type EndScheduledInstanceErrors = {
+  /**
+   * Scheduled instance cannot be ended
+   */
+  400: ApiResponseVoid;
+  /**
+   * Scheduled instance not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type EndScheduledInstanceError = EndScheduledInstanceErrors[keyof EndScheduledInstanceErrors];
+
+export type EndScheduledInstanceResponses = {
+  /**
+   * Scheduled instance ended successfully
+   */
+  200: ApiResponseScheduledInstance;
+};
+
+export type EndScheduledInstanceResponse =
+  EndScheduledInstanceResponses[keyof EndScheduledInstanceResponses];
 
 export type ReorderScoringLevelsData = {
   body: {

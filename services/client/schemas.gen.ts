@@ -6714,6 +6714,28 @@ conflict_resolution per template:
       maxItems: 2147483647,
       minItems: 1,
     },
+    scheduled_session_count: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Number of countable scheduled sessions for this class definition.',
+      example: 8,
+      readOnly: true,
+    },
+    completed_session_count: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Number of completed scheduled sessions for this class definition.',
+      example: 3,
+      readOnly: true,
+    },
+    class_progress_percentage: {
+      type: 'number',
+      description: '**[READ-ONLY]** Completion percentage for scheduled class sessions.',
+      example: 37.5,
+      readOnly: true,
+    },
     created_date: {
       type: 'string',
       format: 'date-time',
@@ -8106,6 +8128,8 @@ export const ScheduledInstanceSchema = {
     max_participants: 25,
     status: 'SCHEDULED',
     cancellation_reason: null,
+    started_at: null,
+    concluded_at: null,
     created_date: '2024-09-05T10:00:00',
     updated_date: '2024-09-05T15:30:00',
     created_by: 'instructor@sarafrika.com',
@@ -8191,6 +8215,20 @@ export const ScheduledInstanceSchema = {
       description: '**[OPTIONAL]** Reason for cancellation if status is CANCELLED.',
       example: 'Instructor unavailable due to illness',
     },
+    started_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the scheduled instance was started.',
+      example: '2024-09-15T09:01:00',
+      readOnly: true,
+    },
+    concluded_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the scheduled instance was concluded.',
+      example: '2024-09-15T10:31:00',
+      readOnly: true,
+    },
     created_date: {
       type: 'string',
       format: 'date-time',
@@ -8251,6 +8289,18 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
       example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be ended.',
+      example: false,
       readOnly: true,
     },
   },
@@ -16679,7 +16729,7 @@ export const SubmissionTypesEnumSchema = {
 export const StatusEnum5Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current status of the scheduled instance.',
-  enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'],
+  enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'],
   example: 'SCHEDULED',
 } as const;
 

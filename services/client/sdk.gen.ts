@@ -904,6 +904,12 @@ import type {
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusResponses,
   UpdateScheduledInstanceStatusErrors,
+  StartScheduledInstanceData,
+  StartScheduledInstanceResponses,
+  StartScheduledInstanceErrors,
+  EndScheduledInstanceData,
+  EndScheduledInstanceResponses,
+  EndScheduledInstanceErrors,
   ReorderScoringLevelsData,
   ReorderScoringLevelsResponses,
   ReorderScoringLevelsErrors,
@@ -1721,6 +1727,8 @@ import {
   search1ResponseTransformer,
   getTrainingBranchesByOrganisation1ResponseTransformer,
   getStudentScheduleResponseTransformer,
+  startScheduledInstanceResponseTransformer,
+  endScheduledInstanceResponseTransformer,
   getScheduledInstanceResponseTransformer,
   getInstructorScheduleResponseTransformer,
   getStudentBookingsResponseTransformer,
@@ -10849,6 +10857,60 @@ export const updateScheduledInstanceStatus = <ThrowOnError extends boolean = fal
       },
     ],
     url: '/api/v1/timetable/schedule/{instanceUuid}/status',
+    ...options,
+  });
+};
+
+/**
+ * Start a scheduled class instance
+ */
+export const startScheduledInstance = <ThrowOnError extends boolean = false>(
+  options: Options<StartScheduledInstanceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    StartScheduledInstanceResponses,
+    StartScheduledInstanceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: startScheduledInstanceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/start',
+    ...options,
+  });
+};
+
+/**
+ * End a scheduled class instance
+ */
+export const endScheduledInstance = <ThrowOnError extends boolean = false>(
+  options: Options<EndScheduledInstanceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    EndScheduledInstanceResponses,
+    EndScheduledInstanceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: endScheduledInstanceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/end',
     ...options,
   });
 };
