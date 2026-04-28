@@ -6,6 +6,11 @@ import {
   type InstructorClassWithSchedule,
   useInstructorClassesWithSchedules,
 } from '@/hooks/use-instructor-classes-with-schedules';
+import {
+  normalizeLocationType,
+  requiresPhysicalLocation,
+  trimToUndefined,
+} from '@/lib/location-types';
 import type { CreateClassDefinitionData } from '@/services/client/types.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -44,7 +49,7 @@ export interface ClassDetails {
   description: string;
   categories: string[];
   class_type: string; // 'group' | 'private'
-  location_type: string; // 'online' | 'in_person' | 'hybrid'
+  location_type: string; // 'ONLINE' | 'IN_PERSON' | 'HYBRID'
   rate_card: string;
   class_limit: number;
   targetAudience: string;
@@ -112,6 +117,17 @@ const RECURRENCE_TYPE_MAP: Record<string, string> = {
 };
 type SubmitEventLike = {
   preventDefault(): void;
+};
+
+const normalizeClassDetailsForState = (details: Partial<ClassDetails>) => {
+  const locationType = normalizeLocationType(details.location_type);
+
+  return {
+    ...details,
+    location_type: locationType,
+    ...(locationType === 'ONLINE' ? { location_name: '' } : {}),
+    ...(locationType === 'IN_PERSON' ? { meeting_link: '' } : {}),
+  };
 };
 
 const getMutationErrorMessage = (error: unknown, fallback: string) => {
@@ -438,7 +454,10 @@ const ClassBuilderPage = ({
       };
 
       if (parsed.classDetails) {
-        setClassDetails(prev => ({ ...prev, ...parsed.classDetails }));
+        setClassDetails(prev => ({
+          ...prev,
+          ...normalizeClassDetailsForState(parsed.classDetails ?? {}),
+        }));
       }
 
       if (parsed.scheduleSettings) {
@@ -507,7 +526,7 @@ const ClassBuilderPage = ({
             : [],
         class_type: classData.class_visibility || '',
         rate_card: classData.rate_card || classData?.training_fee,
-        location_type: classData.location_type || classData?.session_format,
+        location_type: normalizeLocationType(classData.location_type),
         location_name: classData.location_name || '',
         class_limit: classData.max_participants || 0,
         targetAudience: classData?.targetAudience || '',
@@ -606,6 +625,17 @@ const ClassBuilderPage = ({
       return false;
     }
 
+    const locationType = normalizeLocationType(classDetails.location_type);
+    if (!locationType) {
+      toast.error('Please select a lecture type');
+      return false;
+    }
+
+    if (requiresPhysicalLocation(locationType) && !trimToUndefined(classDetails.location_name)) {
+      toast.error('Please enter a class location');
+      return false;
+    }
+
     if (scheduleMode === 'custom') {
       if (sortedCustomSessions.length === 0) {
         toast.error('Please add at least one custom schedule session');
@@ -661,6 +691,14 @@ const ClassBuilderPage = ({
     if (!isFormValid()) return;
 
     try {
+      const locationType = normalizeLocationType(classDetails.location_type);
+      if (!locationType) {
+        toast.error('Please select a lecture type');
+        return;
+      }
+
+      const physicalLocationRequired = requiresPhysicalLocation(locationType);
+      const meetingLinkAllowed = locationType === 'ONLINE' || locationType === 'HYBRID';
       const sessionTemplates: CreateClassDefinitionData['body']['session_templates'] =
         scheduleMode === 'custom'
           ? sortedCustomSessions.map(session => ({
@@ -706,11 +744,12 @@ const ClassBuilderPage = ({
         default_instructor_uuid: instructor?.uuid as string,
         class_visibility: 'PUBLIC',
         session_format: 'GROUP',
-        location_type:
-          classDetails.location_type as CreateClassDefinitionData['body']['location_type'],
-        location_name: classDetails.location_name,
-        location_latitude: -1.292066,
-        location_longitude: 36.821945,
+        location_type: locationType,
+        location_name: physicalLocationRequired
+          ? trimToUndefined(classDetails.location_name)
+          : undefined,
+        location_latitude: physicalLocationRequired ? -1.292066 : undefined,
+        location_longitude: physicalLocationRequired ? 36.821945 : undefined,
         max_participants: classDetails.class_limit,
         allow_waitlist: true,
         is_active: !isDraft,
@@ -740,7 +779,7 @@ const ClassBuilderPage = ({
                   : (scheduleSettings.startClass.endTime as string)
               )
             ),
-        meeting_link: classDetails.meeting_link,
+        meeting_link: meetingLinkAllowed ? trimToUndefined(classDetails.meeting_link) : undefined,
         session_templates: sessionTemplates,
       };
 
