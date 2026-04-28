@@ -149,9 +149,9 @@ export function LessonDetailsSidebar({
                 View Lesson Content
               </Button>
 
-              <Button variant='outline' className='w-full' onClick={onMarkComplete}>
+              {/* <Button variant='outline' className='w-full' onClick={onMarkComplete}>
                 Mark as Complete
-              </Button>
+              </Button> */}
             </>
           ) : (
             <>

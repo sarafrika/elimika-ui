@@ -1,14 +1,14 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { format, isAfter } from 'date-fns';
 import { BookOpen, Calendar } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
 // Import hooks
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
@@ -347,6 +347,7 @@ export default function ClassDetailsPage() {
     setIsReading(false);
   };
 
+  // MAKE CHANGES HERE
   const handleStartLesson = () => {
     if (!selectedLesson) return;
 
