@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 
 export type SchedulerProfile = 'instructor' | 'organization' | 'student' | 'admin';
-export type SchedulerView = 'week' | 'month' | 'year';
+export type SchedulerView = 'day' | 'week' | 'month' | 'year';
 export type SchedulerCategory = 'TVET / Vocational' | 'STEM' | 'Arts' | 'Sports' | 'Certifications';
 
 export type SchedulerEvent = {
