@@ -4,8 +4,8 @@ import { categoryStyles, schedulerHours } from './data';
 import type { SchedulerEvent, SchedulerView } from './types';
 
 const rowHeight = 58;
-const timeColumnClass =
-  'grid-cols-[48px_repeat(7,minmax(0,1fr))] sm:grid-cols-[60px_repeat(7,minmax(0,1fr))] lg:grid-cols-[68px_repeat(7,minmax(0,1fr))]';
+const weekColumnClass =
+  'grid-cols-[72px_repeat(7,110px)] sm:grid-cols-[78px_repeat(7,110px)] lg:grid-cols-[88px_repeat(7,110px)]';
 
 function formatHour(hour: number) {
   const suffix = hour >= 12 ? 'PM' : 'AM';
@@ -42,6 +42,13 @@ function isSameMonth(left: Date, right: Date) {
   return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth();
 }
 
+function getCalendarKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function getMonthDays(currentDate: Date) {
   const firstOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const gridStart = getWeekStart(firstOfMonth);
@@ -50,6 +57,18 @@ function getMonthDays(currentDate: Date) {
     date.setDate(gridStart.getDate() + index);
     return date;
   });
+}
+
+function getMonthEvents(events: SchedulerEvent[], monthDate: Date) {
+  return events
+    .filter(event => isSameMonth(event.startTime, monthDate))
+    .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
+}
+
+function getDayEvents(events: SchedulerEvent[], day: Date) {
+  return events
+    .filter(event => isSameCalendarDay(event.startTime, day))
+    .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
 }
 
 function getStartHour(event: SchedulerEvent) {
@@ -92,6 +111,25 @@ function EventBlock({ event }: { event: SchedulerEvent }) {
   );
 }
 
+function WeekEventBlock({ event }: { event: SchedulerEvent }) {
+  return (
+    <button
+      type='button'
+      className={cn(
+        'focus-visible:ring-ring w-full overflow-hidden rounded-md border px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
+        categoryStyles[event.category]
+      )}
+    >
+      <p className='truncate text-[10px] font-semibold sm:text-[11px]'>{event.title}</p>
+      <p className='truncate text-[9px] opacity-75'>
+        {event.startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} -
+        {event.endTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+      </p>
+      <p className='hidden truncate text-[9px] opacity-75 sm:block'>{event.location}</p>
+    </button>
+  );
+}
+
 function CompactEvent({ event }: { event: SchedulerEvent }) {
   return (
     <div
@@ -110,7 +148,7 @@ function CompactEvent({ event }: { event: SchedulerEvent }) {
 
 function EmptySchedule({ label }: { label: string }) {
   return (
-    <section className='bg-card flex min-h-[420px] min-w-0 flex-1 items-center justify-center rounded-md border p-6 text-center shadow-sm'>
+    <section className='bg-card flex min-h-[420px] w-full items-center justify-center rounded-md border p-6 text-center shadow-sm'>
       <div>
         <p className='text-foreground text-sm font-semibold'>No schedules found</p>
         <p className='text-muted-foreground mt-1 text-xs'>{label}</p>
@@ -119,74 +157,188 @@ function EmptySchedule({ label }: { label: string }) {
   );
 }
 
-function WeekGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
-  const schedulerDays = getWeekDays(currentDate);
+function DayGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
   const today = new Date();
+  const dayEvents = getDayEvents(events, currentDate);
+  const currentDayLabel = currentDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
   return (
-    <section className='bg-card min-w-0 flex-1 overflow-hidden rounded-md border shadow-sm'>
-      <div className={cn('bg-muted/40 grid w-full border-b', timeColumnClass)}>
-        <div className='text-foreground px-1 py-2 text-center text-[10px] font-semibold sm:px-2 sm:text-xs'>
-          Time
-        </div>
-        {schedulerDays.map(day => (
-          <div
-            key={day.toISOString()}
+    <section className='bg-card flex w-full flex-col overflow-hidden rounded-md border shadow-sm'>
+      <div className='border-b px-3 py-3 sm:px-4'>
+        <div className='flex flex-wrap items-start justify-between gap-2'>
+          <div className='min-w-0'>
+            <p className='text-muted-foreground text-xs font-semibold uppercase tracking-wide'>
+              Day view
+            </p>
+            <h2 className='text-foreground text-base font-semibold sm:text-lg'>{currentDayLabel}</h2>
+            <p className='text-muted-foreground text-sm'>
+              {dayEvents.length} session{dayEvents.length === 1 ? '' : 's'} scheduled
+            </p>
+          </div>
+          <span
             className={cn(
-              'border-l px-1 py-2 text-center text-[10px] font-semibold sm:px-2 sm:text-xs lg:text-sm',
-              isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground'
+              'rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
+              isSameCalendarDay(currentDate, today)
+                ? 'border-primary/40 bg-primary/10 text-primary'
+                : 'bg-muted text-muted-foreground'
             )}
           >
-            <span className='block sm:inline'>
-              {day.toLocaleDateString('en-US', { weekday: 'short' })}
-            </span>
-            <span className='sm:ml-1'>{day.getDate()}</span>
-          </div>
-        ))}
+            {isSameCalendarDay(currentDate, today) ? 'Today' : 'Selected day'}
+          </span>
+        </div>
       </div>
 
-      <div className='bg-background max-h-[640px] overflow-x-hidden overflow-y-auto'>
-        <div className='relative w-full'>
-          {schedulerHours.map(hour => (
-            <div
-              key={hour}
-              className={cn('grid border-b last:border-b-0', timeColumnClass)}
-              style={{ height: `${rowHeight}px` }}
-            >
-              <div className='text-muted-foreground px-1 py-2 text-right text-[9px] font-semibold sm:px-2 sm:text-[10px] lg:text-xs'>
-                {formatHour(hour)}
-              </div>
-              {schedulerDays.map(day => (
-                <div key={`${day.toISOString()}-${hour}`} className='border-l' />
-              ))}
+      <div className='grid gap-4 p-3 lg:grid-cols-[minmax(0,1fr)_260px] lg:p-4'>
+        <div className='bg-background min-w-0 overflow-hidden rounded-md border'>
+          <div className='bg-muted/40 grid grid-cols-[72px_1fr] border-b'>
+            <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>Time</div>
+            <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>
+              Schedule
             </div>
-          ))}
+          </div>
 
-          <div className='absolute top-0 right-0 left-[48px] sm:left-[60px] lg:left-[68px]'>
-            <div className='grid grid-cols-7'>
-              {schedulerDays.map(day => (
-                <div
-                  key={day.toISOString()}
-                  className='relative border-l'
-                  style={{ height: `${schedulerHours.length * rowHeight}px` }}
-                >
-                  {events
-                    .filter(event => isSameCalendarDay(event.startTime, day))
+          <div className='max-h-[640px] overflow-y-auto'>
+            {schedulerHours.map(hour => (
+              <div key={hour} className='grid grid-cols-[72px_1fr] border-b last:border-b-0'>
+                <div className='text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold sm:text-[10px]'>
+                  {formatHour(hour)}
+                </div>
+                <div className='relative min-h-[58px] border-l'>
+                  {dayEvents
+                    .filter(event => event.startTime.getHours() === hour)
                     .map(event => (
                       <div
                         key={event.id}
-                        className='absolute right-0 left-0'
+                        className='absolute right-2 left-2 top-2'
                         style={{
-                          top: `${Math.max(getStartHour(event) - (schedulerHours[0] ?? 8), 0) * rowHeight}px`,
+                          top: `${(event.startTime.getMinutes() / 60) * rowHeight + 6}px`,
                         }}
                       >
                         <EventBlock event={event} />
                       </div>
                     ))}
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className='space-y-3'>
+          <div className='bg-background rounded-md border p-3'>
+            <div className='mb-2 flex items-center justify-between gap-2'>
+              <h3 className='text-sm font-semibold'>Events</h3>
+              <span className='text-muted-foreground text-xs'>{dayEvents.length} items</span>
+            </div>
+
+            <div className='space-y-2'>
+              {dayEvents.length ? (
+                dayEvents.map(event => (
+                  <div key={event.id} className='bg-muted/30 rounded-md border p-2'>
+                    <p className='text-foreground text-sm font-semibold'>{event.title}</p>
+                    <p className='text-muted-foreground text-xs'>
+                      {event.startTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}{' '}
+                      -{' '}
+                      {event.endTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                    <p className='text-muted-foreground mt-1 truncate text-xs'>
+                      {event.instructor} · {event.location}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className='text-muted-foreground bg-muted/30 rounded-md border border-dashed p-3 text-xs'>
+                  No sessions scheduled for this day.
+                </p>
+              )}
             </div>
           </div>
+
+          <div className='bg-background rounded-md border p-3'>
+            <h3 className='mb-2 text-sm font-semibold'>Summary</h3>
+            <p className='text-muted-foreground text-xs'>
+              {currentDayLabel} is currently showing {dayEvents.length} scheduled session
+              {dayEvents.length === 1 ? '' : 's'}.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WeekGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
+  const schedulerDays = getWeekDays(currentDate);
+  const today = new Date();
+  const gridClass = weekColumnClass;
+
+  return (
+    <section className='bg-card flex min-w-0 w-full flex-col overflow-hidden rounded-md ring-1 ring-border/60 shadow-sm'>
+      <div className='sticky top-0 z-10 bg-muted/40'>
+        <div className={cn('grid border-b', gridClass)}>
+          <div className='text-foreground px-2 py-2 text-center text-[10px] font-semibold sm:px-3 sm:text-xs'>
+            Time
+          </div>
+          {schedulerDays.map(day => (
+            <div
+              key={day.toISOString()}
+              className={cn(
+                'border-l px-1 py-2 text-center text-[10px] font-semibold sm:px-2 sm:text-xs lg:text-sm',
+                isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground'
+              )}
+            >
+              <span className='block sm:inline'>
+                {day.toLocaleDateString('en-US', { weekday: 'short' })}
+              </span>
+              <span className='sm:ml-1'>{day.getDate()}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className='bg-background max-h-[640px] overflow-x-auto overflow-y-auto'>
+        <div className='min-w-max'>
+          {schedulerHours.map(hour => (
+            <div
+              key={hour}
+              className={cn('grid border-b last:border-b-0', gridClass)}
+              style={{ minHeight: `${rowHeight}px` }}
+            >
+              <div className='text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold sm:px-3 sm:text-[10px] lg:text-xs'>
+                {formatHour(hour)}
+              </div>
+
+              {schedulerDays.map(day => {
+                const hourEvents = events
+                  .filter(
+                    event =>
+                      isSameCalendarDay(event.startTime, day) &&
+                      event.startTime.getHours() === hour
+                  )
+                  .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
+
+                return (
+                  <div key={`${day.toISOString()}-${hour}`} className='border-l px-1 py-1'>
+                    <div className='space-y-1'>
+                      {hourEvents.map(event => (
+                        <WeekEventBlock key={event.id} event={event} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -197,101 +349,144 @@ function MonthGrid({ currentDate, events }: { currentDate: Date; events: Schedul
   const days = getMonthDays(currentDate);
   const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const today = new Date();
+  const monthEvents = getMonthEvents(events, currentDate);
 
   return (
-    <section className='bg-card min-w-0 flex-1 overflow-hidden rounded-md border shadow-sm'>
-      <div className='bg-muted/40 grid grid-cols-7 border-b'>
-        {weekLabels.map(label => (
-          <div key={label} className='px-2 py-2 text-center text-xs font-semibold'>
-            {label}
+    <section className='bg-card min-w-0 w-full overflow-hidden rounded-md border shadow-sm'>
+      <div className='border-b px-3 py-3 sm:px-4'>
+        <div className='flex items-center justify-between gap-2'>
+          <div>
+            <p className='text-muted-foreground text-xs font-semibold uppercase tracking-wide'>
+              Month view
+            </p>
+            <h2 className='text-foreground text-base font-semibold sm:text-lg'>
+              {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </h2>
           </div>
-        ))}
+          <span className='text-muted-foreground text-xs'>
+            {monthEvents.length} session{monthEvents.length === 1 ? '' : 's'}
+          </span>
+        </div>
       </div>
 
-      <div className='grid grid-cols-7'>
-        {days.map(day => {
-          const dayEvents = events
-            .filter(event => isSameCalendarDay(event.startTime, day))
-            .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
-
-          return (
-            <div
-              key={day.toISOString()}
-              className={cn(
-                'min-h-28 border-r border-b p-2 last:border-r-0 sm:min-h-32',
-                !isSameMonth(day, currentDate) && 'bg-muted/20 text-muted-foreground'
-              )}
-            >
-              <div className='mb-2 flex items-center justify-between gap-2'>
-                <span
-                  className={cn(
-                    'flex h-6 w-6 items-center justify-center rounded text-xs font-semibold',
-                    isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground'
-                  )}
-                >
-                  {day.getDate()}
-                </span>
-                {dayEvents.length ? (
-                  <span className='text-muted-foreground text-[10px]'>{dayEvents.length}</span>
-                ) : null}
-              </div>
-              <div className='space-y-1'>
-                {dayEvents.slice(0, 3).map(event => (
-                  <CompactEvent key={event.id} event={event} />
-                ))}
-                {dayEvents.length > 3 ? (
-                  <p className='text-muted-foreground text-[10px] font-semibold'>
-                    +{dayEvents.length - 3} more
-                  </p>
-                ) : null}
-              </div>
+      <div className='overflow-x-auto'>
+        <div
+          className='bg-muted/40 grid w-max min-w-full border-b'
+          style={{ gridTemplateColumns: 'repeat(7, 120px)' }}
+        >
+          {weekLabels.map(label => (
+            <div key={label} className='px-2 py-2 text-center text-xs font-semibold'>
+              {label}
             </div>
-          );
-        })}
+          ))}
+        </div>
+
+        <div className='grid w-max min-w-full' style={{ gridTemplateColumns: 'repeat(7, 120px)' }}>
+          {days.map(day => {
+            const dayEvents = getDayEvents(events, day);
+
+            return (
+              <div
+                key={day.toISOString()}
+                className={cn(
+                  'min-h-28 border-r border-b p-2 last:border-r-0 sm:min-h-32',
+                  !isSameMonth(day, currentDate) && 'bg-muted/20 text-muted-foreground'
+                )}
+              >
+                <div className='mb-2 flex items-center justify-between gap-2'>
+                  <span
+                    className={cn(
+                      'flex h-6 w-6 items-center justify-center rounded text-xs font-semibold',
+                      isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground',
+                      dayEvents.length > 0 && !isSameCalendarDay(day, today) && 'bg-primary/10'
+                    )}
+                  >
+                    {day.getDate()}
+                  </span>
+                  {dayEvents.length ? (
+                    <span className='text-muted-foreground text-[10px]'>{dayEvents.length}</span>
+                  ) : null}
+                </div>
+                <div className='space-y-1'>
+                  {dayEvents.slice(0, 3).map(event => (
+                    <CompactEvent key={event.id} event={event} />
+                  ))}
+                  {dayEvents.length > 3 ? (
+                    <p className='text-muted-foreground text-[10px] font-semibold'>
+                      +{dayEvents.length - 3} more
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
 }
 
 function YearGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
+  const today = new Date();
   const months = Array.from(
     { length: 12 },
     (_, index) => new Date(currentDate.getFullYear(), index, 1)
   );
 
   return (
-    <section className='grid min-w-0 flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+    <section className='bg-card grid min-w-0 w-full gap-3 overflow-hidden rounded-md border p-3 shadow-sm sm:grid-cols-2 xl:grid-cols-3'>
       {months.map(month => {
-        const monthEvents = events
-          .filter(event => isSameMonth(event.startTime, month))
-          .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
+        const monthEvents = getMonthEvents(events, month);
+        const monthDays = getMonthDays(month);
+        const monthEventDays = new Set(monthEvents.map(event => getCalendarKey(event.startTime)));
 
         return (
-          <div key={month.toISOString()} className='bg-card rounded-md border p-3 shadow-sm'>
+          <div key={month.toISOString()} className='bg-background rounded-md border p-3'>
             <div className='mb-3 flex items-center justify-between gap-2'>
               <h3 className='text-foreground text-sm font-semibold'>
                 {month.toLocaleDateString('en-US', { month: 'long' })}
               </h3>
               <span className='text-muted-foreground text-xs'>{monthEvents.length} sessions</span>
             </div>
-            <div className='space-y-2'>
-              {monthEvents.slice(0, 4).map(event => (
-                <div key={event.id} className='bg-muted/40 min-w-0 rounded-md p-2'>
-                  <p className='text-foreground truncate text-xs font-semibold'>{event.title}</p>
-                  <p className='text-muted-foreground truncate text-[11px]'>
-                    {event.startTime.toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}{' '}
-                    · {event.instructor}
-                  </p>
-                </div>
+
+            <div className='mb-2 grid grid-cols-7 text-[10px] font-semibold text-muted-foreground'>
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(label => (
+                <span key={`${month.toISOString()}-${label}`} className='text-center'>
+                  {label}
+                </span>
               ))}
-              {!monthEvents.length ? (
-                <p className='text-muted-foreground bg-muted/40 rounded-md p-2 text-xs'>
-                  No sessions this month.
-                </p>
-              ) : null}
+            </div>
+
+            <div className='grid grid-cols-7 gap-1'>
+              {monthDays.map(day => {
+                const dayKey = getCalendarKey(day);
+                const hasEvents = monthEventDays.has(dayKey);
+                const inMonth = isSameMonth(day, month);
+
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className={cn(
+                      'relative flex aspect-square items-center justify-center rounded text-[11px] font-semibold',
+                      inMonth ? 'text-foreground' : 'text-muted-foreground/50',
+                      isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground',
+                      hasEvents &&
+                      !isSameCalendarDay(day, today) &&
+                      'bg-primary/10 ring-1 ring-primary/30'
+                    )}
+                  >
+                    <span>{day.getDate()}</span>
+                    {hasEvents ? (
+                      <span
+                        className={cn(
+                          'absolute bottom-1 h-1.5 w-1.5 rounded-full',
+                          isSameCalendarDay(day, today) ? 'bg-primary-foreground' : 'bg-primary'
+                        )}
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
@@ -309,8 +504,12 @@ export function SchedulerGrid({
   events: SchedulerEvent[];
   view: SchedulerView;
 }) {
-  if (!events.length) {
+  if (!events.length && view !== 'day') {
     return <EmptySchedule label='Try changing the date range or clearing filters.' />;
+  }
+
+  if (view === 'day') {
+    return <DayGrid currentDate={currentDate} events={events} />;
   }
 
   if (view === 'month') {

@@ -126,6 +126,15 @@ const toApiDate = (date: Date) => {
 };
 
 const formatDateRange = (date: Date, view: SchedulerView) => {
+  if (view === 'day') {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
   if (view === 'month') {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
@@ -144,6 +153,11 @@ const formatDateRange = (date: Date, view: SchedulerView) => {
 
 const getNavigationStep = (date: Date, view: SchedulerView, direction: -1 | 1) => {
   const next = new Date(date);
+
+  if (view === 'day') {
+    next.setDate(next.getDate() + direction);
+    return next;
+  }
 
   if (view === 'month') {
     next.setMonth(next.getMonth() + direction);
@@ -467,7 +481,10 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
           <Button
             variant='outline'
             className='h-10 shrink-0 rounded-md px-4 text-xs sm:text-sm'
-            onClick={() => setCurrentDate(new Date())}
+            onClick={() => {
+              setCurrentDate(new Date());
+              setView('day');
+            }}
           >
             Today
           </Button>
@@ -499,7 +516,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
 
           {/* View switcher */}
           <div className='bg-card flex h-10 shrink-0 overflow-hidden rounded-md border shadow-sm'>
-            {(['week', 'month', 'year'] as SchedulerView[]).map(item => (
+            {(['day', 'week', 'month', 'year'] as SchedulerView[]).map(item => (
               <Button
                 key={item}
                 variant={view === item ? 'secondary' : 'ghost'}
@@ -530,7 +547,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
       </header>
 
       {/* Main layout */}
-      <div className='flex min-w-0 flex-col gap-4 min-[1800px]:flex-row min-[1800px]:items-start'>
+      <div className='flex min-w-0 flex-col gap-4 min-[1300px]:flex-row min-[1300px]:items-start'>
         <div className='flex min-w-0 flex-1 flex-col gap-4'>
           {/* Metrics */}
           <div className='grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4'>
@@ -539,7 +556,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
             ))}
           </div>
 
-          <div className='flex flex-wrap items-center justify-between gap-2 min-[1800px]:hidden'>
+          <div className='flex flex-wrap items-center justify-between gap-2 min-[1600px]:hidden'>
             <Button
               variant='outline'
               className='h-10 rounded-md px-3 text-xs sm:text-sm'
@@ -559,8 +576,8 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
             </Button>
           </div>
 
-          <div className='flex min-w-0 flex-col gap-4 min-[1800px]:flex-row min-[1800px]:items-start'>
-            <div className='hidden min-[1800px]:block'>
+          <div className='flex min-w-0 flex-col gap-4 min-[1300px]:flex-row min-[1300px]:items-start'>
+            <div className='hidden min-[1300px]:block'>
               <SchedulerFilters
                 options={filterOptions}
                 values={filters}
@@ -582,7 +599,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
           </div>
         </div>
 
-        <div className='hidden min-[1800px]:block'>
+        <div className='hidden min-[1600px]:block'>
           <SchedulerRightRail events={filteredEvents} instructors={visibleInstructors} />
         </div>
       </div>
