@@ -302,8 +302,6 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
   });
 
   const { classes: classData, loading: organizationLoading } = useAmdinClassesWithDetails();
-  console.log(classData, "CLSDATA")
-
   // get student instrcutor for classes from the classData.
   // or use the instructor uuid from the studentScheduleQuery to get the instructor name.
   // but the instructor uuid from both sources must match for the same class schedule item.
