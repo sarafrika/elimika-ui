@@ -1,10 +1,5 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Users } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
@@ -15,6 +10,11 @@ import {
   getTrainingProgramByUuidOptions,
   publishProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Users } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import Spinner from '../../../../../../components/ui/spinner';
 
 type ProgramCourseItem = {
@@ -95,31 +95,6 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
     );
   };
 
-  if (programLoading) {
-    return (
-      <div className='flex h-96 items-center justify-center'>
-        <div className='w-full max-w-lg space-y-4'>
-          <Skeleton className='mx-auto h-6 w-2/3' />
-          <Skeleton className='mx-auto h-4 w-1/2' />
-
-          <div className='space-y-3 pt-4'>
-            <Skeleton className='h-4 w-full' />
-            <Skeleton className='h-4 w-11/12' />
-            <Skeleton className='h-4 w-10/12' />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!program) {
-    return (
-      <div className='flex h-96 items-center justify-center'>
-        <div className='text-muted-foreground'>Program not found</div>
-      </div>
-    );
-  }
-
   const enrollments = enrollmentsData?.data?.content || [];
   const courses = programCourses?.data || [];
   const availableCourseCategories = useMemo(() => {
@@ -144,6 +119,32 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
       ),
     [courses, selectedCourseCategory]
   );
+
+
+  if (programLoading) {
+    return (
+      <div className='flex h-96 items-center justify-center'>
+        <div className='w-full max-w-lg space-y-4'>
+          <Skeleton className='mx-auto h-6 w-2/3' />
+          <Skeleton className='mx-auto h-4 w-1/2' />
+
+          <div className='space-y-3 pt-4'>
+            <Skeleton className='h-4 w-full' />
+            <Skeleton className='h-4 w-11/12' />
+            <Skeleton className='h-4 w-10/12' />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!program) {
+    return (
+      <div className='flex h-96 items-center justify-center'>
+        <div className='text-muted-foreground'>Program not found</div>
+      </div>
+    );
+  }
 
   const getStatusClasses = (status: string) => {
     switch (status) {
@@ -236,11 +237,10 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`border-b-2 px-1 py-2 text-sm font-medium whitespace-nowrap md:py-3 md:text-base ${
-                activeTab === tab
+              className={`border-b-2 px-1 py-2 text-sm font-medium whitespace-nowrap md:py-3 md:text-base ${activeTab === tab
                   ? 'border-primary text-primary'
                   : 'text-muted-foreground hover:text-foreground border-transparent'
-              }`}
+                }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === 'courses' && ` (${courses.length})`}

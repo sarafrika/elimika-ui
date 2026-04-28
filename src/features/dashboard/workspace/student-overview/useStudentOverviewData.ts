@@ -67,41 +67,42 @@ type StudentOverviewData = {
 const DEFAULT_PAGE_SIZE = 100;
 const FALLBACK_PROGRESS = [60, 45, 72, 55];
 
-const MOCK_OPPORTUNITIES: StudentOverviewOpportunity[] = [
-  {
-    id: 'junior-web-developer',
-    title: 'Junior Web Developer',
-    company: 'BrightWave Marketing',
-    meta: 'AI Match',
-    location: 'Nairobi, Kenya',
-    match: 82,
-    badge: 'AI Match',
-    badgeTone: 'teal',
-    footer: 'Hybrid · Full-Time',
-  },
-  {
-    id: 'internship-program',
-    title: 'Internship Program',
-    company: 'CreativeBrands',
-    meta: 'Pending',
-    location: 'In-Office',
-    match: 89,
-    badge: 'Pending',
-    badgeTone: 'amber',
-    footer: 'Ongoing · May 23rd',
-  },
-  {
-    id: 'part-time-data-analyst',
-    title: 'Part-Time Data Analyst',
-    company: 'Data Insight Hub',
-    meta: 'AI Match',
-    location: 'Cape Town, S. Africa',
-    match: 75,
-    badge: 'AI Match',
-    badgeTone: 'teal',
-    footer: 'Part-Time · Remote',
-  },
-];
+const MOCK_OPPORTUNITIES: StudentOverviewOpportunity[] = []
+// [
+//   {
+//     id: 'junior-web-developer',
+//     title: 'Junior Web Developer',
+//     company: 'BrightWave Marketing',
+//     meta: 'AI Match',
+//     location: 'Nairobi, Kenya',
+//     match: 82,
+//     badge: 'AI Match',
+//     badgeTone: 'teal',
+//     footer: 'Hybrid · Full-Time',
+//   },
+//   {
+//     id: 'internship-program',
+//     title: 'Internship Program',
+//     company: 'CreativeBrands',
+//     meta: 'Pending',
+//     location: 'In-Office',
+//     match: 89,
+//     badge: 'Pending',
+//     badgeTone: 'amber',
+//     footer: 'Ongoing · May 23rd',
+//   },
+//   {
+//     id: 'part-time-data-analyst',
+//     title: 'Part-Time Data Analyst',
+//     company: 'Data Insight Hub',
+//     meta: 'AI Match',
+//     location: 'Cape Town, S. Africa',
+//     match: 75,
+//     badge: 'AI Match',
+//     badgeTone: 'teal',
+//     footer: 'Part-Time · Remote',
+//   },
+// ];
 
 const formatDateLabel = (value?: Date | string) => {
   if (!value) {

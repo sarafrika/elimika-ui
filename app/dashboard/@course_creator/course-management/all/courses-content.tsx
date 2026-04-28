@@ -1,12 +1,5 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { Edit, Filter, PlusCircle, TrashIcon, X } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import {
   AlertDialog,
@@ -39,6 +32,13 @@ import {
 } from '@/components/ui/table';
 import { useCourseCreator } from '@/context/course-creator-context';
 import type { Course } from '@/services/client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { Edit, Filter, PlusCircle, TrashIcon, X } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import {
   deleteCourseMutation,
   getCourseTrainingRequirementsOptions,
@@ -160,6 +160,13 @@ export default function CourseCreatorCoursesContent() {
                 <Link prefetch href='/dashboard/course-management/create-new-course'>
                   <PlusCircle className='mr-2 h-4 w-4' />
                   Create course
+                </Link>
+              </Button>
+
+              <Button asChild>
+                <Link prefetch href='/dashboard/course-management/create-new-program'>
+                  <PlusCircle className='mr-2 h-4 w-4' />
+                  Bundle Course
                 </Link>
               </Button>
             </div>

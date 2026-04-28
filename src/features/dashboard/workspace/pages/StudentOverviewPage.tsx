@@ -31,7 +31,7 @@ export default function StudentOverviewPage() {
   );
 
   return (
-    <div className='mx-auto w-full max-w-[1280px] overflow-x-clip bg-background px-1 py-3 sm:px-0 sm:py-4'>
+    <div className='mb-10 mx-auto w-full max-w-[1280px] overflow-x-clip bg-background px-1 py-3 sm:px-0 sm:py-4'>
       <div className='space-y-4 min-w-0'>
         <StudentOverviewSearchBar
           value={searchValue}
@@ -70,7 +70,7 @@ export default function StudentOverviewPage() {
             </Link>
           </div>
 
-          <div className='mt-3 grid min-w-0 gap-3 lg:grid-cols-2 min-[1500px]:grid-cols-3'>
+          <div className='w-full mt-3 grid min-w-0 gap-3 lg:grid-cols-2 min-[1500px]:grid-cols-3'>
             {(filteredOpportunities.length > 0
               ? filteredOpportunities
               : data.opportunities
@@ -78,6 +78,12 @@ export default function StudentOverviewPage() {
               <StudentOverviewOpportunityCard key={opportunity.id} opportunity={opportunity} />
             ))}
           </div>
+
+          {filteredOpportunities?.length === 0 &&
+            <div className="w-full mt-3 flex h-auto py-16 items-center justify-center rounded-xl border border-dashed bg-muted/20 text-sm text-muted-foreground">
+              No opportunities available yet
+            </div>
+          }
         </section>
       </div>
     </div>

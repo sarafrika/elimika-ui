@@ -19,6 +19,12 @@ import { CredentialsTabs } from '@/components/profile-credentials/_components/Cr
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -353,11 +359,15 @@ function getDocumentUrl(document: InstructorDocument | CourseCreatorDocumentDto)
 function PdfPreview({
   documentUrl,
   documentLabel,
-  documentTitle
+  documentTitle,
+  height = 190, // default (card preview)
+  fullHeight = false, // optional override
 }: {
   documentUrl: string;
   documentLabel: string;
   documentTitle: string;
+  height?: number;
+  fullHeight?: boolean;
 }) {
   const resolvedUrl = toAuthenticatedMediaUrl(documentUrl) || documentUrl;
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -374,7 +384,7 @@ function PdfPreview({
       const canvas = canvasRef.current;
       if (!canvas || cancelled) return;
 
-      const viewport = page.getViewport({ scale: 1.1 });
+      const viewport = page.getViewport({ scale: fullHeight ? 1.6 : 1.1 });
       const context = canvas.getContext('2d');
       if (!context) return;
 
@@ -414,7 +424,13 @@ function PdfPreview({
   }, [documentUrl, resolvedUrl]);
 
   return (
-    <div className='relative h-[190px] overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-3'>
+    <div
+      className={cn(
+        'relative overflow-hidden rounded-t-[16px] border-b bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,white_4%),color-mix(in_srgb,var(--background)_88%,var(--el-accent-azure)_12%))] p-3',
+        fullHeight ? 'h-auto' : 'overflow-hidden'
+      )}
+      style={!fullHeight ? { height } : undefined}
+    >
       <div className='pointer-events-none absolute inset-x-0 top-0 h-18 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_92%,white_8%),transparent)]' />
       <div className='pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--background)_94%,white_6%))]' />
       <div className='pointer-events-none absolute top-4 left-4 z-10 rounded-full border border-white/80 bg-background/85 px-3 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur'>
@@ -436,9 +452,11 @@ function PdfPreview({
 function ReviewCard({
   item,
   onOpenReview,
+  onOpenViewer,
 }: {
   item: ReviewItem;
   onOpenReview: (item: ReviewItem) => void;
+  onOpenViewer: (item: ReviewItem) => void;
 }) {
   const hasDocumentUrl = !!item.documentUrl;
 
@@ -504,28 +522,16 @@ function ReviewCard({
             {item.fileSize || 'Unknown size'}
           </Badge>
 
-          {hasDocumentUrl ? (
+          {/* {hasDocumentUrl && (
             <Button
-              asChild
-              variant='outline'
-              className='min-h-10 rounded-lg border-white/70 bg-background/80 px-4'
-            >
-              <a href={item.documentUrl} target='_blank' rel='noreferrer'>
-                View
-                <ChevronRight className='size-4' />
-              </a>
-            </Button>
-          ) : (
-            <Button
-              type='button'
-              variant='outline'
-              className='min-h-10 rounded-lg border-white/70 bg-background/80 px-4'
-              disabled
+              variant="outline"
+              className="min-h-10 rounded-lg border-white/70 bg-background/80 px-4"
+              onClick={() => onOpenViewer(item)}
             >
               View
-              <ChevronRight className='size-4' />
+              <ChevronRight className="size-4" />
             </Button>
-          )}
+          )} */}
 
           <Button
             variant='outline'
@@ -576,7 +582,7 @@ function ReviewSheet({
           <div className='space-y-5 px-6 py-5'>
             {item.documentUrl ? (
               <div className='overflow-hidden rounded-[18px] border bg-card shadow-sm'>
-                <PdfPreview documentUrl={item.documentUrl} documentLabel={item.documentLabel} documentTitle={item.documentTitle} />
+                <PdfPreview documentUrl={item.documentUrl} documentLabel={item.documentLabel} documentTitle={item.documentTitle} fullHeight />
               </div>
             ) : null}
 
@@ -684,6 +690,51 @@ function ReviewSheet({
   );
 }
 
+function PdfViewerModal({
+  item,
+  open,
+  onOpenChange,
+}: {
+  item: ReviewItem | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  if (!item || !item.documentUrl) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-screen max-w-none h-screen p-0 gap-0">
+        <div className="flex h-full flex-col bg-background">
+
+          {/* Header */}
+          <DialogHeader className="border-b px-6 py-4 flex flex-row items-center justify-between">
+            <div>
+              <DialogTitle className="text-lg font-semibold">
+                {item.documentTitle}
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                {item.ownerName} • {item.documentLabel}
+              </p>
+            </div>
+          </DialogHeader>
+
+          {/* Viewer */}
+          <div className="flex-1 overflow-auto bg-muted/20 p-6">
+            <div className="mx-auto max-w-4xl">
+              <PdfPreview
+                documentUrl={item.documentUrl}
+                documentLabel={item.documentLabel}
+                documentTitle={item.documentTitle}
+                fullHeight
+              />
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className='rounded-xl border bg-muted/20 px-3 py-2.5'>
@@ -704,6 +755,7 @@ export default function DocumentsVerificationPage() {
     open: false,
     item: null,
   });
+  const [viewerItem, setViewerItem] = useState<ReviewItem | null>(null);
 
   const profileName = admin?.full_name || admin?.email || 'Admin';
   const verifierIdentity = admin?.email || admin?.full_name || 'admin';
@@ -1131,7 +1183,7 @@ export default function DocumentsVerificationPage() {
               <h1 className='text-foreground text-3xl font-semibold tracking-tight'>
                 Document verification
               </h1>
-              <p className='text-muted-foreground max-w-2xl text-base'>
+              <p className='text-muted-foreground max-w-2xl text-sm'>
                 Review uploaded documents from instructors, course creators, and students across
                 the platform.
               </p>
@@ -1283,6 +1335,7 @@ export default function DocumentsVerificationPage() {
                         onOpenReview={selected =>
                           setSheetState({ open: true, item: selected })
                         }
+                        onOpenViewer={setViewerItem}
                       />
                     ))}
                   </div>
@@ -1307,6 +1360,14 @@ export default function DocumentsVerificationPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <PdfViewerModal
+        item={viewerItem}
+        open={!!viewerItem}
+        onOpenChange={(open) => {
+          if (!open) setViewerItem(null);
+        }}
+      />
 
       <ReviewSheet
         state={sheetState}

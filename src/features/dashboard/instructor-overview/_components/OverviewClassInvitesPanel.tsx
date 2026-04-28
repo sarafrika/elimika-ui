@@ -47,7 +47,7 @@ export function OverviewClassInvitesPanel({ invites }: OverviewClassInvitesPanel
           ))}
         </div>
       ) : (
-        <p className='rounded-[10px] border border-dashed border-border bg-card px-4 py-6 text-sm text-muted-foreground'>
+        <p className='rounded-[10px] text-center border border-dashed border-border bg-card px-4 py-6 text-sm text-muted-foreground'>
           No student enrollment interest has been recorded yet.
         </p>
       )}

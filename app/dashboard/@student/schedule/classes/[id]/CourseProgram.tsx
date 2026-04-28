@@ -7,6 +7,7 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  Eye,
   FileText,
   Lock,
   Play,
@@ -45,6 +46,7 @@ interface CourseProgramSectionProps {
   onToggleModule: (uuid: string) => void;
   selectedLesson: LessonContent | null;
   onLessonSelect: (lesson: LessonContent) => void;
+  onViewContent: (lesson: LessonContent) => void;
   completedLessons?: Set<string>;
   lockedLessons?: Set<string>;
   contentTypeMap: ContentTypeMap;
@@ -58,6 +60,7 @@ export function CourseProgramSection({
   onToggleModule,
   selectedLesson,
   onLessonSelect,
+  onViewContent,
   completedLessons = new Set(),
   lockedLessons = new Set(),
   contentTypeMap,
@@ -107,10 +110,10 @@ export function CourseProgramSection({
                   open={isOpen}
                   onOpenChange={() => onToggleModule(module.lesson.uuid)}
                 >
-                  <Card className='border-2 py-2.5'>
+                  <Card className='border-2 py-0'>
                     <CollapsibleTrigger asChild>
-                      <CardHeader className='hover:bg-muted cursor-pointer px-3 py-2 transition-colors sm:px-6'>
-                        <div className='flex items-center justify-between'>
+                      <CardHeader className='hover:bg-muted cursor-pointer px-3 py-2 transition-colors sm:px-6 rounded-t-lg'>
+                        <div className='flex items-center justify-between py-2'>
                           <div className='flex items-center gap-2'>
                             <h3 className='text-sm font-medium sm:text-base'>{moduleIndex + 1}.</h3>
                             <h3 className='text-sm font-medium sm:text-base'>
@@ -127,7 +130,7 @@ export function CourseProgramSection({
                     </CollapsibleTrigger>
 
                     <CollapsibleContent>
-                      <CardContent className='px-3 pt-0 sm:px-6'>
+                      <CardContent className='px-3 pt-0 sm:px-6 mb-6'>
                         <div className='space-y-2'>
                           {module.content.data.map(content => {
                             const isSelected = selectedLesson?.uuid === content.uuid;
@@ -135,19 +138,18 @@ export function CourseProgramSection({
                             const isLocked = lockedLessons.has(content.uuid);
 
                             return (
-                              <button
+                              <div
                                 key={content.uuid}
-                                onClick={() => !isLocked && onLessonSelect(content)}
-                                disabled={isLocked}
-                                className={`flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all ${
-                                  isSelected ? 'border-primary bg-primary/10' : 'border-muted'
-                                } ${
-                                  isLocked
-                                    ? 'cursor-not-allowed opacity-50'
-                                    : 'hover:bg-muted/50 cursor-pointer'
-                                } `}
+                                className={`flex w-full items-stretch justify-between gap-2 rounded-lg border-2 p-3 transition-all ${isSelected ? 'border-primary bg-primary/10' : 'border-muted'
+                                  } ${isLocked ? 'opacity-50' : 'hover:bg-muted/50'}`}
                               >
-                                <div className='flex items-center gap-3'>
+                                <button
+                                  type='button'
+                                  onClick={() => !isLocked && onLessonSelect(content)}
+                                  disabled={isLocked}
+                                  className={`flex flex-1 items-center gap-3 text-left ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'
+                                    }`}
+                                >
                                   {getLessonIcon(content.content_type_uuid)}
 
                                   <div className='text-left'>
@@ -166,12 +168,24 @@ export function CourseProgramSection({
                                       )}
                                     </div>
                                   </div>
-                                </div>
+                                </button>
+
+                                <Button
+                                  type='button'
+                                  variant='outline'
+                                  size='sm'
+                                  onClick={() => !isLocked && onViewContent(content)}
+                                  disabled={isLocked}
+                                  className='shrink-0 gap-2'
+                                >
+                                  <Eye className='h-3.5 w-3.5' />
+                                  View content
+                                </Button>
 
                                 {isCompleted && (
                                   <CheckCircle className='h-5 w-5 flex-shrink-0 text-green-600' />
                                 )}
-                              </button>
+                              </div>
                             );
                           })}
                         </div>
