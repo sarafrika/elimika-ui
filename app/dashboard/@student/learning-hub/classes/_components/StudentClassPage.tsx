@@ -286,22 +286,31 @@ export default function StudentClassPage({
   const remainingSessions = Math.max(totalSessions - completedSessions, 0);
   const sessionProgress = totalSessions ? Math.round((completedSessions / totalSessions) * 100) : 0;
 
+
+  const baseClassRoute = (classUuid: string) =>
+    `/dashboard/learning-hub/classes/class-training/${classUuid}`;
+
   const startLessonHref = useMemo(() => {
     if (!selectedClassUuid) return '#';
 
     const params = new URLSearchParams();
+
     if (selectedInstanceEntry?.instanceUuid) {
       params.set('schedule', selectedInstanceEntry.instanceUuid);
     }
+
     if (selectedModule?.lesson?.uuid) {
       params.set('lesson', selectedModule.lesson.uuid);
     }
+
     if (selectedLesson?.uuid) {
       params.set('content', selectedLesson.uuid);
     }
 
     const queryString = params.toString();
-    return `/dashboard/schedule/classes/${selectedClassUuid}${queryString ? `?${queryString}` : ''}`;
+
+    return `${baseClassRoute(selectedClassUuid)}${queryString ? `?${queryString}` : ''
+      }`;
   }, [
     selectedClassUuid,
     selectedInstanceEntry?.instanceUuid,
@@ -309,40 +318,30 @@ export default function StudentClassPage({
     selectedModule?.lesson?.uuid,
   ]);
 
-  const getStartLessonHref = (lessonUuid?: string | null, contentUuid?: string | null) => {
+  const getLessonHref = (
+    lessonUuid?: string | null,
+    contentUuid?: string | null
+  ) => {
     if (!selectedClassUuid) return '#';
 
     const params = new URLSearchParams();
+
     if (selectedInstanceEntry?.instanceUuid) {
       params.set('schedule', selectedInstanceEntry.instanceUuid);
     }
+
     if (lessonUuid) {
       params.set('lesson', lessonUuid);
     }
+
     if (contentUuid) {
       params.set('content', contentUuid);
     }
 
     const queryString = params.toString();
-    return `/dashboard/schedule/classes/${selectedClassUuid}${queryString ? `?${queryString}` : ''}`;
-  };
 
-  const getResumeLessonHref = (lessonUuid?: string | null, contentUuid?: string | null) => {
-    if (!selectedClassUuid) return '#';
-
-    const params = new URLSearchParams();
-    if (selectedInstanceEntry?.instanceUuid) {
-      params.set('schedule', selectedInstanceEntry.instanceUuid);
-    }
-    if (lessonUuid) {
-      params.set('lesson', lessonUuid);
-    }
-    if (contentUuid) {
-      params.set('content', contentUuid);
-    }
-
-    const queryString = params.toString();
-    return `/dashboard/schedule/classes/${selectedClassUuid}${queryString ? `?${queryString}` : ''}`;
+    return `${baseClassRoute(selectedClassUuid)}${queryString ? `?${queryString}` : ''
+      }`;
   };
 
   return (
@@ -479,8 +478,8 @@ export default function StudentClassPage({
                 setExpandedModuleId={setExpandedModuleId}
                 setSelectedLessonUuid={setSelectedLessonUuid}
                 startLessonHref={startLessonHref}
-                getStartLessonHref={getStartLessonHref}
-                getResumeLessonHref={getResumeLessonHref}
+                getStartLessonHref={getLessonHref}
+                getResumeLessonHref={getLessonHref}
                 onAddClasses={() => router.push('/dashboard/workspace/student/courses')}
                 roleLabel='Student view'
               />

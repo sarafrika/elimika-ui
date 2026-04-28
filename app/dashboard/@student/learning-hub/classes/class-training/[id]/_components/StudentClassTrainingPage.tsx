@@ -1018,7 +1018,7 @@ export default function StudentClassTrainingPage({
       {
         id: 'class-training',
         title: 'Class Training',
-        url: `/dashboard/classes/class-training/${classId}`,
+        url: `/dashboard/learning-hub/classes`,
         isLast: true,
       },
     ]);
@@ -1537,7 +1537,7 @@ export default function StudentClassTrainingPage({
             </p>
           </div>
           <Button asChild variant='outline'>
-            <Link href='/dashboard/classes'>Back to classes</Link>
+            <Link href='/dashboard/learning-hub/classes'>Back to classes</Link>
           </Button>
         </div>
       </div>
@@ -1554,7 +1554,7 @@ export default function StudentClassTrainingPage({
             size='icon'
             className='text-primary-foreground hover:bg-white/10'
           >
-            <Link href='/dashboard/classes' aria-label='Back to classes'>
+            <Link href='/dashboard/learning-hub/classes' aria-label='Back to classes'>
               <ArrowLeft className='h-5 w-5' />
             </Link>
           </Button>

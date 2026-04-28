@@ -10,6 +10,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 // Import hooks
+import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
@@ -113,6 +114,8 @@ export default function ClassDetailsPage() {
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<LessonContent | null>(null);
+  const [viewedLesson, setViewedLesson] = useState<LessonContent | null>(null);
+  const [isContentViewerOpen, setIsContentViewerOpen] = useState(false);
 
   // Feedback/Rating states
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
@@ -276,7 +279,7 @@ export default function ClassDetailsPage() {
     if (classDefinition) {
       replaceBreadcrumbs([
         { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-        { id: 'schedule', title: 'Schedule', url: '/dashboard/schedule' },
+        { id: 'classes', title: 'Classes', url: `/dashboard/learning-hub/classes/${classId}` },
         {
           id: 'training-page',
           title: classDefinition.title,
@@ -345,6 +348,11 @@ export default function ClassDetailsPage() {
     setSelectedLesson(lesson);
     setIsPlaying(false);
     setIsReading(false);
+  };
+
+  const handleViewContent = (lesson: LessonContent) => {
+    setViewedLesson(lesson);
+    setIsContentViewerOpen(true);
   };
 
   // MAKE CHANGES HERE
@@ -456,6 +464,7 @@ export default function ClassDetailsPage() {
                 onToggleModule={handleToggleModule}
                 selectedLesson={selectedLesson}
                 onLessonSelect={handleLessonSelect}
+                onViewContent={handleViewContent}
                 contentTypeMap={contentTypeMap}
               />
             </div>
@@ -556,6 +565,20 @@ export default function ClassDetailsPage() {
         description={selectedLesson?.description}
         content={resolveLessonContentSource(selectedLesson, contentTypeName)}
         contentType={contentTypeName as 'text' | 'pdf'}
+      />
+
+      <LessonContentViewerDialog
+        open={isContentViewerOpen}
+        onOpenChange={open => {
+          setIsContentViewerOpen(open);
+          if (!open) {
+            setViewedLesson(null);
+          }
+        }}
+        content={viewedLesson}
+        contentType={
+          viewedLesson ? contentTypeMap[viewedLesson.content_type_uuid] ?? viewedLesson.type : null
+        }
       />
     </div>
   );

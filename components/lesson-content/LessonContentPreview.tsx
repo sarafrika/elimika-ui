@@ -117,7 +117,7 @@ function getYouTubeEmbedUrl(source: string) {
       const videoId = url.searchParams.get('v');
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     }
-  } catch {}
+  } catch { }
 
   return '';
 }
@@ -208,7 +208,7 @@ export function LessonContentPreview({
 
   if (resolvedType === 'pdf') {
     return resolvedSource ? (
-      <div className='bg-background p-4'>
+      <div className='bg-background p-4 mb-20'>
         <PDFViewer file={resolvedSource} />
       </div>
     ) : (
@@ -262,7 +262,7 @@ export function LessonContentPreview({
 
   if (resolvedType === 'image') {
     return resolvedSource ? (
-      <div className='bg-background overflow-hidden p-4'>
+      <div className='bg-background overflow-hidden p-4 mb-20'>
         <img
           src={resolvedSource}
           alt={content.title || 'Lesson image'}
