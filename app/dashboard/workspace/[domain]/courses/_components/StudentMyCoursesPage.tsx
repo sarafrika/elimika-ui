@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useStudent } from '@/context/student-context';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { useUserProfile } from '../../../../../../context/profile-context';
 import { CoursesCatalogCard } from './CoursesCatalogCard';
 import {
   formatDurationFromParts,
@@ -178,7 +178,8 @@ function MilestoneItem({
 }
 
 export function StudentMyCoursesPage() {
-  const student = useStudent();
+  const user = useUserProfile()
+  const student = user?.student
   const { classDefinitions, loading } = useStudentClassDefinitions(student ?? undefined);
 
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -300,7 +301,7 @@ export function StudentMyCoursesPage() {
   const isLoading =
     loading || creatorQueries.some(query => query.isLoading || query.isFetching);
 
-  const studentName = (student as any)?.full_name ?? (student as any)?.name ?? 'Student';
+  const studentName = student?.full_name ?? 'Student';
 
   const recommendedData = []
   const learningMilestonesData = completedCards || []
