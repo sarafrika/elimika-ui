@@ -35,7 +35,7 @@ export function MarketplaceRail({
 }: MarketplaceRailProps) {
   return (
     <aside className='space-y-4'>
-      <Card className='gap-4 rounded-[18px] border-border border-1 bg-none px-4 py-4 shadow-sm'>
+      <Card className='gap-4 rounded-[18px] border-border border-1 bg-transparent px-4 py-4 shadow-sm'>
         <h2 className='text-foreground text-lg font-semibold'>{coursesTitle}</h2>
         <div className='space-y-3'>
           {courses.map(course => (
@@ -66,7 +66,7 @@ export function MarketplaceRail({
         <Button className='rounded-xl'>{sendLabel}</Button>
       </Card>
 
-      <Card className='gap-4 rounded-[18px] border-border border-1 bg-card/95 px-4 py-4 shadow-sm'>
+      <Card className='gap-4 rounded-[18px] border-border border-1 bg-transparent px-4 py-4 shadow-sm'>
         <h2 className='text-foreground text-lg font-semibold'>{insightsTitle}</h2>
         <div className='rounded-xl border bg-background/70 p-4'>
           <div className='mb-4 flex items-center gap-2'>
@@ -89,7 +89,7 @@ export function MarketplaceRail({
         </div>
       </Card>
 
-      <Card className='gap-4 rounded-[18px] border-border border-1 bg-card/95 px-4 py-4 shadow-sm'>
+      <Card className='gap-4 rounded-[18px] border-border border-1 bg-transparent px-4 py-4 shadow-sm'>
         <h2 className='text-foreground text-lg font-semibold'>{matchingTitle}</h2>
         <div className='flex items-start gap-3 rounded-xl border bg-background/70 p-4'>
           <span className='grid size-12 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--success)_18%,white)] text-success'>

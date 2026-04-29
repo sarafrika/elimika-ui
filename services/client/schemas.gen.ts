@@ -2953,6 +2953,9 @@ export const InstructorProfessionalMembershipSchema = {
       example: 4,
       readOnly: true,
     },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
+    },
     membership_period: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
@@ -2997,9 +3000,6 @@ export const InstructorProfessionalMembershipSchema = {
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
       readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
     },
   },
   required: ['instructor_uuid', 'organisation_name'],
@@ -4808,18 +4808,6 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
-    is_major_assessment: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
-      example: false,
-      readOnly: true,
-    },
     contribution_level: {
       type: 'string',
       description: '**[READ-ONLY]** Level of contribution to final grade based on weight.',
@@ -4837,6 +4825,18 @@ export const CourseAssessmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment type.',
       example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
+    is_major_assessment: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
+      example: false,
       readOnly: true,
     },
   },
@@ -5696,10 +5696,35 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       format: 'uuid',
     },
+    experience_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    membership_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
     original_filename: {
       type: 'string',
       maxLength: 255,
       minLength: 0,
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum4',
+    },
+    expiry_date: {
+      type: 'string',
+      format: 'date',
     },
     stored_filename: {
       type: 'string',
@@ -5716,6 +5741,15 @@ export const CourseCreatorDocumentDTOSchema = {
     },
     mime_type: {
       type: 'string',
+      readOnly: true,
+    },
+    file_hash: {
+      type: 'string',
+      readOnly: true,
+    },
+    upload_date: {
+      type: 'string',
+      format: 'date-time',
       readOnly: true,
     },
     is_verified: {
@@ -5753,6 +5787,13 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       readOnly: true,
     },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
+    },
     file_url: {
       type: 'string',
       description:
@@ -5760,6 +5801,35 @@ export const CourseCreatorDocumentDTOSchema = {
       example:
         '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
       readOnly: true,
+    },
+    file_size_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted file size.',
+      example: 2,
+      readOnly: true,
+    },
+    days_until_expiry: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.',
+      example: 1095,
+      readOnly: true,
+    },
+    is_pending_verification: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the document is pending verification.',
+      example: false,
+      readOnly: true,
+    },
+    has_expiry_date: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the document has an expiry date configured.',
+      example: true,
+      readOnly: true,
+    },
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum',
     },
   },
   required: ['course_creator_uuid', 'document_type_uuid', 'original_filename'],
@@ -6527,6 +6597,9 @@ export const ClassDefinitionSchema = {
         conflict_resolution: 'FAIL',
       },
     ],
+    scheduled_session_count: 8,
+    completed_session_count: 2,
+    class_progress_percentage: 25,
     is_active: true,
     created_date: '2024-09-05T10:00:00',
     updated_date: '2024-09-05T15:30:00',
@@ -6714,6 +6787,28 @@ conflict_resolution per template:
       maxItems: 2147483647,
       minItems: 1,
     },
+    scheduled_session_count: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Number of non-cancelled scheduled sessions for this class.',
+      example: 8,
+      readOnly: true,
+    },
+    completed_session_count: {
+      type: 'integer',
+      format: 'int64',
+      description:
+        '**[READ-ONLY]** Number of non-cancelled scheduled sessions completed for this class.',
+      example: 2,
+      readOnly: true,
+    },
+    class_progress_percentage: {
+      type: 'number',
+      description:
+        '**[READ-ONLY]** Class delivery progress percentage based on completed scheduled sessions.',
+      example: 25,
+      readOnly: true,
+    },
     created_date: {
       type: 'string',
       format: 'date-time',
@@ -6751,6 +6846,13 @@ conflict_resolution per template:
       example: false,
       readOnly: true,
     },
+    capacity_info: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
+      example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -6763,13 +6865,6 @@ conflict_resolution per template:
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
       example: '1h 30m',
-      readOnly: true,
-    },
-    capacity_info: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
-      example: 'Max 25 participants (waitlist enabled)',
       readOnly: true,
     },
   },
@@ -7077,7 +7172,7 @@ export const ClassMarketplaceJobSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum4',
+      $ref: '#/components/schemas/StatusEnum5',
     },
     organisation_uuid: {
       type: 'string',
@@ -8106,6 +8201,8 @@ export const ScheduledInstanceSchema = {
     max_participants: 25,
     status: 'SCHEDULED',
     cancellation_reason: null,
+    started_at: null,
+    concluded_at: null,
     created_date: '2024-09-05T10:00:00',
     updated_date: '2024-09-05T15:30:00',
     created_by: 'instructor@sarafrika.com',
@@ -8184,12 +8281,28 @@ export const ScheduledInstanceSchema = {
       minimum: 0,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum6',
     },
     cancellation_reason: {
       type: 'string',
       description: '**[OPTIONAL]** Reason for cancellation if status is CANCELLED.',
       example: 'Instructor unavailable due to illness',
+    },
+    started_at: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly started the class session.',
+      example: '2024-09-15T09:03:00',
+      readOnly: true,
+    },
+    concluded_at: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly concluded the class session.',
+      example: '2024-09-15T10:31:00',
+      readOnly: true,
     },
     created_date: {
       type: 'string',
@@ -8251,6 +8364,19 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
       example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      example: false,
       readOnly: true,
     },
   },
@@ -8509,7 +8635,7 @@ export const ProgramTrainingApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum6',
+      $ref: '#/components/schemas/StatusEnum7',
     },
     application_notes: {
       type: 'string',
@@ -8796,7 +8922,7 @@ export const GuardianStudentLinkSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum7',
+      $ref: '#/components/schemas/StatusEnum8',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -8930,7 +9056,7 @@ export const EnrollmentSchema = {
       example: 'st123456-7890-abcd-ef01-234567890abc',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     attendance_marked_at: {
       type: 'string',
@@ -8973,12 +9099,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -8995,6 +9115,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -9109,7 +9235,7 @@ export const CourseTrainingApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum9',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     application_notes: {
       type: 'string',
@@ -10007,7 +10133,7 @@ export const ClassMarketplaceJobApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     job_uuid: {
       type: 'string',
@@ -10173,7 +10299,7 @@ export const BookingResponseSchema = {
       description: 'End time for the session',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     price_amount: {
       type: 'number',
@@ -10421,7 +10547,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-10T14:30:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum12',
+      $ref: '#/components/schemas/StatusEnum13',
     },
     score: {
       type: 'number',
@@ -11329,7 +11455,7 @@ export const StudentScheduleSchema = {
       readOnly: true,
     },
     scheduling_status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/SchedulingStatusEnum',
     },
     enrollment_status: {
       $ref: '#/components/schemas/EnrollmentStatusEnum',
@@ -12494,7 +12620,7 @@ export const QuizAttemptSchema = {
       example: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum13',
+      $ref: '#/components/schemas/StatusEnum14',
     },
     created_date: {
       type: 'string',
@@ -12799,7 +12925,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum14',
+      $ref: '#/components/schemas/StatusEnum15',
     },
     progress_percentage: {
       type: 'number',
@@ -13361,7 +13487,7 @@ export const InstructorCalendarEntrySchema = {
         'Flag indicating availability; false represents blocked time or scheduled instances occupying the slot',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum15',
+      $ref: '#/components/schemas/StatusEnum6',
     },
     title: {
       type: 'string',
@@ -13472,7 +13598,7 @@ export const GuardianStudentDashboardDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum7',
+      $ref: '#/components/schemas/StatusEnum8',
     },
     courseProgress: {
       type: 'array',
@@ -13585,7 +13711,7 @@ export const GuardianStudentSummaryDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum7',
+      $ref: '#/components/schemas/StatusEnum8',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -13720,7 +13846,7 @@ export const StudentClassEnrollmentSummarySchema = {
       description: 'Most recent scheduled-instance enrollment identifier for this class',
     },
     latest_enrollment_status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     scheduled_instance_count: {
       type: 'integer',
@@ -14538,7 +14664,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum14',
+      $ref: '#/components/schemas/StatusEnum15',
     },
     progress_percentage: {
       type: 'number',
@@ -16506,6 +16632,14 @@ export const ProficiencyLevelEnumSchema = {
   example: 'EXPERT',
 } as const;
 
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
+  readOnly: true,
+} as const;
+
 export const OrganisationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organisation type based on name keywords.',
@@ -16518,14 +16652,6 @@ export const OrganisationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
-  readOnly: true,
-} as const;
-
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
   readOnly: true,
 } as const;
 
@@ -16617,6 +16743,12 @@ export const ProficiencyLevelEnum2Schema = {
   enum: ['beginner', 'intermediate', 'advanced', 'expert'],
 } as const;
 
+export const StatusEnum4Schema = {
+  type: 'string',
+  enum: ['Pending Review', 'Approved', 'Rejected', 'Expired'],
+  readOnly: true,
+} as const;
+
 export const ClassVisibilityEnumSchema = {
   type: 'string',
   description: '**[REQUIRED]** Visibility of the class when offerings are published.',
@@ -16653,7 +16785,7 @@ export const ConflictResolutionEnumSchema = {
   example: 'FAIL',
 } as const;
 
-export const StatusEnum4Schema = {
+export const StatusEnum5Schema = {
   type: 'string',
   enum: ['open', 'filled', 'cancelled'],
   readOnly: true,
@@ -16676,10 +16808,10 @@ export const SubmissionTypesEnumSchema = {
   },
 } as const;
 
-export const StatusEnum5Schema = {
+export const StatusEnum6Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current status of the scheduled instance.',
-  enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'],
+  enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'],
   example: 'SCHEDULED',
 } as const;
 
@@ -16689,7 +16821,7 @@ export const ApplicantTypeEnumSchema = {
   enum: ['instructor', 'organisation'],
 } as const;
 
-export const StatusEnum6Schema = {
+export const StatusEnum7Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
   enum: ['pending', 'approved', 'rejected', 'revoked'],
@@ -16706,19 +16838,19 @@ export const ShareScopeEnumSchema = {
   enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
 } as const;
 
-export const StatusEnum7Schema = {
+export const StatusEnum8Schema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
 
-export const StatusEnum8Schema = {
+export const StatusEnum9Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
   example: 'ENROLLED',
 } as const;
 
-export const StatusEnum9Schema = {
+export const StatusEnum10Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
   enum: ['pending', 'approved', 'rejected'],
@@ -16740,13 +16872,13 @@ export const ReleaseStrategyEnumSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum10Schema = {
+export const StatusEnum11Schema = {
   type: 'string',
   enum: ['pending', 'approved', 'rejected', 'assigned', 'not_selected'],
   readOnly: true,
 } as const;
 
-export const StatusEnum11Schema = {
+export const StatusEnum12Schema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: [
@@ -16768,7 +16900,7 @@ export const PaymentStatusEnumSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum12Schema = {
+export const StatusEnum13Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -16797,6 +16929,14 @@ export const TransactionTypeEnumSchema = {
   readOnly: true,
 } as const;
 
+export const SchedulingStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the scheduled instance.',
+  enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'],
+  example: 'SCHEDULED',
+  readOnly: true,
+} as const;
+
 export const EnrollmentStatusEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Current enrollment status for the student.',
@@ -16805,14 +16945,14 @@ export const EnrollmentStatusEnumSchema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum13Schema = {
+export const StatusEnum14Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the quiz attempt.',
   enum: ['IN_PROGRESS', 'SUBMITTED', 'GRADED'],
   example: 'GRADED',
 } as const;
 
-export const StatusEnum14Schema = {
+export const StatusEnum15Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -16831,11 +16971,4 @@ export const AvailabilityTypeEnumSchema = {
   description: 'Availability type when the entry is derived from availability patterns',
   enum: ['daily', 'weekly', 'monthly', 'custom'],
   example: 'WEEKLY',
-} as const;
-
-export const StatusEnum15Schema = {
-  type: 'string',
-  description: 'Scheduled instance status when applicable',
-  enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'],
-  example: 'SCHEDULED',
 } as const;

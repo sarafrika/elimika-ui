@@ -74,6 +74,7 @@ import type {
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
+import { cn } from '../../../lib/utils';
 import type { JobMarketplaceRole } from '../data';
 import { getJobMarketplaceRoleConfig } from '../data';
 import { MarketplaceRail } from './MarketplaceRail';
@@ -420,6 +421,7 @@ function JobCard({
   course,
   organisationName,
   applicationStatus,
+  hasApplied,
   applicationCount,
   applicationsHref,
 }: {
@@ -431,16 +433,38 @@ function JobCard({
   course?: Course | null;
   organisationName?: string | null;
   applicationStatus?: string | null;
+  hasApplied?: boolean;
   applicationCount?: number;
   applicationsHref?: string;
 }) {
   const title = job.title ?? 'Untitled job';
   const applicationLabel = getApplicationStatusLabel(applicationStatus);
+  const statusStyles: Record<string, string> = {
+    pending: 'bg-muted text-muted-foreground border-border',
+    approved: 'bg-success/10 text-success border-success/30',
+    rejected: 'bg-destructive/10 text-destructive border-destructive/30',
+  };
 
   return (
     <Card className='group flex gap-4 rounded-[22px] border-border border-1 bg-card/50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md'>
-      <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_14%,white),color-mix(in_srgb,var(--el-accent-azure)_24%,white))] text-primary'>
-        {isManagementView ? <ShieldCheck className='size-5' /> : <BriefcaseBusiness className='size-5' />}
+      <div className='flex flex-row items-center justify-between' >
+        <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_14%,white),color-mix(in_srgb,var(--el-accent-azure)_24%,white))] text-primary'>
+          {isManagementView ? <ShieldCheck className='size-5' /> : <BriefcaseBusiness className='size-5' />}
+        </div>
+
+        <div>
+          {!isManagementView && applicationStatus ? (
+            <Badge
+              variant='outline'
+              className={cn(
+                'rounded-full px-3 py-1 capitalize',
+                statusStyles[applicationStatus.toLowerCase()] || 'bg-muted text-muted-foreground'
+              )}
+            >
+              {applicationLabel}
+            </Badge>
+          ) : null}
+        </div>
       </div>
 
       <div className='min-w-0 flex-1 space-y-3'>
@@ -448,11 +472,6 @@ function JobCard({
           <div className='min-w-0'>
             <div className='flex flex-wrap items-center gap-2'>
               <h3 className='truncate text-lg font-semibold text-foreground'>{title}</h3>
-              {!isManagementView && applicationStatus ? (
-                <Badge variant='secondary' className='rounded-full px-3 py-1'>
-                  {applicationLabel}
-                </Badge>
-              ) : null}
             </div>
             <p className='mt-0.5 text-sm text-muted-foreground'>
               {getDisplayOrganisationLabel(job, organisationName)} · {getDisplayCourseLabel(job, course)}
@@ -502,6 +521,12 @@ function JobCard({
               <Trash2 className='mr-1 size-4' />
               Cancel
             </Button>
+          ) : null}
+
+          {!isManagementView && hasApplied ? (
+            <Badge className='bg-success/75 text-white rounded-full px-3 py-1'>
+              You already applied to this job
+            </Badge>
           ) : null}
         </div>
       </div>
@@ -710,17 +735,6 @@ function JobDetailsSheet({
                 Cancel job
               </Button>
             </div>
-          ) : alreadyApplied ? (
-            <div className='space-y-3 rounded-2xl border bg-background/70 p-4'>
-              <p className='text-sm text-muted-foreground'>
-                You have already applied to this opportunity. Check your applications page for the latest status.
-              </p>
-              {myApplicationsHref ? (
-                <Button asChild className='rounded-xl'>
-                  <Link href={myApplicationsHref}>Go to my applications</Link>
-                </Button>
-              ) : null}
-            </div>
           ) : (
             <div className='space-y-3 rounded-2xl border bg-background/70 p-4'>
               <Label htmlFor='application-note' className='text-sm font-semibold'>
@@ -732,12 +746,26 @@ function JobDetailsSheet({
                 onChange={event => setApplicationNote(event.target.value)}
                 placeholder='Add a short note to support your application.'
                 className='min-h-28 rounded-2xl'
+                disabled={alreadyApplied}
               />
+              {alreadyApplied ? (
+                <div className='flex flex-wrap items-center gap-2 rounded-xl border border-dashed bg-background/60 p-3 text-sm text-muted-foreground'>
+                  <Badge variant='success' className='rounded-full px-3 py-1'>
+                    Applied
+                  </Badge>
+                  <span>You have already applied to this opportunity.</span>
+                  {myApplicationsHref ? (
+                    <Button asChild variant='outline' className='rounded-xl'>
+                      <Link href={myApplicationsHref}>View my applications</Link>
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
               <div className='flex flex-wrap gap-2'>
                 <Button
                   className='rounded-xl'
                   onClick={handleApply}
-                  disabled={applyMutation.isPending}
+                  disabled={applyMutation.isPending || alreadyApplied}
                 >
                   {applyMutation.isPending ? 'Submitting...' : 'Apply for job'}
                 </Button>
@@ -1211,12 +1239,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const myApplicationsQuery = useQuery({
     ...listMyApplicationsOptions({
       query: {
-        pageable: {
-          page: 0,
-          size: PAGE_SIZE,
-          sort: ['created_date,desc'],
-        },
-        status: undefined,
+        pageable: {},
       },
     }),
     enabled: Boolean(!isOrganizationView && userUuid),
@@ -1348,7 +1371,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   }
 
   return (
-    <main className='min-h-screen px-3 py-4 sm:px-5 lg:px-7'>
+    <main className='min-h-screen px-3 py-4 sm:px-5 lg:px-7 mb-20'>
       <div className='mx-auto max-w-[1560px]'>
         <div className='grid gap-4 xl:grid-cols-[270px_minmax(0,1fr)] 2xl:grid-cols-[270px_minmax(0,1fr)_300px]'>
           <div className='hidden xl:sticky xl:top-4 xl:block xl:self-start'>
@@ -1569,6 +1592,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                                 onEdit={isOrganizationView ? () => handleEdit(job) : undefined}
                                 onCancel={isOrganizationView ? () => setPendingCancelJob(job) : undefined}
                                 applicationStatus={application?.status ?? null}
+                                hasApplied={Boolean(application)}
                                 applicationCount={isOrganizationView ? applicationCount : undefined}
                                 applicationsHref={
                                   isOrganizationView && job.uuid

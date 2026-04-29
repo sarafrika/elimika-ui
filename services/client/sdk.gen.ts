@@ -376,6 +376,12 @@ import type {
   ScheduleClassData,
   ScheduleClassResponses,
   ScheduleClassErrors,
+  StartScheduledInstanceData,
+  StartScheduledInstanceResponses,
+  StartScheduledInstanceErrors,
+  EndScheduledInstanceData,
+  EndScheduledInstanceResponses,
+  EndScheduledInstanceErrors,
   CheckInstructorConflictData,
   CheckInstructorConflictResponses,
   CheckInstructorConflictErrors,
@@ -1549,6 +1555,8 @@ import {
   getAllTrainingBranchesResponseTransformer,
   createTrainingBranchResponseTransformer,
   scheduleClassResponseTransformer,
+  startScheduledInstanceResponseTransformer,
+  endScheduledInstanceResponseTransformer,
   blockInstructorTimeResponseTransformer,
   listRulesResponseTransformer,
   createRuleResponseTransformer,
@@ -5487,6 +5495,60 @@ export const scheduleClass = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Start a scheduled class instance
+ */
+export const startScheduledInstance = <ThrowOnError extends boolean = false>(
+  options: Options<StartScheduledInstanceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    StartScheduledInstanceResponses,
+    StartScheduledInstanceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: startScheduledInstanceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/start',
+    ...options,
+  });
+};
+
+/**
+ * End a scheduled class instance
+ */
+export const endScheduledInstance = <ThrowOnError extends boolean = false>(
+  options: Options<EndScheduledInstanceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    EndScheduledInstanceResponses,
+    EndScheduledInstanceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: endScheduledInstanceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/end',
+    ...options,
+  });
+};
+
+/**
  * Check if an instructor has scheduling conflicts
  */
 export const checkInstructorConflict = <ThrowOnError extends boolean = false>(
@@ -8747,7 +8809,8 @@ export const verifyCourseCreatorDocument = <ThrowOnError extends boolean = false
  * Uploads a PDF document for a course creator and creates a document record.
  *
  * **Use cases:**
- * - Uploading certificates for course creator education records.
+ * - Uploading certificates, credentials, and other creator verification documents.
+ * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
  * - Must be a PDF file (`application/pdf`).

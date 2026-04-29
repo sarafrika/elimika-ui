@@ -17,6 +17,14 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -64,6 +72,11 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'pending' | 'approved' | 'rejected' | 'assigned'>('ALL');
   const [reviewNotes, setReviewNotes] = useState('');
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [pendingReview, setPendingReview] = useState<{
+    application: ClassMarketplaceJobApplication;
+    action: 'APPROVE' | 'REJECT';
+  } | null>(null);
 
   // const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
   //   ...listJobsOptions({
@@ -113,6 +126,8 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     onSuccess: async () => {
       toast.success('Application reviewed successfully.');
       setReviewNotes('');
+      setPendingReview(null);
+      setReviewDialogOpen(false);
       await queryClient.invalidateQueries({ queryKey: listJobApplicationsQueryKey({ path: { jobUuid }, query: { pageable: {} } }) });
       await queryClient.invalidateQueries({ queryKey: listJobsQueryKey({ query: { pageable: {} } }) });
     },
@@ -170,14 +185,22 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     [applications]
   );
 
-  const handleReview = (application: ClassMarketplaceJobApplication, action: 'APPROVE' | 'REJECT') => {
+  const openReviewDialog = (application: ClassMarketplaceJobApplication, action: 'APPROVE' | 'REJECT') => {
+    setPendingReview({ application, action });
+    setReviewNotes(application.review_notes ?? '');
+    setReviewDialogOpen(true);
+  };
+
+  const handleReviewConfirm = () => {
+    if (!pendingReview?.application.uuid) return;
+
     reviewMutation.mutate({
       path: {
         jobUuid,
-        applicationUuid: application.uuid ?? '',
+        applicationUuid: pendingReview.application.uuid,
       },
       query: {
-        action,
+        action: pendingReview.action,
       },
       body: reviewNotes.trim() ? { review_notes: reviewNotes.trim() } : undefined,
     } satisfies ReviewApplicationData);
@@ -333,7 +356,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                         <Button
                           variant='outline'
                           className='rounded-xl'
-                          onClick={() => handleReview(application, 'APPROVE')}
+                          onClick={() => openReviewDialog(application, 'APPROVE')}
                           disabled={reviewMutation.isPending || disableButton}
                         >
                           <CheckCircle2 className='mr-2 size-4' />
@@ -342,7 +365,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                         <Button
                           variant='destructive'
                           className='rounded-xl'
-                          onClick={() => handleReview(application, 'REJECT')}
+                          onClick={() => openReviewDialog(application, 'REJECT')}
                           disabled={reviewMutation.isPending || disableButton}
                         >
                           <XCircle className='mr-2 size-4' />
@@ -404,16 +427,6 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
               </div>
             </div>
 
-            <div className='mt-4 rounded-2xl border bg-background/70 p-4'>
-              <Label className='text-sm font-medium'>Review notes</Label>
-              <Textarea
-                value={reviewNotes}
-                onChange={event => setReviewNotes(event.target.value)}
-                placeholder='Add optional notes before approving or rejecting...'
-                className='mt-2 min-h-28 rounded-2xl'
-              />
-            </div>
-
             <div className='mt-4 flex flex-wrap gap-2'>
               <Button variant='outline' className='rounded-xl' asChild>
                 <Link href='/dashboard/opportunities'>Back to opportunities</Link>
@@ -422,6 +435,74 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           </Card>
         </div>
       </div>
+
+      <Dialog
+        open={reviewDialogOpen}
+        onOpenChange={open => {
+          setReviewDialogOpen(open);
+          if (!open) {
+            setPendingReview(null);
+            setReviewNotes('');
+          }
+        }}
+      >
+        <DialogContent className='max-w-lg'>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingReview?.action === 'APPROVE' ? 'Approve application' : 'Reject application'}
+            </DialogTitle>
+            <DialogDescription>
+              Add review notes before confirming this decision. The applicant will receive the
+              submitted notes with the review outcome.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='space-y-2'>
+            <Label htmlFor='review-notes' className='text-sm font-medium'>
+              Review notes
+            </Label>
+            <Textarea
+              id='review-notes'
+              value={reviewNotes}
+              onChange={event => setReviewNotes(event.target.value)}
+              placeholder='Add optional notes for this review...'
+              className='min-h-32 rounded-2xl'
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant='outline'
+              className='rounded-xl'
+              onClick={() => {
+                setReviewDialogOpen(false);
+                setPendingReview(null);
+                setReviewNotes('');
+              }}
+              disabled={reviewMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              className='rounded-xl'
+              variant={pendingReview?.action === 'REJECT' ? 'destructive' : 'default'}
+              onClick={handleReviewConfirm}
+              disabled={reviewMutation.isPending || !pendingReview?.application.uuid}
+            >
+              {reviewMutation.isPending ? (
+                <>
+                  <Loader2 className='mr-2 size-4 animate-spin' />
+                  Submitting...
+                </>
+              ) : pendingReview?.action === 'APPROVE' ? (
+                'Confirm approval'
+              ) : (
+                'Confirm rejection'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

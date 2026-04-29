@@ -1435,6 +1435,7 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
+  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -1460,7 +1461,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
-  membership_status?: MembershipStatusEnum;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2338,14 +2338,6 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is a major assessment component.
-   */
-  readonly is_major_assessment?: boolean;
-  /**
    * **[READ-ONLY]** Level of contribution to final grade based on weight.
    */
   readonly contribution_level?: string;
@@ -2357,6 +2349,14 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Category classification of the assessment type.
    */
   readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is a major assessment component.
+   */
+  readonly is_major_assessment?: boolean;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -2641,11 +2641,19 @@ export type CourseCreatorDocumentDto = {
   course_creator_uuid: string;
   document_type_uuid: string;
   education_uuid?: string;
+  experience_uuid?: string;
+  membership_uuid?: string;
   original_filename: string;
+  title?: string;
+  description?: string;
+  status?: StatusEnum4;
+  expiry_date?: Date;
   readonly stored_filename?: string;
   readonly file_path?: string;
   readonly file_size_bytes?: bigint;
   readonly mime_type?: string;
+  readonly file_hash?: string;
+  readonly upload_date?: Date;
   readonly is_verified?: boolean;
   readonly verified_by?: string;
   readonly verified_at?: Date;
@@ -2655,9 +2663,30 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
+  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  /**
+   * **[READ-ONLY]** Human-readable formatted file size.
+   */
+  readonly file_size_formatted?: string;
+  /**
+   * **[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.
+   */
+  readonly days_until_expiry?: number;
+  /**
+   * **[READ-ONLY]** Indicates if the document is pending verification.
+   */
+  readonly is_pending_verification?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the document has an expiry date configured.
+   */
+  readonly has_expiry_date?: boolean;
+  verification_status?: VerificationStatusEnum;
 };
 
 export type ApiResponseCourseCreatorDocumentDto = {
@@ -3137,6 +3166,18 @@ export type ClassDefinition = {
    */
   session_templates: Array<ClassSessionTemplate>;
   /**
+   * **[READ-ONLY]** Number of non-cancelled scheduled sessions for this class.
+   */
+  readonly scheduled_session_count?: bigint;
+  /**
+   * **[READ-ONLY]** Number of non-cancelled scheduled sessions completed for this class.
+   */
+  readonly completed_session_count?: bigint;
+  /**
+   * **[READ-ONLY]** Class delivery progress percentage based on completed scheduled sessions.
+   */
+  readonly class_progress_percentage?: number;
+  /**
    * **[READ-ONLY]** Timestamp when the class definition was first created. Automatically set by the system.
    */
   readonly created_date?: Date;
@@ -3157,6 +3198,10 @@ export type ClassDefinition = {
    */
   readonly is_standalone?: boolean;
   /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
+  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
@@ -3164,10 +3209,6 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
-  /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
 };
 
 /**
@@ -3336,7 +3377,7 @@ export type ClassMarketplaceJob = {
   readonly uuid?: string;
   readonly title?: string;
   readonly description?: string;
-  status?: StatusEnum4;
+  status?: StatusEnum5;
   readonly organisation_uuid?: string;
   readonly course_uuid?: string;
   class_visibility?: ClassVisibilityEnum;
@@ -3901,11 +3942,19 @@ export type ScheduledInstance = {
    * **[OPTIONAL]** Maximum number of participants for this session (cached from class definition).
    */
   max_participants?: number;
-  status?: StatusEnum5;
+  status?: StatusEnum6;
   /**
    * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
    */
   cancellation_reason?: string;
+  /**
+   * **[READ-ONLY]** Actual UTC timestamp when the instructor explicitly started the class session.
+   */
+  readonly started_at?: Date;
+  /**
+   * **[READ-ONLY]** Actual UTC timestamp when the instructor explicitly concluded the class session.
+   */
+  readonly concluded_at?: Date;
   /**
    * **[READ-ONLY]** Timestamp when the scheduled instance was first created. Automatically set by the system.
    */
@@ -3942,6 +3991,14 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
 };
 
 /**
@@ -4069,7 +4126,7 @@ export type ProgramTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum6;
+  status?: StatusEnum7;
   /**
    * Submission notes provided by the applicant.
    */
@@ -4233,7 +4290,7 @@ export type GuardianStudentLink = {
   guardianDisplayName?: string;
   relationshipType?: RelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum7;
+  status?: StatusEnum8;
   primaryGuardian?: boolean;
   linkedDate?: Date;
   revokedDate?: Date;
@@ -4303,7 +4360,7 @@ export type Enrollment = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum8;
+  status?: StatusEnum9;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -4329,10 +4386,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -4344,6 +4397,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -4393,7 +4450,7 @@ export type CourseTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum9;
+  status?: StatusEnum10;
   /**
    * Submission notes provided by the applicant.
    */
@@ -4960,7 +5017,7 @@ export type ApiResponseClassMarketplaceJobApplication = {
  */
 export type ClassMarketplaceJobApplication = {
   readonly uuid?: string;
-  status?: StatusEnum10;
+  status?: StatusEnum11;
   readonly job_uuid?: string;
   readonly instructor_uuid?: string;
   readonly application_note?: string;
@@ -5055,7 +5112,7 @@ export type BookingResponse = {
    * End time for the session
    */
   end_time: Date;
-  status: StatusEnum11;
+  status: StatusEnum12;
   /**
    * Price amount agreed for the booking
    */
@@ -5203,7 +5260,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum12;
+  status: StatusEnum13;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -5686,7 +5743,7 @@ export type StudentSchedule = {
    * **[READ-ONLY]** Longitude coordinate for the scheduled class location.
    */
   readonly location_longitude?: number;
-  scheduling_status?: StatusEnum5;
+  scheduling_status?: SchedulingStatusEnum;
   enrollment_status?: EnrollmentStatusEnum;
   /**
    * **[READ-ONLY]** Timestamp when attendance was marked (if applicable).
@@ -6156,7 +6213,7 @@ export type QuizAttempt = {
    * **[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.
    */
   is_passed?: boolean;
-  status: StatusEnum13;
+  status: StatusEnum14;
   /**
    * **[READ-ONLY]** Timestamp when the attempt was created. Automatically set by the system.
    */
@@ -6294,7 +6351,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum14;
+  status: StatusEnum15;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -6558,7 +6615,7 @@ export type InstructorCalendarEntry = {
    * Flag indicating availability; false represents blocked time or scheduled instances occupying the slot
    */
   is_available?: boolean;
-  status?: StatusEnum15;
+  status?: StatusEnum6;
   /**
    * Optional title (for scheduled instances)
    */
@@ -6611,7 +6668,7 @@ export type GuardianStudentDashboardDto = {
   studentUuid?: string;
   studentName?: string;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum7;
+  status?: StatusEnum8;
   courseProgress?: Array<LearnerCourseProgressView>;
   programProgress?: Array<LearnerProgramProgressView>;
 };
@@ -6649,7 +6706,7 @@ export type GuardianStudentSummaryDto = {
   studentName?: string;
   relationshipType?: RelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum7;
+  status?: StatusEnum8;
   primaryGuardian?: boolean;
 };
 
@@ -6714,7 +6771,7 @@ export type StudentClassEnrollmentSummary = {
    * Most recent scheduled-instance enrollment identifier for this class
    */
   latest_enrollment_uuid?: string;
-  latest_enrollment_status?: StatusEnum8;
+  latest_enrollment_status?: StatusEnum9;
   /**
    * Number of scheduled-instance enrollments aggregated under this class
    */
@@ -7119,7 +7176,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum14;
+  status: StatusEnum15;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -8215,6 +8272,21 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
+
+/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -8230,21 +8302,6 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -8394,6 +8451,15 @@ export const ProficiencyLevelEnum2 = {
 export type ProficiencyLevelEnum2 =
   (typeof ProficiencyLevelEnum2)[keyof typeof ProficiencyLevelEnum2];
 
+export const StatusEnum4 = {
+  PENDING_REVIEW: 'Pending Review',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  EXPIRED: 'Expired',
+} as const;
+
+export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
+
 /**
  * **[REQUIRED]** Visibility of the class when offerings are published.
  */
@@ -8463,13 +8529,13 @@ export const ConflictResolutionEnum = {
 export type ConflictResolutionEnum =
   (typeof ConflictResolutionEnum)[keyof typeof ConflictResolutionEnum];
 
-export const StatusEnum4 = {
+export const StatusEnum5 = {
   OPEN: 'open',
   FILLED: 'filled',
   CANCELLED: 'cancelled',
 } as const;
 
-export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
+export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
 
 /**
  * **[REQUIRED]** Type of certificate this template is designed for.
@@ -8506,17 +8572,18 @@ export type SubmissionTypesEnum = (typeof SubmissionTypesEnum)[keyof typeof Subm
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export const StatusEnum5 = {
+export const StatusEnum6 = {
   SCHEDULED: 'SCHEDULED',
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
+  BLOCKED: 'BLOCKED',
 } as const;
 
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
 
 /**
  * **[REQUIRED]** Applicant type initiating the request.
@@ -8534,7 +8601,7 @@ export type ApplicantTypeEnum = (typeof ApplicantTypeEnum)[keyof typeof Applican
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum6 = {
+export const StatusEnum7 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -8544,7 +8611,7 @@ export const StatusEnum6 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
 
 export const RelationshipTypeEnum = {
   PARENT: 'PARENT',
@@ -8562,18 +8629,18 @@ export const ShareScopeEnum = {
 
 export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
 
-export const StatusEnum7 = {
+export const StatusEnum8 = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   REVOKED: 'REVOKED',
 } as const;
 
-export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum8 = {
+export const StatusEnum9 = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -8584,12 +8651,12 @@ export const StatusEnum8 = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum9 = {
+export const StatusEnum10 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -8598,7 +8665,7 @@ export const StatusEnum9 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
 
 /**
  * How the platform fee was configured
@@ -8627,7 +8694,7 @@ export const ReleaseStrategyEnum = {
  */
 export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof ReleaseStrategyEnum];
 
-export const StatusEnum10 = {
+export const StatusEnum11 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -8635,12 +8702,12 @@ export const StatusEnum10 = {
   NOT_SELECTED: 'not_selected',
 } as const;
 
-export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
+export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
 
 /**
  * Current status of the booking
  */
-export const StatusEnum11 = {
+export const StatusEnum12 = {
   PAYMENT_REQUIRED: 'payment_required',
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
@@ -8654,7 +8721,7 @@ export const StatusEnum11 = {
 /**
  * Current status of the booking
  */
-export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
+export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
 
 /**
  * Payment status reported by the engine
@@ -8672,7 +8739,7 @@ export type PaymentStatusEnum = (typeof PaymentStatusEnum)[keyof typeof PaymentS
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum12 = {
+export const StatusEnum13 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -8683,7 +8750,7 @@ export const StatusEnum12 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
+export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
 
 /**
  * Type of assignment - global or organization-specific
@@ -8730,6 +8797,21 @@ export const TransactionTypeEnum = {
 export type TransactionTypeEnum = (typeof TransactionTypeEnum)[keyof typeof TransactionTypeEnum];
 
 /**
+ * **[READ-ONLY]** Current status of the scheduled instance.
+ */
+export const SchedulingStatusEnum = {
+  SCHEDULED: 'SCHEDULED',
+  ONGOING: 'ONGOING',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the scheduled instance.
+ */
+export type SchedulingStatusEnum = (typeof SchedulingStatusEnum)[keyof typeof SchedulingStatusEnum];
+
+/**
  * **[READ-ONLY]** Current enrollment status for the student.
  */
 export const EnrollmentStatusEnum = {
@@ -8747,7 +8829,7 @@ export type EnrollmentStatusEnum = (typeof EnrollmentStatusEnum)[keyof typeof En
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const StatusEnum13 = {
+export const StatusEnum14 = {
   IN_PROGRESS: 'IN_PROGRESS',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
@@ -8756,12 +8838,12 @@ export const StatusEnum13 = {
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
+export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum14 = {
+export const StatusEnum15 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -8771,7 +8853,7 @@ export const StatusEnum14 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
+export type StatusEnum15 = (typeof StatusEnum15)[keyof typeof StatusEnum15];
 
 /**
  * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
@@ -8801,22 +8883,6 @@ export const AvailabilityTypeEnum = {
  * Availability type when the entry is derived from availability patterns
  */
 export type AvailabilityTypeEnum = (typeof AvailabilityTypeEnum)[keyof typeof AvailabilityTypeEnum];
-
-/**
- * Scheduled instance status when applicable
- */
-export const StatusEnum15 = {
-  SCHEDULED: 'SCHEDULED',
-  ONGOING: 'ONGOING',
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED',
-  BLOCKED: 'BLOCKED',
-} as const;
-
-/**
- * Scheduled instance status when applicable
- */
-export type StatusEnum15 = (typeof StatusEnum15)[keyof typeof StatusEnum15];
 
 export type DeleteUserData = {
   body?: never;
@@ -12920,6 +12986,86 @@ export type ScheduleClassResponses = {
 
 export type ScheduleClassResponse = ScheduleClassResponses[keyof ScheduleClassResponses];
 
+export type StartScheduledInstanceData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the scheduled instance
+     */
+    instanceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/timetable/schedule/{instanceUuid}/start';
+};
+
+export type StartScheduledInstanceErrors = {
+  /**
+   * Scheduled instance cannot be started
+   */
+  400: ApiResponseScheduledInstance;
+  /**
+   * Scheduled instance not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type StartScheduledInstanceError =
+  StartScheduledInstanceErrors[keyof StartScheduledInstanceErrors];
+
+export type StartScheduledInstanceResponses = {
+  /**
+   * Scheduled instance started successfully
+   */
+  200: ApiResponseScheduledInstance;
+};
+
+export type StartScheduledInstanceResponse =
+  StartScheduledInstanceResponses[keyof StartScheduledInstanceResponses];
+
+export type EndScheduledInstanceData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the scheduled instance
+     */
+    instanceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/timetable/schedule/{instanceUuid}/end';
+};
+
+export type EndScheduledInstanceErrors = {
+  /**
+   * Scheduled instance cannot be ended
+   */
+  400: ApiResponseScheduledInstance;
+  /**
+   * Scheduled instance not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type EndScheduledInstanceError =
+  EndScheduledInstanceErrors[keyof EndScheduledInstanceErrors];
+
+export type EndScheduledInstanceResponses = {
+  /**
+   * Scheduled instance ended successfully
+   */
+  200: ApiResponseScheduledInstance;
+};
+
+export type EndScheduledInstanceResponse =
+  EndScheduledInstanceResponses[keyof EndScheduledInstanceResponses];
+
 export type CheckInstructorConflictData = {
   body: ScheduleRequest;
   path: {
@@ -16512,7 +16658,12 @@ export type UploadCourseCreatorDocumentData = {
   };
   query: {
     document_type_uuid: string;
+    title?: string;
+    description?: string;
     education_uuid?: string;
+    experience_uuid?: string;
+    membership_uuid?: string;
+    expiry_date?: Date;
   };
   url: '/api/v1/course-creators/{courseCreatorUuid}/documents/upload';
 };
@@ -18933,7 +19084,7 @@ export type UpdateScheduledInstanceStatusData = {
   };
   query: {
     /**
-     * New status (SCHEDULED, ONGOING, COMPLETED, CANCELLED)
+     * New status (SCHEDULED, ONGOING, COMPLETED, CANCELLED, BLOCKED)
      */
     status: string;
   };
