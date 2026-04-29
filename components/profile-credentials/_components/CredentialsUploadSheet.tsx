@@ -13,18 +13,10 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
@@ -159,17 +151,17 @@ export function CredentialsUploadSheet({
 
   const roleMutations = role === 'instructor'
     ? {
-        education: addInstructorEducation,
-        membership: addInstructorMembership,
-        experience: addInstructorExperience,
-        upload: uploadInstructorDocument,
-      }
+      education: addInstructorEducation,
+      membership: addInstructorMembership,
+      experience: addInstructorExperience,
+      upload: uploadInstructorDocument,
+    }
     : {
-        education: addCourseCreatorEducation,
-        membership: addCourseCreatorMembership,
-        experience: addCourseCreatorExperience,
-        upload: uploadCourseCreatorDocument,
-      };
+      education: addCourseCreatorEducation,
+      membership: addCourseCreatorMembership,
+      experience: addCourseCreatorExperience,
+      upload: uploadCourseCreatorDocument,
+    };
 
   const selectedDocumentType = useMemo(
     () => documentTypes.find(item => item.uuid === draft.documentTypeUuid),
@@ -191,6 +183,38 @@ export function CredentialsUploadSheet({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!documentTypes.length) return;
+
+    const findType = (keywords: string[]) =>
+      documentTypes.find(type =>
+        keywords.some(keyword =>
+          type.name?.toLowerCase().includes(keyword)
+        )
+      );
+
+    let defaultType;
+
+    if (activeTab === 'education') {
+      defaultType = findType(['certificate', 'cert']);
+    }
+
+    if (activeTab === 'membership') {
+      defaultType = findType(['membership']);
+    }
+
+    if (activeTab === 'experience') {
+      defaultType = findType(['experience', 'cv', 'resume', 'letter']);
+    }
+
+    if (defaultType?.uuid) {
+      setDraft(current => ({
+        ...current,
+        documentTypeUuid: defaultType.uuid as string,
+      }));
+    }
+  }, [activeTab, documentTypes]);
+
   const setEducationDraft = (patch: Partial<DraftState['education']>) => {
     setDraft(current => ({ ...current, education: { ...current.education, ...patch } }));
   };
@@ -211,7 +235,7 @@ export function CredentialsUploadSheet({
       : activeTab === 'membership'
         ? draft.membership.organizationName.trim().length > 0
         : draft.experience.position.trim().length > 0 &&
-          draft.experience.organizationName.trim().length > 0;
+        draft.experience.organizationName.trim().length > 0;
 
   const hasUploadDetails =
     draft.documentTypeUuid.trim().length > 0 &&
@@ -284,25 +308,25 @@ export function CredentialsUploadSheet({
         const body =
           role === 'instructor'
             ? {
-                instructor_uuid: profileUuid,
-                qualification: draft.education.qualification.trim(),
-                school_name: draft.education.schoolName.trim(),
-                field_of_study: draft.education.fieldOfStudy.trim() || undefined,
-                year_completed: draft.education.yearCompleted
-                  ? Number(draft.education.yearCompleted)
-                  : undefined,
-                certificate_number: draft.education.certificateNumber.trim() || undefined,
-              }
+              instructor_uuid: profileUuid,
+              qualification: draft.education.qualification.trim(),
+              school_name: draft.education.schoolName.trim(),
+              field_of_study: draft.education.fieldOfStudy.trim() || undefined,
+              year_completed: draft.education.yearCompleted
+                ? Number(draft.education.yearCompleted)
+                : undefined,
+              certificate_number: draft.education.certificateNumber.trim() || undefined,
+            }
             : {
-                course_creator_uuid: profileUuid,
-                qualification: draft.education.qualification.trim(),
-                school_name: draft.education.schoolName.trim(),
-                field_of_study: draft.education.fieldOfStudy.trim() || undefined,
-                year_completed: draft.education.yearCompleted
-                  ? Number(draft.education.yearCompleted)
-                  : undefined,
-                certificate_number: draft.education.certificateNumber.trim() || undefined,
-              };
+              course_creator_uuid: profileUuid,
+              qualification: draft.education.qualification.trim(),
+              school_name: draft.education.schoolName.trim(),
+              field_of_study: draft.education.fieldOfStudy.trim() || undefined,
+              year_completed: draft.education.yearCompleted
+                ? Number(draft.education.yearCompleted)
+                : undefined,
+              certificate_number: draft.education.certificateNumber.trim() || undefined,
+            };
 
         const response = await roleMutations.education.mutateAsync({
           path:
@@ -318,25 +342,25 @@ export function CredentialsUploadSheet({
         const body =
           role === 'instructor'
             ? {
-                instructor_uuid: profileUuid,
-                organisation_name: draft.membership.organizationName.trim(),
-                membership_number: draft.membership.membershipNumber.trim() || undefined,
-                start_date: draft.membership.startDate ? toDateValue(draft.membership.startDate) : undefined,
-                end_date: draft.membership.isActive || !draft.membership.endDate
-                  ? undefined
-                  : toDateValue(draft.membership.endDate),
-                is_active: draft.membership.isActive,
-              }
+              instructor_uuid: profileUuid,
+              organisation_name: draft.membership.organizationName.trim(),
+              membership_number: draft.membership.membershipNumber.trim() || undefined,
+              start_date: draft.membership.startDate ? toDateValue(draft.membership.startDate) : undefined,
+              end_date: draft.membership.isActive || !draft.membership.endDate
+                ? undefined
+                : toDateValue(draft.membership.endDate),
+              is_active: draft.membership.isActive,
+            }
             : {
-                course_creator_uuid: profileUuid,
-                organization_name: draft.membership.organizationName.trim(),
-                membership_number: draft.membership.membershipNumber.trim() || undefined,
-                start_date: draft.membership.startDate ? toDateValue(draft.membership.startDate) : undefined,
-                end_date: draft.membership.isActive || !draft.membership.endDate
-                  ? undefined
-                  : toDateValue(draft.membership.endDate),
-                is_active: draft.membership.isActive,
-              };
+              course_creator_uuid: profileUuid,
+              organization_name: draft.membership.organizationName.trim(),
+              membership_number: draft.membership.membershipNumber.trim() || undefined,
+              start_date: draft.membership.startDate ? toDateValue(draft.membership.startDate) : undefined,
+              end_date: draft.membership.isActive || !draft.membership.endDate
+                ? undefined
+                : toDateValue(draft.membership.endDate),
+              is_active: draft.membership.isActive,
+            };
 
         const response = await roleMutations.membership.mutateAsync({
           path:
@@ -352,33 +376,33 @@ export function CredentialsUploadSheet({
         const body =
           role === 'instructor'
             ? {
-                instructor_uuid: profileUuid,
-                position: draft.experience.position.trim(),
-                organisation_name: draft.experience.organizationName.trim(),
-                responsibilities: draft.experience.responsibilities.trim() || undefined,
-                years_of_experience: draft.experience.yearsOfExperience
-                  ? Number(draft.experience.yearsOfExperience)
-                  : undefined,
-                start_date: draft.experience.startDate ? toDateValue(draft.experience.startDate) : undefined,
-                end_date: draft.experience.isCurrentPosition || !draft.experience.endDate
-                  ? undefined
-                  : toDateValue(draft.experience.endDate),
-                is_current_position: draft.experience.isCurrentPosition,
-              }
+              instructor_uuid: profileUuid,
+              position: draft.experience.position.trim(),
+              organisation_name: draft.experience.organizationName.trim(),
+              responsibilities: draft.experience.responsibilities.trim() || undefined,
+              years_of_experience: draft.experience.yearsOfExperience
+                ? Number(draft.experience.yearsOfExperience)
+                : undefined,
+              start_date: draft.experience.startDate ? toDateValue(draft.experience.startDate) : undefined,
+              end_date: draft.experience.isCurrentPosition || !draft.experience.endDate
+                ? undefined
+                : toDateValue(draft.experience.endDate),
+              is_current_position: draft.experience.isCurrentPosition,
+            }
             : {
-                course_creator_uuid: profileUuid,
-                position: draft.experience.position.trim(),
-                organisation_name: draft.experience.organizationName.trim(),
-                responsibilities: draft.experience.responsibilities.trim() || undefined,
-                years_of_experience: draft.experience.yearsOfExperience
-                  ? Number(draft.experience.yearsOfExperience)
-                  : undefined,
-                start_date: draft.experience.startDate ? toDateValue(draft.experience.startDate) : undefined,
-                end_date: draft.experience.isCurrentPosition || !draft.experience.endDate
-                  ? undefined
-                  : toDateValue(draft.experience.endDate),
-                is_current_position: draft.experience.isCurrentPosition,
-              };
+              course_creator_uuid: profileUuid,
+              position: draft.experience.position.trim(),
+              organisation_name: draft.experience.organizationName.trim(),
+              responsibilities: draft.experience.responsibilities.trim() || undefined,
+              years_of_experience: draft.experience.yearsOfExperience
+                ? Number(draft.experience.yearsOfExperience)
+                : undefined,
+              start_date: draft.experience.startDate ? toDateValue(draft.experience.startDate) : undefined,
+              end_date: draft.experience.isCurrentPosition || !draft.experience.endDate
+                ? undefined
+                : toDateValue(draft.experience.endDate),
+              is_current_position: draft.experience.isCurrentPosition,
+            };
 
         const response = await roleMutations.experience.mutateAsync({
           path:
@@ -741,40 +765,18 @@ export function CredentialsUploadSheet({
             </TabsContent>
           </Tabs>
 
-          <div className='space-y-4 rounded-2xl border bg-card px-4 py-4'>
+          <div className='space-y-4 rounded-md border bg-card px-4 py-4'>
             <div className='grid gap-4 sm:grid-cols-2'>
               <div className='space-y-2'>
                 <Label>Document type</Label>
-                <Select
-                  value={draft.documentTypeUuid}
-                  onValueChange={value =>
-                    setDraft(current => ({ ...current, documentTypeUuid: value }))
-                  }
-                >
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='Select a document type' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {documentTypes.length > 0 ? (
-                      documentTypes
-                        .filter(type => !!type.uuid)
-                        .map(type => (
-                          <SelectItem key={type.uuid} value={type.uuid as string}>
-                            <span className='flex items-center gap-2'>
-                              <span className='font-medium'>{type.name ?? 'Document type'}</span>
-                              {type.is_required ? <Badge variant='secondary'>Required</Badge> : null}
-                            </span>
-                          </SelectItem>
-                        ))
-                    ) : (
-                      <SelectItem value='document-types-loading' disabled>
-                        Document types loading...
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <div className='border-border bg-muted/40 text-foreground rounded-md border px-3 py-2 text-sm font-medium'>
+                  {selectedDocumentType?.name ?? 'Auto-selected'}
+                </div>
+
                 {selectedDocumentType?.description ? (
-                  <p className='text-muted-foreground text-xs'>{selectedDocumentType.description}</p>
+                  <p className='text-muted-foreground text-xs'>
+                    {selectedDocumentType.description}
+                  </p>
                 ) : null}
               </div>
 

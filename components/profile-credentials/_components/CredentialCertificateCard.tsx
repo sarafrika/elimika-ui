@@ -8,9 +8,17 @@ import { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
+import { PdfPreview } from '../../../app/dashboard/@admin/verifications/_components/DocumentsVerificationPage';
 import type { CredentialItem } from '../data';
 import { CredentialDetailGrid } from './CredentialDetailGrid';
 
@@ -173,6 +181,7 @@ export function CredentialCertificateCard({
 }: CredentialCertificateCardProps) {
   const StatusIcon = item.statusIcon;
   const statusTone = getStatusTone(item.status);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   return (
     <Card className='gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
@@ -219,14 +228,14 @@ export function CredentialCertificateCard({
           </Badge>
           {item.documentUrl ? (
             <Button
-              asChild
+              type='button'
               variant='outline'
               className='min-h-10 rounded-lg border-white/70 bg-background/80 px-4'
+              onClick={() => setViewerOpen(true)}
+              disabled={!item.documentUrl}
             >
-              <a href={toAuthenticatedMediaUrl(item.documentUrl) || item.documentUrl} target='_blank' rel='noreferrer'>
-                {item.actionLabel}
-                <ChevronRight className='size-4' />
-              </a>
+              {item.actionLabel}
+              <ChevronRight className='size-4' />
             </Button>
           ) : (
             <Button variant='outline' className='min-h-10 rounded-lg border-white/70 bg-background/80 px-4'>
@@ -247,6 +256,41 @@ export function CredentialCertificateCard({
           ) : null}
         </div>
       </div>
-    </Card>
+
+
+      {/* Full-height document viewer sheet */}
+      <Sheet open={viewerOpen} onOpenChange={setViewerOpen}>
+        <SheetContent
+          side='right'
+          className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[720px]'
+        >
+          <SheetHeader className='border-border/70 border-b px-6 py-5 text-left'>
+            <SheetTitle className='text-xl'>{item.documentLabel}</SheetTitle>
+            <SheetDescription>
+              {item.recordSummary ? `${item.recordSummary} · ` : ''}{ownerName}
+            </SheetDescription>
+          </SheetHeader>
+
+          {item.documentUrl ? (
+            <div className='flex-1 space-y-5 overflow-y-auto px-6 py-5'>
+              <div className='overflow-hidden rounded-[18px] border bg-card shadow-sm'>
+                <PdfPreview
+                  documentUrl={item.documentUrl}
+                  documentLabel={item.documentLabel}
+                  documentTitle={item.documentLabel}
+                  fullHeight
+                />
+              </div>
+            </div>
+          ) : (
+            <div className='flex flex-1 items-center justify-center p-6 text-center text-sm text-muted-foreground'>
+              No document URL available for this credential.
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+
+    </Card >
   );
 }

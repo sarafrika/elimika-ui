@@ -356,7 +356,7 @@ function getDocumentUrl(document: InstructorDocument | CourseCreatorDocumentDto)
   return resolved || document.file_url || document.file_path || undefined;
 }
 
-function PdfPreview({
+export function PdfPreview({
   documentUrl,
   documentLabel,
   documentTitle,

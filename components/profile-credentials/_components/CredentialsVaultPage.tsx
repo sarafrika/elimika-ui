@@ -40,6 +40,8 @@ import type {
   InstructorProfessionalMembership,
 } from '@/services/client/types.gen';
 
+import { toast } from 'sonner';
+import { useUserDomain } from '../../../context/user-domain-context';
 import type { CredentialsRole, CredentialsStatusFilter, CredentialsTabId } from '../data';
 import { buildCredentialsContent } from '../live-data';
 import { CredentialCertificateCard } from './CredentialCertificateCard';
@@ -372,6 +374,8 @@ function CredentialsPanel({
   onDeleteItem,
   deleting,
 }: CredentialsPanelProps) {
+  const domain = useUserDomain()
+  const activeDomain = domain?.activeDomain
 
   return (
     <>
@@ -399,7 +403,7 @@ function CredentialsPanel({
               ))}
             </div>
           ) : (
-            <EmptyVaultState />
+            <EmptyVaultState role={activeDomain as string} />
           )}
         </div>
       </section>
@@ -409,17 +413,25 @@ function CredentialsPanel({
   );
 }
 
-function EmptyVaultState() {
+function EmptyVaultState({ role }: { role?: string }) {
+  const isStudent = role === 'student';
+
   return (
     <div className='min-h-[360px]'>
       <div className='border-border/60 bg-card/90 flex h-full min-h-[360px] flex-col items-center justify-center rounded-[18px] border border-dashed px-6 py-10 text-center shadow-sm'>
         <div className='bg-primary/10 text-primary mb-4 grid size-14 place-items-center rounded-full'>
           <FileText className='size-7' />
         </div>
+
         <div className='space-y-2'>
-          <h3 className='text-foreground text-xl font-semibold'>No credentials yet</h3>
+          <h3 className='text-foreground text-xl font-semibold'>
+            {isStudent ? 'No certificates yet' : 'No credentials yet'}
+          </h3>
+
           <p className='text-muted-foreground max-w-md text-sm leading-6'>
-            Uploaded documents will appear here once they are added and verified.
+            {isStudent
+              ? 'Certificates you acquired on Elimika platform will appear here once they are verified.'
+              : 'Uploaded documents will appear here once they are added and verified.'}
           </p>
         </div>
       </div>

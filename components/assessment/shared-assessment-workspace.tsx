@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueries } from '@tanstack/react-query';
-import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useInstructor } from '@/context/instructor-context';
+import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import { cn } from '@/lib/utils';
 import {
   getAssignmentByUuidOptions,
@@ -28,12 +28,11 @@ import type {
   AssignmentSubmission,
   ClassAssignmentSchedule,
 } from '@/services/client/types.gen';
-import { useInstructor } from '@/context/instructor-context';
-import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import {
   getStudentAssignmentSubmissionState,
   useStudentAssignmentData,
 } from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
+import { useQueries } from '@tanstack/react-query';
 import {
   ArrowUpRight,
   BookOpen,
@@ -52,6 +51,7 @@ import {
   Star,
   UploadCloud,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { RichTextPreview } from '../../app/dashboard/@instructor/classes/class-training/[id]/_components/ClassTrainingPage';
 
@@ -104,92 +104,97 @@ type Competency = {
   trend: string;
 };
 
-const competencies: Competency[] = [
-  {
-    accent: 'bg-warning',
-    artifacts: '6 Projects',
-    dueLabel: 'Due in 2 days',
-    id: 'uvx-design',
-    level: 'Intermediate',
-    metric: 'Progress manages',
-    progress: 54,
-    score: '9.20',
-    status: 'Intermediate',
-    title: 'UVX Design',
-    trend: 'Needs improvement',
-  },
-  {
-    accent: 'bg-primary',
-    artifacts: '4.1 points',
-    dueLabel: 'Due in 1 day',
-    id: 'graphic-design',
-    level: 'Proficient',
-    metric: 'Highly stated',
-    progress: 72,
-    score: '4.5',
-    status: 'Proficient',
-    title: 'Graphic Design',
-    trend: '4.5 / 5',
-  },
-  {
-    accent: 'bg-destructive',
-    artifacts: '10 Projects',
-    dueLabel: '1 week ago',
-    id: 'public-speaking',
-    level: 'Advanced',
-    metric: 'Export speaker',
-    progress: 82,
-    score: '4.5',
-    status: 'Advanced',
-    title: 'Public Speaking',
-    trend: '4.5 / 5',
-  },
-  {
-    accent: 'bg-success',
-    artifacts: '8 Projects',
-    dueLabel: 'Last reviewed',
-    id: 'digital-marketing',
-    level: 'Intermediate',
-    metric: 'Project complete',
-    progress: 62,
-    score: '4.5',
-    status: 'Intermediate',
-    title: 'Digital Marketing',
-    trend: '2 / 8',
-  },
-  {
-    accent: 'bg-secondary',
-    artifacts: '3 reports',
-    dueLabel: 'Due in 3 days',
-    id: 'html-css',
-    level: 'Intermediate',
-    metric: 'Code review',
-    progress: 46,
-    score: '3.8',
-    status: 'Intermediate',
-    title: 'HTML & CSS',
-    trend: '4 Projects',
-  },
-  {
-    accent: 'bg-muted-foreground',
-    artifacts: '10 documents',
-    dueLabel: 'Needs action',
-    id: 'data-analysis',
-    level: 'Needs improvement',
-    metric: 'Report quality',
-    progress: 34,
-    score: '3.2',
-    status: 'Needs improvement',
-    title: 'Data Analysis',
-    trend: 'Needs improvement',
-  },
-];
+const competencies: Competency[] = []
 
-const topStudents = [
-  { avatar: '', due: 'Overdue', initials: 'SO', name: 'Sarah Otieno' },
-  { avatar: '', due: '1 day', initials: 'NA', name: 'Nathaniel' },
-  { avatar: '', due: '3 days', initials: 'DA', name: 'Daniel' },
-];
+// [
+//   {
+//     accent: 'bg-warning',
+//     artifacts: '6 Projects',
+//     dueLabel: 'Due in 2 days',
+//     id: 'uvx-design',
+//     level: 'Intermediate',
+//     metric: 'Progress manages',
+//     progress: 54,
+//     score: '9.20',
+//     status: 'Intermediate',
+//     title: 'UVX Design',
+//     trend: 'Needs improvement',
+//   },
+//   {
+//     accent: 'bg-primary',
+//     artifacts: '4.1 points',
+//     dueLabel: 'Due in 1 day',
+//     id: 'graphic-design',
+//     level: 'Proficient',
+//     metric: 'Highly stated',
+//     progress: 72,
+//     score: '4.5',
+//     status: 'Proficient',
+//     title: 'Graphic Design',
+//     trend: '4.5 / 5',
+//   },
+//   {
+//     accent: 'bg-destructive',
+//     artifacts: '10 Projects',
+//     dueLabel: '1 week ago',
+//     id: 'public-speaking',
+//     level: 'Advanced',
+//     metric: 'Export speaker',
+//     progress: 82,
+//     score: '4.5',
+//     status: 'Advanced',
+//     title: 'Public Speaking',
+//     trend: '4.5 / 5',
+//   },
+//   {
+//     accent: 'bg-success',
+//     artifacts: '8 Projects',
+//     dueLabel: 'Last reviewed',
+//     id: 'digital-marketing',
+//     level: 'Intermediate',
+//     metric: 'Project complete',
+//     progress: 62,
+//     score: '4.5',
+//     status: 'Intermediate',
+//     title: 'Digital Marketing',
+//     trend: '2 / 8',
+//   },
+//   {
+//     accent: 'bg-secondary',
+//     artifacts: '3 reports',
+//     dueLabel: 'Due in 3 days',
+//     id: 'html-css',
+//     level: 'Intermediate',
+//     metric: 'Code review',
+//     progress: 46,
+//     score: '3.8',
+//     status: 'Intermediate',
+//     title: 'HTML & CSS',
+//     trend: '4 Projects',
+//   },
+//   {
+//     accent: 'bg-muted-foreground',
+//     artifacts: '10 documents',
+//     dueLabel: 'Needs action',
+//     id: 'data-analysis',
+//     level: 'Needs improvement',
+//     metric: 'Report quality',
+//     progress: 34,
+//     score: '3.2',
+//     status: 'Needs improvement',
+//     title: 'Data Analysis',
+//     trend: 'Needs improvement',
+//   },
+// ];
+
+export type TopStudent = {
+  name: string;
+  profile_image?: string;
+  due: string;
+};
+
+export const topStudents: TopStudent[] = [];
+// [ // { avatar: '', due: 'Overdue', initials: 'SO', name: 'Sarah Otieno' }, // { avatar: '', due: '1 day', initials: 'NA', name: 'Nathaniel' }, // { avatar: '', due: '3 days', initials: 'DA', name: 'Daniel' }, // ];
 
 function formatDate(value?: string | Date | null, options?: Intl.DateTimeFormatOptions) {
   if (!value) return 'No deadline';
@@ -257,7 +262,7 @@ function getAveragePercentage(submissions: AssignmentSubmission[]) {
 
   return Math.round(
     gradedPercentages.reduce((total, percentage) => total + percentage, 0) /
-      gradedPercentages.length
+    gradedPercentages.length
   );
 }
 
@@ -820,16 +825,27 @@ function TopStudentsPanel() {
           Top Students
         </p>
         <div className='relative z-10 space-y-3'>
-          {topStudents.map(student => (
-            <div className='flex items-center gap-3' key={student.name}>
-              <Avatar className='size-7'>
-                <AvatarImage src={student.avatar} alt={student.name} />
-                <AvatarFallback>{student.initials}</AvatarFallback>
-              </Avatar>
-              <span className='min-w-0 flex-1 truncate text-sm font-medium'>{student.name}</span>
-              <span className='text-muted-foreground text-xs'>{student.due}</span>
+          {topStudents.length > 0 ? (
+            topStudents.map(student => (
+              <div className='flex items-center gap-3' key={student.name}>
+                <Avatar className='size-7'>
+                  <AvatarImage src={student.avatar} alt={student.name} />
+                  <AvatarFallback>{student.initials}</AvatarFallback>
+                </Avatar>
+                <span className='min-w-0 flex-1 truncate text-sm font-medium'>
+                  {student.name}
+                </span>
+                <span className='text-muted-foreground text-xs'>{student.due}</span>
+              </div>
+            ))
+          ) : (
+            <div className='flex flex-col items-center justify-center rounded-lg border border-dashed py-6 text-center'>
+              <p className='text-sm font-medium'>No students yet</p>
+              <p className='text-muted-foreground mt-1 text-xs'>
+                Top performing students will appear here.
+              </p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </section>
@@ -885,7 +901,6 @@ function CompetencyChart({ compact = false }: { compact?: boolean }) {
       <div className='mb-4 flex items-center justify-between gap-3'>
         <div className='flex min-w-0 items-center gap-2'>
           <h2 className='text-xl font-semibold'>Competency Chart</h2>
-          <Badge className='bg-warning/10 text-warning hover:bg-warning/10'>Mock data</Badge>
         </div>
         <Button className='h-8 rounded-md text-xs' variant='outline' type='button'>
           Assessments
@@ -893,9 +908,20 @@ function CompetencyChart({ compact = false }: { compact?: boolean }) {
         </Button>
       </div>
       <div className='space-y-3'>
-        {(compact ? competencies.slice(0, 4) : competencies).map(competency => (
-          <CompetencyCard competency={competency} key={competency.id} />
-        ))}
+        {competencies.length === 0 ? (
+          <div className='border-border/60 bg-card/80 flex min-h-[160px] flex-col items-center justify-center rounded-xl border border-dashed px-4 py-6 text-center'>
+            <p className='text-foreground text-sm font-semibold'>
+              No competencies yet
+            </p>
+            <p className='text-muted-foreground mt-1 text-xs'>
+              Competencies will appear here once they are added.
+            </p>
+          </div>
+        ) : (
+          (compact ? competencies.slice(0, 4) : competencies).map(competency => (
+            <CompetencyCard competency={competency} key={competency.id} />
+          ))
+        )}
       </div>
     </section>
   );
@@ -958,9 +984,9 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
           statusLabel: status.label,
           submittedAt: formatDate(
             row.latestSubmission?.submitted_at ||
-              row.latestSubmission?.updated_date ||
-              row.latestSubmission?.created_date ||
-              dueAt
+            row.latestSubmission?.updated_date ||
+            row.latestSubmission?.created_date ||
+            dueAt
           ),
           summary:
             row.assignment.description ||
