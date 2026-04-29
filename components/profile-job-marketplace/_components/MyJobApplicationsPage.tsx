@@ -7,7 +7,7 @@ import {
   Search,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import {
   listMyApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useBreadcrumb } from '../../../context/breadcrumb-provider';
 
 function formatDate(value?: string | Date | null) {
   if (!value) return 'Not provided';
@@ -41,6 +42,24 @@ export function MyJobApplicationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'pending' | 'approved' | 'rejected' | 'assigned'>('ALL');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+  const { replaceBreadcrumbs } = useBreadcrumb();
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+      {
+        id: 'opportunities',
+        title: 'Opportunities',
+        url: '/dashboard/opportunities',
+      },
+      {
+        id: 'applications',
+        title: 'Applications',
+        url: '/dashboard/opportunities/applications',
+        isLast: true,
+      },
+    ]);
+  }, [replaceBreadcrumbs]);
 
   // const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
   //   ...listJobsOptions({
@@ -136,25 +155,25 @@ export function MyJobApplicationsPage() {
       </div>
 
       <div className='grid gap-4 sm:grid-cols-4'>
-        <Card className='rounded-2xl p-4'>
+        <Card className='rounded-2xl p-4 bg-transparent'>
           <div className='text-sm text-muted-foreground'>Total</div>
           <div className='mt-1 text-2xl font-semibold'>{stats.total}</div>
         </Card>
-        <Card className='rounded-2xl p-4'>
+        <Card className='rounded-2xl p-4 bg-transparent'>
           <div className='text-sm text-muted-foreground'>Pending</div>
           <div className='mt-1 text-2xl font-semibold'>{stats.pending}</div>
         </Card>
-        <Card className='rounded-2xl p-4'>
+        <Card className='rounded-2xl p-4 bg-transparent'>
           <div className='text-sm text-muted-foreground'>Approved</div>
           <div className='mt-1 text-2xl font-semibold'>{stats.approved}</div>
         </Card>
-        <Card className='rounded-2xl p-4'>
+        <Card className='rounded-2xl p-4 bg-transparent'>
           <div className='text-sm text-muted-foreground'>Rejected</div>
           <div className='mt-1 text-2xl font-semibold'>{stats.rejected}</div>
         </Card>
       </div>
 
-      <Card className='space-y-4 rounded-[18px] border-white/60 bg-card/95 p-4 shadow-sm'>
+      <Card className='space-y-4 rounded-lg border-border border-1 bg-transparent p-4 shadow-sm'>
         <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px]'>
           <label className='relative block'>
             <span className='sr-only'>Search applications</span>
@@ -162,13 +181,13 @@ export function MyJobApplicationsPage() {
               value={searchQuery}
               onChange={event => setSearchQuery(event.target.value)}
               placeholder='Search by job title, note, or job id'
-              className='h-11 rounded-xl pl-10'
+              className='h-11 rounded-md pl-10'
             />
             <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
           </label>
 
           <Select value={statusFilter} onValueChange={value => setStatusFilter(value as typeof statusFilter)}>
-            <SelectTrigger className='h-11 rounded-xl'>
+            <SelectTrigger className='h-11 rounded-md'>
               <SelectValue placeholder='All statuses' />
             </SelectTrigger>
             <SelectContent>
@@ -181,7 +200,7 @@ export function MyJobApplicationsPage() {
           </Select>
 
           <Select value={sortBy} onValueChange={value => setSortBy(value as typeof sortBy)}>
-            <SelectTrigger className='h-11 rounded-xl'>
+            <SelectTrigger className='h-11 rounded-md'>
               <SelectValue placeholder='Sort by' />
             </SelectTrigger>
             <SelectContent>
@@ -191,59 +210,73 @@ export function MyJobApplicationsPage() {
           </Select>
         </div>
 
-        <div className='space-y-3'>
+        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {filteredApplications.length ? (
             filteredApplications.map(application => {
               const job = jobsByUuid.get(application.job_uuid ?? '');
 
               return (
-                <Card key={application.uuid} className='rounded-2xl border bg-background/70 p-4'>
-                  <div className='flex flex-wrap items-start justify-between gap-3'>
-                    <div className='space-y-1'>
-                      <h3 className='text-lg font-semibold'>{job?.title ?? 'Unknown job'}</h3>
-                      <div className='flex flex-wrap gap-2 text-sm text-muted-foreground'>
-                        <span>{job?.location_name || formatLabel(job?.location_type)}</span>
-                        {job?.organisation_uuid ? <span>{job.organisation_uuid}</span> : null}
+                <Card
+                  key={application.uuid}
+                  className="h-full rounded-2xl border bg-background/70 p-4 flex flex-col"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-semibold">
+                        {job?.title ?? 'Unknown job'}
+                      </h3>
+                      <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                        <span>
+                          {job?.location_name || formatLabel(job?.location_type)}
+                        </span>
+                        {job?.organisation_uuid ? (
+                          <span>{job.organisation_uuid}</span>
+                        ) : null}
                       </div>
                     </div>
-                    <Badge variant='secondary' className='rounded-full px-3 py-1'>
+
+                    <Badge variant="secondary" className="rounded-full px-3 py-1">
                       {formatLabel(application.status)}
                     </Badge>
                   </div>
 
-                  <div className='mt-4 grid gap-3 md:grid-cols-2'>
-                    <div className='rounded-xl border bg-background/80 p-3'>
-                      <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <div className="rounded-xl border bg-background/80 p-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Application note
                       </div>
-                      <p className='mt-1 text-sm leading-6 text-foreground'>
+                      <p className="mt-1 text-sm leading-6 text-foreground">
                         {application.application_note || 'No note added.'}
                       </p>
                     </div>
-                    <div className='rounded-xl border bg-background/80 p-3'>
-                      <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+
+                    <div className="rounded-xl border bg-background/80 p-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Review notes
                       </div>
-                      <p className='mt-1 text-sm leading-6 text-foreground'>
+                      <p className="mt-1 text-sm leading-6 text-foreground">
                         {application.review_notes || 'No review notes yet.'}
                       </p>
                     </div>
                   </div>
 
-                  <div className='mt-4 flex flex-wrap items-center gap-2'>
-                    <Badge variant='outline' className='rounded-full'>
+                  {/* Push footer to bottom */}
+                  <div className="mt-auto pt-4 flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className="rounded-full">
                       Applied {formatDate(application.created_date)}
                     </Badge>
+
                     {application.reviewed_at ? (
-                      <Badge variant='outline' className='rounded-full'>
+                      <Badge variant="outline" className="rounded-full">
                         Reviewed {formatDate(application.reviewed_at)}
                       </Badge>
                     ) : null}
-                    <div className='ml-auto flex flex-wrap gap-2'>
-                      <Button asChild variant='outline' className='rounded-xl'>
-                        <Link href='/dashboard/opportunities'>
+
+                    <div className="ml-auto flex flex-wrap gap-2">
+                      <Button asChild variant="outline" className="rounded-xl">
+                        <Link href="/dashboard/opportunities">
                           View opportunities
-                          <ArrowRight className='ml-2 size-4' />
+                          <ArrowRight className="ml-2 size-4" />
                         </Link>
                       </Button>
                     </div>
@@ -252,7 +285,7 @@ export function MyJobApplicationsPage() {
               );
             })
           ) : (
-            <Card className='rounded-2xl border-dashed p-10 text-center text-muted-foreground'>
+            <Card className="col-span-full rounded-2xl border-dashed p-10 text-center text-muted-foreground">
               No applications match the current filters.
             </Card>
           )}

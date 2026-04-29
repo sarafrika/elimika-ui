@@ -126,6 +126,8 @@ import {
   createTrainingBranch,
   checkStudentConflict,
   scheduleClass,
+  startScheduledInstance,
+  endScheduledInstance,
   checkInstructorConflict,
   blockInstructorTime,
   listRules,
@@ -803,6 +805,12 @@ import type {
   ScheduleClassData,
   ScheduleClassError,
   ScheduleClassResponse,
+  StartScheduledInstanceData,
+  StartScheduledInstanceError,
+  StartScheduledInstanceResponse,
+  EndScheduledInstanceData,
+  EndScheduledInstanceError,
+  EndScheduledInstanceResponse,
   CheckInstructorConflictData,
   CheckInstructorConflictError,
   CheckInstructorConflictResponse,
@@ -5191,6 +5199,102 @@ export const scheduleClassMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await scheduleClass({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const startScheduledInstanceQueryKey = (options: Options<StartScheduledInstanceData>) =>
+  createQueryKey('startScheduledInstance', options);
+
+/**
+ * Start a scheduled class instance
+ */
+export const startScheduledInstanceOptions = (options: Options<StartScheduledInstanceData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await startScheduledInstance({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: startScheduledInstanceQueryKey(options),
+  });
+};
+
+/**
+ * Start a scheduled class instance
+ */
+export const startScheduledInstanceMutation = (
+  options?: Partial<Options<StartScheduledInstanceData>>
+): UseMutationOptions<
+  StartScheduledInstanceResponse,
+  StartScheduledInstanceError,
+  Options<StartScheduledInstanceData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StartScheduledInstanceResponse,
+    StartScheduledInstanceError,
+    Options<StartScheduledInstanceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await startScheduledInstance({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const endScheduledInstanceQueryKey = (options: Options<EndScheduledInstanceData>) =>
+  createQueryKey('endScheduledInstance', options);
+
+/**
+ * End a scheduled class instance
+ */
+export const endScheduledInstanceOptions = (options: Options<EndScheduledInstanceData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await endScheduledInstance({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: endScheduledInstanceQueryKey(options),
+  });
+};
+
+/**
+ * End a scheduled class instance
+ */
+export const endScheduledInstanceMutation = (
+  options?: Partial<Options<EndScheduledInstanceData>>
+): UseMutationOptions<
+  EndScheduledInstanceResponse,
+  EndScheduledInstanceError,
+  Options<EndScheduledInstanceData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    EndScheduledInstanceResponse,
+    EndScheduledInstanceError,
+    Options<EndScheduledInstanceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await endScheduledInstance({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -10893,7 +10997,8 @@ export const uploadCourseCreatorDocumentQueryKey = (
  * Uploads a PDF document for a course creator and creates a document record.
  *
  * **Use cases:**
- * - Uploading certificates for course creator education records.
+ * - Uploading certificates, credentials, and other creator verification documents.
+ * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
  * - Must be a PDF file (`application/pdf`).
@@ -10922,7 +11027,8 @@ export const uploadCourseCreatorDocumentOptions = (
  * Uploads a PDF document for a course creator and creates a document record.
  *
  * **Use cases:**
- * - Uploading certificates for course creator education records.
+ * - Uploading certificates, credentials, and other creator verification documents.
+ * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
  * - Must be a PDF file (`application/pdf`).

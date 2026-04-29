@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, MapPin, Share2 } from 'lucide-react';
+import { MapPin, Share2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -84,7 +84,7 @@ export function SkillsWalletHeader({
 
         <div className='flex items-start gap-2'>
           <div className='flex min-w-28 flex-col gap-2'>
-            <Button
+            {/* <Button
               type='button'
               variant='outline'
               size='sm'
@@ -93,7 +93,7 @@ export function SkillsWalletHeader({
             >
               <Download className='size-3.5' />
               <span>Download CV</span>
-            </Button>
+            </Button> */}
             <Button
               type='button'
               variant='outline'

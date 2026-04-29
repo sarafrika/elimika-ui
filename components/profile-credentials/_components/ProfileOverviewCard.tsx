@@ -41,7 +41,7 @@ export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
 
   return (
     <Card className='gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
-      <div className='bg-[linear-gradient(135deg,color-mix(in_srgb,var(--background)_30%,var(--el-accent-azure)_70%),color-mix(in_srgb,var(--background)_88%,white_12%))] px-3 py-4'>
+      <div className='bg-[color-mix(in_srgb,var(--el-accent-azure)_45%,white_55%)] dark:bg-[color-mix(in_srgb,var(--el-accent-azure)_60%,black_40%)] px-3 py-4'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
           <Avatar className='size-16 border-2 border-white/70 shadow-md'>
             {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}

@@ -4,7 +4,6 @@ import { ChevronRight } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 
 import type { FilterGroup } from '../data';
 
@@ -29,7 +28,7 @@ export function MarketplaceSidebar({
 }: MarketplaceSidebarProps) {
   return (
     <aside className='space-y-4'>
-      <Card className='gap-4 rounded-[18px] border-white/60 bg-card/95 px-4 py-4 shadow-sm'>
+      <div className='gap-4 rounded-[18px] border-border border-1 space-y-4 px-4 py-4 shadow-sm'>
         <div className='border-b pb-4'>
           <h2 className='text-foreground text-lg font-semibold'>{heading}</h2>
           <p className='text-muted-foreground mt-1 text-sm'>{count}</p>
@@ -97,7 +96,7 @@ export function MarketplaceSidebar({
           {applicationsLabel}
           <ChevronRight className='size-4' />
         </Button>
-      </Card>
+      </div>
     </aside>
   );
 }

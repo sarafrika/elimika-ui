@@ -4,27 +4,34 @@ import { Button } from '@/components/ui/button';
 
 import type { SharedCredentialSummary, SharedTimelineItem } from '../types';
 
-type CredentialSummaryPanelProps = {
+type PortfolioSummaryPanelProps = {
   summary: SharedCredentialSummary;
   timeline: SharedTimelineItem[];
 };
 
-export function CredentialSummaryPanel({ summary, timeline }: CredentialSummaryPanelProps) {
+export function PortfolioSummaryPanel({
+  summary,
+  timeline,
+}: PortfolioSummaryPanelProps) {
   const values = [
     { label: 'Skill Badges', value: summary.badgesEarned },
-    { label: 'Certificates Earned', value: summary.certificatesEarned },
-    { label: 'Shares', value: summary.shares },
+    { label: 'Certificates', value: summary.certificatesEarned },
+    { label: 'Portfolio Shares', value: summary.shares },
   ];
 
   return (
     <div className='grid items-start gap-3'>
+      {/* Portfolio Overview */}
       <article className='border-border/60 bg-card self-start rounded-lg border p-3 shadow-sm'>
-        <h2 className='mb-3 text-sm font-semibold sm:text-base'>Credential Summary</h2>
+        <h2 className='mb-3 text-sm font-semibold sm:text-base'>Portfolio Overview</h2>
+
         <div className='grid grid-cols-3 gap-2'>
           {values.map(item => (
             <div key={item.label} className='bg-muted/50 rounded-md px-2 py-3 text-center'>
               <p className='text-primary text-lg font-semibold sm:text-xl'>{item.value}</p>
-              <p className='text-muted-foreground text-[10px] sm:text-xs'>{item.label}</p>
+              <p className='text-muted-foreground text-[10px] sm:text-xs'>
+                {item.label}
+              </p>
             </div>
           ))}
         </div>
@@ -35,24 +42,31 @@ export function CredentialSummaryPanel({ summary, timeline }: CredentialSummaryP
               <ShieldCheck className='size-4' />
             </span>
             <div className='min-w-0'>
-              <p className='text-foreground truncate text-xs font-medium'>Verified Wallet</p>
-              <p className='text-muted-foreground text-[10px]'>Ready to share</p>
+              <p className='text-foreground truncate text-xs font-medium'>
+                Verified Portfolio
+              </p>
+              <p className='text-muted-foreground text-[10px]'>
+                Ready to share publicly
+              </p>
             </div>
           </div>
+
           <Button
             type='button'
             variant='outline'
             size='sm'
             className='h-auto justify-between py-2 text-xs'
           >
-            View Details
+            View Portfolio
             <ExternalLink className='size-3.5' />
           </Button>
         </div>
       </article>
 
+      {/* Portfolio Activity */}
       <article className='border-border/60 bg-card self-start rounded-lg border p-3 shadow-sm'>
-        <h2 className='mb-3 text-sm font-semibold sm:text-base'>Growth Timeline</h2>
+        <h2 className='mb-3 text-sm font-semibold sm:text-base'>Portfolio Activity</h2>
+
         {timeline.length > 0 ? (
           <div className='space-y-2'>
             {timeline.slice(0, 3).map(item => (
@@ -63,21 +77,31 @@ export function CredentialSummaryPanel({ summary, timeline }: CredentialSummaryP
                 <span className='bg-primary/10 text-primary grid size-7 place-items-center rounded-md'>
                   {item.icon ?? <ShieldCheck className='size-4' />}
                 </span>
+
                 <div className='min-w-0'>
-                  <p className='text-foreground truncate text-xs font-medium'>{item.provider}</p>
-                  <p className='text-muted-foreground truncate text-[10px]'>{item.description}</p>
+                  <p className='text-foreground truncate text-xs font-medium'>
+                    {item.provider}
+                  </p>
+                  <p className='text-muted-foreground truncate text-[10px]'>
+                    {item.description}
+                  </p>
                 </div>
+
                 {item.metric ? (
-                  <span className='text-muted-foreground text-[10px]'>{item.metric}</span>
+                  <span className='text-muted-foreground text-[10px]'>
+                    {item.metric}
+                  </span>
                 ) : null}
               </div>
             ))}
           </div>
         ) : (
           <div className='border-border/60 bg-background rounded-md border border-dashed px-4 py-6 text-center'>
-            <p className='text-foreground text-xs font-medium'>No verified activity yet</p>
+            <p className='text-foreground text-xs font-medium'>
+              No portfolio activity yet
+            </p>
             <p className='text-muted-foreground mt-1 text-[10px]'>
-              Your credential history will show here once records are verified.
+              Your achievements and updates will appear here as your portfolio grows.
             </p>
           </div>
         )}

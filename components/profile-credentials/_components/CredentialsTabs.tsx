@@ -1,7 +1,7 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -49,7 +49,10 @@ export function CredentialsTabs({
               key={tab.id}
               value={tab.id}
               className={cn(
-                'min-h-11 rounded-lg px-4 text-sm font-medium data-[state=active]:bg-[color-mix(in_srgb,var(--primary)_10%,white)] data-[state=active]:text-foreground',
+                'min-h-11 rounded-lg px-4 text-sm font-medium',
+                'data-[state=active]:bg-[color-mix(in_srgb,var(--primary)_10%,white)]',
+                'data-[state=active]:dark:bg-[color-mix(in_srgb,var(--primary)_45%,black_55%)]',
+                'data-[state=active]:text-foreground',
                 triggerClassName
               )}
             >

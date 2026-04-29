@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { Ellipsis } from 'lucide-react';
 import Link from 'next/link';
 import type { CoursesHeroAction } from './courses-data';
 
@@ -37,7 +36,7 @@ export function CoursesHero({ actions, domain }: CoursesHeroProps) {
           aria-label='More options'
           className='text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center border border-transparent transition-colors'
         >
-          <Ellipsis className='size-4' />
+          {/* <Ellipsis className='size-4' /> */}
         </button>
       </div>
 

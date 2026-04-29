@@ -79,6 +79,8 @@ import type {
   GetAllTrainingBranchesResponse,
   CreateTrainingBranchResponse,
   ScheduleClassResponse,
+  StartScheduledInstanceResponse,
+  EndScheduledInstanceResponse,
   BlockInstructorTimeResponse,
   ListRulesResponse,
   CreateRuleResponse,
@@ -1435,8 +1437,14 @@ export const updateCourseCreatorEducationResponseTransformer = async (
 };
 
 const courseCreatorDocumentDtoSchemaResponseTransformer = (data: any) => {
+  if (data.expiry_date) {
+    data.expiry_date = new Date(data.expiry_date);
+  }
   if (data.file_size_bytes) {
     data.file_size_bytes = BigInt(data.file_size_bytes.toString());
+  }
+  if (data.upload_date) {
+    data.upload_date = new Date(data.upload_date);
   }
   if (data.verified_at) {
     data.verified_at = new Date(data.verified_at);
@@ -1655,6 +1663,12 @@ const classDefinitionSchemaResponseTransformer = (data: any) => {
   data.session_templates = data.session_templates.map((item: any) => {
     return classSessionTemplateSchemaResponseTransformer(item);
   });
+  if (data.scheduled_session_count) {
+    data.scheduled_session_count = BigInt(data.scheduled_session_count.toString());
+  }
+  if (data.completed_session_count) {
+    data.completed_session_count = BigInt(data.completed_session_count.toString());
+  }
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
   }
@@ -1946,6 +1960,12 @@ export const createTrainingBranchResponseTransformer = async (
 const scheduledInstanceSchemaResponseTransformer = (data: any) => {
   data.start_time = new Date(data.start_time);
   data.end_time = new Date(data.end_time);
+  if (data.started_at) {
+    data.started_at = new Date(data.started_at);
+  }
+  if (data.concluded_at) {
+    data.concluded_at = new Date(data.concluded_at);
+  }
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
   }
@@ -1974,6 +1994,20 @@ const apiResponseScheduledInstanceSchemaResponseTransformer = (data: any) => {
 export const scheduleClassResponseTransformer = async (
   data: any
 ): Promise<ScheduleClassResponse> => {
+  data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
+  return data;
+};
+
+export const startScheduledInstanceResponseTransformer = async (
+  data: any
+): Promise<StartScheduledInstanceResponse> => {
+  data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
+  return data;
+};
+
+export const endScheduledInstanceResponseTransformer = async (
+  data: any
+): Promise<EndScheduledInstanceResponse> => {
   data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
   return data;
 };

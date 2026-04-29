@@ -1,12 +1,12 @@
 'use client';
 
-import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
-import { format } from 'date-fns';
-import { CalendarDays, CalendarRange, Filter, Layers3, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
+import { format } from 'date-fns';
+import { CalendarDays, CalendarRange, Filter, Layers3, Sparkles } from 'lucide-react';
 import type { BundledClass } from '../types';
 import EnrollCourseCard from './enroll-course-card';
 
@@ -212,7 +212,7 @@ export function AvailabilityListingLayout({
             <div>
               <h2 className='text-foreground text-lg font-semibold'>Open sessions</h2>
               <p className='text-muted-foreground text-sm'>
-                Compact cards with schedule-ready enrollment options.
+                Classes with schedule-ready enrollment options.
               </p>
             </div>
             <div className='bg-muted/50 text-muted-foreground inline-flex items-center rounded-full px-3 py-1 text-xs font-medium'>
