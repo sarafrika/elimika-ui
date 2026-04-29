@@ -208,6 +208,15 @@ import type {
   UpdateCourseLessonData,
   UpdateCourseLessonResponses,
   UpdateCourseLessonErrors,
+  DeletePracticeActivityData,
+  DeletePracticeActivityResponses,
+  DeletePracticeActivityErrors,
+  GetPracticeActivityData,
+  GetPracticeActivityResponses,
+  GetPracticeActivityErrors,
+  UpdatePracticeActivityData,
+  UpdatePracticeActivityResponses,
+  UpdatePracticeActivityErrors,
   DeleteLessonContentData,
   DeleteLessonContentResponses,
   DeleteLessonContentErrors,
@@ -625,6 +634,15 @@ import type {
   AddCourseLessonData,
   AddCourseLessonResponses,
   AddCourseLessonErrors,
+  GetPracticeActivitiesData,
+  GetPracticeActivitiesResponses,
+  GetPracticeActivitiesErrors,
+  CreatePracticeActivityData,
+  CreatePracticeActivityResponses,
+  CreatePracticeActivityErrors,
+  ReorderPracticeActivitiesData,
+  ReorderPracticeActivitiesResponses,
+  ReorderPracticeActivitiesErrors,
   GetLessonContentData,
   GetLessonContentResponses,
   GetLessonContentErrors,
@@ -910,12 +928,6 @@ import type {
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusResponses,
   UpdateScheduledInstanceStatusErrors,
-  StartScheduledInstanceData,
-  StartScheduledInstanceResponses,
-  StartScheduledInstanceErrors,
-  EndScheduledInstanceData,
-  EndScheduledInstanceResponses,
-  EndScheduledInstanceErrors,
   ReorderScoringLevelsData,
   ReorderScoringLevelsResponses,
   ReorderScoringLevelsErrors,
@@ -1525,6 +1537,8 @@ import {
   updateCourseRequirementResponseTransformer,
   getCourseLessonResponseTransformer,
   updateCourseLessonResponseTransformer,
+  getPracticeActivityResponseTransformer,
+  updatePracticeActivityResponseTransformer,
   updateLessonContentResponseTransformer,
   updateCourseAssessmentResponseTransformer,
   updateLineItemResponseTransformer,
@@ -1639,6 +1653,8 @@ import {
   addCourseRequirementResponseTransformer,
   getCourseLessonsResponseTransformer,
   addCourseLessonResponseTransformer,
+  getPracticeActivitiesResponseTransformer,
+  createPracticeActivityResponseTransformer,
   getLessonContentResponseTransformer,
   addLessonContentResponseTransformer,
   uploadLessonMediaResponseTransformer,
@@ -1735,8 +1751,6 @@ import {
   search1ResponseTransformer,
   getTrainingBranchesByOrganisation1ResponseTransformer,
   getStudentScheduleResponseTransformer,
-  startScheduledInstanceResponseTransformer,
-  endScheduledInstanceResponseTransformer,
   getScheduledInstanceResponseTransformer,
   getInstructorScheduleResponseTransformer,
   getStudentBookingsResponseTransformer,
@@ -3855,6 +3869,90 @@ export const updateCourseLesson = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete a lesson practice activity
+ */
+export const deletePracticeActivity = <ThrowOnError extends boolean = false>(
+  options: Options<DeletePracticeActivityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeletePracticeActivityResponses,
+    DeletePracticeActivityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities/{activityUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get a lesson practice activity
+ */
+export const getPracticeActivity = <ThrowOnError extends boolean = false>(
+  options: Options<GetPracticeActivityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetPracticeActivityResponses,
+    GetPracticeActivityErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getPracticeActivityResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities/{activityUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a lesson practice activity
+ */
+export const updatePracticeActivity = <ThrowOnError extends boolean = false>(
+  options: Options<UpdatePracticeActivityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdatePracticeActivityResponses,
+    UpdatePracticeActivityErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updatePracticeActivityResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities/{activityUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -8113,6 +8211,94 @@ export const addCourseLesson = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List lesson practice activities
+ */
+export const getPracticeActivities = <ThrowOnError extends boolean = false>(
+  options: Options<GetPracticeActivitiesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetPracticeActivitiesResponses,
+    GetPracticeActivitiesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getPracticeActivitiesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities',
+    ...options,
+  });
+};
+
+/**
+ * Create a lesson practice activity
+ */
+export const createPracticeActivity = <ThrowOnError extends boolean = false>(
+  options: Options<CreatePracticeActivityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreatePracticeActivityResponses,
+    CreatePracticeActivityErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createPracticeActivityResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Reorder lesson practice activities
+ */
+export const reorderPracticeActivities = <ThrowOnError extends boolean = false>(
+  options: Options<ReorderPracticeActivitiesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ReorderPracticeActivitiesResponses,
+    ReorderPracticeActivitiesErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities/reorder',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get lesson content
  * Retrieves all content for a lesson in display order with computed properties.
  */
@@ -10920,60 +11106,6 @@ export const updateScheduledInstanceStatus = <ThrowOnError extends boolean = fal
       },
     ],
     url: '/api/v1/timetable/schedule/{instanceUuid}/status',
-    ...options,
-  });
-};
-
-/**
- * Start a scheduled class instance
- */
-export const startScheduledInstance = <ThrowOnError extends boolean = false>(
-  options: Options<StartScheduledInstanceData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    StartScheduledInstanceResponses,
-    StartScheduledInstanceErrors,
-    ThrowOnError
-  >({
-    responseTransformer: startScheduledInstanceResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/timetable/schedule/{instanceUuid}/start',
-    ...options,
-  });
-};
-
-/**
- * End a scheduled class instance
- */
-export const endScheduledInstance = <ThrowOnError extends boolean = false>(
-  options: Options<EndScheduledInstanceData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    EndScheduledInstanceResponses,
-    EndScheduledInstanceErrors,
-    ThrowOnError
-  >({
-    responseTransformer: endScheduledInstanceResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/timetable/schedule/{instanceUuid}/end',
     ...options,
   });
 };

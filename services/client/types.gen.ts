@@ -446,21 +446,21 @@ export type RubricScoringLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
-   */
-  readonly display_name?: string;
-  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
+   */
+  readonly is_highest_level?: boolean;
   /**
    * **[READ-ONLY]** CSS-safe color class name derived from the color code.
    */
   readonly css_color_class?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
+   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
    */
-  readonly is_highest_level?: boolean;
+  readonly display_name?: string;
 };
 
 export type ApiResponseRubricScoringLevel = {
@@ -1349,10 +1349,6 @@ export type InstructorSkill = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted skill name for display in UI components.
-   */
-  readonly display_name?: string;
-  /**
    * **[READ-ONLY]** Brief summary of the skill for display in skill lists.
    */
   readonly summary?: string;
@@ -1360,6 +1356,10 @@ export type InstructorSkill = {
    * **[READ-ONLY]** Human-readable description of the proficiency level.
    */
   readonly proficiency_description?: string;
+  /**
+   * **[READ-ONLY]** Formatted skill name for display in UI components.
+   */
+  readonly display_name?: string;
 };
 
 export type ApiResponseInstructorSkill = {
@@ -1420,10 +1420,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
-   */
-  readonly is_valid?: boolean;
-  /**
    * **[READ-ONLY]** Brief summary of the membership for display in listings.
    */
   readonly summary?: string;
@@ -1435,7 +1431,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
-  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -1461,6 +1456,11 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
+  membership_status?: MembershipStatusEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
+   */
+  readonly is_valid?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1919,6 +1919,10 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
@@ -1934,10 +1938,6 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
@@ -2198,6 +2198,84 @@ export type ApiResponseLesson = {
 };
 
 /**
+ * Reusable practice activity template attached to a lesson
+ */
+export type LessonPracticeActivity = {
+  /**
+   * **[READ-ONLY]** Unique system identifier for the practice activity.
+   */
+  readonly uuid?: string;
+  /**
+   * **[OPTIONAL]** Lesson UUID. When used through nested lesson endpoints, the path lesson is authoritative.
+   */
+  lesson_uuid?: string;
+  /**
+   * **[REQUIRED]** Descriptive title of the practice activity.
+   */
+  title: string;
+  /**
+   * **[REQUIRED]** Facilitator-facing instructions for running the practice activity.
+   */
+  instructions: string;
+  activity_type?: ActivityTypeEnum;
+  grouping?: GroupingEnum;
+  /**
+   * **[OPTIONAL]** Estimated time needed to run the activity.
+   */
+  estimated_minutes?: number;
+  /**
+   * **[OPTIONAL]** Materials, handouts, links, or tools needed for the activity.
+   */
+  materials?: Array<string>;
+  /**
+   * **[OPTIONAL]** Expected learner output or facilitator debrief artifact.
+   */
+  expected_output?: string;
+  /**
+   * **[OPTIONAL]** Display order within the lesson. If omitted, the system appends the activity.
+   */
+  display_order?: number;
+  status?: SchemaEnum4;
+  /**
+   * **[OPTIONAL]** Whether the practice activity is visible for use. Can only be true when status is published.
+   */
+  active?: boolean;
+  /**
+   * **[READ-ONLY]** Timestamp when the practice activity was created.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** User who created the practice activity.
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the practice activity was last updated.
+   */
+  readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** User who last updated the practice activity.
+   */
+  readonly updated_by?: string;
+  /**
+   * **[READ-ONLY]** Whether the activity is published.
+   */
+  readonly is_published?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable estimated duration.
+   */
+  readonly estimated_duration?: string;
+};
+
+export type ApiResponseLessonPracticeActivity = {
+  success?: boolean;
+  data?: LessonPracticeActivity;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
  * Individual content item within a lesson supporting various media types
  */
 export type LessonContent = {
@@ -2338,6 +2416,10 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if this is a major assessment component.
+   */
+  readonly is_major_assessment?: boolean;
+  /**
    * **[READ-ONLY]** Level of contribution to final grade based on weight.
    */
   readonly contribution_level?: string;
@@ -2353,10 +2435,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable format of the weight percentage.
    */
   readonly weight_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is a major assessment component.
-   */
-  readonly is_major_assessment?: boolean;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -2539,8 +2617,8 @@ export type CourseCreatorSkill = {
   readonly created_by?: string;
   readonly updated_date?: Date;
   readonly updated_by?: string;
-  readonly display_name?: string;
   readonly proficiency_description?: string;
+  readonly display_name?: string;
 };
 
 export type ApiResponseCourseCreatorSkill = {
@@ -2816,13 +2894,13 @@ export type DifficultyLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display name including level order for UI presentation.
-   */
-  readonly display_name?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.
    */
   readonly is_entry_level?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted display name including level order for UI presentation.
+   */
+  readonly display_name?: string;
 };
 
 export type ApiResponseDifficultyLevel = {
@@ -3166,15 +3244,15 @@ export type ClassDefinition = {
    */
   session_templates: Array<ClassSessionTemplate>;
   /**
-   * **[READ-ONLY]** Number of countable scheduled sessions for this class definition.
+   * **[READ-ONLY]** Number of non-cancelled scheduled sessions for this class.
    */
-  readonly scheduled_session_count?: number;
+  readonly scheduled_session_count?: bigint;
   /**
-   * **[READ-ONLY]** Number of completed scheduled sessions for this class definition.
+   * **[READ-ONLY]** Number of non-cancelled scheduled sessions completed for this class.
    */
-  readonly completed_session_count?: number;
+  readonly completed_session_count?: bigint;
   /**
-   * **[READ-ONLY]** Completion percentage for scheduled class sessions.
+   * **[READ-ONLY]** Class delivery progress percentage based on completed scheduled sessions.
    */
   readonly class_progress_percentage?: number;
   /**
@@ -3194,14 +3272,6 @@ export type ClassDefinition = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
-   */
-  readonly is_standalone?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
-  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
@@ -3209,6 +3279,14 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
+   */
+  readonly is_standalone?: boolean;
 };
 
 /**
@@ -3643,13 +3721,13 @@ export type Assignment = {
    */
   readonly points_display?: string;
   /**
-   * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
-   */
-  readonly assignment_scope?: string;
-  /**
    * **[READ-ONLY]** Summary of accepted submission types for this assignment.
    */
   readonly submission_summary?: string;
+  /**
+   * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
+   */
+  readonly assignment_scope?: string;
 };
 
 export type ApiResponseAssignment = {
@@ -3948,11 +4026,11 @@ export type ScheduledInstance = {
    */
   cancellation_reason?: string;
   /**
-   * **[READ-ONLY]** Timestamp when the scheduled instance was started.
+   * **[READ-ONLY]** Actual UTC timestamp when the instructor explicitly started the class session.
    */
   readonly started_at?: Date;
   /**
-   * **[READ-ONLY]** Timestamp when the scheduled instance was concluded.
+   * **[READ-ONLY]** Actual UTC timestamp when the instructor explicitly concluded the class session.
    */
   readonly concluded_at?: Date;
   /**
@@ -3992,11 +4070,11 @@ export type ScheduledInstance = {
    */
   readonly can_be_cancelled?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be started.
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
    */
   readonly can_be_started?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be ended.
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
    */
   readonly can_be_ended?: boolean;
 };
@@ -4382,25 +4460,25 @@ export type Enrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
+   * **[READ-ONLY]** Indicates if the student attended the class.
    */
-  readonly is_active?: boolean;
+  readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
   /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
    */
-  readonly can_be_cancelled?: boolean;
+  readonly is_active?: boolean;
 };
 
 export type ApiResponse = {
@@ -5820,6 +5898,7 @@ export type PagedDtoBookingResponse = {
 export type Page = {
   totalElements?: bigint;
   totalPages?: number;
+  pageable?: PageableObject;
   first?: boolean;
   last?: boolean;
   size?: number;
@@ -5829,23 +5908,22 @@ export type Page = {
   number?: number;
   sort?: SortObject;
   numberOfElements?: number;
-  pageable?: PageableObject;
   empty?: boolean;
 };
 
 export type PageableObject = {
-  offset?: bigint;
-  sort?: SortObject;
   paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
   unpaged?: boolean;
+  offset?: bigint;
+  sort?: SortObject;
 };
 
 export type SortObject = {
-  empty?: boolean;
   sorted?: boolean;
   unsorted?: boolean;
+  empty?: boolean;
 };
 
 export type ApiResponsePagedDtoAssessmentRubric = {
@@ -6231,10 +6309,6 @@ export type QuizAttempt = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
-   */
-  readonly is_completed?: boolean;
-  /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
   readonly grade_display?: string;
@@ -6250,6 +6324,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
+   */
+  readonly is_completed?: boolean;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -6377,10 +6455,6 @@ export type ProgramEnrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
-   */
-  readonly is_active?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -6396,6 +6470,10 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   */
+  readonly is_active?: boolean;
 };
 
 export type ApiResponseListCourse = {
@@ -7023,6 +7101,21 @@ export type PagedDtoLesson = {
   links?: PageLinks;
 };
 
+export type ApiResponsePagedDtoLessonPracticeActivity = {
+  success?: boolean;
+  data?: PagedDtoLessonPracticeActivity;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoLessonPracticeActivity = {
+  content?: Array<LessonPracticeActivity>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
 export type ApiResponseListLessonContent = {
   success?: boolean;
   data?: Array<LessonContent>;
@@ -7109,14 +7202,6 @@ export type CourseAssessmentScore = {
    */
   readonly is_passing?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
-   * **[READ-ONLY]** Formatted category of the score based on performance level.
-   */
-  readonly score_category?: string;
-  /**
    * **[READ-ONLY]** Performance level classification based on the achieved percentage.
    */
   readonly performance_level?: string;
@@ -7124,6 +7209,14 @@ export type CourseAssessmentScore = {
    * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
    */
   readonly feedback_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the score based on performance level.
+   */
+  readonly score_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 /**
@@ -7202,10 +7295,6 @@ export type CourseEnrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
-   */
-  readonly is_active?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -7221,6 +7310,10 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   */
+  readonly is_active?: boolean;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -8272,21 +8365,6 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -8302,6 +8380,21 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -8397,6 +8490,38 @@ export const ProvidedByEnum = {
  * **[OPTIONAL]** Party responsible for providing this requirement.
  */
 export type ProvidedByEnum = (typeof ProvidedByEnum)[keyof typeof ProvidedByEnum];
+
+/**
+ * **[OPTIONAL]** Practice activity format.
+ */
+export const ActivityTypeEnum = {
+  EXERCISE: 'EXERCISE',
+  DISCUSSION: 'DISCUSSION',
+  CASE_STUDY: 'CASE_STUDY',
+  ROLE_PLAY: 'ROLE_PLAY',
+  REFLECTION: 'REFLECTION',
+  HANDS_ON: 'HANDS_ON',
+} as const;
+
+/**
+ * **[OPTIONAL]** Practice activity format.
+ */
+export type ActivityTypeEnum = (typeof ActivityTypeEnum)[keyof typeof ActivityTypeEnum];
+
+/**
+ * **[OPTIONAL]** Student grouping mode for the activity.
+ */
+export const GroupingEnum = {
+  INDIVIDUAL: 'INDIVIDUAL',
+  PAIR: 'PAIR',
+  SMALL_GROUP: 'SMALL_GROUP',
+  WHOLE_CLASS: 'WHOLE_CLASS',
+} as const;
+
+/**
+ * **[OPTIONAL]** Student grouping mode for the activity.
+ */
+export type GroupingEnum = (typeof GroupingEnum)[keyof typeof GroupingEnum];
 
 /**
  * **[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.
@@ -11148,6 +11273,134 @@ export type UpdateCourseLessonResponses = {
 
 export type UpdateCourseLessonResponse =
   UpdateCourseLessonResponses[keyof UpdateCourseLessonResponses];
+
+export type DeletePracticeActivityData = {
+  body?: never;
+  path: {
+    /**
+     * Course UUID
+     */
+    courseUuid: string;
+    /**
+     * Lesson UUID
+     */
+    lessonUuid: string;
+    /**
+     * Practice activity UUID
+     */
+    activityUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities/{activityUuid}';
+};
+
+export type DeletePracticeActivityErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeletePracticeActivityError =
+  DeletePracticeActivityErrors[keyof DeletePracticeActivityErrors];
+
+export type DeletePracticeActivityResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type GetPracticeActivityData = {
+  body?: never;
+  path: {
+    /**
+     * Course UUID
+     */
+    courseUuid: string;
+    /**
+     * Lesson UUID
+     */
+    lessonUuid: string;
+    /**
+     * Practice activity UUID
+     */
+    activityUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities/{activityUuid}';
+};
+
+export type GetPracticeActivityErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetPracticeActivityError = GetPracticeActivityErrors[keyof GetPracticeActivityErrors];
+
+export type GetPracticeActivityResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseLessonPracticeActivity;
+};
+
+export type GetPracticeActivityResponse =
+  GetPracticeActivityResponses[keyof GetPracticeActivityResponses];
+
+export type UpdatePracticeActivityData = {
+  body: LessonPracticeActivity;
+  path: {
+    /**
+     * Course UUID
+     */
+    courseUuid: string;
+    /**
+     * Lesson UUID
+     */
+    lessonUuid: string;
+    /**
+     * Practice activity UUID
+     */
+    activityUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities/{activityUuid}';
+};
+
+export type UpdatePracticeActivityErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdatePracticeActivityError =
+  UpdatePracticeActivityErrors[keyof UpdatePracticeActivityErrors];
+
+export type UpdatePracticeActivityResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseLessonPracticeActivity;
+};
+
+export type UpdatePracticeActivityResponse =
+  UpdatePracticeActivityResponses[keyof UpdatePracticeActivityResponses];
 
 export type DeleteLessonContentData = {
   body?: never;
@@ -15861,6 +16114,128 @@ export type AddCourseLessonResponses = {
 
 export type AddCourseLessonResponse = AddCourseLessonResponses[keyof AddCourseLessonResponses];
 
+export type GetPracticeActivitiesData = {
+  body?: never;
+  path: {
+    /**
+     * Course UUID
+     */
+    courseUuid: string;
+    /**
+     * Lesson UUID
+     */
+    lessonUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities';
+};
+
+export type GetPracticeActivitiesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetPracticeActivitiesError =
+  GetPracticeActivitiesErrors[keyof GetPracticeActivitiesErrors];
+
+export type GetPracticeActivitiesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoLessonPracticeActivity;
+};
+
+export type GetPracticeActivitiesResponse =
+  GetPracticeActivitiesResponses[keyof GetPracticeActivitiesResponses];
+
+export type CreatePracticeActivityData = {
+  body: LessonPracticeActivity;
+  path: {
+    /**
+     * Course UUID
+     */
+    courseUuid: string;
+    /**
+     * Lesson UUID
+     */
+    lessonUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities';
+};
+
+export type CreatePracticeActivityErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreatePracticeActivityError =
+  CreatePracticeActivityErrors[keyof CreatePracticeActivityErrors];
+
+export type CreatePracticeActivityResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseLessonPracticeActivity;
+};
+
+export type CreatePracticeActivityResponse =
+  CreatePracticeActivityResponses[keyof CreatePracticeActivityResponses];
+
+export type ReorderPracticeActivitiesData = {
+  body: Array<string>;
+  path: {
+    /**
+     * Course UUID
+     */
+    courseUuid: string;
+    /**
+     * Lesson UUID
+     */
+    lessonUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/practice-activities/reorder';
+};
+
+export type ReorderPracticeActivitiesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ReorderPracticeActivitiesError =
+  ReorderPracticeActivitiesErrors[keyof ReorderPracticeActivitiesErrors];
+
+export type ReorderPracticeActivitiesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseString;
+};
+
+export type ReorderPracticeActivitiesResponse =
+  ReorderPracticeActivitiesResponses[keyof ReorderPracticeActivitiesResponses];
+
 export type GetLessonContentData = {
   body?: never;
   path: {
@@ -19118,85 +19493,6 @@ export type UpdateScheduledInstanceStatusResponses = {
 
 export type UpdateScheduledInstanceStatusResponse =
   UpdateScheduledInstanceStatusResponses[keyof UpdateScheduledInstanceStatusResponses];
-
-export type StartScheduledInstanceData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the scheduled instance
-     */
-    instanceUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/timetable/schedule/{instanceUuid}/start';
-};
-
-export type StartScheduledInstanceErrors = {
-  /**
-   * Scheduled instance cannot be started
-   */
-  400: ApiResponseVoid;
-  /**
-   * Scheduled instance not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type StartScheduledInstanceError =
-  StartScheduledInstanceErrors[keyof StartScheduledInstanceErrors];
-
-export type StartScheduledInstanceResponses = {
-  /**
-   * Scheduled instance started successfully
-   */
-  200: ApiResponseScheduledInstance;
-};
-
-export type StartScheduledInstanceResponse =
-  StartScheduledInstanceResponses[keyof StartScheduledInstanceResponses];
-
-export type EndScheduledInstanceData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the scheduled instance
-     */
-    instanceUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/timetable/schedule/{instanceUuid}/end';
-};
-
-export type EndScheduledInstanceErrors = {
-  /**
-   * Scheduled instance cannot be ended
-   */
-  400: ApiResponseVoid;
-  /**
-   * Scheduled instance not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type EndScheduledInstanceError = EndScheduledInstanceErrors[keyof EndScheduledInstanceErrors];
-
-export type EndScheduledInstanceResponses = {
-  /**
-   * Scheduled instance ended successfully
-   */
-  200: ApiResponseScheduledInstance;
-};
-
-export type EndScheduledInstanceResponse =
-  EndScheduledInstanceResponses[keyof EndScheduledInstanceResponses];
 
 export type ReorderScoringLevelsData = {
   body: {
@@ -25879,7 +26175,7 @@ export type RemoveAdminDomainResponse =
 
 export type ClientOptions = {
   baseUrl:
-  | 'https://api.elimika.staging.sarafrika.com'
-  | 'https://api.elimika.sarafrika.com'
-  | (string & {});
+    | 'https://api.elimika.staging.sarafrika.com'
+    | 'https://api.elimika.sarafrika.com'
+    | (string & {});
 };
