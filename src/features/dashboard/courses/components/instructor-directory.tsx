@@ -1,9 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { DollarSign, Filter, MapPin, Search, SlidersHorizontal, Star, X } from 'lucide-react';
-import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
 import { InstructorCard } from '@/app/dashboard/@student/_components/instructor-card';
 import { InstructorProfileComponent } from '@/app/dashboard/@student/_components/instructor-profile-modal';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +26,10 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { searchSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { Booking } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
+import { useQuery } from '@tanstack/react-query';
+import { DollarSign, Filter, MapPin, Search, SlidersHorizontal, Star, X } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { BundledClass, SearchInstructor } from '../types';
 
 type Props = {
@@ -489,7 +489,7 @@ export const InstructorDirectory: React.FC<Props> = ({
                 <p className='text-muted-foreground mt-2'>
                   Try adjusting your filters to see more results.
                 </p>
-                <Button onClick={clearFilters} variant='outline' className='mt-4 rounded-xl shadow-none'>
+                <Button onClick={clearFilters} variant='outline' className='max-auto self-center max-w-fit px-4 mt-4 rounded-md shadow-none'>
                   Clear Filters
                 </Button>
               </Card>

@@ -54,6 +54,7 @@ import {
   getAllCoursesOptions,
   listJobApplicationsOptions,
   listJobsOptions,
+  listJobsQueryKey,
   listMyApplicationsOptions,
   updateJobMutation
 } from '@/services/client/@tanstack/react-query.gen';
@@ -437,7 +438,7 @@ function JobCard({
   const applicationLabel = getApplicationStatusLabel(applicationStatus);
 
   return (
-    <Card className='group flex gap-4 rounded-[22px] border-white/60 bg-card/95 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md'>
+    <Card className='group flex gap-4 rounded-[22px] border-border border-1 bg-card/50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md'>
       <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_14%,white),color-mix(in_srgb,var(--el-accent-azure)_24%,white))] text-primary'>
         {isManagementView ? <ShieldCheck className='size-5' /> : <BriefcaseBusiness className='size-5' />}
       </div>
@@ -792,15 +793,19 @@ function JobFormSheet({
       },
     }),
   });
+  const courses = (coursesResponse?.data?.content ?? []).filter(
+    course => course.active === true && course.admin_approved === true
+  );
 
-  const courses = coursesResponse?.data?.content ?? [];
   const createMutation = useMutation({
     ...createJobMutation(),
     onSuccess: async () => {
       toast.success('Job posting created successfully.');
       onOpenChange(false);
       onSaved();
-      await queryClient.invalidateQueries({ queryKey: ['listJobs'] });
+      await queryClient.invalidateQueries({
+        queryKey: listJobsQueryKey({ query: { pageable: {} } }),
+      });
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to create the job posting.');
@@ -812,7 +817,9 @@ function JobFormSheet({
       toast.success('Job posting updated successfully.');
       onOpenChange(false);
       onSaved();
-      await queryClient.invalidateQueries({ queryKey: ['listJobs'] });
+      await queryClient.invalidateQueries({
+        queryKey: listJobsQueryKey({ query: { pageable: {} } }),
+      });
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to update the job posting.');
@@ -904,16 +911,14 @@ function JobFormSheet({
                 </Field>
                 <Field label='Course *'>
                   <Select value={selectedCourseUuid} onValueChange={setSelectedCourseUuid}>
-                    <SelectTrigger className='rounded-xl'>
-                      <SelectValue placeholder='Choose course' />
+                    <SelectTrigger className='w-full min-w-0 rounded-xl'>
+                      <SelectValue
+                        placeholder='Choose course'
+                        className='min-w-0 truncate'
+                      />
                     </SelectTrigger>
-                    <SelectContent>
-                      {courses.map(course => (
-                        <SelectItem key={course.uuid} value={course.uuid ?? ''}>
-                          {course.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+
+                    <SelectContent> {courses.map(course => (<SelectItem key={course.uuid} value={course.uuid ?? ''}> {course.name} </SelectItem>))} </SelectContent>
                   </Select>
                 </Field>
               </div>
@@ -1133,7 +1138,7 @@ function JobFormSheet({
 
 function SectionShell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className='rounded-[24px] border border-white/60 bg-card/95 p-4 shadow-sm'>
+    <section className='rounded-[24px] border-border border-1 p-4 shadow-sm'>
       <div className='mb-4 flex items-center justify-between gap-3'>
         <h3 className='text-base font-semibold text-foreground'>{title}</h3>
       </div>
@@ -1386,7 +1391,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
           </div>
 
           <div className='space-y-4'>
-            <Card className='gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 px-0 py-0 shadow-sm'>
+            <div className='gap-0 overflow-hidden rounded-[18px] border-border border-1 px-0 py-0 shadow-sm'>
               <div className='flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4'>
                 <div className='space-y-1'>
                   <h1 className='text-foreground text-[1.9rem] font-semibold tracking-tight'>
@@ -1415,7 +1420,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 </label>
 
                 <Select value={statusFilter} onValueChange={value => setStatusFilter(value as JobFilter)}>
-                  <SelectTrigger className='h-11 rounded-xl border-white/70 bg-background/80'>
+                  <SelectTrigger className='h-11 rounded-xl border-border border-1 bg-background/80'>
                     <SelectValue placeholder='All statuses' />
                   </SelectTrigger>
                   <SelectContent>
@@ -1428,7 +1433,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 </Select>
 
                 <Select value={sortBy} onValueChange={value => setSortBy(value as JobSort)}>
-                  <SelectTrigger className='h-11 rounded-xl border-white/70 bg-background/80'>
+                  <SelectTrigger className='h-11 rounded-xl border-border border-1 bg-background/80'>
                     <SelectValue placeholder='Sort by' />
                   </SelectTrigger>
                   <SelectContent>
@@ -1461,14 +1466,14 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
 
                   return (
                     <TabsContent key={tab.id} value={tab.id} className='mt-0 space-y-4 px-4 py-4 sm:px-5'>
-                      <Card className='gap-4 rounded-[16px] border-white/60 bg-background/65 px-4 py-4 shadow-none'>
-                        <div className='flex flex-wrap items-center justify-between gap-3'>
+                      <div className='gap-4 rounded-[16px] px-4 py-4'>
+                        <div className='flex flex-wrap items-center justify-between gap-3 pb-4'>
                           <div className='text-foreground text-[1.05rem] font-medium'>
                             {tabJobs.length} active job posting{tabJobs.length === 1 ? '' : 's'}
                           </div>
                           <div className='flex flex-wrap items-center gap-2'>
                             <Select value={statusFilter} onValueChange={value => setStatusFilter(value as JobFilter)}>
-                              <SelectTrigger className='h-9 w-[160px] rounded-lg border-white/70 bg-background/80'>
+                              <SelectTrigger className='h-9 w-[160px] rounded-md border-border border-1 bg-background/80'>
                                 <SelectValue placeholder='All statuses' />
                               </SelectTrigger>
                               <SelectContent>
@@ -1480,7 +1485,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                               </SelectContent>
                             </Select>
                             <span className='text-muted-foreground text-sm'>Sort by</span>
-                            <Button variant='outline' size='sm' className='rounded-lg border-white/70 bg-background/80'>
+                            <Button variant='outline' size='sm' className='rounded-md border-border border-1 bg-background/80'>
                               Most Recent
                               <ChevronDown className='size-4' />
                             </Button>
@@ -1489,7 +1494,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                                 <Button
                                   variant='outline'
                                   size='sm'
-                                  className='rounded-lg border-white/70 bg-background/80 xl:hidden'
+                                  className='rounded-lg border-border border-1 bg-background/80 xl:hidden'
                                 >
                                   <SlidersHorizontal className='size-4' />
                                   Filters
@@ -1576,16 +1581,16 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                         </div>
 
                         {!tabJobs.length ? (
-                          <div className='rounded-[16px] border border-dashed border-white/70 bg-background/80 px-4 py-8 text-sm text-muted-foreground'>
+                          <div className='rounded-[16px] border border-dashed border-border border-1 bg-background/80 px-4 py-8 text-sm text-muted-foreground'>
                             {config.emptyStateLabel}
                           </div>
                         ) : null}
-                      </Card>
+                      </div>
                     </TabsContent>
                   );
                 })}
               </Tabs>
-            </Card>
+            </div>
           </div>
 
           {!isOrganizationView ? (
