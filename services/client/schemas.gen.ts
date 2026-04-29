@@ -6789,24 +6789,24 @@ conflict_resolution per template:
     },
     scheduled_session_count: {
       type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Number of non-cancelled scheduled sessions for this class.',
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Number of countable scheduled sessions for this class definition.',
       example: 8,
       readOnly: true,
     },
     completed_session_count: {
       type: 'integer',
-      format: 'int64',
+      format: 'int32',
       description:
-        '**[READ-ONLY]** Number of non-cancelled scheduled sessions completed for this class.',
-      example: 2,
+        '**[READ-ONLY]** Number of completed scheduled sessions for this class definition.',
+      example: 3,
       readOnly: true,
     },
     class_progress_percentage: {
       type: 'number',
-      description:
-        '**[READ-ONLY]** Class delivery progress percentage based on completed scheduled sessions.',
-      example: 25,
+      description: '**[READ-ONLY]** Completion percentage for scheduled class sessions.',
+      example: 37.5,
       readOnly: true,
     },
     created_date: {
@@ -8291,16 +8291,14 @@ export const ScheduledInstanceSchema = {
     started_at: {
       type: 'string',
       format: 'date-time',
-      description:
-        '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly started the class session.',
-      example: '2024-09-15T09:03:00',
+      description: '**[READ-ONLY]** Timestamp when the scheduled instance was started.',
+      example: '2024-09-15T09:01:00',
       readOnly: true,
     },
     concluded_at: {
       type: 'string',
       format: 'date-time',
-      description:
-        '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly concluded the class session.',
+      description: '**[READ-ONLY]** Timestamp when the scheduled instance was concluded.',
       example: '2024-09-15T10:31:00',
       readOnly: true,
     },
@@ -8368,14 +8366,13 @@ export const ScheduledInstanceSchema = {
     },
     can_be_started: {
       type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be started.',
       example: true,
       readOnly: true,
     },
     can_be_ended: {
       type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be ended.',
       example: false,
       readOnly: true,
     },

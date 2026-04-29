@@ -3166,15 +3166,15 @@ export type ClassDefinition = {
    */
   session_templates: Array<ClassSessionTemplate>;
   /**
-   * **[READ-ONLY]** Number of non-cancelled scheduled sessions for this class.
+   * **[READ-ONLY]** Number of countable scheduled sessions for this class definition.
    */
-  readonly scheduled_session_count?: bigint;
+  readonly scheduled_session_count?: number;
   /**
-   * **[READ-ONLY]** Number of non-cancelled scheduled sessions completed for this class.
+   * **[READ-ONLY]** Number of completed scheduled sessions for this class definition.
    */
-  readonly completed_session_count?: bigint;
+  readonly completed_session_count?: number;
   /**
-   * **[READ-ONLY]** Class delivery progress percentage based on completed scheduled sessions.
+   * **[READ-ONLY]** Completion percentage for scheduled class sessions.
    */
   readonly class_progress_percentage?: number;
   /**
@@ -3948,11 +3948,11 @@ export type ScheduledInstance = {
    */
   cancellation_reason?: string;
   /**
-   * **[READ-ONLY]** Actual UTC timestamp when the instructor explicitly started the class session.
+   * **[READ-ONLY]** Timestamp when the scheduled instance was started.
    */
   readonly started_at?: Date;
   /**
-   * **[READ-ONLY]** Actual UTC timestamp when the instructor explicitly concluded the class session.
+   * **[READ-ONLY]** Timestamp when the scheduled instance was concluded.
    */
   readonly concluded_at?: Date;
   /**
@@ -3992,11 +3992,11 @@ export type ScheduledInstance = {
    */
   readonly can_be_cancelled?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   * **[READ-ONLY]** Indicates if the scheduled instance can be started.
    */
   readonly can_be_started?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   * **[READ-ONLY]** Indicates if the scheduled instance can be ended.
    */
   readonly can_be_ended?: boolean;
 };
@@ -19119,6 +19119,85 @@ export type UpdateScheduledInstanceStatusResponses = {
 export type UpdateScheduledInstanceStatusResponse =
   UpdateScheduledInstanceStatusResponses[keyof UpdateScheduledInstanceStatusResponses];
 
+export type StartScheduledInstanceData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the scheduled instance
+     */
+    instanceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/timetable/schedule/{instanceUuid}/start';
+};
+
+export type StartScheduledInstanceErrors = {
+  /**
+   * Scheduled instance cannot be started
+   */
+  400: ApiResponseVoid;
+  /**
+   * Scheduled instance not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type StartScheduledInstanceError =
+  StartScheduledInstanceErrors[keyof StartScheduledInstanceErrors];
+
+export type StartScheduledInstanceResponses = {
+  /**
+   * Scheduled instance started successfully
+   */
+  200: ApiResponseScheduledInstance;
+};
+
+export type StartScheduledInstanceResponse =
+  StartScheduledInstanceResponses[keyof StartScheduledInstanceResponses];
+
+export type EndScheduledInstanceData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the scheduled instance
+     */
+    instanceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/timetable/schedule/{instanceUuid}/end';
+};
+
+export type EndScheduledInstanceErrors = {
+  /**
+   * Scheduled instance cannot be ended
+   */
+  400: ApiResponseVoid;
+  /**
+   * Scheduled instance not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type EndScheduledInstanceError = EndScheduledInstanceErrors[keyof EndScheduledInstanceErrors];
+
+export type EndScheduledInstanceResponses = {
+  /**
+   * Scheduled instance ended successfully
+   */
+  200: ApiResponseScheduledInstance;
+};
+
+export type EndScheduledInstanceResponse =
+  EndScheduledInstanceResponses[keyof EndScheduledInstanceResponses];
+
 export type ReorderScoringLevelsData = {
   body: {
     [key: string]: number;
@@ -25800,7 +25879,7 @@ export type RemoveAdminDomainResponse =
 
 export type ClientOptions = {
   baseUrl:
-    | 'https://api.elimika.staging.sarafrika.com'
-    | 'https://api.elimika.sarafrika.com'
-    | (string & {});
+  | 'https://api.elimika.staging.sarafrika.com'
+  | 'https://api.elimika.sarafrika.com'
+  | (string & {});
 };

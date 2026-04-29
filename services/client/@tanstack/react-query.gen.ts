@@ -304,6 +304,8 @@ import {
   activate,
   moderateCourse,
   updateScheduledInstanceStatus,
+  startScheduledInstance,
+  endScheduledInstance,
   reorderScoringLevels,
   markAttendance,
   getCart,
@@ -1303,6 +1305,12 @@ import type {
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusError,
   UpdateScheduledInstanceStatusResponse,
+  StartScheduledInstanceData,
+  StartScheduledInstanceError,
+  StartScheduledInstanceResponse,
+  EndScheduledInstanceData,
+  EndScheduledInstanceError,
+  EndScheduledInstanceResponse,
   ReorderScoringLevelsData,
   ReorderScoringLevelsError,
   ReorderScoringLevelsResponse,
@@ -14516,6 +14524,60 @@ export const updateScheduledInstanceStatusMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateScheduledInstanceStatus({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Start a scheduled class instance
+ */
+export const startScheduledInstanceMutation = (
+  options?: Partial<Options<StartScheduledInstanceData>>
+): UseMutationOptions<
+  StartScheduledInstanceResponse,
+  StartScheduledInstanceError,
+  Options<StartScheduledInstanceData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StartScheduledInstanceResponse,
+    StartScheduledInstanceError,
+    Options<StartScheduledInstanceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await startScheduledInstance({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * End a scheduled class instance
+ */
+export const endScheduledInstanceMutation = (
+  options?: Partial<Options<EndScheduledInstanceData>>
+): UseMutationOptions<
+  EndScheduledInstanceResponse,
+  EndScheduledInstanceError,
+  Options<EndScheduledInstanceData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    EndScheduledInstanceResponse,
+    EndScheduledInstanceError,
+    Options<EndScheduledInstanceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await endScheduledInstance({
         ...options,
         ...localOptions,
         throwOnError: true,

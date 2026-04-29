@@ -12,6 +12,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, GraduationCap } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { LOCATION_TYPE_OPTIONS, normalizeLocationType } from '@/lib/location-types';
 import { Textarea } from '../../../../../components/ui/textarea';
 import { useInstructor } from '../../../../../context/instructor-context';
 import {
@@ -26,12 +27,6 @@ import { ClassDetails } from './page';
 const CLASS_TYPE_OPTIONS = [
   { label: 'Group', value: 'PUBLIC' },
   { label: 'Private', value: 'PRIVATE' },
-];
-
-const LECTURE_TYPE_OPTIONS = [
-  { label: 'Online', value: 'ONLINE' },
-  { label: 'In-person', value: 'IN_PERSON' },
-  { label: 'Hybrid', value: 'HYBRID' },
 ];
 
 const CLASS_FOR_OPTIONS = [
@@ -63,6 +58,16 @@ export const ClassDetailsSection = ({
 
   // State for class type selection (course or program)
   const [classFor, setClassFor] = useState<'course' | 'program'>('course');
+
+  const handleLocationTypeChange = (value: string) => {
+    const locationType = normalizeLocationType(value);
+
+    onChange({
+      location_type: locationType,
+      ...(locationType === 'ONLINE' ? { location_name: '' } : {}),
+      ...(locationType === 'IN_PERSON' ? { meeting_link: '' } : {}),
+    });
+  };
 
   // Detect classFor from existing data when editing
   useEffect(() => {
@@ -379,14 +384,14 @@ export const ClassDetailsSection = ({
           <div className='bg-muted/30 px-6 py-4 font-semibold'>Lecture Type *</div>
           <div className='bg-card col-span-2 px-6 py-4'>
             <div className='flex gap-6'>
-              {LECTURE_TYPE_OPTIONS.map(option => (
+              {LOCATION_TYPE_OPTIONS.map(option => (
                 <label key={option.value} className='flex cursor-pointer items-center gap-3'>
                   <input
                     type='radio'
                     name='lecture_type'
                     value={option.value}
-                    checked={data.location_type === option.value}
-                    onChange={e => onChange({ location_type: e.target.value })}
+                    checked={normalizeLocationType(data.location_type) === option.value}
+                    onChange={e => handleLocationTypeChange(e.target.value)}
                     className='h-4 w-4'
                   />
                   <span className='text-foreground text-sm font-medium'>{option.label}</span>

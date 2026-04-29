@@ -37,17 +37,21 @@ import {
   createQuizScheduleMutation,
   deleteAssignmentScheduleMutation,
   deleteQuizScheduleMutation,
+  endScheduledInstanceMutation,
   getAllAssignmentsOptions,
   getAllQuizzesOptions,
   getAssignmentAttachmentsOptions,
   getAssignmentByUuidOptions,
   getAssignmentSchedulesOptions,
   getAssignmentSchedulesQueryKey,
+  getClassDefinitionsForInstructorQueryKey,
+  getClassScheduleQueryKey,
   getEnrollmentsForClassQueryKey,
   getQuizByUuidOptions,
   getQuizSchedulesOptions,
   getQuizSchedulesQueryKey,
   markAttendanceMutation,
+  startScheduledInstanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -78,6 +82,7 @@ import moment from 'moment';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { QuizzesSheet } from '@/app/dashboard/@instructor/trainings/instructor-console/[id]/quiz-sheet';
+import { getErrorMessage } from '@/lib/error-utils';
 import type {
   Assignment,
   AssignmentAttachment,
@@ -100,6 +105,10 @@ export type ManagedScheduleItem = {
   session_format?: string;
   meeting_url?: string;
   status?: string;
+  started_at?: string | Date;
+  concluded_at?: string | Date;
+  can_be_started?: boolean;
+  can_be_ended?: boolean;
 };
 
 type Props = {
@@ -231,6 +240,10 @@ export function ClassScheduleManager({
   const [passingScoreOverride, setPassingScoreOverride] = useState('');
   const [quizNotes, setQuizNotes] = useState('');
   const [loadingEnrollmentUuid, setLoadingEnrollmentUuid] = useState<string | null>(null);
+  const [lifecycleAction, setLifecycleAction] = useState<{
+    instanceUuid: string;
+    action: 'start' | 'end';
+  } | null>(null);
 
   const activeClassId = fixedClassId ?? selectedSchedule?.classId;
   const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(activeClassId);
@@ -427,11 +440,71 @@ export function ClassScheduleManager({
   const addQuizScheduleMut = useMutation(createQuizScheduleMutation());
   const deleteAssignmentScheduleMut = useMutation(deleteAssignmentScheduleMutation());
   const deleteQuizScheduleMut = useMutation(deleteQuizScheduleMutation());
+  const startScheduledInstanceMut = useMutation(startScheduledInstanceMutation());
+  const endScheduledInstanceMut = useMutation(endScheduledInstanceMutation());
 
-  const launchClass = (schedule: ManagedScheduleItem) => {
-    const meetingLink = schedule.meeting_url || 'https://meet.google.com/abc-defg-hij';
-    window.open(meetingLink, '_blank', 'noopener,noreferrer');
-    toast.success('Opening class meeting');
+  const invalidateScheduleLifecycleQueries = (schedule: ManagedScheduleItem) => {
+    queryClient.invalidateQueries({
+      queryKey: getClassScheduleQueryKey({
+        path: { uuid: schedule.classId },
+        query: { pageable: {} },
+      }),
+    });
+
+    if (instructor?.uuid) {
+      queryClient.invalidateQueries({
+        queryKey: getClassDefinitionsForInstructorQueryKey({
+          path: { instructorUuid: instructor.uuid },
+          query: { activeOnly: true },
+        }),
+      });
+    }
+  };
+
+  const startClass = (schedule: ManagedScheduleItem) => {
+    const meetingLink = schedule.meeting_url?.trim();
+    const meetingWindow = meetingLink ? window.open('', '_blank', 'noopener,noreferrer') : null;
+    setLifecycleAction({ instanceUuid: schedule.uuid, action: 'start' });
+
+    startScheduledInstanceMut.mutate(
+      { path: { instanceUuid: schedule.uuid } },
+      {
+        onSuccess: () => {
+          if (meetingLink) {
+            if (meetingWindow) {
+              meetingWindow.location.href = meetingLink;
+            } else {
+              window.open(meetingLink, '_blank', 'noopener,noreferrer');
+            }
+          }
+          toast.success(meetingLink ? 'Class started. Opening meeting.' : 'Class started.');
+          invalidateScheduleLifecycleQueries(schedule);
+        },
+        onError: error => {
+          meetingWindow?.close();
+          toast.error(getErrorMessage(error, 'Could not start class.'));
+        },
+        onSettled: () => setLifecycleAction(null),
+      }
+    );
+  };
+
+  const endClass = (schedule: ManagedScheduleItem) => {
+    setLifecycleAction({ instanceUuid: schedule.uuid, action: 'end' });
+
+    endScheduledInstanceMut.mutate(
+      { path: { instanceUuid: schedule.uuid } },
+      {
+        onSuccess: () => {
+          toast.success('Class ended.');
+          invalidateScheduleLifecycleQueries(schedule);
+        },
+        onError: error => {
+          toast.error(getErrorMessage(error, 'Could not end class.'));
+        },
+        onSettled: () => setLifecycleAction(null),
+      }
+    );
   };
 
   const markAttendance = (studentId: string, enrollmentUuid: string, isPresent: boolean) => {
@@ -673,6 +746,51 @@ export function ClassScheduleManager({
                 const isLive =
                   moment(schedule.start_time).isBefore(moment()) &&
                   moment(schedule.end_time).isAfter(moment());
+                const startedAt = schedule.started_at ? moment(schedule.started_at) : null;
+                const concludedAt = schedule.concluded_at ? moment(schedule.concluded_at) : null;
+                const status = schedule.status?.toUpperCase();
+                const isCancelled = status === 'CANCELLED';
+                const isBlocked = status === 'BLOCKED';
+                const isConcluded = Boolean(concludedAt?.isValid()) || status === 'COMPLETED';
+                const canStart =
+                  !isCancelled &&
+                  !isBlocked &&
+                  !isConcluded &&
+                  (schedule.can_be_started ?? status === 'SCHEDULED');
+                const canEnd =
+                  !isCancelled &&
+                  !isBlocked &&
+                  !isConcluded &&
+                  (schedule.can_be_ended ?? status === 'ONGOING');
+                const isStarting =
+                  lifecycleAction?.instanceUuid === schedule.uuid &&
+                  lifecycleAction.action === 'start' &&
+                  startScheduledInstanceMut.isPending;
+                const isEnding =
+                  lifecycleAction?.instanceUuid === schedule.uuid &&
+                  lifecycleAction.action === 'end' &&
+                  endScheduledInstanceMut.isPending;
+                const isLifecycleLoading = isStarting || isEnding;
+                const lifecycleLabel = isCancelled
+                  ? 'Cancelled'
+                  : isBlocked
+                    ? 'Blocked'
+                    : isConcluded
+                      ? 'Completed'
+                      : status === 'ONGOING'
+                        ? 'In progress'
+                        : isLive
+                          ? 'Live now'
+                          : isPast
+                            ? 'Past due'
+                            : 'Upcoming';
+                const lifecycleBadgeVariant = isCancelled
+                  ? 'destructive'
+                  : status === 'ONGOING'
+                    ? 'success'
+                    : isConcluded || isBlocked || isPast
+                      ? 'secondary'
+                      : 'outline';
                 const students = studentsByScheduleInstance[schedule.uuid] ?? [];
                 const rosterPreviewAvailable =
                   !!fixedClassId || selectedSchedule?.classId === schedule.classId;
@@ -686,9 +804,7 @@ export function ClassScheduleManager({
                       <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
                         <div className='space-y-3'>
                           <div className='flex flex-wrap items-center gap-2'>
-                            <Badge variant={isLive ? 'success' : isPast ? 'secondary' : 'outline'}>
-                              {isLive ? 'Live now' : isPast ? 'Completed' : 'Upcoming'}
-                            </Badge>
+                            <Badge variant={lifecycleBadgeVariant}>{lifecycleLabel}</Badge>
                             {schedule.courseName ? (
                               <Badge variant='secondary'>{schedule.courseName}</Badge>
                             ) : null}
@@ -708,10 +824,44 @@ export function ClassScheduleManager({
                         </div>
 
                         <div className='flex items-center gap-2 self-start'>
-                          <Button size='sm' className='gap-2' onClick={() => launchClass(schedule)}>
-                            <Video className='h-4 w-4' />
-                            Launch
-                          </Button>
+                          {canEnd ? (
+                            <Button
+                              size='sm'
+                              variant='outline'
+                              className='gap-2'
+                              disabled={isLifecycleLoading}
+                              onClick={() => endClass(schedule)}
+                            >
+                              {isEnding ? (
+                                <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                              ) : (
+                                <CheckCircle className='h-4 w-4' />
+                              )}
+                              End class
+                            </Button>
+                          ) : (
+                            <Button
+                              size='sm'
+                              className='gap-2'
+                              disabled={!canStart || isLifecycleLoading}
+                              onClick={() => startClass(schedule)}
+                            >
+                              {isStarting ? (
+                                <span className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                              ) : isConcluded ? (
+                                <CheckCircle className='h-4 w-4' />
+                              ) : (
+                                <Video className='h-4 w-4' />
+                              )}
+                              {isConcluded
+                                ? 'Ended'
+                                : isCancelled
+                                  ? 'Cancelled'
+                                  : isBlocked
+                                    ? 'Blocked'
+                                    : 'Start'}
+                            </Button>
+                          )}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant='outline' size='icon'>
@@ -767,6 +917,28 @@ export function ClassScheduleManager({
                             {rosterPreviewAvailable
                               ? `${students.length} student${students.length === 1 ? '' : 's'}`
                               : 'Load in attendance'}
+                          </div>
+                        </div>
+                        <div className='border-border/60 bg-background/70 min-w-0 rounded-2xl border p-3'>
+                          <div className='text-muted-foreground mb-1 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
+                            <Calendar className='h-3.5 w-3.5' />
+                            Started
+                          </div>
+                          <div className='text-foreground text-sm font-medium break-words'>
+                            {startedAt?.isValid()
+                              ? startedAt.format('MMM D, h:mm A')
+                              : 'Not started'}
+                          </div>
+                        </div>
+                        <div className='border-border/60 bg-background/70 min-w-0 rounded-2xl border p-3'>
+                          <div className='text-muted-foreground mb-1 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase'>
+                            <CheckCircle className='h-3.5 w-3.5' />
+                            Concluded
+                          </div>
+                          <div className='text-foreground text-sm font-medium break-words'>
+                            {concludedAt?.isValid()
+                              ? concludedAt.format('MMM D, h:mm A')
+                              : 'Not concluded'}
                           </div>
                         </div>
                       </div>

@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { normalizeLocationType, requiresPhysicalLocation } from '@/lib/location-types';
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 import { ClassDetails } from './page';
@@ -15,6 +16,9 @@ export const ClassInformationSection = ({
   onChange: (updates: Partial<ClassDetails>) => void;
 }) => {
   const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const locationType = normalizeLocationType(data.location_type);
+  const showPhysicalLocation = requiresPhysicalLocation(locationType);
+  const showMeetingLink = locationType === 'ONLINE' || locationType === 'HYBRID';
 
   const inviteUrl = originUrl ? `${originUrl}/class-invite?id=${data?.uuid}` : '';
 
@@ -34,16 +38,18 @@ export const ClassInformationSection = ({
 
       <Table>
         <TableBody>
-          <TableRow className='border-b hover:bg-transparent'>
-            <TableCell className='bg-muted/30 py-4 font-semibold'>Class Location</TableCell>
-            <TableCell className='bg-card py-4'>
-              <Input
-                value={data.location_name}
-                onChange={e => onChange({ location_name: e.target.value })}
-                placeholder='Enter Class Location or Room Name'
-              />
-            </TableCell>
-          </TableRow>
+          {showPhysicalLocation ? (
+            <TableRow className='border-b hover:bg-transparent'>
+              <TableCell className='bg-muted/30 py-4 font-semibold'>Class Location</TableCell>
+              <TableCell className='bg-card py-4'>
+                <Input
+                  value={data.location_name}
+                  onChange={e => onChange({ location_name: e.target.value })}
+                  placeholder='Enter Class Location or Room Name'
+                />
+              </TableCell>
+            </TableRow>
+          ) : null}
 
           <TableRow className='border-b hover:bg-transparent'>
             <TableCell className='bg-muted/30 py-4 font-semibold'>Instructor</TableCell>
@@ -52,16 +58,18 @@ export const ClassInformationSection = ({
             </TableCell>
           </TableRow>
 
-          <TableRow className='border-b hover:bg-transparent'>
-            <TableCell className='bg-muted/30 w-1/3 py-4 font-semibold'>Meeting Link</TableCell>
-            <TableCell className='bg-card py-4'>
-              <Input
-                value={data.meeting_link}
-                onChange={e => onChange({ meeting_link: e.target.value })}
-                placeholder='Enter meeting link'
-              />
-            </TableCell>
-          </TableRow>
+          {showMeetingLink ? (
+            <TableRow className='border-b hover:bg-transparent'>
+              <TableCell className='bg-muted/30 w-1/3 py-4 font-semibold'>Meeting Link</TableCell>
+              <TableCell className='bg-card py-4'>
+                <Input
+                  value={data.meeting_link}
+                  onChange={e => onChange({ meeting_link: e.target.value })}
+                  placeholder='Enter meeting link'
+                />
+              </TableCell>
+            </TableRow>
+          ) : null}
 
           <TableRow className='hover:bg-transparent'>
             <TableCell className='bg-muted/30 py-4 font-semibold'>Class Invite Link</TableCell>
