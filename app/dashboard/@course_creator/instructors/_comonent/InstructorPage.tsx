@@ -16,7 +16,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { extractPage } from '@/lib/api-helpers';
 import { elimikaDesignSystem } from '@/lib/design-system';
@@ -510,7 +510,7 @@ function ApplicationsTabContent({
         Instructor&apos;s application to train {label.toLowerCase()}
       </h3>
 
-      <div className='grid grid-cols-2 gap-3 lg:grid-cols-4'>
+      <div className='grid grid-cols-1 gap-3 min-[1299px]:grid-cols-4'>
         <StatCard icon={FileText} label='Total' value={stats.total} />
         <StatCard icon={Clock} label='Pending' value={stats.pending} />
         <StatCard icon={CheckCircle2} label='Approved' value={stats.approved} />
@@ -600,7 +600,7 @@ function ApplicationsTabContent({
 
       {/* Grid */}
       {isLoading ? (
-        <div className='grid gap-4 md:grid-cols-2'>
+        <div className='grid grid-cols-1 gap-4 min-[1299px]:grid-cols-2'>
           {[...Array(4)].map((_, i) => <Skeleton key={i} className='h-56 rounded-2xl' />)}
         </div>
       ) : applications.length === 0 ? (
@@ -617,7 +617,7 @@ function ApplicationsTabContent({
         </div>
       ) : (
         <>
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-4 min-[1299px]:grid-cols-2'>
             {applications.map(app => (
               <ApplicationCard
                 key={app.uuid}
@@ -727,7 +727,7 @@ function ProfileTabContent({
           )}
         </div>
 
-        <div className='flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between'>
+        <div className='flex flex-col gap-5 min-[1299px]:flex-row min-[1299px]:items-start min-[1299px]:justify-between'>
           <div className='flex items-start gap-4'>
             <Avatar className='h-16 w-16 border'>
               <AvatarImage src={selectedApplicantType === 'instructor' ? instructorData?.profile_picture_url : undefined} />
@@ -757,7 +757,7 @@ function ProfileTabContent({
             </div>
           </div>
 
-          <div className='grid gap-4 text-left sm:grid-cols-2 xl:min-w-[200px] xl:text-right'>
+          <div className='grid grid-cols-1 gap-4 text-left min-[1299px]:min-w-[200px] min-[1299px]:grid-cols-2 min-[1299px]:text-right'>
             <div>
               <p className='text-muted-foreground text-sm font-medium'>
                 {selectedApplicantType === 'organisation' ? 'Organisation ID' : 'Instructor ID'}
@@ -775,7 +775,7 @@ function ProfileTabContent({
 
         <Separator className='my-5' />
 
-        <div className='grid gap-5 md:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-5 min-[1299px]:grid-cols-3'>
           <div>
             <p className='text-muted-foreground text-sm font-medium'>Phone</p>
             <p className='text-foreground mt-1 text-sm'>
@@ -808,7 +808,7 @@ function ProfileTabContent({
             <Building2 className='text-primary h-5 w-5' />
             <h3 className='text-foreground text-xl font-semibold'>Organisation overview</h3>
           </div>
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-4 min-[1299px]:grid-cols-2'>
             <div>
               <p className='text-muted-foreground text-sm font-medium'>Description</p>
               <p className='text-foreground mt-1 text-sm leading-6'>{organisation.description || 'No description provided.'}</p>
@@ -837,7 +837,7 @@ function ProfileTabContent({
       {/* Instructor-specific sections */}
       {selectedApplicantType === 'instructor' && (
         <>
-          <div className='grid gap-5 xl:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-5 min-[1299px]:grid-cols-2'>
             {/* Personal info */}
             <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
               <div className='mb-4 flex items-center gap-2'>
@@ -845,7 +845,7 @@ function ProfileTabContent({
                 <h3 className='text-foreground text-xl font-semibold'>Personal information</h3>
               </div>
               <div className='space-y-4'>
-                <div className='grid gap-4 sm:grid-cols-2'>
+                <div className='grid grid-cols-1 gap-4 min-[1299px]:grid-cols-2'>
                   <div>
                     <p className='text-muted-foreground text-sm font-medium'>Gender</p>
                     <p className='text-foreground mt-1 text-sm'>
@@ -914,7 +914,7 @@ function ProfileTabContent({
             </Card>
           </div>
 
-          <div className='grid gap-5 xl:grid-cols-[1.1fr_0.9fr]'>
+          <div className='grid grid-cols-1 gap-5 min-[1299px]:grid-cols-[1.1fr_0.9fr]'>
             {/* Skills */}
             <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
               <div className='mb-4 flex items-center gap-2'>
@@ -1493,7 +1493,7 @@ const InstructorsApplicationPage = () => {
         key={applicant.uuid}
         onClick={() => {
           setSelectedApplicantUuid(applicant.uuid);
-          if (window.innerWidth < 1024) setIsMobileDetailsOpen(true);
+          if (window.innerWidth < 1299) setIsMobileDetailsOpen(true);
         }}
         className={`relative w-full rounded-2xl border p-4 text-left transition-colors ${isSelected
           ? 'border-primary bg-primary/5 ring-primary/30 shadow-sm ring-1'
@@ -1559,13 +1559,13 @@ const InstructorsApplicationPage = () => {
       </section>
 
       <Card className='overflow-hidden p-0'>
-        <div className='flex flex-col min-[1450px]:h-[calc(100vh-190px)] min-[1450px]:flex-row'>
+        <div className='flex flex-col min-[1299px]:h-[calc(100vh-190px)] min-[1299px]:flex-row'>
 
           {/* ── Left sidebar ──────────────────────────────────────────────── */}
-          <div className='bg-background flex w-full flex-col border-b min-[1450px]:w-[22rem] min-[1450px]:border-r min-[1450px]:border-b-0'>
+          <div className='bg-background flex w-full flex-col border-b min-[1299px]:w-[22rem] min-[1299px]:border-r min-[1299px]:border-b-0'>
             <div className='space-y-3 border-b p-4'>
               {/* Mobile: menu + search row */}
-              <div className='flex items-center gap-2 lg:hidden'>
+              <div className='flex items-center gap-2 min-[1299px]:hidden'>
                 <Button variant='outline' size='icon' className='shrink-0' onClick={() => setIsMobileFiltersOpen(true)}>
                   <Menu size={18} />
                 </Button>
@@ -1581,7 +1581,7 @@ const InstructorsApplicationPage = () => {
               </div>
 
               {/* Desktop: search */}
-              <div className='relative hidden lg:block'>
+              <div className='relative hidden min-[1299px]:block'>
                 <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
                 <Input
                   placeholder='Search applicants'
@@ -1616,7 +1616,7 @@ const InstructorsApplicationPage = () => {
               </div>
 
               {/* Desktop: filters row */}
-              <div className='hidden gap-2 lg:flex'>
+              <div className='hidden gap-2 min-[1299px]:flex'>
                 <Select value={verificationFilter} onValueChange={v => setVerificationFilter(v as typeof verificationFilter)}>
                   <SelectTrigger className='h-9 flex-1 text-sm'>
                     <Filter className='mr-1.5 h-3.5 w-3.5' />
@@ -1657,7 +1657,7 @@ const InstructorsApplicationPage = () => {
           </div>
 
           {/* ── Desktop detail panel ──────────────────────────────────────── */}
-          <div className='hidden flex-1 flex-col lg:flex'>
+          <div className='hidden flex-1 flex-col min-[1299px]:flex'>
             {!selectedApplicantUuid ? (
               <div className='flex flex-1 items-center justify-center p-8'>
                 <div className='text-muted-foreground text-center'>
@@ -1736,53 +1736,41 @@ const InstructorsApplicationPage = () => {
 
         {/* ── Mobile: details sheet ─────────────────────────────────────────── */}
         <Sheet open={isMobileDetailsOpen} onOpenChange={setIsMobileDetailsOpen}>
-          <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-2xl'>
+          <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
             <SheetHeader>
               <SheetTitle>Applicant details</SheetTitle>
             </SheetHeader>
-            <div className='mt-4 space-y-4 px-4 pb-8'>
+
+            <div className="mt-4 px-4 pb-8">
               {selectedApplicantUuid && (
-                <>
-                  {/* Mobile tab picker */}
-                  <Button
-                    variant='outline'
-                    className='w-full justify-between rounded-xl'
-                    onClick={() => setIsMobileTabsOpen(true)}
-                  >
-                    <span>{activeTabLabel}</span>
-                    <Menu size={16} />
-                  </Button>
+                <Tabs value={tabs} onValueChange={setTabs} className="w-full">
+                  {/* Tab triggers */}
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="profile">Profile</TabsTrigger>
+                    <TabsTrigger value="course-application">Course</TabsTrigger>
+                    <TabsTrigger value="program-application">Program</TabsTrigger>
+                  </TabsList>
 
-                  <Sheet open={isMobileTabsOpen} onOpenChange={setIsMobileTabsOpen}>
-                    <SheetContent side='bottom' className='max-h-[60vh] rounded-t-3xl px-0'>
-                      <SheetHeader className='px-4 pb-2'>
-                        <SheetTitle>Choose a section</SheetTitle>
-                      </SheetHeader>
-                      <div className='space-y-2 px-4 pb-6'>
-                        {tabOptions.map(o => (
-                          <button
-                            key={o.value}
-                            onClick={() => { setTabs(o.value); setIsMobileTabsOpen(false); }}
-                            className={`w-full rounded-xl border px-4 py-3 text-left text-sm font-medium ${tabs === o.value
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-border text-foreground hover:bg-muted'
-                              }`}
-                          >
-                            {o.label}
-                          </button>
-                        ))}
-                      </div>
-                    </SheetContent>
-                  </Sheet>
+                  {/* Tab contents */}
+                  <div className="mt-4">
+                    <TabsContent value="profile">
+                      <ProfileTabContent {...profileProps} />
+                    </TabsContent>
 
-                  {tabs === 'profile' && <ProfileTabContent {...profileProps} />}
-                  {tabs === 'course-application' && <ApplicationsTabContent {...courseAppProps} />}
-                  {tabs === 'program-application' && <ApplicationsTabContent {...programAppProps} />}
-                </>
+                    <TabsContent value="course-application">
+                      <ApplicationsTabContent {...courseAppProps} />
+                    </TabsContent>
+
+                    <TabsContent value="program-application">
+                      <ApplicationsTabContent {...programAppProps} />
+                    </TabsContent>
+                  </div>
+                </Tabs>
               )}
             </div>
           </SheetContent>
         </Sheet>
+
       </Card>
     </div>
   );
