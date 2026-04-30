@@ -43,10 +43,28 @@ import {
   getLessonContentQueryKey,
   getPracticeActivitiesOptions,
   getPracticeActivitiesQueryKey,
+  reorderPracticeActivitiesMutation,
   searchAssignmentsOptions,
   searchQuizzesOptions,
   updatePracticeActivityMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -56,6 +74,7 @@ import {
   ClipboardList,
   Clock,
   EyeOff,
+  GripVertical,
   ListOrdered,
   MoreVertical,
   PenLine,
@@ -421,6 +440,128 @@ function PracticeActivityDialog({
   );
 }
 
+type SortablePracticeActivityCardProps = {
+  activity: LessonPracticeActivity;
+  isReordering: boolean;
+  onEdit: (activity: LessonPracticeActivity) => void;
+  onDelete: (activity: LessonPracticeActivity) => void;
+};
+
+function SortablePracticeActivityCard({
+  activity,
+  isReordering,
+  onEdit,
+  onDelete,
+}: SortablePracticeActivityCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: activity.uuid ?? '',
+    disabled: !activity.uuid || isReordering,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`group flex w-full flex-col gap-4 rounded-2xl border border-border bg-card/80 p-4 shadow-lg dark:border-border/70 dark:bg-card/70 ${
+        isDragging ? 'ring-2 ring-primary/20 shadow-xl' : ''
+      }`}
+    >
+      <div className='flex items-start justify-between gap-4'>
+        <div className='flex min-w-0 flex-1 gap-3'>
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            disabled={!activity.uuid || isReordering}
+            className='text-muted-foreground hover:text-foreground mt-1 h-9 w-9 cursor-grab active:cursor-grabbing'
+            aria-label={`Reorder ${activity.title || 'activity'}`}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className='h-4 w-4' />
+          </Button>
+          <div className='bg-primary/10 text-primary mt-1 rounded-full p-2'>
+            <ClipboardList className='h-5 w-5' />
+          </div>
+
+          <div className='min-w-0 space-y-3'>
+            <div className='space-y-1'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <h3 className='text-foreground text-base font-semibold'>{activity.title}</h3>
+                <Badge variant={activity.active ? 'success' : 'outline'}>
+                  {activity.active ? 'Visible' : 'Hidden'}
+                </Badge>
+                <Badge variant='secondary'>{getDisplayLabel(activity.status)}</Badge>
+              </div>
+              <p className='text-muted-foreground line-clamp-3 text-sm'>{activity.instructions}</p>
+            </div>
+
+            <div className='text-muted-foreground flex flex-wrap gap-3 text-sm'>
+              <span className='flex items-center gap-1'>
+                <ClipboardList className='h-4 w-4' />
+                {getDisplayLabel(activity.activity_type)}
+              </span>
+              <span className='flex items-center gap-1'>
+                <Users className='h-4 w-4' />
+                {getDisplayLabel(activity.grouping)}
+              </span>
+              <span className='flex items-center gap-1'>
+                <Clock className='h-4 w-4' />
+                {activity.estimated_duration ?? 'Duration not set'}
+              </span>
+              <span className='flex items-center gap-1'>
+                <ListOrdered className='h-4 w-4' />
+                Order {activity.display_order ?? '-'}
+              </span>
+            </div>
+
+            {activity.materials && activity.materials.length > 0 && (
+              <div className='flex flex-wrap gap-2'>
+                {activity.materials.map(material => (
+                  <Badge key={material} variant='outline'>
+                    {material}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {activity.expected_output && (
+              <p className='text-muted-foreground text-sm'>
+                <span className='text-foreground font-medium'>Output:</span>{' '}
+                {activity.expected_output}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='opacity-0 transition-opacity group-hover:opacity-100'
+              aria-label='Practice activity actions'
+            >
+              <MoreVertical className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem onClick={() => onEdit(activity)}>
+              <PenLine className='mr-1 h-4 w-4' />
+              Edit Activity
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className='text-destructive' onClick={() => onDelete(activity)}>
+              <Trash className='mr-1 h-4 w-4' />
+              Delete Activity
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+}
+
 const LessonDetailsPage = () => {
   const searchParams = useSearchParams();
   const lessonId = searchParams.get('id');
@@ -540,6 +681,52 @@ const LessonDetailsPage = () => {
   const practiceActivities = (practiceActivitiesData?.data?.content ??
     []) as LessonPracticeActivity[];
   const practiceMetadata = practiceActivitiesData?.data?.metadata as PageMetadata | undefined;
+
+  const [orderedPracticeActivities, setOrderedPracticeActivities] = useState<
+    LessonPracticeActivity[]
+  >([]);
+
+  useEffect(() => {
+    setOrderedPracticeActivities(practiceActivities);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [practiceActivitiesData]);
+
+  const practiceSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const reorderPracticeActivities = useMutation({
+    ...reorderPracticeActivitiesMutation(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: practiceActivitiesQueryKey });
+    },
+    onError: error => {
+      toast.error(getErrorMessage(error, 'Unable to reorder practice activities'));
+      qc.invalidateQueries({ queryKey: practiceActivitiesQueryKey });
+    },
+  });
+
+  const handlePracticeActivityDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || reorderPracticeActivities.isPending) return;
+    if (!courseId || !lessonId) return;
+
+    const oldIndex = orderedPracticeActivities.findIndex(item => item.uuid === active.id);
+    const newIndex = orderedPracticeActivities.findIndex(item => item.uuid === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const reordered = arrayMove(orderedPracticeActivities, oldIndex, newIndex);
+    setOrderedPracticeActivities(reordered);
+
+    const orderedUuids = reordered.map(item => item.uuid).filter((uuid): uuid is string => !!uuid);
+    if (orderedUuids.length !== reordered.length) return;
+
+    reorderPracticeActivities.mutate({
+      body: orderedUuids,
+      path: { courseUuid: courseId, lessonUuid: lessonId },
+    });
+  };
 
   const closePracticeActivityModal = () => {
     setEditingPracticeActivity(null);
@@ -880,105 +1067,29 @@ const LessonDetailsPage = () => {
           </CardContent>
         ) : (
           <CardContent>
-            {practiceActivities.length > 0 ? (
-              <div className='space-y-4'>
-                {practiceActivities.map(activity => (
-                  <div
-                    key={activity.uuid}
-                    className='group flex w-full flex-col gap-4 rounded-2xl border border-border bg-card/80 p-4 shadow-lg dark:border-border/70 dark:bg-card/70'
-                  >
-                    <div className='flex items-start justify-between gap-4'>
-                      <div className='flex min-w-0 flex-1 gap-3'>
-                        <div className='bg-primary/10 text-primary mt-1 rounded-full p-2'>
-                          <ClipboardList className='h-5 w-5' />
-                        </div>
-
-                        <div className='min-w-0 space-y-3'>
-                          <div className='space-y-1'>
-                            <div className='flex flex-wrap items-center gap-2'>
-                              <h3 className='text-foreground text-base font-semibold'>
-                                {activity.title}
-                              </h3>
-                              <Badge variant={activity.active ? 'success' : 'outline'}>
-                                {activity.active ? 'Visible' : 'Hidden'}
-                              </Badge>
-                              <Badge variant='secondary'>
-                                {getDisplayLabel(activity.status)}
-                              </Badge>
-                            </div>
-                            <p className='text-muted-foreground line-clamp-3 text-sm'>
-                              {activity.instructions}
-                            </p>
-                          </div>
-
-                          <div className='text-muted-foreground flex flex-wrap gap-3 text-sm'>
-                            <span className='flex items-center gap-1'>
-                              <ClipboardList className='h-4 w-4' />
-                              {getDisplayLabel(activity.activity_type)}
-                            </span>
-                            <span className='flex items-center gap-1'>
-                              <Users className='h-4 w-4' />
-                              {getDisplayLabel(activity.grouping)}
-                            </span>
-                            <span className='flex items-center gap-1'>
-                              <Clock className='h-4 w-4' />
-                              {activity.estimated_duration ?? 'Duration not set'}
-                            </span>
-                            <span className='flex items-center gap-1'>
-                              <ListOrdered className='h-4 w-4' />
-                              Order {activity.display_order ?? '-'}
-                            </span>
-                          </div>
-
-                          {activity.materials && activity.materials.length > 0 && (
-                            <div className='flex flex-wrap gap-2'>
-                              {activity.materials.map(material => (
-                                <Badge key={material} variant='outline'>
-                                  {material}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-
-                          {activity.expected_output && (
-                            <p className='text-muted-foreground text-sm'>
-                              <span className='text-foreground font-medium'>Output:</span>{' '}
-                              {activity.expected_output}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            className='opacity-0 transition-opacity group-hover:opacity-100'
-                            aria-label='Practice activity actions'
-                          >
-                            <MoreVertical className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem onClick={() => handleEditPracticeActivity(activity)}>
-                            <PenLine className='mr-1 h-4 w-4' />
-                            Edit Activity
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className='text-destructive'
-                            onClick={() => handleDeletePracticeActivity(activity)}
-                          >
-                            <Trash className='mr-1 h-4 w-4' />
-                            Delete Activity
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+            {orderedPracticeActivities.length > 0 ? (
+              <DndContext
+                sensors={practiceSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handlePracticeActivityDragEnd}
+              >
+                <SortableContext
+                  items={orderedPracticeActivities.map(item => item.uuid ?? '')}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className='space-y-4'>
+                    {orderedPracticeActivities.map(activity => (
+                      <SortablePracticeActivityCard
+                        key={activity.uuid}
+                        activity={activity}
+                        isReordering={reorderPracticeActivities.isPending}
+                        onEdit={handleEditPracticeActivity}
+                        onDelete={handleDeletePracticeActivity}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             ) : (
               <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
                 <EyeOff className='text-muted-foreground mb-2 h-8 w-8' />
