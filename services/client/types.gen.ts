@@ -446,21 +446,21 @@ export type RubricScoringLevel = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
+   */
+  readonly display_name?: string;
+  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
-   */
-  readonly is_highest_level?: boolean;
   /**
    * **[READ-ONLY]** CSS-safe color class name derived from the color code.
    */
   readonly css_color_class?: string;
   /**
-   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
+   * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
-  readonly display_name?: string;
+  readonly is_highest_level?: boolean;
 };
 
 export type ApiResponseRubricScoringLevel = {
@@ -1349,6 +1349,10 @@ export type InstructorSkill = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted skill name for display in UI components.
+   */
+  readonly display_name?: string;
+  /**
    * **[READ-ONLY]** Brief summary of the skill for display in skill lists.
    */
   readonly summary?: string;
@@ -1356,10 +1360,6 @@ export type InstructorSkill = {
    * **[READ-ONLY]** Human-readable description of the proficiency level.
    */
   readonly proficiency_description?: string;
-  /**
-   * **[READ-ONLY]** Formatted skill name for display in UI components.
-   */
-  readonly display_name?: string;
 };
 
 export type ApiResponseInstructorSkill = {
@@ -1420,6 +1420,10 @@ export type InstructorProfessionalMembership = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
+   */
+  readonly is_valid?: boolean;
+  /**
    * **[READ-ONLY]** Brief summary of the membership for display in listings.
    */
   readonly summary?: string;
@@ -1457,10 +1461,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly membership_duration_months?: number;
   membership_status?: MembershipStatusEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
-   */
-  readonly is_valid?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1919,10 +1919,6 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
@@ -1938,6 +1934,10 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
@@ -2416,6 +2416,10 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -2431,10 +2435,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Category classification of the assessment type.
    */
   readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -2617,8 +2617,8 @@ export type CourseCreatorSkill = {
   readonly created_by?: string;
   readonly updated_date?: Date;
   readonly updated_by?: string;
-  readonly proficiency_description?: string;
   readonly display_name?: string;
+  readonly proficiency_description?: string;
 };
 
 export type ApiResponseCourseCreatorSkill = {
@@ -2894,13 +2894,13 @@ export type DifficultyLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.
-   */
-  readonly is_entry_level?: boolean;
-  /**
    * **[READ-ONLY]** Formatted display name including level order for UI presentation.
    */
   readonly display_name?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.
+   */
+  readonly is_entry_level?: boolean;
 };
 
 export type ApiResponseDifficultyLevel = {
@@ -3272,6 +3272,10 @@ export type ClassDefinition = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
+   */
+  readonly is_standalone?: boolean;
+  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
@@ -3283,10 +3287,6 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
-   */
-  readonly is_standalone?: boolean;
 };
 
 /**
@@ -3721,13 +3721,13 @@ export type Assignment = {
    */
   readonly points_display?: string;
   /**
-   * **[READ-ONLY]** Summary of accepted submission types for this assignment.
-   */
-  readonly submission_summary?: string;
-  /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
   readonly assignment_scope?: string;
+  /**
+   * **[READ-ONLY]** Summary of accepted submission types for this assignment.
+   */
+  readonly submission_summary?: string;
 };
 
 export type ApiResponseAssignment = {
@@ -4460,25 +4460,25 @@ export type Enrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
+   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
    */
-  readonly did_attend?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
+  readonly is_active?: boolean;
   /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
-  readonly is_active?: boolean;
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -5898,7 +5898,6 @@ export type PagedDtoBookingResponse = {
 export type Page = {
   totalElements?: bigint;
   totalPages?: number;
-  pageable?: PageableObject;
   first?: boolean;
   last?: boolean;
   size?: number;
@@ -5908,22 +5907,23 @@ export type Page = {
   number?: number;
   sort?: SortObject;
   numberOfElements?: number;
+  pageable?: PageableObject;
   empty?: boolean;
 };
 
 export type PageableObject = {
+  offset?: bigint;
+  sort?: SortObject;
   paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
   unpaged?: boolean;
-  offset?: bigint;
-  sort?: SortObject;
 };
 
 export type SortObject = {
+  empty?: boolean;
   sorted?: boolean;
   unsorted?: boolean;
-  empty?: boolean;
 };
 
 export type ApiResponsePagedDtoAssessmentRubric = {
@@ -6309,6 +6309,10 @@ export type QuizAttempt = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
+   */
+  readonly is_completed?: boolean;
+  /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
   readonly grade_display?: string;
@@ -6324,10 +6328,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
-   */
-  readonly is_completed?: boolean;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -6455,6 +6455,10 @@ export type ProgramEnrollment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   */
+  readonly is_active?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -6470,10 +6474,6 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
-   */
-  readonly is_active?: boolean;
 };
 
 export type ApiResponseListCourse = {
@@ -7202,6 +7202,14 @@ export type CourseAssessmentScore = {
    */
   readonly is_passing?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the score based on performance level.
+   */
+  readonly score_category?: string;
+  /**
    * **[READ-ONLY]** Performance level classification based on the achieved percentage.
    */
   readonly performance_level?: string;
@@ -7209,14 +7217,6 @@ export type CourseAssessmentScore = {
    * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
    */
   readonly feedback_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted category of the score based on performance level.
-   */
-  readonly score_category?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 /**
@@ -7295,6 +7295,10 @@ export type CourseEnrollment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   */
+  readonly is_active?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -7310,10 +7314,6 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
-   */
-  readonly is_active?: boolean;
 };
 
 export type PagedDtoCourseEnrollment = {

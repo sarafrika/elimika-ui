@@ -683,17 +683,15 @@ export const zRubricScoringLevel = z
       )
       .readonly()
       .optional(),
+    display_name: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
+      .readonly()
+      .optional(),
     performance_indicator: z
       .string()
       .describe(
         '**[READ-ONLY]** Performance classification based on level order and passing status.'
-      )
-      .readonly()
-      .optional(),
-    is_highest_level: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).'
       )
       .readonly()
       .optional(),
@@ -702,9 +700,11 @@ export const zRubricScoringLevel = z
       .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
       .readonly()
       .optional(),
-    display_name: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
+    is_highest_level: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).'
+      )
       .readonly()
       .optional(),
   })
@@ -2013,6 +2013,11 @@ export const zInstructorSkill = z
       )
       .readonly()
       .optional(),
+    display_name: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted skill name for display in UI components.')
+      .readonly()
+      .optional(),
     summary: z
       .string()
       .describe('**[READ-ONLY]** Brief summary of the skill for display in skill lists.')
@@ -2021,11 +2026,6 @@ export const zInstructorSkill = z
     proficiency_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the proficiency level.')
-      .readonly()
-      .optional(),
-    display_name: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted skill name for display in UI components.')
       .readonly()
       .optional(),
   })
@@ -2141,6 +2141,11 @@ export const zInstructorProfessionalMembership = z
       )
       .readonly()
       .optional(),
+    is_valid: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership is currently valid and active.')
+      .readonly()
+      .optional(),
     summary: z
       .string()
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
@@ -2191,11 +2196,6 @@ export const zInstructorProfessionalMembership = z
       .readonly()
       .optional(),
     membership_status: zMembershipStatusEnum.optional(),
-    is_valid: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership is currently valid and active.')
-      .readonly()
-      .optional(),
   })
   .describe(
     'Professional membership record for instructors including associations, industry bodies, and certification organizations'
@@ -3040,13 +3040,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
@@ -3065,6 +3058,13 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
+      .readonly()
+      .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
       .readonly()
       .optional(),
     total_duration_display: z
@@ -3687,6 +3687,11 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3707,11 +3712,6 @@ export const zCourseAssessment = z
     assessment_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -3961,8 +3961,8 @@ export const zCourseCreatorSkill = z
     created_by: z.string().readonly().optional(),
     updated_date: z.string().datetime().readonly().optional(),
     updated_by: z.string().readonly().optional(),
-    proficiency_description: z.string().readonly().optional(),
     display_name: z.string().readonly().optional(),
+    proficiency_description: z.string().readonly().optional(),
   })
   .describe(
     'Technical or creative competency declared by a course creator with proficiency metadata'
@@ -4311,14 +4311,14 @@ export const zDifficultyLevel = z
       )
       .readonly()
       .optional(),
-    is_entry_level: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.')
-      .readonly()
-      .optional(),
     display_name: z
       .string()
       .describe('**[READ-ONLY]** Formatted display name including level order for UI presentation.')
+      .readonly()
+      .optional(),
+    is_entry_level: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.')
       .readonly()
       .optional(),
   })
@@ -4861,6 +4861,13 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    is_standalone: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if this is a standalone class not associated with any course.'
+      )
+      .readonly()
+      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe(
@@ -4877,13 +4884,6 @@ export const zClassDefinition = z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
-      )
-      .readonly()
-      .optional(),
-    is_standalone: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if this is a standalone class not associated with any course.'
       )
       .readonly()
       .optional(),
@@ -5414,14 +5414,14 @@ export const zAssignment = z
       .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
-    submission_summary: z
-      .string()
-      .describe('**[READ-ONLY]** Summary of accepted submission types for this assignment.')
-      .readonly()
-      .optional(),
     assignment_scope: z
       .string()
       .describe('**[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.')
+      .readonly()
+      .optional(),
+    submission_summary: z
+      .string()
+      .describe('**[READ-ONLY]** Summary of accepted submission types for this assignment.')
       .readonly()
       .optional(),
   })
@@ -6217,14 +6217,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Email or username of the user who last modified this enrollment.')
       .readonly()
       .optional(),
-    did_attend: z
+    is_active: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
     is_attendance_marked: z
@@ -6232,14 +6227,19 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
-    is_active: z
+    can_be_cancelled: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -7702,24 +7702,23 @@ export const zApiResponsePagedDtoBookingResponse = z.object({
 });
 
 export const zSortObject = z.object({
+  empty: z.boolean().optional(),
   sorted: z.boolean().optional(),
   unsorted: z.boolean().optional(),
-  empty: z.boolean().optional(),
 });
 
 export const zPageableObject = z.object({
+  offset: z.coerce.bigint().optional(),
+  sort: zSortObject.optional(),
   paged: z.boolean().optional(),
   pageNumber: z.number().int().optional(),
   pageSize: z.number().int().optional(),
   unpaged: z.boolean().optional(),
-  offset: z.coerce.bigint().optional(),
-  sort: zSortObject.optional(),
 });
 
 export const zPage = z.object({
   totalElements: z.coerce.bigint().optional(),
   totalPages: z.number().int().optional(),
-  pageable: zPageableObject.optional(),
   first: z.boolean().optional(),
   last: z.boolean().optional(),
   size: z.number().int().optional(),
@@ -7727,6 +7726,7 @@ export const zPage = z.object({
   number: z.number().int().optional(),
   sort: zSortObject.optional(),
   numberOfElements: z.number().int().optional(),
+  pageable: zPageableObject.optional(),
   empty: z.boolean().optional(),
 });
 
@@ -8097,6 +8097,13 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    is_completed: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).'
+      )
+      .readonly()
+      .optional(),
     grade_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the grade information.')
@@ -8115,13 +8122,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    is_completed: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).'
-      )
       .readonly()
       .optional(),
   })
@@ -8275,6 +8275,11 @@ export const zProgramEnrollment = z
       )
       .readonly()
       .optional(),
+    is_active: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
+      .readonly()
+      .optional(),
     enrollment_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
@@ -8297,11 +8302,6 @@ export const zProgramEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
-      .readonly()
-      .optional(),
-    is_active: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
   })
@@ -8968,6 +8968,16 @@ export const zCourseAssessmentScore = z
       .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
+    score_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
+      .readonly()
+      .optional(),
     performance_level: z
       .string()
       .describe(
@@ -8980,16 +8990,6 @@ export const zCourseAssessmentScore = z
       .describe(
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.'
       )
-      .readonly()
-      .optional(),
-    score_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -9106,6 +9106,11 @@ export const zCourseEnrollment = z
       )
       .readonly()
       .optional(),
+    is_active: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
+      .readonly()
+      .optional(),
     enrollment_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
@@ -9128,11 +9133,6 @@ export const zCourseEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
-      .readonly()
-      .optional(),
-    is_active: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
   })

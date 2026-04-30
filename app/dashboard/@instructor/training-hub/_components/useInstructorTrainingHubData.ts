@@ -340,7 +340,9 @@ export function useInstructorTrainingHubData() {
         waitlistedStudents: `${waitlistedStudents} students`,
         fee: formatCurrency(classItem.training_fee),
         sessions: `${classItem.schedule?.filter(isNonCancelledInstance).length ?? 0}`,
-        href: '/dashboard/classes',
+        href: instance.uuid
+          ? `/dashboard/class-instance/${instance.uuid}`
+          : '/dashboard/classes',
         status: dayLabel === 'Today' ? 'today' : dayLabel === 'Tomorrow' ? 'tomorrow' : 'upcoming',
       };
     });
