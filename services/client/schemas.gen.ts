@@ -2953,9 +2953,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: 4,
       readOnly: true,
     },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
-    },
     membership_period: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
@@ -3000,6 +2997,9 @@ export const InstructorProfessionalMembershipSchema = {
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
       readOnly: true,
+    },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
     },
   },
   required: ['instructor_uuid', 'organisation_name'],
@@ -4521,6 +4521,159 @@ export const ApiResponseLessonSchema = {
   },
 } as const;
 
+export const LessonPracticeActivitySchema = {
+  type: 'object',
+  description: 'Reusable practice activity template attached to a lesson',
+  example: {
+    uuid: 'f0f57b88-6a16-4b75-a39d-ecb1a04c2ac6',
+    lesson_uuid: '30b49de6-f266-4a5e-8e81-fd706a601a15',
+    title: 'Think-pair-share: API contract review',
+    instructions:
+      'Students review the sample API payload individually, discuss issues in pairs, then share one improvement with the class.',
+    activity_type: 'DISCUSSION',
+    grouping: 'PAIR',
+    estimated_minutes: 15,
+    materials: ['Sample API payload', 'Review checklist'],
+    expected_output: 'Each pair identifies one contract risk and one improvement.',
+    display_order: 1,
+    status: 'published',
+    active: true,
+    created_date: '2026-04-29T18:04:00',
+    created_by: 'creator@sarafrika.com',
+    updated_date: '2026-04-29T18:30:00',
+    updated_by: 'creator@sarafrika.com',
+    is_published: true,
+    estimated_duration: '15 minutes',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique system identifier for the practice activity.',
+      readOnly: true,
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Lesson UUID. When used through nested lesson endpoints, the path lesson is authoritative.',
+    },
+    title: {
+      type: 'string',
+      description: '**[REQUIRED]** Descriptive title of the practice activity.',
+      example: 'Think-pair-share: API contract review',
+      maxLength: 255,
+      minLength: 0,
+    },
+    instructions: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Facilitator-facing instructions for running the practice activity.',
+      example:
+        'Students review the sample API payload individually, discuss issues in pairs, then share one improvement with the class.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    activity_type: {
+      $ref: '#/components/schemas/ActivityTypeEnum',
+    },
+    grouping: {
+      $ref: '#/components/schemas/GroupingEnum',
+    },
+    estimated_minutes: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Estimated time needed to run the activity.',
+      example: 15,
+      minimum: 1,
+    },
+    materials: {
+      type: 'array',
+      description: '**[OPTIONAL]** Materials, handouts, links, or tools needed for the activity.',
+      example: ['Sample API payload', 'Review checklist'],
+      items: {
+        type: 'string',
+      },
+    },
+    expected_output: {
+      type: 'string',
+      description: '**[OPTIONAL]** Expected learner output or facilitator debrief artifact.',
+      example: 'Each pair identifies one contract risk and one improvement.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Display order within the lesson. If omitted, the system appends the activity.',
+      example: 1,
+      minimum: 1,
+    },
+    status: {
+      $ref: '#/components/schemas/SchemaEnum4',
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Whether the practice activity is visible for use. Can only be true when status is published.',
+      example: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the practice activity was created.',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User who created the practice activity.',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the practice activity was last updated.',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User who last updated the practice activity.',
+      readOnly: true,
+    },
+    is_published: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Whether the activity is published.',
+      readOnly: true,
+    },
+    estimated_duration: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable estimated duration.',
+      example: 15,
+      readOnly: true,
+    },
+  },
+  required: ['instructions', 'title'],
+} as const;
+
+export const ApiResponseLessonPracticeActivitySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/LessonPracticeActivity',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
 export const LessonContentSchema = {
   type: 'object',
   description: 'Individual content item within a lesson supporting various media types',
@@ -4808,6 +4961,18 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
+    is_major_assessment: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
+      example: false,
+      readOnly: true,
+    },
     contribution_level: {
       type: 'string',
       description: '**[READ-ONLY]** Level of contribution to final grade based on weight.',
@@ -4825,18 +4990,6 @@ export const CourseAssessmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment type.',
       example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
-    is_major_assessment: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
-      example: false,
       readOnly: true,
     },
   },
@@ -6789,24 +6942,24 @@ conflict_resolution per template:
     },
     scheduled_session_count: {
       type: 'integer',
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Number of countable scheduled sessions for this class definition.',
+      format: 'int64',
+      description: '**[READ-ONLY]** Number of non-cancelled scheduled sessions for this class.',
       example: 8,
       readOnly: true,
     },
     completed_session_count: {
       type: 'integer',
-      format: 'int32',
+      format: 'int64',
       description:
-        '**[READ-ONLY]** Number of completed scheduled sessions for this class definition.',
-      example: 3,
+        '**[READ-ONLY]** Number of non-cancelled scheduled sessions completed for this class.',
+      example: 2,
       readOnly: true,
     },
     class_progress_percentage: {
       type: 'number',
-      description: '**[READ-ONLY]** Completion percentage for scheduled class sessions.',
-      example: 37.5,
+      description:
+        '**[READ-ONLY]** Class delivery progress percentage based on completed scheduled sessions.',
+      example: 25,
       readOnly: true,
     },
     created_date: {
@@ -6846,13 +6999,6 @@ conflict_resolution per template:
       example: false,
       readOnly: true,
     },
-    capacity_info: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
-      example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -6865,6 +7011,13 @@ conflict_resolution per template:
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
       example: '1h 30m',
+      readOnly: true,
+    },
+    capacity_info: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
+      example: 'Max 25 participants (waitlist enabled)',
       readOnly: true,
     },
   },
@@ -8291,14 +8444,16 @@ export const ScheduledInstanceSchema = {
     started_at: {
       type: 'string',
       format: 'date-time',
-      description: '**[READ-ONLY]** Timestamp when the scheduled instance was started.',
-      example: '2024-09-15T09:01:00',
+      description:
+        '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly started the class session.',
+      example: '2024-09-15T09:03:00',
       readOnly: true,
     },
     concluded_at: {
       type: 'string',
       format: 'date-time',
-      description: '**[READ-ONLY]** Timestamp when the scheduled instance was concluded.',
+      description:
+        '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly concluded the class session.',
       example: '2024-09-15T10:31:00',
       readOnly: true,
     },
@@ -8366,13 +8521,14 @@ export const ScheduledInstanceSchema = {
     },
     can_be_started: {
       type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be started.',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
       example: true,
       readOnly: true,
     },
     can_be_ended: {
       type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be ended.',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
       example: false,
       readOnly: true,
     },
@@ -14331,6 +14487,42 @@ export const PagedDTOLessonSchema = {
   },
 } as const;
 
+export const ApiResponsePagedDTOLessonPracticeActivitySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOLessonPracticeActivity',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOLessonPracticeActivitySchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LessonPracticeActivity',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const ApiResponseListLessonContentSchema = {
   type: 'object',
   properties: {
@@ -16629,14 +16821,6 @@ export const ProficiencyLevelEnumSchema = {
   example: 'EXPERT',
 } as const;
 
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
-  readOnly: true,
-} as const;
-
 export const OrganisationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organisation type based on name keywords.',
@@ -16649,6 +16833,14 @@ export const OrganisationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
+  readOnly: true,
+} as const;
+
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
   readOnly: true,
 } as const;
 
@@ -16697,6 +16889,20 @@ export const ProvidedByEnumSchema = {
   description: '**[OPTIONAL]** Party responsible for providing this requirement.',
   enum: ['course_creator', 'instructor', 'organisation', 'student'],
   example: 'organisation',
+} as const;
+
+export const ActivityTypeEnumSchema = {
+  type: 'string',
+  description: '**[OPTIONAL]** Practice activity format.',
+  enum: ['EXERCISE', 'DISCUSSION', 'CASE_STUDY', 'ROLE_PLAY', 'REFLECTION', 'HANDS_ON'],
+  example: 'DISCUSSION',
+} as const;
+
+export const GroupingEnumSchema = {
+  type: 'string',
+  description: '**[OPTIONAL]** Student grouping mode for the activity.',
+  enum: ['INDIVIDUAL', 'PAIR', 'SMALL_GROUP', 'WHOLE_CLASS'],
+  example: 'PAIR',
 } as const;
 
 export const AggregationStrategyEnumSchema = {

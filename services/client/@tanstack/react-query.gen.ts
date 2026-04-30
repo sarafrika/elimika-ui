@@ -70,6 +70,9 @@ import {
   deleteCourseLesson,
   getCourseLesson,
   updateCourseLesson,
+  deletePracticeActivity,
+  getPracticeActivity,
+  updatePracticeActivity,
   deleteLessonContent,
   updateLessonContent,
   deleteCourseAssessment,
@@ -209,6 +212,9 @@ import {
   addCourseRequirement,
   getCourseLessons,
   addCourseLesson,
+  getPracticeActivities,
+  createPracticeActivity,
+  reorderPracticeActivities,
   getLessonContent,
   addLessonContent,
   uploadLessonMedia,
@@ -304,8 +310,6 @@ import {
   activate,
   moderateCourse,
   updateScheduledInstanceStatus,
-  startScheduledInstance,
-  endScheduledInstance,
   reorderScoringLevels,
   markAttendance,
   getCart,
@@ -662,6 +666,12 @@ import type {
   UpdateCourseLessonData,
   UpdateCourseLessonError,
   UpdateCourseLessonResponse,
+  DeletePracticeActivityData,
+  DeletePracticeActivityError,
+  GetPracticeActivityData,
+  UpdatePracticeActivityData,
+  UpdatePracticeActivityError,
+  UpdatePracticeActivityResponse,
   DeleteLessonContentData,
   DeleteLessonContentError,
   UpdateLessonContentData,
@@ -1038,6 +1048,15 @@ import type {
   AddCourseLessonData,
   AddCourseLessonError,
   AddCourseLessonResponse,
+  GetPracticeActivitiesData,
+  GetPracticeActivitiesError,
+  GetPracticeActivitiesResponse,
+  CreatePracticeActivityData,
+  CreatePracticeActivityError,
+  CreatePracticeActivityResponse,
+  ReorderPracticeActivitiesData,
+  ReorderPracticeActivitiesError,
+  ReorderPracticeActivitiesResponse,
   GetLessonContentData,
   AddLessonContentData,
   AddLessonContentError,
@@ -1305,12 +1324,6 @@ import type {
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusError,
   UpdateScheduledInstanceStatusResponse,
-  StartScheduledInstanceData,
-  StartScheduledInstanceError,
-  StartScheduledInstanceResponse,
-  EndScheduledInstanceData,
-  EndScheduledInstanceError,
-  EndScheduledInstanceResponse,
   ReorderScoringLevelsData,
   ReorderScoringLevelsError,
   ReorderScoringLevelsResponse,
@@ -3501,6 +3514,81 @@ export const updateCourseLessonMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCourseLesson({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a lesson practice activity
+ */
+export const deletePracticeActivityMutation = (
+  options?: Partial<Options<DeletePracticeActivityData>>
+): UseMutationOptions<
+  unknown,
+  DeletePracticeActivityError,
+  Options<DeletePracticeActivityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeletePracticeActivityError,
+    Options<DeletePracticeActivityData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deletePracticeActivity({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getPracticeActivityQueryKey = (options: Options<GetPracticeActivityData>) =>
+  createQueryKey('getPracticeActivity', options);
+
+/**
+ * Get a lesson practice activity
+ */
+export const getPracticeActivityOptions = (options: Options<GetPracticeActivityData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPracticeActivity({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPracticeActivityQueryKey(options),
+  });
+};
+
+/**
+ * Update a lesson practice activity
+ */
+export const updatePracticeActivityMutation = (
+  options?: Partial<Options<UpdatePracticeActivityData>>
+): UseMutationOptions<
+  UpdatePracticeActivityResponse,
+  UpdatePracticeActivityError,
+  Options<UpdatePracticeActivityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdatePracticeActivityResponse,
+    UpdatePracticeActivityError,
+    Options<UpdatePracticeActivityData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updatePracticeActivity({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9759,6 +9847,172 @@ export const addCourseLessonMutation = (
   return mutationOptions;
 };
 
+export const getPracticeActivitiesQueryKey = (options: Options<GetPracticeActivitiesData>) =>
+  createQueryKey('getPracticeActivities', options);
+
+/**
+ * List lesson practice activities
+ */
+export const getPracticeActivitiesOptions = (options: Options<GetPracticeActivitiesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPracticeActivities({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPracticeActivitiesQueryKey(options),
+  });
+};
+
+export const getPracticeActivitiesInfiniteQueryKey = (
+  options: Options<GetPracticeActivitiesData>
+): QueryKey<Options<GetPracticeActivitiesData>> =>
+  createQueryKey('getPracticeActivities', options, true);
+
+/**
+ * List lesson practice activities
+ */
+export const getPracticeActivitiesInfiniteOptions = (
+  options: Options<GetPracticeActivitiesData>
+) => {
+  return infiniteQueryOptions<
+    GetPracticeActivitiesResponse,
+    GetPracticeActivitiesError,
+    InfiniteData<GetPracticeActivitiesResponse>,
+    QueryKey<Options<GetPracticeActivitiesData>>,
+    | number
+    | Pick<QueryKey<Options<GetPracticeActivitiesData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetPracticeActivitiesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPracticeActivities({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPracticeActivitiesInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const createPracticeActivityQueryKey = (options: Options<CreatePracticeActivityData>) =>
+  createQueryKey('createPracticeActivity', options);
+
+/**
+ * Create a lesson practice activity
+ */
+export const createPracticeActivityOptions = (options: Options<CreatePracticeActivityData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createPracticeActivity({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createPracticeActivityQueryKey(options),
+  });
+};
+
+/**
+ * Create a lesson practice activity
+ */
+export const createPracticeActivityMutation = (
+  options?: Partial<Options<CreatePracticeActivityData>>
+): UseMutationOptions<
+  CreatePracticeActivityResponse,
+  CreatePracticeActivityError,
+  Options<CreatePracticeActivityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreatePracticeActivityResponse,
+    CreatePracticeActivityError,
+    Options<CreatePracticeActivityData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createPracticeActivity({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const reorderPracticeActivitiesQueryKey = (
+  options: Options<ReorderPracticeActivitiesData>
+) => createQueryKey('reorderPracticeActivities', options);
+
+/**
+ * Reorder lesson practice activities
+ */
+export const reorderPracticeActivitiesOptions = (
+  options: Options<ReorderPracticeActivitiesData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await reorderPracticeActivities({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: reorderPracticeActivitiesQueryKey(options),
+  });
+};
+
+/**
+ * Reorder lesson practice activities
+ */
+export const reorderPracticeActivitiesMutation = (
+  options?: Partial<Options<ReorderPracticeActivitiesData>>
+): UseMutationOptions<
+  ReorderPracticeActivitiesResponse,
+  ReorderPracticeActivitiesError,
+  Options<ReorderPracticeActivitiesData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReorderPracticeActivitiesResponse,
+    ReorderPracticeActivitiesError,
+    Options<ReorderPracticeActivitiesData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await reorderPracticeActivities({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getLessonContentQueryKey = (options: Options<GetLessonContentData>) =>
   createQueryKey('getLessonContent', options);
 
@@ -14524,60 +14778,6 @@ export const updateScheduledInstanceStatusMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateScheduledInstanceStatus({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Start a scheduled class instance
- */
-export const startScheduledInstanceMutation = (
-  options?: Partial<Options<StartScheduledInstanceData>>
-): UseMutationOptions<
-  StartScheduledInstanceResponse,
-  StartScheduledInstanceError,
-  Options<StartScheduledInstanceData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    StartScheduledInstanceResponse,
-    StartScheduledInstanceError,
-    Options<StartScheduledInstanceData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await startScheduledInstance({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * End a scheduled class instance
- */
-export const endScheduledInstanceMutation = (
-  options?: Partial<Options<EndScheduledInstanceData>>
-): UseMutationOptions<
-  EndScheduledInstanceResponse,
-  EndScheduledInstanceError,
-  Options<EndScheduledInstanceData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    EndScheduledInstanceResponse,
-    EndScheduledInstanceError,
-    Options<EndScheduledInstanceData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await endScheduledInstance({
         ...options,
         ...localOptions,
         throwOnError: true,

@@ -2041,13 +2041,6 @@ export const zApiResponseInstructorSkill = z.object({
 });
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const zMembershipStatusEnum = z
-  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
-  .describe('**[READ-ONLY]** Current status of the membership.');
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const zOrganisationTypeEnum = z
@@ -2060,6 +2053,13 @@ export const zOrganisationTypeEnum = z
     'OTHER',
   ])
   .describe('**[READ-ONLY]** Classification of organisation type based on name keywords.');
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const zMembershipStatusEnum = z
+  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
+  .describe('**[READ-ONLY]** Current status of the membership.');
 
 /**
  * Professional membership record for instructors including associations, industry bodies, and certification organizations
@@ -2161,7 +2161,6 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
       .readonly()
       .optional(),
-    membership_status: zMembershipStatusEnum.optional(),
     membership_period: z
       .string()
       .describe('**[READ-ONLY]** Formatted membership period showing start and end dates.')
@@ -2196,6 +2195,7 @@ export const zInstructorProfessionalMembership = z
       )
       .readonly()
       .optional(),
+    membership_status: zMembershipStatusEnum.optional(),
   })
   .describe(
     'Professional membership record for instructors including associations, industry bodies, and certification organizations'
@@ -3350,6 +3350,125 @@ export const zApiResponseLesson = z.object({
 });
 
 /**
+ * **[OPTIONAL]** Practice activity format.
+ */
+export const zActivityTypeEnum = z
+  .enum(['EXERCISE', 'DISCUSSION', 'CASE_STUDY', 'ROLE_PLAY', 'REFLECTION', 'HANDS_ON'])
+  .describe('**[OPTIONAL]** Practice activity format.');
+
+/**
+ * **[OPTIONAL]** Student grouping mode for the activity.
+ */
+export const zGroupingEnum = z
+  .enum(['INDIVIDUAL', 'PAIR', 'SMALL_GROUP', 'WHOLE_CLASS'])
+  .describe('**[OPTIONAL]** Student grouping mode for the activity.');
+
+/**
+ * Reusable practice activity template attached to a lesson
+ */
+export const zLessonPracticeActivity = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique system identifier for the practice activity.')
+      .readonly()
+      .optional(),
+    lesson_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[OPTIONAL]** Lesson UUID. When used through nested lesson endpoints, the path lesson is authoritative.'
+      )
+      .optional(),
+    title: z
+      .string()
+      .min(0)
+      .max(255)
+      .describe('**[REQUIRED]** Descriptive title of the practice activity.'),
+    instructions: z
+      .string()
+      .min(0)
+      .max(5000)
+      .describe(
+        '**[REQUIRED]** Facilitator-facing instructions for running the practice activity.'
+      ),
+    activity_type: zActivityTypeEnum.optional(),
+    grouping: zGroupingEnum.optional(),
+    estimated_minutes: z
+      .number()
+      .int()
+      .gte(1)
+      .describe('**[OPTIONAL]** Estimated time needed to run the activity.')
+      .optional(),
+    materials: z
+      .array(z.string())
+      .describe('**[OPTIONAL]** Materials, handouts, links, or tools needed for the activity.')
+      .optional(),
+    expected_output: z
+      .string()
+      .min(0)
+      .max(2000)
+      .describe('**[OPTIONAL]** Expected learner output or facilitator debrief artifact.')
+      .optional(),
+    display_order: z
+      .number()
+      .int()
+      .gte(1)
+      .describe(
+        '**[OPTIONAL]** Display order within the lesson. If omitted, the system appends the activity.'
+      )
+      .optional(),
+    status: zSchemaEnum4.optional(),
+    active: z
+      .boolean()
+      .describe(
+        '**[OPTIONAL]** Whether the practice activity is visible for use. Can only be true when status is published.'
+      )
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the practice activity was created.')
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe('**[READ-ONLY]** User who created the practice activity.')
+      .readonly()
+      .optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the practice activity was last updated.')
+      .readonly()
+      .optional(),
+    updated_by: z
+      .string()
+      .describe('**[READ-ONLY]** User who last updated the practice activity.')
+      .readonly()
+      .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether the activity is published.')
+      .readonly()
+      .optional(),
+    estimated_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable estimated duration.')
+      .readonly()
+      .optional(),
+  })
+  .describe('Reusable practice activity template attached to a lesson');
+
+export const zApiResponseLessonPracticeActivity = z.object({
+  success: z.boolean().optional(),
+  data: zLessonPracticeActivity.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
  * Individual content item within a lesson supporting various media types
  */
 export const zLessonContent = z
@@ -3568,6 +3687,16 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
+    is_major_assessment: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
+      .readonly()
+      .optional(),
     contribution_level: z
       .string()
       .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
@@ -3583,16 +3712,6 @@ export const zCourseAssessment = z
     assessment_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
-    is_major_assessment: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
       .readonly()
       .optional(),
   })
@@ -4695,25 +4814,23 @@ export const zClassDefinition = z
       .describe(
         '**[REQUIRED]** Inline session templates with time slots and recurrence rules to schedule class instances during creation.\nconflict_resolution per template:\n- FAIL: stop scheduling if any conflict; response 409 with conflicts.\n- SKIP: schedule non-conflicting occurrences; return conflicts for skipped dates.\n- ROLLOVER: push conflicting dates forward by the recurrence interval (bounded retries) and extend the series; return unrecoverable conflicts.\n'
       ),
-    scheduled_session_count: z
-      .number()
-      .int()
-      .describe(
-        '**[READ-ONLY]** Number of countable scheduled sessions for this class definition.'
-      )
+    scheduled_session_count: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Number of non-cancelled scheduled sessions for this class.')
       .readonly()
       .optional(),
-    completed_session_count: z
-      .number()
-      .int()
+    completed_session_count: z.coerce
+      .bigint()
       .describe(
-        '**[READ-ONLY]** Number of completed scheduled sessions for this class definition.'
+        '**[READ-ONLY]** Number of non-cancelled scheduled sessions completed for this class.'
       )
       .readonly()
       .optional(),
     class_progress_percentage: z
       .number()
-      .describe('**[READ-ONLY]** Completion percentage for scheduled class sessions.')
+      .describe(
+        '**[READ-ONLY]** Class delivery progress percentage based on completed scheduled sessions.'
+      )
       .readonly()
       .optional(),
     created_date: z
@@ -4751,13 +4868,6 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    capacity_info: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
-      )
-      .readonly()
-      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe(
@@ -4768,6 +4878,13 @@ export const zClassDefinition = z
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
+    capacity_info: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
+      )
       .readonly()
       .optional(),
   })
@@ -5523,7 +5640,7 @@ export const zApiResponseBoolean = z.object({
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export const zStatusEnum5 = z
+export const zStatusEnum6 = z
   .enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'])
   .describe('**[OPTIONAL]** Current status of the scheduled instance.');
 
@@ -5596,13 +5713,17 @@ export const zScheduledInstance = z
     started_at: z
       .string()
       .datetime()
-      .describe('**[READ-ONLY]** Timestamp when the scheduled instance was started.')
+      .describe(
+        '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly started the class session.'
+      )
       .readonly()
       .optional(),
     concluded_at: z
       .string()
       .datetime()
-      .describe('**[READ-ONLY]** Timestamp when the scheduled instance was concluded.')
+      .describe(
+        '**[READ-ONLY]** Actual UTC timestamp when the instructor explicitly concluded the class session.'
+      )
       .readonly()
       .optional(),
     created_date: z
@@ -5664,12 +5785,12 @@ export const zScheduledInstance = z
       .optional(),
     can_be_started: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be started.')
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
       .readonly()
       .optional(),
     can_be_ended: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be ended.')
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -8739,6 +8860,19 @@ export const zApiResponsePagedDtoLesson = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+export const zPagedDtoLessonPracticeActivity = z.object({
+  content: z.array(zLessonPracticeActivity).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoLessonPracticeActivity = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoLessonPracticeActivity.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 export const zApiResponseListLessonContent = z.object({
   success: z.boolean().optional(),
   data: z.array(zLessonContent).optional(),
@@ -10708,6 +10842,46 @@ export const zUpdateCourseLessonData = z.object({
  */
 export const zUpdateCourseLessonResponse = zApiResponseLesson;
 
+export const zDeletePracticeActivityData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid().describe('Course UUID'),
+    lessonUuid: z.string().uuid().describe('Lesson UUID'),
+    activityUuid: z.string().uuid().describe('Practice activity UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+export const zGetPracticeActivityData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid().describe('Course UUID'),
+    lessonUuid: z.string().uuid().describe('Lesson UUID'),
+    activityUuid: z.string().uuid().describe('Practice activity UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetPracticeActivityResponse = zApiResponseLessonPracticeActivity;
+
+export const zUpdatePracticeActivityData = z.object({
+  body: zLessonPracticeActivity,
+  path: z.object({
+    courseUuid: z.string().uuid().describe('Course UUID'),
+    lessonUuid: z.string().uuid().describe('Lesson UUID'),
+    activityUuid: z.string().uuid().describe('Practice activity UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdatePracticeActivityResponse = zApiResponseLessonPracticeActivity;
+
 export const zDeleteLessonContentData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -12623,6 +12797,50 @@ export const zAddCourseLessonData = z.object({
  */
 export const zAddCourseLessonResponse = zApiResponseLesson;
 
+export const zGetPracticeActivitiesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid().describe('Course UUID'),
+    lessonUuid: z.string().uuid().describe('Lesson UUID'),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetPracticeActivitiesResponse = zApiResponsePagedDtoLessonPracticeActivity;
+
+export const zCreatePracticeActivityData = z.object({
+  body: zLessonPracticeActivity,
+  path: z.object({
+    courseUuid: z.string().uuid().describe('Course UUID'),
+    lessonUuid: z.string().uuid().describe('Lesson UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreatePracticeActivityResponse = zApiResponseLessonPracticeActivity;
+
+export const zReorderPracticeActivitiesData = z.object({
+  body: z.array(z.string().uuid()),
+  path: z.object({
+    courseUuid: z.string().uuid().describe('Course UUID'),
+    lessonUuid: z.string().uuid().describe('Lesson UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zReorderPracticeActivitiesResponse = zApiResponseString;
+
 export const zGetLessonContentData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -13958,32 +14176,6 @@ export const zUpdateScheduledInstanceStatusData = z.object({
  * Status updated successfully
  */
 export const zUpdateScheduledInstanceStatusResponse = zApiResponseVoid;
-
-export const zStartScheduledInstanceData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instanceUuid: z.string().uuid().describe('UUID of the scheduled instance'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Scheduled instance started successfully
- */
-export const zStartScheduledInstanceResponse = zApiResponseScheduledInstance;
-
-export const zEndScheduledInstanceData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instanceUuid: z.string().uuid().describe('UUID of the scheduled instance'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Scheduled instance ended successfully
- */
-export const zEndScheduledInstanceResponse = zApiResponseScheduledInstance;
 
 export const zReorderScoringLevelsData = z.object({
   body: z.record(z.number().int()),
