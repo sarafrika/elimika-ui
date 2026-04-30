@@ -11,7 +11,7 @@ export const schedulerDays = [
   { label: 'Sun', date: '3' },
 ];
 
-export const schedulerHours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+export const schedulerHours = Array.from({ length: 24 }, (_, index) => index);
 
 export const categoryStyles: Record<SchedulerCategory, string> = {
   'TVET / Vocational': 'border-primary/50 bg-primary/10 text-primary',

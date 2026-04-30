@@ -390,13 +390,33 @@ const ClassBuilderPage = ({
     classColour: '',
   });
 
-  useEffect(() => {
-    if (resolveId || !initialSlot) return;
+  const queryPrefillSlot = useMemo(() => {
+    if (resolveId || initialSlot) return null;
 
-    const nextDate = initialSlot.startTime.toISOString().slice(0, 10);
-    const nextStart = initialSlot.startTime.toTimeString().slice(0, 5);
-    const nextEnd = initialSlot.endTime.toTimeString().slice(0, 5);
-    const slotWeekday = initialSlot.startTime.getDay();
+    const date = searchParams.get('date');
+    const startTime = searchParams.get('startTime');
+    const endTime = searchParams.get('endTime');
+
+    if (!date || !startTime || !endTime) return null;
+
+    const start = new Date(`${date}T${startTime}:00`);
+    const end = new Date(`${date}T${endTime}:00`);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return null;
+    }
+
+    return { startTime: start, endTime: end };
+  }, [initialSlot, resolveId, searchParams]);
+
+  useEffect(() => {
+    const slot = initialSlot || queryPrefillSlot;
+    if (resolveId || !slot) return;
+
+    const nextDate = slot.startTime.toISOString().slice(0, 10);
+    const nextStart = slot.startTime.toTimeString().slice(0, 5);
+    const nextEnd = slot.endTime.toTimeString().slice(0, 5);
+    const slotWeekday = slot.startTime.getDay();
     const normalizedWeekday = slotWeekday === 0 ? 6 : slotWeekday - 1;
 
     setScheduleSettings(prev => ({
@@ -414,24 +434,24 @@ const ClassBuilderPage = ({
         days:
           prev.repeat.days && prev.repeat.days.length > 0 ? prev.repeat.days : [normalizedWeekday],
       },
-      timetable: {
-        ...prev.timetable,
-        days:
-          prev.timetable.days && prev.timetable.days.length > 0
-            ? prev.timetable.days
-            : [DAY_NAMES[normalizedWeekday]],
-        time: {
-          ...prev.timetable.time,
-          duration:
-            prev.timetable.time.duration ||
-            `${Math.max(
-              30,
-              Math.round((initialSlot.endTime.getTime() - initialSlot.startTime.getTime()) / 60000)
-            )}`,
+        timetable: {
+          ...prev.timetable,
+          days:
+            prev.timetable.days && prev.timetable.days.length > 0
+              ? prev.timetable.days
+              : [DAY_NAMES[normalizedWeekday]],
+          time: {
+            ...prev.timetable.time,
+            duration:
+              prev.timetable.time.duration ||
+              `${Math.max(
+                30,
+                Math.round((slot.endTime.getTime() - slot.startTime.getTime()) / 60000)
+              )}`,
+          },
         },
-      },
-    }));
-  }, [initialSlot, resolveId]);
+      }));
+  }, [initialSlot, queryPrefillSlot, resolveId]);
 
 
   useEffect(() => {

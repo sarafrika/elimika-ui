@@ -7,9 +7,16 @@ const rowHeight = 58;
 const weekColumnClass =
   'grid-cols-[72px_repeat(7,110px)] sm:grid-cols-[78px_repeat(7,110px)] lg:grid-cols-[88px_repeat(7,110px)]';
 
+type EmptySlot = {
+  date: Date;
+  startTime: Date;
+  endTime: Date;
+  view: SchedulerView;
+};
+
 function formatHour(hour: number) {
   const suffix = hour >= 12 ? 'PM' : 'AM';
-  const normalized = hour > 12 ? hour - 12 : hour;
+  const normalized = hour % 12 || 12;
   return `${normalized}:00 ${suffix}`;
 }
 
@@ -79,7 +86,13 @@ function getDurationHours(event: SchedulerEvent) {
   return Math.max((event.endTime.getTime() - event.startTime.getTime()) / 36e5, 0.75);
 }
 
-function EventBlock({ event }: { event: SchedulerEvent }) {
+function EventBlock({
+  event,
+  onClick,
+}: {
+  event: SchedulerEvent;
+  onClick?: (event: SchedulerEvent) => void;
+}) {
   return (
     <button
       type='button'
@@ -90,6 +103,10 @@ function EventBlock({ event }: { event: SchedulerEvent }) {
       style={{
         top: `${(getStartHour(event) % 1) * rowHeight + 6}px`,
         height: `${Math.max(getDurationHours(event) * rowHeight - 10, 50)}px`,
+      }}
+      onClick={eventData => {
+        eventData.stopPropagation();
+        onClick?.(event);
       }}
     >
       <p className='truncate text-[9px] font-semibold sm:text-[10px] lg:text-xs'>{event.title}</p>
@@ -111,7 +128,13 @@ function EventBlock({ event }: { event: SchedulerEvent }) {
   );
 }
 
-function WeekEventBlock({ event }: { event: SchedulerEvent }) {
+function WeekEventBlock({
+  event,
+  onClick,
+}: {
+  event: SchedulerEvent;
+  onClick?: (event: SchedulerEvent) => void;
+}) {
   return (
     <button
       type='button'
@@ -119,6 +142,10 @@ function WeekEventBlock({ event }: { event: SchedulerEvent }) {
         'focus-visible:ring-ring w-full overflow-hidden rounded-md border px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
         categoryStyles[event.category]
       )}
+      onClick={eventData => {
+        eventData.stopPropagation();
+        onClick?.(event);
+      }}
     >
       <p className='truncate text-[10px] font-semibold sm:text-[11px]'>{event.title}</p>
       <p className='truncate text-[9px] opacity-75'>
@@ -130,11 +157,23 @@ function WeekEventBlock({ event }: { event: SchedulerEvent }) {
   );
 }
 
-function CompactEvent({ event }: { event: SchedulerEvent }) {
+function CompactEvent({
+  event,
+  onClick,
+}: {
+  event: SchedulerEvent;
+  onClick?: (event: SchedulerEvent) => void;
+}) {
   return (
     <div
+      role='button'
+      tabIndex={0}
+      onClick={eventData => {
+        eventData.stopPropagation();
+        onClick?.(event);
+      }}
       className={cn(
-        'min-w-0 rounded border px-2 py-1 text-left text-[10px] font-semibold',
+        'min-w-0 rounded border px-2 py-1 text-left text-[10px] font-semibold transition hover:shadow-sm',
         categoryStyles[event.category]
       )}
     >
@@ -146,18 +185,17 @@ function CompactEvent({ event }: { event: SchedulerEvent }) {
   );
 }
 
-function EmptySchedule({ label }: { label: string }) {
-  return (
-    <section className='bg-card flex min-h-[420px] w-full items-center justify-center rounded-md border p-6 text-center shadow-sm'>
-      <div>
-        <p className='text-foreground text-sm font-semibold'>No schedules found</p>
-        <p className='text-muted-foreground mt-1 text-xs'>{label}</p>
-      </div>
-    </section>
-  );
-}
-
-function DayGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
+function DayGrid({
+  currentDate,
+  events,
+  onEventClick,
+  onEmptySlotClick,
+}: {
+  currentDate: Date;
+  events: SchedulerEvent[];
+  onEventClick?: (event: SchedulerEvent) => void;
+  onEmptySlotClick?: (slot: EmptySlot) => void;
+}) {
   const today = new Date();
   const dayEvents = getDayEvents(events, currentDate);
   const currentDayLabel = currentDate.toLocaleDateString('en-US', {
@@ -204,7 +242,36 @@ function DayGrid({ currentDate, events }: { currentDate: Date; events: Scheduler
 
           <div className='max-h-[640px] overflow-y-auto'>
             {schedulerHours.map(hour => (
-              <div key={hour} className='grid grid-cols-[72px_1fr] border-b last:border-b-0'>
+              <div
+                key={hour}
+                role='button'
+                tabIndex={0}
+                className='grid grid-cols-[72px_1fr] border-b last:border-b-0'
+                onClick={() =>
+                  onEmptySlotClick?.({
+                    date: currentDate,
+                    startTime: new Date(
+                      currentDate.getFullYear(),
+                      currentDate.getMonth(),
+                      currentDate.getDate(),
+                      hour,
+                      0,
+                      0,
+                      0
+                    ),
+                    endTime: new Date(
+                      currentDate.getFullYear(),
+                      currentDate.getMonth(),
+                      currentDate.getDate(),
+                      hour + 1,
+                      0,
+                      0,
+                      0
+                    ),
+                    view: 'day',
+                  })
+                }
+              >
                 <div className='text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold sm:text-[10px]'>
                   {formatHour(hour)}
                 </div>
@@ -219,7 +286,7 @@ function DayGrid({ currentDate, events }: { currentDate: Date; events: Scheduler
                           top: `${(event.startTime.getMinutes() / 60) * rowHeight + 6}px`,
                         }}
                       >
-                        <EventBlock event={event} />
+                        <EventBlock event={event} onClick={onEventClick} />
                       </div>
                     ))}
                 </div>
@@ -277,7 +344,17 @@ function DayGrid({ currentDate, events }: { currentDate: Date; events: Scheduler
   );
 }
 
-function WeekGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
+function WeekGrid({
+  currentDate,
+  events,
+  onEventClick,
+  onEmptySlotClick,
+}: {
+  currentDate: Date;
+  events: SchedulerEvent[];
+  onEventClick?: (event: SchedulerEvent) => void;
+  onEmptySlotClick?: (slot: EmptySlot) => void;
+}) {
   const schedulerDays = getWeekDays(currentDate);
   const today = new Date();
   const gridClass = weekColumnClass;
@@ -290,12 +367,12 @@ function WeekGrid({ currentDate, events }: { currentDate: Date; events: Schedule
             Time
           </div>
           {schedulerDays.map(day => (
-            <div
-              key={day.toISOString()}
-              className={cn(
-                'border-l px-1 py-2 text-center text-[10px] font-semibold sm:px-2 sm:text-xs lg:text-sm',
-                isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground'
-              )}
+              <div
+                key={day.toISOString()}
+                className={cn(
+                  'border-l px-1 py-2 text-center text-[10px] font-semibold sm:px-2 sm:text-xs lg:text-sm',
+                  isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground'
+                )}
             >
               <span className='block sm:inline'>
                 {day.toLocaleDateString('en-US', { weekday: 'short' })}
@@ -306,7 +383,7 @@ function WeekGrid({ currentDate, events }: { currentDate: Date; events: Schedule
         </div>
       </div>
 
-      <div className='bg-background max-h-[640px] overflow-x-auto overflow-y-auto'>
+      <div className='bg-background max-h-[720px] overflow-x-auto overflow-y-auto'>
         <div className='min-w-max'>
           {schedulerHours.map(hour => (
             <div
@@ -328,10 +405,39 @@ function WeekGrid({ currentDate, events }: { currentDate: Date; events: Schedule
                   .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
 
                 return (
-                  <div key={`${day.toISOString()}-${hour}`} className='border-l px-1 py-1'>
+                  <div
+                    key={`${day.toISOString()}-${hour}`}
+                    role='button'
+                    tabIndex={0}
+                    className='border-l px-1 py-1'
+                    onClick={() =>
+                      onEmptySlotClick?.({
+                        date: day,
+                        startTime: new Date(
+                          day.getFullYear(),
+                          day.getMonth(),
+                          day.getDate(),
+                          hour,
+                          0,
+                          0,
+                          0
+                        ),
+                        endTime: new Date(
+                          day.getFullYear(),
+                          day.getMonth(),
+                          day.getDate(),
+                          hour + 1,
+                          0,
+                          0,
+                          0
+                        ),
+                        view: 'week',
+                      })
+                    }
+                  >
                     <div className='space-y-1'>
                       {hourEvents.map(event => (
-                        <WeekEventBlock key={event.id} event={event} />
+                        <WeekEventBlock key={event.id} event={event} onClick={onEventClick} />
                       ))}
                     </div>
                   </div>
@@ -345,7 +451,17 @@ function WeekGrid({ currentDate, events }: { currentDate: Date; events: Schedule
   );
 }
 
-function MonthGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
+function MonthGrid({
+  currentDate,
+  events,
+  onEventClick,
+  onEmptySlotClick,
+}: {
+  currentDate: Date;
+  events: SchedulerEvent[];
+  onEventClick?: (event: SchedulerEvent) => void;
+  onEmptySlotClick?: (slot: EmptySlot) => void;
+}) {
   const days = getMonthDays(currentDate);
   const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const today = new Date();
@@ -392,6 +508,32 @@ function MonthGrid({ currentDate, events }: { currentDate: Date; events: Schedul
                   'min-h-28 border-r border-b p-2 last:border-r-0 sm:min-h-32',
                   !isSameMonth(day, currentDate) && 'bg-muted/20 text-muted-foreground'
                 )}
+                role='button'
+                tabIndex={0}
+                onClick={() =>
+                  onEmptySlotClick?.({
+                    date: day,
+                    startTime: new Date(
+                      day.getFullYear(),
+                      day.getMonth(),
+                      day.getDate(),
+                      9,
+                      0,
+                      0,
+                      0
+                    ),
+                    endTime: new Date(
+                      day.getFullYear(),
+                      day.getMonth(),
+                      day.getDate(),
+                      10,
+                      0,
+                      0,
+                      0
+                    ),
+                    view: 'month',
+                  })
+                }
               >
                 <div className='mb-2 flex items-center justify-between gap-2'>
                   <span
@@ -409,7 +551,7 @@ function MonthGrid({ currentDate, events }: { currentDate: Date; events: Schedul
                 </div>
                 <div className='space-y-1'>
                   {dayEvents.slice(0, 3).map(event => (
-                    <CompactEvent key={event.id} event={event} />
+                    <CompactEvent key={event.id} event={event} onClick={onEventClick} />
                   ))}
                   {dayEvents.length > 3 ? (
                     <p className='text-muted-foreground text-[10px] font-semibold'>
@@ -426,7 +568,15 @@ function MonthGrid({ currentDate, events }: { currentDate: Date; events: Schedul
   );
 }
 
-function YearGrid({ currentDate, events }: { currentDate: Date; events: SchedulerEvent[] }) {
+function YearGrid({
+  currentDate,
+  events,
+  onEmptySlotClick,
+}: {
+  currentDate: Date;
+  events: SchedulerEvent[];
+  onEmptySlotClick?: (slot: EmptySlot) => void;
+}) {
   const today = new Date();
   const months = Array.from(
     { length: 12 },
@@ -441,7 +591,20 @@ function YearGrid({ currentDate, events }: { currentDate: Date; events: Schedule
         const monthEventDays = new Set(monthEvents.map(event => getCalendarKey(event.startTime)));
 
         return (
-          <div key={month.toISOString()} className='bg-background rounded-md border p-3'>
+          <div
+            key={month.toISOString()}
+            className='bg-background rounded-md border p-3'
+            role='button'
+            tabIndex={0}
+            onClick={() =>
+              onEmptySlotClick?.({
+                date: month,
+                startTime: new Date(month.getFullYear(), month.getMonth(), 1, 9, 0, 0, 0),
+                endTime: new Date(month.getFullYear(), month.getMonth(), 1, 10, 0, 0, 0),
+                view: 'year',
+              })
+            }
+          >
             <div className='mb-3 flex items-center justify-between gap-2'>
               <h3 className='text-foreground text-sm font-semibold'>
                 {month.toLocaleDateString('en-US', { month: 'long' })}
@@ -464,7 +627,7 @@ function YearGrid({ currentDate, events }: { currentDate: Date; events: Schedule
                 const inMonth = isSameMonth(day, month);
 
                 return (
-                  <div
+              <div
                     key={day.toISOString()}
                     className={cn(
                       'relative flex aspect-square items-center justify-center rounded text-[11px] font-semibold',
@@ -499,26 +662,53 @@ export function SchedulerGrid({
   currentDate,
   events,
   view,
+  onEventClick,
+  onEmptySlotClick,
 }: {
   currentDate: Date;
   events: SchedulerEvent[];
   view: SchedulerView;
+  onEventClick?: (event: SchedulerEvent) => void;
+  onEmptySlotClick?: (slot: EmptySlot) => void;
 }) {
-  if (!events.length && view !== 'day') {
-    return <EmptySchedule label='Try changing the date range or clearing filters.' />;
-  }
-
   if (view === 'day') {
-    return <DayGrid currentDate={currentDate} events={events} />;
+    return (
+      <DayGrid
+        currentDate={currentDate}
+        events={events}
+        onEventClick={onEventClick}
+        onEmptySlotClick={onEmptySlotClick}
+      />
+    );
   }
 
   if (view === 'month') {
-    return <MonthGrid currentDate={currentDate} events={events} />;
+    return (
+      <MonthGrid
+        currentDate={currentDate}
+        events={events}
+        onEventClick={onEventClick}
+        onEmptySlotClick={onEmptySlotClick}
+      />
+    );
   }
 
   if (view === 'year') {
-    return <YearGrid currentDate={currentDate} events={events} />;
+    return (
+      <YearGrid
+        currentDate={currentDate}
+        events={events}
+        onEmptySlotClick={onEmptySlotClick}
+      />
+    );
   }
 
-  return <WeekGrid currentDate={currentDate} events={events} />;
+  return (
+    <WeekGrid
+      currentDate={currentDate}
+      events={events}
+      onEventClick={onEventClick}
+      onEmptySlotClick={onEmptySlotClick}
+    />
+  );
 }

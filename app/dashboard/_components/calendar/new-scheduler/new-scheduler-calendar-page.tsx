@@ -19,10 +19,14 @@ import {
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import useAmdinClassesWithDetails from '@/hooks/use-admin-classes';
+import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import {
+  getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
   getInstructorScheduleOptions,
+  getStudentByIdOptions,
   getStudentScheduleOptions,
+  getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ScheduledInstance, StudentSchedule } from '@/services/client/types.gen';
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
@@ -30,16 +34,16 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Download,
   Filter,
   Info,
   Plus,
   Search,
-  Settings,
+  Settings
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { useUserProfile } from '../../../../../context/profile-context';
-import { categoryDotStyles, schedulerMetrics } from './data';
+import { schedulerMetrics } from './data';
 import { SchedulerFilters } from './scheduler-filters';
 import { SchedulerGrid } from './scheduler-grid';
 import { SchedulerRightRail } from './scheduler-right-rail';
@@ -88,8 +92,22 @@ type ClassWithScheduleInput = {
   instructor?: { full_name?: string | null; uuid?: string | null } | null;
   default_instructor_uuid?: string | null;
   location_name?: string | null;
+  meeting_link?: string | null;
   max_participants?: number | null;
   schedule?: ClassScheduleInput[] | null;
+};
+
+type InstructorSummary = {
+  uuid: string;
+  fullName: string;
+  avatarUrl?: string;
+  subtitle?: string;
+};
+
+type StudentSummary = {
+  uuid: string;
+  fullName: string;
+  avatarUrl?: string;
 };
 
 const DEFAULT_PREFERENCES: SchedulePreferences = {
@@ -172,6 +190,64 @@ const getNavigationStep = (date: Date, view: SchedulerView, direction: -1 | 1) =
   return next;
 };
 
+const isSameCalendarDay = (left: Date, right: Date) =>
+  left.getFullYear() === right.getFullYear() &&
+  left.getMonth() === right.getMonth() &&
+  left.getDate() === right.getDate();
+
+const getDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTimeValue = (date: Date) =>
+  `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+const findClosestDate = (reference: Date, events: SchedulerEvent[]) => {
+  if (!events.length) return reference;
+
+  const referenceTime = reference.getTime();
+
+  return events.reduce((closest, event) => {
+    const closestDelta = Math.abs(closest.startTime.getTime() - referenceTime);
+    const eventDelta = Math.abs(event.startTime.getTime() - referenceTime);
+
+    if (eventDelta < closestDelta) {
+      return event;
+    }
+
+    if (eventDelta === closestDelta && event.startTime.getTime() < closest.startTime.getTime()) {
+      return event;
+    }
+
+    return closest;
+  }).startTime;
+};
+
+const makeInitials = (value?: string | null) =>
+  (value || 'NA')
+    .split(' ')
+    .map(part => part.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+const toClassLookup = (
+  classes: Array<{ uuid?: string | null; meeting_link?: string | null; location_name?: string | null }>
+) => {
+  const map = new Map<string, { uuid?: string | null; meeting_link?: string | null; location_name?: string | null }>();
+
+  classes.forEach(item => {
+    if (item.uuid) {
+      map.set(item.uuid, item);
+    }
+  });
+
+  return map;
+};
+
 const formatStatus = (status?: string | null) =>
   status
     ? status
@@ -202,14 +278,6 @@ const inferCategory = (value?: string | null): SchedulerCategory => {
   return 'TVET / Vocational';
 };
 
-const makeInitials = (value?: string | null) =>
-  (value || 'Student')
-    .split(' ')
-    .map(part => part.charAt(0))
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-
 function mapScheduledInstance(
   instance: ScheduledInstance,
   instructorName: string
@@ -218,11 +286,15 @@ function mapScheduledInstance(
 
   return {
     id: instance.uuid || `${instance.class_definition_uuid}-${instance.start_time}`,
+    instanceUuid: instance.uuid || undefined,
+    classDefinitionUuid: instance.class_definition_uuid || undefined,
     title: instance.title || 'Scheduled class',
     course: instance.title || 'Class',
     instructor: instructorName,
     instructorUuid: instance.instructor_uuid,
     location: instance.location_name || 'Location pending',
+    meetingLink: undefined,
+    locationType: instance.location_type,
     startTime: new Date(instance.start_time),
     endTime: new Date(instance.end_time),
     status: formatStatus(instance.status),
@@ -237,11 +309,15 @@ function mapStudentSchedule(item: StudentSchedule, instructorName: string): Sche
 
   return {
     id: item.scheduled_instance_uuid || item.enrollment_uuid || `${item.title}-${item.start_time}`,
+    instanceUuid: item.scheduled_instance_uuid || undefined,
+    classDefinitionUuid: item.class_definition_uuid || undefined,
     title: item.title || 'Scheduled class',
     course: item.title || 'Class',
     instructor: instructorName,
     instructorUuid: item.instructor_uuid,
     location: item.location_name || 'Location pending',
+    meetingLink: undefined,
+    locationType: item.location_type,
     startTime: new Date(item.start_time),
     endTime: new Date(item.end_time),
     status: formatStatus(item.scheduling_status || item.enrollment_status),
@@ -251,29 +327,48 @@ function mapStudentSchedule(item: StudentSchedule, instructorName: string): Sche
   };
 }
 
-function mapClassSchedule(classDef: ClassWithScheduleInput, classIndex: number): SchedulerEvent[] {
+function mapClassSchedule(
+  classDef: ClassWithScheduleInput,
+  classIndex: number,
+  instructorNameLookup?: Map<string, string>
+): SchedulerEvent[] {
+  const resolvedInstructorUuid =
+    classDef.default_instructor_uuid || classDef.instructor?.uuid || undefined;
+  const resolvedInstructorName =
+    (resolvedInstructorUuid ? instructorNameLookup?.get(resolvedInstructorUuid) : undefined) ||
+    classDef.instructor?.full_name ||
+    'Instructor pending';
+
   return (classDef.schedule ?? [])
     .filter(schedule => schedule.start_time && schedule.end_time)
     .map((schedule, scheduleIndex) => ({
       id: schedule.uuid || `${classDef.uuid}-${schedule.start_time}-${scheduleIndex}`,
+      instanceUuid: schedule.uuid || undefined,
+      classDefinitionUuid: classDef.uuid || undefined,
       title: schedule.title || classDef.title || classDef.course?.name || 'Scheduled class',
       course: classDef.course?.name || classDef.title || 'Class',
-      instructor: classDef.instructor?.full_name || 'Instructor pending',
-      instructorUuid: schedule.instructor_uuid || classDef.default_instructor_uuid || undefined,
+      instructor:
+        (schedule.instructor_uuid
+          ? instructorNameLookup?.get(schedule.instructor_uuid)
+          : undefined) || resolvedInstructorName,
+      instructorUuid: schedule.instructor_uuid || resolvedInstructorUuid,
       location: schedule.location_name || classDef.location_name || 'Location pending',
+      meetingLink: classDef.meeting_link || undefined,
+      locationType: schedule.location_type || undefined,
       startTime: new Date(schedule.start_time as Date | string),
       endTime: new Date(schedule.end_time as Date | string),
       status: formatStatus(schedule.status),
       category: inferCategory(classDef.course?.name || classDef.title),
-      students: [makeInitials(classDef.instructor?.full_name), `S${classIndex}`, 'EN'],
+      students: [makeInitials(resolvedInstructorName), `S${classIndex}`, 'EN'],
       maxParticipants: schedule.max_participants || classDef.max_participants || undefined,
     }));
 }
 
 export function NewSchedulerCalendarPage({ profile }: Props) {
-  const user = useUserProfile()
-  const instructor = user?.instructor
-  const student = user?.student
+  const router = useRouter();
+  const user = useUserProfile();
+  const instructor = user?.instructor;
+  const student = user?.student;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -282,6 +377,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
   const [preloadAnchor] = useState(() => new Date());
   const [filters, setFilters] = useState<SchedulerFilterValues>(DEFAULT_FILTERS);
   const [preferences, setPreferences] = useState<SchedulePreferences>(DEFAULT_PREFERENCES);
+  const [showAllInstructors, setShowAllInstructors] = useState(false);
 
   const createLabel = profile === 'student' ? 'View Session' : 'Create Session';
   const rangeStart = useMemo(
@@ -315,144 +411,161 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
     refetchOnWindowFocus: false,
   });
 
-  const { classes: classData, loading: organizationLoading } = useAmdinClassesWithDetails();
-  // =========================
-  // INSTRUCTOR UUIDS (STABLE)
-  // =========================
-  const studentInstructorUuids = useMemo(() => {
-    return Array.from(
-      new Set(
-        (classData ?? [])
-          .map(item => item.default_instructor_uuid)
-          .filter(Boolean)
-      )
-    ) as string[];
-  }, [classData]);
+  const instructorClassesQuery = useInstructorClassesWithSchedules(instructor?.uuid);
+  const adminClassesQuery = useAmdinClassesWithDetails();
 
-  // =========================
-  // STABLE QUERY CONFIG
-  // =========================
-  const instructorQueryConfigs = useMemo(
+  const classData = useMemo<ClassWithScheduleInput[]>(() => {
+    if (profile === 'instructor') {
+      return (instructorClassesQuery.classes ?? []) as ClassWithScheduleInput[];
+    }
+
+    if (profile === 'student') {
+      return [];
+    }
+
+    return (adminClassesQuery.classes ?? []) as ClassWithScheduleInput[];
+  }, [adminClassesQuery.classes, instructorClassesQuery.classes, profile]);
+
+  const classLookup = useMemo(() => toClassLookup(classData), [classData]);
+
+  const studentInstructorUuids = useMemo(
     () =>
-      studentInstructorUuids.map(uuid => ({
-        ...getInstructorByUuidOptions({ path: { uuid } }),
-        enabled: !!uuid,
-        staleTime: 1000 * 60 * 5, // 5 mins cache
-      })),
-    [studentInstructorUuids]
+      Array.from(
+        new Set(
+          (studentScheduleQuery.data?.data ?? [])
+            .map(item => item.instructor_uuid)
+            .filter(Boolean)
+        )
+      ) as string[],
+    [studentScheduleQuery.data]
   );
 
-  // =========================
-  // FETCH INSTRUCTORS
-  // =========================
-  const studentInstructorQueries = useQueries({
-    queries: instructorQueryConfigs,
+  const visibleClassInstructorUuids = useMemo(
+    () => {
+      const source =
+        profile === 'student'
+          ? studentInstructorUuids
+          : classData.map(item => item.default_instructor_uuid || item.instructor?.uuid);
+
+      return Array.from(new Set(source.filter(Boolean))) as string[];
+    },
+    [classData, profile, studentInstructorUuids]
+  );
+
+  const allInstructorQueries = useQueries({
+    queries: visibleClassInstructorUuids.map(uuid => ({
+      ...getInstructorByUuidOptions({ path: { uuid } }),
+      enabled: !!uuid,
+      staleTime: 1000 * 60 * 5,
+    })),
   });
 
-  // =========================
-  // DERIVE INSTRUCTOR MAP
-  // =========================
-  const instructorMap = useMemo(() => {
-    const map = new Map<string, string>();
+  const allInstructorUserUuids = useMemo(
+    () =>
+      allInstructorQueries
+        .map(query => query.data?.user_uuid)
+        .filter((uuid): uuid is string => !!uuid),
+    [allInstructorQueries]
+  );
 
-    studentInstructorQueries.forEach(q => {
-      const value = q.data?.data;
-      if (value?.uuid && value?.full_name) {
-        map.set(value.uuid.trim(), value.full_name);
+  const allInstructorProfileQueries = useQueries({
+    queries: allInstructorUserUuids.map(uuid => ({
+      ...getUserByUuidOptions({ path: { uuid } }),
+      enabled: !!uuid,
+      staleTime: 1000 * 60 * 5,
+    })),
+  });
+
+  const allInstructorProfilesByUuid = useMemo(() => {
+    const map = new Map<string, (typeof allInstructorProfileQueries)[number]['data']>();
+
+    allInstructorUserUuids.forEach((uuid, index) => {
+      const queryData = allInstructorProfileQueries[index]?.data;
+      if (queryData) {
+        map.set(uuid, queryData);
       }
     });
 
     return map;
-  }, [
-    studentInstructorQueries.map(q => q.data),
-  ]);
+  }, [allInstructorProfileQueries, allInstructorUserUuids]);
 
-  // =========================
-  // SCHEDULER EVENTS
-  // =========================
-  const schedulerEvents = useMemo<SchedulerEvent[]>(() => {
-    // =========================
-    // STUDENT VIEW
-    // =========================
+  const allInstructorSummaries = useMemo(() => {
+    const map = new Map<string, InstructorSummary>();
+
+    allInstructorQueries.forEach(query => {
+      const instructorRecord = query.data;
+      if (!instructorRecord?.uuid) return;
+
+      const user = instructorRecord.user_uuid
+        ? allInstructorProfilesByUuid.get(instructorRecord.user_uuid)?.data
+        : undefined;
+      map.set(instructorRecord.uuid, {
+        uuid: instructorRecord.uuid,
+        fullName: instructorRecord.full_name || user?.full_name || user?.display_name || 'Instructor pending',
+        avatarUrl: user?.profile_image_url,
+        subtitle: instructorRecord.professional_headline || user?.email || 'Attached to class data',
+      });
+    });
+
+    return Array.from(map.values());
+  }, [allInstructorProfilesByUuid, allInstructorQueries]);
+
+
+  const allEvents = useMemo<SchedulerEvent[]>(() => {
+    const instructorNameMap = new Map<string, string>(
+      allInstructorSummaries.map(item => [item.uuid, item.fullName])
+    );
+
+    const enrichEvent = (event: SchedulerEvent): SchedulerEvent => {
+      const classInfo = event.classDefinitionUuid ? classLookup.get(event.classDefinitionUuid) : null;
+
+      return {
+        ...event,
+        meetingLink: event.meetingLink || classInfo?.meeting_link || undefined,
+        location: event.location || classInfo?.location_name || 'Location pending',
+      };
+    };
+
     if (profile === 'student') {
-      const schedules = studentScheduleQuery.data?.data ?? [];
-
-      const isAnyLoading = studentInstructorQueries.some(q => q.isLoading);
-
-      return schedules
+      return (studentScheduleQuery.data?.data ?? [])
         .map(item => {
           const instructorName =
-            instructorMap.get(item.instructor_uuid?.trim() ?? '') ??
-            (isAnyLoading ? 'Loading...' : 'Unknown Instructor');
-
-          return mapStudentSchedule(item, instructorName);
+            instructorNameMap.get(item.instructor_uuid?.trim() ?? '') || 'Unknown Instructor';
+          const mapped = mapStudentSchedule(item, instructorName);
+          return mapped ? enrichEvent(mapped) : null;
         })
         .filter((item): item is SchedulerEvent => Boolean(item))
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
     }
 
-    // =========================
-    // INSTRUCTOR VIEW
-    // =========================
     if (profile === 'instructor') {
       return (instructorScheduleQuery.data?.data ?? [])
-        .map(item =>
-          mapScheduledInstance(
-            item,
-            instructor?.full_name || 'Instructor pending'
-          )
-        )
+        .map(item => {
+          const mapped = mapScheduledInstance(item, instructor?.full_name || 'Instructor pending');
+          return mapped ? enrichEvent(mapped) : null;
+        })
         .filter((item): item is SchedulerEvent => Boolean(item))
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
     }
 
-    return ((classData ?? []) as ClassWithScheduleInput[])
+    return classData
       .flatMap((classDef, classIndex) =>
-        mapClassSchedule(classDef, classIndex)
+        mapClassSchedule(classDef, classIndex, instructorNameMap).map(enrichEvent)
       )
       .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
   }, [
+    allInstructorSummaries,
+    classData,
+    classLookup,
+    instructor?.full_name,
+    instructorScheduleQuery.data,
     profile,
     studentScheduleQuery.data,
-    instructorMap, // ✅ stable now
-    studentInstructorQueries.some(q => q.isLoading), // ✅ only what matters
-    instructorScheduleQuery.data,
-    instructor?.full_name,
-    classData,
   ]);
-  // =========================
-  // UNIQUE INSTRUCTORS LIST
-  // =========================
-  const instructors = useMemo(() => {
-    return Array.from(
-      new Set(
-        schedulerEvents
-          .map(event => event.instructor)
-          .filter(Boolean)
-      )
-    ).sort();
-  }, [schedulerEvents]);
-
-  const filterOptions = useMemo<SchedulerFilterOptions>(
-    () => ({
-      category: Array.from(new Set(schedulerEvents.map(event => event.category))).sort(),
-      course: Array.from(
-        new Set(schedulerEvents.map(event => event.course).filter(Boolean))
-      ).sort(),
-      instructor: instructors,
-      location: Array.from(
-        new Set(schedulerEvents.map(event => event.location).filter(Boolean))
-      ).sort(),
-      statuses: Array.from(
-        new Set(schedulerEvents.map(event => event.status || 'Scheduled').filter(Boolean))
-      ).sort(),
-    }),
-    [instructors, schedulerEvents]
-  );
 
   const filteredEvents = useMemo(
     () =>
-      schedulerEvents.filter(event => {
+      allEvents.filter(event => {
         if (filters.course && event.course !== filters.course) return false;
         if (filters.instructor && event.instructor !== filters.instructor) return false;
         if (filters.location && event.location !== filters.location) return false;
@@ -462,41 +575,276 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
         }
         return true;
       }),
-    [filters, schedulerEvents]
+    [allEvents, filters]
   );
 
-  const visibleInstructors = useMemo(
-    () => Array.from(new Set(filteredEvents.map(event => event.instructor).filter(Boolean))).sort(),
-    [filteredEvents]
+  const visibleEvents = useMemo(
+    () =>
+      view === 'day'
+        ? filteredEvents.filter(event => isSameCalendarDay(event.startTime, currentDate))
+        : filteredEvents,
+    [currentDate, filteredEvents, view]
+  );
+
+  const filterOptions = useMemo<SchedulerFilterOptions>(
+    () => ({
+      category: Array.from(new Set(allEvents.map(event => event.category))).sort(),
+      course: Array.from(new Set(allEvents.map(event => event.course).filter(Boolean))).sort(),
+      instructor: Array.from(
+        new Set(allEvents.map(event => event.instructor).filter(Boolean))
+      ).sort(),
+      location: Array.from(
+        new Set(allEvents.map(event => event.location).filter(Boolean))
+      ).sort(),
+      statuses: Array.from(
+        new Set(allEvents.map(event => event.status || 'Scheduled').filter(Boolean))
+      ).sort(),
+    }),
+    [allEvents]
+  );
+
+  const activeDayEvents = useMemo(
+    () => filteredEvents.filter(event => isSameCalendarDay(event.startTime, currentDate)),
+    [currentDate, filteredEvents]
+  );
+
+  const dayInstructorUuids = useMemo(
+    () =>
+      Array.from(new Set(activeDayEvents.map(event => event.instructorUuid).filter(Boolean))) as string[],
+    [activeDayEvents]
+  );
+
+  const dayClassDefinitionUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(activeDayEvents.map(event => event.classDefinitionUuid).filter(Boolean))
+      ) as string[],
+    [activeDayEvents]
+  );
+
+  const instructorUuidsForDisplay = showAllInstructors
+    ? visibleClassInstructorUuids
+    : dayInstructorUuids;
+
+  const instructorQueries = useQueries({
+    queries: instructorUuidsForDisplay.map(uuid => ({
+      ...getInstructorByUuidOptions({ path: { uuid } }),
+      enabled: !!uuid,
+      staleTime: 1000 * 60 * 5,
+    })),
+  });
+
+  const instructorUserUuids = useMemo(
+    () =>
+      instructorQueries
+        .map(query => query.data?.user_uuid)
+        .filter((uuid): uuid is string => !!uuid),
+    [instructorQueries]
+  );
+
+  const instructorProfileQueries = useQueries({
+    queries: instructorUserUuids.map(uuid => ({
+      ...getUserByUuidOptions({ path: { uuid } }),
+      enabled: !!uuid,
+      staleTime: 1000 * 60 * 5,
+    })),
+  });
+
+  const instructorProfilesByUuid = useMemo(() => {
+    const map = new Map<string, (typeof instructorProfileQueries)[number]['data']>();
+
+    instructorUserUuids.forEach((uuid, index) => {
+      const queryData = instructorProfileQueries[index]?.data;
+      if (queryData) {
+        map.set(uuid, queryData);
+      }
+    });
+
+    return map;
+  }, [instructorProfileQueries, instructorUserUuids]);
+
+  const instructorSummaries = useMemo(() => {
+    const map = new Map<string, { uuid: string; fullName: string; avatarUrl?: string; subtitle?: string }>();
+
+    instructorQueries.forEach(query => {
+      const instructorRecord = query.data;
+      if (!instructorRecord?.uuid) return;
+
+      const user = instructorRecord.user_uuid
+        ? instructorProfilesByUuid.get(instructorRecord.user_uuid)?.data
+        : undefined;
+      map.set(instructorRecord.uuid, {
+        uuid: instructorRecord.uuid,
+        fullName: instructorRecord.full_name || user?.full_name || user?.display_name || 'Instructor pending',
+        avatarUrl: user?.profile_image_url,
+        subtitle: instructorRecord.professional_headline || user?.email || 'Attached to today&apos;s classes',
+      });
+    });
+
+    return Array.from(map.values());
+  }, [instructorProfilesByUuid, instructorQueries]);
+
+  const enrollmentQueries = useQueries({
+    queries: dayClassDefinitionUuids.map(uuid => ({
+      ...getEnrollmentsForClassOptions({ path: { uuid } }),
+      enabled: !!uuid,
+      staleTime: 1000 * 60 * 2,
+    })),
+  });
+
+  const studentUuidsForDay = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          enrollmentQueries
+            .flatMap(query => query.data?.data ?? [])
+            .map(enrollment => enrollment.student_uuid)
+            .filter(Boolean)
+        )
+      ) as string[],
+    [enrollmentQueries]
+  );
+
+  const studentQueries = useQueries({
+    queries: studentUuidsForDay.map(uuid => ({
+      ...getStudentByIdOptions({ path: { uuid } }),
+      enabled: !!uuid,
+      staleTime: 1000 * 60 * 5,
+    })),
+  });
+
+  const studentUserUuids = useMemo(
+    () =>
+      studentQueries
+        .map(query => query.data?.user_uuid)
+        .filter((uuid): uuid is string => !!uuid),
+    [studentQueries]
+  );
+
+  const studentUserQueries = useQueries({
+    queries: studentUserUuids.map(uuid => ({
+      ...getUserByUuidOptions({ path: { uuid } }),
+      enabled: !!uuid,
+      staleTime: 1000 * 60 * 5,
+    })),
+  });
+
+  const studentProfilesByUuid = useMemo(() => {
+    const map = new Map<string, (typeof studentUserQueries)[number]['data']>();
+
+    studentUserUuids.forEach((uuid, index) => {
+      const queryData = studentUserQueries[index]?.data;
+      if (queryData) {
+        map.set(uuid, queryData);
+      }
+    });
+
+    return map;
+  }, [studentUserQueries, studentUserUuids]);
+
+  const studentSummaries = useMemo<StudentSummary[]>(() => {
+    const summaries = studentQueries
+      .map<StudentSummary | null>(query => {
+        const student = query.data;
+        if (!student?.uuid) return null;
+
+        const user = student.user_uuid ? studentProfilesByUuid.get(student.user_uuid)?.data : undefined;
+        return {
+          uuid: student.uuid,
+          fullName: student.full_name || user?.full_name || user?.display_name || 'Student',
+          avatarUrl: user?.profile_image_url,
+        };
+      })
+      .filter((value): value is StudentSummary => value !== null);
+
+    return summaries;
+  }, [studentProfilesByUuid, studentQueries]);
+
+  const locationSummaries = useMemo(
+    () =>
+      activeDayEvents
+        .map(event => ({
+          label: event.title,
+          detail: event.meetingLink || event.location,
+          meetingLink: event.meetingLink,
+        }))
+        .filter((item, index, array) => index === array.findIndex(entry => entry.detail === item.detail)),
+    [activeDayEvents]
+  );
+
+  const hasActiveFilters =
+    Boolean(filters.course || filters.instructor || filters.location || filters.category) ||
+    filters.statuses.length > 0;
+
+  useEffect(() => {
+    if (!hasActiveFilters || !filteredEvents.length) return;
+
+    const closest = findClosestDate(currentDate, filteredEvents);
+    if (!isSameCalendarDay(closest, currentDate)) {
+      setCurrentDate(closest);
+    }
+  }, [currentDate, filteredEvents, hasActiveFilters]);
+
+  const activeEvents = visibleEvents;
+  const filteredVisibleInstructors = useMemo(
+    () => Array.from(new Set(activeDayEvents.map(event => event.instructor).filter(Boolean))).sort(),
+    [activeDayEvents]
   );
 
   const isLoading =
     profile === 'student'
       ? studentScheduleQuery.isLoading
       : profile === 'instructor'
-        ? instructorScheduleQuery.isLoading
-        : organizationLoading;
+        ? instructorScheduleQuery.isLoading || instructorClassesQuery.isLoading || instructorQueries.some(query => query.isLoading)
+        : adminClassesQuery.loading || allInstructorQueries.some(query => query.isLoading);
 
   const metrics = useMemo<SchedulerMetric[]>(
     () => [
       {
         ...(schedulerMetrics[0] as SchedulerMetric),
-        value: String(new Set(filteredEvents.map(event => event.title)).size),
+        value: String(new Set(activeEvents.map(event => event.title)).size),
       },
-      { ...(schedulerMetrics[1] as SchedulerMetric), value: String(visibleInstructors.length) },
+      { ...(schedulerMetrics[1] as SchedulerMetric), value: String(filteredVisibleInstructors.length) },
       {
         ...(schedulerMetrics[2] as SchedulerMetric),
-        value: `${new Set(filteredEvents.map(event => event.location).filter(Boolean)).size}`,
+        value: `${new Set(activeEvents.map(event => event.location).filter(Boolean)).size}`,
       },
       {
         ...(schedulerMetrics[3] as SchedulerMetric),
-        value: String(
-          filteredEvents.filter(event => event.startTime.getTime() >= Date.now()).length
-        ),
+        value: String(activeEvents.filter(event => event.startTime.getTime() >= Date.now()).length),
       },
     ],
-    [filteredEvents, visibleInstructors.length]
+    [activeEvents, filteredVisibleInstructors.length]
   );
+
+  const handleEventClick = (event: SchedulerEvent) => {
+    const instanceUuid = event.instanceUuid || event.id;
+    if (!instanceUuid) return;
+
+    router.push(`/dashboard/class-instance/${instanceUuid}`);
+  };
+
+  const handleCreateSession = (slot?: { date: Date; startTime: Date; endTime: Date }) => {
+    if (profile === 'student') {
+      setDetailsOpen(true);
+      return;
+    }
+
+    const params = new URLSearchParams();
+
+    if (slot) {
+      params.set('date', getDateKey(slot.date));
+      params.set('startTime', getTimeValue(slot.startTime));
+      params.set('endTime', getTimeValue(slot.endTime));
+    }
+
+    router.push(`/dashboard/classes/create-new${params.toString() ? `?${params.toString()}` : ''}`);
+  };
+
+  const handleEmptySlotClick = (slot: { date: Date; startTime: Date; endTime: Date }) => {
+    if (profile === 'student') return;
+    handleCreateSession(slot);
+  };
 
   return (
     <main className='bg-background space-y-4 pb-8'>
@@ -518,7 +866,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
         </label>
 
         <div className='flex flex-wrap items-center gap-2'>
-          <Button className='h-10 rounded-md px-4 text-xs sm:text-sm'>
+          <Button className='h-10 rounded-md px-4 text-xs sm:text-sm' onClick={() => handleCreateSession()}>
             <Plus className='h-4 w-4' />
             {createLabel}
           </Button>
@@ -581,7 +929,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
           {/* Schedule count */}
           <div className='bg-card text-foreground flex h-10 shrink-0 items-center gap-2 rounded-md border px-3 text-xs font-semibold whitespace-nowrap shadow-sm sm:text-sm'>
             <CalendarDays className='text-primary h-4 w-4' />
-            {filteredEvents.length} schedules
+            {visibleEvents.length} schedules
           </div>
 
           <Button
@@ -644,18 +992,33 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
                 </div>
               </div>
             ) : (
-              <SchedulerGrid currentDate={currentDate} events={filteredEvents} view={view} />
+              <SchedulerGrid
+                currentDate={currentDate}
+                events={filteredEvents}
+                view={view}
+                onEventClick={handleEventClick}
+                onEmptySlotClick={handleEmptySlotClick}
+              />
             )}
           </div>
         </div>
 
         <div className='hidden min-[1600px]:block'>
-          <SchedulerRightRail events={filteredEvents} instructors={visibleInstructors} />
+          <SchedulerRightRail
+            currentDate={currentDate}
+            events={filteredEvents}
+            instructors={instructorSummaries}
+            allInstructors={allInstructorSummaries}
+            students={studentSummaries}
+            locations={locationSummaries}
+            showAllInstructors={showAllInstructors}
+            onToggleInstructors={() => setShowAllInstructors(v => !v)}
+          />
         </div>
       </div>
 
       {/* Legend + export */}
-      <div className='bg-card flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2 shadow-sm'>
+      {/* <div className='bg-card flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2 shadow-sm'>
         <div className='flex flex-wrap items-center gap-3'>
           {(Object.keys(categoryDotStyles) as Array<keyof typeof categoryDotStyles>).map(
             category => (
@@ -675,7 +1038,7 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
           Export Schedule
           <CalendarDays className='h-4 w-4' />
         </Button>
-      </div>
+      </div> */}
 
       {/* Filters sheet */}
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -703,7 +1066,16 @@ export function NewSchedulerCalendarPage({ profile }: Props) {
               Today&apos;s sessions, students, location, notes, and sharing.
             </SheetDescription>
           </SheetHeader>
-          <SchedulerRightRail events={filteredEvents} instructors={visibleInstructors} />
+          <SchedulerRightRail
+            currentDate={currentDate}
+            events={filteredEvents}
+            instructors={instructorSummaries}
+            allInstructors={allInstructorSummaries}
+            students={studentSummaries}
+            locations={locationSummaries}
+            showAllInstructors={showAllInstructors}
+            onToggleInstructors={() => setShowAllInstructors(v => !v)}
+          />
         </SheetContent>
       </Sheet>
 

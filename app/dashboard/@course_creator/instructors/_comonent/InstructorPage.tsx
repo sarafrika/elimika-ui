@@ -692,7 +692,7 @@ function ProfileTabContent({
   return (
     <div className='space-y-5'>
       {/* Header card */}
-      <Card className='rounded-[28px] border-border/70 p-6 shadow-sm'>
+      <Card className='rounded-lg border-border border-1 p-6 shadow-sm'>
         {/* Links row */}
         <div className='mb-5 flex flex-wrap items-center gap-4 text-sm'>
           {selectedApplicantType === 'instructor' && instructorData?.user_uuid ? (
@@ -727,14 +727,15 @@ function ProfileTabContent({
           )}
         </div>
 
-        <div className='flex flex-col gap-5 min-[1299px]:flex-row min-[1299px]:items-start min-[1299px]:justify-between'>
-          <div className='flex items-start gap-4'>
+        <div className='flex flex-col gap-5 justify-between'>
+          <div className='flex flex-col sm:flex-row items-center sm:items-start gap-4'>
             <Avatar className='h-16 w-16 border'>
               <AvatarImage src={selectedApplicantType === 'instructor' ? instructorData?.profile_picture_url : undefined} />
               <AvatarFallback className={`text-lg ${selectedApplicantType === 'organisation' ? 'bg-accent/20 text-accent-foreground' : 'bg-primary/10 text-primary'}`}>
                 {selectedApplicantInitials}
               </AvatarFallback>
             </Avatar>
+
             <div className='space-y-1.5'>
               <div className='flex items-center gap-2'>
                 {selectedApplicantType === "instructor" ? <h3 className='text-foreground text-2xl font-bold tracking-tight'>
@@ -757,13 +758,13 @@ function ProfileTabContent({
             </div>
           </div>
 
-          <div className='grid grid-cols-1 gap-4 text-left min-[1299px]:min-w-[200px] min-[1299px]:grid-cols-2 min-[1299px]:text-right'>
-            <div>
+          <div className='grid grid-cols-1 gap-4 text-left min-[1299px]:min-w-[200px] min-[1299px]:grid-cols-2 min-[1299px]:text-right self-end'>
+            {/* <div>
               <p className='text-muted-foreground text-sm font-medium'>
                 {selectedApplicantType === 'organisation' ? 'Organisation ID' : 'Instructor ID'}
               </p>
               <p className='text-foreground font-semibold'>{selectedApplicantType === "instructor" ? instructorData?.uuid : selectedApplicantId}    </p>
-            </div>
+            </div> */}
             <div>
               <p className='text-muted-foreground text-sm font-medium'>Status</p>
               <Badge variant={selectedApplicantStatusBadge === 'Verified' ? 'success' : 'secondary'} className='mt-1'>
