@@ -16,9 +16,12 @@ import { useClassRoster } from '@/hooks/use-class-roster';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import { startScheduledInstanceMutation } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation } from '@tanstack/react-query';
 import { NotebookPen, PanelBottom, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useUserProfile } from '../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
 import { ClassOverviewTab } from './_components/class-overview-tab';
@@ -44,7 +47,7 @@ export default function NewClassPage() {
   const router = useRouter();
 
   const [selectedInstanceUuid, setSelectedInstanceUuid] = useState<string | null>(null);
-  const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
+  const [, setExpandedModuleId] = useState<string | null>(null);
   const [selectedLessonUuid, setSelectedLessonUuid] = useState<string | null>(null);
   const [draftSearchTerm, setDraftSearchTerm] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,6 +101,7 @@ export default function NewClassPage() {
 
   const selectedClass = selectedInstanceEntry?.classItem ?? null;
   const selectedClassUuid = selectedClass?.uuid ?? null;
+  const selectedInstance = selectedInstanceEntry?.instance ?? null;
   const { roster, isLoading: isLoadingStudents } = useClassRoster(selectedClassUuid ?? undefined);
   const {
     isLoading: isLoadingLessons,
@@ -154,7 +158,7 @@ export default function NewClassPage() {
     [selectedLessonUuid, selectedModule]
   );
 
-  const selectedModuleResources = selectedModule?.content?.data ?? [];
+  const startClassMut = useMutation(startScheduledInstanceMutation());
 
   const visibleInstances = selectedClass?.schedule ?? [];
   const countableInstances = visibleInstances.filter(instance => {
@@ -233,6 +237,46 @@ export default function NewClassPage() {
         }`;
     },
     [selectedClassUuid, selectedInstanceEntry?.instanceUuid]
+  );
+
+  const handleStartLesson = useCallback(
+    (lessonUuid?: string | null, contentUuid?: string | null) => {
+      if (!selectedClassUuid || !selectedInstanceEntry?.instanceUuid) {
+        return;
+      }
+
+      const href = getStartLessonHref(lessonUuid, contentUuid);
+      const shouldResumeLesson = Boolean(selectedInstance?.started_at && !selectedInstance?.concluded_at);
+
+      if (shouldResumeLesson) {
+        router.push(href);
+        return;
+      }
+
+      startClassMut.mutate(
+        { path: { instanceUuid: selectedInstanceEntry.instanceUuid } },
+        {
+          onSuccess: () => {
+            router.push(href);
+          },
+          onError: error => {
+            const message = error instanceof Error && error.message
+              ? error.message
+              : 'Could not start this class instance.';
+            toast.error(message);
+          },
+        }
+      );
+    },
+    [
+      getStartLessonHref,
+      router,
+      selectedClassUuid,
+      selectedInstance?.concluded_at,
+      selectedInstance?.started_at,
+      selectedInstanceEntry?.instanceUuid,
+      startClassMut,
+    ]
   );
 
   return (
@@ -375,21 +419,22 @@ export default function NewClassPage() {
                 selectedClass={selectedClass}
                 selectedClassUuid={selectedClassUuid}
                 lessonModules={lessonModules}
-                expandedModuleId={expandedModuleId}
                 selectedLesson={selectedLesson}
-                selectedModule={selectedModule}
-                selectedModuleResources={selectedModuleResources}
                 contentTypeMap={contentTypeMap}
                 difficultyMap={difficultyMap}
                 instructorName={instructor?.full_name}
                 rosterEntries={roster}
                 sessionProgress={sessionProgress}
                 remainingSessions={remainingSessions}
-                setExpandedModuleId={setExpandedModuleId}
                 setSelectedLessonUuid={setSelectedLessonUuid}
                 startLessonHref={startLessonHref}
                 getStartLessonHref={getStartLessonHref}
-                getResumeLessonHref={getStartLessonHref}
+                onStartLesson={handleStartLesson}
+                selectedLessonActionLabel={
+                  selectedInstance?.started_at && !selectedInstance?.concluded_at
+                    ? 'Resume Lesson'
+                    : 'Start Lesson'
+                }
                 onAddClasses={() => router.push('/dashboard/classes/create-new')}
               />
             </TabsContent>

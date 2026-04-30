@@ -1,5 +1,6 @@
 'use client';
 
+import ConfirmModal from '@/components/custom-modals/confirm-modal';
 import { LessonContentPreview } from '@/components/lesson-content/LessonContentPreview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -738,9 +739,9 @@ function RosterPanel({
             className="grid size-[72px] shrink-0 place-items-center rounded-full"
             style={{
               background: `conic-gradient(
-          color-mix(in srgb, var(--primary) 85%, white) 0 ${presentPct}%,
-          color-mix(in srgb, var(--warning) 70%, white) ${presentPct}% ${presentPct + pendingPct}%,
-          color-mix(in srgb, var(--destructive) 80%, white) ${presentPct + pendingPct}% 100%
+          color-mix(in srgb, var(--primary) 85%, var(--background)) 0 ${presentPct}%,
+          color-mix(in srgb, var(--warning) 70%, var(--background)) ${presentPct}% ${presentPct + pendingPct}%,
+          color-mix(in srgb, var(--destructive) 80%, var(--background)) ${presentPct + pendingPct}% 100%
         )`,
             }}
           >
@@ -801,6 +802,10 @@ function SubmissionPanel({
   sentNotes,
   selectedStudentSubmissions,
   onNoteDraftChange,
+  handleEndClass,
+  isEndClassConfirmOpen,
+  setIsEndClassConfirmOpen,
+  isEndingClass,
   onSendNote,
   onMarkAttendance,
   isMarkingAttendance,
@@ -817,6 +822,10 @@ function SubmissionPanel({
   rubricAssociations: CourseRubricAssociation[];
   rubricMatrices: Record<string, RubricMatrix | null>;
   noteDraft: string;
+  handleEndClass: () => void;
+  isEndClassConfirmOpen: boolean;
+  setIsEndClassConfirmOpen: (value: boolean) => void;
+  isEndingClass: boolean;
   sentNotes: NoteEntry[];
   selectedStudentSubmissions: Array<{
     scheduleId: string;
@@ -858,19 +867,19 @@ function SubmissionPanel({
             View Rubric
           </Button>
         </div>
-        <div className="bg-muted dark:bg-muted/40 grid grid-cols-3 gap-1 rounded-md p-1">
+        <div className='bg-muted grid grid-cols-3 gap-1 rounded-md p-1 dark:bg-muted/60'>
           {panelTabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activePanel === tab.value;
 
             return (
-              <button
+              <Button
                 key={tab.value}
-                type="button"
+                type='button'
                 onClick={() => setActivePanel(tab.value)}
                 className={`
           flex h-8 min-w-0 items-center justify-center gap-1.5
-          overflow-hidden rounded px-1 text-[11px] font-medium
+          overflow-hidden rounded-md px-1 text-[11px] font-medium
           transition-all
 
           ${isActive
@@ -885,9 +894,9 @@ function SubmissionPanel({
             `}
         `}
               >
-                <Icon className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{tab.label}</span>
-              </button>
+                <Icon className='h-3.5 w-3.5 shrink-0' />
+                <span className='truncate'>{tab.label}</span>
+              </Button>
             );
           })}
         </div>
@@ -1254,6 +1263,18 @@ function SubmissionPanel({
           );
         })()}
       </div>
+
+      <ConfirmModal
+        open={isEndClassConfirmOpen}
+        setOpen={setIsEndClassConfirmOpen}
+        title='End this class?'
+        description='This will conclude the selected class session and stop learners from resuming it until it is started again.'
+        confirmText={isEndingClass ? 'Ending...' : 'End Class'}
+        confirmButtonProps={{ variant: 'destructive' }}
+        cancelText='Cancel'
+        isLoading={isEndingClass}
+        onConfirm={handleEndClass}
+      />
     </aside>
   );
 }
@@ -1292,6 +1313,7 @@ export default function ClassTrainingPage({
   const [quizGradingDueAt, setQuizGradingDueAt] = useState('');
   const [noteDraft, setNoteDraft] = useState('');
   const [sentNotes, setSentNotes] = useState<NoteEntry[]>([]);
+  const [isEndClassConfirmOpen, setIsEndClassConfirmOpen] = useState(false);
   const appliedRouteContentSelectionRef = useRef('');
 
   const [activeTab, setActiveTab] = useState<'content' | 'practice' | 'assessment'>('content');
@@ -1904,6 +1926,26 @@ export default function ClassTrainingPage({
     );
   };
 
+  const endClassMut = useMutation(endScheduledInstanceMutation());
+  const handleEndClass = () => {
+    if (!requestedScheduleId) return;
+
+    endClassMut.mutate(
+      {
+        path: { instanceUuid: requestedScheduleId },
+      },
+      {
+        onSuccess: data => {
+          toast.success(data?.message || 'Class ended successfully.');
+          setIsEndClassConfirmOpen(false);
+        },
+        onError: error => {
+          toast.error(getApiToastMessage(error, 'Could not end class.'));
+        },
+      }
+    );
+  };
+
   const handleSendNote = () => {
     if (!noteDraft.trim()) {
       toast.error('Type a note before sending.');
@@ -1928,7 +1970,7 @@ export default function ClassTrainingPage({
 
   if (isError) {
     return (
-      <div className='fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_oklch,var(--el-brand-50)_80%,var(--background))] p-6'>
+      <div className='fixed inset-0 z-50 flex items-center justify-center bg-background p-6'>
         <div className='border-destructive/30 bg-card flex min-h-[280px] w-full max-w-xl flex-col items-center justify-center gap-4 rounded-lg border p-8 text-center shadow-sm'>
           <AlertCircle className='text-destructive h-10 w-10' />
           <div className='space-y-1'>
@@ -1946,28 +1988,28 @@ export default function ClassTrainingPage({
   }
 
   return (
-    <main className='text-foreground fixed inset-0 z-50 flex flex-col overflow-hidden bg-[color-mix(in_oklch,var(--el-brand-50)_80%,var(--background))]'>
-      <header className='border-border/70 bg-primary text-primary-foreground flex h-16 shrink-0 items-center justify-between gap-3 border-b px-3 shadow-sm sm:px-4'>
+    <main className='text-foreground fixed inset-0 z-50 flex flex-col overflow-hidden bg-background'>
+      <header className='border-border/70 bg-card/95 text-foreground flex h-16 shrink-0 items-center justify-between gap-3 border-b px-3 shadow-sm backdrop-blur sm:px-4'>
         <div className='flex min-w-0 items-center gap-3'>
           <Button
             asChild
             variant='ghost'
             size='icon'
-            className='text-primary-foreground hover:bg-white/10'
+            className='text-foreground hover:bg-muted'
           >
             <Link href='/dashboard/classes' aria-label='Back to classes'>
               <ArrowLeft className='h-5 w-5' />
             </Link>
           </Button>
           <div className='flex min-w-0 items-center gap-2'>
-            <span className='flex size-8 shrink-0 items-center justify-center rounded-full bg-white/15'>
+            <span className='bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-full'>
               <BookOpen className='h-4 w-4' />
             </span>
             <div className='min-w-0'>
               <h1 className='truncate text-sm font-semibold sm:text-base'>
                 {course?.name || classData?.title || 'Class Training'}
               </h1>
-              <p className='text-primary-foreground/75 truncate text-xs'>
+              <p className='text-muted-foreground truncate text-xs'>
                 {activeSchedule
                   ? formatRange(activeSchedule.start_time, activeSchedule.end_time)
                   : 'Training session'}
@@ -1977,8 +2019,8 @@ export default function ClassTrainingPage({
         </div>
 
         <div className='hidden min-w-0 flex-1 justify-center md:flex'>
-          <div className='flex max-w-xl flex-1 items-center gap-2 rounded-full bg-white/12 px-3 py-2'>
-            <Search className='text-primary-foreground/70 h-4 w-4 shrink-0' />
+          <div className='bg-muted/70 border-border/70 flex max-w-xl flex-1 items-center gap-2 rounded-full border px-3 py-2'>
+            <Search className='text-muted-foreground h-4 w-4 shrink-0' />
             <Input
               value={pageSearch}
               onChange={event => setPageSearch(event.target.value)}
@@ -1988,12 +2030,12 @@ export default function ClassTrainingPage({
                 }
               }}
               placeholder='Search this page...'
-              className='border-0 bg-transparent px-0 text-xs text-white placeholder:text-white/70 focus-visible:ring-0'
+              className='border-0 bg-transparent px-0 text-xs text-foreground placeholder:text-muted-foreground focus-visible:ring-0'
             />
             <Button
               size='sm'
               variant='ghost'
-              className='h-7 shrink-0 text-primary-foreground hover:bg-white/10'
+              className='text-foreground hover:bg-muted h-7 shrink-0'
               onClick={handlePageSearch}
             >
               Find
@@ -2007,7 +2049,7 @@ export default function ClassTrainingPage({
               <Button
                 variant='ghost'
                 size='sm'
-                className='text-primary-foreground gap-2 hover:bg-white/10 xl:hidden'
+                className='text-foreground gap-2 hover:bg-muted xl:hidden'
               >
                 <PanelLeft className='h-4 w-4' />
                 Roster
@@ -2040,7 +2082,7 @@ export default function ClassTrainingPage({
               <Button
                 variant='ghost'
                 size='sm'
-                className='text-primary-foreground gap-2 hover:bg-white/10 xl:hidden'
+                className='text-foreground gap-2 hover:bg-muted xl:hidden'
               >
                 <PanelRight className='h-4 w-4' />
                 Work
@@ -2114,23 +2156,12 @@ export default function ClassTrainingPage({
 
                 <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-xl">
-                    <TabsList className="grid w-full grid-cols-3 bg-muted dark:bg-muted/40 p-1 rounded-lg">
+                    <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
                       {TAB_ITEMS.map(tab => (
                         <TabsTrigger
                           key={tab.value}
                           value={tab.value}
-                          className="
-          truncate text-xs sm:text-sm rounded-md px-2 py-1.5
-          text-muted-foreground dark:text-muted-foreground/70
-
-          data-[state=active]:bg-white
-          data-[state=active]:text-foreground
-          data-[state=active]:shadow-sm
-
-          dark:data-[state=active]:bg-primary
-          dark:data-[state=active]:text-primary-foreground
-          dark:data-[state=active]:shadow-md
-        "
+                          className='text-muted-foreground truncate rounded-md px-2 py-1.5 text-xs sm:text-sm dark:text-muted-foreground/70 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground dark:data-[state=active]:shadow-md'
                         >
                           {tab.label}
                         </TabsTrigger>
@@ -2328,13 +2359,16 @@ export default function ClassTrainingPage({
             sentNotes={sentNotes}
             selectedStudentSubmissions={selectedStudentSubmissions}
             onNoteDraftChange={setNoteDraft}
+            isEndClassConfirmOpen={isEndClassConfirmOpen}
+            setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
+            isEndingClass={endClassMut.isPending || endScheduledInstanceMut.isPending}
             onSendNote={handleSendNote}
             onMarkAttendance={handleMarkAttendance}
             isMarkingAttendance={markAttendanceMut.isPending}
             onStartClass={handleStartClass}
             onEndClass={handleEndClass}
             isStartingClass={startScheduledInstanceMut.isPending}
-            isEndingClass={endScheduledInstanceMut.isPending}
+            handleEndClass={() => { }}
           />
         </aside>
       </section>

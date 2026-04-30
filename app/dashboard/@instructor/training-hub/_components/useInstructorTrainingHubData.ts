@@ -259,7 +259,7 @@ export function useInstructorTrainingHubData() {
         level: course.total_duration_display || `${course.duration_hours}h ${course.duration_minutes}m`,
         students: `${learnerIds.size} students`,
         classes: `${courseClasses.length} classes`,
-        ctaLabel: 'Create Classes',
+        ctaLabel: 'Create New Class',
         ctaHref: '/dashboard/classes/create-new',
         accent: ACCENTS[index % ACCENTS.length] ?? 'blue',
         imageUrl: course.thumbnail_url ?? course.banner_url,
@@ -331,7 +331,9 @@ export function useInstructorTrainingHubData() {
       const dayLabel = formatDayLabel(instance.start_time);
 
       return {
-        id: instance.uuid ?? classItem.uuid ?? classItem.title,
+        instanceUuid: instance.uuid,
+        classUuid: classItem.uuid,
+        id: instance.uuid,
         day: dayLabel,
         time: formatTimeRange(instance.start_time, instance.end_time),
         title: instance.title || classItem.course?.name || classItem.title,
@@ -549,9 +551,8 @@ export function useInstructorTrainingHubData() {
           subtitle: booking.purpose || formatDateTime(booking.start_time),
           status: normalizeStatusLabel(booking.status || 'confirmed'),
           statusTone: getBookingStatusTone(booking.status),
-          meta: `${formatTimeRange(booking.start_time, booking.end_time)} • ${
-            booking.currency ? formatCurrency(booking.price_amount, booking.currency) : 'Booking'
-          }`,
+          meta: `${formatTimeRange(booking.start_time, booking.end_time)} • ${booking.currency ? formatCurrency(booking.price_amount, booking.currency) : 'Booking'
+            }`,
           actionLabel: 'View booking',
           actionTone: 'primary',
           href: '/dashboard/training-hub/bookings',

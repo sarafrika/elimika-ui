@@ -742,6 +742,37 @@ export const updatePracticeActivityResponseTransformer = async (data: any): Prom
     return data;
 };
 
+const lessonPracticeActivitySchemaResponseTransformer = (data: any) => {
+    if (data.created_date) {
+        data.created_date = new Date(data.created_date);
+    }
+    if (data.updated_date) {
+        data.updated_date = new Date(data.updated_date);
+    }
+    return data;
+};
+
+const apiResponseLessonPracticeActivitySchemaResponseTransformer = (data: any) => {
+    if (data.data) {
+        data.data = lessonPracticeActivitySchemaResponseTransformer(data.data);
+    }
+    return data;
+};
+
+export const getPracticeActivityResponseTransformer = async (
+    data: any
+): Promise<GetPracticeActivityResponse> => {
+    data = apiResponseLessonPracticeActivitySchemaResponseTransformer(data);
+    return data;
+};
+
+export const updatePracticeActivityResponseTransformer = async (
+    data: any
+): Promise<UpdatePracticeActivityResponse> => {
+    data = apiResponseLessonPracticeActivitySchemaResponseTransformer(data);
+    return data;
+};
+
 const lessonContentSchemaResponseTransformer = (data: any) => {
     if (data.file_size_bytes) {
         data.file_size_bytes = BigInt(data.file_size_bytes.toString());
@@ -1511,9 +1542,17 @@ export const endScheduledInstanceResponseTransformer = async (data: any): Promis
     return data;
 };
 
+<<<<<<< HEAD
+export const blockInstructorTimeResponseTransformer = async (
+    data: any
+): Promise<BlockInstructorTimeResponse> => {
+    data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
+    return data;
+=======
 export const blockInstructorTimeResponseTransformer = async (data: any): Promise<BlockInstructorTimeResponse> => {
     data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
     return data;
+>>>>>>> main
 };
 
 const pagedDtoSystemRuleResponseSchemaResponseTransformer = (data: any) => {
@@ -2503,6 +2542,39 @@ export const getPracticeActivitiesResponseTransformer = async (data: any): Promi
 };
 
 export const createPracticeActivityResponseTransformer = async (data: any): Promise<CreatePracticeActivityResponse> => {
+    data = apiResponseLessonPracticeActivitySchemaResponseTransformer(data);
+    return data;
+};
+
+const pagedDtoLessonPracticeActivitySchemaResponseTransformer = (data: any) => {
+    if (data.content) {
+        data.content = data.content.map((item: any) => {
+            return lessonPracticeActivitySchemaResponseTransformer(item);
+        });
+    }
+    if (data.metadata) {
+        data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+    }
+    return data;
+};
+
+const apiResponsePagedDtoLessonPracticeActivitySchemaResponseTransformer = (data: any) => {
+    if (data.data) {
+        data.data = pagedDtoLessonPracticeActivitySchemaResponseTransformer(data.data);
+    }
+    return data;
+};
+
+export const getPracticeActivitiesResponseTransformer = async (
+    data: any
+): Promise<GetPracticeActivitiesResponse> => {
+    data = apiResponsePagedDtoLessonPracticeActivitySchemaResponseTransformer(data);
+    return data;
+};
+
+export const createPracticeActivityResponseTransformer = async (
+    data: any
+): Promise<CreatePracticeActivityResponse> => {
     data = apiResponseLessonPracticeActivitySchemaResponseTransformer(data);
     return data;
 };

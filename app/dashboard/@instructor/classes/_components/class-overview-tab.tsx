@@ -1,7 +1,6 @@
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { RosterEntry } from '@/hooks/use-class-roster';
@@ -89,7 +88,7 @@ function CourseArtwork({ imageUrl, courseName }: { imageUrl?: string | null; cou
   }
 
   return (
-    <div className='border-border/70 relative aspect-[16/9] w-full overflow-hidden rounded-sm border bg-[color-mix(in_oklch,var(--warning)_18%,var(--card))] p-4 sm:max-w-[220px] sm:shrink-0'>
+    <div className='border-border/70 bg-warning/10 relative aspect-[16/9] w-full overflow-hidden rounded-sm border p-4 sm:max-w-[220px] sm:shrink-0'>
       <div className='bg-primary/80 text-primary-foreground absolute top-6 right-5 flex h-14 w-14 items-center justify-center rounded-full shadow-sm'>
         <MonitorPlay className='h-7 w-7' />
       </div>
@@ -239,26 +238,20 @@ function ClassHero({
 
 function CourseProgram({
   lessonModules,
-  expandedModuleId,
   selectedLesson,
   contentTypeMap,
-  setExpandedModuleId,
   setSelectedLessonUuid,
   getStartLessonHref,
-  getResumeLessonHref,
-  selectedClassUuid,
-  roleLabel = "Instructor view"
+  onStartLesson,
+  selectedLessonActionLabel,
 }: {
   lessonModules: LessonModule[];
-  expandedModuleId: string | null;
   selectedLesson: LessonContentItem | null;
   contentTypeMap: Record<string, string>;
-  setExpandedModuleId: (value: string | null) => void;
   setSelectedLessonUuid: (value: string | null) => void;
   getStartLessonHref: (lessonUuid?: string | null, contentUuid?: string | null) => string;
-  getResumeLessonHref?: (lessonUuid?: string | null, contentUuid?: string | null) => string;
-  selectedClassUuid: string | null;
-  roleLabel: string
+  onStartLesson: (lessonUuid?: string | null, contentUuid?: string | null) => void;
+  selectedLessonActionLabel: string;
 }) {
   return (
     <section className='border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur'>
@@ -283,122 +276,108 @@ function CourseProgram({
       ) : (
         <div className='space-y-3'>
           {lessonModules.map((module, moduleIndex) => {
-            const isOpen = expandedModuleId === module.lesson.uuid;
-
             return (
-              <Collapsible
+              <div
                 key={module.lesson.uuid ?? `module-${moduleIndex}`}
-                open={isOpen}
-                onOpenChange={() =>
-                  setExpandedModuleId(isOpen ? null : (module.lesson.uuid ?? null))
-                }
+                className='border-border/70 bg-background/70 overflow-hidden rounded-md border'
               >
-                <div className='border-border/70 bg-background/70 overflow-hidden rounded-md border'>
-                  <CollapsibleTrigger asChild>
-                    <button
-                      type='button'
-                      className='hover:bg-muted/60 focus-visible:ring-ring flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none'
-                    >
-                      <p className='text-foreground truncate text-lg font-semibold'>
-                        Module {moduleIndex + 1}: {module.lesson.title || 'Untitled lesson'}
-                      </p>
-                      <ChevronDown
-                        className={cn(
-                          'text-muted-foreground h-4 w-4 shrink-0 transition-transform',
-                          isOpen ? 'rotate-180' : ''
-                        )}
-                      />
-                    </button>
-                  </CollapsibleTrigger>
-
-                  <CollapsibleContent>
-                    <div className='divide-border/70 border-border/70 divide-y border-t'>
-                      {module.content?.data?.map((content, contentIndex) => {
-                        const isSelected = selectedLesson?.uuid === content.uuid;
-                        // const lessonProgress = getLessonProgress(moduleIndex, contentIndex);
-                        const lessonProgress = 0;
-                        const typeLabel = getContentTypeLabel(
-                          contentTypeMap,
-                          content.content_type_uuid
-                        );
-                        const isWarmTrack = lessonProgress < 100;
-                        const lessonHref = getStartLessonHref(module.lesson.uuid, content.uuid);
-
-                        return (
-                          <div
-                            key={content.uuid ?? `${module.lesson.uuid}-${contentIndex}`}
-                            role='button'
-                            tabIndex={0}
-                            onClick={() => {
-                              if (content.uuid) setSelectedLessonUuid(content.uuid);
-                            }}
-                            onKeyDown={event => {
-                              if (event.key === 'Enter' || event.key === ' ') {
-                                event.preventDefault();
-                                if (content.uuid) setSelectedLessonUuid(content.uuid);
-                              }
-                            }}
-                            className={cn(
-                              'hover:bg-muted/60 focus-visible:ring-ring block w-full cursor-pointer px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
-                              isSelected ? 'bg-primary/5' : ''
-                            )}
-                          >
-                            <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center'>
-                              <div className='flex min-w-0 items-center gap-3'>
-                                <span
-                                  className={cn(
-                                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
-                                    isWarmTrack
-                                      ? 'bg-warning text-warning-foreground'
-                                      : 'bg-success text-success-foreground'
-                                  )}
-                                >
-                                  {getContentTypeIcon(contentTypeMap, content.content_type_uuid)}
-                                </span>
-                                <p className='text-foreground min-w-0 truncate text-base font-semibold'>
-                                  Lesson {moduleIndex + 1}.{contentIndex + 1}{' '}
-                                  <span className='text-muted-foreground font-medium'>
-                                    {typeLabel}
-                                  </span>
-                                </p>
-                              </div>
-
-                              {roleLabel === "Instructor view" ? <Link
-                                href={selectedClassUuid ? lessonHref : '#'}
-                                onClick={event => event.stopPropagation()}
-                                className='bg-primary text-primary-foreground hover:bg-accent focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
-                              >
-                                Start Lesson
-                              </Link> : <Link
-                                href={selectedClassUuid ? lessonHref : '#'}
-                                onClick={event => event.stopPropagation()}
-                                className='bg-primary text-primary-foreground hover:bg-accent focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
-                              >
-                                Resume Lesson
-                              </Link>}
-
-                            </div>
-
-                            <div className='mt-2 grid gap-3 pl-8 md:grid-cols-[72px_minmax(0,1fr)_56px] md:items-center'>
-                              <p className='text-muted-foreground text-sm'>
-                                {getContentDuration(content)}
-                              </p>
-                              <Progress
-                                value={lessonProgress}
-                                className='bg-muted h-2.5'
-                                indicatorClassName={isWarmTrack ? 'bg-warning' : 'bg-success'}
-                              />
-                              <p className='text-foreground text-left text-sm font-semibold md:text-right md:text-sm'>
-                                {lessonProgress}%
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CollapsibleContent>
+                <div className='border-border/70 flex items-center justify-between gap-3 border-b px-4 py-3'>
+                  <p className='text-foreground truncate text-lg font-semibold'>
+                    Module {moduleIndex + 1}: {module.lesson.title || 'Untitled lesson'}
+                  </p>
+                  <span className='text-muted-foreground text-xs font-medium'>
+                    {module.content?.data?.length ?? 0} contents
+                  </span>
                 </div>
-              </Collapsible>
+                <div className='divide-border/70 divide-y'>
+                  {module.content?.data?.map((content, contentIndex) => {
+                    const isSelected = selectedLesson?.uuid === content.uuid;
+                    // const lessonProgress = getLessonProgress(moduleIndex, contentIndex);
+                    const lessonProgress = 0;
+                    const typeLabel = getContentTypeLabel(
+                      contentTypeMap,
+                      content.content_type_uuid
+                    );
+                    const isWarmTrack = lessonProgress < 100;
+                    const lessonHref = getStartLessonHref(module.lesson.uuid, content.uuid);
+
+                    return (
+                      <div
+                        key={content.uuid ?? `${module.lesson.uuid}-${contentIndex}`}
+                        role='button'
+                        tabIndex={0}
+                        onClick={() => {
+                          if (content.uuid) setSelectedLessonUuid(content.uuid);
+                        }}
+                        onKeyDown={event => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            if (content.uuid) setSelectedLessonUuid(content.uuid);
+                          }
+                        }}
+                        className={cn(
+                          'hover:bg-muted/60 focus-visible:ring-ring block w-full cursor-pointer px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                          isSelected ? 'bg-primary/5' : ''
+                        )}
+                      >
+                        <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center'>
+                          <div className='flex min-w-0 items-center gap-3'>
+                            <span
+                              className={cn(
+                                'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
+                                isWarmTrack
+                                  ? 'bg-warning text-warning-foreground'
+                                  : 'bg-success text-success-foreground'
+                              )}
+                            >
+                              {getContentTypeIcon(contentTypeMap, content.content_type_uuid)}
+                            </span>
+                            <p className='text-foreground min-w-0 truncate text-base font-semibold'>
+                              Lesson {moduleIndex + 1}.{contentIndex + 1}{' '}
+                              <span className='text-muted-foreground font-medium'>{typeLabel}</span>
+                            </p>
+                          </div>
+
+                          {isSelected ? (
+                            <Button
+                              type='button'
+                              onClick={event => {
+                                event.stopPropagation();
+                                if (content.uuid) {
+                                  onStartLesson(module.lesson.uuid, content.uuid);
+                                }
+                              }}
+                              className='bg-primary text-primary-foreground hover:bg-accent focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                            >
+                              {selectedLessonActionLabel}
+                            </Button>
+                          ) : (
+                            <Link
+                              href={lessonHref}
+                              onClick={event => event.stopPropagation()}
+                              className='text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                            >
+                              Open lesson
+                            </Link>
+                          )}
+                        </div>
+
+                        <div className='mt-2 grid gap-3 pl-8 md:grid-cols-[72px_minmax(0,1fr)_56px] md:items-center'>
+                          <p className='text-muted-foreground text-sm'>{getContentDuration(content)}</p>
+                          <Progress
+                            value={lessonProgress}
+                            className='bg-muted h-2.5'
+                            indicatorClassName={isWarmTrack ? 'bg-warning' : 'bg-success'}
+                          />
+                          <p className='text-foreground text-left text-sm font-semibold md:text-right md:text-sm'>
+                            {lessonProgress}%
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
@@ -409,12 +388,10 @@ function CourseProgram({
 
 function UpcomingClassesPanel({
   selectedClass,
-  selectedModuleResources,
   contentTypeMap,
   rosterEntries,
 }: {
   selectedClass: InstructorClassWithSchedule;
-  selectedModuleResources: LessonContentItem[];
   contentTypeMap: Record<string, string>;
   rosterEntries: RosterEntry[];
 }) {
@@ -552,9 +529,7 @@ export function ClassOverviewTab({
   selectedClass,
   selectedClassUuid,
   lessonModules,
-  expandedModuleId,
   selectedLesson,
-  selectedModuleResources,
   contentTypeMap,
   difficultyMap,
   instructorName,
@@ -562,11 +537,11 @@ export function ClassOverviewTab({
   rosterEntries = [],
   sessionProgress,
   remainingSessions,
-  setExpandedModuleId,
   setSelectedLessonUuid,
   startLessonHref,
   getStartLessonHref,
-  getResumeLessonHref,
+  onStartLesson,
+  selectedLessonActionLabel,
   onAddClasses,
 }: {
   isLoadingClasses: boolean;
@@ -574,10 +549,7 @@ export function ClassOverviewTab({
   selectedClass: InstructorClassWithSchedule | null;
   selectedClassUuid: string | null;
   lessonModules: LessonModule[];
-  expandedModuleId: string | null;
   selectedLesson: LessonContentItem | null;
-  selectedModule: LessonModule | null;
-  selectedModuleResources: LessonContentItem[];
   contentTypeMap: Record<string, string>;
   difficultyMap: Record<string, string>;
   instructorName?: string | null;
@@ -585,11 +557,11 @@ export function ClassOverviewTab({
   rosterEntries?: RosterEntry[];
   sessionProgress: number;
   remainingSessions: number;
-  setExpandedModuleId: (value: string | null) => void;
   setSelectedLessonUuid: (value: string | null) => void;
   startLessonHref: string;
   getStartLessonHref: (lessonUuid?: string | null, contentUuid?: string | null) => string;
-  getResumeLessonHref: (lessonUuid?: string | null, contentUuid?: string | null) => string;
+  onStartLesson: (lessonUuid?: string | null, contentUuid?: string | null) => void;
+  selectedLessonActionLabel: string;
   onAddClasses: () => void;
 }) {
   if (isLoadingClasses || !selectedClass || isLoadingLessons) {
@@ -621,19 +593,15 @@ export function ClassOverviewTab({
       <div className='grid gap-3 2xl:grid-cols-[minmax(0,1fr)_320px]'>
         <CourseProgram
           lessonModules={lessonModules}
-          expandedModuleId={expandedModuleId}
           selectedLesson={selectedLesson}
           contentTypeMap={contentTypeMap}
-          setExpandedModuleId={setExpandedModuleId}
           setSelectedLessonUuid={setSelectedLessonUuid}
           getStartLessonHref={getStartLessonHref}
-          getResumeLessonHref={getResumeLessonHref}
-          selectedClassUuid={selectedClassUuid}
-          roleLabel={roleLabel}
+          onStartLesson={onStartLesson}
+          selectedLessonActionLabel={selectedLessonActionLabel}
         />
         <UpcomingClassesPanel
           selectedClass={selectedClass}
-          selectedModuleResources={selectedModuleResources}
           contentTypeMap={contentTypeMap}
           rosterEntries={rosterEntries}
         />
