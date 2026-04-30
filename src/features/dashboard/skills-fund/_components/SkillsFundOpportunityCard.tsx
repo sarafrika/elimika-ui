@@ -7,24 +7,24 @@ import type { SkillsFundOpportunity } from '../data';
 
 const accentStyles = {
   amber: {
-    artwork: 'from-amber-100 via-orange-50 to-amber-100',
-    bubble: 'bg-amber-300/80',
-    chip: 'bg-amber-50 text-amber-700',
+    artwork: 'from-warning/15 via-orange-50 to-warning/15',
+    bubble: 'bg-warning/80',
+    chip: 'bg-warning/10 text-warning',
   },
   blue: {
-    artwork: 'from-blue-100 via-sky-50 to-indigo-100',
-    bubble: 'bg-blue-300/80',
-    chip: 'bg-green-50 text-green-700',
+    artwork: 'from-primary/15 via-primary/5 to-primary/15',
+    bubble: 'bg-primary/40',
+    chip: 'bg-success/10 text-success',
   },
   sky: {
-    artwork: 'from-sky-100 via-blue-50 to-cyan-100',
-    bubble: 'bg-sky-300/80',
-    chip: 'bg-green-50 text-green-700',
+    artwork: 'from-primary/20 via-primary/10 to-primary/15',
+    bubble: 'bg-primary/40',
+    chip: 'bg-success/10 text-success',
   },
   violet: {
-    artwork: 'from-violet-100 via-indigo-50 to-blue-100',
-    bubble: 'bg-violet-300/80',
-    chip: 'bg-amber-50 text-amber-700',
+    artwork: 'from-accent/40 via-accent/20 to-primary/15',
+    bubble: 'bg-accent',
+    chip: 'bg-warning/10 text-warning',
   },
 } as const;
 
@@ -81,8 +81,8 @@ export function SkillsFundOpportunityCard({ opportunity }: SkillsFundOpportunity
                 className={cn(
                   'size-4',
                   index < opportunity.rating
-                    ? 'fill-amber-400 text-amber-400'
-                    : 'fill-slate-200 text-slate-200'
+                    ? 'fill-warning text-warning'
+                    : 'fill-muted text-muted'
                 )}
               />
             ))}
@@ -106,7 +106,7 @@ export function SkillsFundOpportunityCard({ opportunity }: SkillsFundOpportunity
             </span>
           ) : null}
           {opportunity.eyebrow ? (
-            <span className='rounded-[4px] bg-amber-500/10 px-2 py-1 text-amber-600 dark:text-amber-300'>
+            <span className='rounded-[4px] bg-warning/10 px-2 py-1 text-warning'>
               {opportunity.eyebrow}
             </span>
           ) : null}

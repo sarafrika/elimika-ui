@@ -18,13 +18,11 @@ export function MarketingTopNav() {
 
   const { cartId: savedCartId } = useCartStore();
   const { data: cartData } = useQuery({
-    ...getCartOptions({ path: { cartId: savedCartId ?? '' } }),
+    ...getCartOptions({ path: { cartId: savedCartId ?? 'unset' } }),
     enabled: !!savedCartId,
     retry: 1,
   });
-  // @ts-ignore
-  const cart = cartData?.data;
-  const cartItemCount = cart?.items?.length;
+  const cartItemCount = cartData?.items?.length ?? 0;
 
   const navLinks = [
     { label: 'Catalogue', href: '/courses' },

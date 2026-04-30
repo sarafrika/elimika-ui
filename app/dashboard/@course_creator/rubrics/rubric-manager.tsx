@@ -1260,7 +1260,7 @@ const RubricManager: React.FC = () => {
                         <div className='text-muted-foreground mt-1 flex flex-wrap items-center gap-3 text-xs'>
                           {rubric.rubric_type && (
                             <span className='flex items-center gap-1'>
-                              <span className='h-2 w-2 rounded-full bg-green-500' />
+                              <span className='h-2 w-2 rounded-full bg-success' />
                               Type:{' '}
                               <span className='text-foreground font-medium'>
                                 {rubric.rubric_type}

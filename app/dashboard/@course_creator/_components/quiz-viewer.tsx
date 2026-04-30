@@ -264,12 +264,12 @@ export function QuizViewer({ quiz, open, onOpenChange }: QuizViewerProps) {
                           key={option.uuid || optIndex}
                           className={`flex items-start gap-3 rounded-lg border-2 p-3 transition-colors ${
                             option.isCorrect
-                              ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
+                              ? 'border-success/30 bg-success/10 dark:border-success/40 dark:bg-success/20'
                               : 'border-muted bg-muted/30'
                           }`}
                         >
                           {option.isCorrect ? (
-                            <CheckCircle2 className='mt-0.5 h-5 w-5 shrink-0 text-green-600' />
+                            <CheckCircle2 className='mt-0.5 h-5 w-5 shrink-0 text-success' />
                           ) : (
                             <Circle className='text-muted-foreground mt-0.5 h-5 w-5 shrink-0' />
                           )}
@@ -278,7 +278,7 @@ export function QuizViewer({ quiz, open, onOpenChange }: QuizViewerProps) {
                             {option.isCorrect && (
                               <Badge
                                 variant='outline'
-                                className='just mt-2 flex items-end self-end bg-green-100 text-xs dark:bg-green-900'
+                                className='just mt-2 flex items-end self-end bg-success/15 text-xs dark:bg-success/25'
                               >
                                 Correct Answer
                               </Badge>

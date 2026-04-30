@@ -61,7 +61,7 @@ export function StudentOverviewHeroCard({ firstName }: StudentOverviewHeroCardPr
                   <div className='min-w-0 flex-1'>
                     <div className='mb-1 h-2.5 w-20 rounded-full bg-muted' />
                     <div className='mb-2 h-2 w-28 rounded-full bg-muted/60' />
-                    <div className='flex gap-1 text-[0.65rem] text-amber-400 dark:text-amber-300'>
+                    <div className='flex gap-1 text-[0.65rem] text-warning dark:text-amber-300'>
                       <span>★</span>
                       <span>★</span>
                       <span>★</span>

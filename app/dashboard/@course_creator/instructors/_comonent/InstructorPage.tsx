@@ -1191,7 +1191,7 @@ const InstructorsApplicationPage = () => {
                                           key={i}
                                           className={`h-4 w-4 ${i < (review.rating || 0)
                                             ? 'fill-yellow-400 text-yellow-400'
-                                            : 'text-gray-300'
+                                            : 'text-muted-foreground'
                                             }`}
                                         />
                                       ))}
@@ -2019,7 +2019,7 @@ const InstructorsApplicationPage = () => {
                                         key={i}
                                         className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < (review.rating || 0)
                                           ? 'fill-yellow-400 text-yellow-400'
-                                          : 'text-gray-300'
+                                          : 'text-muted-foreground'
                                           }`}
                                       />
                                     ))}
@@ -2696,7 +2696,7 @@ function ReviewDialog({
       title: 'Approve Application',
       description: 'Approve this training application to allow the applicant to train this course.',
       icon: ThumbsUp,
-      color: 'text-green-600',
+      color: 'text-success',
     },
     reject: {
       title: 'Reject Application',

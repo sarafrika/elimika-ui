@@ -195,9 +195,9 @@ export function ComplianceRequirements({ data, onDataChange }: ComplianceRequire
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'text-green-600';
+        return 'text-success';
       case 'required':
-        return 'text-red-600';
+        return 'text-destructive';
       case 'optional':
         return 'text-yellow-600';
       default:
@@ -239,7 +239,7 @@ export function ComplianceRequirements({ data, onDataChange }: ComplianceRequire
         return (
           <Card
             key={area.id}
-            className={area.required && status === 'required' ? 'border-red-200' : ''}
+            className={area.required && status === 'required' ? 'border-destructive/30' : ''}
           >
             <CardHeader>
               <div className='flex items-center justify-between'>
@@ -291,10 +291,10 @@ export function ComplianceRequirements({ data, onDataChange }: ComplianceRequire
                     {docs.map(doc => (
                       <div
                         key={doc.id}
-                        className='flex items-center justify-between rounded border border-green-200 bg-green-50 p-3'
+                        className='flex items-center justify-between rounded border border-success/30 bg-success/10 p-3'
                       >
                         <div className='flex items-center gap-3'>
-                          <FileText className='h-4 w-4 text-green-600' />
+                          <FileText className='h-4 w-4 text-success' />
                           <div>
                             <p className='text-sm font-medium'>{doc.type}</p>
                             <p className='text-muted-foreground text-xs'>
@@ -498,8 +498,8 @@ export function ComplianceRequirements({ data, onDataChange }: ComplianceRequire
                   area => getComplianceStatus(area.id) === 'completed'
                 ) ? (
                   <>
-                    <CheckCircle className='h-5 w-5 text-green-600' />
-                    <span className='font-medium text-green-600'>Ready for Review</span>
+                    <CheckCircle className='h-5 w-5 text-success' />
+                    <span className='font-medium text-success'>Ready for Review</span>
                   </>
                 ) : (
                   <>

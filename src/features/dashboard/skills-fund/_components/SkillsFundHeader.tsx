@@ -11,7 +11,7 @@ export function SkillsFundHeader({ profileName, title }: SkillsFundHeaderProps) 
         <h1 className='text-[1.75rem] font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-[2rem]'>
           {title}
         </h1>
-        {/* <div className='flex items-center gap-2 text-sm text-slate-500 sm:text-[0.95rem]'>
+        {/* <div className='flex items-center gap-2 text-sm text-muted-foreground sm:text-[0.95rem]'>
           <Search className='size-4' />
           <span>{profileName}</span>
         </div> */}

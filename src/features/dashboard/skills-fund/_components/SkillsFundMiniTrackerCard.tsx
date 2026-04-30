@@ -34,7 +34,7 @@ export function SkillsFundMiniTrackerCard({ card }: SkillsFundMiniTrackerCardPro
               key={`${card.id}-rating-${index + 1}`}
               className={cn(
                 'size-4',
-                index < card.rating ? 'fill-amber-400 text-amber-400' : 'fill-slate-200 text-slate-200'
+                index < card.rating ? 'fill-warning text-warning' : 'fill-muted text-muted'
               )}
             />
           ))}

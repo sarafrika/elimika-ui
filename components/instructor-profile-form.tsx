@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -168,10 +169,6 @@ export function InstructorProfileForm({
     }
   };
 
-  const buttonPrimaryClasses =
-    'inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2';
-  const buttonSecondaryClasses =
-    'inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1';
   const cardContentClasses = 'p-6 sm:p-8';
   const sectionTitleClasses = 'text-2xl font-semibold text-foreground mb-6';
 
@@ -719,27 +716,26 @@ export function InstructorProfileForm({
 
               <div className='border-border mt-8 flex justify-between border-t pt-4'>
                 {tabOrder.indexOf(activeTab) > 0 ? (
-                  <Button type='button' onClick={handlePrevious} className={buttonSecondaryClasses}>
+                  <Button type='button' variant='outline' onClick={handlePrevious}>
                     Previous
                   </Button>
                 ) : (
                   <div />
                 )}
                 {tabOrder.indexOf(activeTab) < tabOrder.length - 1 ? (
-                  <Button
-                    type='button'
-                    onClick={handleNext}
-                    className={`${buttonPrimaryClasses} ml-auto`}
-                  >
+                  <Button type='button' onClick={handleNext} className='ml-auto'>
                     Next
                   </Button>
                 ) : (
-                  <Button
-                    type='submit'
-                    disabled={isSubmitting}
-                    className={`${buttonPrimaryClasses} ml-auto`}
-                  >
-                    {isSubmitting ? 'Updating...' : 'Update Profile'}
+                  <Button type='submit' disabled={isSubmitting} className='ml-auto'>
+                    {isSubmitting ? (
+                      <>
+                        <Spinner />
+                        Updating…
+                      </>
+                    ) : (
+                      'Update Profile'
+                    )}
                   </Button>
                 )}
               </div>

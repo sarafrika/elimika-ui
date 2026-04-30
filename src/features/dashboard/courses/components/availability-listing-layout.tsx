@@ -55,7 +55,7 @@ export function AvailabilityListingLayout({
       : 'Pick a date range to start';
 
   return (
-    <div className='mx-auto w-full max-w-[1680px] space-y-6 pb-10'>
+    <div className='mx-auto w-full max-w-[1480px] space-y-6 pb-10'>
       <section className='border-border bg-card relative overflow-hidden rounded-[22px] border px-5 py-5 sm:px-6 sm:py-6'>
         <div className='from-primary/10 via-background absolute inset-0 bg-gradient-to-br to-transparent' />
         <div className='relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between'>

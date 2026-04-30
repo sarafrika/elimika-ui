@@ -1152,23 +1152,23 @@ export default function StudentClassTrainingPage({
   const { data: courseRubricsData } = useQuery({
     ...getCourseRubricsOptions({
       path: { courseUuid: course?.uuid as string },
-      query: { pageable: { page: 0, size: 50, sort: [] } },
+      query: { pageable: { page: 0, size: 50 } },
     }),
     enabled: !!course?.uuid,
   });
   const { data: courseAssessmentsData } = useQuery({
     ...getCourseAssessmentsOptions({
       path: { courseUuid: course?.uuid as string },
-      query: { pageable: { page: 0, size: 50, sort: [] } },
+      query: { pageable: { page: 0, size: 50 } },
     }),
     enabled: !!course?.uuid,
   });
   const { data: allAssignments } = useQuery({
-    ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 100, sort: [] } } }),
+    ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 100 } } }),
     enabled: !!classId,
   });
   const { data: allQuizzes } = useQuery({
-    ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 100, sort: [] } } }),
+    ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 100 } } }),
     enabled: !!classId,
   });
   const { data: assignmentSchedules } = useQuery({

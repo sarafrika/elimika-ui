@@ -1136,7 +1136,7 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
     queries: classes.map(classItem => ({
       ...getCourseLessonsOptions({
         path: { courseUuid: classItem.course_uuid as string },
-        query: { pageable: { page: 0, size: 100, sort: [] } },
+        query: { pageable: { page: 0, size: 100 } },
       }),
       enabled: role === 'instructor' && Boolean(classItem.course_uuid),
       staleTime: 5 * 60 * 1000,

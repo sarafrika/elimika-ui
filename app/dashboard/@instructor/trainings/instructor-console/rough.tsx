@@ -293,7 +293,7 @@ export default function ClassPreviewPage() {
 
             <div className='w-48 text-right'>
               <p className='text-muted-foreground text-sm'>Assignment Point</p>
-              <p className='text-lg font-semibold text-green-600'>80/100 (80%)</p>
+              <p className='text-lg font-semibold text-success'>80/100 (80%)</p>
             </div>
           </div>
 

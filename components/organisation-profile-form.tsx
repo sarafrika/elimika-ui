@@ -141,21 +141,7 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
     },
   ]);
 
-  // Keep all the styling classes
-  const _inputClasses =
-    'mt-1 block w-full rounded-md border-border shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 bg-card text-foreground';
-  const _labelClasses = 'block text-sm font-medium text-muted-foreground';
-  const buttonPrimaryClasses =
-    'inline-flex items-center justify-center rounded-md border border-transparent bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2';
-  const buttonSecondaryClasses =
-    'inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1';
-  const _buttonDangerClasses =
-    'inline-flex items-center justify-center rounded-md border border-destructive bg-transparent px-3 py-1.5 text-sm font-medium text-destructive shadow-sm hover:bg-destructive hover:text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-1';
-  const _cardBaseClasses = 'bg-white shadow-xl rounded-xl overflow-hidden';
   const cardContentClasses = 'p-6 sm:p-8';
-  const _sectionTitleClasses = 'text-2xl font-semibold text-foreground mb-6';
-  const _addMoreButtonClasses =
-    'inline-flex items-center text-sky-600 hover:text-sky-800 text-sm font-medium';
 
   const tabOrder = [
     'age-branch',
@@ -213,8 +199,10 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
               {currentTabIndex > 0 && (
                 <Button
                   type='button'
+                  variant='outline'
+                  size='lg'
                   onClick={handlePrevious}
-                  className={`${buttonSecondaryClasses} px-8 py-3 text-base`}
+                  className='px-8 py-3 text-base'
                 >
                   Previous
                 </Button>
@@ -222,8 +210,9 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
             </div>
             <Button
               type='button'
+              size='lg'
               onClick={handleNext}
-              className={`${buttonPrimaryClasses} w-full px-8 py-3 text-base sm:w-auto`}
+              className='w-full px-8 py-3 text-base sm:w-auto'
             >
               {isLastTab ? 'Save Profile Changes' : 'Next'}
             </Button>

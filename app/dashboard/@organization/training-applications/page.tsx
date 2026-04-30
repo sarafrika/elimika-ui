@@ -188,14 +188,14 @@ export default function TrainingApplicationsPage() {
           label: 'Approved',
           variant: 'default' as const,
           icon: CheckCircle2,
-          color: 'text-green-600',
+          color: 'text-success',
         };
       case 'REJECTED':
         return {
           label: 'Rejected',
           variant: 'destructive' as const,
           icon: XCircle,
-          color: 'text-red-600',
+          color: 'text-destructive',
         };
       default:
         return {
@@ -259,7 +259,7 @@ export default function TrainingApplicationsPage() {
             <CardTitle className='text-muted-foreground text-sm font-medium'>Approved</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-green-600'>{stats.approved}</div>
+            <div className='text-2xl font-bold text-success'>{stats.approved}</div>
           </CardContent>
         </Card>
         <Card>

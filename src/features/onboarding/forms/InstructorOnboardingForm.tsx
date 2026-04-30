@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import Spinner from '@/components/ui/spinner';
 import { getErrorMessage } from '@/lib/error-utils';
 import { createInstructor } from '@/services/client';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -201,7 +202,14 @@ export function InstructorOnboardingForm() {
           </Card>
 
           <Button type='submit' className='w-full' disabled={isSubmitting}>
-            {isSubmitting ? 'Creating Account...' : 'Complete Instructor Registration'}
+            {isSubmitting ? (
+              <>
+                <Spinner />
+                Creating account…
+              </>
+            ) : (
+              'Complete Instructor Registration'
+            )}
           </Button>
         </form>
       </Form>

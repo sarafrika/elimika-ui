@@ -82,7 +82,7 @@ export function AssignmentPageClient() {
     queries: classes.map(item => ({
       ...getCourseLessonsOptions({
         path: { courseUuid: item.course_uuid as string },
-        query: { pageable: { page: 0, size: 100, sort: [] } },
+        query: { pageable: { page: 0, size: 100 } },
       }),
       enabled: !!item.course_uuid,
       staleTime: 5 * 60 * 1000,
@@ -188,7 +188,7 @@ export function AssignmentPageClient() {
     queries: uniqueQuizUuids.map(uuid => ({
       ...getQuizAttemptsOptions({
         path: { quizUuid: uuid },
-        query: { pageable: { page: 0, size: 100, sort: [] } },
+        query: { pageable: { page: 0, size: 100 } },
       }),
       enabled: !!uuid,
       staleTime: 60 * 1000,

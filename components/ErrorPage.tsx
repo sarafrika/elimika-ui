@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 interface ErrorPageProps {
   message: string;
@@ -44,12 +45,9 @@ export default function ErrorPage({
             {details}
           </pre>
         )}
-        <button
-          onClick={handleAction}
-          className='bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive/40 mt-4 rounded-lg px-6 py-2 font-semibold shadow transition-colors focus:ring-2 focus:outline-none'
-        >
+        <Button onClick={handleAction} variant='destructive' size='lg' className='mt-4'>
           {actionLabel}
-        </button>
+        </Button>
       </section>
     </main>
   );

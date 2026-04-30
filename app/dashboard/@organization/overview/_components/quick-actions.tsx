@@ -61,24 +61,24 @@ export function QuickActions() {
 function getActionColorStyles(color: 'blue' | 'green' | 'purple' | 'orange' | 'slate' | 'pink') {
   const styles = {
     blue: {
-      icon: 'text-blue-600 dark:text-blue-400',
-      bg: 'bg-blue-100 dark:bg-blue-900/30',
+      icon: 'text-primary dark:text-blue-400',
+      bg: 'bg-primary/15 dark:bg-blue-900/30',
     },
     green: {
-      icon: 'text-green-600 dark:text-green-400',
-      bg: 'bg-green-100 dark:bg-green-900/30',
+      icon: 'text-success dark:text-success',
+      bg: 'bg-success/15 dark:bg-success/25',
     },
     purple: {
-      icon: 'text-purple-600 dark:text-purple-400',
-      bg: 'bg-purple-100 dark:bg-purple-900/30',
+      icon: 'text-accent-foreground dark:text-purple-400',
+      bg: 'bg-accent dark:bg-purple-900/30',
     },
     orange: {
       icon: 'text-orange-600 dark:text-orange-400',
       bg: 'bg-orange-100 dark:bg-orange-900/30',
     },
     slate: {
-      icon: 'text-slate-600 dark:text-slate-400',
-      bg: 'bg-slate-100 dark:bg-slate-900/30',
+      icon: 'text-muted-foreground dark:text-slate-400',
+      bg: 'bg-muted dark:bg-slate-900/30',
     },
     pink: {
       icon: 'text-pink-600 dark:text-pink-400',

@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
+import Spinner from '@/components/ui/spinner';
 import {
   AdminCredentialsCard,
   AdminPersonalInformationCard,
@@ -60,8 +61,19 @@ export default function AdminProfile() {
           <AdminCredentialsCard form={form} />
 
           <div className='flex justify-end pt-2'>
-            <Button type='submit' className='px-6'>
-              Save Changes
+            <Button
+              type='submit'
+              className='px-6'
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? (
+                <>
+                  <Spinner />
+                  Saving…
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </Button>
           </div>
         </form>

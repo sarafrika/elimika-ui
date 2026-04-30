@@ -41,7 +41,7 @@ export function ManageCourseCard({ course }: ManageCourseCardProps) {
                 <span>|</span>
                 <span>{course.level}</span>
               </div>
-              <div className='mt-1 flex items-center gap-1 text-[0.74rem] text-green-600'>
+              <div className='mt-1 flex items-center gap-1 text-[0.74rem] text-success'>
                 <BadgeCheck className='size-3.5' />
                 <span>Admin verified  •  Approved to train</span>
               </div>

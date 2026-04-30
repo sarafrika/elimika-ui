@@ -308,7 +308,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                         key={course?.uuid}
                         className='hover:bg-secondary dark:hover:bg-muted flex items-start gap-3 p-4 transition'
                       >
-                        <CheckCircle className='mt-1 h-5 w-5 text-green-600' />
+                        <CheckCircle className='mt-1 h-5 w-5 text-success' />
                         <div className='flex flex-col'>
                           <div>
                             <p className='font-medium'>{course?.title}</p>

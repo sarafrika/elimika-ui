@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import Spinner from '@/components/ui/spinner';
 import { createStudent } from '@/services/client';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
@@ -102,7 +103,14 @@ export function StudentOnboardingForm() {
           </Card>
 
           <Button type='submit' className='w-full' disabled={isSubmitting}>
-            {isSubmitting ? 'Creating Account...' : 'Create Student Account'}
+            {isSubmitting ? (
+              <>
+                <Spinner />
+                Creating account…
+              </>
+            ) : (
+              'Create Student Account'
+            )}
           </Button>
         </form>
       </Form>

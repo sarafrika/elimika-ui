@@ -486,7 +486,7 @@ export default function AdminProgramsPage() {
               value={stats.active}
             />
             <MetricCard
-              icon={<CheckCircle2 className='h-5 w-5 text-green-600' />}
+              icon={<CheckCircle2 className='h-5 w-5 text-success' />}
               label='Approved'
               value={stats.approved}
             />

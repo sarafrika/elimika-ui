@@ -97,7 +97,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
   const quizAttemptsQuery = useQuery({
     ...getQuizAttemptsOptions({
       path: { quizUuid: parsedTask?.uuid as string },
-      query: { pageable: { page: 0, size: 100, sort: [] } },
+      query: { pageable: { page: 0, size: 100 } },
     }),
     enabled: parsedTask?.taskType === 'quiz' && !!parsedTask?.uuid,
   });

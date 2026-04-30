@@ -57,7 +57,7 @@ export default function AssignmentListPage() {
   // const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery({
   //   ...getCoursesByInstructorOptions({
   //     path: { instructorUuid: instructor?.uuid as string },
-  //     query: { pageable: { page, size, sort: [] } },
+  //     query: { pageable: { page, size } },
   //   }),
   //   enabled: !!instructor?.uuid,
   // });
@@ -213,7 +213,7 @@ export default function AssignmentListPage() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className='text-red-600'
+                      className='text-destructive'
                       onClick={() => item.uuid && handleDeleteAssignment(item.uuid)}
                     >
                       <Trash className='mr-1 h-4 w-4' />

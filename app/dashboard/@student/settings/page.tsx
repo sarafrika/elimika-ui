@@ -261,7 +261,7 @@ const SettingsPage = () => {
                 </Button>
                 <Button variant='outline' size='icon' onClick={handleCopyAccountId}>
                   {copiedAccountId ? (
-                    <Check className='h-4 w-4 text-green-600' />
+                    <Check className='h-4 w-4 text-success' />
                   ) : (
                     <Copy className='h-4 w-4' />
                   )}
@@ -430,8 +430,8 @@ const SettingsPage = () => {
                   className='flex items-center justify-between rounded-lg border p-4'
                 >
                   <div className='flex items-center gap-4'>
-                    <div className='flex h-10 w-10 items-center justify-center rounded-full bg-green-100'>
-                      <FileText className='h-5 w-5 text-green-600' />
+                    <div className='flex h-10 w-10 items-center justify-center rounded-full bg-success/15'>
+                      <FileText className='h-5 w-5 text-success' />
                     </div>
                     <div>
                       <p className='font-medium'>{bill.description}</p>
@@ -691,7 +691,7 @@ const SettingsPage = () => {
                   </Button>
                   <Button variant='outline' size='icon' onClick={handleCopyAccountId}>
                     {copiedAccountId ? (
-                      <Check className='h-4 w-4 text-green-600' />
+                      <Check className='h-4 w-4 text-success' />
                     ) : (
                       <Copy className='h-4 w-4' />
                     )}
