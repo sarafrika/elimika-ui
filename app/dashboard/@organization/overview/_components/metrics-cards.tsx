@@ -131,19 +131,19 @@ export function OrganizationMetricsCards() {
 function getColorStyles(color: 'blue' | 'green' | 'purple' | 'orange') {
   const styles = {
     blue: {
-      text: 'text-blue-700 dark:text-blue-300',
-      icon: 'text-blue-600 dark:text-blue-400',
-      bg: 'bg-blue-100 dark:bg-blue-900/30',
+      text: 'text-primary dark:text-blue-300',
+      icon: 'text-primary dark:text-blue-400',
+      bg: 'bg-primary/15 dark:bg-blue-900/30',
     },
     green: {
-      text: 'text-green-700 dark:text-green-300',
-      icon: 'text-green-600 dark:text-green-400',
-      bg: 'bg-green-100 dark:bg-green-900/30',
+      text: 'text-success dark:text-success',
+      icon: 'text-success dark:text-success',
+      bg: 'bg-success/15 dark:bg-success/25',
     },
     purple: {
-      text: 'text-purple-700 dark:text-purple-300',
-      icon: 'text-purple-600 dark:text-purple-400',
-      bg: 'bg-purple-100 dark:bg-purple-900/30',
+      text: 'text-accent-foreground dark:text-purple-300',
+      icon: 'text-accent-foreground dark:text-purple-400',
+      bg: 'bg-accent dark:bg-purple-900/30',
     },
     orange: {
       text: 'text-orange-700 dark:text-orange-300',

@@ -8,8 +8,8 @@ import type {
 } from '../data';
 
 const iconToneClasses = {
-  amber: 'bg-amber-50 text-amber-600',
-  blue: 'bg-blue-50 text-blue-600',
+  amber: 'bg-warning/10 text-warning',
+  blue: 'bg-primary/10 text-primary',
   green: 'bg-green-50 text-green-600',
   violet: 'bg-violet-50 text-violet-600',
 } as const;

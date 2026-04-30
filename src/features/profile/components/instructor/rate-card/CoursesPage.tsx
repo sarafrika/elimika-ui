@@ -29,7 +29,7 @@ export default function CoursesPage() {
   const [page] = useState(0);
 
   const { data: allCourses } = useQuery(
-    getAllCoursesOptions({ query: { pageable: { page, size, sort: [] } } })
+    getAllCoursesOptions({ query: { pageable: { page, size } } })
   );
 
   const { data: appliedCourses } = useQuery({

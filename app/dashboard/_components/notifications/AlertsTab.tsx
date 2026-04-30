@@ -52,18 +52,18 @@ function getNotificationIcon(type: AlertNotificationType) {
 
 function getNotificationColor(type: AlertNotificationType) {
   const colorMap: Record<AlertNotificationType, string> = {
-    message: 'text-blue-500',
-    request: 'text-purple-500',
-    enrollment: 'text-green-500',
-    payment: 'text-emerald-500',
+    message: 'text-primary',
+    request: 'text-accent-foreground',
+    enrollment: 'text-success',
+    payment: 'text-success',
     class_update: 'text-orange-500',
     review: 'text-yellow-500',
     achievement: 'text-pink-500',
-    reminder: 'text-red-500',
-    system: 'text-gray-500',
+    reminder: 'text-destructive',
+    system: 'text-muted-foreground',
   };
 
-  return colorMap[type] || 'text-gray-500';
+  return colorMap[type] || 'text-muted-foreground';
 }
 
 function getPriorityBadgeVariant(priority: AlertNotificationPriority) {
@@ -124,7 +124,7 @@ export function AlertsTab() {
   };
 
   return (
-    <section className='space-y-5 bg-white'>
+    <section className="space-y-5 bg-background">
       <Tabs
         value={activeTab}
         onValueChange={value => {

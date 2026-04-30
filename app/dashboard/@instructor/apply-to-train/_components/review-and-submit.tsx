@@ -153,26 +153,26 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
       {/* Application Status */}
       <Card
         className={
-          isReadyToSubmit ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'
+          isReadyToSubmit ? 'border-success/30 bg-success/10' : 'border-yellow-200 bg-yellow-50'
         }
       >
         <CardContent className='pt-6'>
           <div className='flex items-start gap-4'>
             {isReadyToSubmit ? (
-              <CheckCircle className='mt-1 h-6 w-6 text-green-600' />
+              <CheckCircle className='mt-1 h-6 w-6 text-success' />
             ) : (
               <AlertTriangle className='mt-1 h-6 w-6 text-yellow-600' />
             )}
 
             <div className='flex flex-col'>
               <h4
-                className={`font-semibold ${isReadyToSubmit ? 'text-green-800' : 'text-yellow-800'}`}
+                className={`font-semibold ${isReadyToSubmit ? 'text-success' : 'text-yellow-800'}`}
               >
                 Application {isReadyToSubmit ? 'Ready for Submission' : 'Incomplete'}
               </h4>
 
               <p
-                className={`mt-1 text-sm ${isReadyToSubmit ? 'text-green-600' : 'text-yellow-600'}`}
+                className={`mt-1 text-sm ${isReadyToSubmit ? 'text-success' : 'text-yellow-600'}`}
               >
                 {status.completed} of {status.total} required sections completed (
                 {status.percentage}%)
@@ -333,7 +333,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
           <Separator />
 
           {/* Training Details */}
-          <div className='bg-red-100'>
+          <div className='bg-destructive/15'>
             <h4 className='mb-3 flex items-center gap-2'>
               <Calendar className='h-4 w-4' />
               Training Schedule & Delivery
@@ -379,7 +379,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
           <Separator />
 
           {/* Resources Summary */}
-          <div className='bg-red-100'>
+          <div className='bg-destructive/15'>
             <h4 className='mb-3 flex items-center gap-2'>
               <Monitor className='h-4 w-4' />
               Resources & Support
@@ -415,7 +415,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
           <Separator />
 
           {/* Compliance Status */}
-          <div className='bg-red-100'>
+          <div className='bg-destructive/15'>
             <h4 className='mb-3 flex items-center gap-2'>
               <Shield className='h-4 w-4' />
               Compliance Status
@@ -435,7 +435,7 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
               </div>
               {data?.gdprCompliant && (
                 <div className='mt-2 flex items-center gap-2 text-sm'>
-                  <CheckCircle className='h-3 w-3 text-green-600' />
+                  <CheckCircle className='h-3 w-3 text-success' />
                   <span>GDPR Compliant</span>
                 </div>
               )}

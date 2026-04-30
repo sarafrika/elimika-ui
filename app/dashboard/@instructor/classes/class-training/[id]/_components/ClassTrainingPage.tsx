@@ -43,13 +43,15 @@ import {
   getAssignmentSchedulesOptions,
   getAssignmentSchedulesQueryKey,
   getAssignmentSubmissionsOptions,
+  getClassScheduleQueryKey,
   getCourseAssessmentsOptions,
   getCourseRubricsOptions,
   getEnrollmentsForClassQueryKey,
   getQuizSchedulesOptions,
   getQuizSchedulesQueryKey,
   getRubricMatrixOptions,
-  markAttendanceMutation
+  markAttendanceMutation,
+  startScheduledInstanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -68,6 +70,7 @@ import {
   AlertCircle,
   ArrowLeft,
   BookOpen,
+  CheckCircle,
   ClipboardCheck,
   Loader2,
   MessageSquareText,
@@ -77,10 +80,11 @@ import {
   Send,
   ShieldCheck,
   SquarePen,
+  Video,
 } from 'lucide-react';
 import moment from 'moment';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -805,6 +809,10 @@ function SubmissionPanel({
   onSendNote,
   onMarkAttendance,
   isMarkingAttendance,
+  onStartClass,
+  onEndClass,
+  isStartingClass,
+  isEndingClass,
 }: {
   activeSchedule: TrainingSchedule | null;
   activeInstanceStudentsCount: number;
@@ -829,6 +837,10 @@ function SubmissionPanel({
   onSendNote: () => void;
   onMarkAttendance: (entry: RosterEntry, attended: boolean) => void;
   isMarkingAttendance: boolean;
+  onStartClass: () => void;
+  onEndClass: () => void;
+  isStartingClass: boolean;
+  isEndingClass: boolean;
 }) {
   const [activePanel, setActivePanel] = useState<'submissions' | 'rubric' | 'notes'>(
     'submissions'
@@ -1182,13 +1194,74 @@ function SubmissionPanel({
       </ScrollArea>
 
       <div className='border-border/70 border-t p-3'>
-        <Button
-          onClick={() => setIsEndClassConfirmOpen(true)}
-          className='bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 w-full rounded-md'
-          disabled={!activeSchedule?.uuid}
-        >
-          End Class
-        </Button>
+        {(() => {
+          const status = activeSchedule?.status?.toUpperCase();
+          const isCancelled = status === 'CANCELLED';
+          const isBlocked = status === 'BLOCKED';
+          const isConcluded =
+            Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
+          const canStart =
+            !!activeSchedule &&
+            !isCancelled &&
+            !isBlocked &&
+            !isConcluded &&
+            (activeSchedule.can_be_started ?? status === 'SCHEDULED');
+          const canEnd =
+            !!activeSchedule &&
+            !isCancelled &&
+            !isBlocked &&
+            !isConcluded &&
+            (activeSchedule.can_be_ended ?? status === 'ONGOING');
+          const isLifecycleLoading = isStartingClass || isEndingClass;
+
+          if (isConcluded) {
+            return (
+              <Button disabled className='h-10 w-full gap-2 rounded-md'>
+                <CheckCircle className='h-4 w-4' />
+                Class ended
+              </Button>
+            );
+          }
+
+          if (canEnd) {
+            return (
+              <Button
+                variant='destructive'
+                className='h-10 w-full gap-2 rounded-md'
+                disabled={isLifecycleLoading}
+                onClick={onEndClass}
+              >
+                {isEndingClass ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : (
+                  <CheckCircle className='h-4 w-4' />
+                )}
+                End Class
+              </Button>
+            );
+          }
+
+          return (
+            <Button
+              className='h-10 w-full gap-2 rounded-md'
+              disabled={!canStart || isLifecycleLoading}
+              onClick={onStartClass}
+            >
+              {isStartingClass ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <Video className='h-4 w-4' />
+              )}
+              {isCancelled
+                ? 'Cancelled'
+                : isBlocked
+                  ? 'Blocked'
+                  : !activeSchedule
+                    ? 'Select a session'
+                    : 'Start Class'}
+            </Button>
+          );
+        })()}
       </div>
 
       <ConfirmModal
@@ -1217,6 +1290,7 @@ export default function ClassTrainingPage({
 }: ClassTrainingPageProps = {}) {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const classId = classIdProp ?? (params?.id as string);
   const requestedScheduleId = requestedScheduleIdProp ?? searchParams.get('schedule') ?? '';
@@ -1401,27 +1475,90 @@ export default function ClassTrainingPage({
   const markAttendanceMut = useMutation(markAttendanceMutation());
   const addAssignmentScheduleMut = useMutation(createAssignmentScheduleMutation());
   const addQuizScheduleMut = useMutation(createQuizScheduleMutation());
+  const startScheduledInstanceMut = useMutation(startScheduledInstanceMutation());
+  const endScheduledInstanceMut = useMutation(endScheduledInstanceMutation());
+
+  const handleStartClass = () => {
+    if (!activeSchedule?.uuid) return;
+    const meetingLink = activeSchedule.meeting_url?.trim();
+    const meetingWindow = meetingLink
+      ? window.open('', '_blank', 'noopener,noreferrer')
+      : null;
+
+    startScheduledInstanceMut.mutate(
+      { path: { instanceUuid: activeSchedule.uuid } },
+      {
+        onSuccess: () => {
+          if (meetingLink) {
+            if (meetingWindow) {
+              meetingWindow.location.href = meetingLink;
+            } else {
+              window.open(meetingLink, '_blank', 'noopener,noreferrer');
+            }
+          }
+          toast.success(meetingLink ? 'Class started. Opening meeting.' : 'Class started.');
+          if (classId) {
+            queryClient.invalidateQueries({
+              queryKey: getClassScheduleQueryKey({
+                path: { uuid: classId },
+                query: { pageable: {} },
+              }),
+            });
+          }
+        },
+        onError: error => {
+          meetingWindow?.close();
+          toast.error(getApiToastMessage(error, 'Could not start class.'));
+        },
+      }
+    );
+  };
+
+  const handleEndClass = () => {
+    if (!activeSchedule?.uuid) return;
+
+    endScheduledInstanceMut.mutate(
+      { path: { instanceUuid: activeSchedule.uuid } },
+      {
+        onSuccess: () => {
+          toast.success('Class ended.');
+          if (classId) {
+            queryClient.invalidateQueries({
+              queryKey: getClassScheduleQueryKey({
+                path: { uuid: classId },
+                query: { pageable: {} },
+              }),
+            });
+          }
+          router.push('/dashboard/training-hub');
+        },
+        onError: error => {
+          toast.error(getApiToastMessage(error, 'Could not end class.'));
+        },
+      }
+    );
+  };
 
   const { data: courseRubricsData } = useQuery({
     ...getCourseRubricsOptions({
       path: { courseUuid: course?.uuid as string },
-      query: { pageable: { page: 0, size: 50, sort: [] } },
+      query: { pageable: { page: 0, size: 50 } },
     }),
     enabled: !!course?.uuid,
   });
   const { data: courseAssessmentsData } = useQuery({
     ...getCourseAssessmentsOptions({
       path: { courseUuid: course?.uuid as string },
-      query: { pageable: { page: 0, size: 50, sort: [] } },
+      query: { pageable: { page: 0, size: 50 } },
     }),
     enabled: !!course?.uuid,
   });
   const { data: allAssignments } = useQuery({
-    ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 100, sort: [] } } }),
+    ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 100 } } }),
     enabled: !!classId,
   });
   const { data: allQuizzes } = useQuery({
-    ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 100, sort: [] } } }),
+    ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 100 } } }),
     enabled: !!classId,
   });
   const { data: assignmentSchedules } = useQuery({
@@ -1971,6 +2108,10 @@ export default function ClassTrainingPage({
                 onSendNote={handleSendNote}
                 onMarkAttendance={handleMarkAttendance}
                 isMarkingAttendance={markAttendanceMut.isPending}
+                onStartClass={handleStartClass}
+                onEndClass={handleEndClass}
+                isStartingClass={startScheduledInstanceMut.isPending}
+                isEndingClass={endScheduledInstanceMut.isPending}
               />
             </SheetContent>
           </Sheet>
@@ -2220,11 +2361,14 @@ export default function ClassTrainingPage({
             onNoteDraftChange={setNoteDraft}
             isEndClassConfirmOpen={isEndClassConfirmOpen}
             setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
-            isEndingClass={endClassMut.isPending}
+            isEndingClass={endClassMut.isPending || endScheduledInstanceMut.isPending}
             onSendNote={handleSendNote}
             onMarkAttendance={handleMarkAttendance}
             isMarkingAttendance={markAttendanceMut.isPending}
-            handleEndClass={handleEndClass}
+            onStartClass={handleStartClass}
+            onEndClass={handleEndClass}
+            isStartingClass={startScheduledInstanceMut.isPending}
+            handleEndClass={() => { }}
           />
         </aside>
       </section>

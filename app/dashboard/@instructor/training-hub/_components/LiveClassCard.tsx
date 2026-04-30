@@ -1,7 +1,14 @@
 'use client';
 
-import { EllipsisVertical } from 'lucide-react';
+import { EllipsisVertical, Eye, Pencil, Play } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '../../../../../components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../../../../components/ui/dropdown-menu';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
 type LiveClassCardProps = {
@@ -50,22 +57,57 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
           </dl>
 
 
-          <button
-            aria-label='More options'
-            className='inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20'
-            type='button'
-          >
-            <EllipsisVertical className='size-4' />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                aria-label='More options'
+                variant='ghost'
+                size='icon'
+                className='rounded-full text-muted-foreground hover:bg-muted/50 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/20'
+              >
+                <EllipsisVertical className='size-4' />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align='end' className='w-44'>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/classes/overview/${liveClass.classUuid}`} className='flex items-center gap-2'>
+                  <Eye className='size-4' />
+                  View info
+                </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/class-instance/${liveClass.instanceUuid}`} className='flex items-center gap-2'>
+                  <Play className='size-4' />
+                  Open class
+                </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/classes/create-new?id=${liveClass.classUuid}`} className='flex items-center gap-2'>
+                  <Pencil className='size-4' />
+                  Edit class
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      <div className='mt-3 flex flex-row justify-end'>
+      <div className='mt-3 flex flex-row justify-end gap-2'>
         <Link
-          className='inline-flex h-10 items-center justify-center rounded-[8px] bg-primary px-5 text-[0.84rem] font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
-          href={liveClass.href}
+          href={`/dashboard/classes/overview/${liveClass.classUuid}`}
+          className='inline-flex h-9 items-center justify-center rounded-md border border-border/60 px-3 text-[0.8rem] font-medium text-muted-foreground transition hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20'
         >
-          Open Class
+          View info
+        </Link>
+
+        <Link
+          href={`/dashboard/class-instance/${liveClass.instanceUuid}`}
+          className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-[0.82rem] font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
+        >
+          Open class
         </Link>
       </div>
     </article>

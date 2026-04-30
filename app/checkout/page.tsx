@@ -94,16 +94,15 @@ export default function CheckoutPage() {
   const watchPaymentType = form.watch('paymentType');
   const watchInstallmentPlan = form.watch('installmentPlan');
 
-  // Fetch cart data
+  // HeyAPI's path serializer leaves `{cartId}` literal in the URL when path value is null/empty.
+  // Use a sentinel string when no cartId; `enabled: false` blocks the actual fetch.
   const cartQuery = useQuery({
-    ...getCartOptions({
-      path: { cartId: cartId ?? '' },
-    }),
+    ...getCartOptions({ path: { cartId: cartId ?? 'unset' } }),
     enabled: !!cartId,
     retry: 1,
   });
 
-  const cart = cartQuery.data?.data;
+  const cart = cartQuery.data ?? null;
   const cartItems = cart?.items ?? [];
 
   const subtotal = useMemo(() => {
@@ -112,9 +111,9 @@ export default function CheckoutPage() {
   }, [cart?.subtotal]);
 
   const tax = useMemo(() => {
-    if (!cart?.tax_total) return 0;
-    return typeof cart.tax_total === 'string' ? parseFloat(cart.tax_total) : cart.tax_total;
-  }, [cart?.tax_total]);
+    if (!cart?.tax) return 0;
+    return typeof cart.tax === 'string' ? parseFloat(cart.tax) : cart.tax;
+  }, [cart?.tax]);
 
   const total = useMemo(() => {
     if (!cart?.total) return 0;
@@ -471,18 +470,8 @@ export default function CheckoutPage() {
                   <div className='space-y-3'>
                     {cartItems.map((item: CartItemResponse) => (
                       <div key={item.id} className='flex gap-3'>
-                        <div className='bg-muted relative h-16 w-20 shrink-0 overflow-hidden rounded-lg'>
-                          {item.thumbnail ? (
-                            <img
-                              src={item.thumbnail}
-                              alt={item.title ?? ''}
-                              className='h-full w-full object-cover'
-                            />
-                          ) : (
-                            <div className='flex h-full items-center justify-center'>
-                              <Package className='text-muted-foreground h-6 w-6' />
-                            </div>
-                          )}
+                        <div className='bg-muted relative flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg'>
+                          <Package className='text-muted-foreground h-6 w-6' />
                         </div>
                         <div className='flex-1 space-y-1'>
                           <p className='text-sm font-medium'>{item.title}</p>

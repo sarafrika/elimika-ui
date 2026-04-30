@@ -72,7 +72,7 @@ export function CourseProgramSection({
     const contentTypeName = contentTypeMap[uuid];
 
     if (isLocked) return <Lock className='text-muted-foreground h-4 w-4' />;
-    if (isCompleted) return <CheckCircle className='h-4 w-4 text-green-600' />;
+    if (isCompleted) return <CheckCircle className='h-4 w-4 text-success' />;
 
     switch (contentTypeName) {
       case 'video':
@@ -183,7 +183,7 @@ export function CourseProgramSection({
                                 </Button>
 
                                 {isCompleted && (
-                                  <CheckCircle className='h-5 w-5 flex-shrink-0 text-green-600' />
+                                  <CheckCircle className='h-5 w-5 flex-shrink-0 text-success' />
                                 )}
                               </div>
                             );

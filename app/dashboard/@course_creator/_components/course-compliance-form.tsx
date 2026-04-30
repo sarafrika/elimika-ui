@@ -160,7 +160,7 @@ export const CourseComplianceForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         {showSuccessUI && (
           <div className='border-border bg-background flex flex-col items-center justify-center space-y-6 rounded-3xl border px-6 py-16 text-center'>
-            <CheckCircle className='h-14 w-14 text-green-500' />
+            <CheckCircle className='h-14 w-14 text-success' />
 
             <div className='space-y-2'>
               <h2 className='text-2xl font-semibold'>Your course is ready 🎉</h2>

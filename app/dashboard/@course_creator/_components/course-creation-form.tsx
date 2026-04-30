@@ -154,7 +154,7 @@ function SavingOverlay({ stage }: { stage: SaveStage }) {
                   }`}
               >
                 {isDone ? (
-                  <CheckCircle2 className='h-4 w-4 shrink-0 text-green-500' />
+                  <CheckCircle2 className='h-4 w-4 shrink-0 text-success' />
                 ) : isActive ? (
                   <Loader2 className='text-primary h-4 w-4 shrink-0 animate-spin' />
                 ) : (

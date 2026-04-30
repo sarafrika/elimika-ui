@@ -82,13 +82,15 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
       pageable: {
         page: 0,
         size: 1,
-        sort: [],
       },
     },
   });
 
+  if (userResponse.error || !userResponse.data) {
+    throw new Error('User not found');
+  }
   const userData = userResponse.data as SearchResponse;
-  if (userData.error || !userData.data?.content || userData.data.content.length === 0) {
+  if (!userData.data?.content || userData.data.content.length === 0) {
     throw new Error('User not found');
   }
 
@@ -107,14 +109,15 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
           pageable: {
             page: 0,
             size: 20,
-            sort: [],
           },
         },
       });
 
-      const respData = searchResponse.data as SearchResponse;
-      if (!respData.error && respData.data?.content && respData.data.content.length > 0) {
-        user.student = respData.data.content[0] as unknown as Student;
+      if (!searchResponse.error && searchResponse.data) {
+        const respData = searchResponse.data as SearchResponse;
+        if (respData.data?.content && respData.data.content.length > 0) {
+          user.student = respData.data.content[0] as unknown as Student;
+        }
       }
     }
 
@@ -128,19 +131,16 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
           pageable: {
             page: 0,
             size: 20,
-            sort: [],
           },
         },
       });
 
-      const responseData = instructorSearchResponse.data as SearchResponse;
-      if (
-        !responseData.error &&
-        responseData.data?.content &&
-        responseData.data.content.length > 0
-      ) {
-        const instructor = responseData.data.content[0] as unknown as Instructor;
-        user.instructor = instructor as unknown as UserProfileType['instructor'];
+      if (!instructorSearchResponse.error && instructorSearchResponse.data) {
+        const responseData = instructorSearchResponse.data as SearchResponse;
+        if (responseData.data?.content && responseData.data.content.length > 0) {
+          const instructor = responseData.data.content[0] as unknown as Instructor;
+          user.instructor = instructor as unknown as UserProfileType['instructor'];
+        }
       }
     }
 
@@ -155,17 +155,18 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
             pageable: {
               page: 0,
               size: 1,
-              sort: [],
             },
           },
         });
 
-        const creatorData = courseCreatorResponse.data as SearchResponse;
-        const creatorProfile = Array.isArray(creatorData.data?.content)
-          ? (creatorData.data.content[0] as unknown as CourseCreator)
-          : undefined;
-        if (creatorProfile) {
-          user.courseCreator = creatorProfile;
+        if (!courseCreatorResponse.error && courseCreatorResponse.data) {
+          const creatorData = courseCreatorResponse.data as SearchResponse;
+          const creatorProfile = Array.isArray(creatorData.data?.content)
+            ? (creatorData.data.content[0] as unknown as CourseCreator)
+            : undefined;
+          if (creatorProfile) {
+            user.courseCreator = creatorProfile;
+          }
         }
       } catch (_error) {}
     }

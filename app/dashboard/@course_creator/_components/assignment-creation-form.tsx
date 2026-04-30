@@ -686,7 +686,7 @@ export const AssignmentCreationForm = ({
                   {attachments?.data?.map((file: AssignmentAttachment) => (
                     <div
                       key={file.uuid}
-                      className='border-border hover:border-primary flex items-start justify-between rounded-lg border bg-white p-4 transition'
+                      className='border-border hover:border-primary bg-card flex items-start justify-between rounded-lg border p-4 transition'
                     >
                       <div className='flex items-start gap-3'>
                         <span className='flex h-8 w-8 items-center justify-center text-xl'>

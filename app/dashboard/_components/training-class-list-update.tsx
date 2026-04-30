@@ -61,7 +61,7 @@ export const getLocationBadgeColor = (location: string) => {
 export const getDifficultyColor = (difficulty: string) => {
   switch (difficulty?.toLowerCase()) {
     case 'beginner':
-      return 'bg-green-500/70';
+      return 'bg-success/70';
     case 'intermediate':
       return 'bg-primary/70';
     case 'advanced':
@@ -450,7 +450,7 @@ export function TrainingClassList({
             <SlidersHorizontal className='text-muted-foreground h-4 w-4' />
 
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className='w-full bg-white/80 sm:w-[150px]'>
+              <SelectTrigger className='w-full bg-card/80 sm:w-[150px]'>
                 <SelectValue placeholder='Location' />
               </SelectTrigger>
               <SelectContent>
@@ -462,7 +462,7 @@ export function TrainingClassList({
             </Select>
 
             <Select value={activeFilter} onValueChange={setActiveFilter}>
-              <SelectTrigger className='w-full bg-white/80 sm:w-[150px]'>
+              <SelectTrigger className='w-full bg-card/80 sm:w-[150px]'>
                 <SelectValue placeholder='Class Status' />
               </SelectTrigger>
               <SelectContent>

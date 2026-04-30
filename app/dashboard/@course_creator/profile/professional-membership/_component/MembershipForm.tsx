@@ -337,7 +337,7 @@ export default function ProfessionalBodySettings() {
                               'New membership'}
                           </h3>
                           {form.watch(`professional_bodies.${index}.is_active`) && (
-                            <Badge className='border-green-200 bg-green-100 text-xs text-green-700'>
+                            <Badge className='border-success/30 bg-success/15 text-xs text-success'>
                               Active
                             </Badge>
                           )}

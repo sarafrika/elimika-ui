@@ -42,16 +42,12 @@ export default function DashboardTopBar({ showToggle = true }: { showToggle?: bo
   const domain = useUserDomain();
   const { cartId: savedCartId } = useCartStore();
   const { data: cartData } = useQuery({
-    ...getCartOptions({
-      path: { cartId: savedCartId ?? '' },
-    }),
+    ...getCartOptions({ path: { cartId: savedCartId ?? 'unset' } }),
     enabled: !!savedCartId,
     retry: 1,
   });
 
-  // @ts-ignore
-  const cart = cartData?.data;
-  const cartItemCount = cart?.items?.length;
+  const cartItemCount = cartData?.items?.length ?? 0;
 
   return (
     <div className='bg-opacity-80 sticky top-0 z-40 flex items-center px-6 py-3 backdrop-blur-sm'>

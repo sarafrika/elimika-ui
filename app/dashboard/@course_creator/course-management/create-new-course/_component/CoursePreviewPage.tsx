@@ -234,7 +234,7 @@ export default function CustomCoursePreview() {
                       {/* <div className="space-y-3">
                         <div className="flex items-center gap-3">
                           {data?.data?.learning_rules?.completion_rules_enabled ? (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <CheckCircle className="w-5 h-5 text-success" />
                           ) : (
                             <div className="w-5 h-5 rounded-full border-2 border-muted" />
                           )}
@@ -242,7 +242,7 @@ export default function CustomCoursePreview() {
                         </div>
                         <div className="flex items-center gap-3">
                           {data?.data?.learning_rules?.drip_schedule_enabled ? (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <CheckCircle className="w-5 h-5 text-success" />
                           ) : (
                             <div className="w-5 h-5 rounded-full border-2 border-muted" />
                           )}
@@ -250,7 +250,7 @@ export default function CustomCoursePreview() {
                         </div>
                         <div className="flex items-center gap-3">
                           {data?.data?.compliance?.certificate_enabled ? (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <CheckCircle className="w-5 h-5 text-success" />
                           ) : (
                             <div className="w-5 h-5 rounded-full border-2 border-muted" />
                           )}
@@ -258,7 +258,7 @@ export default function CustomCoursePreview() {
                         </div>
                         <div className="flex items-center gap-3">
                           {data?.data?.compliance?.accessibility_captions ? (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <CheckCircle className="w-5 h-5 text-success" />
                           ) : (
                             <div className="w-5 h-5 rounded-full border-2 border-muted" />
                           )}
@@ -336,13 +336,13 @@ export default function CustomCoursePreview() {
               <h3 className='text-foreground mb-4 text-lg font-semibold'>Compliance</h3>
               <div className='space-y-3'>
              {data?.data?.compliance.copyright_confirmed && (
-                  <div className="flex items-center gap-2 text-sm text-green-700">
+                  <div className="flex items-center gap-2 text-sm text-success">
                     <CheckCircle className="w-5 h-5" />
                     <span>Copyright Verified</span>
                   </div>
                 )}
                 {data?.data?.compliance.accessibility_captions && (
-                  <div className="flex items-center gap-2 text-sm text-green-700">
+                  <div className="flex items-center gap-2 text-sm text-success">
                     <CheckCircle className="w-5 h-5" />
                     <span>Accessibility Compliant</span>
                   </div>

@@ -19,7 +19,7 @@ async function fetchOrganisationForUser(): Promise<Organisation | null> {
   const userResp = await search({
     query: {
       searchParams: { email_eq: email },
-      pageable: { page: 0, size: 1, sort: [] },
+      pageable: { page: 0, size: 1 },
     },
   });
 

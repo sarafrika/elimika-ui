@@ -354,7 +354,7 @@ export default function CertificatesSettings() {
                                 'New certification'}
                             </h3>
                             {form.watch(`certifications.${index}.is_verified`) && (
-                              <Badge className='border-green-200 bg-green-100 text-xs text-green-700'>
+                              <Badge className='border-success/30 bg-success/15 text-xs text-success'>
                                 Verified
                               </Badge>
                             )}

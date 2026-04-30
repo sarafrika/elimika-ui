@@ -46,16 +46,15 @@ export default function CartPage() {
   const queryClient = useQueryClient();
   const removeItemMut = useMutation(removeItemMutation());
 
-  // Fetch cart data
+  // HeyAPI's path serializer leaves `{cartId}` literal in the URL when path value is null/empty.
+  // Use a sentinel string when no cartId; `enabled: false` blocks the actual fetch.
   const cartQuery = useQuery({
-    ...getCartOptions({
-      path: { cartId: cartId ?? '' },
-    }),
+    ...getCartOptions({ path: { cartId: cartId ?? 'unset' } }),
     enabled: !!cartId,
     retry: 1,
   });
 
-  const cart = useMemo(() => cartQuery.data?.data, [cartQuery.data]);
+  const cart = cartQuery.data ?? null;
   const cartItems = useMemo(() => cart?.items ?? [], [cart?.items]);
   const isEmpty = cartItems.length === 0;
 
@@ -65,9 +64,9 @@ export default function CartPage() {
   }, [cart?.subtotal]);
 
   const tax = useMemo(() => {
-    if (!cart?.tax_total) return 0;
-    return typeof cart.tax_total === 'string' ? parseFloat(cart.tax_total) : cart.tax_total;
-  }, [cart?.tax_total]);
+    if (!cart?.tax) return 0;
+    return typeof cart.tax === 'string' ? parseFloat(cart.tax) : cart.tax;
+  }, [cart?.tax]);
 
   const total = useMemo(() => {
     if (!cart?.total) return 0;
@@ -279,7 +278,7 @@ function CartItem({
   item: CartItemResponse;
   handleRemoveItem: (id: string) => void;
 }) {
-  const title = item.title ?? item.variant_title ?? 'Course';
+  const title = item.title ?? 'Course';
   const quantity = item.quantity ?? 1;
   const unitPrice = useMemo(() => {
     const price = item.unit_price ?? item.subtotal;
@@ -296,26 +295,14 @@ function CartItem({
   return (
     <div className='flex gap-4'>
       {/* Course Image */}
-      <div className='bg-muted relative h-24 w-32 shrink-0 overflow-hidden rounded-2xl'>
-        {item.thumbnail ? (
-          <img src={item.thumbnail} alt={title} className='h-full w-full object-cover' />
-        ) : (
-          <div className='flex h-full items-center justify-center'>
-            <Package className='text-primary h-8 w-8' />
-          </div>
-        )}
+      <div className='bg-muted relative flex h-24 w-32 shrink-0 items-center justify-center overflow-hidden rounded-2xl'>
+        <Package className='text-primary h-8 w-8' />
       </div>
 
       {/* Course Info */}
       <div className='flex flex-1 flex-col justify-between'>
         <div className='space-y-1'>
           <h3 className='text-foreground font-semibold'>{title}</h3>
-          {item.description && (
-            <p className='text-muted-foreground line-clamp-1 text-sm'>{item.description}</p>
-          )}
-          {item.variant_sku && (
-            <p className='text-muted-foreground text-xs'>SKU: {item.variant_sku}</p>
-          )}
         </div>
 
         <div className='flex items-center justify-between'>

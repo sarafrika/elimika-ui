@@ -2,10 +2,10 @@ import { cn } from '@/lib/utils';
 import type { OverviewStat } from './overview-data';
 
 const toneClasses = {
-  blue: 'from-blue-600 to-blue-500',
-  green: 'from-emerald-500 to-teal-400',
-  orange: 'from-orange-500 to-amber-400',
-  red: 'from-red-500 to-rose-400',
+  blue: 'from-primary to-primary',
+  green: 'from-success to-teal-400',
+  orange: 'from-orange-500 to-warning',
+  red: 'from-destructive to-destructive',
 } as const;
 
 type OverviewStatCardProps = {

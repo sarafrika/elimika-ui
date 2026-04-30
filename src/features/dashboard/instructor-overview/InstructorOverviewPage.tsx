@@ -45,7 +45,7 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
               <OverviewClassInvitesPanel invites={classInvites} />
               <button
                 type='button'
-                className='flex max-h-[48px] w-full items-center justify-center gap-3 rounded-[10px] bg-cyan-600 px-4 py-3 text-center text-[0.96rem] font-medium text-white transition hover:bg-cyan-700'
+                className='flex max-h-[48px] w-full items-center justify-center gap-3 rounded-[10px] bg-primary px-4 py-3 text-center text-[0.96rem] font-medium text-white transition hover:bg-cyan-700'
               >
                 <CalendarDays className='size-4 shrink-0' />
                 <span>Invite Past Students</span>

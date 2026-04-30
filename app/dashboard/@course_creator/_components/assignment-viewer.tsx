@@ -122,8 +122,8 @@ export function AssignmentViewer({ assignment, open, onOpenChange }: AssignmentV
 
                   {/* {assignment.passing_score !== undefined && (
                                         <div className="flex items-center gap-3">
-                                            <div className="rounded-full bg-green-100 dark:bg-green-900 p-2">
-                                                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                            <div className="rounded-full bg-success/15 dark:bg-success/25 p-2">
+                                                <CheckCircle2 className="h-4 w-4 text-success dark:text-success" />
                                             </div>
                                             <div>
                                                 <p className="text-sm text-muted-foreground">Passing Score</p>

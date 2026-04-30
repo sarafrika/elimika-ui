@@ -54,7 +54,7 @@ export function AdminPersonalInformationCard({ form }: AdminProfileSectionsProps
                 variant='outline'
                 size='sm'
                 type='button'
-                className='text-red-500 hover:text-red-600'
+                className='text-destructive hover:text-destructive'
               >
                 Remove
               </Button>

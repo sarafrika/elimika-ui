@@ -37,8 +37,8 @@ export const BookingConfirmation: React.FC<Props> = ({ booking, instructor, onCl
     <Card className='space-y-6 p-6'>
       {/* Success Icon */}
       <div className='text-center'>
-        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100'>
-          <CheckCircle className='h-8 w-8 text-green-600' />
+        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/15'>
+          <CheckCircle className='h-8 w-8 text-success' />
         </div>
         <h2>Booking Confirmed!</h2>
         <p className='text-muted-foreground mt-2'>Your session has been successfully booked</p>
@@ -63,7 +63,7 @@ export const BookingConfirmation: React.FC<Props> = ({ booking, instructor, onCl
 
         <div>
           <p className='text-muted-foreground mb-1 text-sm'>Status</p>
-          <Badge className='bg-green-600'>Confirmed</Badge>
+          <Badge className='bg-success'>Confirmed</Badge>
         </div>
       </div>
 

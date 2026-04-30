@@ -78,7 +78,7 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
           />
         )}
         {website && (
-          <p className='text-blue-600 hover:underline'>
+          <p className='text-primary hover:underline'>
             🌐{' '}
             <a href={website} target='_blank' rel='noopener noreferrer'>
               Visit Website

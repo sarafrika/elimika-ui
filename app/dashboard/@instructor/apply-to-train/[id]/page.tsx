@@ -167,7 +167,7 @@ export default function ApplyToTrain() {
                   step.id === currentStep
                     ? 'text-primary font-medium'
                     : step.id < currentStep
-                      ? 'text-green-600 hover:text-green-700'
+                      ? 'text-success hover:text-success'
                       : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -176,7 +176,7 @@ export default function ApplyToTrain() {
                     step.id === currentStep
                       ? 'bg-primary text-primary-foreground'
                       : step.id < currentStep
-                        ? 'bg-green-600 text-white'
+                        ? 'bg-success text-white'
                         : 'bg-muted text-muted-foreground'
                   }`}
                 >

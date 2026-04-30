@@ -1,6 +1,8 @@
 import type React from 'react';
 import { useState } from 'react';
-import Spinner from '../../../../components/ui/spinner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import Spinner from '@/components/ui/spinner';
 
 interface DateTimeModalProps {
   isOpen: boolean;
@@ -9,7 +11,6 @@ interface DateTimeModalProps {
   pending: boolean;
 }
 
-// utils/date.ts (or inline if preferred)
 export const toDateTimeInputValue = (date: Date) => {
   const pad = (n: number) => n.toString().padStart(2, '0');
 
@@ -40,39 +41,34 @@ const DateTimeModal: React.FC<DateTimeModalProps> = ({ isOpen, onClose, onSave, 
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'>
-      <div className='w-full max-w-md space-y-4 rounded-lg bg-white p-6 shadow-lg'>
+      <div className='bg-card w-full max-w-md space-y-4 rounded-lg p-6 shadow-lg'>
         <h2 className='text-lg font-semibold'>Select Date & Time</h2>
 
         <div className='flex flex-col space-y-2'>
           <label className='text-sm font-medium'>Start Date & Time</label>
-          <input
+          <Input
             type='datetime-local'
             value={startDateTime ? toDateTimeInputValue(startDateTime) : ''}
             onChange={e => setStartDateTime(new Date(e.target.value))}
-            className='rounded-md border px-3 py-2'
           />
         </div>
 
         <div className='flex flex-col space-y-2'>
           <label className='text-sm font-medium'>End Date & Time</label>
-          <input
+          <Input
             type='datetime-local'
             value={endDateTime ? toDateTimeInputValue(endDateTime) : ''}
             onChange={e => setEndDateTime(new Date(e.target.value))}
-            className='rounded-md border px-3 py-2'
           />
         </div>
 
         <div className='flex justify-end gap-3 pt-4'>
-          <button onClick={onClose} className='bg-muted hover:bg-muted/80 rounded px-4 py-2'>
+          <Button variant='outline' onClick={onClose}>
             Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className='bg-primary text-primary-foreground hover:bg-primary/90 rounded px-4 py-2'
-          >
+          </Button>
+          <Button onClick={handleSubmit} disabled={pending}>
             {pending ? <Spinner /> : 'Save'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

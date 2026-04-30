@@ -49,7 +49,7 @@ export default function CourseMobileModal({
               onApprove(course);
               onClose();
             }}
-            className='bg-blue-600 text-white hover:bg-blue-700'
+            className='bg-primary text-primary-foreground hover:bg-primary/90'
           >
             <Edit className='mr-2 h-4 w-4' />
             Verify

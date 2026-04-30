@@ -368,8 +368,8 @@ export default function CourseCreatorProfilePage() {
 
             const badgeClass =
               membership.status_label === 'Active'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-gray-200 text-muted-foreground';
+                ? 'bg-success/15 text-success'
+                : 'bg-muted text-muted-foreground';
 
             const badgeText = membership.status_label === 'Active' ? 'Active' : 'Inactive';
 

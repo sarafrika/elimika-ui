@@ -103,21 +103,21 @@ function QuestionCard({ question, index }: { question: QuizQuestionWithOptions; 
                   key={option.uuid}
                   className={`flex items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
                     option.is_correct
-                      ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30'
+                      ? 'border-success/30 bg-success/10 dark:border-success/40 dark:bg-success/20'
                       : 'border-border/40 bg-muted/20'
                   }`}
                 >
                   {/* Correct / incorrect indicator */}
                   <div className='mt-0.5 shrink-0'>
                     {option.is_correct ? (
-                      <CheckCircle className='h-4 w-4 text-green-600' />
+                      <CheckCircle className='h-4 w-4 text-success' />
                     ) : (
                       <XCircle className='text-muted-foreground/50 h-4 w-4' />
                     )}
                   </div>
 
                   <span
-                    className={`flex-1 leading-snug ${option.is_correct ? 'font-medium text-green-800 dark:text-green-300' : 'text-foreground'}`}
+                    className={`flex-1 leading-snug ${option.is_correct ? 'font-medium text-success dark:text-success' : 'text-foreground'}`}
                   >
                     {option.option_text}
                   </span>

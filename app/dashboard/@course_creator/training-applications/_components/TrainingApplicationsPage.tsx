@@ -679,7 +679,7 @@ export function ReviewDialog({
       title: 'Approve Application',
       description: 'Approve this training application to allow the applicant to train this course.',
       icon: ThumbsUp,
-      color: 'text-green-600',
+      color: 'text-success',
     },
     reject: {
       title: 'Reject Application',

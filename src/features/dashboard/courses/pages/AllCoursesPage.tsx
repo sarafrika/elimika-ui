@@ -3,6 +3,7 @@
 import { CustomPagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -237,20 +238,23 @@ export default function AllCoursesPage() {
             </div>
 
             {filteredCourses.length === 0 && (
-              <div className='py-16 text-center'>
-                <BookOpen className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
-                <h3 className='mb-2'>No courses found</h3>
-                <p className='text-muted-foreground mb-4'>Try adjusting your search or filters</p>
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('all');
-                  }}
-                >
-                  Clear filters
-                </Button>
-              </div>
+              <EmptyState
+                icon={BookOpen}
+                title='No courses found'
+                description='Try adjusting your search or filters.'
+                action={
+                  <Button
+                    variant='outline'
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory('all');
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                }
+                className='my-8'
+              />
             )}
 
             {/* Load More */}

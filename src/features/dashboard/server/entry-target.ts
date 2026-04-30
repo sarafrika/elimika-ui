@@ -25,25 +25,33 @@ async function getServerDashboardUser() {
     return null;
   }
 
-  const { data } = await search({
-    query: {
-      searchParams: {
-        email_eq: session.user.email,
+  try {
+    const { data, error } = await search({
+      query: {
+        searchParams: {
+          email_eq: session.user.email,
+        },
+        pageable: {
+          page: 0,
+          size: 1,
+        },
       },
-      pageable: {
-        page: 0,
-        size: 1,
-        sort: [],
-      },
-    },
-  });
+    });
 
-  const payload = data as SearchResponse;
-  const user = Array.isArray(payload.data?.content)
-    ? (payload.data.content[0] as User | undefined)
-    : undefined;
+    if (error || !data) {
+      return null;
+    }
 
-  return user ?? null;
+    const payload = data as SearchResponse;
+    const content = payload.data?.content;
+    if (!Array.isArray(content) || content.length === 0) {
+      return null;
+    }
+
+    return (content[0] as User) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function extractUserDomains(user: User | null) {
