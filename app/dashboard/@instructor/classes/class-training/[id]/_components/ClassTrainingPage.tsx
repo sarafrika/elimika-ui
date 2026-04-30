@@ -812,7 +812,6 @@ function SubmissionPanel({
   onStartClass,
   onEndClass,
   isStartingClass,
-  isEndingClass,
 }: {
   activeSchedule: TrainingSchedule | null;
   activeInstanceStudentsCount: number;
@@ -825,7 +824,6 @@ function SubmissionPanel({
   handleEndClass: () => void;
   isEndClassConfirmOpen: boolean;
   setIsEndClassConfirmOpen: (value: boolean) => void;
-  isEndingClass: boolean;
   sentNotes: NoteEntry[];
   selectedStudentSubmissions: Array<{
     scheduleId: string;
@@ -1926,25 +1924,25 @@ export default function ClassTrainingPage({
     );
   };
 
-  const endClassMut = useMutation(endScheduledInstanceMutation());
-  const handleEndClass = () => {
-    if (!requestedScheduleId) return;
+  // const endClassMut = useMutation(endScheduledInstanceMutation());
+  // const handleEndClass = () => {
+  //   if (!requestedScheduleId) return;
 
-    endClassMut.mutate(
-      {
-        path: { instanceUuid: requestedScheduleId },
-      },
-      {
-        onSuccess: data => {
-          toast.success(data?.message || 'Class ended successfully.');
-          setIsEndClassConfirmOpen(false);
-        },
-        onError: error => {
-          toast.error(getApiToastMessage(error, 'Could not end class.'));
-        },
-      }
-    );
-  };
+  //   endClassMut.mutate(
+  //     {
+  //       path: { instanceUuid: requestedScheduleId },
+  //     },
+  //     {
+  //       onSuccess: data => {
+  //         toast.success(data?.message || 'Class ended successfully.');
+  //         setIsEndClassConfirmOpen(false);
+  //       },
+  //       onError: error => {
+  //         toast.error(getApiToastMessage(error, 'Could not end class.'));
+  //       },
+  //     }
+  //   );
+  // };
 
   const handleSendNote = () => {
     if (!noteDraft.trim()) {
@@ -2361,7 +2359,7 @@ export default function ClassTrainingPage({
             onNoteDraftChange={setNoteDraft}
             isEndClassConfirmOpen={isEndClassConfirmOpen}
             setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
-            isEndingClass={endClassMut.isPending || endScheduledInstanceMut.isPending}
+            isEndingClass={endScheduledInstanceMut.isPending}
             onSendNote={handleSendNote}
             onMarkAttendance={handleMarkAttendance}
             isMarkingAttendance={markAttendanceMut.isPending}
