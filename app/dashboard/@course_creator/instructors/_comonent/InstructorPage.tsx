@@ -679,7 +679,7 @@ function ProfileTabContent({
   education: InstructorEducation[];
   documents: InstructorDocument[];
   reviews: InstructorReview[];
-  instructorUserData: any;
+  instructorUserData: Instructor[];
   selectedApplicantName: string | undefined;
   selectedApplicantHeadline: string;
   selectedApplicantLocation: string;
