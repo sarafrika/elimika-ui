@@ -1,5 +1,6 @@
 'use client';
 
+import { PracticeActivityList } from '@/app/dashboard/@course_creator/_components/practice-activity-management';
 import ConfirmModal from '@/components/custom-modals/confirm-modal';
 import { LessonContentPreview } from '@/components/lesson-content/LessonContentPreview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -2110,6 +2111,9 @@ export default function ClassTrainingPage({
                 onEndClass={handleEndClass}
                 isStartingClass={startScheduledInstanceMut.isPending}
                 isEndingClass={endScheduledInstanceMut.isPending}
+                handleEndClass={handleEndClass}
+                isEndClassConfirmOpen={isEndClassConfirmOpen}
+                setIsEndClassConfirmOpen={setIsEndClassConfirmOpen}
               />
             </SheetContent>
           </Sheet>
@@ -2153,7 +2157,11 @@ export default function ClassTrainingPage({
                 </h2>
 
                 <div className='mt-2 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-xl">
+                  <Tabs
+                    value={activeTab}
+                    onValueChange={value => setActiveTab(value as typeof activeTab)}
+                    className='w-full max-w-xl'
+                  >
                     <TabsList className='bg-muted grid w-full grid-cols-3 rounded-lg p-1 dark:bg-muted/60'>
                       {TAB_ITEMS.map(tab => (
                         <TabsTrigger
@@ -2277,23 +2285,15 @@ export default function ClassTrainingPage({
                       {activeLesson?.title || 'Practice activities'}
                     </h3>
                     <p className='text-muted-foreground mt-2 text-sm'>
-                      Practice activities for this lesson will appear here once the API is available.
+                      Class activities tied to this skill — guide learners through these during class.
                     </p>
                   </div>
-                  <div className='grid gap-3 p-4 sm:grid-cols-2'>
-                    {['Warm-up drill', 'Guided practice', 'Independent attempt', 'Reflection prompt'].map(
-                      item => (
-                        <div
-                          key={item}
-                          className='border-border/70 bg-background rounded-md border p-3'
-                        >
-                          <p className='text-sm font-medium'>{item}</p>
-                          <p className='text-muted-foreground mt-1 text-xs'>
-                            Placeholder for lesson-specific practice activity data.
-                          </p>
-                        </div>
-                      )
-                    )}
+                  <div className='p-4'>
+                    <PracticeActivityList
+                      courseUuid={course?.uuid}
+                      lessonUuid={activeLesson?.uuid}
+                      variant='instructor'
+                    />
                   </div>
                 </article>
               </div>
