@@ -83,7 +83,7 @@ import {
 } from 'lucide-react';
 import moment from 'moment';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -1269,6 +1269,7 @@ export default function ClassTrainingPage({
 }: ClassTrainingPageProps = {}) {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const classId = classIdProp ?? (params?.id as string);
   const requestedScheduleId = requestedScheduleIdProp ?? searchParams.get('schedule') ?? '';
@@ -1507,6 +1508,7 @@ export default function ClassTrainingPage({
               }),
             });
           }
+          router.push('/dashboard/training-hub');
         },
         onError: error => {
           toast.error(getApiToastMessage(error, 'Could not end class.'));
