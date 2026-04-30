@@ -88,10 +88,16 @@ export function SkillOverviewCard({
 
         {/* CTAs */}
         <div className='mb-3 grid grid-cols-2 gap-2'>
-          <Button type='button' size='sm' className='h-9 rounded-md text-xs'>
+          <div className='flex items-center px-3 text-sm font-medium text-muted-foreground'>
             Contact Info
-          </Button>
-          <Button type='button' variant='outline' size='sm' className='h-9 gap-1.5 rounded-md text-xs'>
+          </div>
+
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            className='h-9 gap-1.5 rounded-md text-xs'
+          >
             <Share2 className='size-3.5' />
             Share
           </Button>

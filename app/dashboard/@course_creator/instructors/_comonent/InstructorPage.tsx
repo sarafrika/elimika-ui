@@ -762,7 +762,7 @@ function ProfileTabContent({
               <p className='text-muted-foreground text-sm font-medium'>
                 {selectedApplicantType === 'organisation' ? 'Organisation ID' : 'Instructor ID'}
               </p>
-              <p className='text-foreground font-semibold'>{selectedApplicantId}</p>
+              <p className='text-foreground font-semibold'>{selectedApplicantType === "instructor" ? instructorData?.uuid : selectedApplicantId}    </p>
             </div>
             <div>
               <p className='text-muted-foreground text-sm font-medium'>Status</p>

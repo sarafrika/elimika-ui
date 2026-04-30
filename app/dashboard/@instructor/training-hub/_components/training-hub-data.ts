@@ -13,6 +13,8 @@ export type TrainingHubManagedCourse = {
 };
 
 export type TrainingHubLiveClass = {
+  classUuid: string,
+  instanceUuid: string,
   id: string;
   day: string;
   time: string;

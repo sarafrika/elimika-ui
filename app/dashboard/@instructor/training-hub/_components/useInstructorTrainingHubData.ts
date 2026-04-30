@@ -331,7 +331,9 @@ export function useInstructorTrainingHubData() {
       const dayLabel = formatDayLabel(instance.start_time);
 
       return {
-        id: instance.uuid ?? classItem.uuid ?? classItem.title,
+        instanceUuid: instance.uuid,
+        classUuid: classItem.uuid,
+        id: instance.uuid,
         day: dayLabel,
         time: formatTimeRange(instance.start_time, instance.end_time),
         title: instance.title || classItem.course?.name || classItem.title,
