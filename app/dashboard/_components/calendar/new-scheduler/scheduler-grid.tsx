@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 import { categoryStyles, schedulerHours } from './data';
 import type { SchedulerEvent, SchedulerView } from './types';
 
@@ -84,6 +85,23 @@ function getStartHour(event: SchedulerEvent) {
 
 function getDurationHours(event: SchedulerEvent) {
   return Math.max((event.endTime.getTime() - event.startTime.getTime()) / 36e5, 0.75);
+}
+
+function getCurrentTimeOffset(currentTime: Date) {
+  return (currentTime.getMinutes() / 60) * rowHeight;
+}
+
+function CurrentTimeIndicator({ currentTime }: { currentTime: Date }) {
+  return (
+    <div
+      className='pointer-events-none absolute right-0 left-0 z-30 flex items-center'
+      style={{ top: `${getCurrentTimeOffset(currentTime)}px` }}
+      aria-hidden='true'
+    >
+      <span className='bg-destructive h-2 w-2 shrink-0 rounded-full' />
+      <span className='bg-destructive h-0.5 flex-1 shadow-sm' />
+    </div>
+  );
 }
 
 function EventBlock({
@@ -187,17 +205,20 @@ function CompactEvent({
 
 function DayGrid({
   currentDate,
+  currentTime,
   events,
   onEventClick,
   onEmptySlotClick,
 }: {
   currentDate: Date;
+  currentTime: Date;
   events: SchedulerEvent[];
   onEventClick?: (event: SchedulerEvent) => void;
   onEmptySlotClick?: (slot: EmptySlot) => void;
 }) {
   const today = new Date();
   const dayEvents = getDayEvents(events, currentDate);
+  const shouldShowCurrentTime = isSameCalendarDay(currentDate, currentTime);
   const currentDayLabel = currentDate.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -276,6 +297,9 @@ function DayGrid({
                   {formatHour(hour)}
                 </div>
                 <div className='relative min-h-[58px] border-l'>
+                  {shouldShowCurrentTime && currentTime.getHours() === hour ? (
+                    <CurrentTimeIndicator currentTime={currentTime} />
+                  ) : null}
                   {dayEvents
                     .filter(event => event.startTime.getHours() === hour)
                     .map(event => (
@@ -346,11 +370,13 @@ function DayGrid({
 
 function WeekGrid({
   currentDate,
+  currentTime,
   events,
   onEventClick,
   onEmptySlotClick,
 }: {
   currentDate: Date;
+  currentTime: Date;
   events: SchedulerEvent[];
   onEventClick?: (event: SchedulerEvent) => void;
   onEmptySlotClick?: (slot: EmptySlot) => void;
@@ -409,7 +435,7 @@ function WeekGrid({
                     key={`${day.toISOString()}-${hour}`}
                     role='button'
                     tabIndex={0}
-                    className='border-l px-1 py-1'
+                    className='relative border-l px-1 py-1'
                     onClick={() =>
                       onEmptySlotClick?.({
                         date: day,
@@ -435,6 +461,9 @@ function WeekGrid({
                       })
                     }
                   >
+                    {isSameCalendarDay(day, currentTime) && currentTime.getHours() === hour ? (
+                      <CurrentTimeIndicator currentTime={currentTime} />
+                    ) : null}
                     <div className='space-y-1'>
                       {hourEvents.map(event => (
                         <WeekEventBlock key={event.id} event={event} onClick={onEventClick} />
@@ -671,10 +700,18 @@ export function SchedulerGrid({
   onEventClick?: (event: SchedulerEvent) => void;
   onEmptySlotClick?: (slot: EmptySlot) => void;
 }) {
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 30 * 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   if (view === 'day') {
     return (
       <DayGrid
         currentDate={currentDate}
+        currentTime={currentTime}
         events={events}
         onEventClick={onEventClick}
         onEmptySlotClick={onEmptySlotClick}
@@ -706,6 +743,7 @@ export function SchedulerGrid({
   return (
     <WeekGrid
       currentDate={currentDate}
+      currentTime={currentTime}
       events={events}
       onEventClick={onEventClick}
       onEmptySlotClick={onEmptySlotClick}
