@@ -53,6 +53,7 @@ import type {
   PagedDtoLesson,
 } from '../../../../services/client/types.gen';
 import { ContentItem } from '../../@instructor/trainings/overview/[id]/page';
+import { PracticeActivityManager } from './practice-activity-management';
 
 type LessonCreationFormProps = {
   course: ApiResponseCourse | undefined;
@@ -61,8 +62,7 @@ type LessonCreationFormProps = {
 };
 
 type ContentType = 'TEXT' | 'VIDEO' | 'AUDIO' | 'PDF' | 'IMAGE';
-// const tabs = ['Lesson Content', 'Practice Activities'];
-const tabs = ['Lesson Content'];
+const tabs = ['Lesson Content', 'Practice Activities'];
 
 const lessonFormSchema = z.object({
   title: z.string().min(1),
@@ -903,41 +903,17 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
 
           {activeTab === 'Practice Activities' && (
             <div className='px-2'>
-              <div className='border-border flex flex-row items-center justify-between border-b p-2'>
-                <div>
-                  <p className='text-muted-foreground mt-1 text-sm'>
-                    Add class activities for this lesson
-                  </p>
-                </div>
-
-                {activeLessonId && (
-                  <Button
-                    size='sm'
-                    variant='outline'
-                    onClick={() => {
-                      resetContentForm();
-                      setShowContentForm(true);
-                    }}
-                  >
-                    <PlusCircle /> Add Practice Activity
-                  </Button>
-                )}
+              <div className='border-border border-b p-2'>
+                <p className='text-muted-foreground mt-1 text-sm'>
+                  Add class activities for this lesson
+                </p>
               </div>
 
               <CardContent className='space-y-4 pt-6'>
-                {!activeLessonId ? (
-                  <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 py-12 text-center'>
-                    <p className='text-foreground font-medium'>
-                      You need to save the lesson first to add practice activities.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className='bg-muted border-border rounded-lg border-2 border-dashed px-4 py-16 text-center'>
-                      <p className='text-foreground font-medium'>No lesson activity added yet</p>
-                    </div>
-                  </>
-                )}
+                <PracticeActivityManager
+                  courseUuid={course?.data?.uuid}
+                  lessonUuid={activeLessonId}
+                />
               </CardContent>
             </div>
           )}

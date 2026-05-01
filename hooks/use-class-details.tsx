@@ -114,9 +114,9 @@ export const useClassDetails = (classId?: string) => {
 
   const { data: instructorProfile } = useQuery({
     ...getUserByUuidOptions({
-      path: { uuid: instructorResp?.data?.user_uuid as string },
+      path: { uuid: instructorResp?.user_uuid as string },
     }),
-    enabled: !!instructorResp?.data?.user_uuid,
+    enabled: !!instructorResp?.user_uuid,
   });
 
 
@@ -139,8 +139,8 @@ export const useClassDetails = (classId?: string) => {
       program: programDetailData?.data,
       lessons: courseLessonsData?.data?.content ?? [],
       enrollments: classEnrollments?.data ?? [],
-      instructor: instructorResp?.data || {},
-      instructorProfile: instructorProfile?.data || {}
+      instructor: instructorResp,
+      instructorProfile: instructorProfile?.data,
     },
     isLoading,
     isError: isClassError,
