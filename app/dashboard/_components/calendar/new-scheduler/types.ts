@@ -6,11 +6,15 @@ export type SchedulerCategory = 'TVET / Vocational' | 'STEM' | 'Arts' | 'Sports'
 
 export type SchedulerEvent = {
   id: string;
+  instanceUuid?: string;
+  classDefinitionUuid?: string;
   title: string;
   course: string;
   instructor: string;
   instructorUuid?: string;
   location: string;
+  meetingLink?: string;
+  locationType?: string;
   startTime: Date;
   endTime: Date;
   status?: string;

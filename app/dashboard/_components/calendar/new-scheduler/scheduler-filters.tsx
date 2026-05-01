@@ -31,11 +31,11 @@ const filterGroups: Array<{
       label: 'Venue',
       placeholder: 'All Venues',
     },
-    {
-      key: 'category',
-      label: 'Department',
-      placeholder: 'All Departments',
-    },
+    // {
+    //   key: 'category',
+    //   label: 'Department',
+    //   placeholder: 'All Departments',
+    // },
   ];
 
 export function SchedulerFilters({
@@ -68,25 +68,25 @@ export function SchedulerFilters({
   };
 
   return (
-    <aside className="w-full bg-card rounded-md border p-3 shadow-sm xl:w-full">
-      <div className="mb-4 flex w-full items-center justify-between gap-2">
-        <h2 className="text-foreground text-sm font-semibold sm:text-base">
+    <aside className='bg-card w-full min-w-[220px] max-w-[20rem] rounded-md border p-3 shadow-sm xl:w-full'>
+      <div className='mb-4 flex w-full items-center justify-between gap-2'>
+        <h2 className='text-foreground text-sm font-semibold sm:text-base'>
           Filters
         </h2>
         <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 text-xs"
+          variant='ghost'
+          size='sm'
+          className='h-7 px-2 text-xs'
           onClick={onClear}
         >
           Clear All
         </Button>
       </div>
 
-      <div className="grid w-full gap-4 sm:grid-cols-1 xl:grid-cols-1">
+      <div className='grid w-full gap-4 sm:grid-cols-1 xl:grid-cols-1'>
         {filterGroups.map(group => (
-          <label key={group.label} className="flex w-full flex-col space-y-2">
-            <span className="text-foreground text-xs font-semibold sm:text-sm">
+          <label key={group.label} className='flex w-full min-w-0 flex-col space-y-2'>
+            <span className='text-foreground text-xs font-semibold sm:text-sm'>
               {group.label}
             </span>
 
@@ -94,10 +94,10 @@ export function SchedulerFilters({
               value={values[group.key] || ALL_VALUE}
               onValueChange={value => updateFilter(group.key, value)}
             >
-              <SelectTrigger className="h-9 w-full rounded-md text-xs sm:text-sm">
-                <SelectValue placeholder={group.placeholder} />
+              <SelectTrigger className='h-9 w-full max-w-full min-w-0 rounded-md text-xs sm:text-sm'>
+                <SelectValue className='truncate' placeholder={group.placeholder} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='max-w-[20rem]'>
                 <SelectItem value={ALL_VALUE}>
                   {group.placeholder}
                 </SelectItem>
@@ -111,16 +111,16 @@ export function SchedulerFilters({
           </label>
         ))}
 
-        <div className="w-full space-y-2">
-          <p className="text-foreground text-xs font-semibold sm:text-sm">
+        <div className='w-full space-y-2'>
+          <p className='text-foreground text-xs font-semibold sm:text-sm'>
             Status
           </p>
 
-          <div className="grid w-full gap-2 sm:grid-cols-1 xl:grid-cols-1">
+          <div className='grid w-full gap-2 sm:grid-cols-1 xl:grid-cols-1'>
             {options.statuses.map(status => (
               <label
                 key={status}
-                className="flex w-full items-center gap-2 text-xs sm:text-sm text-muted-foreground"
+                className='text-muted-foreground flex w-full items-center gap-2 text-xs sm:text-sm'
               >
                 <Checkbox
                   checked={
@@ -136,7 +136,7 @@ export function SchedulerFilters({
             ))}
 
             {!options.statuses.length && (
-              <p className="text-muted-foreground text-xs">
+              <p className='text-muted-foreground text-xs'>
                 No schedule statuses yet.
               </p>
             )}

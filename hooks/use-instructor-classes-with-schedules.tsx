@@ -1,15 +1,16 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import {
   getClassDefinitionsForInstructorOptions,
   getClassScheduleOptions,
   getCourseByUuidOptions,
+  getEnrollmentsForClassOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   GetClassDefinitionsForInstructorResponse,
   GetClassScheduleResponse,
   GetCourseByUuidResponse,
 } from '@/services/client/types.gen';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 type InstructorClass = NonNullable<
   NonNullable<GetClassDefinitionsForInstructorResponse['data']>[number]['class_definition']
@@ -60,6 +61,20 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     })),
   });
 
+  const enrollmentQueries = useQueries({
+    queries: classes.map(classItem => ({
+      ...getEnrollmentsForClassOptions({
+        path: { uuid: classItem.uuid as string },
+      }),
+      enabled: !!classItem.uuid,
+      staleTime: 10 * 60 * 1000,
+      gcTime: 60 * 60 * 1000,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
   const scheduleQueries = useQueries({
     queries: classes.map(classItem => ({
       ...getClassScheduleOptions({
@@ -81,8 +96,9 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
         ...classItem,
         course: courseQueries[index]?.data?.data ?? null,
         schedule: scheduleQueries[index]?.data?.data?.content ?? [],
+        enrollments: enrollmentQueries[index]?.data?.data ?? []
       })),
-    [classes, courseQueries, scheduleQueries]
+    [classes, courseQueries, scheduleQueries, enrollmentQueries]
   );
 
   return {
@@ -90,14 +106,17 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     isLoading:
       classesQuery.isLoading ||
       courseQueries.some(query => query.isLoading) ||
+      enrollmentQueries.some(query => query.isLoading) ||
       scheduleQueries.some(query => query.isLoading),
     isPending:
       classesQuery.isPending ||
       courseQueries.some(query => query.isPending) ||
+      enrollmentQueries.some(query => query.isPending) ||
       scheduleQueries.some(query => query.isPending),
     isError:
       classesQuery.isError ||
       courseQueries.some(query => query.isError) ||
+      enrollmentQueries.some(query => query.isError) ||
       scheduleQueries.some(query => query.isError),
   };
 }
