@@ -387,30 +387,30 @@ function WeekGrid({
 
   return (
     <section className='bg-card flex min-w-0 w-full flex-col overflow-hidden rounded-md ring-1 ring-border/60 shadow-sm'>
-      <div className='sticky top-0 z-10 bg-muted/40'>
-        <div className={cn('grid border-b', gridClass)}>
-          <div className='text-foreground px-2 py-2 text-center text-[10px] font-semibold sm:px-3 sm:text-xs'>
-            Time
-          </div>
-          {schedulerDays.map(day => (
-              <div
-                key={day.toISOString()}
-                className={cn(
-                  'border-l px-1 py-2 text-center text-[10px] font-semibold sm:px-2 sm:text-xs lg:text-sm',
-                  isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground'
-                )}
-            >
-              <span className='block sm:inline'>
-                {day.toLocaleDateString('en-US', { weekday: 'short' })}
-              </span>
-              <span className='sm:ml-1'>{day.getDate()}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className='bg-background max-h-[720px] overflow-x-auto overflow-y-auto'>
         <div className='min-w-max'>
+          <div className='sticky top-0 z-10 bg-muted/40'>
+            <div className={cn('grid border-b', gridClass)}>
+              <div className='text-foreground px-2 py-2 text-center text-[10px] font-semibold sm:px-3 sm:text-xs'>
+                Time
+              </div>
+              {schedulerDays.map(day => (
+                <div
+                  key={day.toISOString()}
+                  className={cn(
+                    'border-l px-1 py-2 text-center text-[10px] font-semibold sm:px-2 sm:text-xs lg:text-sm',
+                    isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground'
+                  )}
+                >
+                  <span className='block sm:inline'>
+                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                  </span>
+                  <span className='sm:ml-1'>{day.getDate()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {schedulerHours.map(hour => (
             <div
               key={hour}

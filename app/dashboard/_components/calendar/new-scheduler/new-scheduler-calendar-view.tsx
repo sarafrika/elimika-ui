@@ -13,14 +13,9 @@ import {
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { CalendarDays, ChevronLeft, ChevronRight, Filter, Info, Plus, Search, Settings } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { schedulerMetrics } from './data';
-import { SchedulerFilters } from './scheduler-filters';
-import { SchedulerGrid } from './scheduler-grid';
-import { SchedulerRightRail } from './scheduler-right-rail';
-import { SchedulerStatCard } from './scheduler-stat-card';
-import type { SchedulerEvent, SchedulerFilterOptions, SchedulerFilterValues, SchedulerMetric, SchedulerProfile, SchedulerView } from './types';
+import { useEffect, useMemo, useState } from 'react';
+import type { SchedulerCalendarData } from './calendar-utils';
 import {
   DEFAULT_FILTERS,
   DEFAULT_PREFERENCES,
@@ -32,46 +27,16 @@ import {
   getTimeValue,
   isSameCalendarDay,
 } from './calendar-utils';
-import type { InstructorSummary, LocationSummary, SchedulerCalendarData, StudentSummary } from './calendar-utils';
+import { schedulerMetrics } from './data';
+import { SchedulerFilters } from './scheduler-filters';
+import { SchedulerGrid } from './scheduler-grid';
+import { SchedulerRightRail } from './scheduler-right-rail';
+import { SchedulerStatCard } from './scheduler-stat-card';
+import type { SchedulerEvent, SchedulerFilterOptions, SchedulerFilterValues, SchedulerMetric, SchedulerProfile, SchedulerView } from './types';
 
 type Props = {
   profile: SchedulerProfile;
   data: SchedulerCalendarData;
-};
-
-const toLocationSummaries = (events: SchedulerEvent[]): LocationSummary[] =>
-  events
-    .map(event => ({
-      label: event.title,
-      detail: event.meetingLink || event.location,
-      meetingLink: event.meetingLink,
-    }))
-    .filter((item, index, array) => index === array.findIndex(entry => entry.detail === item.detail));
-
-const toInstructorSummaries = (events: SchedulerEvent[]): InstructorSummary[] => {
-  const map = new Map<string, InstructorSummary>();
-
-  events.forEach(event => {
-    if (!event.instructorUuid) return;
-
-    if (!map.has(event.instructorUuid)) {
-      map.set(event.instructorUuid, {
-        uuid: event.instructorUuid,
-        fullName: event.instructor,
-        subtitle: 'Attached to class data',
-      });
-    }
-  });
-
-  return Array.from(map.values());
-};
-
-const toStudentSummaries = (events: SchedulerEvent[]): StudentSummary[] => {
-  const uniqueStudents = Array.from(new Set(events.flatMap(event => event.students)));
-  return uniqueStudents.map((student, index) => ({
-    uuid: `${student}-${index}`,
-    fullName: student,
-  }));
 };
 
 export function SchedulerCalendarView({ profile, data }: Props) {
@@ -87,11 +52,8 @@ export function SchedulerCalendarView({ profile, data }: Props) {
 
   const createLabel = profile === 'student' ? 'View Session' : 'Create Session';
   const events = data.events;
-  const instructorSummaries = data.instructors.length ? data.instructors : toInstructorSummaries(events);
-  const allInstructorSummaries =
-    data.allInstructors.length > 0 ? data.allInstructors : instructorSummaries;
-  const studentSummaries = data.students.length ? data.students : toStudentSummaries(events);
-  const locationSummaries = useMemo(() => toLocationSummaries(events), [events]);
+  const allInstructorSummaries = data.allInstructors.length > 0 ? data.allInstructors : data.instructors;
+  const studentSummaries = data.students;
 
   const allEvents = useMemo(() => events, [events]);
   const filteredEvents = useMemo(
@@ -360,10 +322,8 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           <SchedulerRightRail
             currentDate={currentDate}
             events={visibleEvents}
-            instructors={instructorSummaries}
             allInstructors={allInstructorSummaries}
             students={studentSummaries}
-            locations={locationSummaries}
             showAllInstructors={showAllInstructors}
             onToggleInstructors={() => setShowAllInstructors(v => !v)}
           />
@@ -395,10 +355,8 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           <SchedulerRightRail
             currentDate={currentDate}
             events={visibleEvents}
-            instructors={instructorSummaries}
             allInstructors={allInstructorSummaries}
             students={studentSummaries}
-            locations={locationSummaries}
             showAllInstructors={showAllInstructors}
             onToggleInstructors={() => setShowAllInstructors(v => !v)}
           />

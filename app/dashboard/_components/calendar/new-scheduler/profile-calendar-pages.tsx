@@ -3,7 +3,17 @@
 import { useUserProfile } from '@/context/profile-context';
 import useAmdinClassesWithDetails from '@/hooks/use-admin-classes';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
-import { getClassDefinitionOptions, getClassDefinitionsForOrganisationOptions, getClassScheduleOptions, getCourseByUuidOptions, getInstructorByUuidOptions, getStudentScheduleOptions, getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getClassDefinitionOptions,
+  getClassDefinitionsForOrganisationOptions,
+  getClassScheduleOptions,
+  getCourseByUuidOptions,
+  getEnrollmentsForClassOptions,
+  getInstructorByUuidOptions,
+  getStudentByIdOptions,
+  getStudentScheduleOptions,
+  getUserByUuidOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, Course } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -19,6 +29,130 @@ function useUserOrganisationUuid() {
     profile?.organisation_affiliations?.[0]?.organisation_uuid ||
     undefined
   );
+}
+
+function useClassStudentSummaries(classUuids: Array<string | null | undefined>) {
+  const normalizedClassUuids = useMemo(
+    () => Array.from(new Set(classUuids.filter((uuid): uuid is string => Boolean(uuid && uuid.trim())))),
+    [classUuids]
+  );
+
+  const enrollmentQueries = useQueries({
+    queries: normalizedClassUuids.map(uuid => ({
+      ...getEnrollmentsForClassOptions({ path: { uuid } }),
+      enabled: !!uuid,
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const uniqueStudentEntries = useMemo(() => {
+    const entries: Array<{
+      classDefinitionUuid: string;
+      enrollmentUuid?: string;
+      studentUuid: string;
+    }> = [];
+
+    normalizedClassUuids.forEach((classDefinitionUuid, index) => {
+      const enrollments = enrollmentQueries[index]?.data?.data ?? [];
+      const seenInClass = new Set<string>();
+
+      // Keep one summary row per student within each class definition.
+      // The enrollments endpoint can return multiple rows for the same student,
+      // but the calendar rail only needs a single representative entry.
+      enrollments.forEach(enrollment => {
+        const studentUuid = enrollment.student_uuid?.trim();
+        if (!studentUuid || seenInClass.has(studentUuid)) return;
+
+        seenInClass.add(studentUuid);
+        entries.push({
+          classDefinitionUuid,
+          enrollmentUuid: enrollment.uuid,
+          studentUuid,
+        });
+      });
+    });
+
+    return entries;
+  }, [enrollmentQueries, normalizedClassUuids]);
+
+  const studentQueries = useQueries({
+    queries: uniqueStudentEntries.map(entry => ({
+      ...getStudentByIdOptions({ path: { uuid: entry.studentUuid } }),
+      enabled: !!entry.studentUuid,
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const studentUserUuids = useMemo(
+    () =>
+      studentQueries
+        //@ts-ignore
+        .map(query => query?.data?.data?.user_uuid)
+        .filter((uuid): uuid is string => !!uuid),
+    [studentQueries]
+  );
+
+  const studentUserQueries = useQueries({
+    queries: studentUserUuids.map(uuid => ({
+      ...getUserByUuidOptions({ path: { uuid } }),
+      enabled: !!uuid,
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+
+  const studentProfilesByUuid = useMemo(() => {
+    const map = new Map<string, any>();
+
+    studentUserQueries.forEach(query => {
+      const user = query?.data?.data;
+      if (user?.uuid) {
+        map.set(user.uuid, user);
+      }
+    });
+
+    return map;
+  }, [studentUserQueries]);
+
+  const students = useMemo<StudentSummary[]>(
+    () =>
+      uniqueStudentEntries
+        .map((entry, index) => {
+          // @ts-ignore
+          const student = studentQueries[index]?.data?.data;
+          if (!student?.uuid) return null;
+
+          const user = student.user_uuid ? studentProfilesByUuid.get(student.user_uuid)?.data : undefined;
+
+          return {
+            uuid: student.uuid,
+            fullName: student.full_name || user?.full_name || user?.display_name || 'Student',
+            avatarUrl: user?.profile_image_url,
+            classDefinitionUuid: entry.classDefinitionUuid,
+            enrollmentUuid: entry.enrollmentUuid,
+            studentEnrollmentKey: `${entry.classDefinitionUuid}:${student.uuid}`,
+          };
+        })
+        .filter(value => value !== null) as StudentSummary[],
+    [studentProfilesByUuid, studentQueries, uniqueStudentEntries]
+  );
+
+  return {
+    isLoading:
+      enrollmentQueries.some(query => query.isLoading) ||
+      studentQueries.some(query => query.isLoading) ||
+      studentUserQueries.some(query => query.isLoading),
+    students,
+  };
 }
 
 function AdminCalendarPage() {
@@ -84,8 +218,7 @@ function AdminCalendarPage() {
     const map = new Map<string, InstructorSummary>();
 
     instructorQueries.forEach(query => {
-      //@ts-ignore
-      const instructorRecord = query.data.data;
+      const instructorRecord = query.data;
       if (!instructorRecord?.uuid) return;
 
       const user = instructorRecord.user_uuid
@@ -101,6 +234,8 @@ function AdminCalendarPage() {
 
     return Array.from(map.values());
   }, [instructorProfilesByUuid, instructorQueries]);
+
+  const studentData = useClassStudentSummaries(classData.map(classDef => classDef.uuid ?? undefined));
 
   const events = useMemo(
     () =>
@@ -121,8 +256,8 @@ function AdminCalendarPage() {
     allInstructors: instructorSummaries,
     events,
     instructors: instructorSummaries,
-    isLoading: adminClassesQuery.loading || instructorQueries.some(query => query.isLoading),
-    students: [],
+    isLoading: adminClassesQuery.loading || instructorQueries.some(query => query.isLoading) || studentData.isLoading,
+    students: studentData.students,
   };
 
   return <SchedulerCalendarView profile='admin' data={data} />;
@@ -165,6 +300,10 @@ function InstructorCalendarPage() {
       : [];
   }, [instructorUuid, profile?.instructor?.full_name, profile?.instructor?.professional_headline]);
 
+
+  const studentData = useClassStudentSummaries(classData.map(classDef => classDef.uuid ?? undefined));
+  console.log(studentData, "STUD DAT")
+
   const events = useMemo(
     () =>
       classData
@@ -184,8 +323,8 @@ function InstructorCalendarPage() {
     allInstructors: instructorSummary,
     events,
     instructors: instructorSummary,
-    isLoading: instructorClassesQuery.isLoading,
-    students: [],
+    isLoading: instructorClassesQuery.isLoading || studentData.isLoading,
+    students: studentData.students,
   };
 
   return <SchedulerCalendarView profile='instructor' data={data} />;
@@ -297,6 +436,8 @@ function StudentCalendarPage() {
     [studentClassDefinitions, studentCourseLookup]
   );
 
+  const studentData = useClassStudentSummaries(studentClassData.map(classDef => classDef.uuid ?? undefined));
+
   const studentInstructorUuids = useMemo(
     () =>
       Array.from(
@@ -346,7 +487,7 @@ function StudentCalendarPage() {
     const map = new Map<string, InstructorSummary>();
 
     instructorQueries.forEach(query => {
-      //@ts-ignore
+      // @ts-ignore
       const instructorRecord = query.data.data;
       if (!instructorRecord?.uuid) return;
 
@@ -385,17 +526,25 @@ function StudentCalendarPage() {
   );
 
   const studentSummaries = useMemo(() => {
-    const map = new Map<string, StudentSummary>();
-    (studentScheduleQuery.data?.data ?? []).forEach(item => {
-      const key = item.enrollment_uuid || item.scheduled_instance_uuid || item.class_definition_uuid;
-      if (!key || map.has(key)) return;
-      map.set(key, {
-        uuid: key,
-        fullName: profile?.student?.full_name || 'Student',
-      });
-    });
-    return Array.from(map.values());
-  }, [profile?.student?.full_name, studentScheduleQuery.data]);
+    return studentData.students.length
+      ? studentData.students
+      : (studentScheduleQuery.data?.data ?? []).reduce<StudentSummary[]>((acc, item) => {
+        const classDefinitionUuid = item.class_definition_uuid?.trim();
+        const enrollmentUuid = item.enrollment_uuid?.trim() || item.scheduled_instance_uuid?.trim();
+        const studentUuid = enrollmentUuid || classDefinitionUuid;
+        if (!studentUuid) return acc;
+
+        if (acc.some(entry => entry.uuid === studentUuid)) return acc;
+
+        acc.push({
+          uuid: studentUuid,
+          fullName: profile?.student?.full_name || 'Student',
+          classDefinitionUuid,
+          enrollmentUuid,
+        });
+        return acc;
+      }, []);
+  }, [profile?.student?.full_name, studentData.students, studentScheduleQuery.data]);
 
   const data: SchedulerCalendarData = {
     allInstructors: instructorSummaries,
@@ -405,7 +554,8 @@ function StudentCalendarPage() {
       studentScheduleQuery.isLoading ||
       studentClassDefinitionQueries.some(query => query.isLoading) ||
       studentCourseQueries.some(query => query.isLoading) ||
-      instructorQueries.some(query => query.isLoading),
+      instructorQueries.some(query => query.isLoading) ||
+      studentData.isLoading,
     students: studentSummaries,
   };
 
@@ -554,6 +704,8 @@ function OrganizationCalendarPage() {
     });
   }, [instructorMap, uniqueInstructorUuids]);
 
+  const studentData = useClassStudentSummaries(classData.map(classDef => classDef.uuid ?? undefined));
+
   const data: SchedulerCalendarData = {
     allInstructors: instructorSummaries,
     events,
@@ -562,8 +714,9 @@ function OrganizationCalendarPage() {
       organizationClassesQuery.isLoading ||
       courseQueries.some(query => query.isLoading) ||
       instructorQueries.some(query => query.isLoading) ||
-      scheduleQueries.some(query => query.isLoading),
-    students: [],
+      scheduleQueries.some(query => query.isLoading) ||
+      studentData.isLoading,
+    students: studentData.students,
   };
 
   return <SchedulerCalendarView profile='organization' data={data} />;

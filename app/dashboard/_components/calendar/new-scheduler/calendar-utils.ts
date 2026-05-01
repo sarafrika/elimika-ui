@@ -28,6 +28,9 @@ export type StudentSummary = {
   uuid: string;
   fullName: string;
   avatarUrl?: string;
+  classDefinitionUuid?: string;
+  enrollmentUuid?: string;
+  studentEnrollmentKey?: string;
 };
 
 export type LocationSummary = {
@@ -251,8 +254,7 @@ export const mapScheduledInstance = (
     instance.title || classDetails?.title || classDetails?.course?.name || 'Scheduled class';
   const courseName = classDetails?.course?.name || classDetails?.title || 'Class';
   const instructorName = instructorDetails.fullName || 'Instructor pending';
-  const locationName =
-    instance.location_name || classDetails?.location_name || 'Location pending';
+  const locationName = instance.location_name || classDetails?.location_name || '';
 
   return {
     id: instance.uuid || `${instance.class_definition_uuid}-${instance.start_time}`,
@@ -284,7 +286,7 @@ export const mapStudentSchedule = (
   const title = item.title || classDetails?.title || classDetails?.course?.name || 'Scheduled class';
   const courseName = classDetails?.course?.name || classDetails?.title || 'Class';
   const instructorName = instructorDetails.fullName || 'Unknown Instructor';
-  const locationName = item.location_name || classDetails?.location_name || 'Location pending';
+  const locationName = item.location_name || classDetails?.location_name || '';
 
   return {
     id: item.scheduled_instance_uuid || item.enrollment_uuid || `${title}-${item.start_time}`,
@@ -332,7 +334,7 @@ export const mapClassSchedule = (
 
       const title = schedule.title || classDef.title || classDef.course?.name || 'Scheduled class';
       const courseName = classDef.course?.name || classDef.title || 'Class';
-      const locationName = schedule.location_name || classDef.location_name || 'Location pending';
+      const locationName = schedule.location_name || classDef.location_name || '';
 
       return {
         id: schedule.uuid || `${classDef.uuid}-${schedule.start_time}-${scheduleIndex}`,
