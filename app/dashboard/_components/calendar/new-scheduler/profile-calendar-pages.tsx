@@ -14,7 +14,7 @@ import {
   getStudentScheduleOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ClassDefinition, Course } from '@/services/client/types.gen';
+import type { ClassDefinition, Course, User } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { ClassWithScheduleInput, InstructorSummary, SchedulerCalendarData, StudentSummary } from './calendar-utils';
@@ -111,7 +111,7 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
 
 
   const studentProfilesByUuid = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, User>();
 
     studentUserQueries.forEach(query => {
       const user = query?.data?.data;
@@ -202,7 +202,7 @@ function AdminCalendarPage() {
   });
 
   const instructorProfilesByUuid = useMemo(() => {
-    const map = new Map<string, (typeof instructorProfileQueries)[number]['data']>();
+    const map = new Map<string, User>();
 
     instructorUserUuids.forEach((uuid, index) => {
       const queryData = instructorProfileQueries[index]?.data;
@@ -489,7 +489,7 @@ function StudentCalendarPage() {
 
   // ✅ FIXED: no index coupling
   const instructorProfilesByUuid = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, User>();
 
     instructorProfileQueries.forEach(query => {
       const user = query.data?.data;
