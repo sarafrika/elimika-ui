@@ -270,22 +270,38 @@ export default function StudentClassPage({
 
   const selectedModuleResources = selectedModule?.content?.data ?? [];
 
-  const totalInstances = selectedClass?.schedule?.length ?? 0;
   const visibleInstances = selectedClass?.schedule ?? [];
-  const completedInstances = visibleInstances.filter(
-    instance => instance.start_time && instance.end_time && new Date(instance.end_time) < new Date()
-  ).length;
-  const completionRate = visibleInstances.length
-    ? Math.round((completedInstances / visibleInstances.length) * 100)
-    : 0;
-  const totalSessions = selectedClass?.schedule?.length ?? 0;
+  const countableInstances = visibleInstances.filter(instance => {
+    const status = instance.status?.toUpperCase();
+    return status !== 'CANCELLED' && status !== 'BLOCKED';
+  });
+  const apiTotalSessions =
+    typeof selectedClass?.scheduled_session_count === 'number'
+      ? selectedClass.scheduled_session_count
+      : undefined;
+  const apiCompletedSessions =
+    typeof selectedClass?.completed_session_count === 'number'
+      ? selectedClass.completed_session_count
+      : undefined;
+  const apiSessionProgress =
+    typeof selectedClass?.class_progress_percentage === 'number'
+      ? selectedClass.class_progress_percentage
+      : undefined;
+  const totalSessions = apiTotalSessions ?? countableInstances.length;
   const completedSessions =
-    selectedClass?.schedule?.filter(session =>
-      session.start_time ? new Date(session.start_time) < new Date() : false
-    ).length ?? 0;
+    apiCompletedSessions ??
+    countableInstances.filter(
+      instance => instance.status?.toUpperCase() === 'COMPLETED' || instance.concluded_at
+    ).length;
   const remainingSessions = Math.max(totalSessions - completedSessions, 0);
-  const sessionProgress = totalSessions ? Math.round((completedSessions / totalSessions) * 100) : 0;
-
+  const sessionProgress =
+    apiSessionProgress !== undefined
+      ? Math.round(apiSessionProgress)
+      : totalSessions
+        ? Math.round((completedSessions / totalSessions) * 100)
+        : 0;
+  const totalInstances = totalSessions;
+  const completionRate = sessionProgress;
 
   const baseClassRoute = (classUuid: string) =>
     `/dashboard/learning-hub/classes/class-training/${classUuid}`;

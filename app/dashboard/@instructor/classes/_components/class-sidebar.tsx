@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ClassInstanceItem, DateFilter } from './new-class-page.utils';
 import { formatTimeRange } from './new-class-page.utils';
 
-const CLASSES_PER_PAGE = 7;
+const CLASSES_PER_PAGE = 10;
 
 function getClassIconClass(index: number) {
   const styles = [
@@ -142,8 +142,6 @@ export function ClassSidebar({
             aria-label='Search instructor classes'
           />
         </div>
-
-
       </div>
 
       <div className='space-y-2'>
@@ -187,7 +185,7 @@ export function ClassSidebar({
 
                     <div className='min-w-0'>
                       <p className='text-foreground truncate text-sm leading-5 font-semibold'>
-                        {classItem.courseName || classItem.title}
+                        {classItem.title} - ({classItem.courseName})
                       </p>
 
                       <div className='flex flex-row items-center justify-between'>
