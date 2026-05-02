@@ -7,18 +7,16 @@ import {
   CalendarDays,
   CheckCircle,
   Clock,
-  Copy,
   Edit,
   Eye,
   Facebook,
   FileQuestion,
   FileText,
   Globe,
-  Link,
   Linkedin,
-  Mail,
   MapPin,
   MessageCircle,
+  Share2,
   Twitter,
   Users,
 } from 'lucide-react';
@@ -27,10 +25,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
+import { LinkShareCard } from '@/components/shared/link-share-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import {
@@ -48,6 +46,7 @@ import { useClassRoster } from '@/hooks/use-class-roster';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useInstructorInfo } from '@/hooks/use-instructor-info';
 import { getResourceIcon } from '@/lib/resources-icon';
+import { buildSocialShareUrl, openShareWindow, type SharePlatform } from '@/lib/share';
 import { getCourseAssessmentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
@@ -68,18 +67,24 @@ export interface ContentItem {
   description?: string;
 }
 
-type SharePlatform = 'facebook' | 'twitter' | 'linkedin' | 'whatsapp' | 'email';
-
-type ShareOptions = {
-  title?: string;
-  links: string[];
-};
+const socialShareActions: Array<{
+  icon: typeof Facebook;
+  label: string;
+  platform: SharePlatform;
+}> = [
+  { icon: Facebook, label: 'Facebook', platform: 'facebook' },
+  { icon: Twitter, label: 'Twitter', platform: 'twitter' },
+  { icon: Linkedin, label: 'LinkedIn', platform: 'linkedin' },
+  { icon: MessageCircle, label: 'WhatsApp', platform: 'whatsapp' },
+  { icon: Share2, label: 'Email', platform: 'email' },
+];
 
 export default function ClassPreviewPage() {
   const router = useRouter();
   const params = useParams();
   const classId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const [siteOrigin, setSiteOrigin] = useState('');
 
   // State for video player and reading mode
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -105,6 +110,10 @@ export default function ClassPreviewPage() {
       },
     ]);
   }, [replaceBreadcrumbs, classId]);
+
+  useEffect(() => {
+    setSiteOrigin(window.location.origin);
+  }, []);
 
   const { data: combinedClass, isLoading: classIsLoading } = useClassDetails(classId as string);
   const classData = combinedClass?.class;
@@ -198,40 +207,33 @@ export default function ClassPreviewPage() {
     return sum + (courseData.lessons?.length || 0);
   }, 0);
 
-  // Helper to get enrollment URL
-  const getRegistrationLink = () => {
-    if (typeof window === 'undefined') return '';
+  const registrationLink = useMemo(() => {
+    if (!siteOrigin) return '';
 
     if (course?.uuid) {
-      return `${window.location.origin}/dashboard/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
+      return `${siteOrigin}/dashboard/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
     }
 
     if (program?.uuid) {
-      return `${window.location.origin}/dashboard/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
+      return `${siteOrigin}/dashboard/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
     }
 
     return '';
-  };
+  }, [classId, course?.uuid, program?.uuid, siteOrigin]);
 
-  const getInviteLink = () => {
-    if (typeof window === 'undefined') return '';
+  const inviteLink = useMemo(() => {
+    if (!siteOrigin) return '';
 
     if (course?.uuid) {
-      return `${window.location.origin}/class-invite?id=${classId}`;
+      return `${siteOrigin}/class-invite?id=${classId}`;
     }
 
     if (program?.uuid) {
-      return `${window.location.origin}/program-invite?id=${classId}`;
+      return `${siteOrigin}/program-invite?id=${classId}`;
     }
 
     return '';
-  };
-
-  const registrationLink = getRegistrationLink();
-  const inviteLink = getInviteLink();
-
-  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
-  const [registrationLinkCopied, setRegistrationLinkCopied] = useState(false);
+  }, [classId, course?.uuid, program?.uuid, siteOrigin]);
 
   // const totalLessons = classData.schedule.skills.reduce((acc, skill) => acc + skill.lessons.length, 0);
   // const totalHours = classData.schedule.skills.reduce((total, skill) => {
@@ -242,39 +244,6 @@ export default function ClassPreviewPage() {
 
   // const totalFee = classData?.visibility.isFree ? 0 : classData.visibility.price * totalLessons;
   const totalAssignments = cAssesssment?.data?.content?.length || 0;
-
-  const copyLink = async (
-    text: string,
-    setCopied?: React.Dispatch<React.SetStateAction<boolean>>
-  ) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      if (setCopied) {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    } catch (err) {}
-  };
-
-  const shareToSocial = (platform: SharePlatform, { title, links }: ShareOptions) => {
-    const joinedLinks = links.join('\n');
-    const encodedLinks = encodeURIComponent(joinedLinks);
-    const encodedText = encodeURIComponent(
-      title ? `Check out this class: ${title}` : 'Check this out'
-    );
-
-    const urls: Record<SharePlatform, string> = {
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedLinks}`,
-      twitter: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedLinks}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedLinks}`,
-      whatsapp: `https://wa.me/?text=${encodedText}%0A${encodedLinks}`,
-      email: `mailto:?subject=${encodeURIComponent(
-        title ?? 'Shared Links'
-      )}&body=${encodedText}%0A${encodedLinks}`,
-    };
-
-    window.open(urls[platform], '_blank', 'width=600,height=400');
-  };
 
   const { roster } = useClassRoster(classId);
 
@@ -850,121 +819,77 @@ export default function ClassPreviewPage() {
       </Tabs>
 
       {/* Registration Link and Sharing */}
-      <Card>
-        <CardHeader className='gap-4'>
-          <CardTitle className='flex items-center gap-2'>
-            <Link className='h-5 w-5' />
-            Class Invite Link
-          </CardTitle>
-          <div className='flex gap-2'>
-            <Input value={inviteLink} readOnly className='font-mono text-sm' />
-            <Button
-              onClick={() => copyLink(inviteLink, setInviteLinkCopied)}
-              variant='outline'
-              className='gap-2'
-            >
-              <Copy className='h-4 w-4' />
-              {inviteLinkCopied ? 'Copied!' : 'Copy'}
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardHeader className='gap-4'>
-          <CardTitle className='flex items-center gap-2'>
-            <Link className='h-5 w-5' />
-            Registration Link
-          </CardTitle>
-          <div className='flex gap-2'>
-            <Input value={registrationLink} readOnly className='font-mono text-sm' />
-            <Button
-              onClick={() => copyLink(registrationLink, setRegistrationLinkCopied)}
-              variant='outline'
-              className='gap-2'
-            >
-              <Copy className='h-4 w-4' />
-              {registrationLinkCopied ? 'Copied!' : 'Copy'}
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent className='space-y-4 px-6'>
-          <div className='space-y-3'>
-            <h4 className='font-medium'>Share Your Class</h4>
-            <div className='flex flex-wrap gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() =>
-                  shareToSocial('facebook', {
-                    title: classData?.title,
-                    links: [registrationLink, inviteLink],
-                  })
-                }
-                className='gap-2'
-              >
-                <Facebook className='h-4 w-4' />
-                Facebook
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() =>
-                  shareToSocial('twitter', {
-                    title: classData?.title,
-                    links: [registrationLink, inviteLink],
-                  })
-                }
-                className='gap-2'
-              >
-                <Twitter className='h-4 w-4' />
-                Twitter
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() =>
-                  shareToSocial('linkedin', {
-                    title: classData?.title,
-                    links: [registrationLink, inviteLink],
-                  })
-                }
-                className='gap-2'
-              >
-                <Linkedin className='h-4 w-4' />
-                LinkedIn
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() =>
-                  shareToSocial('whatsapp', {
-                    title: classData?.title,
-                    links: [registrationLink, inviteLink],
-                  })
-                }
-                className='gap-2'
-              >
-                <MessageCircle className='h-4 w-4' />
-                WhatsApp
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() =>
-                  shareToSocial('email', {
-                    title: classData?.title,
-                    links: [registrationLink, inviteLink],
-                  })
-                }
-                className='gap-2'
-              >
-                <Mail className='h-4 w-4' />
-                Email
-              </Button>
+      <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
+        <LinkShareCard
+          description='Send students directly to the class invite page.'
+          title='Class Invite Link'
+          url={inviteLink}
+          footer={
+            <div className='space-y-3'>
+              <h4 className='text-sm font-medium'>Share via</h4>
+              <div className='flex flex-wrap gap-2'>
+                {socialShareActions.map(({ icon: Icon, label, platform }) => (
+                  <Button
+                    key={label}
+                    aria-label={`Share class invite link on ${label}`}
+                    className='gap-2'
+                    disabled={!inviteLink}
+                    onClick={() =>
+                      openShareWindow(
+                        buildSocialShareUrl(platform, {
+                          title: classData?.title,
+                          url: inviteLink,
+                          description: `Check out this class: ${classData?.title ?? 'Class invite'}`,
+                        })
+                      )
+                    }
+                    size='sm'
+                    variant='outline'
+                  >
+                    <Icon className='h-4 w-4' />
+                    {label}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          }
+        />
+
+        <LinkShareCard
+          description='Copy or share the registration link for enrollment.'
+          title='Registration Link'
+          url={registrationLink}
+          footer={
+            <div className='space-y-3'>
+              <h4 className='text-sm font-medium'>Share via</h4>
+              <div className='flex flex-wrap gap-2'>
+                {socialShareActions.map(({ icon: Icon, label, platform }) => (
+                  <Button
+                    key={label}
+                    aria-label={`Share registration link on ${label}`}
+                    className='gap-2'
+                    disabled={!registrationLink}
+                    onClick={() =>
+                      openShareWindow(
+                        buildSocialShareUrl(platform, {
+                          title: classData?.title,
+                          url: registrationLink,
+                          description: `Check out this class: ${classData?.title ?? 'Registration link'}`,
+                        })
+                      )
+                    }
+                    size='sm'
+                    variant='outline'
+                  >
+                    <Icon className='h-4 w-4' />
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          }
+        />
+      </div>
 
       <LessonContentViewerDialog
         open={isViewerOpen}

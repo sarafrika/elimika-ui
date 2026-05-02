@@ -185,10 +185,11 @@ function AdminCalendarPage() {
     })),
   });
 
+  // ✅ FIXED: correct data shape
   const instructorUserUuids = useMemo(
     () =>
       instructorQueries
-        .map(query => query.data?.user_uuid)
+        .map(q => q.data?.data?.user_uuid)
         .filter((uuid): uuid is string => !!uuid),
     [instructorQueries]
   );
@@ -197,44 +198,54 @@ function AdminCalendarPage() {
     queries: instructorUserUuids.map(uuid => ({
       ...getUserByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
-      staleTime: 1000 * 60 * 5,
+      staleTime: 5 * 60 * 1000,
     })),
   });
 
+  // ✅ FIXED: no index coupling
   const instructorProfilesByUuid = useMemo(() => {
     const map = new Map<string, User>();
 
-    instructorUserUuids.forEach((uuid, index) => {
-      const queryData = instructorProfileQueries[index]?.data;
-      if (queryData) {
-        map.set(uuid, queryData);
+    instructorProfileQueries.forEach(query => {
+      const user = query.data?.data;
+      if (user?.uuid) {
+        map.set(user.uuid, user);
       }
     });
 
     return map;
-  }, [instructorProfileQueries, instructorUserUuids]);
+  }, [instructorProfileQueries]);
 
+  // ✅ FIXED: clean summary mapping
   const instructorSummaries = useMemo(() => {
     const map = new Map<string, InstructorSummary>();
 
     instructorQueries.forEach(query => {
-      // @ts-ignore
-      const instructorRecord = query.data.data;
-      if (!instructorRecord?.uuid) return;
+      const instructor = query.data?.data;
+      if (!instructor?.uuid) return;
 
-      const user = instructorRecord.user_uuid
-        ? instructorProfilesByUuid.get(instructorRecord.user_uuid)?.data
+      const user = instructor.user_uuid
+        ? instructorProfilesByUuid.get(instructor.user_uuid)
         : undefined;
-      map.set(instructorRecord.uuid, {
-        uuid: instructorRecord.uuid,
-        fullName: instructorRecord.full_name || user?.full_name || user?.display_name || 'Instructor pending',
+
+      map.set(instructor.uuid, {
+        uuid: instructor.uuid,
+        fullName:
+          instructor.full_name ||
+          user?.full_name ||
+          user?.display_name ||
+          'Instructor pending',
         avatarUrl: user?.profile_image_url,
-        subtitle: instructorRecord.professional_headline || user?.email || 'Attached to class data',
+        subtitle:
+          instructor.professional_headline ||
+          user?.email ||
+          'Attached to class data',
       });
     });
 
     return Array.from(map.values());
-  }, [instructorProfilesByUuid, instructorQueries]);
+  }, [instructorQueries, instructorProfilesByUuid]);
+
 
   const studentData = useClassStudentSummaries(classData.map(classDef => classDef.uuid ?? undefined));
 
