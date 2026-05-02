@@ -1,9 +1,9 @@
 'use client';
 
-import { LinkShareCard } from '@/components/shared/link-share-card';
 import { MapPin } from 'lucide-react';
 
 import type { SharedMySkillsProfile } from '../types';
+import { ProfileShareDialog } from './ProfileShareDialog';
 import { ProfileQrCode } from './ProfileQrCode';
 
 type SkillsWalletHeaderProps = {
@@ -57,15 +57,7 @@ export function SkillsWalletHeader({
         </div>
 
         <div className='flex flex-wrap items-start gap-2'>
-          <LinkShareCard
-            className='w-full max-w-[18rem]'
-            title='Share Profile'
-            description='Copy or share this public profile page.'
-            url={shareUrl ?? ''}
-            copyLabel='Copy profile link'
-            copiedLabel='Link copied'
-            shareLabel='Share profile'
-          />
+          <ProfileShareDialog profileName={profile.name} shareUrl={shareUrl ?? ''} />
           <ProfileQrCode targetUrl={shareUrl} />
         </div>
       </div>

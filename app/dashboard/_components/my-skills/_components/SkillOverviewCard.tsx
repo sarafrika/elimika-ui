@@ -1,16 +1,17 @@
-import { CalendarDays, Globe, Mail, MapPin, Phone, Share2 } from 'lucide-react';
+import { CalendarDays, Globe, Mail, MapPin, Phone } from 'lucide-react';
 import type React from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 
 import type { SharedMySkillsProfile, SharedSkill } from '../types';
+import { ProfileShareDialog } from './ProfileShareDialog';
 
 type SkillOverviewCardProps = {
   profile: SharedMySkillsProfile;
   skills: SharedSkill[];
   averageScore: number;
   levelLabel: string;
+  shareUrl: string;
 };
 
 export function SkillOverviewCard({
@@ -18,6 +19,7 @@ export function SkillOverviewCard({
   skills,
   averageScore,
   levelLabel,
+  shareUrl
 }: SkillOverviewCardProps) {
   const overviewSkills = skills.slice(0, 4);
   const levelNumber = Number(levelLabel.replace(/\D/g, '')) || 1;
@@ -92,15 +94,7 @@ export function SkillOverviewCard({
             Contact Info
           </div>
 
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            className='h-9 gap-1.5 rounded-md text-xs'
-          >
-            <Share2 className='size-3.5' />
-            Share
-          </Button>
+          <ProfileShareDialog profileName={profile.name} shareUrl={shareUrl ?? ''} triggerLabel='Share' />
         </div>
 
         {/* Profile facts */}

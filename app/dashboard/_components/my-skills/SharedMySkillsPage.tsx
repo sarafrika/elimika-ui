@@ -74,6 +74,7 @@ export function SharedMySkillsPage({
             skills={sortedSkills}
             averageScore={averageScore}
             levelLabel={levelLabel}
+            shareUrl={shareUrl as string}
           />
           <TopSkillsPanel skills={sortedSkills} />
           <PortfolioSummaryPanel summary={displaySummary} timeline={orderedTimeline} />
