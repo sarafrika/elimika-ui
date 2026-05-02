@@ -1,48 +1,22 @@
 'use client';
 
-import { MapPin, Share2 } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+import { MapPin } from 'lucide-react';
 
 import type { SharedMySkillsProfile } from '../types';
+import { ProfileShareDialog } from './ProfileShareDialog';
 import { ProfileQrCode } from './ProfileQrCode';
 
 type SkillsWalletHeaderProps = {
   profile: SharedMySkillsProfile;
-  onPrimaryAction?: () => void;
-  primaryActionLabel: string;
-  qrTargetUrl?: string;
+  shareUrl?: string;
   levelLabel: string;
 };
 
 export function SkillsWalletHeader({
   profile,
-  onPrimaryAction,
-  primaryActionLabel,
-  qrTargetUrl,
+  shareUrl,
   levelLabel,
 }: SkillsWalletHeaderProps) {
-  const handleShare = async () => {
-    if (onPrimaryAction) {
-      onPrimaryAction();
-      return;
-    }
-
-    if (typeof window === 'undefined') return;
-
-    const shareUrl = qrTargetUrl || window.location.href;
-    if (navigator.share) {
-      await navigator.share({
-        title: `${profile.name} Skills Wallet`,
-        text: `View ${profile.name}'s verified skills wallet.`,
-        url: shareUrl,
-      });
-      return;
-    }
-
-    await navigator.clipboard?.writeText(shareUrl);
-  };
-
   return (
     <section className='border-border/60 bg-card overflow-hidden rounded-lg border'>
       <div className='bg-muted/40 flex min-h-28 flex-col gap-3 p-3 sm:p-4 md:flex-row md:items-end md:justify-between'>
@@ -82,30 +56,9 @@ export function SkillsWalletHeader({
           </div>
         </div>
 
-        <div className='flex items-start gap-2'>
-          <div className='flex min-w-28 flex-col gap-2'>
-            {/* <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              className='h-8 justify-start rounded-md text-xs'
-              aria-label='Download CV'
-            >
-              <Download className='size-3.5' />
-              <span>Download CV</span>
-            </Button> */}
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              className='h-8 justify-start rounded-md text-xs'
-              onClick={handleShare}
-            >
-              <Share2 className='size-3.5' />
-              {primaryActionLabel}
-            </Button>
-          </div>
-          <ProfileQrCode targetUrl={qrTargetUrl} />
+        <div className='flex flex-wrap items-start gap-2'>
+          <ProfileShareDialog profileName={profile.name} shareUrl={shareUrl ?? ''} />
+          <ProfileQrCode targetUrl={shareUrl} />
         </div>
       </div>
     </section>

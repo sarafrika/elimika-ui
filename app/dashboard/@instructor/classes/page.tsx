@@ -18,7 +18,7 @@ import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import { startScheduledInstanceMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation } from '@tanstack/react-query';
-import { NotebookPen, PanelBottom, Search } from 'lucide-react';
+import { NotebookPen, PanelBottom, Plus, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -27,6 +27,7 @@ import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab'
 import { ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassSidebar } from './_components/class-sidebar';
 import { ClassStudentsTab } from './_components/class-students-tab';
+import { ClassTasksTab } from './_components/class-tasks-tab';
 import { ClassWaitingListTab } from './_components/class-waiting-list-tab';
 import {
   classTabs,
@@ -260,10 +261,7 @@ export default function NewClassPage() {
             router.push(href);
           },
           onError: error => {
-            const message = error instanceof Error && error.message
-              ? error.message
-              : 'Could not start this class instance.';
-            toast.error(message);
+            toast.error(error?.message || 'Could not start this class instance.');
           },
         }
       );
@@ -288,9 +286,10 @@ export default function NewClassPage() {
         <Button
           type='button'
           onClick={() => router.push('/dashboard/classes/create-new')}
-          className='bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success h-11 rounded-full px-10 text-base font-semibold sm:min-w-[236px]'
+          className='inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-success px-8 text-sm font-semibold text-success-foreground transition hover:bg-success/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/30'
         >
-          Create Class
+          <Plus className='h-4 w-4' />
+          Create New class
         </Button>
       </div>
 
@@ -435,7 +434,7 @@ export default function NewClassPage() {
                     ? 'Resume Lesson'
                     : 'Start Lesson'
                 }
-                onAddClasses={() => router.push('/dashboard/classes/create-new')}
+                onAddClasses={() => router.push(`/dashboard/classes/create-new?id=${selectedClass?.uuid}`)}
               />
             </TabsContent>
 
@@ -463,6 +462,7 @@ export default function NewClassPage() {
                 studentCount={roster.length}
                 totalInstances={totalInstances}
                 completionRate={completionRate}
+                selectedInstanceUuid={selectedInstanceUuid as string}
                 visibleInstances={visibleInstances}
                 onAddClasses={() => router.push('/dashboard/classes/create-new')}
               />
@@ -471,14 +471,16 @@ export default function NewClassPage() {
             <TabsContent value='announcements' className='mt-0'>
               <PlaceholderTab
                 title='Announcements'
-                description='This tab is ready for class-wide announcement tools and communication flows when you are ready to wire them in.'
+                description='No announcements yet. Updates, reminders, and important messages for this class will appear here.'
               />
             </TabsContent>
 
             <TabsContent value='tasks' className='mt-0'>
-              <PlaceholderTab
-                title='Tasks'
-                description='Use this section to connect follow-up work such as assignments, reviews, or grading actions for the selected class.'
+              <ClassTasksTab
+                classUuid={selectedClassUuid}
+                classTitle={selectedClass?.title}
+                courseTitle={selectedClass?.course?.name}
+                isLoading={isLoadingClasses || isLoadingLessons}
               />
             </TabsContent>
           </Tabs>

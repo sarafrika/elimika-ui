@@ -30,6 +30,7 @@ import { useUserProfile } from '../../../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from '../../../../@instructor/classes/_components/class-delivery-status-tab';
 import { ClassOverviewTab } from '../../../../@instructor/classes/_components/class-overview-tab';
 import { ClassSidebar } from '../../../../@instructor/classes/_components/class-sidebar';
+import { ClassTasksTab } from '../../../../@instructor/classes/_components/class-tasks-tab';
 import {
   classTabs,
   useFilteredClassInstances,
@@ -270,22 +271,38 @@ export default function StudentClassPage({
 
   const selectedModuleResources = selectedModule?.content?.data ?? [];
 
-  const totalInstances = selectedClass?.schedule?.length ?? 0;
   const visibleInstances = selectedClass?.schedule ?? [];
-  const completedInstances = visibleInstances.filter(
-    instance => instance.start_time && instance.end_time && new Date(instance.end_time) < new Date()
-  ).length;
-  const completionRate = visibleInstances.length
-    ? Math.round((completedInstances / visibleInstances.length) * 100)
-    : 0;
-  const totalSessions = selectedClass?.schedule?.length ?? 0;
+  const countableInstances = visibleInstances.filter(instance => {
+    const status = instance.status?.toUpperCase();
+    return status !== 'CANCELLED' && status !== 'BLOCKED';
+  });
+  const apiTotalSessions =
+    typeof selectedClass?.scheduled_session_count === 'number'
+      ? selectedClass.scheduled_session_count
+      : undefined;
+  const apiCompletedSessions =
+    typeof selectedClass?.completed_session_count === 'number'
+      ? selectedClass.completed_session_count
+      : undefined;
+  const apiSessionProgress =
+    typeof selectedClass?.class_progress_percentage === 'number'
+      ? selectedClass.class_progress_percentage
+      : undefined;
+  const totalSessions = apiTotalSessions ?? countableInstances.length;
   const completedSessions =
-    selectedClass?.schedule?.filter(session =>
-      session.start_time ? new Date(session.start_time) < new Date() : false
-    ).length ?? 0;
+    apiCompletedSessions ??
+    countableInstances.filter(
+      instance => instance.status?.toUpperCase() === 'COMPLETED' || instance.concluded_at
+    ).length;
   const remainingSessions = Math.max(totalSessions - completedSessions, 0);
-  const sessionProgress = totalSessions ? Math.round((completedSessions / totalSessions) * 100) : 0;
-
+  const sessionProgress =
+    apiSessionProgress !== undefined
+      ? Math.round(apiSessionProgress)
+      : totalSessions
+        ? Math.round((completedSessions / totalSessions) * 100)
+        : 0;
+  const totalInstances = totalSessions;
+  const completionRate = sessionProgress;
 
   const baseClassRoute = (classUuid: string) =>
     `/dashboard/learning-hub/classes/class-training/${classUuid}`;
@@ -496,6 +513,7 @@ export default function StudentClassPage({
                 totalInstances={totalInstances}
                 completionRate={completionRate}
                 visibleInstances={visibleInstances}
+                selectedInstanceUuid={selectedInstanceUuid as string}
                 onAddClasses={() => router.push('/dashboard/workspace/student/courses')}
                 roleLabel='Student view'
               />
@@ -504,14 +522,16 @@ export default function StudentClassPage({
             <TabsContent value='announcements' className='mt-0'>
               <PlaceholderTab
                 title='Announcements'
-                description='This tab is ready for class-wide announcement tools and communication flows when you are ready to wire them in.'
+                description='No announcements yet. Updates, reminders, and important messages for this class will appear here.'
               />
             </TabsContent>
 
             <TabsContent value='tasks' className='mt-0'>
-              <PlaceholderTab
-                title='Tasks'
-                description='Use this section to connect follow-up work such as assignments, reviews, or grading actions for the selected class.'
+              <ClassTasksTab
+                classUuid={selectedClassUuid}
+                classTitle={selectedClass?.title}
+                courseTitle={selectedClass?.course?.name}
+                isLoading={loading || classDefinitionQueries.some(query => query.isLoading)}
               />
             </TabsContent>
           </Tabs>

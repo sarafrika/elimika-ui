@@ -12,15 +12,23 @@ import {
   BookOpen,
   Building2,
   Check,
-  ChevronDown,
   Clock3,
   Layers3,
   MonitorPlay,
   Play,
+  Plus,
   UserRound,
+  Video
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../../../../../components/ui/tooltip';
+import { useUserDomain } from '../../../../../context/user-domain-context';
 import type { LessonContentItem, LessonModule } from './new-class-page.utils';
 import {
   formatDateOnly,
@@ -145,46 +153,81 @@ function ClassHero({
 
   return (
     <section className='border-border/70 bg-card/90 overflow-hidden rounded-lg border shadow-sm backdrop-blur'>
-      {roleLabel === "Instructor view" && <div className='m-3 flex justify-start sm:justify-end'>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={onAddClasses}
-          className='border-border/80 bg-background/70 hover:bg-muted h-10 rounded-md px-8 font-semibold'
-        >
-          Add Classes
-        </Button>
-      </div>}
 
+      <div className='flex flex-wrap items-center justify-end gap-2 p-3'>
+        {selectedClass?.meeting_link && (
+          <a
+            href={selectedClass.meeting_link}
+            target='_blank'
+            rel='noopener noreferrer'
+            className='inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border/60 bg-background px-4 text-xs font-medium text-foreground transition hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20'
+          >
+            <Video className='h-4 w-4' />
+            Join via link
+          </a>
+        )}
 
+        {roleLabel === 'Instructor view' && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type='button'
+                  variant='default'
+                  size='sm'
+                  onClick={onAddClasses}
+                  className='inline-flex h-9 items-center justify-center gap-2 rounded-lg px-4 text-xs font-medium'
+                >
+                  <Plus className='h-4 w-4' />
+                  Add classes
+                </Button>
+              </TooltipTrigger>
+
+              <TooltipContent side='top' className='max-w-[220px] text-xs leading-snug'>
+                You can add more class schedule instances by extending the class end date.
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
 
       <div className='border-border/70 grid gap-5 border-b p-4 md:grid-cols-[220px_minmax(0,1fr)] md:p-5'>
         <CourseArtwork imageUrl={courseImageUrl} courseName={courseName} />
 
         <div className='min-w-0'>
-          <div className='min-w-0 space-y-2'>
-            <h1 className='text-foreground text-2xl leading-tight font-semibold md:text-3xl'>
-              {courseName}
-            </h1>
+          <div className="min-w-0 space-y-3">
+            <div>
+              <h1 className="text-foreground text-2xl leading-tight font-semibold">
+                {selectedClass?.title}
+              </h1>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-medium text-muted-foreground">
+                {courseName}
+              </h2>
+            </div>
+
             <div title={plainCourseDescription || courseDescription}>
               <HTMLTextPreview
                 className={cn(
-                  'text-muted-foreground max-w-3xl overflow-hidden text-sm leading-6 md:text-base [&_p]:mb-0',
+                  'text-muted-foreground max-w-3xl overflow-hidden text-sm leading-6 [&_p]:mb-0',
                   isDescriptionExpanded ? '' : 'line-clamp-3 max-h-[4.5rem]'
                 )}
                 htmlContent={courseDescription}
               />
+
+              {plainCourseDescription.length > 140 && (
+                <button
+                  type="button"
+                  onClick={() => setIsDescriptionExpanded(v => !v)}
+                  aria-expanded={isDescriptionExpanded}
+                  className="text-primary hover:text-accent focus-visible:ring-ring mt-1 inline-flex rounded-sm text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  {isDescriptionExpanded ? 'Show less' : 'Read more'}
+                </button>
+              )}
             </div>
-            {plainCourseDescription.length > 140 ? (
-              <button
-                type='button'
-                onClick={() => setIsDescriptionExpanded(value => !value)}
-                aria-expanded={isDescriptionExpanded}
-                className='text-primary hover:text-accent focus-visible:ring-ring inline-flex rounded-sm text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
-              >
-                {isDescriptionExpanded ? 'Show less' : 'Read more'}
-              </button>
-            ) : null}
           </div>
 
           <div className='text-muted-foreground mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm'>
@@ -210,7 +253,6 @@ function ClassHero({
               {selectedClass.training_fee ? `$${selectedClass.training_fee}` : 'Class fee not set'}
             </p>
           </div>}
-
         </div>
       </div>
 
@@ -218,14 +260,14 @@ function ClassHero({
         <div className='grid items-center gap-3 md:grid-cols-[minmax(0,1fr)_auto]'>
           <Progress
             value={sessionProgress}
-            className='bg-muted h-3'
+            className='bg-muted h-1.5'
             indicatorClassName='bg-success'
           />
-          <p className='text-primary text-base font-semibold md:text-lg'>
+          <p className='text-primary text-sm font-semibold'>
             {remainingSessions} Sessions Remaining
           </p>
         </div>
-        <p className='text-foreground mt-3 text-lg'>{sessionProgress}% completed</p>
+        <p className='text-foreground mt-1 text-sm'>{sessionProgress}% completed</p>
         {selectedClassUuid ? (
           <Link href={startLessonHref} className='sr-only'>
             Open selected lesson
@@ -253,6 +295,9 @@ function CourseProgram({
   onStartLesson: (lessonUuid?: string | null, contentUuid?: string | null) => void;
   selectedLessonActionLabel: string;
 }) {
+  const domain = useUserDomain()
+  const isStudent = domain.activeDomain === "student"
+
   return (
     <section className='border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur'>
       <div className='mb-3 flex items-center justify-between gap-4'>
@@ -338,7 +383,15 @@ function CourseProgram({
                             </p>
                           </div>
 
-                          {isSelected ? (
+                          {isStudent ? (
+                            <Link
+                              href={lessonHref}
+                              onClick={event => event.stopPropagation()}
+                              className='text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                            >
+                              Open lesson
+                            </Link>
+                          ) : isSelected ? (
                             <Button
                               type='button'
                               onClick={event => {
@@ -355,7 +408,7 @@ function CourseProgram({
                             <Link
                               href={lessonHref}
                               onClick={event => event.stopPropagation()}
-                              className='text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                              className='text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
                             >
                               Open lesson
                             </Link>
@@ -409,13 +462,13 @@ function UpcomingClassesPanel({
     <aside className='border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur'>
       <div className='mb-3 flex items-center justify-between gap-4'>
         <h2 className='text-foreground text-xl font-semibold'>Upcoming Classes</h2>
-        <button
+        {/* <Button
           type='button'
           className='text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none'
         >
           View All
           <ChevronDown className='h-4 w-4 -rotate-90' />
-        </button>
+        </Button> */}
       </div>
 
       <div className='space-y-2'>

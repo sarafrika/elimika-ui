@@ -6,6 +6,7 @@ import {
   type SharedOpportunity,
 } from '@/app/dashboard/_components/my-skills';
 import { useVerifiedSkillsContent } from '@/app/dashboard/_components/my-skills/verified-skills/live-data';
+import { useProfileShareUrl } from '@/app/dashboard/_components/my-skills/use-profile-share-url';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import { useMultipleClassDetails } from '@/hooks/use-class-multiple-details';
@@ -36,6 +37,7 @@ export default function InstructorMySkillsPage() {
   const instructorContext = useInstructor();
   const instructor = user?.instructor ?? instructorContext;
   const verifiedSkillsContent = useVerifiedSkillsContent('instructor');
+  const shareUrl = useProfileShareUrl(user?.uuid ?? instructor?.user_uuid, 'instructor');
 
   const studentSearchQuery = useQuery({
     ...searchStudentsOptions({
@@ -115,7 +117,7 @@ export default function InstructorMySkillsPage() {
       content={verifiedSkillsContent}
       opportunities={opportunities}
       isLoading={verifiedSkillsContent.isLoading || classDetailsQuery.isLoading}
-      actionLabel='Share Profile'
+      shareUrl={shareUrl}
     />
   );
 }
