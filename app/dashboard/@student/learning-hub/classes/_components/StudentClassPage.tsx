@@ -30,6 +30,7 @@ import { useUserProfile } from '../../../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from '../../../../@instructor/classes/_components/class-delivery-status-tab';
 import { ClassOverviewTab } from '../../../../@instructor/classes/_components/class-overview-tab';
 import { ClassSidebar } from '../../../../@instructor/classes/_components/class-sidebar';
+import { ClassTasksTab } from '../../../../@instructor/classes/_components/class-tasks-tab';
 import {
   classTabs,
   useFilteredClassInstances,
@@ -512,6 +513,7 @@ export default function StudentClassPage({
                 totalInstances={totalInstances}
                 completionRate={completionRate}
                 visibleInstances={visibleInstances}
+                selectedInstanceUuid={selectedInstanceUuid as string}
                 onAddClasses={() => router.push('/dashboard/workspace/student/courses')}
                 roleLabel='Student view'
               />
@@ -520,14 +522,16 @@ export default function StudentClassPage({
             <TabsContent value='announcements' className='mt-0'>
               <PlaceholderTab
                 title='Announcements'
-                description='This tab is ready for class-wide announcement tools and communication flows when you are ready to wire them in.'
+                description='No announcements yet. Updates, reminders, and important messages for this class will appear here.'
               />
             </TabsContent>
 
             <TabsContent value='tasks' className='mt-0'>
-              <PlaceholderTab
-                title='Tasks'
-                description='Use this section to connect follow-up work such as assignments, reviews, or grading actions for the selected class.'
+              <ClassTasksTab
+                classUuid={selectedClassUuid}
+                classTitle={selectedClass?.title}
+                courseTitle={selectedClass?.course?.name}
+                isLoading={loading || classDefinitionQueries.some(query => query.isLoading)}
               />
             </TabsContent>
           </Tabs>

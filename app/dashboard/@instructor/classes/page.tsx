@@ -27,6 +27,7 @@ import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab'
 import { ClassOverviewTab } from './_components/class-overview-tab';
 import { ClassSidebar } from './_components/class-sidebar';
 import { ClassStudentsTab } from './_components/class-students-tab';
+import { ClassTasksTab } from './_components/class-tasks-tab';
 import { ClassWaitingListTab } from './_components/class-waiting-list-tab';
 import {
   classTabs,
@@ -461,6 +462,7 @@ export default function NewClassPage() {
                 studentCount={roster.length}
                 totalInstances={totalInstances}
                 completionRate={completionRate}
+                selectedInstanceUuid={selectedInstanceUuid as string}
                 visibleInstances={visibleInstances}
                 onAddClasses={() => router.push('/dashboard/classes/create-new')}
               />
@@ -469,14 +471,16 @@ export default function NewClassPage() {
             <TabsContent value='announcements' className='mt-0'>
               <PlaceholderTab
                 title='Announcements'
-                description='This tab is ready for class-wide announcement tools and communication flows when you are ready to wire them in.'
+                description='No announcements yet. Updates, reminders, and important messages for this class will appear here.'
               />
             </TabsContent>
 
             <TabsContent value='tasks' className='mt-0'>
-              <PlaceholderTab
-                title='Tasks'
-                description='Use this section to connect follow-up work such as assignments, reviews, or grading actions for the selected class.'
+              <ClassTasksTab
+                classUuid={selectedClassUuid}
+                classTitle={selectedClass?.title}
+                courseTitle={selectedClass?.course?.name}
+                isLoading={isLoadingClasses || isLoadingLessons}
               />
             </TabsContent>
           </Tabs>

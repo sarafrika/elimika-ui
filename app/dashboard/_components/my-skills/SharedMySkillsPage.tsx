@@ -22,9 +22,7 @@ type SharedMySkillsPageProps = {
   content: VerifiedSkillsContent;
   opportunities: SharedOpportunity[];
   isLoading?: boolean;
-  actionLabel: string;
-  onAction?: () => void;
-  qrTargetUrl?: string;
+  shareUrl?: string;
 };
 
 export function SharedMySkillsPage({
@@ -32,9 +30,7 @@ export function SharedMySkillsPage({
   content,
   opportunities: _opportunities,
   isLoading,
-  actionLabel,
-  onAction,
-  qrTargetUrl,
+  shareUrl,
 }: SharedMySkillsPageProps) {
   const { skills, summary, timeline } = content;
 
@@ -68,9 +64,7 @@ export function SharedMySkillsPage({
       <div className='mx-auto flex w-full max-w-7xl flex-col gap-4'>
         <SkillsWalletHeader
           profile={profile}
-          primaryActionLabel={actionLabel}
-          onPrimaryAction={onAction}
-          qrTargetUrl={qrTargetUrl}
+          shareUrl={shareUrl}
           levelLabel={levelLabel}
         />
 
