@@ -25,7 +25,27 @@ import {
   formatLabel,
 } from './new-class-page.utils';
 
-function resolveInstanceStatus(instance: any) {
+export type ClassScheduleInstance = {
+  class_definition_uuid: string;
+  instructor_uuid: string;
+  title: string;
+  status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+  location_type: 'ONLINE' | 'OFFLINE' | 'HYBRID';
+  max_participants: number;
+  can_be_cancelled: boolean;
+  can_be_started: boolean;
+  can_be_ended: boolean;
+  concluded_at: boolean;
+  is_currently_active: boolean;
+  start_time: Date;
+  end_time: Date;
+  duration_minutes: bigint; // because of 60n
+  duration_formatted: string;
+  time_range: string;
+  timezone: string;
+};
+
+function resolveInstanceStatus(instance: ClassScheduleInstance) {
   if (instance.status === 'COMPLETED' || instance.concluded_at) {
     return 'Completed';
   }
