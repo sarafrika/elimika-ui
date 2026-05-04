@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -70,8 +69,7 @@ import {
   Loader2,
   MessageSquareText,
   PanelRight,
-  Search,
-  SquarePen
+  Search
 } from 'lucide-react';
 import moment from 'moment';
 import Link from 'next/link';
@@ -425,127 +423,8 @@ function AssessmentTasksSection({
 }) {
   return (
     <div className='space-y-3'>
-      <div className='border-border/70 bg-background/80 min-w-0 rounded-md border p-3'>
-        <div className='flex items-start justify-between gap-3'>
-          <div className='min-w-0'>
-            <p className='text-sm font-semibold'>Attach assignment</p>
-            <p className='text-muted-foreground mt-1 text-xs'>
-              Pick an assignment, set the student deadline, then set when grading is due.
-            </p>
-          </div>
-          <Badge variant='outline' className='shrink-0'>
-            Assignment
-          </Badge>
-        </div>
-        <div className='mt-4 grid gap-3'>
-          <div className='space-y-1.5'>
-            <Label className='text-xs'>Assignment</Label>
-            <Select value={selectedAssignmentUuid} onValueChange={onAssignmentSelect}>
-              <SelectTrigger className='h-9'>
-                <SelectValue placeholder='Select assignment' />
-              </SelectTrigger>
-              <SelectContent>
-                {lessonAssignments.map(assignment => (
-                  <SelectItem key={assignment.uuid} value={assignment.uuid ?? ''}>
-                    {assignment.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs'>Due date</Label>
-              <Input
-                type='datetime-local'
-                value={assignmentDueAt}
-                onChange={event => onAssignmentDueAtChange(event.target.value)}
-                className='h-9'
-              />
-            </div>
-            <div className='space-y-1.5'>
-              <Label className='text-xs'>Grading due</Label>
-              <Input
-                type='datetime-local'
-                value={assignmentGradingDueAt}
-                onChange={event => onAssignmentGradingDueAtChange(event.target.value)}
-                className='h-9'
-              />
-            </div>
-          </div>
-          <Button
-            onClick={onAssignAssignment}
-            disabled={!selectedAssignmentUuid || !activeSchedule || isAssigningAssignment}
-            className='w-full'
-          >
-            <SquarePen className='mr-2 h-4 w-4' />
-            {isAssigningAssignment ? 'Assigning...' : 'Assign Assignment'}
-          </Button>
-        </div>
-      </div>
-
-      <div className='border-border/70 bg-background/80 min-w-0 rounded-md border p-3'>
-        <div className='flex items-start justify-between gap-3'>
-          <div className='min-w-0'>
-            <p className='text-sm font-semibold'>Attach quiz</p>
-            <p className='text-muted-foreground mt-1 text-xs'>
-              Schedule a lesson quiz and define its deadline details.
-            </p>
-          </div>
-          <Badge variant='outline' className='shrink-0'>
-            Quiz
-          </Badge>
-        </div>
-        <div className='mt-4 grid gap-3'>
-          <div className='space-y-1.5'>
-            <Label className='text-xs'>Quiz</Label>
-            <Select value={selectedQuizUuid} onValueChange={onQuizSelect}>
-              <SelectTrigger className='h-9'>
-                <SelectValue placeholder='Select quiz' />
-              </SelectTrigger>
-              <SelectContent>
-                {lessonQuizzes.map(quiz => (
-                  <SelectItem key={quiz.uuid} value={quiz.uuid ?? ''}>
-                    {quiz.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs'>Due date</Label>
-              <Input
-                type='datetime-local'
-                value={quizDueAt}
-                onChange={event => onQuizDueAtChange(event.target.value)}
-                className='h-9'
-              />
-            </div>
-            <div className='space-y-1.5'>
-              <Label className='text-xs'>Grading due</Label>
-              <Input
-                type='datetime-local'
-                value={quizGradingDueAt}
-                onChange={event => onQuizGradingDueAtChange(event.target.value)}
-                className='h-9'
-              />
-            </div>
-          </div>
-          <Button
-            onClick={onAssignQuiz}
-            disabled={!selectedQuizUuid || !activeSchedule || isAssigningQuiz}
-            variant='outline'
-            className='w-full'
-          >
-            <SquarePen className='mr-2 h-4 w-4' />
-            {isAssigningQuiz ? 'Assigning...' : 'Assign Quiz'}
-          </Button>
-        </div>
-      </div>
-
       <div className='border-border/70 bg-background/80 rounded-md border p-3'>
-        <p className='text-sm font-semibold'>Assigned for this lesson</p>
+        <p className='text-sm font-semibold'>Tasks assigned for this lesson</p>
         <div className='mt-3 space-y-2'>
           {activeScheduleAssignments.map(item => (
             <div key={item.uuid ?? item.assignment_uuid} className='rounded-md border p-3'>
@@ -1028,8 +907,8 @@ export default function StudentClassTrainingPage({
   const classData = data.class;
   const course = data.course;
   const schedules = data.schedule ?? [];
-  const instructorProfile = data?.instructorProfile;
-
+  //@ts-ignore
+  const instructorProfile = data?.instructor?.data;
 
   const {
     isLoading: lessonsLoading,
@@ -1243,11 +1122,11 @@ export default function StudentClassTrainingPage({
   const activeScheduleAssignments = useMemo(
     () =>
       assignmentScheduleItems
-        .filter(
-          item =>
-            item.class_lesson_plan_uuid === activeSchedule?.uuid &&
-            item.lesson_uuid === activeLesson?.uuid
-        )
+        // .filter(
+        //   item =>
+        //     item.class_lesson_plan_uuid === activeSchedule?.uuid &&
+        //     item.lesson_uuid === activeLesson?.uuid
+        // )
         .map(item => ({
           ...item,
           assignment:
@@ -1259,11 +1138,11 @@ export default function StudentClassTrainingPage({
   const activeScheduleQuizzes = useMemo(
     () =>
       quizScheduleItems
-        .filter(
-          item =>
-            item.class_lesson_plan_uuid === activeSchedule?.uuid &&
-            item.lesson_uuid === activeLesson?.uuid
-        )
+        // .filter(
+        //   item =>
+        //     item.class_lesson_plan_uuid === activeSchedule?.uuid &&
+        //     item.lesson_uuid === activeLesson?.uuid
+        // )
         .map(item => ({
           ...item,
           quiz: quizOptions.find(quiz => quiz.uuid === item.quiz_uuid) ?? null,
@@ -1643,7 +1522,7 @@ export default function StudentClassTrainingPage({
               <AvatarFallback>{getInitials(instructorName)}</AvatarFallback>
             </Avatar>
             <div className='hidden min-w-0 max-w-36 text-left sm:block lg:max-w-48'>
-              <p className='text-primary-foreground/70 text-[11px] leading-tight'>Instructor</p>
+              <p className='text-[11px] leading-tight'>Instructor</p>
               <p className='truncate text-xs font-semibold leading-tight'>{instructorName}</p>
             </div>
 
