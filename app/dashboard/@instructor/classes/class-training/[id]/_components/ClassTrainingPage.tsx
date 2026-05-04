@@ -965,7 +965,6 @@ function RosterPanel({
         <p className='text-xs text-muted-foreground mb-2'>Attendance rubric tracker</p>
 
         <div className='grid grid-cols-2 items-center gap-3'>
-
           {/* Donut */}
           <div
             className="grid size-[72px] shrink-0 place-items-center rounded-full"

@@ -1,14 +1,14 @@
 import { notFound } from 'next/navigation';
-import StudentInstructorSearchPage from './_components/student-instructor-search-page';
+import InstructorBookingPage from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
 import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
 
-type WorkspaceInstructorSearchPageProps = {
+type WorkspaceInstructorBookingPageProps = {
   params: Promise<{ domain: string }>;
 };
 
-export default async function StudentInstructorSearchRoute({
+export default async function WorkspaceInstructorBookingPage({
   params,
-}: WorkspaceInstructorSearchPageProps) {
+}: WorkspaceInstructorBookingPageProps) {
   const { domain } = await params;
   const normalizedDomain = normalizeStoredUserDomain(domain);
 
@@ -20,5 +20,5 @@ export default async function StudentInstructorSearchRoute({
     notFound();
   }
 
-  return <StudentInstructorSearchPage />;
+  return <InstructorBookingPage classes={[]} />;
 }
