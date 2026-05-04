@@ -1,5 +1,5 @@
-import InstructorBookingPage from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
+import StudentInstructorSearchPage from './_components/student-instructor-search-page';
 
-export default function StudentInstructorBookingRoute() {
-  return <InstructorBookingPage classes={[]} />;
+export default function StudentInstructorSearchRoute() {
+  return <StudentInstructorSearchPage />;
 }

@@ -1,18 +1,18 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   getAllInstructorsOptions,
   getInstructorExperienceOptions,
+  getInstructorReviewsOptions,
   getInstructorSkillsOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Instructor,
-  InstructorExperience,
   InstructorSkill,
   PagedDtoInstructorExperience,
-  User,
+  User
 } from '@/services/client/types.gen';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
+import { useQueries, useQuery } from '@tanstack/react-query';
 
 function useSearchTrainingInstructors() {
   const {
@@ -38,6 +38,22 @@ function useSearchTrainingInstructors() {
       })) || [],
   });
   const profiles: Array<User | null> = profileQueries.map(q => q.data?.data ?? null);
+
+  // Fetch reviews
+  const reviewsQueries = useQueries({
+    queries:
+      instructors.map(instructor => ({
+        ...getInstructorReviewsOptions({
+          path: { instructorUuid: instructor.uuid as string },
+        }),
+        enabled: !!instructor.uuid,
+      })) || [],
+  });
+
+  // Map reviews per instructor
+  const reviewsList = reviewsQueries.map(
+    q => q.data?.data ?? []
+  );
 
   // Fetch experiences
   const experienceQueries = useQueries({
@@ -99,6 +115,7 @@ function useSearchTrainingInstructors() {
       total_experience_years: totalExperience,
       specializations: skillArray,
       skill_categories: skillCategories,
+      reviews: reviewsList
     };
   });
 
