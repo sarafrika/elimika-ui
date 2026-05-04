@@ -7,6 +7,7 @@ type Props = {
   totalInstructors: number;
   topSkill: string;
   topLocation: string;
+  topInstructorName: string;
   topRating: number;
 };
 
@@ -14,6 +15,7 @@ export function SearchInstructorMetrics({
   totalInstructors,
   topSkill,
   topLocation,
+  topInstructorName,
   topRating,
 }: Props) {
   const cards = [
@@ -27,8 +29,8 @@ export function SearchInstructorMetrics({
     {
       icon: Star,
       label: 'Highest Rated Instructor',
-      value: `${topRating.toFixed(1)}`,
-      suffix: ' rating',
+      value: topInstructorName || 'No instructor yet',
+      suffix: topInstructorName ? ` • ${topRating.toFixed(1)} rating` : '',
       accent: 'text-warning',
       iconBg: 'bg-warning/10',
     },

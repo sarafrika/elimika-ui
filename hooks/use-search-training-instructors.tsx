@@ -1,6 +1,7 @@
 import {
   getAllInstructorsOptions,
   getInstructorExperienceOptions,
+  getInstructorRatingSummaryOptions,
   getInstructorReviewsOptions,
   getInstructorSkillsOptions,
   getUserByUuidOptions,
@@ -9,6 +10,7 @@ import type {
   Instructor,
   InstructorSkill,
   PagedDtoInstructorExperience,
+  InstructorReview,
   User
 } from '@/services/client/types.gen';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
@@ -50,10 +52,17 @@ function useSearchTrainingInstructors() {
       })) || [],
   });
 
-  // Map reviews per instructor
-  const reviewsList = reviewsQueries.map(
-    q => q.data?.data ?? []
-  );
+  const reviewsList: InstructorReview[][] = reviewsQueries.map(q => q.data?.data ?? []);
+
+  const ratingSummaryQueries = useQueries({
+    queries:
+      instructors.map(instructor => ({
+        ...getInstructorRatingSummaryOptions({
+          path: { instructorUuid: instructor.uuid as string },
+        }),
+        enabled: !!instructor.uuid,
+      })) || [],
+  });
 
   // Fetch experiences
   const experienceQueries = useQueries({
@@ -69,6 +78,8 @@ function useSearchTrainingInstructors() {
   const experiences: Array<PagedDtoInstructorExperience['content']> = experienceQueries.map(
     q => q.data?.data?.content ?? []
   );
+
+  const ratingSummaries = ratingSummaryQueries.map(q => q.data?.data ?? null);
 
   // Fetch skills
   const skillQueries = useQueries({
@@ -91,6 +102,15 @@ function useSearchTrainingInstructors() {
       (sum, exp) => sum + (exp?.years_of_experience ?? exp?.calculated_years ?? 0),
       0
     );
+    const instructorReviews = reviewsList[i] ?? [];
+    const ratingSummary = ratingSummaries[i];
+    const reviewCount = ratingSummary?.review_count
+      ? Number(ratingSummary.review_count)
+      : instructorReviews.length;
+    const averageRating =
+      typeof ratingSummary?.average_rating === 'number'
+        ? ratingSummary.average_rating
+        : instructor.rating ?? null;
 
     const skillArray = skills[i] ?? [];
     const skillCategories = skillArray.reduce<Record<string, InstructorSkill[]>>((acc, skill) => {
@@ -115,18 +135,24 @@ function useSearchTrainingInstructors() {
       total_experience_years: totalExperience,
       specializations: skillArray,
       skill_categories: skillCategories,
-      reviews: reviewsList
+      rating: averageRating ?? instructor.rating ?? 0,
+      review_count: reviewCount,
+      reviews: instructorReviews,
     };
   });
 
   // Handle loading states
   const isProfilesLoading = profileQueries.some(q => q.isLoading || q.isFetching);
+  const isReviewsLoading = reviewsQueries.some(q => q.isLoading || q.isFetching);
+  const isRatingSummaryLoading = ratingSummaryQueries.some(q => q.isLoading || q.isFetching);
   const isExperiencesLoading = experienceQueries.some(q => q.isLoading || q.isFetching);
   const isSkillsLoading = skillQueries.some(q => q.isLoading || q.isFetching);
   const loading =
     isInstructorsLoading ||
     isFetching ||
     isProfilesLoading ||
+    isReviewsLoading ||
+    isRatingSummaryLoading ||
     isExperiencesLoading ||
     isSkillsLoading;
 

@@ -18,6 +18,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { getCoursesByInstructorOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import {
   CalendarDays,
@@ -32,7 +35,8 @@ import {
   Wallet
 } from 'lucide-react';
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 type Props = {
   instructor: SearchInstructor | null;
@@ -65,7 +69,6 @@ const timeSlots = [
 ];
 
 const durations = ['30 mins', '1 Hour', '2 Hours'];
-const courses = ['Piano Lessons', 'Guitar Basics', 'Music Theory'];
 
 const paymentMethods = [
   {
@@ -101,6 +104,18 @@ function getTopSkills(instructor: SearchInstructor) {
     .slice(0, 3);
 }
 
+function getCourseLabel(course: { name?: string; category_names?: Array<string> }) {
+  if (course.name?.trim()) {
+    return course.name.trim();
+  }
+
+  if (course.category_names?.length) {
+    return course.category_names[0];
+  }
+
+  return 'Untitled course';
+}
+
 function formatAmount(amount: number) {
   return new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 0,
@@ -113,8 +128,22 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
   const [selectedPayment, setSelectedPayment] = useState('skills-fund');
 
   const [selectedDuration, setSelectedDuration] = useState('1 Hour');
-  const [selectedCourse, setSelectedCourse] = useState('Piano Lessons');
+  const [selectedCourseUuid, setSelectedCourseUuid] = useState<string>('');
+  const [hireNotes, setHireNotes] = useState('');
   const [sessionType, setSessionType] = useState<'online' | 'physical'>('online');
+
+  const { data: instructorCourses } = useQuery({
+    ...getCoursesByInstructorOptions({
+      path: { instructorUuid: instructor?.uuid as string },
+      query: { pageable: { page: 0, size: 100 } },
+    }),
+    enabled: !!instructor?.uuid,
+  });
+
+  const allowedCourses = useMemo(
+    () => instructorCourses?.data?.content ?? [],
+    [instructorCourses]
+  );
 
   const selectedServiceOption = useMemo(
     () => serviceOptions.find(option => option.id === selectedService) ?? serviceOptions[0],
@@ -129,6 +158,39 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
     (instructor?.admin_verified ? 7 : 0) +
     (instructor?.is_profile_complete ? 5 : 0)
   );
+
+  const selectedCourse = useMemo(
+    () =>
+      allowedCourses.find(course => course.uuid === selectedCourseUuid) ??
+      allowedCourses[0] ??
+      null,
+    [allowedCourses, selectedCourseUuid]
+  );
+
+  const selectedCourseLabel = selectedCourse ? getCourseLabel(selectedCourse) : 'No course selected';
+  const reviewCount = instructor?.review_count ?? Math.max(18, Math.round(((instructor?.rating ?? 4.8) || 4.8) * 25));
+
+  useEffect(() => {
+    if (!open || !instructor) {
+      return;
+    }
+
+    if (!allowedCourses.length) {
+      setSelectedCourseUuid('');
+      return;
+    }
+
+    const currentSelectionIsValid = allowedCourses.some(course => course.uuid === selectedCourseUuid);
+    if (!currentSelectionIsValid) {
+      setSelectedCourseUuid(allowedCourses[0]?.uuid ?? '');
+    }
+  }, [allowedCourses, instructor, open, selectedCourseUuid]);
+
+  useEffect(() => {
+    if (!open) {
+      setHireNotes('');
+    }
+  }, [open]);
 
   if (!instructor) return null;
 
@@ -203,7 +265,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                           {(instructor.rating ?? 4.8).toFixed(1)}
                         </span>
                         <span className='text-muted-foreground'>
-                          {Math.max(18, Math.round(((instructor.rating ?? 4.8) || 4.8) * 25))} reviews
+                          {reviewCount} reviews
                         </span>
                       </div>
                     </div>
@@ -337,18 +399,37 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                             <p className='text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
                               Subject / Topic
                             </p>
-                            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                            <Select
+                              value={selectedCourseUuid}
+                              onValueChange={setSelectedCourseUuid}
+                              disabled={!allowedCourses.length}
+                            >
                               <SelectTrigger className='h-10 rounded-[12px] text-sm'>
-                                <SelectValue placeholder='Select course' />
+                                <SelectValue
+                                  placeholder={
+                                    allowedCourses.length
+                                      ? 'Select course'
+                                      : 'No approved courses available'
+                                  }
+                                />
                               </SelectTrigger>
                               <SelectContent>
-                                {courses.map(course => (
-                                  <SelectItem key={course} value={course}>
-                                    {course}
+                                {allowedCourses.map(course => (
+                                  <SelectItem key={course.uuid ?? course.name} value={course.uuid ?? course.name}>
+                                    {getCourseLabel(course)}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
+                            {allowedCourses.length ? (
+                              <p className='text-muted-foreground text-xs'>
+                                Courses approved for this instructor to train.
+                              </p>
+                            ) : (
+                              <p className='text-warning text-xs'>
+                                No approved courses found for this instructor yet.
+                              </p>
+                            )}
                           </div>
 
                           {/* SESSION TYPE */}
@@ -464,27 +545,34 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
                           </Card>
                         </div>
 
-                        <StaticField
-                          label='Your Notes (Optional)'
-                          value='Add any specific requirements or goals for this session...'
-                          footer='0/250'
-                        />
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='hire-notes' className='text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
+                            Your Notes (Optional)
+                          </Label>
+                          <Textarea
+                            id='hire-notes'
+                            value={hireNotes}
+                            onChange={event => setHireNotes(event.target.value)}
+                            className='min-h-24 rounded-[14px] text-sm'
+                            placeholder='Add any specific requirements, goals, or context for this booking...'
+                            maxLength={500}
+                          />
+                          <p className='text-right text-xs text-muted-foreground'>{hireNotes.length}/500</p>
+                        </div>
                       </div>
-
-
                     </div>
                   </Card>
                 </div>
-
-
 
                 <Card className='rounded-md border bg-success/5 p-4 shadow-none'>
                   <h3 className='text-sm font-semibold sm:text-base'>Booking Summary</h3>
                   <div className='mt-4 space-y-3 text-sm'>
                     <SummaryRow label='Service' value={selectedServiceOption.label} />
+                    <SummaryRow label='Subject / Topic' value={selectedCourseLabel} />
                     <SummaryRow label='Date' value='Tue, 20 May 2025' />
                     <SummaryRow label='Time' value='02:00 PM - 03:00 PM' />
                     <SummaryRow label='Duration' value='1 Hour' />
+                    <SummaryRow label='Notes' value={hireNotes.trim() || 'No notes added'} />
                     <Separator className='my-2' />
                     <SummaryRow label='Total Amount' value={`KSh ${formatAmount(totalAmount)}`} strong />
                   </div>
@@ -593,26 +681,6 @@ function SummaryRow({
     <div className='flex items-center justify-between gap-3'>
       <span className='text-muted-foreground'>{label}</span>
       <span className={strong ? 'font-semibold' : 'font-medium'}>{value}</span>
-    </div>
-  );
-}
-
-function StaticField({
-  label,
-  value,
-  footer,
-}: {
-  label: string;
-  value: string;
-  footer?: string;
-}) {
-  return (
-    <div className='space-y-1.5'>
-      <p className='text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
-        {label}
-      </p>
-      <div className='rounded-[14px] border px-3 py-2.5 text-sm'>{value}</div>
-      {footer ? <p className='text-right text-xs text-muted-foreground'>{footer}</p> : null}
     </div>
   );
 }

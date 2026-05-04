@@ -103,6 +103,7 @@ export function SearchInstructorCard({
   const location = getLocation(instructor);
   const skills = getSkillNames(instructor);
   const rating = instructor.rating ?? 0;
+  const reviewCount = instructor.review_count ?? Math.max(18, Math.round((rating || 4.8) * 25));
   const isVerified = Boolean(instructor.admin_verified);
 
   return (
@@ -183,7 +184,7 @@ export function SearchInstructorCard({
             {rating.toFixed(1)}
           </span>
           <span className='text-muted-foreground text-xs sm:text-sm'>
-            {Math.max(18, Math.round((rating || 4.8) * 25))} reviews
+            {reviewCount} reviews
           </span>
           <span className='bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-[11px]'>
             {matchLabel}

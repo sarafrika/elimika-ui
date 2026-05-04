@@ -132,8 +132,6 @@ export default function StudentInstructorSearchPage() {
     [approvedInstructorUuids, courseId, trainingInstructors]
   );
 
-  console.log(scopedInstructors, "SCOPE ")
-
   const filteredInstructors = useMemo(() => {
     const query = filters.searchQuery.trim().toLowerCase();
 
@@ -287,6 +285,22 @@ export default function StudentInstructorSearchPage() {
     () => filteredInstructors.reduce((max, instructor) => Math.max(max, instructor.rating ?? 0), 0),
     [filteredInstructors]
   );
+  const topRatedInstructor = useMemo(
+    () =>
+      filteredInstructors.reduce<SearchInstructor | null>((currentBest, instructor) => {
+        if (!currentBest) return instructor;
+
+        const currentBestRating = currentBest.rating ?? 0;
+        const nextRating = instructor.rating ?? 0;
+
+        if (nextRating > currentBestRating) {
+          return instructor;
+        }
+
+        return currentBest;
+      }, null),
+    [filteredInstructors]
+  );
 
   const updateFilter = <K extends keyof InstructorSearchFiltersState>(
     key: K,
@@ -348,6 +362,7 @@ export default function StudentInstructorSearchPage() {
             totalInstructors={filteredInstructors.length}
             topSkill={topSkill}
             topLocation={topLocation}
+            topInstructorName={topRatedInstructor?.full_name ?? ''}
             topRating={topRating}
           />
 

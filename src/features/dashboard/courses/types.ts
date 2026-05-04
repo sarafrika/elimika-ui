@@ -5,6 +5,7 @@ import type {
   Course,
   Instructor,
   InstructorSkill,
+  InstructorReview,
   ProgramCourse,
   ScheduledInstance,
   StudentSchedule,
@@ -44,6 +45,8 @@ export type SearchInstructor = Instructor & {
   skill_categories: Record<string, InstructorSkill[]>;
   courses?: string[];
   rating?: number;
+  review_count?: number;
+  reviews?: InstructorReview[];
   location?: {
     city?: string;
   } | null;
