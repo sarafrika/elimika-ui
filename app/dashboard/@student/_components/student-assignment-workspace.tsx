@@ -1,22 +1,5 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  BookOpen,
-  CalendarDays,
-  CheckCircle2,
-  Clock3,
-  GraduationCap,
-  Loader2,
-  Search,
-  Send,
-  Sparkles,
-  Upload,
-  X,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { AttachmentResourceList } from '@/components/assessment/AttachmentResourceList';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +27,7 @@ import {
   uploadSubmissionAttachmentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmissionAttachment } from '@/services/client/types.gen';
+import { getErrorMessage } from '@/src/features/dashboard/courses/types';
 import {
   getDueSummary,
   getStudentAssignmentSubmissionState,
@@ -51,7 +35,23 @@ import {
   type StudentAssignmentFilterTab,
   type StudentAssignmentRow,
 } from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
-import { getErrorMessage } from '@/src/features/dashboard/courses/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  AlertCircle,
+  BookOpen,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  GraduationCap,
+  Loader2,
+  Search,
+  Send,
+  Sparkles,
+  Upload,
+  X,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import DragDropUpload from '../assignment/drag-drop';
 
 type FilterTab = StudentAssignmentFilterTab;
@@ -195,9 +195,9 @@ export function StudentAssignmentWorkspace() {
     const averageScore =
       gradedSubmissions.length > 0
         ? Math.round(
-            gradedSubmissions.reduce((totalScore, percentage) => totalScore + percentage, 0) /
-              gradedSubmissions.length
-          )
+          gradedSubmissions.reduce((totalScore, percentage) => totalScore + percentage, 0) /
+          gradedSubmissions.length
+        )
         : 0;
 
     const progress = total > 0 ? Math.round(((submitted + graded + returned) / total) * 100) : 0;
@@ -688,7 +688,7 @@ export function StudentAssignmentWorkspace() {
                         <p className='text-foreground mt-1 text-sm'>
                           {formatDate(
                             selectedAssignment.schedule?.due_at ||
-                              selectedAssignment.assignment?.due_date
+                            selectedAssignment.assignment?.due_date
                           )}
                         </p>
                       </div>
@@ -746,7 +746,7 @@ export function StudentAssignmentWorkspace() {
                             {selectedAssignment.latestSubmission.percentage == null
                               ? 'Pending'
                               : selectedAssignment.latestSubmission.grade_display ||
-                                `${Math.round(selectedAssignment.latestSubmission.percentage)}%`}
+                              `${Math.round(selectedAssignment.latestSubmission.percentage)}%`}
                           </p>
                         </div>
                       </div>

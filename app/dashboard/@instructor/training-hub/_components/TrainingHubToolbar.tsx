@@ -41,16 +41,17 @@ export function TrainingHubToolbar({
       <div className='flex flex-col gap-3 min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-2'>
 
         {/* Search */}
-        <Label className='flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-border/60 bg-background px-3 text-muted-foreground'>
-          <Search className='size-4 shrink-0' />
-          <span className='sr-only'>Search courses or classes</span>
+        <Label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-border/60 bg-background px-3 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
+          <Search className="size-4 shrink-0" />
+          <span className="sr-only">Search courses or classes</span>
+
           <Input
-            aria-label='Search courses or classes'
-            className='w-full min-w-0 bg-transparent text-[0.9rem] text-foreground outline-none placeholder:text-muted-foreground/80 sm:text-[0.95rem]'
+            type="search"
+            aria-label="Search courses or classes"
+            placeholder="Search courses or classes..."
             value={searchTerm}
-            onChange={e => onSearchTermChange(e.target.value)}
-            placeholder='Search courses or classes...'
-            type='search'
+            onChange={(e) => onSearchTermChange(e.target.value)}
+            className="w-full min-w-0 border-none bg-transparent p-0 text-[0.9rem] text-foreground shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-[0.95rem]"
           />
         </Label>
 

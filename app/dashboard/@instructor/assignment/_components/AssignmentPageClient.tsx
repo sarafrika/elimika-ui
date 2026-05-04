@@ -427,7 +427,7 @@ export function AssignmentPageClient() {
 
   return (
     <main className='bg-background p-3 sm:p-4 md:p-6'>
-      <div className='mx-auto max-w-7xl space-y-4 sm:space-y-5'>
+      <div className='mx-auto space-y-4 sm:space-y-5'>
         <AssignmentHeader />
 
         <AssignmentToolbar
