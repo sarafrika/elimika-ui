@@ -87,6 +87,18 @@ function getDurationHours(event: SchedulerEvent) {
   return Math.max((event.endTime.getTime() - event.startTime.getTime()) / 36e5, 0.75);
 }
 
+function isCancelledStatus(status?: string) {
+  return Boolean(status?.toLowerCase().includes('cancel'));
+}
+
+function getEventStyles(event: SchedulerEvent) {
+  if (isCancelledStatus(event.status)) {
+    return 'border-destructive/70 bg-destructive text-destructive-foreground';
+  }
+
+  return categoryStyles[event.category];
+}
+
 function getCurrentTimeOffset(currentTime: Date) {
   return (currentTime.getMinutes() / 60) * rowHeight;
 }
@@ -116,7 +128,7 @@ function EventBlock({
       type='button'
       className={cn(
         'focus-visible:ring-ring absolute inset-x-0.5 overflow-hidden rounded-md border px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:inset-x-1 sm:px-1.5 lg:inset-x-2 lg:p-2',
-        categoryStyles[event.category]
+        getEventStyles(event)
       )}
       style={{
         top: `${(getStartHour(event) % 1) * rowHeight + 6}px`,
@@ -158,7 +170,7 @@ function WeekEventBlock({
       type='button'
       className={cn(
         'focus-visible:ring-ring w-full overflow-hidden rounded-md border px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
-        categoryStyles[event.category]
+        getEventStyles(event)
       )}
       onClick={eventData => {
         eventData.stopPropagation();
@@ -192,7 +204,7 @@ function CompactEvent({
       }}
       className={cn(
         'min-w-0 rounded border px-2 py-1 text-left text-[10px] font-semibold transition hover:shadow-sm',
-        categoryStyles[event.category]
+        getEventStyles(event)
       )}
     >
       <p className='truncate'>{event.title}</p>
@@ -529,6 +541,7 @@ function MonthGrid({
         <div className='grid w-max min-w-full' style={{ gridTemplateColumns: 'repeat(7, 120px)' }}>
           {days.map(day => {
             const dayEvents = getDayEvents(events, day);
+            const hasCancelledEvents = dayEvents.some(event => isCancelledStatus(event.status));
 
             return (
               <div
@@ -568,8 +581,13 @@ function MonthGrid({
                   <span
                     className={cn(
                       'flex h-6 w-6 items-center justify-center rounded text-xs font-semibold',
-                      isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground',
-                      dayEvents.length > 0 && !isSameCalendarDay(day, today) && 'bg-primary/10'
+                      isSameCalendarDay(day, today) &&
+                      (hasCancelledEvents
+                        ? 'bg-destructive text-destructive-foreground'
+                        : 'bg-primary text-primary-foreground'),
+                      dayEvents.length > 0 &&
+                      !isSameCalendarDay(day, today) &&
+                      (hasCancelledEvents ? 'bg-destructive/10' : 'bg-primary/10')
                     )}
                   >
                     {day.getDate()}
@@ -618,6 +636,11 @@ function YearGrid({
         const monthEvents = getMonthEvents(events, month);
         const monthDays = getMonthDays(month);
         const monthEventDays = new Set(monthEvents.map(event => getCalendarKey(event.startTime)));
+        const monthCancelledEventDays = new Set(
+          monthEvents
+            .filter(event => isCancelledStatus(event.status))
+            .map(event => getCalendarKey(event.startTime))
+        );
 
         return (
           <div
@@ -653,18 +676,20 @@ function YearGrid({
               {monthDays.map(day => {
                 const dayKey = getCalendarKey(day);
                 const hasEvents = monthEventDays.has(dayKey);
+                const hasCancelledEvents = monthCancelledEventDays.has(dayKey);
                 const inMonth = isSameMonth(day, month);
 
                 return (
-              <div
+                  <div
                     key={day.toISOString()}
                     className={cn(
                       'relative flex aspect-square items-center justify-center rounded text-[11px] font-semibold',
                       inMonth ? 'text-foreground' : 'text-muted-foreground/50',
-                      isSameCalendarDay(day, today) && 'bg-primary text-primary-foreground',
+                      isSameCalendarDay(day, today) &&
+                      (hasCancelledEvents ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground'),
                       hasEvents &&
                       !isSameCalendarDay(day, today) &&
-                      'bg-primary/10 ring-1 ring-primary/30'
+                      (hasCancelledEvents ? 'bg-destructive/10 ring-1 ring-destructive/30' : 'bg-primary/10 ring-1 ring-primary/30')
                     )}
                   >
                     <span>{day.getDate()}</span>
@@ -672,7 +697,11 @@ function YearGrid({
                       <span
                         className={cn(
                           'absolute bottom-1 h-1.5 w-1.5 rounded-full',
-                          isSameCalendarDay(day, today) ? 'bg-primary-foreground' : 'bg-primary'
+                          hasCancelledEvents
+                            ? 'bg-destructive'
+                            : isSameCalendarDay(day, today)
+                              ? 'bg-primary-foreground'
+                              : 'bg-primary'
                         )}
                       />
                     ) : null}

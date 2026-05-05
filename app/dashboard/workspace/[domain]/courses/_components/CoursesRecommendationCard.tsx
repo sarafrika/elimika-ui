@@ -18,6 +18,7 @@ type CoursesRecommendationCardProps = {
 
 export function CoursesRecommendationCard({ card }: CoursesRecommendationCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
+  const isApplyToTrain = card.ctaKind === 'apply-to-train';
 
   return (
     <article className='border-border bg-card overflow-hidden rounded-lg border min-w-[248px] max-w-[248px] sm:min-w-[270px] sm:max-w-[270px]'>
@@ -75,8 +76,12 @@ export function CoursesRecommendationCard({ card }: CoursesRecommendationCardPro
           ) : (
             <span />
           )}
-          <Button asChild variant='outline' className='h-8 rounded-xl px-4 text-sm shadow-none'>
-            <Link href={card.enrollHref}>Enroll</Link>
+          <Button
+            asChild
+            variant={isApplyToTrain ? 'default' : 'outline'}
+            className='h-8 rounded-xl px-4 text-sm shadow-none'
+          >
+            <Link href={card.ctaHref}>{card.ctaLabel}</Link>
           </Button>
         </div>
       </div>

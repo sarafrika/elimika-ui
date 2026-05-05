@@ -57,13 +57,11 @@ export function SchedulerFilters({
   };
 
   const updateStatus = (status: string, checked: boolean) => {
-    const activeStatuses = values.statuses.length ? values.statuses : options.statuses;
-
     onChange({
       ...values,
       statuses: checked
-        ? Array.from(new Set([...activeStatuses, status]))
-        : activeStatuses.filter(item => item !== status),
+        ? Array.from(new Set([...values.statuses, status]))
+        : values.statuses.filter(item => item !== status),
     });
   };
 
@@ -122,11 +120,8 @@ export function SchedulerFilters({
                 key={status}
                 className='text-muted-foreground flex w-full items-center gap-2 text-xs sm:text-sm'
               >
-                <Checkbox
-                  checked={
-                    !values.statuses.length ||
-                    values.statuses.includes(status)
-                  }
+              <Checkbox
+                  checked={values.statuses.includes(status)}
                   onCheckedChange={checked =>
                     updateStatus(status, checked === true)
                   }

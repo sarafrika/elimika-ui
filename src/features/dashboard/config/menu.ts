@@ -382,11 +382,11 @@ export default {
       url: '/dashboard/portfolio',
       icon: Briefcase,
     },
-    {
-      title: 'Opportunities',
-      url: '/dashboard/opportunities',
-      icon: Handshake,
-    },
+    // {
+    //   title: 'Opportunities',
+    //   url: '/dashboard/opportunities',
+    //   icon: Handshake,
+    // },
     {
       title: 'Notifications',
       url: '/dashboard/notifications',

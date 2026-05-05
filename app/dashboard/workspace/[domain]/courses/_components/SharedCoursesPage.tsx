@@ -175,10 +175,12 @@ const createRecommendationCards = (
   items: UnifiedContentItem[],
   domain: UserDomain,
   creatorMap: Map<string, string>,
-  ratingsMap: Map<string, string>
+  ratingsMap: Map<string, string>,
+  isInstructorDomain: boolean
 ): CoursesRecommendationCardData[] =>
   items.map((item, index) => {
     const presentation = getCardPresentation(index + 2);
+    const shouldApplyToTrain = isInstructorDomain && item.kind === 'course';
 
     return {
       id: item.id,
@@ -187,8 +189,12 @@ const createRecommendationCards = (
       rating: ratingsMap.get(item.id) ?? 'New',
       weeks: item.durationLabel,
       secondaryMeta: item.categoryLabels[0] ?? item.secondaryMeta ?? 'Published Course',
+      ctaLabel: shouldApplyToTrain ? 'Apply to Train' : 'Enroll',
+      ctaHref: shouldApplyToTrain
+        ? getApplyToTrainHref(item.id)
+        : buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
+      ctaKind: shouldApplyToTrain ? 'apply-to-train' : 'enroll',
       detailsHref: buildWorkspaceAliasPath(domain, item.href),
-      enrollHref: buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
       icon: presentation.icon,
       imageTone: presentation.imageTone,
       imageUrl: item.imageUrl,
@@ -535,39 +541,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     [baseTabItems, categoryMap, difficultyMap, filters]
   );
 
-  const recommendedBase = useMemo(() => allCoursesFeed.slice(0, 6), [allCoursesFeed]);
-
-  const creatorIds = useMemo(
-    () =>
-      Array.from(
-        new Set([...filteredItems, ...recommendedBase].map(item => item.creatorUuid).filter(Boolean))
-      ),
-    [filteredItems, recommendedBase]
-  );
-
-  const creatorQueries = useQueries({
-    queries: creatorIds.map(uuid => ({
-      ...getCourseCreatorByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      refetchOnWindowFocus: false,
-    })),
-  });
-
-  const creatorMap = useMemo(() => {
-    const map = new Map<string, string>();
-
-    creatorQueries.forEach((query, index) => {
-      const uuid = creatorIds[index];
-      const name = query.data?.data?.full_name;
-
-      if (uuid && name) {
-        map.set(uuid, name);
-      }
-    });
-
-    return map;
-  }, [creatorIds, creatorQueries]);
-
   const instructorCourseApplicationMap = useMemo(() => {
     const map = new Map<string, { status?: string | null }>();
     instructorCourseApplications?.data?.content?.forEach(application => {
@@ -614,6 +587,47 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const activeProgramApplicationMap = isOrganisationDomain
     ? organisationProgramApplicationMap
     : instructorProgramApplicationMap;
+
+  const recommendedBase = useMemo(() => {
+    if (isInstructorDomain) {
+      return allCoursesFeed
+        .filter(item => item.kind === 'course' && !instructorCourseApplicationMap.has(item.id))
+        .slice(0, 6);
+    }
+
+    return allCoursesFeed.slice(0, 6);
+  }, [allCoursesFeed, instructorCourseApplicationMap, isInstructorDomain]);
+
+  const creatorIds = useMemo(
+    () =>
+      Array.from(
+        new Set([...filteredItems, ...recommendedBase].map(item => item.creatorUuid).filter(Boolean))
+      ),
+    [filteredItems, recommendedBase]
+  );
+
+  const creatorQueries = useQueries({
+    queries: creatorIds.map(uuid => ({
+      ...getCourseCreatorByUuidOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+      refetchOnWindowFocus: false,
+    })),
+  });
+
+  const creatorMap = useMemo(() => {
+    const map = new Map<string, string>();
+
+    creatorQueries.forEach((query, index) => {
+      const uuid = creatorIds[index];
+      const name = query.data?.data?.full_name;
+
+      if (uuid && name) {
+        map.set(uuid, name);
+      }
+    });
+
+    return map;
+  }, [creatorIds, creatorQueries]);
 
   const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
   const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation());
@@ -682,8 +696,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   );
 
   const recommendationCards = useMemo(
-    () => createRecommendationCards(recommendedBase, domain, creatorMap, ratingsMap),
-    [creatorMap, domain, ratingsMap, recommendedBase]
+    () => createRecommendationCards(recommendedBase, domain, creatorMap, ratingsMap, isInstructorDomain),
+    [creatorMap, domain, isInstructorDomain, ratingsMap, recommendedBase]
   );
 
   const hasMoreCatalogItems = filteredItems.length > visibleCoursesCount;
