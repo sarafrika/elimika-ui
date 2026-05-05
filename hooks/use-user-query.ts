@@ -1,6 +1,10 @@
+import type { UserDomain } from '@/lib/types';
+import { getDashboardStorageKey } from '@/lib/utils';
 import { search } from '@/services/client';
+import { readPersistedDashboardDomain } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
+import { useEffect, useMemo, useState } from 'react';
 
 export function useUserQuery() {
   const { data: session, status } = useSession();
@@ -35,12 +39,59 @@ export function useUserQuery() {
 export function useUserDomains() {
   const userQuery = useUserQuery();
 
-  const userDomains = userQuery.data?.user_domain || [];
-  const activeDomain = userDomains[0] || null;
+  const userDomains = useMemo(() => {
+    const rawDomains = userQuery.data?.user_domain || [];
+    return (Array.isArray(rawDomains) ? rawDomains : [rawDomains]).filter(
+      (domain): domain is UserDomain => typeof domain === 'string'
+    );
+  }, [userQuery.data?.user_domain]);
+
+  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  const dashboardStorageKey = useMemo(
+    () => getDashboardStorageKey(userQuery.data?.uuid ?? userQuery.data?.email ?? undefined),
+    [userQuery.data?.email, userQuery.data?.uuid]
+  );
+
+  const persistedActiveDomain = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    return readPersistedDashboardDomain(dashboardStorageKey);
+  }, [dashboardStorageKey, userQuery.isLoading]);
+
+  useEffect(() => {
+    if (userQuery.isLoading) {
+      return;
+    }
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (!userDomains.length) {
+      setActiveDomain(null);
+      setIsReady(true);
+      return;
+    }
+
+    const storedDomain = readPersistedDashboardDomain(dashboardStorageKey);
+    const nextDomain =
+      storedDomain && userDomains.includes(storedDomain) ? storedDomain : userDomains[0] || null;
+
+    setActiveDomain(nextDomain);
+    setIsReady(true);
+  }, [dashboardStorageKey, userDomains, userQuery.isLoading]);
 
   return {
     domains: userDomains,
-    activeDomain,
+    activeDomain:
+      (persistedActiveDomain && userDomains.includes(persistedActiveDomain)
+        ? persistedActiveDomain
+        : activeDomain) ?? null,
+    isReady,
     isLoading: userQuery.isLoading,
     error: userQuery.error,
   };

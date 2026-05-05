@@ -62,6 +62,9 @@ export function SearchInstructorSidebar({
   // const primaryShortlist = shortlist.slice(0, 3);
   const primaryShortlist = [] as SearchInstructor[]
 
+  const currency = 'Ksh'
+  const skillFundBallance = 0
+
   return (
     <div className='space-y-4'>
       <Card className='rounded-md -space-y-2 border bg-card p-4 shadow-none'>
@@ -130,7 +133,7 @@ export function SearchInstructorSidebar({
         <div className='flex items-start justify-between gap-3'>
           <div>
             <h3 className='text-sm font-semibold sm:text-base'>Pay using Skills Fund</h3>
-            <p className='text-muted-foreground text-xs sm:text-sm'>Balance: KSh 20,000</p>
+            <p className='text-muted-foreground text-xs sm:text-sm'>Balance: {currency} {skillFundBallance}</p>
           </div>
           <Switch checked={skillsFundEnabled} onCheckedChange={setSkillsFundEnabled} />
         </div>

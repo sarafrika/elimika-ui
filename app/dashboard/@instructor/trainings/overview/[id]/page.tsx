@@ -1,27 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  BookOpen,
-  CalendarDays,
-  CheckCircle,
-  Clock,
-  Edit,
-  Eye,
-  Facebook,
-  FileQuestion,
-  FileText,
-  Globe,
-  Linkedin,
-  MapPin,
-  MessageCircle,
-  Share2,
-  Twitter,
-  Users,
-} from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { LessonContentViewerDialog } from '@/components/lesson-content/LessonContentPreview';
@@ -48,6 +26,28 @@ import { useInstructorInfo } from '@/hooks/use-instructor-info';
 import { getResourceIcon } from '@/lib/resources-icon';
 import { buildSocialShareUrl, openShareWindow, type SharePlatform } from '@/lib/share';
 import { getCourseAssessmentsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  BookOpen,
+  CalendarDays,
+  CheckCircle,
+  Clock,
+  Edit,
+  Eye,
+  Facebook,
+  FileQuestion,
+  FileText,
+  Globe,
+  Linkedin,
+  MapPin,
+  MessageCircle,
+  Share2,
+  Twitter,
+  Users,
+} from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useClassDetails } from '../../../../../../hooks/use-class-details';
 import { useProgramLessonsWithContent } from '../../../../../../hooks/use-programlessonwithcontent';
@@ -72,12 +72,12 @@ const socialShareActions: Array<{
   label: string;
   platform: SharePlatform;
 }> = [
-  { icon: Facebook, label: 'Facebook', platform: 'facebook' },
-  { icon: Twitter, label: 'Twitter', platform: 'twitter' },
-  { icon: Linkedin, label: 'LinkedIn', platform: 'linkedin' },
-  { icon: MessageCircle, label: 'WhatsApp', platform: 'whatsapp' },
-  { icon: Share2, label: 'Email', platform: 'email' },
-];
+    { icon: Facebook, label: 'Facebook', platform: 'facebook' },
+    { icon: Twitter, label: 'Twitter', platform: 'twitter' },
+    { icon: Linkedin, label: 'LinkedIn', platform: 'linkedin' },
+    { icon: MessageCircle, label: 'WhatsApp', platform: 'whatsapp' },
+    { icon: Share2, label: 'Email', platform: 'email' },
+  ];
 
 export default function ClassPreviewPage() {
   const router = useRouter();
@@ -211,11 +211,11 @@ export default function ClassPreviewPage() {
     if (!siteOrigin) return '';
 
     if (course?.uuid) {
-      return `${siteOrigin}/dashboard/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
+      return `${siteOrigin}/dashboard/workspace/student/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
     }
 
     if (program?.uuid) {
-      return `${siteOrigin}/dashboard/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
+      return `${siteOrigin}/dashboard/workspace/student/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
     }
 
     return '';

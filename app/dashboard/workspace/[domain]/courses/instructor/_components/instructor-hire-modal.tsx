@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -19,9 +20,9 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { getCoursesByInstructorOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getCourseByUuidOptions, searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   CalendarDays,
   Check,
@@ -36,7 +37,6 @@ import {
 } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 
 type Props = {
   instructor: SearchInstructor | null;
@@ -132,23 +132,50 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
   const [hireNotes, setHireNotes] = useState('');
   const [sessionType, setSessionType] = useState<'online' | 'physical'>('online');
 
-  const { data: instructorCourses } = useQuery({
-    ...getCoursesByInstructorOptions({
-      path: { instructorUuid: instructor?.uuid as string },
-      query: { pageable: { page: 0, size: 100 } },
+  const { data: trainingApplications } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        pageable: {},
+        searchParams: {
+          applicantUuid_eq: instructor?.uuid as string,
+          status: "approved",
+        },
+      },
     }),
     enabled: !!instructor?.uuid,
   });
 
-  const allowedCourses = useMemo(
-    () => instructorCourses?.data?.content ?? [],
-    [instructorCourses]
-  );
+  // extract course uuids
+  const courseUuids = useMemo(() => {
+    return (
+      trainingApplications?.data?.content
+        ?.map((app: any) => app.courseUuid) // adjust if it's app.course?.uuid
+        ?.filter(Boolean) ?? []
+    );
+  }, [trainingApplications]);
+
+  // fetch courses using uuids
+  const courseQueries = useQueries({
+    queries: courseUuids.map((uuid) => ({
+      ...getCourseByUuidOptions({
+        path: { uuid },
+      }),
+      enabled: !!uuid,
+    })),
+  });
+
+  const allowedCourses = useMemo(() => {
+    return courseQueries
+      .map((q) => q.data?.data)
+      .filter(Boolean);
+  }, [courseQueries]);
 
   const selectedServiceOption = useMemo(
     () => serviceOptions.find(option => option.id === selectedService) ?? serviceOptions[0],
     [selectedService]
   );
+
+  console.log(allowedCourses, "Allowed")
 
   const matchScore = Math.min(
     99,
@@ -161,7 +188,7 @@ export function InstructorHireModal({ instructor, open, onOpenChange }: Props) {
 
   const selectedCourse = useMemo(
     () =>
-      allowedCourses.find(course => course.uuid === selectedCourseUuid) ??
+      allowedCourses.find(course => course?.uuid === selectedCourseUuid) ??
       allowedCourses[0] ??
       null,
     [allowedCourses, selectedCourseUuid]

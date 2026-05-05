@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, GraduationCap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -22,10 +23,14 @@ import {
 
 export default function AddStudentProfileForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const user = useUserProfile();
   const userDomain = useUserDomain();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const returnTo = searchParams.get('next');
+  const returnPath =
+    returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : null;
 
   const form = useForm<StudentProfileFormData>({
     resolver: zodResolver(studentProfileSchema),
@@ -62,7 +67,7 @@ export default function AddStudentProfileForm() {
 
       // Set the new domain as active and redirect
       userDomain.setActiveDomain('student');
-      router.replace(buildDashboardSwitchPath('student'));
+      router.replace(buildDashboardSwitchPath('student', returnPath || undefined));
     } catch (_error) {
       toast.error('Failed to create student profile. Please try again.');
       setIsSubmitting(false);

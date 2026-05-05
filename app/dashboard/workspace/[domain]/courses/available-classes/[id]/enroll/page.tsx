@@ -1,6 +1,6 @@
-import { notFound } from 'next/navigation';
 import ClassEnrollmentPage from '@/src/features/dashboard/courses/pages/ClassEnrollmentPage';
 import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
+import { notFound } from 'next/navigation';
 
 type WorkspaceClassEnrollPageProps = {
   params: Promise<{ domain: string; id: string }>;

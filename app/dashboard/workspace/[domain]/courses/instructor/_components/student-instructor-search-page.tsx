@@ -10,7 +10,7 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Bookmark, LucideGrid, LucideList, Plus, Search } from 'lucide-react';
+import { ArrowRight, Bookmark, LucideGrid, LucideList, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { InstructorHireModal } from './instructor-hire-modal';
@@ -67,18 +67,29 @@ export default function StudentInstructorSearchPage() {
   const [hireModalInstructorUuid, setHireModalInstructorUuid] = useState<string | null>(null);
   const [filters, setFilters] = useState<InstructorSearchFiltersState>(searchInstructorFiltersDefaults);
 
-  const { data: applications } = useQuery(
-    courseId
-      ? listTrainingApplicationsOptions({
-        path: { courseUuid: courseId },
-        query: { pageable: {}, status: 'approved' },
-      })
-      : {
-        queryKey: ['student-instructor-search', 'approved-applications', null],
-        queryFn: async () => ({ data: { content: [] } }),
-        enabled: false,
-      }
-  );
+  // const { data: applications } = useQuery(
+  //   courseId
+  //     ? listTrainingApplicationsOptions({
+  //       path: { courseUuid: courseId },
+  //       query: { pageable: {}, status: 'approved' },
+
+  //     })
+  //     : {
+  //       queryKey: ['student-instructor-search', 'approved-applications', null],
+  //       queryFn: async () => ({ data: { content: [] } }),
+  //       enabled: false,
+  //     }
+  // );
+
+  const { data: applications } = useQuery({
+    ...listTrainingApplicationsOptions({
+      path: { courseUuid: courseId as string },
+      query: { pageable: {} }
+    }),
+    enabled: !!courseId
+  })
+
+  console.log(applications?.data?.content, "LEAJLDDF dfjlsdf")
 
   const approvedInstructorUuids =
     applications?.data?.content
@@ -124,13 +135,16 @@ export default function StudentInstructorSearchPage() {
     ]);
   }, [activeDomain, courseId, replaceBreadcrumbs]);
 
-  const scopedInstructors = useMemo(
-    () =>
-      courseId && approvedInstructorUuids.length > 0
-        ? trainingInstructors.filter(instructor => approvedInstructorUuids.includes(instructor.uuid))
-        : trainingInstructors,
-    [approvedInstructorUuids, courseId, trainingInstructors]
-  );
+  const scopedInstructors = useMemo(() => {
+    if (!courseId) return [];
+
+    return trainingInstructors.filter(instructor =>
+      approvedInstructorUuids.includes(instructor.uuid)
+    );
+  }, [approvedInstructorUuids, courseId, trainingInstructors]);
+
+  console.log(scopedInstructors, "SCOPED IS")
+  console.log(approvedInstructorUuids, "App")
 
   const filteredInstructors = useMemo(() => {
     const query = filters.searchQuery.trim().toLowerCase();
@@ -237,6 +251,7 @@ export default function StudentInstructorSearchPage() {
     return withScores.map(entry => entry.instructor);
   }, [filters, scopedInstructors, sortBy]);
 
+
   useEffect(() => {
     if (!filteredInstructors.length) {
       setSelectedInstructorUuid(null);
@@ -336,11 +351,11 @@ export default function StudentInstructorSearchPage() {
           </div>
 
           <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-            <Button type='button' variant='success' className='h-10 rounded-xl px-4 text-sm'>
+            {/* <Button type='button' variant='success' className='h-10 rounded-xl px-4 text-sm'>
               <Plus className='size-4' />
               Post a Job
-            </Button>
-            <Button type='button' variant='outline' className='h-10 rounded-xl px-4 text-sm'>
+            </Button> */}
+            <Button type='button' variant='outline' className='h-10 rounded-md px-4 text-sm'>
               <Bookmark className='size-4' />
               Saved Instructors
             </Button>
@@ -420,7 +435,7 @@ export default function StudentInstructorSearchPage() {
                 />
               ))
             ) : (
-              <Card className='rounded-xl border border-dashed bg-card p-8 text-center shadow-none'>
+              <Card className='col-span-1 md:col-span-2 2xl:col-span-3 w-full rounded-xl border border-dashed bg-card p-8 text-center shadow-none'>
                 <div className='mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted/40'>
                   <Search className='text-muted-foreground size-5' />
                 </div>
