@@ -24,7 +24,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const { domain } = await context.params;
   const normalizedDomain = normalizeStoredUserDomain(domain);
   const requestedNextPath = request.nextUrl.searchParams.get('next');
-  const nextPath = resolveWorkspaceSwitchPath(normalizedDomain, requestedNextPath);
+  const nextPath =
+    normalizedDomain &&
+    requestedNextPath &&
+    requestedNextPath.startsWith('/') &&
+    !requestedNextPath.startsWith('//') &&
+    !requestedNextPath.startsWith('/dashboard')
+      ? requestedNextPath
+      : resolveWorkspaceSwitchPath(normalizedDomain, requestedNextPath);
 
   const response = NextResponse.redirect(buildPublicRequestUrl(request, nextPath));
 

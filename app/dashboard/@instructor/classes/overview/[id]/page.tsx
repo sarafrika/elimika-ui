@@ -220,11 +220,11 @@ export default function ClassPreviewPage() {
     if (!siteOrigin) return '';
 
     if (course?.uuid) {
-      return `${siteOrigin}/dashboard/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
+      return `${siteOrigin}/dashboard/workspace/student/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
     }
 
     if (program?.uuid) {
-      return `${siteOrigin}/dashboard/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
+      return `${siteOrigin}/dashboard/workspace/student/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
     }
 
     return '';

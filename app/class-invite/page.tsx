@@ -5,16 +5,22 @@ import { PublicTopNav } from '@/components/PublicTopNav';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   addDays,
-  addWeeks,
   endOfMonth,
   endOfWeek,
   format,
   isSameMonth,
   startOfMonth,
-  startOfWeek,
+  startOfWeek
 } from 'date-fns';
 import {
   Armchair,
@@ -26,12 +32,12 @@ import {
   MapPin,
   Users,
 } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { useClassDetails } from '../../hooks/use-class-details';
 import { useDifficultyLevels } from '../../hooks/use-difficultyLevels';
 import { useUserDomains } from '../../hooks/use-user-query';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type ClassInviteData = ReturnType<typeof useClassDetails>['data'];
 type ClassInviteCourse = NonNullable<ClassInviteData['course']>;
@@ -42,8 +48,10 @@ type ClassInviteSchedule = ClassInviteData['schedule'][number];
 
 function ClassInviteContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const uuid = searchParams.get('id');
   const [copied, setCopied] = useState(false);
+  const [accountPromptOpen, setAccountPromptOpen] = useState(false);
   const user = useUserDomains();
 
   const { data: combinedClass, isLoading } = useClassDetails(uuid as string);
@@ -53,6 +61,11 @@ function ClassInviteContent() {
   const program = combinedClass?.program;
   const enrollments = combinedClass?.enrollments;
   const programCourses = combinedClass?.pCourses;
+  const currentInvitePath = useMemo(() => {
+    const queryString = searchParams.toString();
+    return queryString ? `/class-invite?${queryString}` : '/class-invite';
+  }, [searchParams]);
+  const hasStudentDomain = user.domains.includes('student');
 
   const uniqueEnrollments = useMemo(() => {
     if (!enrollments) return [];
@@ -70,26 +83,38 @@ function ClassInviteContent() {
 
   const getEnrollUrl = () => {
     if (course?.uuid) {
-      return `/dashboard/courses/available-classes/${course.uuid}/enroll?id=${uuid}`;
+      return `/dashboard/workspace/student/courses/available-classes/${course.uuid}/enroll?id=${uuid}`;
     }
 
     if (program?.uuid) {
-      return `/dashboard/courses/available-programs/${program.uuid}/enroll?id=${uuid}`;
+      return `/dashboard/workspace/student/courses/available-programs/${program.uuid}/enroll?id=${uuid}`;
     }
 
     return '';
   };
 
   const handleRegister = () => {
+    if (!user.isReady) {
+      return;
+    }
+
     if (user?.activeDomain !== 'student') {
-      toast.message(
-        'To enroll in a class, please switch to your student profile or create a student profile.'
-      );
+      setAccountPromptOpen(true);
       return;
     }
 
     const url = getEnrollUrl();
     if (url) window.open(url, '_blank');
+  };
+
+  const handleSwitchToStudent = () => {
+    setAccountPromptOpen(false);
+    router.push(buildDashboardSwitchPath('student', currentInvitePath));
+  };
+
+  const handleCreateStudentProfile = () => {
+    setAccountPromptOpen(false);
+    router.push(`/dashboard/add-profile/student?next=${encodeURIComponent(currentInvitePath)}`);
   };
 
   const copyLink = async () => {
@@ -204,8 +229,13 @@ function ClassInviteContent() {
                   Open to the public • Limited seats
                 </div>
 
-                <div className='flex items-center gap-3'>
-                  <Button onClick={handleRegister} size='lg' className='rounded-full px-10'>
+                  <div className='flex items-center gap-3'>
+                  <Button
+                    onClick={handleRegister}
+                    size='lg'
+                    className='rounded-full px-10'
+                    disabled={!user.isReady}
+                  >
                     Register for Class
                   </Button>
 
@@ -341,6 +371,41 @@ function ClassInviteContent() {
           }
         </>
       )}
+
+      <Dialog open={accountPromptOpen} onOpenChange={setAccountPromptOpen}>
+        <DialogContent className='max-w-md'>
+          <DialogHeader>
+            <DialogTitle>
+              {hasStudentDomain ? 'Switch to your student profile' : 'Create a student profile'}
+            </DialogTitle>
+            <DialogDescription className='space-y-2'>
+              {hasStudentDomain ? (
+                <span>
+                  You already have a student profile. Switch to it and we will bring you back to
+                  this class invite page so you can register.
+                </span>
+              ) : (
+                <span>
+                  You do not have a student profile yet. Create one first, then come back here to
+                  register for the class again.
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='flex flex-col gap-3 sm:flex-row sm:justify-end'>
+            <Button variant='outline' onClick={() => setAccountPromptOpen(false)}>
+              Cancel
+            </Button>
+
+            {hasStudentDomain ? (
+              <Button onClick={handleSwitchToStudent}>Switch to student</Button>
+            ) : (
+              <Button onClick={handleCreateStudentProfile}>Create student profile</Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div >
   );
 }
@@ -386,7 +451,6 @@ function InfoRow({
 interface Props {
   schedules: ClassInviteSchedule[];
 }
-
 function getCalendarBounds(schedules: ClassInviteSchedule[]) {
   if (!schedules?.length) {
     const now = new Date();
@@ -397,8 +461,8 @@ function getCalendarBounds(schedules: ClassInviteSchedule[]) {
   }
 
   const sorted = schedules
-    ?.map(s => new Date(s.start_time))
-    ?.sort((a, b) => a.getTime() - b.getTime());
+    .map(s => new Date(s.start_time))
+    .sort((a, b) => a.getTime() - b.getTime());
 
   const firstSchedule = sorted[0];
   const lastSchedule = sorted[sorted.length - 1];
@@ -412,8 +476,8 @@ function getCalendarBounds(schedules: ClassInviteSchedule[]) {
   }
 
   return {
-    minMonth: startOfMonth(addWeeks(firstSchedule, -2)),
-    maxMonth: endOfMonth(addWeeks(lastSchedule, 2)),
+    minMonth: startOfMonth(firstSchedule),
+    maxMonth: endOfMonth(lastSchedule),
   };
 }
 

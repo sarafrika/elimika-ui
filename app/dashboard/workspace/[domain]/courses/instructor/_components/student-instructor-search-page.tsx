@@ -2,6 +2,15 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
@@ -10,7 +19,7 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Bookmark, LucideGrid, LucideList, Plus, Search } from 'lucide-react';
+import { Bookmark, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { InstructorHireModal } from './instructor-hire-modal';
@@ -24,6 +33,25 @@ import { SearchInstructorMetrics } from './search-instructor-metrics';
 import { SearchInstructorSidebar } from './search-instructor-sidebar';
 
 type SortBy = 'relevance' | 'rating' | 'experience' | 'alphabetical';
+const PAGE_SIZE = 6;
+
+type PaginationItemValue = number | 'ellipsis';
+
+function buildPaginationItems(currentPage: number, totalPages: number): PaginationItemValue[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  if (currentPage <= 4) {
+    return [1, 2, 3, 4, 5, 'ellipsis', totalPages];
+  }
+
+  if (currentPage >= totalPages - 3) {
+    return [1, 'ellipsis', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+}
 
 function getInstructorType(instructor: SearchInstructor) {
   const userDomain = instructor.user_domain;
@@ -66,19 +94,29 @@ export default function StudentInstructorSearchPage() {
   const [selectedInstructorUuid, setSelectedInstructorUuid] = useState<string | null>(null);
   const [hireModalInstructorUuid, setHireModalInstructorUuid] = useState<string | null>(null);
   const [filters, setFilters] = useState<InstructorSearchFiltersState>(searchInstructorFiltersDefaults);
+  const [page, setPage] = useState(1);
 
-  const { data: applications } = useQuery(
-    courseId
-      ? listTrainingApplicationsOptions({
-        path: { courseUuid: courseId },
-        query: { pageable: {}, status: 'approved' },
-      })
-      : {
-        queryKey: ['student-instructor-search', 'approved-applications', null],
-        queryFn: async () => ({ data: { content: [] } }),
-        enabled: false,
-      }
-  );
+  // const { data: applications } = useQuery(
+  //   courseId
+  //     ? listTrainingApplicationsOptions({
+  //       path: { courseUuid: courseId },
+  //       query: { pageable: {}, status: 'approved' },
+
+  //     })
+  //     : {
+  //       queryKey: ['student-instructor-search', 'approved-applications', null],
+  //       queryFn: async () => ({ data: { content: [] } }),
+  //       enabled: false,
+  //     }
+  // );
+
+  const { data: applications } = useQuery({
+    ...listTrainingApplicationsOptions({
+      path: { courseUuid: courseId as string },
+      query: { pageable: {} },
+    }),
+    enabled: !!courseId,
+  });
 
   const approvedInstructorUuids =
     applications?.data?.content
@@ -124,13 +162,13 @@ export default function StudentInstructorSearchPage() {
     ]);
   }, [activeDomain, courseId, replaceBreadcrumbs]);
 
-  const scopedInstructors = useMemo(
-    () =>
-      courseId && approvedInstructorUuids.length > 0
-        ? trainingInstructors.filter(instructor => approvedInstructorUuids.includes(instructor.uuid))
-        : trainingInstructors,
-    [approvedInstructorUuids, courseId, trainingInstructors]
-  );
+  const scopedInstructors = useMemo(() => {
+    if (!courseId) return [];
+
+    return trainingInstructors.filter(instructor =>
+      approvedInstructorUuids.includes(instructor.uuid)
+    );
+  }, [approvedInstructorUuids, courseId, trainingInstructors]);
 
   const filteredInstructors = useMemo(() => {
     const query = filters.searchQuery.trim().toLowerCase();
@@ -237,6 +275,14 @@ export default function StudentInstructorSearchPage() {
     return withScores.map(entry => entry.instructor);
   }, [filters, scopedInstructors, sortBy]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredInstructors.length / PAGE_SIZE));
+  const paginatedInstructors = useMemo(
+    () => filteredInstructors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredInstructors, page]
+  );
+  const paginationItems = useMemo(() => buildPaginationItems(page, totalPages), [page, totalPages]);
+
+
   useEffect(() => {
     if (!filteredInstructors.length) {
       setSelectedInstructorUuid(null);
@@ -248,6 +294,16 @@ export default function StudentInstructorSearchPage() {
       setSelectedInstructorUuid(filteredInstructors[0]?.uuid ?? null);
     }
   }, [filteredInstructors, selectedInstructorUuid]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [courseId, filters, sortBy]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   const selectedInstructor =
     filteredInstructors.find(instructor => instructor.uuid === selectedInstructorUuid) ??
@@ -316,9 +372,12 @@ export default function StudentInstructorSearchPage() {
 
   const selectInstructor = (uuid: string) => {
     setSelectedInstructorUuid(uuid);
-  };
 
-  const [viewMode, setViewMode] = useState('')
+    const selectedIndex = filteredInstructors.findIndex(instructor => instructor.uuid === uuid);
+    if (selectedIndex >= 0) {
+      setPage(Math.floor(selectedIndex / PAGE_SIZE) + 1);
+    }
+  };
 
   return (
     <div className='space-y-2 px-3 py-4 sm:px-4 lg:px-6'>
@@ -336,11 +395,11 @@ export default function StudentInstructorSearchPage() {
           </div>
 
           <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-            <Button type='button' variant='success' className='h-10 rounded-xl px-4 text-sm'>
+            {/* <Button type='button' variant='success' className='h-10 rounded-xl px-4 text-sm'>
               <Plus className='size-4' />
               Post a Job
-            </Button>
-            <Button type='button' variant='outline' className='h-10 rounded-xl px-4 text-sm'>
+            </Button> */}
+            <Button type='button' variant='outline' className='h-10 rounded-md px-4 text-sm'>
               <Bookmark className='size-4' />
               Saved Instructors
             </Button>
@@ -379,15 +438,6 @@ export default function StudentInstructorSearchPage() {
                     {selectedInstructor ? selectedInstructor.full_name : 'No instructor selected'}
                   </span>
                 </div> */}
-
-                <div className='inline-flex items-center gap-2'>
-                  {viewMode === 'list' ? (
-                    <LucideList className='h-6 w-6 text-muted-foreground' />
-                  ) : (
-                    <LucideGrid className='h-6 w-6 text-muted-foreground' />
-                  )}
-                </div>
-
                 <Select value={sortBy} onValueChange={value => setSortBy(value as SortBy)}>
                   <SelectTrigger className='h-10 rounded-md text-sm sm:w-[180px]'>
                     <SelectValue placeholder='Sort by: Relevance' />
@@ -408,8 +458,8 @@ export default function StudentInstructorSearchPage() {
               Array.from({ length: 6 }).map((_, index) => (
                 <Card key={index} className='h-[280px] rounded-xl border bg-card p-4 shadow-none' />
               ))
-            ) : filteredInstructors.length > 0 ? (
-              filteredInstructors.map(instructor => (
+            ) : paginatedInstructors.length > 0 ? (
+              paginatedInstructors.map(instructor => (
                 <SearchInstructorCard
                   key={instructor.uuid}
                   instructor={instructor}
@@ -420,7 +470,7 @@ export default function StudentInstructorSearchPage() {
                 />
               ))
             ) : (
-              <Card className='rounded-xl border border-dashed bg-card p-8 text-center shadow-none'>
+              <Card className='col-span-1 md:col-span-2 2xl:col-span-3 w-full rounded-xl border border-dashed bg-card p-8 text-center shadow-none'>
                 <div className='mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted/40'>
                   <Search className='text-muted-foreground size-5' />
                 </div>
@@ -435,31 +485,53 @@ export default function StudentInstructorSearchPage() {
             )}
           </div>
 
-          {filteredInstructors.length > 0 ? (
-            <div className='flex flex-wrap items-center justify-center gap-2 pb-2 mt-10'>
-              <Button type='button' variant='outline' size='icon' className='size-9 rounded-xl'>
-                1
-              </Button>
-              <Button type='button' variant='ghost' size='icon' className='size-9 rounded-xl'>
-                2
-              </Button>
-              <Button type='button' variant='ghost' size='icon' className='size-9 rounded-xl'>
-                3
-              </Button>
-              <Button type='button' variant='ghost' size='icon' className='size-9 rounded-xl'>
-                4
-              </Button>
-              <Button type='button' variant='ghost' size='icon' className='size-9 rounded-xl'>
-                5
-              </Button>
-              <span className='text-muted-foreground px-1 text-sm'>...</span>
-              <Button type='button' variant='ghost' size='icon' className='size-9 rounded-xl'>
-                14
-              </Button>
-              <Button type='button' variant='outline' className='h-9 rounded-xl px-4 text-sm'>
-                Next <ArrowRight className='size-4' />
-              </Button>
-            </div>
+          {filteredInstructors.length > PAGE_SIZE ? (
+            <Pagination className='justify-center pb-2'>
+              <PaginationContent className='flex-wrap justify-center'>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href='#'
+                    onClick={event => {
+                      event.preventDefault();
+                      setPage(current => Math.max(1, current - 1));
+                    }}
+                    aria-disabled={page === 1}
+                  />
+                </PaginationItem>
+
+                {paginationItems.map((item, index) =>
+                  item === 'ellipsis' ? (
+                    <PaginationItem key={`ellipsis-${index}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={item}>
+                      <PaginationLink
+                        href='#'
+                        isActive={item === page}
+                        onClick={event => {
+                          event.preventDefault();
+                          setPage(item);
+                        }}
+                      >
+                        {item}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href='#'
+                    onClick={event => {
+                      event.preventDefault();
+                      setPage(current => Math.min(totalPages, current + 1));
+                    }}
+                    aria-disabled={page === totalPages}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           ) : null}
         </div>
 
@@ -474,6 +546,7 @@ export default function StudentInstructorSearchPage() {
                 setHireModalInstructorUuid(selectedInstructor.uuid);
               }
             }}
+            courseId={courseId}
           />
         </aside>
       </div>
