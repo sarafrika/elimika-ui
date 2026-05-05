@@ -69,8 +69,10 @@ export type CoursesRecommendationCardData = {
   rating: string;
   weeks: string;
   secondaryMeta: string;
+  ctaLabel: string;
+  ctaHref: string;
+  ctaKind: 'enroll' | 'apply-to-train';
   detailsHref: string;
-  enrollHref: string;
   icon: LucideIcon;
   imageTone: 'primary' | 'warning' | 'success';
   imageUrl?: string;
