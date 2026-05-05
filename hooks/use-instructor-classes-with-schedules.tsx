@@ -79,7 +79,7 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     queries: classes.map(classItem => ({
       ...getClassScheduleOptions({
         path: { uuid: classItem.uuid as string },
-        query: { pageable: {} },
+        query: { pageable: { page: 0, size: 1000 } }
       }),
       enabled: !!classItem.uuid,
       staleTime: 10 * 60 * 1000,

@@ -109,7 +109,7 @@ function useAmdinClassesWithDetails() {
     queries: classes.map(cls => ({
       ...getClassScheduleOptions({
         path: { uuid: cls.uuid ?? '' },
-        query: { pageable: {} },
+        query: { pageable: { page: 0, size: 1000 } }
       }),
       enabled: !!cls.uuid,
       staleTime: 5 * 60 * 1000,
