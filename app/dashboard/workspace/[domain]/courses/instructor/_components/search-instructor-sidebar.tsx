@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
+import { useQuery } from '@tanstack/react-query';
 import { Info, Play, Sparkles, Video } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -15,7 +17,8 @@ type Props = {
   shortlist: SearchInstructor[];
   onSelectShortlist: (uuid: string) => void;
   onQuickHire: () => void;
-  instructorIntroVideo: string
+  instructorIntroVideo: string;
+  courseId?: string | null;
 };
 
 function getMatchScore(instructor: SearchInstructor | null) {
@@ -49,21 +52,77 @@ function MatchRing({ score }: { score: number }) {
   );
 }
 
+function formatMoney(amount: number, currency?: string) {
+  const resolvedCurrency = currency?.toUpperCase() ?? 'KES';
+  const currencyLabel = resolvedCurrency === 'KES' ? 'KSh' : resolvedCurrency;
+  const formattedAmount = new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 0,
+  }).format(amount);
+
+  return `${currencyLabel} ${formattedAmount}`;
+}
+
+function resolveRateKey(
+  selectedService: 'private' | 'group',
+  sessionType: 'online' | 'physical'
+) {
+  if (selectedService === 'private') {
+    return sessionType === 'online' ? 'private_online_rate' : 'private_inperson_rate';
+  }
+
+  return sessionType === 'online' ? 'group_online_rate' : 'group_inperson_rate';
+}
+
 export function SearchInstructorSidebar({
   selectedInstructor,
   shortlist,
   instructorIntroVideo,
   onSelectShortlist,
   onQuickHire,
+  courseId,
 }: Props) {
   const [skillsFundEnabled, setSkillsFundEnabled] = useState(true);
   const score = useMemo(() => getMatchScore(selectedInstructor), [selectedInstructor]);
   const matchLabel = getMatchLabel(score);
-  // const primaryShortlist = shortlist.slice(0, 3);
-  const primaryShortlist = [] as SearchInstructor[]
 
-  const currency = 'Ksh'
-  const skillFundBallance = 0
+  const { data: trainingApplications } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        pageable: {},
+        searchParams: {
+          applicant_uuid_eq: selectedInstructor?.uuid as string,
+          status: 'approved',
+        },
+      },
+    }),
+    enabled: Boolean(selectedInstructor?.uuid),
+  });
+
+  const selectedApplication = useMemo(() => {
+    const applications = trainingApplications?.data?.content ?? [];
+
+    if (!applications.length) {
+      return null;
+    }
+
+    if (courseId) {
+      return applications.find(application => application.course_uuid === courseId) ?? applications[0];
+    }
+
+    return applications[0];
+  }, [courseId, trainingApplications]);
+
+  const rateCard = selectedApplication?.rate_card;
+  const selectedService = 'private' as const;
+  const sessionType = 'online' as const;
+  const rateKey = resolveRateKey(selectedService, sessionType);
+  const classInstances = 1;
+  const hoursPerClass = 1;
+  const rateAmount = rateCard?.[rateKey] ?? 0;
+  const bookingTotal = rateAmount * classInstances * hoursPerClass;
+  const currency = rateCard?.currency ?? 'KES';
+  const primaryShortlist = shortlist.slice(0, 3);
+  const skillFundBalance = 0;
 
   return (
     <div className='space-y-4'>
@@ -133,14 +192,24 @@ export function SearchInstructorSidebar({
         <div className='flex items-start justify-between gap-3'>
           <div>
             <h3 className='text-sm font-semibold sm:text-base'>Pay using Skills Fund</h3>
-            <p className='text-muted-foreground text-xs sm:text-sm'>Balance: {currency} {skillFundBallance}</p>
+            <p className='text-muted-foreground text-xs sm:text-sm'>
+              Balance: {formatMoney(skillFundBalance, currency)}
+            </p>
           </div>
           <Switch checked={skillsFundEnabled} onCheckedChange={setSkillsFundEnabled} />
         </div>
 
         <div className='bg-background p-3'>
           <div className='flex items-center justify-between gap-3'>
-            <p className='text-base font-semibold sm:text-lg'>KSh 1,500</p>
+            <div>
+              <p className='text-base font-semibold sm:text-lg'>
+                {formatMoney(bookingTotal, currency)}
+              </p>
+              <p className='text-muted-foreground text-xs sm:text-sm'>
+                {classInstances} class instance{classInstances === 1 ? '' : 's'} x {hoursPerClass}{' '}
+                hour{hoursPerClass === 1 ? '' : 's'}
+              </p>
+            </div>
             <p className='text-muted-foreground text-xs sm:text-sm'>This booking</p>
           </div>
           <Separator className='my-3' />
@@ -252,7 +321,7 @@ export function SearchInstructorSidebar({
                     {instructor.full_name}
                   </p>
                   <p className='text-muted-foreground text-xs'>
-                    {((instructor.rating ?? 0).toFixed(1) || '4.8')} • KSh 1,500 / session
+                    {((instructor.rating ?? 0).toFixed(1) || '4.8')} • {formatMoney(rateAmount, currency)} / session
                   </p>
                 </div>
 
