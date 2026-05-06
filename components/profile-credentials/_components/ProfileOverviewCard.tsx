@@ -56,14 +56,14 @@ export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
           </Avatar>
 
           <div className='min-w-0 space-y-1'>
-            <h2 className='text-foreground text-2xl font-semibold tracking-tight'>{displayName}</h2>
-            <p className='text-muted-foreground text-sm'>{title}</p>
+            <h2 className='text-foreground text-xl font-semibold tracking-tight'>{displayName}</h2>
+            <p className='text-muted-foreground text-xs'>{title}</p>
           </div>
         </div>
 
         <Badge
           variant='outline'
-          className='mt-5 rounded-full border-white/70 bg-background/80 px-4 py-1.5 text-sm font-semibold text-primary shadow-sm'
+          className='mt-5 rounded-full border-white/70 bg-background/80 px-4 py-1 text-xs font-semibold text-primary shadow-sm'
         >
           {levelLabel}
         </Badge>
@@ -71,10 +71,10 @@ export function ProfileOverviewCard({ profile }: ProfileOverviewCardProps) {
 
       <CardContent className='space-y-4 px-3 py-4'>
         <div className='space-y-3'>
-          <div className='text-foreground flex items-center gap-3 text-lg font-medium'>
+          <div className='text-foreground flex items-center gap-3 text-md font-medium'>
             Base Info
           </div>
-          <div className='text-muted-foreground space-y-2 text-base'>
+          <div className='text-muted-foreground space-y-2 text-sm'>
             {website && <div className='flex items-center gap-3'>
               <Globe className='size-4' />
               <span>{website}</span>

@@ -272,7 +272,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
   }
 
   return (
-    <div className='fixed inset-0 z-[100] bg-[color-mix(in_oklch,var(--el-brand-50)_80%,var(--background))]'>
+    <div className='fixed inset-0 z-[100]'>
       <header className='bg-primary text-primary-foreground flex h-16 items-center justify-between gap-3 border-b px-4 shadow-sm'>
         <div className='flex min-w-0 items-center gap-3'>
           <span className='flex h-9 w-9 items-center justify-center rounded-full text-lg font-semibold'>
@@ -395,14 +395,23 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
           />
         </div>
 
-        <div className='min-h-0 min-w-0 overflow-hidden xl:block'>
+        <div className='min-h-0 min-w-0 overflow-hidden xl:block border-l'>
           {selectedStudent ? (
             <SubmissionInsightsPanel
               rubricMatrix={rubricMatrix}
               student={selectedStudent}
               taskType={parsedTask.taskType}
             />
-          ) : null}
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-center text-foreground px-4">
+              <div className="text-lg font-medium mb-2">
+                No student selected
+              </div>
+              <p className="text-sm">
+                Choose a student from the list to view their submission insights.
+              </p>
+            </div>
+          )}
         </div>
       </section>
     </div>

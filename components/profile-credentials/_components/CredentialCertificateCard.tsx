@@ -184,29 +184,40 @@ export function CredentialCertificateCard({
   const [viewerOpen, setViewerOpen] = useState(false);
 
   return (
-    <Card className='gap-0 overflow-hidden rounded-[18px] border-white/60 bg-card/95 py-0 shadow-sm'>
+    <Card className='gap-0 overflow-hidden rounded-[16px] border-white/60 bg-card/95 py-0 shadow-sm'>
       {item.documentUrl ? (
-        <GeneralPdfPreview documentUrl={item.documentUrl} documentLabel={item.documentLabel} />
+        <GeneralPdfPreview
+          documentUrl={item.documentUrl}
+          documentLabel={item.documentLabel}
+        />
       ) : (
-        <CertificatePreview ownerName={ownerName} issuer={item.issuer} documentLabel={item.documentLabel} />
+        <CertificatePreview
+          ownerName={ownerName}
+          issuer={item.issuer}
+          documentLabel={item.documentLabel}
+        />
       )}
 
-      <div className={cn('space-y-4 px-5 py-4', item.documentUrl ? 'pt-5' : '')}>
-        <div className='space-y-2'>
+      <div className={cn('space-y-3 px-4 py-3', item.documentUrl ? 'pt-4' : '')}>
+        <div className='space-y-1.5'>
           {item.recordSummary ? (
-            <h3 className='text-foreground text-[20px] font-semibold tracking-tight'>
+            <h3 className='text-foreground text-[17px] font-semibold tracking-tight leading-snug'>
               {item.recordSummary}
-            </h3>) : null}
+            </h3>
+          ) : null}
 
-          <div className='flex flex-wrap items-center gap-3 text-base'>
-            <span className='text-[16px] font-semibold text-[color-mix(in_srgb,var(--primary)_62%,var(--el-accent-amber))]'>
+          <div className='flex flex-wrap items-center gap-2 text-sm'>
+            <span className='font-semibold text-[color-mix(in_srgb,var(--primary)_62%,var(--el-accent-amber))]'>
               {item.title}
             </span>
             <span className='text-muted-foreground'>|</span>
-            <span className='text-muted-foreground text-sm'>{item.stage}</span>
+            <span className='text-muted-foreground text-[13px]'>
+              {item.stage}
+            </span>
+
             <Badge
               variant='secondary'
-              className='rounded-lg bg-[color-mix(in_srgb,var(--primary)_8%,white)] px-3 py-1 text-primary'
+              className='rounded-md bg-[color-mix(in_srgb,var(--primary)_8%,white)] px-2 py-0.5 text-[11px] text-primary'
             >
               {item.level}
             </Badge>
@@ -219,35 +230,40 @@ export function CredentialCertificateCard({
           <Badge
             variant='outline'
             className={cn(
-              'min-h-10 rounded-lg px-3 text-sm font-medium',
+              'min-h-8 rounded-md px-2.5 text-xs font-medium',
               statusTone.badgeClass
             )}
           >
-            <StatusIcon className={cn('size-4', statusTone.iconClass)} />
+            <StatusIcon className={cn('size-3.5', statusTone.iconClass)} />
             {item.status}
           </Badge>
+
           {item.documentUrl ? (
             <Button
               type='button'
               variant='outline'
-              className='min-h-10 rounded-lg border-white/70 bg-background/80 px-4'
+              className='min-h-8 rounded-md border-white/70 bg-background/80 px-3 text-xs'
               onClick={() => setViewerOpen(true)}
               disabled={!item.documentUrl}
             >
               {item.actionLabel}
-              <ChevronRight className='size-4' />
+              <ChevronRight className='size-3.5' />
             </Button>
           ) : (
-            <Button variant='outline' className='min-h-10 rounded-lg border-white/70 bg-background/80 px-4'>
+            <Button
+              variant='outline'
+              className='min-h-8 rounded-md border-white/70 bg-background/80 px-3 text-xs'
+            >
               {item.actionLabel}
-              <ChevronRight className='size-4' />
+              <ChevronRight className='size-3.5' />
             </Button>
           )}
+
           {onDelete ? (
             <Button
               type='button'
               variant='destructive'
-              className='min-h-10 rounded-lg px-4'
+              className='min-h-8 rounded-md px-3 text-xs'
               onClick={() => onDelete(item)}
               disabled={isDeleting}
             >
@@ -257,23 +273,23 @@ export function CredentialCertificateCard({
         </div>
       </div>
 
-
-      {/* Full-height document viewer sheet */}
+      {/* Viewer */}
       <Sheet open={viewerOpen} onOpenChange={setViewerOpen}>
         <SheetContent
           side='right'
-          className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[720px]'
+          className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[680px]'
         >
-          <SheetHeader className='border-border/70 border-b px-6 py-5 text-left'>
-            <SheetTitle className='text-xl'>{item.documentLabel}</SheetTitle>
-            <SheetDescription>
-              {item.recordSummary ? `${item.recordSummary} · ` : ''}{ownerName}
+          <SheetHeader className='border-border/70 border-b px-5 py-4 text-left'>
+            <SheetTitle className='text-lg'>{item.documentLabel}</SheetTitle>
+            <SheetDescription className='text-xs'>
+              {item.recordSummary ? `${item.recordSummary} · ` : ''}
+              {ownerName}
             </SheetDescription>
           </SheetHeader>
 
           {item.documentUrl ? (
-            <div className='flex-1 space-y-5 overflow-y-auto px-6 py-5'>
-              <div className='overflow-hidden rounded-[18px] border bg-card shadow-sm'>
+            <div className='flex-1 space-y-4 overflow-y-auto px-5 py-4'>
+              <div className='overflow-hidden rounded-[14px] border bg-card shadow-sm'>
                 <PdfPreview
                   documentUrl={item.documentUrl}
                   documentLabel={item.documentLabel}
@@ -283,14 +299,12 @@ export function CredentialCertificateCard({
               </div>
             </div>
           ) : (
-            <div className='flex flex-1 items-center justify-center p-6 text-center text-sm text-muted-foreground'>
+            <div className='flex flex-1 items-center justify-center p-5 text-center text-xs text-muted-foreground'>
               No document URL available for this credential.
             </div>
           )}
         </SheetContent>
       </Sheet>
-
-
-    </Card >
+    </Card>
   );
 }

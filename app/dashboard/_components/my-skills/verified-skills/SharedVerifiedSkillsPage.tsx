@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/sheet';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 
+import { ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { VerifiedSkillCategoryCard } from './_components/VerifiedSkillCategoryCard';
 import { VerifiedSkillsSidebar } from './_components/VerifiedSkillsSidebar';
 import { VerifiedSkillsTopBar } from './_components/VerifiedSkillsTopBar';
@@ -27,6 +29,7 @@ type SharedVerifiedSkillsPageProps = {
 };
 
 export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps) {
+  const router = useRouter()
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { categories, insights, suggestions } = useVerifiedSkillsContent(role);
   const [activeGroup, setActiveGroup] = useState<VerifiedSkillGroup>('All Skills');
@@ -80,6 +83,18 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
   return (
     <main className='bg-background min-h-screen px-3 py-3 sm:px-4 lg:px-5'>
       <div className='mx-auto grid w-full max-w-7xl gap-4'>
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-foreground hover:bg-muted"
+            onClick={() => router.back()}
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </div>
+
         <VerifiedSkillsTopBar
           activeGroup={activeGroup}
           proficiencyFilter={proficiencyFilter}

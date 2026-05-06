@@ -16,7 +16,7 @@ export function GrowthTimelineSection({ items }: GrowthTimelineSectionProps) {
   return (
     <Card className='rounded-[18px] border-white/60 bg-card/95 px-4 py-4 shadow-sm sm:px-5 mb-20'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
-        <h2 className='text-foreground text-2xl font-semibold tracking-tight'>Growth Timeline</h2>
+        <h2 className='text-foreground text-xl font-semibold tracking-tight'>Growth Timeline</h2>
         <Button variant='ghost' className='rounded-xl text-primary'>
           View Full Timeline
           <ChevronRight className='size-4' />

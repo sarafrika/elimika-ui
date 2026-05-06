@@ -57,7 +57,7 @@ export function VaultHighlights({
   return (
     <div className='flex flex-wrap gap-3'>
       <Card className='min-w-[180px] flex-1 rounded-[16px] border-white/60 bg-card/95 px-5 py-4 shadow-sm'>
-        <div className='flex items-center gap-2 text-lg font-semibold'>
+        <div className='flex items-center gap-2 text-base font-semibold'>
           <span className='text-primary'>⊞</span>
           {badges}
         </div>

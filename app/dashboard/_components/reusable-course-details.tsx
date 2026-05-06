@@ -22,6 +22,7 @@ import {
   submitCourseReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -38,7 +39,6 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { ReviewCard } from '../@instructor/reviews/review-card';
 import { VideoPlayer } from '../@student/schedule/classes/[id]/VideoPlayer';
 import { FeedbackDialog } from './review-instructor-modal';
@@ -381,6 +381,9 @@ export default function ReusableCourseDetailsPage({
                     View available classes
                   </Button>
                 )}
+
+
+                {/* // route to this page: "/dashboard/workspace/instructor/courses/instructor?courseId=a512846d-707a-4215-9009-2ba93508ee7f" for all other domains, but hide the button for instructors....... retain the coourseId on this new page when user switches profile */}
                 <Button
                   onClick={() =>
                     router.push(

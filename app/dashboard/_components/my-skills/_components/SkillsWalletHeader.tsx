@@ -3,8 +3,8 @@
 import { MapPin } from 'lucide-react';
 
 import type { SharedMySkillsProfile } from '../types';
-import { ProfileShareDialog } from './ProfileShareDialog';
 import { ProfileQrCode } from './ProfileQrCode';
+import { ProfileShareDialog } from './ProfileShareDialog';
 
 type SkillsWalletHeaderProps = {
   profile: SharedMySkillsProfile;
@@ -56,9 +56,9 @@ export function SkillsWalletHeader({
           </div>
         </div>
 
-        <div className='flex flex-wrap items-start gap-2'>
-          <ProfileShareDialog profileName={profile.name} shareUrl={shareUrl ?? ''} />
+        <div className='flex flex-wrap items-center gap-2'>
           <ProfileQrCode targetUrl={shareUrl} />
+          <ProfileShareDialog profileName={profile.name} shareUrl={shareUrl ?? ''} />
         </div>
       </div>
     </section>

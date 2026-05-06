@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, EllipsisVertical, Users } from 'lucide-react';
+import { BriefcaseBusiness, Users } from 'lucide-react';
 import Link from 'next/link';
 import { OverviewSectionShell } from './OverviewSectionShell';
 import { ActionButton } from './OverviewSharedBits';
@@ -40,7 +40,7 @@ function SkillsProgressCard({ summary }: { summary: OverviewCourseSummary }) {
 
       <div className='mt-4 grid gap-2 sm:grid-cols-2'>
         <ActionButton label={summary.primaryActionLabel} tone='muted' href={'/dashboard/classes'} />
-        <ActionButton label={summary.secondaryActionLabel} tone='muted' href={'/dashboard/assignments'} />
+        <ActionButton label={summary.secondaryActionLabel} tone='muted' href={'/dashboard/assignment'} />
       </div>
     </div>
   );
@@ -67,14 +67,14 @@ function CourseRow({ course }: { course: OverviewCourse }) {
                 <span className='text-primary'>{course.provider}</span> | {course.level}
               </p>
             </div>
-
+            {/* 
             <button
               type='button'
               aria-label={`${course.title} options`}
               className='text-muted-foreground transition hover:text-foreground'
             >
               <EllipsisVertical className='size-4' />
-            </button>
+            </button> */}
           </div>
 
           {/* Students + Progress */}
@@ -113,7 +113,7 @@ function CourseRow({ course }: { course: OverviewCourse }) {
 export function OverviewCourseListPanel({ courses, summary }: OverviewCourseListPanelProps) {
   return (
     <>
-      <OverviewSectionShell title='Active Courses' trailingMode='ellipsis' onActionHref='#' >
+      <OverviewSectionShell title='Active Courses' trailingMode='none' onActionHref='#' >
         <SkillsProgressCard summary={summary} />
       </OverviewSectionShell>
 

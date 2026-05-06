@@ -2,17 +2,18 @@ import { ExternalLink, ShieldCheck } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
+import Link from 'next/link';
 import type { SharedCredentialSummary, SharedTimelineItem } from '../types';
 
-type PortfolioSummaryPanelProps = {
+type CredentailSummaryPanelProps = {
   summary: SharedCredentialSummary;
   timeline: SharedTimelineItem[];
 };
 
-export function PortfolioSummaryPanel({
+export function CredentailSummaryPanel({
   summary,
   timeline,
-}: PortfolioSummaryPanelProps) {
+}: CredentailSummaryPanelProps) {
   const values = [
     { label: 'Skill Badges', value: summary.badgesEarned },
     { label: 'Certificates', value: summary.certificatesEarned },
@@ -23,7 +24,7 @@ export function PortfolioSummaryPanel({
     <div className='grid items-start gap-3'>
       {/* Portfolio Overview */}
       <article className='border-border/60 bg-card self-start rounded-lg border p-3 shadow-sm'>
-        <h2 className='mb-3 text-sm font-semibold sm:text-base'>Portfolio Overview</h2>
+        <h2 className='mb-3 text-sm font-semibold sm:text-base'>Credential Summary</h2>
 
         <div className='grid grid-cols-3 gap-2'>
           {values.map(item => (
@@ -36,8 +37,8 @@ export function PortfolioSummaryPanel({
           ))}
         </div>
 
-        <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2'>
-          <div className='border-border/60 bg-background flex items-center gap-2 rounded-md border p-2'>
+        <div className='mt-3 flex justify-end self-end'>
+          {/* <div className='border-border/60 bg-background flex items-center gap-2 rounded-md border p-2'>
             <span className='bg-primary/10 text-primary grid size-8 place-items-center rounded-md'>
               <ShieldCheck className='size-4' />
             </span>
@@ -49,23 +50,26 @@ export function PortfolioSummaryPanel({
                 Ready to share publicly
               </p>
             </div>
-          </div>
+          </div> */}
 
           <Button
+            asChild
             type='button'
             variant='outline'
             size='sm'
             className='h-auto justify-between py-2 text-xs'
           >
-            View Portfolio
-            <ExternalLink className='size-3.5' />
+            <Link href="/dashboard/my-skills/verified-skills">
+              View Details
+              <ExternalLink className='size-3.5' />
+            </Link>
           </Button>
         </div>
       </article>
 
       {/* Portfolio Activity */}
       <article className='border-border/60 bg-card self-start rounded-lg border p-3 shadow-sm'>
-        <h2 className='mb-3 text-sm font-semibold sm:text-base'>Portfolio Activity</h2>
+        <h2 className='mb-3 text-sm font-semibold sm:text-base'>Credential Activity</h2>
 
         {timeline.length > 0 ? (
           <div className='space-y-2'>
