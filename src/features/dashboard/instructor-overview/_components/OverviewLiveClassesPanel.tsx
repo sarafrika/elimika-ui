@@ -1,7 +1,15 @@
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { EllipsisVertical } from 'lucide-react';
+import Link from 'next/link';
+import type { OverviewLiveClass } from './overview-data';
 import { OverviewSectionShell } from './OverviewSectionShell';
 import { ActionButton, InitialsGroup } from './OverviewSharedBits';
-import type { OverviewLiveClass } from './overview-data';
 
 type OverviewLiveClassesPanelProps = {
   liveClasses: OverviewLiveClass[];
@@ -14,13 +22,32 @@ function LiveClassRow({ liveClass }: { liveClass: OverviewLiveClass }) {
         <p className='text-[0.9rem] font-medium text-muted-foreground'>
           {liveClass.timeLabel}
         </p>
-        <button
-          type='button'
-          aria-label={`${liveClass.title} options`}
-          className='text-muted-foreground transition hover:text-foreground'
-        >
-          <EllipsisVertical className='size-4' />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type='button'
+              variant='ghost'
+              size='icon'
+              aria-label={`${liveClass.title} options`}
+              className='rounded-full text-muted-foreground transition hover:bg-muted/50 hover:text-foreground'
+            >
+              <EllipsisVertical className='size-4' />
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align='end' className='w-44'>
+            <DropdownMenuItem asChild>
+              <Link href={liveClass.infoHref} className='flex w-full items-center gap-2'>
+                View info
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={liveClass.href} className='flex w-full items-center gap-2'>
+                Manage class
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <h3 className='mt-1 text-[1.05rem] font-semibold text-foreground sm:text-[1.1rem]'>
@@ -35,11 +62,12 @@ function LiveClassRow({ liveClass }: { liveClass: OverviewLiveClass }) {
           <span>|</span>
           <span>{liveClass.students}</span>
         </div>
+      </div>
 
-        <div className='flex items-center gap-3'>
-          <InitialsGroup initials={liveClass.attendeeInitials} />
-          <ActionButton href={liveClass.href} label={liveClass.actionLabel} />
-        </div>
+      <div className='flex flex-wrap items-center gap-2 mt-2 self-end justify-end'>
+        <InitialsGroup initials={liveClass.attendeeInitials} />
+        <ActionButton href={liveClass.infoHref} label='View info' tone='muted' />
+        <ActionButton href={liveClass.href} label={liveClass.actionLabel} />
       </div>
     </article>
   );

@@ -382,24 +382,24 @@ export default function ReusableCourseDetailsPage({
                   </Button>
                 )}
 
-
-                {/* // route to this page: "/dashboard/workspace/instructor/courses/instructor?courseId=a512846d-707a-4215-9009-2ba93508ee7f" for all other domains, but hide the button for instructors....... retain the coourseId on this new page when user switches profile */}
-                <Button
-                  onClick={() =>
-                    router.push(
-                      buildWorkspaceAliasPath(
-                        activeDomain,
-                        `/dashboard/courses/instructor?courseId=${courseData?.uuid}`
+                {activeDomain !== 'instructor' ? (
+                  <Button
+                    onClick={() =>
+                      router.push(
+                        buildWorkspaceAliasPath(
+                          activeDomain,
+                          `/dashboard/courses/instructor?courseId=${courseData?.uuid}`
+                        )
                       )
-                    )
-                  }
-                  variant='outline'
-                  className='w-full rounded-xl shadow-none'
-                  size='lg'
-                >
-                  <Search className='mr-2 h-4 w-4' />
-                  Find an instructor
-                </Button>
+                    }
+                    variant='outline'
+                    className='w-full rounded-xl shadow-none'
+                    size='lg'
+                  >
+                    <Search className='mr-2 h-4 w-4' />
+                    Find an instructor
+                  </Button>
+                ) : null}
               </div>
             </div>
           </Card>
@@ -494,9 +494,9 @@ export default function ReusableCourseDetailsPage({
                   <span className='bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-xl'>
                     <Icon className='h-4 w-4' />
                   </span>
-                  <div className='min-w-0 flex flex-row items-center gap-1'>
-                    <p className='text-muted-foreground text-xl font-bold'>{value}</p>
+                  <div className='min-w-0 flex flex-row items-center gap-2'>
                     <p className='text-foreground text-sm font-medium'>{label}</p>
+                    <p className='text-muted-foreground text-xl font-bold'>{value}</p>
                   </div>
                 </div>
               ))}

@@ -35,6 +35,7 @@ export type OverviewLiveClass = {
   provider: string;
   students: string;
   actionLabel: string;
+  infoHref: string;
   href: string;
   attendeeInitials: string[];
 };
