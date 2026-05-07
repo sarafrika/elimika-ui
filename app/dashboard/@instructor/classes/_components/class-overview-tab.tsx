@@ -317,13 +317,6 @@ function CourseProgram({
     <section className='border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur'>
       <div className='mb-3 flex items-center justify-between gap-4'>
         <h2 className='text-foreground text-xl font-semibold'>Course Program</h2>
-        {/* <button
-          type='button'
-          className='text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none'
-        >
-          See All
-          <ChevronDown className='h-4 w-4 -rotate-90' />
-        </button> */}
       </div>
 
       {lessonModules.length === 0 ? (
@@ -350,8 +343,7 @@ function CourseProgram({
                   </span>
                 </div>
 
-                {/* // for students, allow clicking on the entire div component open the lesson */}
-                <div className='divide-border/70 divide-y'>
+                {!isStudent && <div className='divide-border/70 divide-y'>
                   {module.content?.data?.map((content, contentIndex) => {
                     const isSelected = selectedLesson?.uuid === content.uuid;
                     // const lessonProgress = getLessonProgress(moduleIndex, contentIndex);
@@ -400,15 +392,7 @@ function CourseProgram({
                             </p>
                           </div>
 
-                          {isStudent ? (
-                            <Link
-                              href={lessonHref}
-                              onClick={event => event.stopPropagation()}
-                              className='text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
-                            >
-                              Open lesson
-                            </Link>
-                          ) : isSelected ? (
+                          {isSelected ? (
                             <Button
                               type='button'
                               onClick={event => {
@@ -446,7 +430,84 @@ function CourseProgram({
                       </div>
                     );
                   })}
-                </div>
+                </div>}
+
+                {isStudent &&
+                  <div className='divide-border/70 divide-y'>
+                    {module.content?.data?.map((content, contentIndex) => {
+                      const isSelected = selectedLesson?.uuid === content.uuid;
+                      // const lessonProgress = getLessonProgress(moduleIndex, contentIndex);
+                      const lessonProgress = 0;
+                      const typeLabel = getContentTypeLabel(
+                        contentTypeMap,
+                        content.content_type_uuid
+                      );
+                      const isWarmTrack = lessonProgress < 100;
+                      const lessonHref = getStartLessonHref(module.lesson.uuid, content.uuid);
+
+                      return (
+                        <div
+                          key={content.uuid ?? `${module.lesson.uuid}-${contentIndex}`}
+                          role='button'
+                          tabIndex={0}
+                          onClick={() => {
+                            if (content.uuid) setSelectedLessonUuid(content.uuid);
+                          }}
+                          onKeyDown={event => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              if (content.uuid) setSelectedLessonUuid(content.uuid);
+                            }
+                          }}
+                          className={cn(
+                            'hover:bg-muted/60 focus-visible:ring-ring block w-full cursor-pointer px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none')}
+                        >
+                          <Link
+                            href={lessonHref}
+                            onClick={event => event.stopPropagation()}>
+                            <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center'>
+                              <div className='flex min-w-0 items-center gap-3'>
+                                <span
+                                  className={cn(
+                                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
+                                    isWarmTrack
+                                      ? 'bg-warning text-warning-foreground'
+                                      : 'bg-success text-success-foreground'
+                                  )}
+                                >
+                                  {getContentTypeIcon(contentTypeMap, content.content_type_uuid)}
+                                </span>
+                                <p className='text-foreground min-w-0 truncate text-base font-semibold'>
+                                  Lesson {moduleIndex + 1}.{contentIndex + 1}{' '}
+                                  <span className='text-muted-foreground font-medium'>{typeLabel}</span>
+                                </p>
+                              </div>
+
+                              <Link
+                                href={lessonHref}
+                                onClick={event => event.stopPropagation()}
+                                className='text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                              >
+                                Open lesson
+                              </Link>
+                            </div>
+
+                            <div className='mt-2 grid gap-3 pl-8 md:grid-cols-[72px_minmax(0,1fr)_56px] md:items-center'>
+                              <p className='text-muted-foreground text-sm'>{getContentDuration(content)}</p>
+                              <Progress
+                                value={lessonProgress}
+                                className='bg-muted h-2.5'
+                                indicatorClassName={isWarmTrack ? 'bg-warning' : 'bg-success'}
+                              />
+                              <p className='text-foreground text-left text-sm font-semibold md:text-right md:text-sm'>
+                                {lessonProgress}%
+                              </p>
+                            </div>
+                          </Link>
+                        </div>
+                      );
+                    })}
+                  </div>}
               </div>
             );
           })}
