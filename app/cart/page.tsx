@@ -54,7 +54,7 @@ export default function CartPage() {
     retry: 1,
   });
 
-  const cart = cartQuery.data ?? null;
+  const cart = cartQuery?.data?.data ?? null;
   const cartItems = useMemo(() => cart?.items ?? [], [cart?.items]);
   const isEmpty = cartItems.length === 0;
 

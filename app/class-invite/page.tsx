@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
   addDays,
   endOfMonth,
@@ -37,7 +38,6 @@ import { Suspense, useMemo, useState } from 'react';
 import { useClassDetails } from '../../hooks/use-class-details';
 import { useDifficultyLevels } from '../../hooks/use-difficultyLevels';
 import { useUserDomains } from '../../hooks/use-user-query';
-import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type ClassInviteData = ReturnType<typeof useClassDetails>['data'];
 type ClassInviteCourse = NonNullable<ClassInviteData['course']>;
@@ -45,6 +45,8 @@ type ClassInviteEnrollment = ClassInviteData['enrollments'][number];
 type ClassInviteProgram = NonNullable<ClassInviteData['program']>;
 type ClassInviteProgramCourse = ClassInviteData['pCourses'][number] & { title?: string };
 type ClassInviteSchedule = ClassInviteData['schedule'][number];
+
+// if user is not authenticated, show them a dialog that prompts them to create a student account on the platform to view and use the invite, instead of an empty page
 
 function ClassInviteContent() {
   const searchParams = useSearchParams();
@@ -229,7 +231,7 @@ function ClassInviteContent() {
                   Open to the public • Limited seats
                 </div>
 
-                  <div className='flex items-center gap-3'>
+                <div className='flex items-center gap-3'>
                   <Button
                     onClick={handleRegister}
                     size='lg'

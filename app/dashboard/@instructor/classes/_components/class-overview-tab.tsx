@@ -15,6 +15,7 @@ import {
   Clock3,
   Layers3,
   MonitorPlay,
+  Pen,
   Play,
   Plus,
   UserRound,
@@ -165,6 +166,20 @@ function ClassHero({
             <Video className='h-4 w-4' />
             Join via link
           </a>
+        )}
+
+        {/* // edit class button here */}
+        {roleLabel === 'Instructor view' && (
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={onAddClasses}
+            className='inline-flex h-9 items-center justify-center gap-2 rounded-lg px-4 text-xs font-medium'
+          >
+            <Pen className='h-4 w-4' />
+            Edit class
+          </Button>
         )}
 
         {roleLabel === 'Instructor view' && (
@@ -334,6 +349,8 @@ function CourseProgram({
                     {module.content?.data?.length ?? 0} contents
                   </span>
                 </div>
+
+                {/* // for students, allow clicking on the entire div component open the lesson */}
                 <div className='divide-border/70 divide-y'>
                   {module.content?.data?.map((content, contentIndex) => {
                     const isSelected = selectedLesson?.uuid === content.uuid;
