@@ -3,6 +3,15 @@
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { Button } from '@/components/ui/button';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -94,13 +103,7 @@ const defaultFilterValues: FilterValues = {
   price: 'all',
 };
 
-const getCatalogBatchSize = (width: number) => {
-  if (width >= 1280) {
-    return 9;
-  }
-
-  return 8;
-};
+const CATALOG_PAGE_SIZE = 12;
 
 const createCatalogCards = (
   items: UnifiedContentItem[],
@@ -203,10 +206,10 @@ const createRecommendationCards = (
 
 export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const qc = useQueryClient();
-  const user = useUserProfile()
+  const user = useUserProfile();
   const instructor = useInstructor();
   // const organisation = useOrganisation();
-  const organisation = user?.organisation_affiliations?.[0]
+  const organisation = user?.organisation_affiliations?.[0];
 
   const isInstructorDomain = domain === 'instructor';
   const isOrganisationDomain = domain === 'organisation' || domain === 'organisation_user';
@@ -218,29 +221,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const [activeTab, setActiveTab] = useState<CoursesCatalogTab>('all-courses');
   const [filters, setFilters] = useState<FilterValues>(defaultFilterValues);
-  const [visibleCoursesCount, setVisibleCoursesCount] = useState(8);
+  const [currentCatalogPage, setCurrentCatalogPage] = useState(1);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [selectedApplicationCard, setSelectedApplicationCard] = useState<CoursesCatalogCardData | null>(null);
-
-  useEffect(() => {
-    const syncVisibleCountToViewport = () => {
-      const batchSize = getCatalogBatchSize(window.innerWidth);
-      setVisibleCoursesCount(current => {
-        if (current <= batchSize) {
-          return batchSize;
-        }
-
-        return Math.ceil(current / batchSize) * batchSize;
-      });
-    };
-
-    syncVisibleCountToViewport();
-    window.addEventListener('resize', syncVisibleCountToViewport);
-
-    return () => {
-      window.removeEventListener('resize', syncVisibleCountToViewport);
-    };
-  }, []);
 
   const { data: coursesResponse, isLoading: coursesLoading } = useQuery({
     ...getPublishedCoursesOptions({
@@ -398,13 +381,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   );
 
   const categoryTileData = useMemo(
-    () => categories.slice(0, 4).map((category, index) => getCategoryTilePresentation(category.name, index)),
-    [categories]
-  );
-
-  const compactCategoryTiles = useMemo(
-    () =>
-      categories.slice(4, 7).map((category, index) => getCategoryTilePresentation(category.name, index + 4)),
+    () => categories.map((category, index) => getCategoryTilePresentation(category.name, index)),
     [categories]
   );
 
@@ -541,6 +518,25 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     [baseTabItems, categoryMap, difficultyMap, filters]
   );
 
+  useEffect(() => {
+    setCurrentCatalogPage(1);
+  }, [activeTab, filters]);
+
+  const totalCatalogPages = Math.max(1, Math.ceil(filteredItems.length / CATALOG_PAGE_SIZE));
+
+  useEffect(() => {
+    setCurrentCatalogPage(current => Math.min(current, totalCatalogPages));
+  }, [totalCatalogPages]);
+
+  const paginatedItems = useMemo(
+    () =>
+      filteredItems.slice(
+        (currentCatalogPage - 1) * CATALOG_PAGE_SIZE,
+        currentCatalogPage * CATALOG_PAGE_SIZE
+      ),
+    [currentCatalogPage, filteredItems]
+  );
+
   const instructorCourseApplicationMap = useMemo(() => {
     const map = new Map<string, { status?: string | null }>();
     instructorCourseApplications?.data?.content?.forEach(application => {
@@ -669,7 +665,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const catalogCards = useMemo(
     () =>
       createCatalogCards(
-        filteredItems.slice(0, visibleCoursesCount).map(item =>
+        paginatedItems.map(item =>
           item.kind === 'program'
             ? {
               ...item,
@@ -690,8 +686,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       canApplyToTrain,
       creatorMap,
       domain,
-      filteredItems,
-      visibleCoursesCount,
+      paginatedItems,
     ]
   );
 
@@ -699,8 +694,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     () => createRecommendationCards(recommendedBase, domain, creatorMap, ratingsMap, isInstructorDomain),
     [creatorMap, domain, isInstructorDomain, ratingsMap, recommendedBase]
   );
-
-  const hasMoreCatalogItems = filteredItems.length > visibleCoursesCount;
 
   const isLoading =
     coursesLoading || programsLoading || categoriesLoading || difficultiesLoading;
@@ -710,7 +703,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       ...current,
       [key]: value,
     }));
-    setVisibleCoursesCount(getCatalogBatchSize(window.innerWidth));
 
     if (
       key === 'contentType' &&
@@ -725,7 +717,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       ...defaultFilterValues,
       contentType: activeTab,
     });
-    setVisibleCoursesCount(getCatalogBatchSize(window.innerWidth));
   };
 
   const handleTabChange = (tab: CoursesCatalogTab) => {
@@ -734,7 +725,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       ...current,
       contentType: tab,
     }));
-    setVisibleCoursesCount(getCatalogBatchSize(window.innerWidth));
   };
 
   const handleCategoryTileClick = (category: Category) => {
@@ -742,7 +732,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       ...current,
       category: category.uuid ?? category.name,
     }));
-    setVisibleCoursesCount(getCatalogBatchSize(window.innerWidth));
   };
 
   const handleCatalogCardAction = (card: CoursesCatalogCardData) => {
@@ -902,11 +891,12 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                   ))}
                 </div>
               ) : (
-                <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+                <div className='scrollbar-hidden flex gap-3 overflow-x-auto pb-1'>
                   {categoryTileData.map((tile, index) => (
                     <CoursesCategoryTile
                       key={tile.title}
                       tile={tile}
+                      className='min-w-[168px] shrink-0 sm:min-w-[190px]'
                       isActive={
                         filters.category ===
                         (categories[index]?.uuid ?? categories[index]?.name ?? '')
@@ -974,21 +964,66 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                       ))}
                     </div>
 
-                    {hasMoreCatalogItems ? (
-                      <div className='mt-5 flex justify-center'>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          onClick={() =>
-                            setVisibleCoursesCount(
-                              current => current + getCatalogBatchSize(window.innerWidth)
-                            )
-                          }
-                          className='rounded-xl px-5 shadow-none'
-                        >
-                          See More
-                        </Button>
-                      </div>
+                    {totalCatalogPages > 1 ? (
+                      <Pagination className='mt-5 justify-center'>
+                        <PaginationContent className='flex-wrap justify-center'>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              href='#'
+                              onClick={event => {
+                                event.preventDefault();
+                                setCurrentCatalogPage(current => Math.max(1, current - 1));
+                              }}
+                            />
+                          </PaginationItem>
+
+                          {Array.from({ length: totalCatalogPages }).map((_, index) => {
+                            const page = index + 1;
+                            const shouldShow =
+                              totalCatalogPages <= 5 ||
+                              page === 1 ||
+                              page === totalCatalogPages ||
+                              Math.abs(page - currentCatalogPage) <= 1;
+
+                            if (!shouldShow) {
+                              if (page === 2 || page === totalCatalogPages - 1) {
+                                return (
+                                  <PaginationItem key={`ellipsis-${page}`}>
+                                    <PaginationEllipsis />
+                                  </PaginationItem>
+                                );
+                              }
+
+                              return null;
+                            }
+
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  href='#'
+                                  isActive={page === currentCatalogPage}
+                                  onClick={event => {
+                                    event.preventDefault();
+                                    setCurrentCatalogPage(page);
+                                  }}
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          })}
+
+                          <PaginationItem>
+                            <PaginationNext
+                              href='#'
+                              onClick={event => {
+                                event.preventDefault();
+                                setCurrentCatalogPage(current => Math.min(totalCatalogPages, current + 1));
+                              }}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
                     ) : null}
                   </div>
                 ) : (

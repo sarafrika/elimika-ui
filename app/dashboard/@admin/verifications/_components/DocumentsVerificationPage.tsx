@@ -934,7 +934,6 @@ export default function DocumentsVerificationPage() {
       const owner = instructorsWithUuid[index];
       if (!owner) return [];
       const documents = (query.data?.data ?? []) as InstructorDocument[];
-
       return documents.map(document => {
         const status = getInstructorDocumentStatus(document);
         const education = document.education_uuid
@@ -1294,7 +1293,7 @@ export default function DocumentsVerificationPage() {
                   </h2>
                   <p className="text-muted-foreground text-sm leading-6">
                     {activeTab === 'student'
-                      ? 'Student documents are not wired to a verification API yet, so this tab currently shows profiles only.'
+                      ? 'Student does not have any certificate document yet.'
                       : 'Open a document to inspect the preview and verify it from the side sheet.'}
                   </p>
                 </div>
@@ -1344,12 +1343,12 @@ export default function DocumentsVerificationPage() {
                     <div className="max-w-md space-y-2">
                       <h3 className="text-foreground text-xl font-semibold">
                         {activeTab === 'student'
-                          ? 'Student review queue coming soon'
+                          ? 'No documents found'
                           : 'No documents found'}
                       </h3>
                       <p className="text-muted-foreground text-sm leading-6">
                         {activeTab === 'student'
-                          ? 'Student profile records are loaded, but the client does not yet have a student document verification endpoint.'
+                          ? 'Student does not have any certificate document yet.'
                           : 'Try adjusting the search term or wait for more documents to be uploaded.'}
                       </p>
                     </div>

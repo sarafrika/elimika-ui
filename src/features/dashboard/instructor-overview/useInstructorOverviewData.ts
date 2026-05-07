@@ -392,16 +392,17 @@ export function useInstructorOverviewData() {
 
   const liveSource = useMemo(() => {
     const imminent = futureInstances.filter(item => {
-      if (item.instance.status === 'ONGOING') {
-        return true;
+      if (item.instance.status !== 'SCHEDULED') {
+        return false;
       }
 
       const start = new Date(item.instance.start_time).getTime();
       const diff = start - now.getTime();
+
       return diff >= 0 && diff <= 1000 * 60 * 60 * 24;
     });
 
-    return (imminent.length ? imminent : futureInstances).slice(0, 2);
+    return (imminent.length ? imminent : futureInstances).slice(0, 3);
   }, [futureInstances, now]);
 
   const liveInstanceIds = new Set(liveSource.map(item => item.instance.uuid).filter(Boolean));
@@ -429,7 +430,12 @@ export function useInstructorOverviewData() {
           title: item.instance.title || item.course?.name || item.classDefinition.title,
           provider: item.course?.category_names?.[0] ?? formatSessionFormat(item.classDefinition.session_format),
           students: `${enrolledCount} students`,
-          actionLabel: 'Manage',
+          actionLabel: 'Manage class',
+          infoHref: item.classDefinition.uuid
+            ? `/dashboard/trainings/overview/${item.classDefinition.uuid}`
+            : item.instance.uuid
+              ? `/dashboard/class-instance/${item.instance.uuid}`
+              : `/dashboard/classes/class-training/${item.classDefinition.uuid ?? ''}`,
           href: item.instance.uuid
             ? `/dashboard/class-instance/${item.instance.uuid}`
             : `/dashboard/classes/class-training/${item.classDefinition.uuid ?? ''}`,

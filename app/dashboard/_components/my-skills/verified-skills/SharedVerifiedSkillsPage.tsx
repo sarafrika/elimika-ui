@@ -15,23 +15,37 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
+import { ArrowLeft, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { VerifiedSkillCategoryCard } from './_components/VerifiedSkillCategoryCard';
 import { VerifiedSkillsSidebar } from './_components/VerifiedSkillsSidebar';
 import { VerifiedSkillsTopBar } from './_components/VerifiedSkillsTopBar';
 import { useVerifiedSkillsContent } from './live-data';
-import type { ProficiencyFilter, VerifiedSkillCategory, VerifiedSkillGroup, VerifiedSkillsRole } from './types';
+import type {
+  ProficiencyFilter,
+  VerifiedSkillCategory,
+  VerifiedSkillGroup,
+  VerifiedSkillRecord,
+  VerifiedSkillsRole,
+} from './types';
 
 type SharedVerifiedSkillsPageProps = {
   role?: VerifiedSkillsRole;
 };
 
 export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps) {
+  const router = useRouter();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { categories, insights, suggestions } = useVerifiedSkillsContent(role);
   const [activeGroup, setActiveGroup] = useState<VerifiedSkillGroup>('All Skills');
   const [proficiencyFilter, setProficiencyFilter] = useState<ProficiencyFilter>('All Levels');
   const [selectedCategory, setSelectedCategory] = useState<VerifiedSkillCategory | null>(null);
+  const [previewedRecord, setPreviewedRecord] = useState<VerifiedSkillRecord | null>(null);
+  const previewUrl = previewedRecord?.documentUrl
+    ? toAuthenticatedMediaUrl(previewedRecord.documentUrl) || previewedRecord.documentUrl
+    : null;
 
   const filteredCategories = useMemo(() => {
     return categories.filter(category => {
@@ -55,6 +69,10 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
       },
     ]);
   }, [replaceBreadcrumbs]);
+
+  useEffect(() => {
+    setPreviewedRecord(null);
+  }, [selectedCategory]);
 
   const report = useMemo(() => {
     const verifiedRecords = filteredCategories.reduce(
@@ -80,6 +98,18 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
   return (
     <main className='bg-background min-h-screen px-3 py-3 sm:px-4 lg:px-5'>
       <div className='mx-auto grid w-full max-w-7xl gap-4'>
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-foreground hover:bg-muted"
+            onClick={() => router.back()}
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </div>
+
         <VerifiedSkillsTopBar
           activeGroup={activeGroup}
           proficiencyFilter={proficiencyFilter}
@@ -116,7 +146,10 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
       <Sheet
         open={!!selectedCategory}
         onOpenChange={open => {
-          if (!open) setSelectedCategory(null);
+          if (!open) {
+            setSelectedCategory(null);
+            setPreviewedRecord(null);
+          }
         }}
       >
         <SheetContent side='right' className='flex w-full flex-col overflow-y-auto p-0 sm:max-w-[760px]'>
@@ -130,6 +163,36 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
               </SheetHeader>
 
               <div className='space-y-5 px-6 py-5'>
+                {previewUrl ? (
+                  <Card className='overflow-hidden rounded-[18px] border bg-card shadow-sm'>
+                    <div className='border-border/70 flex items-center justify-between gap-3 border-b px-4 py-3'>
+                      <div className='min-w-0'>
+                        <p className='text-foreground truncate text-sm font-semibold'>
+                          {previewedRecord.documentLabel}
+                        </p>
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {previewedRecord.title}
+                        </p>
+                      </div>
+
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon'
+                        className='shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground'
+                        onClick={() => setPreviewedRecord(null)}
+                        aria-label='Close preview'
+                      >
+                        <X className='size-4' />
+                      </Button>
+                    </div>
+
+                    <div className='bg-muted/10 h-[52vh] min-h-[360px]'>
+                      <iframe src={previewUrl} title={previewedRecord.documentLabel} className='h-full w-full' />
+                    </div>
+                  </Card>
+                ) : null}
+
                 <Card className='rounded-[18px] border bg-card p-4 shadow-sm'>
                   <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
                     <StatBox label='Group' value={selectedCategory.group} />
@@ -197,10 +260,13 @@ export function SharedVerifiedSkillsPage({ role }: SharedVerifiedSkillsPageProps
 
                           <div className='flex flex-wrap items-center gap-3'>
                             {record.documentUrl ? (
-                              <Button asChild variant='outline' className='rounded-xl px-4'>
-                                <a href={record.documentUrl} target='_blank' rel='noreferrer'>
-                                  Open file
-                                </a>
+                              <Button
+                                type='button'
+                                variant='outline'
+                                className='rounded-xl px-4'
+                                onClick={() => setPreviewedRecord(record)}
+                              >
+                                Open file
                               </Button>
                             ) : null}
                             <span className='text-muted-foreground text-xs'>

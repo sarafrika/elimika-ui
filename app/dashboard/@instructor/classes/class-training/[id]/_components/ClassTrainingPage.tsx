@@ -2221,14 +2221,13 @@ export default function ClassTrainingPage({
       <header className='border-border/70 bg-card/95 text-foreground flex h-16 shrink-0 items-center justify-between gap-3 border-b px-3 shadow-sm backdrop-blur sm:px-4'>
         <div className='flex min-w-0 items-center gap-3'>
           <Button
-            asChild
             variant='ghost'
             size='icon'
             className='text-foreground hover:bg-muted'
+            onClick={() => router.back()}
+            aria-label='Go back'
           >
-            <Link href='/dashboard/classes' aria-label='Back to classes'>
-              <ArrowLeft className='h-5 w-5' />
-            </Link>
+            <ArrowLeft className='h-5 w-5' />
           </Button>
           <div className='flex min-w-0 items-center gap-2'>
             <span className='bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-full'>

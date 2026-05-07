@@ -5,7 +5,7 @@ import { BadgeCheck, ChevronRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { PortfolioSummaryPanel } from './_components/CredentialSummaryPanel';
+import { CredentailSummaryPanel } from './_components/CredentialSummaryPanel';
 import { SkillOverviewCard } from './_components/SkillOverviewCard';
 import { SkillsWalletHeader } from './_components/SkillsWalletHeader';
 import { TopSkillsPanel } from './_components/TopSkillsPanel';
@@ -77,7 +77,7 @@ export function SharedMySkillsPage({
             shareUrl={shareUrl as string}
           />
           <TopSkillsPanel skills={sortedSkills} />
-          <PortfolioSummaryPanel summary={displaySummary} timeline={orderedTimeline} />
+          <CredentailSummaryPanel summary={displaySummary} timeline={orderedTimeline} />
         </section>
 
         <GrowthTimeline items={orderedTimeline} />
@@ -92,7 +92,7 @@ function GrowthTimeline({ items }: { items: SharedTimelineItem[] }) {
   return (
     <section className='border-border/60 bg-card rounded-lg border p-3 shadow-sm sm:p-4'>
       <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
-        <h2 className='text-foreground text-base font-semibold sm:text-lg'>Growth Timeline</h2>
+        <h2 className='text-foreground text-base font-semibold'>Growth Timeline</h2>
         <Button type='button' variant='ghost' size='sm' className='h-8 rounded-md text-xs'>
           View Full Timeline
           <ChevronRight className='size-3.5' />
@@ -142,7 +142,7 @@ function CareerTimeline({ items }: { items: SharedTimelineItem[] }) {
     <section className='border-border/60 bg-card rounded-lg border p-3 shadow-sm sm:p-4'>
       <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <h2 className='text-foreground text-base font-semibold sm:text-lg'>Career Timeline</h2>
+          <h2 className='text-foreground text-base font-semibold sm:text-base'>Career Timeline</h2>
           <p className='text-muted-foreground text-xs sm:text-sm'>
             Verified education, membership, and experience records from your profile.
           </p>

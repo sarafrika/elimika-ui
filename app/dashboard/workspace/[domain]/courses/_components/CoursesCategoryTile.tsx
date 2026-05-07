@@ -13,15 +13,22 @@ type CoursesCategoryTileProps = {
   tile: CoursesCategoryTileData;
   onClick?: () => void;
   isActive?: boolean;
+  className?: string;
 };
 
-export function CoursesCategoryTile({ tile, onClick, isActive = false }: CoursesCategoryTileProps) {
+export function CoursesCategoryTile({
+  tile,
+  onClick,
+  isActive = false,
+  className,
+}: CoursesCategoryTileProps) {
   return (
     <button
       type='button'
       onClick={onClick}
       className={cn(
         'border-border bg-card hover:bg-secondary/60 flex min-h-12 items-center gap-3 rounded-md border px-4 py-2 text-left transition-colors',
+        className,
         isActive && 'border-primary bg-primary/5'
       )}
     >
@@ -33,7 +40,9 @@ export function CoursesCategoryTile({ tile, onClick, isActive = false }: Courses
       >
         <tile.icon className='size-4' />
       </span>
-      <span className='text-foreground text-sm font-semibold'>{tile.title}</span>
+      <span className='text-foreground truncate text-sm font-semibold' title={tile.title}>
+        {tile.title}
+      </span>
     </button>
   );
 }

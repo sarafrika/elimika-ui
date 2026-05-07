@@ -31,7 +31,7 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
 
   return (
-    <article className='border-border bg-card overflow-hidden rounded-lg border'>
+    <article className='border-border bg-card group overflow-hidden rounded-lg border'>
       <Link href={card.detailsHref} className='block'>
         <div
           className={cn(
@@ -62,7 +62,10 @@ export function CoursesCatalogCard({ card, onPrimaryAction }: CoursesCatalogCard
       <div className='space-y-3 px-4 py-3.5'>
         <div>
           <Link href={card.detailsHref} className='block'>
-            <h3 className='text-foreground text-[clamp(0.95rem,1vw,1.05rem)] font-semibold leading-tight'>
+            <h3
+              className='text-foreground line-clamp-2 text-[clamp(0.95rem,1vw,1.05rem)] font-semibold leading-tight group-hover:line-clamp-none'
+              title={card.title}
+            >
               {card.title}
             </h3>
           </Link>

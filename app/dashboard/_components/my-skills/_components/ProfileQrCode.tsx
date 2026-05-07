@@ -25,7 +25,7 @@ export function ProfileQrCode({ targetUrl }: ProfileQrCodeProps) {
     <a
       href={qrTarget || '#'}
       aria-label='Open this skills wallet'
-      className='border-border bg-background grid size-[4.5rem] shrink-0 place-items-center overflow-hidden rounded-md border p-1'
+      className='border-border bg-background grid size-[4.5rem] sm:size-[5rem] shrink-0 place-items-center overflow-hidden rounded-md border p-1'
     >
       {qrImageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element

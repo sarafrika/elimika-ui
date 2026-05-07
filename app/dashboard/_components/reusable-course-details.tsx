@@ -22,6 +22,7 @@ import {
   submitCourseReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -38,7 +39,6 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { ReviewCard } from '../@instructor/reviews/review-card';
 import { VideoPlayer } from '../@student/schedule/classes/[id]/VideoPlayer';
 import { FeedbackDialog } from './review-instructor-modal';
@@ -381,22 +381,25 @@ export default function ReusableCourseDetailsPage({
                     View available classes
                   </Button>
                 )}
-                <Button
-                  onClick={() =>
-                    router.push(
-                      buildWorkspaceAliasPath(
-                        activeDomain,
-                        `/dashboard/courses/instructor?courseId=${courseData?.uuid}`
+
+                {activeDomain !== 'instructor' ? (
+                  <Button
+                    onClick={() =>
+                      router.push(
+                        buildWorkspaceAliasPath(
+                          activeDomain,
+                          `/dashboard/courses/instructor?courseId=${courseData?.uuid}`
+                        )
                       )
-                    )
-                  }
-                  variant='outline'
-                  className='w-full rounded-xl shadow-none'
-                  size='lg'
-                >
-                  <Search className='mr-2 h-4 w-4' />
-                  Find an instructor
-                </Button>
+                    }
+                    variant='outline'
+                    className='w-full rounded-xl shadow-none'
+                    size='lg'
+                  >
+                    <Search className='mr-2 h-4 w-4' />
+                    Find an instructor
+                  </Button>
+                ) : null}
               </div>
             </div>
           </Card>
@@ -491,9 +494,9 @@ export default function ReusableCourseDetailsPage({
                   <span className='bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-xl'>
                     <Icon className='h-4 w-4' />
                   </span>
-                  <div className='min-w-0 flex flex-row items-center gap-1'>
-                    <p className='text-muted-foreground text-xl font-bold'>{value}</p>
+                  <div className='min-w-0 flex flex-row items-center gap-2'>
                     <p className='text-foreground text-sm font-medium'>{label}</p>
+                    <p className='text-muted-foreground text-xl font-bold'>{value}</p>
                   </div>
                 </div>
               ))}
