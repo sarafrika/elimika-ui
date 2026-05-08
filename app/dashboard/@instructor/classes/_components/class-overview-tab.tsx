@@ -339,18 +339,20 @@ function CourseProgram({
                 key={module.lesson.uuid ?? `module-${moduleIndex}`}
                 className='border-border/70 bg-background/70 overflow-hidden rounded-md border'
               >
-                <div className='border-border/70 flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3'>
-                  <div className='min-w-0'>
+                <div className='border-border/70 flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between'>
+                  <div className='min-w-0 flex-1'>
                     {courseLabel ? (
-                      <p className='text-muted-foreground text-[11px] tracking-[0.18em] uppercase'>
+                      <p className='text-muted-foreground text-[10px] tracking-[0.18em] uppercase sm:text-[11px]'>
                         {courseLabel}
                       </p>
                     ) : null}
-                    <p className='text-foreground truncate text-lg font-semibold'>
+
+                    <p className='text-foreground break-words text-base font-semibold sm:truncate sm:text-lg'>
                       Module {moduleIndex + 1}: {moduleTitle}
                     </p>
                   </div>
-                  <span className='text-muted-foreground text-xs font-medium'>
+
+                  <span className='text-muted-foreground shrink-0 text-xs font-medium'>
                     {contentCount} contents
                   </span>
                 </div>
@@ -384,14 +386,16 @@ function CourseProgram({
                               }
                             }}
                             className={cn(
-                              'hover:bg-muted/60 focus-visible:ring-ring block w-full cursor-pointer px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                              'hover:bg-muted/60 focus-visible:ring-ring block w-full rounded-md px-3 py-2 transition-colors focus-visible:ring-2 focus-visible:outline-none sm:px-4 sm:py-3'
                             )}
                           >
-                            <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center'>
-                              <div className='flex min-w-0 items-center gap-3'>
+                            {/* Top section */}
+                            <div className='flex flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
+                              {/* Lesson info */}
+                              <div className='flex min-w-0 items-start gap-2 sm:items-center sm:gap-3'>
                                 <span
                                   className={cn(
-                                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
+                                    'flex h-4 w-4 shrink-0 items-center justify-center rounded-full sm:h-5 sm:w-5',
                                     isWarmTrack
                                       ? 'bg-warning text-warning-foreground'
                                       : 'bg-success text-success-foreground'
@@ -399,33 +403,51 @@ function CourseProgram({
                                 >
                                   {getContentTypeIcon(contentTypeMap, content.content_type_uuid)}
                                 </span>
-                                <p className='text-foreground min-w-0 truncate text-base font-semibold'>
-                                  Lesson {moduleIndex + 1}.{contentIndex + 1}{' '}
-                                  <span className='text-muted-foreground font-medium'>
+
+                                <div className='min-w-0'>
+                                  <p className='text-foreground truncate text-sm font-semibold sm:text-base'>
+                                    Lesson {moduleIndex + 1}.{contentIndex + 1}
+                                  </p>
+
+                                  <p className='text-muted-foreground truncate text-xs font-medium sm:hidden'>
+                                    {typeLabel}
+                                  </p>
+
+                                  <span className='text-muted-foreground hidden text-sm font-medium sm:inline'>
                                     {typeLabel}
                                   </span>
-                                </p>
+                                </div>
                               </div>
 
+                              {/* CTA */}
                               <Link
                                 href={lessonHref}
                                 onClick={event => event.stopPropagation()}
-                                className='text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                                className='text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-ring inline-flex h-8 items-center justify-center self-start rounded-md px-3 text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none sm:h-9 sm:self-center sm:px-4 sm:text-xs'
                               >
                                 Open lesson
                               </Link>
                             </div>
 
-                            <div className='mt-2 grid gap-3 pl-8 md:grid-cols-[72px_minmax(0,1fr)_56px] md:items-center'>
-                              <p className='text-muted-foreground text-sm'>
-                                {getContentDuration(content)}
-                              </p>
+                            {/* Bottom section */}
+                            <div className='mt-3 flex flex-col gap-2 pl-6 sm:grid sm:grid-cols-[72px_minmax(0,1fr)_56px] sm:items-center sm:gap-3 sm:pl-8'>
+                              <div className='flex items-center justify-between sm:block'>
+                                <p className='text-muted-foreground text-xs sm:text-sm'>
+                                  {getContentDuration(content)}
+                                </p>
+
+                                <p className='text-foreground text-xs font-semibold sm:hidden'>
+                                  {lessonProgress}%
+                                </p>
+                              </div>
+
                               <Progress
                                 value={lessonProgress}
                                 className='bg-muted h-1.5'
                                 indicatorClassName={isWarmTrack ? 'bg-warning' : 'bg-success'}
                               />
-                              <p className='text-foreground text-left text-sm font-semibold md:text-right md:text-sm'>
+
+                              <p className='text-foreground hidden text-right text-sm font-semibold sm:block'>
                                 {lessonProgress}%
                               </p>
                             </div>
@@ -462,15 +484,17 @@ function CourseProgram({
                             }
                           }}
                           className={cn(
-                            'hover:bg-muted/60 focus-visible:ring-ring block w-full cursor-pointer px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                            'hover:bg-muted/60 focus-visible:ring-ring block w-full rounded-md px-3 py-2 transition-colors focus-visible:ring-2 focus-visible:outline-none sm:px-4 sm:py-3',
                             isSelected ? 'bg-primary/5' : ''
                           )}
                         >
-                          <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center'>
-                            <div className='flex min-w-0 items-center gap-3'>
+                          {/* Top section */}
+                          <div className='flex flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
+                            {/* Lesson info */}
+                            <div className='flex min-w-0 items-start gap-2 sm:items-center sm:gap-3'>
                               <span
                                 className={cn(
-                                  'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
+                                  'flex h-4 w-4 shrink-0 items-center justify-center rounded-full sm:h-5 sm:w-5',
                                   isWarmTrack
                                     ? 'bg-warning text-warning-foreground'
                                     : 'bg-success text-success-foreground'
@@ -478,14 +502,25 @@ function CourseProgram({
                               >
                                 {getContentTypeIcon(contentTypeMap, content.content_type_uuid)}
                               </span>
-                              <p className='text-foreground min-w-0 truncate text-base font-semibold'>
-                                Lesson {moduleIndex + 1}.{contentIndex + 1}{' '}
-                                <span className='text-muted-foreground font-medium'>
+
+                              <div className='min-w-0'>
+                                <p className='text-foreground truncate text-sm font-semibold sm:text-base'>
+                                  Lesson {moduleIndex + 1}.{contentIndex + 1}
+                                </p>
+
+                                {/* Mobile */}
+                                <p className='text-muted-foreground truncate text-xs font-medium sm:hidden'>
+                                  {typeLabel}
+                                </p>
+
+                                {/* Desktop */}
+                                <span className='text-muted-foreground hidden text-sm font-medium sm:inline'>
                                   {typeLabel}
                                 </span>
-                              </p>
+                              </div>
                             </div>
 
+                            {/* CTA */}
                             {isSelected ? (
                               <Button
                                 type='button'
@@ -495,7 +530,7 @@ function CourseProgram({
                                     onStartLesson(module.lesson.uuid, content.uuid);
                                   }
                                 }}
-                                className='bg-primary text-primary-foreground hover:bg-accent focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                                className='bg-primary text-primary-foreground hover:bg-accent focus-visible:ring-ring inline-flex h-8 items-center justify-center self-start rounded-md px-3 text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none sm:h-9 sm:self-center sm:px-4 sm:text-xs'
                               >
                                 {selectedLessonActionLabel}
                               </Button>
@@ -503,23 +538,32 @@ function CourseProgram({
                               <Link
                                 href={lessonHref}
                                 onClick={event => event.stopPropagation()}
-                                className='text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-ring inline-flex h-9 items-center justify-center rounded-md px-4 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none'
+                                className='text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-ring inline-flex h-8 items-center justify-center self-start rounded-md px-3 text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none sm:h-9 sm:self-center sm:px-4 sm:text-xs'
                               >
                                 Open lesson
                               </Link>
                             )}
                           </div>
 
-                          <div className='mt-2 grid gap-3 pl-8 md:grid-cols-[72px_minmax(0,1fr)_56px] md:items-center'>
-                            <p className='text-muted-foreground text-sm'>
-                              {getContentDuration(content)}
-                            </p>
+                          {/* Bottom section */}
+                          <div className='mt-3 flex flex-col gap-2 pl-6 sm:grid sm:grid-cols-[72px_minmax(0,1fr)_56px] sm:items-center sm:gap-3 sm:pl-8'>
+                            <div className='flex items-center justify-between sm:block'>
+                              <p className='text-muted-foreground text-xs sm:text-sm'>
+                                {getContentDuration(content)}
+                              </p>
+
+                              <p className='text-foreground text-xs font-semibold sm:hidden'>
+                                {lessonProgress}%
+                              </p>
+                            </div>
+
                             <Progress
                               value={lessonProgress}
                               className='bg-muted h-1.5'
                               indicatorClassName={isWarmTrack ? 'bg-warning' : 'bg-success'}
                             />
-                            <p className='text-foreground text-left text-sm font-semibold md:text-right md:text-sm'>
+
+                            <p className='text-foreground hidden text-right text-sm font-semibold sm:block'>
                               {lessonProgress}%
                             </p>
                           </div>

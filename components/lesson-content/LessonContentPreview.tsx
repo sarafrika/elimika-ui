@@ -137,36 +137,210 @@ export function RichTextPreview({ html }: { html: string }) {
   return (
     <div
       className='
-        text-foreground mx-auto w-full text-[15px] leading-7
+        text-foreground mx-auto block w-full max-w-full min-w-0 overflow-hidden
+
+        text-[13.5px] leading-6
+        sm:text-sm sm:leading-7
+        md:text-[15px]
+
+        [overflow-wrap:anywhere]
+        break-words
+
         [&_*]:max-w-full
-        [&_h1]:mt-12 [&_h1]:mb-5 [&_h1]:text-[1.7rem] [&_h1]:font-bold [&_h1]:leading-tight
+        [&_*]:min-w-0
+
+        /* Headings */
+        [&_h1]:mt-8
+        [&_h1]:mb-4
+        [&_h1]:text-[1.5rem]
+        [&_h1]:font-bold
+        [&_h1]:leading-tight
+        sm:[&_h1]:text-2xl
+        md:[&_h1]:text-[1.7rem]
+        sm:[&_h1]:mt-10
+        md:[&_h1]:mt-12
         [&_h1:first-child]:mt-0
-        [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-[1.35rem] [&_h2]:font-bold [&_h2]:leading-snug
+
+        [&_h2]:mt-7
+        [&_h2]:mb-3
+        [&_h2]:text-[1.2rem]
+        [&_h2]:font-bold
+        [&_h2]:leading-snug
+        sm:[&_h2]:text-xl
+        md:[&_h2]:text-[1.35rem]
+        sm:[&_h2]:mt-8
+        md:[&_h2]:mt-10
         [&_h2:first-child]:mt-0
-        [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-[1.15rem] [&_h3]:font-semibold
-        [&_h4]:mt-8 [&_h4]:mb-3 [&_h4]:text-base [&_h4]:font-semibold
-        [&_p]:text-foreground/80 [&_p]:leading-7
-        [&_p:not(:first-child)]:mt-5
-        [&_ol]:my-6 [&_ol]:list-decimal [&_ol]:pl-6
-        [&_ul]:my-6 [&_ul]:list-disc [&_ul]:pl-6
-        [&_li]:text-foreground/80 [&_li]:leading-7
-        [&_li:not(:first-child)]:mt-1.5
+
+        [&_h3]:mt-6
+        [&_h3]:mb-2
+        [&_h3]:text-base
+        [&_h3]:font-semibold
+        sm:[&_h3]:text-lg
+        md:[&_h3]:text-[1.15rem]
+
+        [&_h4]:mt-6
+        [&_h4]:mb-2
+        [&_h4]:text-sm
+        [&_h4]:font-semibold
+        sm:[&_h4]:text-base
+
+        /* Paragraphs */
+        [&_p]:text-foreground/80
+        [&_p]:leading-6
+        sm:[&_p]:leading-7
+        [&_p:not(:first-child)]:mt-3
+        sm:[&_p:not(:first-child)]:mt-4
+        md:[&_p:not(:first-child)]:mt-5
+
+        /* Lists */
+        [&_ol]:my-4
+        [&_ol]:list-decimal
+        [&_ol]:pl-4
+        sm:[&_ol]:pl-5
+
+        [&_ul]:my-4
+        [&_ul]:list-disc
+        [&_ul]:pl-4
+        sm:[&_ul]:pl-5
+
+        [&_li]:text-foreground/80
+        [&_li]:leading-6
+        sm:[&_li]:leading-7
+        [&_li:not(:first-child)]:mt-1
+
         [&_li_p]:mt-0
-        [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground
-        [&_blockquote]:my-6
-        [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4
-        [&_hr]:bg-border [&_hr]:my-10 [&_hr]:h-px [&_hr]:border-0
-        [&_pre]:bg-muted/60 [&_pre]:border-border/70 [&_pre]:my-8 [&_pre]:overflow-x-auto [&_pre]:rounded-2xl [&_pre]:border [&_pre]:p-5
-        [&_pre]:text-[0.95rem] [&_pre]:leading-7
-        [&_pre_code]:bg-transparent [&_pre_code]:border-0 [&_pre_code]:p-0
-        [&_code]:bg-muted [&_code]:rounded-md [&_code]:border [&_code]:border-border/60 [&_code]:px-1.5 [&_code]:py-0.5
-        [&_code]:font-mono [&_code]:text-[0.9em]
-        [&_img]:my-8 [&_img]:rounded-2xl [&_img]:border [&_img]:border-border/60
+
+        /* Blockquotes */
+        [&_blockquote]:my-5
+        [&_blockquote]:border-l-4
+        [&_blockquote]:border-border
+        [&_blockquote]:pl-3
+        sm:[&_blockquote]:pl-4
+        [&_blockquote]:italic
+        [&_blockquote]:text-muted-foreground
+
+        /* Links */
+        [&_a]:text-primary
+        [&_a]:underline
+        [&_a]:underline-offset-4
+        [&_a]:break-all
+
+        /* Divider */
+        [&_hr]:bg-border
+        [&_hr]:my-6
+        sm:[&_hr]:my-8
+        md:[&_hr]:my-10
+        [&_hr]:h-px
+        [&_hr]:border-0
+
+        /* Code blocks */
+        [&_pre]:bg-muted/60
+        [&_pre]:border-border/70
+        [&_pre]:my-5
+        sm:[&_pre]:my-6
+        md:[&_pre]:my-8
+
+        [&_pre]:w-full
+        [&_pre]:max-w-full
+        [&_pre]:overflow-x-auto
+
+        [&_pre]:rounded-xl
+        sm:[&_pre]:rounded-2xl
+
+        [&_pre]:border
+
+        [&_pre]:p-3
+        sm:[&_pre]:p-4
+        md:[&_pre]:p-5
+
+        [&_pre]:text-[12px]
+        sm:[&_pre]:text-sm
+        md:[&_pre]:text-[0.95rem]
+
+        [&_pre]:leading-6
+        sm:[&_pre]:leading-7
+
+        [&_pre_code]:bg-transparent
+        [&_pre_code]:border-0
+        [&_pre_code]:p-0
+
+        /* Inline code */
+        [&_code]:bg-muted
+        [&_code]:rounded-md
+        [&_code]:border
+        [&_code]:border-border/60
+        [&_code]:px-1
+        sm:[&_code]:px-1.5
+        [&_code]:py-0.5
+        [&_code]:font-mono
+        [&_code]:text-[0.82em]
+        [&_code]:break-all
+
+        /* Images */
+        [&_img]:block
+        [&_img]:my-5
+        sm:[&_img]:my-6
+        md:[&_img]:my-8
+
+        [&_img]:h-auto
+        [&_img]:w-full
+        [&_img]:max-w-full
+
+        [&_img]:rounded-xl
+        sm:[&_img]:rounded-2xl
+
+        [&_img]:border
+        [&_img]:border-border/60
+
+        [&_img]:object-contain
         [&_img]:shadow-sm
-        [&_figure]:my-8
-        [&_table]:my-8 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden
-        [&_th]:bg-muted [&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold
-        [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2
+
+        /* Figures */
+        [&_figure]:my-5
+        sm:[&_figure]:my-6
+        md:[&_figure]:my-8
+
+        /* Tables */
+        [&_table]:my-5
+        sm:[&_table]:my-6
+        md:[&_table]:my-8
+
+        [&_table]:block
+        sm:[&_table]:table
+
+        [&_table]:w-full
+        [&_table]:overflow-x-auto
+        [&_table]:border-collapse
+
+        [&_table]:text-[12px]
+        sm:[&_table]:text-sm
+
+        [&_th]:bg-muted
+        [&_th]:border
+        [&_th]:border-border
+        [&_th]:px-2
+        sm:[&_th]:px-3
+        [&_th]:py-2
+        [&_th]:text-left
+        [&_th]:font-semibold
+        [&_th]:break-words
+
+        [&_td]:border
+        [&_td]:border-border
+        [&_td]:px-2
+        sm:[&_td]:px-3
+        [&_td]:py-2
+        [&_td]:break-words
+
+        /* Embeds */
+        [&_iframe]:block
+        [&_iframe]:w-full
+        [&_iframe]:max-w-full
+
+        [&_video]:block
+        [&_video]:w-full
+        [&_video]:max-w-full
       '
       dangerouslySetInnerHTML={{ __html: html }}
     />
@@ -184,7 +358,7 @@ export function LessonContentPreview({
 }) {
   if (!content) {
     return (
-      <div className='text-muted-foreground flex min-h-[360px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
+      <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
         No lesson content available.
       </div>
     );
@@ -196,7 +370,7 @@ export function LessonContentPreview({
 
   if (resolvedType === 'text') {
     return (
-      <div className='bg-background p-6'>
+      <div className='bg-background mb-10 w-full max-w-full min-w-0 overflow-hidden p-6'>
         {normalizedTextContent.renderedContent ? (
           <RichTextPreview html={normalizedTextContent.renderedContent} />
         ) : (
@@ -208,11 +382,11 @@ export function LessonContentPreview({
 
   if (resolvedType === 'pdf') {
     return resolvedSource ? (
-      <div className='bg-background p-4 mb-20'>
+      <div className='bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden p-4'>
         <PDFViewer file={resolvedSource} />
       </div>
     ) : (
-      <div className='text-muted-foreground flex min-h-[360px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
+      <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
         This PDF is not available yet.
       </div>
     );
@@ -225,11 +399,11 @@ export function LessonContentPreview({
 
     if (embedUrl) {
       return (
-        <div className='bg-background overflow-hidden'>
+        <div className='bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden'>
           <iframe
             src={embedUrl}
             title={content.title || 'Lesson video'}
-            className='aspect-video w-full'
+            className='aspect-video block w-full max-w-full'
             allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
             allowFullScreen
           />
@@ -238,11 +412,11 @@ export function LessonContentPreview({
     }
 
     return resolvedSource ? (
-      <div className='border-border/60 bg-background overflow-hidden border p-4'>
-        <video controls className='aspect-video w-full rounded-2xl' src={resolvedSource} />
+      <div className='border-border/60 bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden border p-4'>
+        <video controls className='aspect-video block w-full max-w-full rounded-2xl' src={resolvedSource} />
       </div>
     ) : (
-      <div className='text-muted-foreground flex min-h-[360px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
+      <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
         This video source is not available yet.
       </div>
     );
@@ -250,11 +424,11 @@ export function LessonContentPreview({
 
   if (resolvedType === 'audio') {
     return resolvedSource ? (
-      <div className='bg-background p-6'>
+      <div className='bg-background mb-20 w-full max-w-full min-w-0 p-6'>
         <audio controls className='w-full' src={resolvedSource} />
       </div>
     ) : (
-      <div className='text-muted-foreground flex min-h-[220px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
+      <div className='text-muted-foreground flex min-h-[220px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
         This audio source is not available yet.
       </div>
     );
@@ -262,22 +436,22 @@ export function LessonContentPreview({
 
   if (resolvedType === 'image') {
     return resolvedSource ? (
-      <div className='bg-background overflow-hidden p-4 mb-20'>
+      <div className='bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden p-4'>
         <img
           src={resolvedSource}
           alt={content.title || 'Lesson image'}
-          className='max-h-[680px] w-full rounded-2xl object-contain'
+          className='block h-auto max-h-[680px] w-full max-w-full rounded-2xl object-contain'
         />
       </div>
     ) : (
-      <div className='text-muted-foreground flex min-h-[360px] items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
+      <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
         This image source is not available yet.
       </div>
     );
   }
 
   return (
-    <div className='border-border/60 bg-background rounded-[28px] border p-6'>
+    <div className='border-border/60 bg-background mb-20 w-full max-w-full min-w-0 rounded-[28px] border p-6'>
       <div className='space-y-3'>
         <p className='text-sm font-semibold'>File content</p>
         <p className='text-muted-foreground text-sm'>
