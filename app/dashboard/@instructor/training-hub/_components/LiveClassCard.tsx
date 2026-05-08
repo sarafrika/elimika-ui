@@ -24,46 +24,56 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
         : 'bg-[color-mix(in_srgb,var(--primary)_10%,white)] text-primary';
 
   return (
-    <article className='rounded-[12px] border border-border/60 bg-card p-3 shadow-sm'>
-      <div className='flex flex-col gap-3 min-[560px]:flex-row min-[560px]:items-start min-[560px]:justify-between'>
-        <div className='min-w-0 flex-1'>
-          <div className='flex flex-wrap items-center gap-2 text-[0.78rem] text-muted-foreground'>
-            <span className={`rounded-full px-2 py-0.5 font-medium ${toneClass}`}>{liveClass.day}</span>
-            <span>{liveClass.time}</span>
+    <article className='rounded-2xl border border-border/60 bg-card p-4 shadow-sm transition-colors'>
+      <div className='flex flex-col gap-4'>
+        {/* Top row */}
+        <div className='flex items-start justify-between gap-3'>
+          {/* Left content */}
+          <div className='min-w-0 flex-1'>
+            {/* Pills */}
+            <div className='flex flex-wrap items-center gap-2'>
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${toneClass}`}
+              >
+                {liveClass?.instance_status}
+              </span>
+
+              <span className='inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
+                {liveClass.day}
+              </span>
+
+              <span className='text-[11px] font-medium text-muted-foreground'>
+                {liveClass.time}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3 className='mt-3 line-clamp-2 text-[1rem] font-semibold leading-snug tracking-[-0.02em] text-foreground sm:text-[1.05rem]'>
+              {liveClass.title}
+            </h3>
+
+            {/* Meta */}
+            <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground'>
+              <span className='font-medium text-primary'>
+                {liveClass.provider}
+              </span>
+
+              <span>{liveClass.students} enrolled</span>
+
+              <span className='hidden sm:inline'>•</span>
+
+              <span>{liveClass.waitlistedStudents} waiting</span>
+            </div>
           </div>
 
-          <h3 className='mt-2 text-[1rem] font-semibold tracking-[-0.02em] text-foreground sm:text-[1.04rem]'>
-            {liveClass.title}
-          </h3>
-
-          <div className='mt-3 flex flex-wrap items-center gap-2 text-[0.78rem] text-muted-foreground'>
-            <span className='font-medium text-primary'>{liveClass.provider}</span>
-            <span>{liveClass.students} enrolled</span>
-            <span>•</span>
-            <span>{liveClass.waitlistedStudents} waiting</span>
-          </div>
-        </div>
-
-        <div className='flex items-start gap-4 min-[560px]:shrink-0'>
-          <dl className='grid grid-cols-2 gap-x-4 gap-y-1 text-[0.78rem]'>
-            <div>
-              <dt className='text-muted-foreground'>Fee</dt>
-              <dd className='text-[0.95rem] font-semibold text-foreground'>{liveClass.fee}</dd>
-            </div>
-            <div>
-              <dt className='text-muted-foreground'>Sessions</dt>
-              <dd className='text-[0.95rem] font-semibold text-foreground'>{liveClass.sessions}</dd>
-            </div>
-          </dl>
-
-
+          {/* Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 aria-label='More options'
                 variant='ghost'
                 size='icon'
-                className='rounded-full text-muted-foreground hover:bg-muted/50 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/20'
+                className='h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/20'
               >
                 <EllipsisVertical className='size-4' />
               </Button>
@@ -71,21 +81,30 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
 
             <DropdownMenuContent align='end' className='w-44'>
               <DropdownMenuItem asChild>
-                <Link href={`/dashboard/classes/overview/${liveClass.classUuid}`} className='flex items-center gap-2'>
+                <Link
+                  href={`/dashboard/classes/overview/${liveClass.classUuid}`}
+                  className='flex items-center gap-2'
+                >
                   <Eye className='size-4' />
                   View info
                 </Link>
               </DropdownMenuItem>
 
               <DropdownMenuItem asChild>
-                <Link href={`/dashboard/class-instance/${liveClass.instanceUuid}`} className='flex items-center gap-2'>
+                <Link
+                  href={`/dashboard/class-instance/${liveClass.instanceUuid}`}
+                  className='flex items-center gap-2'
+                >
                   <Play className='size-4' />
                   Open class
                 </Link>
               </DropdownMenuItem>
 
               <DropdownMenuItem asChild>
-                <Link href={`/dashboard/classes/create-new?id=${liveClass.classUuid}`} className='flex items-center gap-2'>
+                <Link
+                  href={`/dashboard/classes/create-new?id=${liveClass.classUuid}`}
+                  className='flex items-center gap-2'
+                >
                   <Pencil className='size-4' />
                   Edit class
                 </Link>
@@ -93,22 +112,46 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div>
 
-      <div className='mt-3 flex flex-row justify-end gap-2'>
-        <Link
-          href={`/dashboard/classes/overview/${liveClass.classUuid}`}
-          className='inline-flex h-9 items-center justify-center rounded-md border border-border/60 px-3 text-[0.8rem] font-medium text-muted-foreground transition hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20'
-        >
-          View info
-        </Link>
+        {/* Stats section */}
+        <div className='grid grid-cols-2 gap-3 rounded-md border border-border/50 bg-muted/30 px-3 py-2 sm:grid-cols-2'>
+          <div className='min-w-0 flex flex-row items-center gap-2'>
+            <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+              Fee
+            </p>
 
-        <Link
-          href={`/dashboard/class-instance/${liveClass.instanceUuid}`}
-          className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-[0.82rem] font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
-        >
-          Open class
-        </Link>
+            <p className='truncate text-sm font-semibold text-foreground sm:text-[0.95rem]'>
+              {liveClass.fee}
+            </p>
+          </div>
+
+          <div className='min-w-0 flex flex-row items-center gap-2'>
+            <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+              Sessions
+            </p>
+
+            <p className='text-sm font-semibold text-foreground sm:text-[0.95rem]'>
+              {liveClass.sessions}
+            </p>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className='flex flex-row gap-2 pt-1 sm:flex-row sm:justify-end'>
+          <Link
+            href={`/dashboard/classes/overview/${liveClass.classUuid}`}
+            className='inline-flex h-10 w-full items-center justify-center rounded-lg border border-border/60 px-4 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 sm:w-auto'
+          >
+            View info
+          </Link>
+
+          <Link
+            href={`/dashboard/class-instance/${liveClass.instanceUuid}`}
+            className='inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:w-auto'
+          >
+            Open class
+          </Link>
+        </div>
       </div>
     </article>
   );

@@ -1435,68 +1435,87 @@ function SubmissionPanel({
           const status = activeSchedule?.status?.toUpperCase();
           const isCancelled = status === 'CANCELLED';
           const isBlocked = status === 'BLOCKED';
+
           const isConcluded =
             Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
+
           const canStart =
             !!activeSchedule &&
             !isCancelled &&
             !isBlocked &&
             !isConcluded &&
             (activeSchedule.can_be_started ?? status === 'SCHEDULED');
+
           const canEnd =
             !!activeSchedule &&
             !isCancelled &&
             !isBlocked &&
             !isConcluded &&
             (activeSchedule.can_be_ended ?? status === 'ONGOING');
+
           const isLifecycleLoading = isStartingClass || isEndingClass;
 
-          if (isConcluded) {
-            return (
-              <Button disabled className='h-10 w-full gap-2 rounded-md'>
-                <CheckCircle className='h-4 w-4' />
-                Class ended
-              </Button>
-            );
-          }
+          const statusStyles = {
+            SCHEDULED:
+              'bg-primary/10 text-primary border border-primary/20',
 
-          if (canEnd) {
-            return (
-              <Button
-                variant='destructive'
-                className='h-10 w-full gap-2 rounded-md'
-                disabled={isLifecycleLoading}
-                onClick={onEndClass}
-              >
-                {isEndingClass ? (
-                  <Loader2 className='h-4 w-4 animate-spin' />
-                ) : (
-                  <CheckCircle className='h-4 w-4' />
-                )}
-                End Class
-              </Button>
-            );
-          }
+            ONGOING:
+              'bg-success/10 text-success border border-success/20',
+
+            COMPLETED:
+              'bg-muted text-muted-foreground border border-border',
+
+            CANCELLED:
+              'bg-destructive/10 text-destructive border border-destructive/20',
+
+            BLOCKED:
+              'bg-warning/10 text-warning border border-warning/20',
+          };
 
           return (
-            <Button
-              className='h-10 w-full gap-2 rounded-md'
-              disabled={!canStart || isLifecycleLoading}
-              onClick={onStartClass}
-            >
-              {isStartingClass ? (
-                <Loader2 className='h-4 w-4 animate-spin' />
+            <div className='flex flex-col gap-3'>
+              {/* Action button */}
+              {isConcluded ? (
+                <Button disabled className='h-10 w-full gap-2 rounded-md'>
+                  <CheckCircle className='h-4 w-4' />
+                  Class ended
+                </Button>
+              ) : canEnd ? (
+                <Button
+                  variant='destructive'
+                  className='h-10 w-full gap-2 rounded-md'
+                  disabled={isLifecycleLoading}
+                  onClick={onEndClass}
+                >
+                  {isEndingClass ? (
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                  ) : (
+                    <CheckCircle className='h-4 w-4' />
+                  )}
+                  End Class
+                </Button>
               ) : (
-                <Video className='h-4 w-4' />
+                <Button
+                  className='h-10 w-full gap-2 rounded-md'
+                  disabled={!canStart || isLifecycleLoading}
+                  onClick={onStartClass}
+                >
+                  {isStartingClass ? (
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                  ) : (
+                    <Video className='h-4 w-4' />
+                  )}
+
+                  {isCancelled
+                    ? 'Cancelled'
+                    : isBlocked
+                      ? 'Blocked'
+                      : !activeSchedule
+                        ? 'Select a session'
+                        : 'Start Class'}
+                </Button>
               )}
-              {isCancelled
-                ? 'Cancelled'
-                : isBlocked
-                  ? 'Blocked'
-                  : !activeSchedule
-                    ? 'Select a session'
-                    : 'Start Class'}
-            </Button>
+            </div>
           );
         })()}
       </div>
@@ -2442,7 +2461,7 @@ export default function ClassTrainingPage({
 
           <ScrollArea className='h-[calc(100vh-8.5rem)]'>
             {activeTab === 'content' && (
-              <div className='mx-auto space-y-4 p-2 md:p-2'>
+              <div className='mx-auto space-y-4 p-2 md:p-2 pb-40'>
                 <article className='border-border/70 bg-card overflow-hidden rounded-lg border shadow-sm'>
                   <div className='border-b p-4 text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
                     <Badge variant='outline' className='capitalize'>
@@ -2465,7 +2484,10 @@ export default function ClassTrainingPage({
                         </p>
                       </div>
                     ) : null}
-                    {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
+
+                    <div className='max-w-[inherit]' >
+                      {renderLessonContentPreview(selectedContent, contentTypeDetailsMap)}
+                    </div>
                   </div>
                 </article>
 

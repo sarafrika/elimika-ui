@@ -345,6 +345,7 @@ export function useInstructorTrainingHubData() {
         href: instance.uuid
           ? `/dashboard/class-instance/${instance.uuid}`
           : '/dashboard/classes',
+        instance_status: instance?.status,
         status: dayLabel === 'Today' ? 'today' : dayLabel === 'Tomorrow' ? 'tomorrow' : 'upcoming',
       };
     });

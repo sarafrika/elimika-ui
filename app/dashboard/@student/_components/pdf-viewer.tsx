@@ -109,11 +109,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file }) => {
   }
 
   return (
-    <div className='space-y-4'>
-      <div className='overflow-auto rounded-xl border'>
-        <canvas ref={canvasRef} className='mx-auto block max-w-full' />
+    <div className='w-full max-w-full min-w-0 space-y-4 overflow-hidden'>
+      <div className='overflow-hidden rounded-xl border'>
+        <canvas ref={canvasRef} className='block h-auto w-full max-w-full' />
       </div>
-      <div className='mt-2 flex items-center justify-center gap-4'>
+      <div className='mt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-4'>
         <button type='button' onClick={prevPage} disabled={pageNumber === 1}>
           Previous
         </button>
