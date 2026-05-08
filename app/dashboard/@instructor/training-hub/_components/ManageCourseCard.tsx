@@ -4,6 +4,7 @@ import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/medi
 import { BadgeCheck, BarChart3, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useUserDomain } from '../../../../../context/user-domain-context';
 import type { TrainingHubManagedCourse } from './training-hub-data';
 
 const accentClasses: Record<TrainingHubManagedCourse['accent'], string> = {
@@ -26,27 +27,39 @@ type ManageCourseCardProps = {
 
 export function ManageCourseCard({ course }: ManageCourseCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(course.imageUrl);
+  const { activeDomain } = useUserDomain()
 
   return (
     <article className='rounded-[12px] border border-border/60 bg-card p-2.5 shadow-sm sm:p-3'>
       <div className='flex gap-3'>
         <div className='min-w-0 flex-1'>
-          <div className='flex items-start gap-2'>
-            <div className='min-w-0'>
-              <h3 className='truncate text-[0.98rem] font-semibold text-foreground sm:text-[1rem]'>
-                {course.title}
-              </h3>
-              <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.77rem] text-muted-foreground sm:text-[0.8rem]'>
-                <span className='font-medium text-primary'>{course.provider}</span>
-                <span>|</span>
-                <span>{course.level}</span>
-              </div>
-              <div className='mt-1 flex items-center gap-1 text-[0.74rem] text-success'>
-                <BadgeCheck className='size-3.5' />
-                <span>Admin verified  •  Approved to train</span>
+          <Link
+            href={`/dashboard/workspace/${activeDomain}/courses/${course.id}`}
+            className='group block'
+          >
+            <div className='flex items-start gap-2'>
+              <div className='min-w-0'>
+                <h3 className='truncate text-[0.98rem] font-semibold text-foreground transition-colors group-hover:text-primary sm:text-[1rem]'>
+                  {course.title}
+                </h3>
+
+                <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.77rem] text-muted-foreground sm:text-[0.8rem]'>
+                  <span className='font-medium text-primary'>
+                    {course.provider}
+                  </span>
+
+                  <span>|</span>
+
+                  <span>{course.level}</span>
+                </div>
+
+                <div className='mt-1 flex items-center gap-1 text-[0.74rem] text-success'>
+                  <BadgeCheck className='size-3.5' />
+                  <span>Admin verified • Approved to train</span>
+                </div>
               </div>
             </div>
-          </div>
+          </Link>
 
           <div className='mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.77rem] text-muted-foreground sm:text-[0.8rem]'>
             <span className='inline-flex items-center gap-1.5'>

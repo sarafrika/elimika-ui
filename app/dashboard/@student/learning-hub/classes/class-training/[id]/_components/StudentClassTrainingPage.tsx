@@ -840,12 +840,6 @@ function SubmissionPanel({
           ) : null}
         </div>
       </ScrollArea>
-
-      <div className='border-border/70 border-t p-3'>
-        <Button className='bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 w-full rounded-md'>
-          End Class
-        </Button>
-      </div>
     </aside>
   );
 }

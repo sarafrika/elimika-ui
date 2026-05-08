@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { useClassRoster } from '@/hooks/use-class-roster';
-import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { type InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import {
@@ -37,7 +37,6 @@ import {
   type ClassInstanceItem,
   type ClassTab,
   type DateFilter,
-  type LessonModule,
 } from '../../../../@instructor/classes/_components/new-class-page.utils';
 import { PlaceholderTab } from '../../../../@instructor/classes/_components/placeholder-tab';
 
@@ -49,17 +48,20 @@ type StudentClassDefinition = ClassDefinition & {
 type StudentClassPageProps = {
   studentEnrolledClasses: StudentSchedule[];
   loading?: boolean;
+  singleClassDetails?: boolean
 };
 
 export default function StudentClassPage({
   studentEnrolledClasses,
   loading = false,
+  singleClassDetails = false,
 }: StudentClassPageProps) {
   const router = useRouter();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { difficultyMap } = useDifficultyLevels();
   const profile = useUserProfile()
   const student = profile?.student
+  const classTitile = studentEnrolledClasses[0]?.class_title
 
   const [selectedInstanceUuid, setSelectedInstanceUuid] = useState<string | null>(null);
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
@@ -212,14 +214,30 @@ export default function StudentClassPage({
   );
 
   const selectedClass = selectedInstanceEntry?.classItem ?? null;
+
   const selectedClassUuid = selectedClass?.uuid ?? null;
   const { roster, isLoading: isLoadingStudents } = useClassRoster(selectedClassUuid ?? undefined);
   const {
     isLoading: isLoadingLessons,
-    lessons,
+    lessonModules,
     contentTypeMap,
-  } = useCourseLessonsWithContent({ courseUuid: selectedClass?.course_uuid });
-  const lessonModules = useMemo<LessonModule[]>(() => lessons ?? [], [lessons]);
+    programCourses,
+  } = useClassLessonContent({
+    courseUuid: selectedClass?.course_uuid,
+    programUuid: selectedClass?.program_uuid,
+  });
+  const selectedClassForDisplay = useMemo<InstructorClassWithSchedule | null>(() => {
+    if (!selectedClass) return null;
+    if (!selectedClass.program_uuid || selectedClass.course) return selectedClass;
+
+    const primaryProgramCourse = programCourses[0] ?? null;
+    if (!primaryProgramCourse) return selectedClass;
+
+    return {
+      ...selectedClass,
+      course: primaryProgramCourse,
+    };
+  }, [programCourses, selectedClass]);
 
   useEffect(() => {
     if (!lessonModules.length) {
@@ -361,13 +379,15 @@ export default function StudentClassPage({
       }`;
   };
 
+
+
   return (
     <div className='space-y-3 mb-20'>
       <div className='border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur'>
         <div className='flex items-center justify-between gap-3'>
           <div>
             <p className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Learning Hub</p>
-            <h1 className='text-foreground mt-1 text-2xl font-semibold'>Your Classes</h1>
+            <h1 className='text-foreground mt-1 text-2xl font-semibold'>{singleClassDetails ? classTitile : "Your Classes"}</h1>
           </div>
         </div>
       </div>
@@ -480,7 +500,7 @@ export default function StudentClassPage({
               <ClassOverviewTab
                 isLoadingClasses={loading || classDefinitionQueries.some(query => query.isLoading)}
                 isLoadingLessons={isLoadingLessons}
-                selectedClass={selectedClass}
+                selectedClass={selectedClassForDisplay}
                 selectedClassUuid={selectedClassUuid}
                 lessonModules={lessonModules}
                 expandedModuleId={expandedModuleId}
@@ -530,7 +550,8 @@ export default function StudentClassPage({
               <ClassTasksTab
                 classUuid={selectedClassUuid}
                 classTitle={selectedClass?.title}
-                courseTitle={selectedClass?.course?.name}
+                courseTitle={selectedClassForDisplay?.course?.name}
+                lessonModules={lessonModules}
                 isLoading={loading || classDefinitionQueries.some(query => query.isLoading)}
               />
             </TabsContent>

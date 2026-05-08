@@ -1,10 +1,14 @@
 import type { UserDomain } from '@/lib/types';
 import { getDashboardStorageKey } from '@/lib/utils';
 import { search } from '@/services/client';
-import { readPersistedDashboardDomain } from '@/src/features/dashboard/lib/active-domain-storage';
+import {
+  clearPersistedDashboardDomain,
+  persistDashboardDomain,
+  readPersistedDashboardDomain,
+} from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export function useUserQuery() {
   const { data: session, status } = useSession();
@@ -62,6 +66,24 @@ export function useUserDomains() {
     return readPersistedDashboardDomain(dashboardStorageKey);
   }, [dashboardStorageKey, userQuery.isLoading]);
 
+  const syncActiveDomain = useCallback(
+    (domain: UserDomain | null) => {
+      if (typeof window === 'undefined') {
+        setActiveDomain(domain);
+        return;
+      }
+
+      if (domain) {
+        persistDashboardDomain(dashboardStorageKey, domain);
+      } else {
+        clearPersistedDashboardDomain(dashboardStorageKey);
+      }
+
+      setActiveDomain(domain);
+    },
+    [dashboardStorageKey]
+  );
+
   useEffect(() => {
     if (userQuery.isLoading) {
       return;
@@ -85,6 +107,31 @@ export function useUserDomains() {
     setIsReady(true);
   }, [dashboardStorageKey, userDomains, userQuery.isLoading]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== dashboardStorageKey) {
+        return;
+      }
+
+      const nextDomain = readPersistedDashboardDomain(dashboardStorageKey);
+      if (nextDomain && userDomains.includes(nextDomain)) {
+        setActiveDomain(nextDomain);
+        return;
+      }
+
+      if (!nextDomain && userDomains.length > 0) {
+        setActiveDomain(userDomains[0] || null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [dashboardStorageKey, userDomains]);
+
   return {
     domains: userDomains,
     activeDomain:
@@ -94,5 +141,7 @@ export function useUserDomains() {
     isReady,
     isLoading: userQuery.isLoading,
     error: userQuery.error,
+    setActiveDomain: syncActiveDomain,
+    clearDomain: () => syncActiveDomain(null),
   };
 }

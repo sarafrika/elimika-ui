@@ -28,6 +28,7 @@ type AvailabilityListingLayoutProps = {
   setStartDateInput: (value: string) => void;
   startDateInput: string;
   subheading: string;
+  instructorView: boolean
 };
 
 export function AvailabilityListingLayout({
@@ -48,6 +49,7 @@ export function AvailabilityListingLayout({
   setStartDateInput,
   startDateInput,
   subheading,
+  instructorView,
 }: AvailabilityListingLayoutProps) {
   const activeRangeLabel =
     appliedStart && appliedEnd
@@ -220,7 +222,7 @@ export function AvailabilityListingLayout({
             </div>
           </div>
 
-          <div className='grid gap-4 justify-items-center md:grid-cols-2 2xl:grid-cols-3'>
+          {instructorView ? <div className='grid gap-4 justify-items-center md:grid-cols-2 2xl:grid-cols-3'>
             {items.map(item => (
               <EnrollCourseCard
                 key={item.uuid}
@@ -230,9 +232,24 @@ export function AvailabilityListingLayout({
                 disableEnroll={false}
                 handleEnroll={onEnroll}
                 variant='full'
+                instructorView={true}
               />
             ))}
-          </div>
+          </div> : <div className='grid gap-4 justify-items-center md:grid-cols-2 2xl:grid-cols-3'>
+            {items.map(item => (
+              <EnrollCourseCard
+                key={item.uuid}
+                href='#'
+                cls={item}
+                isFull={false}
+                disableEnroll={false}
+                handleEnroll={onEnroll}
+                variant='full'
+                instructorView={false}
+              />
+            ))}
+          </div>}
+
         </section>
       )}
     </div>

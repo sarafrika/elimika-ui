@@ -103,7 +103,7 @@ const defaultFilterValues: FilterValues = {
   price: 'all',
 };
 
-const CATALOG_PAGE_SIZE = 12;
+const CATALOG_PAGE_SIZE = 18;
 
 const createCatalogCards = (
   items: UnifiedContentItem[],

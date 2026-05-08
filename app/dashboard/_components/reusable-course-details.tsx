@@ -36,6 +36,7 @@ import {
   Star,
   Users,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -241,7 +242,7 @@ export default function ReusableCourseDetailsPage({
                 <Badge
                   key={i}
                   variant='outline'
-                  className='rounded-full border-border/70 bg-background/70'
+                  className='border-border/70 bg-background/70 rounded-full'
                 >
                   {cat}
                 </Badge>
@@ -287,7 +288,10 @@ export default function ReusableCourseDetailsPage({
 
             <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
               {detailStats.map(({ label, value, icon: Icon }) => (
-                <Card key={label} className='rounded-[20px] border bg-background/80 p-4 shadow-none'>
+                <Card
+                  key={label}
+                  className='bg-background/80 rounded-[20px] border p-4 shadow-none'
+                >
                   <div className='flex items-center gap-3'>
                     <span className='bg-primary/10 text-primary inline-flex size-10 items-center justify-center rounded-xl'>
                       <Icon className='h-4 w-4' />
@@ -301,7 +305,7 @@ export default function ReusableCourseDetailsPage({
               ))}
             </div>
 
-            <Card className='rounded-[22px] border bg-background/75 p-4 shadow-none'>
+            <Card className='bg-background/75 rounded-[22px] border p-4 shadow-none'>
               <div className='flex items-center gap-4'>
                 <Avatar className='ring-primary/20 h-14 w-14 ring-2'>
                   <AvatarFallback className='bg-muted text-foreground font-semibold'>
@@ -312,7 +316,9 @@ export default function ReusableCourseDetailsPage({
                   </AvatarFallback>
                 </Avatar>
                 <div className='min-w-0'>
-                  <p className='text-foreground text-sm font-semibold'>{courseCreator?.full_name}</p>
+                  <p className='text-foreground text-sm font-semibold'>
+                    {courseCreator?.full_name}
+                  </p>
                   <p className='text-muted-foreground text-sm'>
                     {courseCreator?.professional_headline || 'Course creator'}
                   </p>
@@ -321,9 +327,9 @@ export default function ReusableCourseDetailsPage({
             </Card>
           </div>
 
-          <Card className='rounded-[24px] border bg-background/85 p-5 shadow-none'>
+          <Card className='bg-background/85 rounded-[24px] border p-5 shadow-none'>
             <div className='space-y-5'>
-              <div className='from-primary/12 to-success/8 bg-gradient-to-br rounded-[20px] border p-4'>
+              <div className='from-primary/12 to-success/8 rounded-[20px] border bg-gradient-to-br p-4'>
                 <div className='bg-muted relative flex h-44 items-center justify-center overflow-hidden rounded-[18px]'>
                   {courseData?.intro_video_url ? (
                     <button
@@ -355,7 +361,7 @@ export default function ReusableCourseDetailsPage({
               </div>
 
               <div>
-                <p className='text-muted-foreground text-xs font-medium uppercase tracking-[0.12em]'>
+                <p className='text-muted-foreground text-xs font-medium tracking-[0.12em] uppercase'>
                   Minimum training fee
                 </p>
                 <p className='text-foreground mt-2 text-3xl font-semibold tracking-[-0.03em]'>
@@ -364,25 +370,25 @@ export default function ReusableCourseDetailsPage({
                 <p className='text-muted-foreground mt-1 text-sm'>Per hour, per learner.</p>
               </div>
 
-              <div className='flex flex-col gap-3'>
-                {typeof handleEnroll === 'function' && (
-                  <Button
-                    onClick={() =>
-                      router.push(
-                        buildWorkspaceAliasPath(
-                          activeDomain,
-                          `/dashboard/courses/available-classes/${courseData?.uuid}`
+              {activeDomain !== 'instructor' ? (
+                <div className='flex flex-col gap-3'>
+                  {typeof handleEnroll === 'function' && (
+                    <Button
+                      onClick={() =>
+                        router.push(
+                          buildWorkspaceAliasPath(
+                            activeDomain,
+                            `/dashboard/courses/available-classes/${courseData?.uuid}`
+                          )
                         )
-                      )
-                    }
-                    className='w-full rounded-xl font-semibold'
-                    size='lg'
-                  >
-                    View available classes
-                  </Button>
-                )}
+                      }
+                      className='w-full rounded-xl font-semibold'
+                      size='lg'
+                    >
+                      View available classes
+                    </Button>
+                  )}
 
-                {activeDomain !== 'instructor' ? (
                   <Button
                     onClick={() =>
                       router.push(
@@ -399,8 +405,20 @@ export default function ReusableCourseDetailsPage({
                     <Search className='mr-2 h-4 w-4' />
                     Find an instructor
                   </Button>
-                ) : null}
-              </div>
+                </div>
+              ) : (
+                <Link
+                  href={`/dashboard/workspace/instructor/courses/${courseData?.uuid}/my-classes`}
+                  className='w-full rounded-xl font-semibold'
+                >
+                  <Button
+                    className='w-full rounded-xl font-semibold'
+                    size='lg'
+                  >
+                    View my classes
+                  </Button>
+                </Link>
+              )}
             </div>
           </Card>
         </div>
@@ -494,7 +512,7 @@ export default function ReusableCourseDetailsPage({
                   <span className='bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-xl'>
                     <Icon className='h-4 w-4' />
                   </span>
-                  <div className='min-w-0 flex flex-row items-center gap-2'>
+                  <div className='flex min-w-0 flex-row items-center gap-2'>
                     <p className='text-foreground text-sm font-medium'>{label}</p>
                     <p className='text-muted-foreground text-xl font-bold'>{value}</p>
                   </div>

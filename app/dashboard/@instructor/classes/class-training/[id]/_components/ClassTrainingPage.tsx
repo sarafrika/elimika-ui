@@ -1104,27 +1104,35 @@ function SubmissionPanel({
             return (
               <Button
                 key={tab.value}
-                type='button'
+                type="button"
+                variant="ghost"
                 onClick={() => setActivePanel(tab.value)}
                 className={`
-          flex h-8 min-w-0 items-center justify-center gap-1.5
-          overflow-hidden rounded-md px-1 text-[11px] font-medium
-          transition-all
+        flex h-8 min-w-0 items-center justify-center gap-1.5
+        overflow-hidden rounded-md px-2 py-1.5
+        text-[11px] font-medium transition-all
 
-          ${isActive
+        ${isActive
                     ? `
               bg-background text-foreground shadow-sm
-              dark:bg-primary dark:text-primary-foreground
+              dark:bg-primary
+              dark:text-primary-foreground
               dark:shadow-md
             `
                     : `
-              text-muted-foreground hover:text-foreground
-              dark:text-muted-foreground/70 dark:hover:text-foreground
-            `}
-        `}
+              text-muted-foreground
+              hover:bg-background/80
+              hover:text-foreground
+
+              dark:text-muted-foreground/70
+              dark:hover:bg-muted/50
+              dark:hover:text-foreground
+            `
+                  }
+      `}
               >
-                <Icon className='h-3.5 w-3.5 shrink-0' />
-                <span className='truncate'>{tab.label}</span>
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{tab.label}</span>
               </Button>
             );
           })}

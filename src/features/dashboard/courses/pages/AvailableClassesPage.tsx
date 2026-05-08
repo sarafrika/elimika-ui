@@ -1,20 +1,22 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useStudent } from '@/context/student-context';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import { listCatalogItemsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { AvailabilityListingLayout } from '@/src/features/dashboard/courses/components/availability-listing-layout';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { AvailabilityListingLayout } from '@/src/features/dashboard/courses/components/availability-listing-layout';
 import { useDateRangeFilter } from '@/src/features/dashboard/courses/hooks/use-date-range-filter';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useUserProfile } from '../../../profile/context/profile-context';
 
-export default function AvailableClassesPage({ courseId }: { courseId: string }) {
+export default function AvailableClassesPage({ courseId, instructorView }: { courseId: string, instructorView: boolean }) {
   const { activeDomain } = useUserDomain();
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const student = useStudent();
+  const user = useUserProfile()
+  const student = user?.student;
+  const instructor = user?.instructor
 
   useEffect(() => {
     if (!courseId) return;
@@ -68,30 +70,65 @@ export default function AvailableClassesPage({ courseId }: { courseId: string })
     catalogues?.data?.some(cat => cat.class_definition_uuid === cls.uuid)
   );
 
+  const instructorFilteredClasses = filteredClasses.filter(cls =>
+    cls.default_instructor_uuid === instructor?.uuid
+  );
+
   return (
-    <AvailabilityListingLayout
-      appliedEnd={appliedEnd}
-      appliedStart={appliedStart}
-      dateError={dateError}
-      emptyDescription="It looks like this course doesn't have any classes yet."
-      emptyTitle='No Classes Available'
-      endDateInput={endDateInput}
-      heading='Find the right class session for this course'
-      helperText='Review upcoming class windows, compare instructors and pricing, then continue into enrollment from a more focused shortlist.'
-      isLoading={loading}
-      items={filteredClasses}
-      onApplyDates={applyDates}
-      onClearDates={clearDates}
-      onEnroll={selectedClass => {
-        window.location.href = buildWorkspaceAliasPath(
-          activeDomain,
-          `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
-        );
-      }}
-      setEndDateInput={setEndDateInput}
-      setStartDateInput={setStartDateInput}
-      startDateInput={startDateInput}
-      subheading='Available classes'
-    />
+    <>
+      {instructorView ? (
+        <AvailabilityListingLayout
+          appliedEnd={appliedEnd}
+          appliedStart={appliedStart}
+          dateError={dateError}
+          instructorView={true}
+          emptyDescription="You haven't created any classes for this course yet."
+          emptyTitle="No Classes Created"
+          endDateInput={endDateInput}
+          heading="Classes you have created for this course"
+          helperText=""
+          isLoading={loading}
+          items={instructorFilteredClasses}
+          onApplyDates={applyDates}
+          onClearDates={clearDates}
+          onEnroll={selectedClass => {
+            window.location.href = buildWorkspaceAliasPath(
+              activeDomain,
+              `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
+            );
+          }}
+          setEndDateInput={setEndDateInput}
+          setStartDateInput={setStartDateInput}
+          startDateInput={startDateInput}
+          subheading="Your created classes"
+        />
+      ) : (
+        <AvailabilityListingLayout
+          appliedEnd={appliedEnd}
+          appliedStart={appliedStart}
+          dateError={dateError}
+          instructorView={false}
+          emptyDescription="It looks like this course doesn't have any classes yet."
+          emptyTitle="No Classes Available"
+          endDateInput={endDateInput}
+          heading="Find the right class session for this course"
+          helperText="Review upcoming class windows, compare instructors and pricing, then continue into enrollment from a more focused shortlist."
+          isLoading={loading}
+          items={filteredClasses}
+          onApplyDates={applyDates}
+          onClearDates={clearDates}
+          onEnroll={selectedClass => {
+            window.location.href = buildWorkspaceAliasPath(
+              activeDomain,
+              `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
+            );
+          }}
+          setEndDateInput={setEndDateInput}
+          setStartDateInput={setStartDateInput}
+          startDateInput={startDateInput}
+          subheading="Available classes"
+        />
+      )}
+    </>
   );
 }

@@ -84,41 +84,22 @@ type LearningHubData = {
 const COURSE_PROGRESS_FALLBACK = [72, 61, 54, 45];
 
 const MOCK_RECOMMENDED_COURSES: LearningHubRecommendedCourse[] = [
-  { id: 'seo', title: 'SEO Essentials', level: 'Beginner', duration: '6 h' },
-  { id: 'excel', title: 'Advanced Excel Analysis', level: 'Intermediate', duration: '5 h' },
-  { id: 'product-design', title: 'Product Design Foundations', level: 'Beginner', duration: '4 h' },
-  {
-    id: 'data-visualization',
-    title: 'Data Visualization Studio',
-    level: 'Intermediate',
-    duration: '7 h',
-  },
-  { id: 'copywriting', title: 'Copywriting for Creators', level: 'Beginner', duration: '3 h' },
-  {
-    id: 'project-management',
-    title: 'Project Management Essentials',
-    level: 'Intermediate',
-    duration: '8 h',
-  },
-];
-
-const MOCK_ASSIGNMENTS: LearningHubAssignment[] = [
-  {
-    id: 'web-design-project',
-    title: 'Web Design Project',
-    summary: 'Revamp a nonprofit website with a new design.',
-    dueLabel: 'Due May 2, 2024',
-    statusLabel: 'Pending Feedback',
-    href: '/dashboard/assignment',
-  },
-  {
-    id: 'design-website-test',
-    title: 'Design Website Test',
-    summary: 'Review the latest design exercises and submit your response.',
-    dueLabel: 'Due May 2, 2024',
-    statusLabel: 'Pending Feedback',
-    href: '/dashboard/assignment',
-  },
+  // { id: 'seo', title: 'SEO Essentials', level: 'Beginner', duration: '6 h' },
+  // { id: 'excel', title: 'Advanced Excel Analysis', level: 'Intermediate', duration: '5 h' },
+  // { id: 'product-design', title: 'Product Design Foundations', level: 'Beginner', duration: '4 h' },
+  // {
+  //   id: 'data-visualization',
+  //   title: 'Data Visualization Studio',
+  //   level: 'Intermediate',
+  //   duration: '7 h',
+  // },
+  // { id: 'copywriting', title: 'Copywriting for Creators', level: 'Beginner', duration: '3 h' },
+  // {
+  //   id: 'project-management',
+  //   title: 'Project Management Essentials',
+  //   level: 'Intermediate',
+  //   duration: '8 h',
+  // },
 ];
 
 const MOCK_INVITE: LearningHubInvite = {
@@ -204,6 +185,8 @@ export function useStudentLearningHubData(): LearningHubData {
     enabled: Boolean(student?.uuid),
   })
 
+  // console.log(enrolledClassesResponse?.data?.content, "CLASSES ENROLLED")
+
   const { data: studentScheduleResponse, isLoading: scheduleLoading } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: student?.uuid as string },
@@ -214,6 +197,8 @@ export function useStudentLearningHubData(): LearningHubData {
     }),
     enabled: Boolean(student?.uuid),
   });
+
+  // console.log(studentScheduleResponse?.data, "SCHED")
 
   const { data: studentCertificatesResponse, isLoading: certificatesLoading } = useQuery({
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
@@ -294,6 +279,8 @@ export function useStudentLearningHubData(): LearningHubData {
 
     return map;
   }, [assignmentIds, assignmentQueries]);
+
+  // console.log(assignmentsMap, "MAP")
 
   const submissionsMap = useMemo(() => {
     const map = new Map<string, AssignmentSubmission[]>();
@@ -432,7 +419,7 @@ export function useStudentLearningHubData(): LearningHubData {
       .slice(0, 3)
       .map(({ dueTime: _dueTime, ...assignment }) => assignment);
 
-    return rows.length > 0 ? rows : MOCK_ASSIGNMENTS;
+    return rows.length > 0 ? rows : [];
   }, [assignmentSchedules, assignmentsMap, submissionsMap]);
 
   const recommendedCourses = useMemo<LearningHubRecommendedCourse[]>(() => {

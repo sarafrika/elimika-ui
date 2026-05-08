@@ -121,6 +121,7 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
 
   const setActiveDomain = (domain: UserDomain) => {
     if (!domains.includes(domain)) return;
+    persistDashboardDomain(dashboardStorageKey, domain);
     setActiveDomainState(domain);
   };
 

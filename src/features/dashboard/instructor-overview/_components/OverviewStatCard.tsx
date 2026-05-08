@@ -16,13 +16,43 @@ export function OverviewStatCard({ stat }: OverviewStatCardProps) {
   return (
     <article
       className={cn(
-        'min-h-[78px] rounded-[10px] bg-gradient-to-r px-5 py-4 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]',
+        `
+          rounded-[10px]
+          bg-gradient-to-r
+          px-4 py-3 sm:px-5 sm:py-4
+          text-white
+          shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]
+
+          min-h-[72px]
+          w-full
+        `,
         toneClasses[stat.tone]
       )}
     >
-      <div className='flex h-full items-center gap-3'>
-        <span className='text-[2rem] font-semibold leading-none sm:text-[2.2rem]'>{stat.value}</span>
-        <span className='text-[1rem] font-medium sm:text-[1.08rem]'>{stat.label}</span>
+      <div
+        className="
+          flex h-full items-center gap-2 sm:gap-3
+          flex-wrap sm:flex-nowrap
+        "
+      >
+        <span
+          className="
+            leading-none font-semibold
+            text-[clamp(1.5rem,4vw,2.2rem)]
+          "
+        >
+          {stat.value}
+        </span>
+
+        <span
+          className="
+            font-medium leading-tight
+            text-[clamp(0.85rem,2vw,1.08rem)]
+            break-words
+          "
+        >
+          {stat.label}
+        </span>
       </div>
     </article>
   );
