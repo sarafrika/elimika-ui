@@ -179,7 +179,7 @@ export function ClassDeliveryStatusTab({
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <Users className="h-4 w-4" />
-                    {studentCount} unique students
+                    {studentCount} students
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <UserRound className="h-4 w-4" />
