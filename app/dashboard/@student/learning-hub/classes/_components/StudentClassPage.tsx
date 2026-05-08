@@ -13,7 +13,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassRoster } from '@/hooks/use-class-roster';
-import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { type InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import {
@@ -37,7 +37,6 @@ import {
   type ClassInstanceItem,
   type ClassTab,
   type DateFilter,
-  type LessonModule,
 } from '../../../../@instructor/classes/_components/new-class-page.utils';
 import { PlaceholderTab } from '../../../../@instructor/classes/_components/placeholder-tab';
 
@@ -212,14 +211,30 @@ export default function StudentClassPage({
   );
 
   const selectedClass = selectedInstanceEntry?.classItem ?? null;
+
   const selectedClassUuid = selectedClass?.uuid ?? null;
   const { roster, isLoading: isLoadingStudents } = useClassRoster(selectedClassUuid ?? undefined);
   const {
     isLoading: isLoadingLessons,
-    lessons,
+    lessonModules,
     contentTypeMap,
-  } = useCourseLessonsWithContent({ courseUuid: selectedClass?.course_uuid });
-  const lessonModules = useMemo<LessonModule[]>(() => lessons ?? [], [lessons]);
+    programCourses,
+  } = useClassLessonContent({
+    courseUuid: selectedClass?.course_uuid,
+    programUuid: selectedClass?.program_uuid,
+  });
+  const selectedClassForDisplay = useMemo<InstructorClassWithSchedule | null>(() => {
+    if (!selectedClass) return null;
+    if (!selectedClass.program_uuid || selectedClass.course) return selectedClass;
+
+    const primaryProgramCourse = programCourses[0] ?? null;
+    if (!primaryProgramCourse) return selectedClass;
+
+    return {
+      ...selectedClass,
+      course: primaryProgramCourse,
+    };
+  }, [programCourses, selectedClass]);
 
   useEffect(() => {
     if (!lessonModules.length) {
@@ -480,7 +495,7 @@ export default function StudentClassPage({
               <ClassOverviewTab
                 isLoadingClasses={loading || classDefinitionQueries.some(query => query.isLoading)}
                 isLoadingLessons={isLoadingLessons}
-                selectedClass={selectedClass}
+                selectedClass={selectedClassForDisplay}
                 selectedClassUuid={selectedClassUuid}
                 lessonModules={lessonModules}
                 expandedModuleId={expandedModuleId}
@@ -530,7 +545,8 @@ export default function StudentClassPage({
               <ClassTasksTab
                 classUuid={selectedClassUuid}
                 classTitle={selectedClass?.title}
-                courseTitle={selectedClass?.course?.name}
+                courseTitle={selectedClassForDisplay?.course?.name}
+                lessonModules={lessonModules}
                 isLoading={loading || classDefinitionQueries.some(query => query.isLoading)}
               />
             </TabsContent>

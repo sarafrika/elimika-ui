@@ -1,4 +1,5 @@
 import type { CourseLessonWithContent } from '@/hooks/use-courselessonwithcontent';
+import type { ProgramCourseLike } from '@/hooks/use-programlessonwithcontent';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import type { Student } from '@/services/client';
 import { useMemo } from 'react';
@@ -38,7 +39,9 @@ export type LessonContentItem = NonNullable<
   NonNullable<CourseLessonWithContent['content']>['data']
 >[number];
 
-export type LessonModule = CourseLessonWithContent;
+export type LessonModule = CourseLessonWithContent & {
+  course?: ProgramCourseLike | null;
+};
 
 export type ClassInstanceItem = {
   instanceUuid: string;

@@ -1,10 +1,10 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import type {
   ContentType,
   GetCourseLessonsResponse,
   GetLessonContentResponse,
 } from '@/services/client/types.gen';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import {
   getAllContentTypesOptions,
   getCourseLessonsOptions,
@@ -13,6 +13,7 @@ import {
 
 type Params = {
   courseUuid?: string;
+  enabled?: boolean;
 };
 
 export type CourseLesson = NonNullable<
@@ -26,7 +27,8 @@ export type CourseLessonWithContent = {
   content: GetLessonContentResponse | undefined;
 };
 
-export function useCourseLessonsWithContent({ courseUuid }: Params) {
+export function useCourseLessonsWithContent({ courseUuid, enabled = true }: Params) {
+  const isEnabled = enabled && !!courseUuid;
   const {
     data: cLessons,
     isLoading: lessonsLoading,
@@ -37,7 +39,7 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
       path: { courseUuid: courseUuid as string },
       query: { pageable: {} },
     }),
-    enabled: !!courseUuid,
+    enabled: isEnabled,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -52,7 +54,7 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
             lessonUuid: lesson.uuid as string,
           },
         }),
-        enabled: !!lesson.uuid,
+        enabled: isEnabled && !!lesson.uuid,
         staleTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
@@ -74,7 +76,10 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
   );
 
   const { data: contentTypeList, isFetching: contentTypeFetching } = useQuery(
-    getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
+    {
+      ...getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
+      enabled: isEnabled,
+    }
   );
 
   const contentTypeData = useMemo(() => {

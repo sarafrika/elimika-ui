@@ -18,12 +18,13 @@ import type {
 import { useQuery } from '@tanstack/react-query';
 import { ClipboardList, FileQuestion, NotebookPen } from 'lucide-react';
 import { type ReactNode, useMemo } from 'react';
-import { formatDateTime } from './new-class-page.utils';
+import { formatDateTime, type LessonModule } from './new-class-page.utils';
 
 type ClassTasksTabProps = {
   classUuid?: string | null;
   classTitle?: string | null;
   courseTitle?: string | null;
+  lessonModules?: LessonModule[];
   isLoading?: boolean;
 };
 
@@ -39,6 +40,7 @@ export function ClassTasksTab({
   classUuid,
   classTitle,
   courseTitle,
+  lessonModules = [],
   isLoading = false,
 }: ClassTasksTabProps) {
   const { data: allAssignments, isLoading: isLoadingAssignments } = useQuery({
@@ -73,6 +75,53 @@ export function ClassTasksTab({
     ...item,
     quiz: quizOptions.find(quiz => quiz.uuid === item.quiz_uuid) ?? null,
   }));
+
+  const lessonCourseMap = useMemo(() => {
+    const map = new Map<string, string>();
+
+    lessonModules.forEach(module => {
+      const lessonUuid = module.lesson.uuid;
+      if (!lessonUuid) return;
+
+      const label = module.course?.name?.trim() || classTitle || 'This class';
+      map.set(lessonUuid, label);
+    });
+
+    return map;
+  }, [classTitle, lessonModules]);
+
+  const groupedTaskSections = useMemo(() => {
+    const sections = new Map<
+      string,
+      {
+        courseLabel: string;
+        assignments: AssignmentScheduleItem[];
+        quizzes: QuizScheduleItem[];
+      }
+    >();
+
+    const getCourseLabel = (lessonUuid?: string | null) =>
+      (lessonUuid ? lessonCourseMap.get(lessonUuid) : undefined) || classTitle || 'This class';
+
+    const ensureSection = (courseLabel: string) => {
+      const existing = sections.get(courseLabel);
+      if (existing) return existing;
+
+      const section = { courseLabel, assignments: [], quizzes: [] };
+      sections.set(courseLabel, section);
+      return section;
+    };
+
+    assignmentScheduleItems.forEach(item => {
+      ensureSection(getCourseLabel(item.lesson_uuid)).assignments.push(item);
+    });
+
+    quizScheduleItems.forEach(item => {
+      ensureSection(getCourseLabel(item.lesson_uuid)).quizzes.push(item);
+    });
+
+    return Array.from(sections.values());
+  }, [assignmentScheduleItems, classTitle, lessonCourseMap, quizScheduleItems]);
 
   const taskSummary = useMemo(
     () => [
@@ -130,21 +179,34 @@ export function ClassTasksTab({
             <TaskSkeleton />
           </div>
         ) : hasTasks ? (
-          <div className='grid gap-3 lg:grid-cols-2'>
-          <AssignmentTaskGroup
-            title='Assignments'
-            icon={<ClipboardList className='h-4 w-4' />}
-            items={assignmentScheduleItems}
-            emptyLabel='No assignments have been attached to this class yet.'
-          />
+          <div className='space-y-4'>
+            {groupedTaskSections.map(section => (
+              <div key={section.courseLabel} className='space-y-3'>
+                <div className='border-border/70 bg-background/80 rounded-md border px-3 py-2'>
+                  <p className='text-muted-foreground text-[11px] uppercase tracking-[0.14em]'>
+                    Course
+                  </p>
+                  <p className='text-foreground mt-1 text-sm font-semibold'>{section.courseLabel}</p>
+                </div>
 
-          <QuizTaskGroup
-            title='Quizzes'
-            icon={<FileQuestion className='h-4 w-4' />}
-            items={quizScheduleItems}
-            emptyLabel='No quizzes have been attached to this class yet.'
-          />
-        </div>
+                <div className='grid gap-3 lg:grid-cols-2'>
+                  <AssignmentTaskGroup
+                    title='Assignments'
+                    icon={<ClipboardList className='h-4 w-4' />}
+                    items={section.assignments}
+                    emptyLabel='No assignments have been attached to this course yet.'
+                  />
+
+                  <QuizTaskGroup
+                    title='Quizzes'
+                    icon={<FileQuestion className='h-4 w-4' />}
+                    items={section.quizzes}
+                    emptyLabel='No quizzes have been attached to this course yet.'
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className='border-border/70 bg-background/80 rounded-md border border-dashed p-6 text-center'>
             <NotebookPen className='text-primary mx-auto mb-3 h-8 w-8' />

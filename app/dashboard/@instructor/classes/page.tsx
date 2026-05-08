@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { useClassRoster } from '@/hooks/use-class-roster';
-import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import { InstructorClassWithSchedule, useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import { startScheduledInstanceMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation } from '@tanstack/react-query';
 import { NotebookPen, PanelBottom, Plus, Search } from 'lucide-react';
@@ -36,12 +36,11 @@ import {
   type ClassInstanceItem,
   type ClassTab,
   type DateFilter,
-  type LessonModule,
 } from './_components/new-class-page.utils';
 import { PlaceholderTab } from './_components/placeholder-tab';
 
 export default function NewClassPage() {
-  const profile = useUserProfile()
+  const profile = useUserProfile();
   const instructor = profile?.instructor;
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { difficultyMap } = useDifficultyLevels();
@@ -106,10 +105,25 @@ export default function NewClassPage() {
   const { roster, isLoading: isLoadingStudents } = useClassRoster(selectedClassUuid ?? undefined);
   const {
     isLoading: isLoadingLessons,
-    lessons,
+    lessonModules,
     contentTypeMap,
-  } = useCourseLessonsWithContent({ courseUuid: selectedClass?.course_uuid });
-  const lessonModules = useMemo<LessonModule[]>(() => lessons ?? [], [lessons]);
+    programCourses,
+  } = useClassLessonContent({
+    courseUuid: selectedClass?.course_uuid,
+    programUuid: selectedClass?.program_uuid,
+  });
+  const selectedClassForDisplay = useMemo<InstructorClassWithSchedule | null>(() => {
+    if (!selectedClass) return null;
+    if (!selectedClass.program_uuid || selectedClass.course) return selectedClass;
+
+    const primaryProgramCourse = programCourses[0] ?? null;
+    if (!primaryProgramCourse) return selectedClass;
+
+    return {
+      ...selectedClass,
+      course: primaryProgramCourse,
+    };
+  }, [programCourses, selectedClass]);
 
   useEffect(() => {
     if (!lessonModules.length) {
@@ -415,7 +429,7 @@ export default function NewClassPage() {
               <ClassOverviewTab
                 isLoadingClasses={isLoadingClasses}
                 isLoadingLessons={isLoadingLessons}
-                selectedClass={selectedClass}
+                selectedClass={selectedClassForDisplay}
                 selectedClassUuid={selectedClassUuid}
                 lessonModules={lessonModules}
                 selectedLesson={selectedLesson}
@@ -479,7 +493,8 @@ export default function NewClassPage() {
               <ClassTasksTab
                 classUuid={selectedClassUuid}
                 classTitle={selectedClass?.title}
-                courseTitle={selectedClass?.course?.name}
+                courseTitle={selectedClassForDisplay?.course?.name}
+                lessonModules={lessonModules}
                 isLoading={isLoadingClasses || isLoadingLessons}
               />
             </TabsContent>

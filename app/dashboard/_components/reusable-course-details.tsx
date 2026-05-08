@@ -364,7 +364,7 @@ export default function ReusableCourseDetailsPage({
                 <p className='text-muted-foreground mt-1 text-sm'>Per hour, per learner.</p>
               </div>
 
-              <div className='flex flex-col gap-3'>
+              {activeDomain !== 'instructor' ? <div className='flex flex-col gap-3'>
                 {typeof handleEnroll === 'function' && (
                   <Button
                     onClick={() =>
@@ -382,25 +382,38 @@ export default function ReusableCourseDetailsPage({
                   </Button>
                 )}
 
-                {activeDomain !== 'instructor' ? (
-                  <Button
-                    onClick={() =>
-                      router.push(
-                        buildWorkspaceAliasPath(
-                          activeDomain,
-                          `/dashboard/courses/instructor?courseId=${courseData?.uuid}`
-                        )
+                <Button
+                  onClick={() =>
+                    router.push(
+                      buildWorkspaceAliasPath(
+                        activeDomain,
+                        `/dashboard/courses/instructor?courseId=${courseData?.uuid}`
                       )
-                    }
-                    variant='outline'
-                    className='w-full rounded-xl shadow-none'
-                    size='lg'
-                  >
-                    <Search className='mr-2 h-4 w-4' />
-                    Find an instructor
-                  </Button>
-                ) : null}
-              </div>
+                    )
+                  }
+                  variant='outline'
+                  className='w-full rounded-xl shadow-none'
+                  size='lg'
+                >
+                  <Search className='mr-2 h-4 w-4' />
+                  Find an instructor
+                </Button>
+
+              </div> : <Button
+                onClick={() =>
+                  router.push(
+                    buildWorkspaceAliasPath(
+                      activeDomain,
+                      `/dashboard/classes`
+                    )
+                  )
+                }
+                className='w-full rounded-xl font-semibold'
+                size='lg'
+              >
+                View my classes
+              </Button>}
+
             </div>
           </Card>
         </div>

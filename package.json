@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "biome lint . && node scripts/check-brand-colors.mjs",
     "lint:palette": "node scripts/check-brand-colors.mjs",
-    "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\""
+    "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\"",
+    "format:file": "prettier --write"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

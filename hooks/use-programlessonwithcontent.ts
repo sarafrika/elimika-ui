@@ -26,10 +26,14 @@ export type ProgramCourseWithLessons = {
 export function useProgramLessonsWithContent({
   programUuid,
   programCourses,
+  enabled = true,
 }: {
-  programUuid: string;
+  programUuid?: string;
   programCourses: ProgramCourseLike[] | undefined;
+  enabled?: boolean;
 }) {
+  const isEnabled = enabled && Boolean(programUuid);
+
   // Flatten all courses in the program
   const courseList = (programCourses || []).filter((course): course is ProgramCourseLike =>
     Boolean(course?.uuid)
@@ -42,7 +46,7 @@ export function useProgramLessonsWithContent({
         path: { courseUuid: course.uuid },
         query: { pageable: {} },
       }),
-      enabled: !!course.uuid,
+      enabled: isEnabled && !!course.uuid,
     })),
   });
 
@@ -65,7 +69,7 @@ export function useProgramLessonsWithContent({
             lessonUuid: lesson.uuid,
           },
         }),
-        enabled: !!lesson.uuid,
+        enabled: isEnabled && !!lesson.uuid,
       }));
     }),
   });
@@ -94,7 +98,10 @@ export function useProgramLessonsWithContent({
 
   // Fetch content types (same as course hook)
   const { data: contentTypeList, isFetching: contentTypeFetching } = useQuery(
-    getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
+    {
+      ...getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
+      enabled: isEnabled,
+    }
   );
 
   const contentTypeData = useMemo(() => {
