@@ -280,7 +280,7 @@ export function useStudentLearningHubData(): LearningHubData {
     return map;
   }, [assignmentIds, assignmentQueries]);
 
-  console.log(assignmentsMap, "MAP")
+  // console.log(assignmentsMap, "MAP")
 
   const submissionsMap = useMemo(() => {
     const map = new Map<string, AssignmentSubmission[]>();

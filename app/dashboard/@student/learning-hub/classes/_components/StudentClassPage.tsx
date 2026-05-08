@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useClassRoster } from '@/hooks/use-class-roster';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
+import { useClassRoster } from '@/hooks/use-class-roster';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { type InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import {
@@ -48,17 +48,20 @@ type StudentClassDefinition = ClassDefinition & {
 type StudentClassPageProps = {
   studentEnrolledClasses: StudentSchedule[];
   loading?: boolean;
+  singleClassDetails?: boolean
 };
 
 export default function StudentClassPage({
   studentEnrolledClasses,
   loading = false,
+  singleClassDetails = false,
 }: StudentClassPageProps) {
   const router = useRouter();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { difficultyMap } = useDifficultyLevels();
   const profile = useUserProfile()
   const student = profile?.student
+  const classTitile = studentEnrolledClasses[0]?.class_title
 
   const [selectedInstanceUuid, setSelectedInstanceUuid] = useState<string | null>(null);
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
@@ -376,13 +379,15 @@ export default function StudentClassPage({
       }`;
   };
 
+
+
   return (
     <div className='space-y-3 mb-20'>
       <div className='border-border/70 bg-card/90 rounded-lg border p-4 shadow-sm backdrop-blur'>
         <div className='flex items-center justify-between gap-3'>
           <div>
             <p className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>Learning Hub</p>
-            <h1 className='text-foreground mt-1 text-2xl font-semibold'>Your Classes</h1>
+            <h1 className='text-foreground mt-1 text-2xl font-semibold'>{singleClassDetails ? classTitile : "Your Classes"}</h1>
           </div>
         </div>
       </div>

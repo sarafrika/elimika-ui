@@ -26,6 +26,7 @@ export default function Page() {
         <StudentClassPage
             studentEnrolledClasses={studentEnrolledClasses ?? []}
             loading={false}
+            singleClassDetails={true}
         />
     );
 }
